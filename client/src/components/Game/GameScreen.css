@@ -10,8 +10,8 @@
   margin: 0 auto;
 }
 
-/* ── Top bar ─────────────────────────────────────────── */
-.top-bar {
+/* ── Utility bar ──────────────────────────────────────── */
+.utility-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -19,25 +19,70 @@
   gap: 0.5rem;
 }
 
-.center-top { flex: 1; }
+.timer-slot { flex: 1; }
 
-.top-right {
+.utility-buttons {
   display: flex;
   align-items: center;
   gap: 0.4rem;
 }
 
-/* ── HP row ──────────────────────────────────────────── */
-.hp-row {
-  display: flex;
+/* ── Player panel (상대방 + 자신 공용) ───────────────── */
+.player-panel {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.75rem;
   width: 100%;
-  padding: 0 0.25rem;
+  padding: 0.55rem 0.875rem;
+  background: var(--panel, #1E252B);
+  border: 1px solid var(--tile-border, #3A444D);
+  border-radius: 0.875rem;
 }
 
-.opponent-row {
-  margin-bottom: 0.2rem;
+.self-panel {
+  border-color: rgba(56, 102, 65, 0.4);
+  box-shadow:
+    0 0 0 1px rgba(56, 102, 65, 0.12) inset,
+    0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.hp-slot {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ── Role pill ────────────────────────────────────────── */
+.role-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.35rem 0.7rem;
+  background: var(--tile, #2A3137);
+  border: 1px solid var(--tile-border, #3A444D);
+  border-radius: 0.625rem;
+  color: var(--text-muted, #9AA4AE);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.role-pill-self {
+  border-color: rgba(56, 102, 65, 0.4);
+  box-shadow: 0 0 0 1px rgba(56, 102, 65, 0.1) inset;
+}
+
+.role-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.role-text {
+  font-size: 0.72rem;
+  line-height: 1;
 }
 
 /* ── Grid area ───────────────────────────────────────── */
@@ -48,58 +93,12 @@
   justify-content: center;
 }
 
-/* ── Bottom bar ──────────────────────────────────────── */
-.bottom-bar {
+/* ── Footer row ──────────────────────────────────────── */
+.footer-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   width: 100%;
   padding: 0 0.25rem;
-  gap: 1rem;
-}
-
-.player-status {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.85rem;
-  min-width: 0;
-}
-
-/* ── Role badge ──────────────────────────────────────── */
-.role-badge {
-  width: 4.9rem;
-  aspect-ratio: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  border-radius: 1rem;
-  background: var(--tile, #2A3137);
-  border: 1px solid var(--tile-border, #3A444D);
-  color: var(--text-muted, #9AA4AE);
-  text-transform: uppercase;
-  flex: 0 0 auto;
-}
-
-.role-badge-self {
-  width: 5.6rem;
-  border-color: rgba(56, 102, 65, 0.45);
-  box-shadow:
-    0 0 0 1px rgba(56, 102, 65, 0.2) inset,
-    0 10px 24px rgba(0, 0, 0, 0.2);
-}
-
-.role-icon {
-  font-size: 1.9rem;
-  line-height: 1;
-}
-
-.role-text {
-  font-size: 1rem;
-  line-height: 1;
 }
 
 /* ── Phase label ─────────────────────────────────────── */
@@ -124,12 +123,6 @@
 }
 
 /* ── Path points ─────────────────────────────────────── */
-.path-points-info {
-  font-size: 0.8rem;
-  color: var(--text-muted, #9AA4AE);
-  flex: 0 0 auto;
-}
-
 .path-points {
   font-family: var(--mono, monospace);
   font-size: 0.8rem;

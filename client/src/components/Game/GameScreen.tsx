@@ -31,9 +31,9 @@ export function GameScreen({ onLeaveToLobby }: Props) {
 
   return (
     <div className="game-screen">
-      <div className="top-bar">
-        <PlayerInfo player={opponent} isMe={false} />
-        <div className="center-top">
+      {/* 유틸리티 바: 타이머 + 버튼 */}
+      <div className="utility-bar">
+        <div className="timer-slot">
           {gameState.phase === 'planning' && roundInfo && (
             <TimerBar
               duration={roundInfo.timeLimit}
@@ -44,45 +44,49 @@ export function GameScreen({ onLeaveToLobby }: Props) {
             <div className="phase-label moving">이동 중...</div>
           )}
         </div>
-        <div className="top-right">
-          <button className="lobby-btn" onClick={onLeaveToLobby}>
-            Lobby
-          </button>
+        <div className="utility-buttons">
+          <button className="lobby-btn" onClick={onLeaveToLobby}>Lobby</button>
           <MuteButton />
         </div>
       </div>
 
-      <div className="hp-row opponent-row">
-        <HpDisplay color={opponentColor} hp={gameState.players[opponentColor].hp} myColor={myColor!} />
-        <div className="role-badge">
-          <span className="role-icon">{gameState.players[opponentColor].role === 'attacker' ? '⚔' : '🏃'}</span>
-          <span className="role-text">{gameState.players[opponentColor].role === 'attacker' ? '공격' : '도망'}</span>
+      {/* 상대방 패널 */}
+      <div className="player-panel">
+        <PlayerInfo player={opponent} isMe={false} />
+        <div className="role-pill">
+          <span className="role-icon">{opponent.role === 'attacker' ? '⚔' : '🏃'}</span>
+          <span className="role-text">{opponent.role === 'attacker' ? '공격' : '도망'}</span>
+        </div>
+        <div className="hp-slot">
+          <HpDisplay color={opponentColor} hp={gameState.players[opponentColor].hp} myColor={myColor!} />
         </div>
       </div>
 
+      {/* 그리드 */}
       <div className="grid-area">
         <GameGrid />
       </div>
 
-      <div className="bottom-bar">
-        <div className="player-status">
-          <PlayerInfo player={me!} isMe={true} />
-          <div className="role-badge role-badge-self">
-            <span className="role-icon">{me?.role === 'attacker' ? '⚔' : '🏃'}</span>
-            <span className="role-text">{me?.role === 'attacker' ? '공격' : '도망'}</span>
-          </div>
-          <HpDisplay color={myColor!} hp={me?.hp ?? 3} myColor={myColor!} />
+      {/* 내 패널 */}
+      <div className="player-panel self-panel">
+        <PlayerInfo player={me!} isMe={true} />
+        <div className="role-pill role-pill-self">
+          <span className="role-icon">{me?.role === 'attacker' ? '⚔' : '🏃'}</span>
+          <span className="role-text">{me?.role === 'attacker' ? '공격' : '도망'}</span>
         </div>
-
-        <div className="path-points-info">
-          {gameState.phase === 'planning' && (
-            <span className="path-points">경로: {useGameStore.getState().myPath.length} / {gameState.pathPoints}</span>
-          )}
+        <div className="hp-slot">
+          <HpDisplay color={myColor!} hp={me?.hp ?? 3} myColor={myColor!} />
         </div>
       </div>
 
-      <ChatPanel />
+      {/* 경로 포인트 */}
+      {gameState.phase === 'planning' && (
+        <div className="footer-row">
+          <span className="path-points">경로: {useGameStore.getState().myPath.length} / {gameState.pathPoints}</span>
+        </div>
+      )}
 
+      <ChatPanel />
       {winner && <GameOverOverlay winner={winner} myColor={myColor!} />}
     </div>
   );
