@@ -114,6 +114,12 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       </div>
 
       {/* ── 그리드 ──────────────────────────────────────── */}
+      {winner && (
+        <div className="gs-result-slot">
+          <GameOverOverlay winner={winner} myColor={myColor!} />
+        </div>
+      )}
+
       <div className="gs-grid-area" ref={gridAreaRef}>
         <GameGrid cellSize={cellSize} />
       </div>
@@ -137,7 +143,6 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       <PathProgressBar current={myPath.length} max={gameState.pathPoints} />
 
       <ChatPanel />
-      {winner && <GameOverOverlay winner={winner} myColor={myColor!} />}
     </div>
   );
 }

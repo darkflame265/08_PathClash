@@ -349,3 +349,7 @@
 @media (min-width: 1024px) {
   .game-screen { max-width: 800px; }
 }
+.gs-result-slot {
+  width: 100%;
+  flex-shrink: 0;
+}
