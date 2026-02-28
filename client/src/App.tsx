@@ -17,7 +17,7 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <div className={`app ${view === 'game' ? 'app-game' : 'app-lobby'}`}>
       {view === 'lobby' && <LobbyScreen onGameStart={() => setView('game')} />}
       {view === 'game' && <GameScreen onLeaveToLobby={handleReturnToLobby} />}
     </div>
