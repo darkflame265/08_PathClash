@@ -95,26 +95,40 @@ class GameRoom {
                 return;
             for (const [, p] of this.players) {
                 if (!p.pathSubmitted) {
-                    p.plannedPath = [];
+                    const maxPoints = (0, GameEngine_1.calcPathPoints)(this.turn);
+                    if (!(0, GameEngine_1.isValidPath)(p.position, p.plannedPath, maxPoints, this.obstacles)) {
+                        p.plannedPath = [];
+                    }
                     p.pathSubmitted = true;
                 }
             }
             this.revealPaths();
         }, SUBMIT_GRACE_MS);
     }
-    submitPath(socketId, path) {
+    updatePlannedPath(socketId, path) {
         if (this.phase !== 'planning')
             return;
         const player = this.getPlayerBySocket(socketId);
         if (!player || player.pathSubmitted)
             return;
         const maxPoints = (0, GameEngine_1.calcPathPoints)(this.turn);
-        if (!(0, GameEngine_1.isValidPath)(player.position, path, maxPoints, this.obstacles)) {
+        if (!(0, GameEngine_1.isValidPath)(player.position, path, maxPoints, this.obstacles))
+            return;
+        player.plannedPath = path;
+    }
+    submitPath(socketId, path) {
+        if (this.phase !== 'planning')
+            return false;
+        const player = this.getPlayerBySocket(socketId);
+        if (!player || player.pathSubmitted)
+            return false;
+        const maxPoints = (0, GameEngine_1.calcPathPoints)(this.turn);
+        if ((0, GameEngine_1.isValidPath)(player.position, path, maxPoints, this.obstacles)) {
             // Invalid path — treat as empty
-            player.plannedPath = [];
-        }
-        else {
             player.plannedPath = path;
+        }
+        else if (!(0, GameEngine_1.isValidPath)(player.position, player.plannedPath, maxPoints, this.obstacles)) {
+            player.plannedPath = [];
         }
         player.pathSubmitted = true;
         // Notify opponent
@@ -125,6 +139,7 @@ class GameRoom {
             this.timer.clear();
             this.revealPaths();
         }
+        return true;
     }
     revealPaths() {
         if (this.phase !== 'planning')

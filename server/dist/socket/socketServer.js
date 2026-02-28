@@ -90,9 +90,14 @@ function initSocketServer(io) {
             setTimeout(() => room.startGame(), 500);
         });
         // ─── Path submission ─────────────────────────────────────────────────────
-        socket.on('submit_path', ({ path }) => {
+        socket.on('path_update', ({ path }) => {
             const room = store.getBySocket(socket.id);
-            room?.submitPath(socket.id, path);
+            room?.updatePlannedPath(socket.id, path);
+        });
+        socket.on('submit_path', ({ path }, ack) => {
+            const room = store.getBySocket(socket.id);
+            const ok = room?.submitPath(socket.id, path) ?? false;
+            ack?.({ ok });
         });
         // ─── Rematch ─────────────────────────────────────────────────────────────
         socket.on('request_rematch', () => {

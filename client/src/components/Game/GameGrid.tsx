@@ -16,6 +16,7 @@ import "./GameGrid.css";
 const DEFAULT_CELL_SIZE = 96;
 const GRID_SIZE = 5;
 const PRE_SUBMIT_LEAD_MS = 250;
+const PATH_UPDATE_THROTTLE_MS = 150;
 
 interface GridProps {
   cellSize?: number;
@@ -38,6 +39,9 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
   const shellRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState(cellSize * GRID_SIZE);
+  const lastPathUpdateAtRef = useRef(0);
+  const pendingPathUpdateRef = useRef<number | null>(null);
+  const pendingPathRef = useRef<Position[]>([]);
   const dragState = useRef<{
     active: boolean;
     fromPiece: boolean;
@@ -76,6 +80,19 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
   }, []);
 
   const responsiveCellSize = boardSize / GRID_SIZE;
+
+  const emitPathUpdate = useCallback((path: Position[]) => {
+    getSocket().emit("path_update", { path });
+    lastPathUpdateAtRef.current = Date.now();
+  }, []);
+
+  const flushPendingPathUpdate = useCallback(() => {
+    if (pendingPathUpdateRef.current !== null) {
+      window.clearTimeout(pendingPathUpdateRef.current);
+      pendingPathUpdateRef.current = null;
+    }
+    emitPathUpdate(pendingPathRef.current);
+  }, [emitPathUpdate]);
 
   const addToPath = useCallback(
     (cell: Position) => {
@@ -236,6 +253,35 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
     return () => window.removeEventListener("keydown", handleKey);
   }, [isPlanning, myPos, obstacles, pathPoints, removeFromPath, setMyPath]);
 
+  useEffect(() => {
+    pendingPathRef.current = myPath;
+    if (!isPlanning || !myColor || !gameState) return;
+    if (gameState.players[myColor].pathSubmitted) return;
+
+    const elapsed = Date.now() - lastPathUpdateAtRef.current;
+    if (elapsed >= PATH_UPDATE_THROTTLE_MS) {
+      emitPathUpdate(myPath);
+      return;
+    }
+
+    if (pendingPathUpdateRef.current !== null) {
+      window.clearTimeout(pendingPathUpdateRef.current);
+    }
+
+    pendingPathUpdateRef.current = window.setTimeout(() => {
+      pendingPathUpdateRef.current = null;
+      emitPathUpdate(pendingPathRef.current);
+    }, PATH_UPDATE_THROTTLE_MS - elapsed);
+  }, [emitPathUpdate, gameState, isPlanning, myColor, myPath]);
+
+  useEffect(() => {
+    return () => {
+      if (pendingPathUpdateRef.current !== null) {
+        window.clearTimeout(pendingPathUpdateRef.current);
+      }
+    };
+  }, []);
+
   // Submit once when the planning timer ends, even if the path is partial.
   useEffect(() => {
     if (!isPlanning || !myColor || !roundInfo || !gameState) return;
@@ -251,19 +297,30 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
       if (!latestGameState || latestGameState.phase !== "planning") return;
       if (latestGameState.players[myColor].pathSubmitted) return;
 
-      getSocket().emit("submit_path", { path: state.myPath });
-      useGameStore.setState({
-        gameState: {
-          ...latestGameState,
-          players: {
-            ...latestGameState.players,
-            [myColor]: {
-              ...latestGameState.players[myColor],
-              pathSubmitted: true,
+      flushPendingPathUpdate();
+      getSocket().emit(
+        "submit_path",
+        { path: state.myPath },
+        ({ ok }: { ok: boolean }) => {
+          if (!ok) return;
+
+          const freshGameState = useGameStore.getState().gameState;
+          if (!freshGameState) return;
+
+          useGameStore.setState({
+            gameState: {
+              ...freshGameState,
+              players: {
+                ...freshGameState.players,
+                [myColor]: {
+                  ...freshGameState.players[myColor],
+                  pathSubmitted: true,
+                },
+              },
             },
-          },
+          });
         },
-      });
+      );
     };
 
     const preSubmitTimeoutId = window.setTimeout(() => {
@@ -278,7 +335,7 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
       window.clearTimeout(preSubmitTimeoutId);
       window.clearTimeout(finalSubmitTimeoutId);
     };
-  }, [isPlanning, myColor, roundInfo, gameState]);
+  }, [flushPendingPathUpdate, isPlanning, myColor, roundInfo, gameState]);
 
   const cells = Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, i) => ({
     row: Math.floor(i / GRID_SIZE),

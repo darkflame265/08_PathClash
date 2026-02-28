@@ -116,7 +116,10 @@ export class GameRoom {
 
       for (const [, p] of this.players) {
         if (!p.pathSubmitted) {
-          p.plannedPath = [];
+          const maxPoints = calcPathPoints(this.turn);
+          if (!isValidPath(p.position, p.plannedPath, maxPoints, this.obstacles)) {
+            p.plannedPath = [];
+          }
           p.pathSubmitted = true;
         }
       }
@@ -124,17 +127,27 @@ export class GameRoom {
     }, SUBMIT_GRACE_MS);
   }
 
-  submitPath(socketId: string, path: Position[]): void {
+  updatePlannedPath(socketId: string, path: Position[]): void {
     if (this.phase !== 'planning') return;
     const player = this.getPlayerBySocket(socketId);
     if (!player || player.pathSubmitted) return;
 
     const maxPoints = calcPathPoints(this.turn);
-    if (!isValidPath(player.position, path, maxPoints, this.obstacles)) {
+    if (!isValidPath(player.position, path, maxPoints, this.obstacles)) return;
+    player.plannedPath = path;
+  }
+
+  submitPath(socketId: string, path: Position[]): boolean {
+    if (this.phase !== 'planning') return false;
+    const player = this.getPlayerBySocket(socketId);
+    if (!player || player.pathSubmitted) return false;
+
+    const maxPoints = calcPathPoints(this.turn);
+    if (isValidPath(player.position, path, maxPoints, this.obstacles)) {
       // Invalid path — treat as empty
-      player.plannedPath = [];
-    } else {
       player.plannedPath = path;
+    } else if (!isValidPath(player.position, player.plannedPath, maxPoints, this.obstacles)) {
+      player.plannedPath = [];
     }
     player.pathSubmitted = true;
 
@@ -147,6 +160,7 @@ export class GameRoom {
       this.timer.clear();
       this.revealPaths();
     }
+    return true;
   }
 
   private revealPaths(): void {

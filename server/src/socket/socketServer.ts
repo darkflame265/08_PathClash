@@ -105,9 +105,15 @@ export function initSocketServer(io: Server): void {
     });
 
     // ─── Path submission ─────────────────────────────────────────────────────
-    socket.on('submit_path', ({ path }: { path: Position[] }) => {
+    socket.on('path_update', ({ path }: { path: Position[] }) => {
       const room = store.getBySocket(socket.id);
-      room?.submitPath(socket.id, path);
+      room?.updatePlannedPath(socket.id, path);
+    });
+
+    socket.on('submit_path', ({ path }: { path: Position[] }, ack?: (response: { ok: boolean }) => void) => {
+      const room = store.getBySocket(socket.id);
+      const ok = room?.submitPath(socket.id, path) ?? false;
+      ack?.({ ok });
     });
 
     // ─── Rematch ─────────────────────────────────────────────────────────────
