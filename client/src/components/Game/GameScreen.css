@@ -356,7 +356,7 @@
 
 .game-screen {
   overflow-y: auto;
-  overflow-x: visible;
+  overflow-x: hidden;
   overscroll-behavior-y: contain;
 }
 
