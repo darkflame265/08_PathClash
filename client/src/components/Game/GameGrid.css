@@ -19,3 +19,48 @@
 .grid-cell:hover {
   background: var(--tile-hover, #333C44);
 }
+
+.grid-cell.obstacle {
+  background:
+    linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(248, 113, 113, 0.08)),
+    var(--tile, #2A3137);
+  border-color: rgba(248, 113, 113, 0.45);
+}
+
+.grid-cell.obstacle:hover {
+  background:
+    linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(248, 113, 113, 0.08)),
+    var(--tile, #2A3137);
+}
+
+.obstacle-mark {
+  position: absolute;
+  inset: 18%;
+  border-radius: 0.75rem;
+  background:
+    linear-gradient(135deg, rgba(248, 113, 113, 0.75), rgba(185, 28, 28, 0.9));
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 8px 18px rgba(127, 29, 29, 0.28);
+}
+
+.obstacle-mark::before,
+.obstacle-mark::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 245, 245, 0.92);
+  transform-origin: center;
+}
+
+.obstacle-mark::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.obstacle-mark::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}

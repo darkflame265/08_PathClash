@@ -1,5 +1,9 @@
 import { Position, PlayerColor, CollisionEvent, PlayerState } from '../types/game.types';
 
+const GRID_MIN = 0;
+const GRID_MAX = 4;
+const MAX_OBSTACLES = 3;
+
 export function calcPathPoints(turn: number): number {
   return Math.min(4 + turn, 10);
 }
@@ -9,19 +13,43 @@ export function isValidMove(from: Position, to: Position): boolean {
   const dc = Math.abs(to.col - from.col);
   return (
     dr + dc === 1 &&
-    to.row >= 0 && to.row <= 4 &&
-    to.col >= 0 && to.col <= 4
+    to.row >= GRID_MIN && to.row <= GRID_MAX &&
+    to.col >= GRID_MIN && to.col <= GRID_MAX
   );
 }
 
-export function isValidPath(start: Position, path: Position[], maxPoints: number): boolean {
+export function isValidPath(start: Position, path: Position[], maxPoints: number, obstacles: Position[] = []): boolean {
   if (path.length > maxPoints) return false;
   let cur = start;
   for (const next of path) {
+    if (isObstacle(next, obstacles)) return false;
     if (!isValidMove(cur, next)) return false;
     cur = next;
   }
   return true;
+}
+
+export function generateObstacles(redPosition: Position, bluePosition: Position): Position[] {
+  const occupied = new Set([toKey(redPosition), toKey(bluePosition)]);
+  const candidates: Position[] = [];
+
+  const rowMin = Math.min(redPosition.row, bluePosition.row);
+  const rowMax = Math.max(redPosition.row, bluePosition.row);
+  const colMin = Math.min(redPosition.col, bluePosition.col);
+  const colMax = Math.max(redPosition.col, bluePosition.col);
+
+  for (let row = GRID_MIN; row <= GRID_MAX; row++) {
+    for (let col = GRID_MIN; col <= GRID_MAX; col++) {
+      const cell = { row, col };
+      const key = toKey(cell);
+      if (occupied.has(key)) continue;
+      if (!isBetweenPlayers(cell, redPosition, bluePosition, rowMin, rowMax, colMin, colMax)) continue;
+      candidates.push(cell);
+    }
+  }
+
+  shuffle(candidates);
+  return candidates.slice(0, Math.min(MAX_OBSTACLES, candidates.length));
 }
 
 export function detectCollisions(
@@ -84,4 +112,38 @@ export function calcAnimationDuration(pathLength: number): number {
 export function toClientPlayer(p: PlayerState) {
   const { socketId: _s, ...rest } = p;
   return rest;
+}
+
+export function isObstacle(cell: Position, obstacles: Position[]): boolean {
+  return obstacles.some((obstacle) => obstacle.row === cell.row && obstacle.col === cell.col);
+}
+
+function isBetweenPlayers(
+  cell: Position,
+  redPosition: Position,
+  bluePosition: Position,
+  rowMin: number,
+  rowMax: number,
+  colMin: number,
+  colMax: number
+): boolean {
+  const withinBox = cell.row >= rowMin && cell.row <= rowMax && cell.col >= colMin && cell.col <= colMax;
+  const betweenDistance =
+    manhattan(redPosition, cell) + manhattan(cell, bluePosition) === manhattan(redPosition, bluePosition);
+  return withinBox || betweenDistance;
+}
+
+function manhattan(a: Position, b: Position): number {
+  return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
+}
+
+function toKey(position: Position): string {
+  return `${position.row},${position.col}`;
+}
+
+function shuffle<T>(items: T[]): void {
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
 }

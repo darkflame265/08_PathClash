@@ -5,7 +5,7 @@ import {
 } from '../types/game.types';
 import {
   calcPathPoints, detectCollisions, getInitialPositions,
-  isValidPath, calcAnimationDuration, toClientPlayer,
+  isValidPath, calcAnimationDuration, toClientPlayer, generateObstacles,
 } from './GameEngine';
 import { createAiPath } from './AiPlanner';
 import { ServerTimer } from './ServerTimer';
@@ -22,6 +22,7 @@ export class GameRoom {
   private phase: GameState['phase'] = 'waiting';
   private turn = 1;
   private attackerColor: PlayerColor = 'red';
+  private obstacles: Position[] = [];
   private timer = new ServerTimer();
   private rematchSet: Set<string> = new Set();
   private aiColor: PlayerColor | null = null;
@@ -89,6 +90,7 @@ export class GameRoom {
     red.pathSubmitted = false;
     blue.plannedPath = [];
     blue.pathSubmitted = false;
+    this.obstacles = generateObstacles(red.position, blue.position);
 
     const payload: RoundStartPayload = {
       turn: this.turn,
@@ -96,6 +98,7 @@ export class GameRoom {
       attackerColor: this.attackerColor,
       redPosition: red.position,
       bluePosition: blue.position,
+      obstacles: this.obstacles,
       timeLimit: 10,
       serverTime: Date.now(),
     };
@@ -127,7 +130,7 @@ export class GameRoom {
     if (!player || player.pathSubmitted) return;
 
     const maxPoints = calcPathPoints(this.turn);
-    if (!isValidPath(player.position, path, maxPoints)) {
+    if (!isValidPath(player.position, path, maxPoints, this.obstacles)) {
       // Invalid path — treat as empty
       player.plannedPath = [];
     } else {
@@ -258,6 +261,7 @@ export class GameRoom {
     this.turn = 1;
     this.attackerColor = 'red';
     this.phase = 'waiting';
+    this.obstacles = [];
     this.resetPositions();
     for (const p of this.players.values()) {
       p.hp = 3;
@@ -307,6 +311,7 @@ export class GameRoom {
       turn: this.turn,
       phase: this.phase,
       pathPoints: calcPathPoints(this.turn),
+      obstacles: this.obstacles,
       players: {
         red: toClientPlayer(red),
         blue: toClientPlayer(blue),
@@ -350,6 +355,7 @@ export class GameRoom {
       selfPosition: aiPlayer.position,
       opponentPosition: opponent.position,
       pathPoints: calcPathPoints(this.turn),
+      obstacles: this.obstacles,
     });
     aiPlayer.pathSubmitted = true;
   }

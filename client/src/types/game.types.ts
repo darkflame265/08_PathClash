@@ -24,6 +24,7 @@ export interface ClientGameState {
   turn: number;
   phase: GamePhase;
   pathPoints: number;
+  obstacles: Position[];
   players: {
     red: ClientPlayerState;
     blue: ClientPlayerState;
@@ -52,6 +53,7 @@ export interface RoundStartPayload {
   attackerColor: PlayerColor;
   redPosition: Position;
   bluePosition: Position;
+  obstacles: Position[];
   timeLimit: number;
   serverTime: number;
 }

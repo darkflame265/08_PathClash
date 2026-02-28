@@ -3,10 +3,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.calcPathPoints = calcPathPoints;
 exports.isValidMove = isValidMove;
 exports.isValidPath = isValidPath;
+exports.generateObstacles = generateObstacles;
 exports.detectCollisions = detectCollisions;
 exports.getInitialPositions = getInitialPositions;
 exports.calcAnimationDuration = calcAnimationDuration;
 exports.toClientPlayer = toClientPlayer;
+exports.isObstacle = isObstacle;
+const GRID_MIN = 0;
+const GRID_MAX = 4;
+const MAX_OBSTACLES = 3;
 function calcPathPoints(turn) {
     return Math.min(4 + turn, 10);
 }
@@ -14,19 +19,42 @@ function isValidMove(from, to) {
     const dr = Math.abs(to.row - from.row);
     const dc = Math.abs(to.col - from.col);
     return (dr + dc === 1 &&
-        to.row >= 0 && to.row <= 4 &&
-        to.col >= 0 && to.col <= 4);
+        to.row >= GRID_MIN && to.row <= GRID_MAX &&
+        to.col >= GRID_MIN && to.col <= GRID_MAX);
 }
-function isValidPath(start, path, maxPoints) {
+function isValidPath(start, path, maxPoints, obstacles = []) {
     if (path.length > maxPoints)
         return false;
     let cur = start;
     for (const next of path) {
+        if (isObstacle(next, obstacles))
+            return false;
         if (!isValidMove(cur, next))
             return false;
         cur = next;
     }
     return true;
+}
+function generateObstacles(redPosition, bluePosition) {
+    const occupied = new Set([toKey(redPosition), toKey(bluePosition)]);
+    const candidates = [];
+    const rowMin = Math.min(redPosition.row, bluePosition.row);
+    const rowMax = Math.max(redPosition.row, bluePosition.row);
+    const colMin = Math.min(redPosition.col, bluePosition.col);
+    const colMax = Math.max(redPosition.col, bluePosition.col);
+    for (let row = GRID_MIN; row <= GRID_MAX; row++) {
+        for (let col = GRID_MIN; col <= GRID_MAX; col++) {
+            const cell = { row, col };
+            const key = toKey(cell);
+            if (occupied.has(key))
+                continue;
+            if (!isBetweenPlayers(cell, redPosition, bluePosition, rowMin, rowMax, colMin, colMax))
+                continue;
+            candidates.push(cell);
+        }
+    }
+    shuffle(candidates);
+    return candidates.slice(0, Math.min(MAX_OBSTACLES, candidates.length));
 }
 function detectCollisions(redPath, bluePath, redStart, blueStart, attackerColor, escaperHp) {
     const events = [];
@@ -70,4 +98,24 @@ function calcAnimationDuration(pathLength) {
 function toClientPlayer(p) {
     const { socketId: _s, ...rest } = p;
     return rest;
+}
+function isObstacle(cell, obstacles) {
+    return obstacles.some((obstacle) => obstacle.row === cell.row && obstacle.col === cell.col);
+}
+function isBetweenPlayers(cell, redPosition, bluePosition, rowMin, rowMax, colMin, colMax) {
+    const withinBox = cell.row >= rowMin && cell.row <= rowMax && cell.col >= colMin && cell.col <= colMax;
+    const betweenDistance = manhattan(redPosition, cell) + manhattan(cell, bluePosition) === manhattan(redPosition, bluePosition);
+    return withinBox || betweenDistance;
+}
+function manhattan(a, b) {
+    return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
+}
+function toKey(position) {
+    return `${position.row},${position.col}`;
+}
+function shuffle(items) {
+    for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+    }
 }

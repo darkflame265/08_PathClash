@@ -12,6 +12,7 @@ class GameRoom {
         this.phase = 'waiting';
         this.turn = 1;
         this.attackerColor = 'red';
+        this.obstacles = [];
         this.timer = new ServerTimer_1.ServerTimer();
         this.rematchSet = new Set();
         this.aiColor = null;
@@ -72,12 +73,14 @@ class GameRoom {
         red.pathSubmitted = false;
         blue.plannedPath = [];
         blue.pathSubmitted = false;
+        this.obstacles = (0, GameEngine_1.generateObstacles)(red.position, blue.position);
         const payload = {
             turn: this.turn,
             pathPoints: (0, GameEngine_1.calcPathPoints)(this.turn),
             attackerColor: this.attackerColor,
             redPosition: red.position,
             bluePosition: blue.position,
+            obstacles: this.obstacles,
             timeLimit: 10,
             serverTime: Date.now(),
         };
@@ -106,7 +109,7 @@ class GameRoom {
         if (!player || player.pathSubmitted)
             return;
         const maxPoints = (0, GameEngine_1.calcPathPoints)(this.turn);
-        if (!(0, GameEngine_1.isValidPath)(player.position, path, maxPoints)) {
+        if (!(0, GameEngine_1.isValidPath)(player.position, path, maxPoints, this.obstacles)) {
             // Invalid path — treat as empty
             player.plannedPath = [];
         }
@@ -218,6 +221,7 @@ class GameRoom {
         this.turn = 1;
         this.attackerColor = 'red';
         this.phase = 'waiting';
+        this.obstacles = [];
         this.resetPositions();
         for (const p of this.players.values()) {
             p.hp = 3;
@@ -266,6 +270,7 @@ class GameRoom {
             turn: this.turn,
             phase: this.phase,
             pathPoints: (0, GameEngine_1.calcPathPoints)(this.turn),
+            obstacles: this.obstacles,
             players: {
                 red: (0, GameEngine_1.toClientPlayer)(red),
                 blue: (0, GameEngine_1.toClientPlayer)(blue),
@@ -307,6 +312,7 @@ class GameRoom {
             selfPosition: aiPlayer.position,
             opponentPosition: opponent.position,
             pathPoints: (0, GameEngine_1.calcPathPoints)(this.turn),
+            obstacles: this.obstacles,
         });
         aiPlayer.pathSubmitted = true;
     }

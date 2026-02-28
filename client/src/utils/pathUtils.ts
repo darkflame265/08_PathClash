@@ -14,6 +14,10 @@ export function posEqual(a: Position, b: Position): boolean {
   return a.row === b.row && a.col === b.col;
 }
 
+export function isBlockedCell(cell: Position, obstacles: Position[]): boolean {
+  return obstacles.some((obstacle) => posEqual(obstacle, cell));
+}
+
 export function getCellCenter(row: number, col: number, cellSize: number): { x: number; y: number } {
   return {
     x: col * cellSize + cellSize / 2,

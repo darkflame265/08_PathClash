@@ -122,6 +122,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       turn: r.turn,
       phase: 'planning',
       pathPoints: r.pathPoints,
+      obstacles: r.obstacles,
       attackerColor: r.attackerColor,
       players: {
         ...get().gameState!.players,

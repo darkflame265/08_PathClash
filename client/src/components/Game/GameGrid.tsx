@@ -1,7 +1,7 @@
 import { useRef, useCallback, useEffect } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import type { Position } from '../../types/game.types';
-import { isValidMove, posEqual, pixelToCell } from '../../utils/pathUtils';
+import { isBlockedCell, isValidMove, posEqual, pixelToCell } from '../../utils/pathUtils';
 import { PlayerPiece } from './PlayerPiece';
 import { PathLine } from './PathLine';
 import { CollisionEffect } from '../Effects/CollisionEffect';
@@ -28,6 +28,7 @@ export function GameGrid() {
   const isPlanning = gameState?.phase === 'planning';
   const myPos = myColor ? gameState?.players[myColor]?.position : null;
   const pathPoints = gameState?.pathPoints ?? 5;
+  const obstacles = gameState?.obstacles ?? roundInfo?.obstacles ?? [];
 
   const getGridOffset = () => {
     const rect = gridRef.current?.getBoundingClientRect();
@@ -38,11 +39,12 @@ export function GameGrid() {
     if (!isPlanning || !myPos) return;
     const current = useGameStore.getState().myPath;
     if (current.length >= pathPoints) return;
+    if (isBlockedCell(cell, obstacles)) return;
     const lastPos = current.length > 0 ? current[current.length - 1] : myPos;
     if (isValidMove(lastPos, cell)) {
       setMyPath([...current, cell]);
     }
-  }, [isPlanning, myPos, pathPoints, setMyPath]);
+  }, [isPlanning, myPos, obstacles, pathPoints, setMyPath]);
 
   const removeFromPath = useCallback(() => {
     const current = useGameStore.getState().myPath;
@@ -89,14 +91,19 @@ export function GameGrid() {
 
       // New direction from the current endpoint.
       const lastPos = current.length > 0 ? current[current.length - 1] : myPos;
-      if (!posEqual(cell, lastPos) && isValidMove(lastPos, cell) && current.length < pathPoints) {
+      if (
+        !posEqual(cell, lastPos)
+        && !isBlockedCell(cell, obstacles)
+        && isValidMove(lastPos, cell)
+        && current.length < pathPoints
+      ) {
         setMyPath([...current, cell]);
       }
     } else if (dragState.current.fromPiece) {
       // Add mode
       addToPath(cell);
     }
-  }, [isPlanning, myPos, addToPath, removeFromPath, pathPoints, setMyPath]);
+  }, [isPlanning, myPos, addToPath, removeFromPath, obstacles, pathPoints, setMyPath]);
 
   const handleMouseUp = useCallback(() => {
     dragState.current = { active: false, fromPiece: false, fromEnd: false };
@@ -123,6 +130,7 @@ export function GameGrid() {
       const lastPos = current.length > 0 ? current[current.length - 1] : myPos;
       const next: Position = { row: lastPos.row + dir.row, col: lastPos.col + dir.col };
       if (next.row < 0 || next.row > 4 || next.col < 0 || next.col > 4) return;
+      if (isBlockedCell(next, obstacles)) return;
 
       if (current.length > 0) {
         const secondLast = current.length >= 2
@@ -141,7 +149,7 @@ export function GameGrid() {
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [isPlanning, myPos, pathPoints, removeFromPath, setMyPath]);
+  }, [isPlanning, myPos, obstacles, pathPoints, removeFromPath, setMyPath]);
 
   // Submit once when the planning timer ends, even if the path is partial.
   useEffect(() => {
@@ -201,14 +209,16 @@ export function GameGrid() {
       {cells.map(({ row, col }) => (
         <div
           key={`${row}-${col}`}
-          className="grid-cell"
+          className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? 'obstacle' : ''}`}
           style={{
             left: col * CELL_SIZE,
             top: row * CELL_SIZE,
             width: CELL_SIZE,
             height: CELL_SIZE,
           }}
-        />
+        >
+          {isBlockedCell({ row, col }, obstacles) && <div className="obstacle-mark" />}
+        </div>
       ))}
 
       {/* Path lines: red behind (lower z-index, thicker), blue on top */}

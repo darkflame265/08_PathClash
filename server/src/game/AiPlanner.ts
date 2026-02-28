@@ -14,22 +14,23 @@ export function createAiPath(params: {
   selfPosition: Position;
   opponentPosition: Position;
   pathPoints: number;
+  obstacles: Position[];
 }): Position[] {
   const { role } = params;
   return role === 'attacker'
-    ? createAttackerPath(params.selfPosition, params.opponentPosition, params.pathPoints)
-    : createEscaperPath(params.selfPosition, params.opponentPosition, params.pathPoints);
+    ? createAttackerPath(params.selfPosition, params.opponentPosition, params.pathPoints, params.obstacles)
+    : createEscaperPath(params.selfPosition, params.opponentPosition, params.pathPoints, params.obstacles);
 }
 
-function createAttackerPath(selfPosition: Position, targetPosition: Position, pathPoints: number): Position[] {
-  const path = buildShortestPath(selfPosition, targetPosition).slice(0, pathPoints);
+function createAttackerPath(selfPosition: Position, targetPosition: Position, pathPoints: number, obstacles: Position[]): Position[] {
+  const path = buildShortestPath(selfPosition, targetPosition, obstacles).slice(0, pathPoints);
   if (path.length === pathPoints) return path;
 
   let current = path.length > 0 ? path[path.length - 1] : selfPosition;
   let previous = path.length > 1 ? path[path.length - 2] : null;
 
   while (path.length < pathPoints) {
-    const nextMove = chooseAttackerExtension(current, previous, targetPosition);
+    const nextMove = chooseAttackerExtension(current, previous, targetPosition, obstacles);
     if (!nextMove) break;
 
     path.push(nextMove);
@@ -40,7 +41,7 @@ function createAttackerPath(selfPosition: Position, targetPosition: Position, pa
   return path;
 }
 
-function createEscaperPath(selfPosition: Position, threatPosition: Position, pathPoints: number): Position[] {
+function createEscaperPath(selfPosition: Position, threatPosition: Position, pathPoints: number, obstacles: Position[]): Position[] {
   const maxSpend = Math.max(1, pathPoints);
   const spend = Math.floor(Math.random() * maxSpend) + 1;
   const path: Position[] = [];
@@ -49,7 +50,7 @@ function createEscaperPath(selfPosition: Position, threatPosition: Position, pat
   let previous: Position | null = null;
 
   for (let step = 0; step < spend; step++) {
-    const candidates = getNeighbors(current).filter((candidate) => !isSamePosition(candidate, previous));
+    const candidates = getNeighbors(current, obstacles).filter((candidate) => !isSamePosition(candidate, previous));
     if (candidates.length === 0) break;
 
     const scored = candidates
@@ -79,31 +80,45 @@ function scoreEscaperMove(candidate: Position, threat: Position, previous: Posit
   return distance * 10 - edgePenalty + centerBias + Math.random();
 }
 
-function buildShortestPath(from: Position, to: Position): Position[] {
-  const path: Position[] = [];
-  let current = { ...from };
+function buildShortestPath(from: Position, to: Position, obstacles: Position[]): Position[] {
+  const startKey = toKey(from);
+  const targetKey = toKey(to);
+  const queue: Position[] = [{ ...from }];
+  const visited = new Set<string>([startKey]);
+  const previous = new Map<string, string>();
+  const positionMap = new Map<string, Position>([[startKey, { ...from }]]);
 
-  while (current.row !== to.row) {
-    current = {
-      row: current.row + Math.sign(to.row - current.row),
-      col: current.col,
-    };
-    path.push(current);
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const currentKey = toKey(current);
+    if (currentKey === targetKey) break;
+
+    for (const next of getNeighbors(current, obstacles)) {
+      const nextKey = toKey(next);
+      if (visited.has(nextKey)) continue;
+      visited.add(nextKey);
+      previous.set(nextKey, currentKey);
+      positionMap.set(nextKey, next);
+      queue.push(next);
+    }
   }
 
-  while (current.col !== to.col) {
-    current = {
-      row: current.row,
-      col: current.col + Math.sign(to.col - current.col),
-    };
-    path.push(current);
+  if (!visited.has(targetKey)) return [];
+
+  const reversedPath: Position[] = [];
+  let cursor = targetKey;
+  while (cursor !== startKey) {
+    const pos = positionMap.get(cursor);
+    if (!pos) break;
+    reversedPath.push(pos);
+    cursor = previous.get(cursor)!;
   }
 
-  return path;
+  return reversedPath.reverse();
 }
 
-function chooseAttackerExtension(current: Position, previous: Position | null, target: Position): Position | null {
-  const candidates = getNeighbors(current).filter((candidate) => !isSamePosition(candidate, previous));
+function chooseAttackerExtension(current: Position, previous: Position | null, target: Position, obstacles: Position[]): Position | null {
+  const candidates = getNeighbors(current, obstacles).filter((candidate) => !isSamePosition(candidate, previous));
   if (candidates.length === 0) return null;
 
   candidates.sort((a, b) => manhattan(a, target) - manhattan(b, target));
@@ -112,13 +127,13 @@ function chooseAttackerExtension(current: Position, previous: Position | null, t
   return bestMoves[Math.floor(Math.random() * bestMoves.length)] ?? null;
 }
 
-function getNeighbors(position: Position): Position[] {
+function getNeighbors(position: Position, obstacles: Position[]): Position[] {
   return DIRECTIONS
     .map((direction) => ({
       row: position.row + direction.row,
       col: position.col + direction.col,
     }))
-    .filter((next) => isValidMove(position, next));
+    .filter((next) => isValidMove(position, next) && !isBlocked(next, obstacles));
 }
 
 function manhattan(a: Position, b: Position): number {
@@ -131,4 +146,12 @@ function isEdge(position: Position): boolean {
 
 function isSamePosition(a: Position, b: Position | null): boolean {
   return !!b && a.row === b.row && a.col === b.col;
+}
+
+function isBlocked(position: Position, obstacles: Position[]): boolean {
+  return obstacles.some((obstacle) => isSamePosition(position, obstacle));
+}
+
+function toKey(position: Position): string {
+  return `${position.row},${position.col}`;
 }
