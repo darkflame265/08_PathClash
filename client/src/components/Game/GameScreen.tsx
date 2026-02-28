@@ -64,6 +64,12 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     return cleanup;
   }, []);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, []);
+
   if (!gameState) return <div className="gs-loading">게임 로딩 중...</div>;
 
   const opponentColor = myColor === 'red' ? 'blue' : 'red';
