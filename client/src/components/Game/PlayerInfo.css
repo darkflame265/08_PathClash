@@ -1,10 +1,9 @@
-/* PlayerInfo — 닉네임 버튼 + 프로필 드롭다운 */
+/* PlayerInfo: nickname button + stat dropdown */
 
 .player-info {
   position: relative;
 }
 
-/* ── 닉네임 버튼 ─────────────────────────────────────────── */
 .nickname-btn {
   background: transparent;
   border: 1px solid transparent;
@@ -23,23 +22,24 @@
   white-space: nowrap;
 }
 
-.nickname-btn.color-red  { color: #f87171; }
+.nickname-btn.color-red { color: #f87171; }
 .nickname-btn.color-blue { color: #60a5fa; }
 
 .nickname-btn.color-red:hover {
   background: rgba(239, 68, 68, 0.08);
   border-color: rgba(239, 68, 68, 0.3);
 }
+
 .nickname-btn.color-blue:hover {
   background: rgba(59, 130, 246, 0.08);
   border-color: rgba(59, 130, 246, 0.3);
 }
 
-/* ── 프로필 드롭다운 ─────────────────────────────────────── */
 .profile-box {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
+  right: auto;
   z-index: 200;
   background: var(--panel, #1E252B);
   border: 1px solid var(--tile-border, #3A444D);
@@ -47,13 +47,14 @@
   padding: 0.625rem;
   min-width: 180px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
-  /* 코너 브라켓 */
-  position: absolute;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 .profile-box.profile-box-self {
-  left: auto;
-  right: 0;
+  left: 0;
+  right: auto;
 }
 
 .profile-row {
@@ -66,16 +67,22 @@
   border-bottom: 1px solid var(--tile, #2A3137);
 }
 
-.profile-row:last-child { border-bottom: none; }
+.profile-row:last-child {
+  border-bottom: none;
+}
 
 .profile-row span:first-child {
   color: var(--text-muted, #9AA4AE);
   font-size: 0.75rem;
   letter-spacing: 0.04em;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .profile-row span:last-child {
   color: var(--text, #F0F4F8);
   font-weight: 600;
   font-family: 'Plus Jakarta Sans', sans-serif;
+  user-select: text;
+  -webkit-user-select: text;
 }
