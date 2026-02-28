@@ -44,6 +44,13 @@ export function GameGrid() {
     }
   }, [isPlanning, myPos, pathPoints, setMyPath]);
 
+  const removeFromPath = useCallback(() => {
+    const current = useGameStore.getState().myPath;
+    if (current.length > 0) {
+      setMyPath(current.slice(0, -1));
+    }
+  }, [setMyPath]);
+
   // Mouse handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!isPlanning || !myPos || !gridRef.current) return;
@@ -70,7 +77,17 @@ export function GameGrid() {
     const current = useGameStore.getState().myPath;
 
     if (dragState.current.fromEnd) {
-      // Continue from the current path end, including immediate backtracking.
+      if (current.length > 0) {
+        const secondLast = current.length >= 2
+          ? current[current.length - 2]
+          : myPos;
+        if (posEqual(cell, secondLast)) {
+          removeFromPath();
+          return;
+        }
+      }
+
+      // New direction from the current endpoint.
       const lastPos = current.length > 0 ? current[current.length - 1] : myPos;
       if (!posEqual(cell, lastPos) && isValidMove(lastPos, cell) && current.length < pathPoints) {
         setMyPath([...current, cell]);
@@ -79,7 +96,7 @@ export function GameGrid() {
       // Add mode
       addToPath(cell);
     }
-  }, [isPlanning, myPos, addToPath, pathPoints, setMyPath]);
+  }, [isPlanning, myPos, addToPath, removeFromPath, pathPoints, setMyPath]);
 
   const handleMouseUp = useCallback(() => {
     dragState.current = { active: false, fromPiece: false, fromEnd: false };
@@ -103,16 +120,28 @@ export function GameGrid() {
       e.preventDefault();
 
       const current = useGameStore.getState().myPath;
-      if (current.length >= pathPoints) return;
       const lastPos = current.length > 0 ? current[current.length - 1] : myPos;
       const next: Position = { row: lastPos.row + dir.row, col: lastPos.col + dir.col };
-      if (next.row >= 0 && next.row <= 4 && next.col >= 0 && next.col <= 4) {
+      if (next.row < 0 || next.row > 4 || next.col < 0 || next.col > 4) return;
+
+      if (current.length > 0) {
+        const secondLast = current.length >= 2
+          ? current[current.length - 2]
+          : myPos;
+        if (posEqual(next, secondLast)) {
+          removeFromPath();
+          return;
+        }
+      }
+
+      if (current.length >= pathPoints) return;
+      if (isValidMove(lastPos, next)) {
         setMyPath([...current, next]);
       }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [isPlanning, myPos, pathPoints, setMyPath]);
+  }, [isPlanning, myPos, pathPoints, removeFromPath, setMyPath]);
 
   // Submit once when the planning timer ends, even if the path is partial.
   useEffect(() => {
