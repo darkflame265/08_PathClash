@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect, useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import type { Position } from '../../types/game.types';
 import { isBlockedCell, isValidMove, posEqual, pixelToCell } from '../../utils/pathUtils';
@@ -22,7 +22,9 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
     hitEffect, explosionEffect, collisionEffects,
   } = useGameStore();
 
+  const shellRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const [boardSize, setBoardSize] = useState(cellSize * GRID_SIZE);
   const dragState = useRef<{
     active: boolean;
     fromPiece: boolean;
@@ -38,6 +40,29 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
     const rect = gridRef.current?.getBoundingClientRect();
     return rect ? { x: rect.left, y: rect.top } : { x: 0, y: 0 };
   };
+
+  useEffect(() => {
+    const element = shellRef.current;
+    if (!element) return;
+
+    const updateSize = (width: number) => {
+      if (!width) return;
+      setBoardSize(width);
+    };
+
+    updateSize(element.getBoundingClientRect().width);
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      updateSize(entry.contentRect.width);
+    });
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  const responsiveCellSize = boardSize / GRID_SIZE;
 
   const addToPath = useCallback((cell: Position) => {
     if (!isPlanning || !myPos) return;
@@ -60,7 +85,7 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
   // Mouse handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!isPlanning || !myPos || !gridRef.current) return;
-    const cell = pixelToCell(e.clientX, e.clientY, cellSize, getGridOffset());
+    const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
     if (!cell) return;
 
     const current = useGameStore.getState().myPath;
@@ -73,11 +98,11 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
     } else if (isOnEnd) {
       dragState.current = { active: true, fromPiece: false, fromEnd: true };
     }
-  }, [isPlanning, myPos, cellSize]);
+  }, [isPlanning, myPos, responsiveCellSize]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!dragState.current.active || !isPlanning || !myPos) return;
-    const cell = pixelToCell(e.clientX, e.clientY, cellSize, getGridOffset());
+    const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
     if (!cell) return;
 
     const current = useGameStore.getState().myPath;
@@ -107,7 +132,7 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
       // Add mode
       addToPath(cell);
     }
-  }, [isPlanning, myPos, cellSize, addToPath, removeFromPath, obstacles, pathPoints, setMyPath]);
+  }, [isPlanning, myPos, responsiveCellSize, addToPath, removeFromPath, obstacles, pathPoints, setMyPath]);
 
   const handleMouseUp = useCallback(() => {
     dragState.current = { active: false, fromPiece: false, fromEnd: false };
@@ -201,24 +226,26 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
   void opponentColor; void opponentPath;
 
   return (
-    <div
-      ref={gridRef}
-      className="game-grid"
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      style={{ width: cellSize * GRID_SIZE, height: cellSize * GRID_SIZE }}
-    >
+    <div ref={shellRef} className="game-grid-shell">
+      <div
+        ref={gridRef}
+        className="game-grid"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        style={{ width: boardSize, height: boardSize }}
+      >
       {cells.map(({ row, col }) => (
         <div
           key={`${row}-${col}`}
           className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? 'obstacle' : ''}`}
           style={{
-            left: col * cellSize,
-            top: row * cellSize,
-            width: cellSize,
-            height: cellSize,
+            left: col * responsiveCellSize,
+            top: row * responsiveCellSize,
+            width: responsiveCellSize,
+            height: responsiveCellSize,
+            ['--cell-size' as string]: `${responsiveCellSize}px`,
           }}
         >
           {isBlockedCell({ row, col }, obstacles) && <div className="obstacle-mark" />}
@@ -226,19 +253,19 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
       ))}
 
       {/* Path lines: red behind (lower z-index, thicker), blue on top */}
-      <PathLine color="red" path={revealedRedPath} startPos={gameState?.players.red.position ?? redDisplayPos} cellSize={cellSize} isPlanning={isPlanning} />
-      <PathLine color="blue" path={revealedBluePath} startPos={gameState?.players.blue.position ?? blueDisplayPos} cellSize={cellSize} isPlanning={isPlanning} />
+      <PathLine color="red" path={revealedRedPath} startPos={gameState?.players.red.position ?? redDisplayPos} cellSize={responsiveCellSize} isPlanning={isPlanning} />
+      <PathLine color="blue" path={revealedBluePath} startPos={gameState?.players.blue.position ?? blueDisplayPos} cellSize={responsiveCellSize} isPlanning={isPlanning} />
 
       {/* Collision effects */}
       {collisionEffects.map(({ id, position }) => (
-        <CollisionEffect key={id} position={position} cellSize={cellSize} />
+        <CollisionEffect key={id} position={position} cellSize={responsiveCellSize} />
       ))}
 
       {/* Pieces */}
       <PlayerPiece
         color="red"
         position={redDisplayPos}
-        cellSize={cellSize}
+        cellSize={responsiveCellSize}
         isAttacker={gameState?.attackerColor === 'red'}
         isHit={hitEffect.red}
         isExploding={explosionEffect === 'red'}
@@ -247,12 +274,13 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
       <PlayerPiece
         color="blue"
         position={blueDisplayPos}
-        cellSize={cellSize}
+        cellSize={responsiveCellSize}
         isAttacker={gameState?.attackerColor === 'blue'}
         isHit={hitEffect.blue}
         isExploding={explosionEffect === 'blue'}
         isMe={myColor === 'blue'}
       />
+      </div>
     </div>
   );
 }

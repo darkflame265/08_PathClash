@@ -17,10 +17,15 @@ export function PathLine({ color, path, startPos, cellSize, isPlanning = false }
     .join(' ');
 
   const isRed = color === 'red';
-  const strokeWidth = isRed ? 8 : 5;
+  const strokeWidth = isRed
+    ? Math.max(4, cellSize * 0.085)
+    : Math.max(3, cellSize * 0.055);
   const stroke = isRed ? '#ef4444' : '#3b82f6';
   const opacity = isRed ? 0.7 : 0.85;
   const zIndex = isRed ? 2 : 3;
+  const endRadius = isRed
+    ? Math.max(4, cellSize * 0.072)
+    : Math.max(3, cellSize * 0.052);
   // 경로 지정 단계: 점선 표시 (dasharray = 선길이 공백길이)
   const strokeDasharray = isPlanning ? `${strokeWidth * 2} ${strokeWidth * 1.5}` : undefined;
 
@@ -51,7 +56,7 @@ export function PathLine({ color, path, startPos, cellSize, isPlanning = false }
         <circle
           cx={path[path.length - 1].col * cellSize + cellSize / 2}
           cy={path[path.length - 1].row * cellSize + cellSize / 2}
-          r={isRed ? 7 : 5}
+          r={endRadius}
           fill={stroke}
           fillOpacity={opacity}
         />

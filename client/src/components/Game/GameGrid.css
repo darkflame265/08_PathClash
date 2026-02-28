@@ -1,3 +1,11 @@
+.game-grid-shell {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .game-grid {
   position: relative;
   background: var(--panel, #1E252B);
@@ -36,7 +44,7 @@
 .obstacle-mark {
   position: absolute;
   inset: 18%;
-  border-radius: 0.75rem;
+  border-radius: calc(var(--cell-size, 96px) * 0.125);
   background:
     linear-gradient(135deg, rgba(248, 113, 113, 0.75), rgba(185, 28, 28, 0.9));
   box-shadow:
@@ -51,7 +59,7 @@
   top: 50%;
   left: 50%;
   width: 70%;
-  height: 6px;
+  height: calc(var(--cell-size, 96px) * 0.065);
   border-radius: 999px;
   background: rgba(255, 245, 245, 0.92);
   transform-origin: center;
