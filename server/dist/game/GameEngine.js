@@ -59,6 +59,9 @@ function generateObstacles(redPosition, bluePosition) {
 function detectCollisions(redPath, bluePath, redStart, blueStart, attackerColor, escaperHp) {
     const events = [];
     const escapeeColor = attackerColor === 'red' ? 'blue' : 'red';
+    const escaperPath = escapeeColor === 'red' ? redPath : bluePath;
+    const startsOverlapped = redStart.row === blueStart.row && redStart.col === blueStart.col;
+    const ignoreStartTileCollision = startsOverlapped && escaperPath.length > 0;
     const redSeq = [redStart, ...redPath];
     const blueSeq = [blueStart, ...bluePath];
     const maxLen = Math.max(redSeq.length, blueSeq.length);
@@ -68,6 +71,9 @@ function detectCollisions(redPath, bluePath, redStart, blueStart, attackerColor,
         const b = blueSeq[Math.min(i, blueSeq.length - 1)];
         // Same cell collision
         if (r.row === b.row && r.col === b.col) {
+            if (i === 0 && ignoreStartTileCollision) {
+                continue;
+            }
             currentHp = Math.max(0, currentHp - 1);
             events.push({ step: i, position: r, escapeeColor, newHp: currentHp });
             continue;
