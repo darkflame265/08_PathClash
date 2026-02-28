@@ -13,7 +13,7 @@ const GRID_SIZE = 5;
 
 export function GameGrid() {
   const {
-    gameState, myColor, myPath, setMyPath,
+    gameState, myColor, myPath, roundInfo, setMyPath,
     redDisplayPos, blueDisplayPos,
     hitEffect, explosionEffect, collisionEffects,
   } = useGameStore();
@@ -131,25 +131,34 @@ export function GameGrid() {
     return () => window.removeEventListener('keydown', handleKey);
   }, [isPlanning, myPos, pathPoints, setMyPath]);
 
-  // Auto-submit when path is full
+  // Submit once when the planning timer ends, even if the path is partial.
   useEffect(() => {
-    if (!isPlanning || !myColor) return;
-    const current = useGameStore.getState().myPath;
-    if (current.length === pathPoints && pathPoints > 0) {
-      // small delay to let user see final position
-      const t = setTimeout(() => {
-        getSocket().emit('submit_path', { path: useGameStore.getState().myPath });
-        useGameStore.setState({ gameState: gameState ? {
-          ...gameState,
+    if (!isPlanning || !myColor || !roundInfo || !gameState) return;
+    if (gameState.players[myColor].pathSubmitted) return;
+
+    const submitAtMs = roundInfo.serverTime + roundInfo.timeLimit * 1000;
+    const delayMs = Math.max(0, submitAtMs - Date.now());
+
+    const timeoutId = window.setTimeout(() => {
+      const state = useGameStore.getState();
+      const latestGameState = state.gameState;
+      if (!latestGameState || latestGameState.phase !== 'planning') return;
+      if (latestGameState.players[myColor].pathSubmitted) return;
+
+      getSocket().emit('submit_path', { path: state.myPath });
+      useGameStore.setState({
+        gameState: {
+          ...latestGameState,
           players: {
-            ...gameState.players,
-            [myColor]: { ...gameState.players[myColor], pathSubmitted: true },
+            ...latestGameState.players,
+            [myColor]: { ...latestGameState.players[myColor], pathSubmitted: true },
           },
-        } : null });
-      }, 300);
-      return () => clearTimeout(t);
-    }
-  }, [myPath, isPlanning, pathPoints, myColor, gameState]);
+        },
+      });
+    }, delayMs);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isPlanning, myColor, roundInfo, gameState]);
 
   const cells = Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, i) => ({
     row: Math.floor(i / GRID_SIZE),

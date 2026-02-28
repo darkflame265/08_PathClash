@@ -4,6 +4,7 @@ exports.GameRoom = void 0;
 const GameEngine_1 = require("./GameEngine");
 const ServerTimer_1 = require("./ServerTimer");
 const PLANNING_TIME_MS = 10000;
+const SUBMIT_GRACE_MS = 350;
 class GameRoom {
     constructor(roomId, code, io) {
         this.players = new Map();
@@ -79,14 +80,18 @@ class GameRoom {
         this.timer.start(PLANNING_TIME_MS, () => this.onPlanningTimeout());
     }
     onPlanningTimeout() {
-        // Force-submit empty path for anyone who hasn't submitted
-        for (const [, p] of this.players) {
-            if (!p.pathSubmitted) {
-                p.plannedPath = [];
-                p.pathSubmitted = true;
+        // Give the timer-end submission a brief grace window to arrive.
+        setTimeout(() => {
+            if (this.phase !== 'planning')
+                return;
+            for (const [, p] of this.players) {
+                if (!p.pathSubmitted) {
+                    p.plannedPath = [];
+                    p.pathSubmitted = true;
+                }
             }
-        }
-        this.revealPaths();
+            this.revealPaths();
+        }, SUBMIT_GRACE_MS);
     }
     submitPath(socketId, path) {
         if (this.phase !== 'planning')
@@ -113,6 +118,8 @@ class GameRoom {
         }
     }
     revealPaths() {
+        if (this.phase !== 'planning')
+            return;
         this.phase = 'moving';
         const red = this.players.get('red');
         const blue = this.players.get('blue');

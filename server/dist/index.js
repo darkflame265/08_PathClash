@@ -9,10 +9,14 @@ const socket_io_1 = require("socket.io");
 const socketServer_1 = require("./socket/socketServer");
 const app = (0, express_1.default)();
 const httpServer = (0, http_1.createServer)(app);
-const defaultOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+const defaultOrigins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://zero8-pathclash-1.onrender.com",
+];
 const configuredOrigins = [
     process.env.CLIENT_URL,
-    ...(process.env.ALLOWED_ORIGINS?.split(',') ?? []),
+    ...(process.env.ALLOWED_ORIGINS?.split(",") ?? []),
 ]
     .map((origin) => origin?.trim())
     .filter((origin) => Boolean(origin));
@@ -30,10 +34,10 @@ const io = new socket_io_1.Server(httpServer, {
             }
             callback(new Error(`CORS blocked for origin: ${origin}`));
         },
-        methods: ['GET', 'POST'],
+        methods: ["GET", "POST"],
     },
 });
-app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+app.get("/health", (_req, res) => res.json({ status: "ok" }));
 (0, socketServer_1.initSocketServer)(io);
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {

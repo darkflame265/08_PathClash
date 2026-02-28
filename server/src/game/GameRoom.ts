@@ -10,6 +10,7 @@ import {
 import { ServerTimer } from './ServerTimer';
 
 const PLANNING_TIME_MS = 10_000;
+const SUBMIT_GRACE_MS = 350;
 
 export class GameRoom {
   readonly roomId: string;
@@ -99,14 +100,18 @@ export class GameRoom {
   }
 
   private onPlanningTimeout(): void {
-    // Force-submit empty path for anyone who hasn't submitted
-    for (const [, p] of this.players) {
-      if (!p.pathSubmitted) {
-        p.plannedPath = [];
-        p.pathSubmitted = true;
+    // Give the timer-end submission a brief grace window to arrive.
+    setTimeout(() => {
+      if (this.phase !== 'planning') return;
+
+      for (const [, p] of this.players) {
+        if (!p.pathSubmitted) {
+          p.plannedPath = [];
+          p.pathSubmitted = true;
+        }
       }
-    }
-    this.revealPaths();
+      this.revealPaths();
+    }, SUBMIT_GRACE_MS);
   }
 
   submitPath(socketId: string, path: Position[]): void {
@@ -135,6 +140,7 @@ export class GameRoom {
   }
 
   private revealPaths(): void {
+    if (this.phase !== 'planning') return;
     this.phase = 'moving';
     const red = this.players.get('red')!;
     const blue = this.players.get('blue')!;
