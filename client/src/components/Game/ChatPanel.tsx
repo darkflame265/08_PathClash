@@ -10,11 +10,9 @@ export function ChatPanel() {
   const listRef = useRef<HTMLDivElement>(null);
 
   const scrollGameToTop = () => {
-    window.setTimeout(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    }, 0);
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
   };
 
   useEffect(() => {
@@ -50,7 +48,11 @@ export function ChatPanel() {
   };
 
   return (
-    <div className="chat-panel">
+    <div
+      className="chat-panel"
+      onPointerDownCapture={scrollGameToTop}
+      onFocusCapture={scrollGameToTop}
+    >
       <div className="chat-messages" ref={listRef}>
         {messages.map((m, i) => (
           <div key={i} className={`chat-msg color-${m.color}`}>
@@ -65,19 +67,10 @@ export function ChatPanel() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={onKey}
-          onFocus={scrollGameToTop}
-          onTouchStart={scrollGameToTop}
           placeholder="Tab to focus chat (Enter to send)"
           maxLength={200}
         />
-        <button
-          className="chat-send-btn"
-          onTouchStart={scrollGameToTop}
-          onClick={() => {
-            scrollGameToTop();
-            send();
-          }}
-        >
+        <button className="chat-send-btn" onClick={send}>
           Send
         </button>
       </div>
