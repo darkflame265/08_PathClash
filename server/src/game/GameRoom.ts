@@ -10,7 +10,7 @@ import {
 import { createAiPath } from './AiPlanner';
 import { ServerTimer } from './ServerTimer';
 
-const PLANNING_TIME_MS = 10_000;
+const PLANNING_TIME_MS = 7_000;
 const SUBMIT_GRACE_MS = 350;
 
 export class GameRoom {
@@ -99,7 +99,7 @@ export class GameRoom {
       redPosition: red.position,
       bluePosition: blue.position,
       obstacles: this.obstacles,
-      timeLimit: 10,
+      timeLimit: 7,
       serverTime: Date.now(),
     };
     this.io.to(this.roomId).emit('round_start', payload);

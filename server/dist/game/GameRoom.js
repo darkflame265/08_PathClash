@@ -4,7 +4,7 @@ exports.GameRoom = void 0;
 const GameEngine_1 = require("./GameEngine");
 const AiPlanner_1 = require("./AiPlanner");
 const ServerTimer_1 = require("./ServerTimer");
-const PLANNING_TIME_MS = 10000;
+const PLANNING_TIME_MS = 7000;
 const SUBMIT_GRACE_MS = 350;
 class GameRoom {
     constructor(roomId, code, io) {
@@ -81,7 +81,7 @@ class GameRoom {
             redPosition: red.position,
             bluePosition: blue.position,
             obstacles: this.obstacles,
-            timeLimit: 10,
+            timeLimit: 7,
             serverTime: Date.now(),
         };
         this.io.to(this.roomId).emit('round_start', payload);
