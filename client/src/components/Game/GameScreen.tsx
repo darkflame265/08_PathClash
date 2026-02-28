@@ -21,12 +21,12 @@ interface Props {
 
 const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
-const MAX_CELL = 120;
+const MAX_CELL = 160;
 
 function computeInitialCellSize(): number {
   // Width-only fast estimate before ResizeObserver fires.
-  const availW = Math.min(window.innerWidth, 560) - 24;
-  return Math.max(MIN_CELL, Math.min(MAX_CELL, Math.floor(availW / 5)));
+  const availW = Math.max(260, window.innerWidth - 24);
+  return Math.max(MIN_CELL, Math.min(MAX_CELL, availW / 5));
 }
 
 function useAdaptiveCellSize(gridAreaRef: React.RefObject<HTMLDivElement | null>) {
@@ -40,7 +40,7 @@ function useAdaptiveCellSize(gridAreaRef: React.RefObject<HTMLDivElement | null>
       const { width, height } = entry.contentRect;
       // Grid is square — constrain by the smaller of available W/H
       const squareSide = Math.min(width, height > 60 ? height : width);
-      const next = Math.max(MIN_CELL, Math.min(MAX_CELL, Math.floor(squareSide / 5)));
+      const next = Math.max(MIN_CELL, Math.min(MAX_CELL, squareSide / 5));
       setCellSize(next);
     });
 

@@ -342,13 +342,6 @@
 }
 
 /* ── 최대 너비 확장 (넓은 화면) ─────────────────────────────── */
-@media (min-width: 700px) {
-  .game-screen { max-width: 700px; }
-}
-
-@media (min-width: 1024px) {
-  .game-screen { max-width: 800px; }
-}
 .gs-result-slot {
   width: 100%;
   flex-shrink: 0;
@@ -357,6 +350,7 @@
 .game-screen {
   overflow-y: visible;
   overflow-x: hidden;
+  max-width: 800px;
 }
 
 .gs-grid-area {
