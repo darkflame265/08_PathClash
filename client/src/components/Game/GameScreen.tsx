@@ -31,7 +31,6 @@ export function GameScreen({ onLeaveToLobby }: Props) {
 
   return (
     <div className="game-screen">
-      {/* Top: opponent info + timer */}
       <div className="top-bar">
         <PlayerInfo player={opponent} isMe={false} />
         <div className="center-top">
@@ -53,29 +52,28 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         </div>
       </div>
 
-      {/* HP bars */}
-      <div className="hp-row">
+      <div className="hp-row opponent-row">
         <HpDisplay color={opponentColor} hp={gameState.players[opponentColor].hp} myColor={myColor!} />
         <div className="role-badge">
-          {gameState.players[opponentColor].role === 'attacker' ? '⚔️ 공격' : '🏃 도망'}
+          <span className="role-icon">{gameState.players[opponentColor].role === 'attacker' ? '⚔' : '🏃'}</span>
+          <span className="role-text">{gameState.players[opponentColor].role === 'attacker' ? '공격' : '도망'}</span>
         </div>
       </div>
 
-      {/* Grid */}
       <div className="grid-area">
         <GameGrid />
       </div>
 
-      {/* My HP + info */}
-      <div className="hp-row bottom">
-        <div className="role-badge">
-          {me?.role === 'attacker' ? '⚔️ 공격' : '🏃 도망'}
-        </div>
-        <HpDisplay color={myColor!} hp={me?.hp ?? 3} myColor={myColor!} />
-      </div>
-
       <div className="bottom-bar">
-        <PlayerInfo player={me!} isMe={true} />
+        <div className="player-status">
+          <PlayerInfo player={me!} isMe={true} />
+          <div className="role-badge role-badge-self">
+            <span className="role-icon">{me?.role === 'attacker' ? '⚔' : '🏃'}</span>
+            <span className="role-text">{me?.role === 'attacker' ? '공격' : '도망'}</span>
+          </div>
+          <HpDisplay color={myColor!} hp={me?.hp ?? 3} myColor={myColor!} />
+        </div>
+
         <div className="path-points-info">
           {gameState.phase === 'planning' && (
             <span className="path-points">경로: {useGameStore.getState().myPath.length} / {gameState.pathPoints}</span>
@@ -83,10 +81,8 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         </div>
       </div>
 
-      {/* Chat */}
       <ChatPanel />
 
-      {/* Game Over */}
       {winner && <GameOverOverlay winner={winner} myColor={myColor!} />}
     </div>
   );
