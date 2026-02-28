@@ -112,18 +112,18 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
     if (!cell) return;
 
     const current = useGameStore.getState().myPath;
+    if (current.length > 0) {
+      const secondLast = current.length >= 2
+        ? current[current.length - 2]
+        : myPos;
+      if (posEqual(cell, secondLast)) {
+        dragState.current = { active: true, fromPiece: false, fromEnd: true };
+        removeFromPath();
+        return;
+      }
+    }
 
     if (dragState.current.fromEnd) {
-      if (current.length > 0) {
-        const secondLast = current.length >= 2
-          ? current[current.length - 2]
-          : myPos;
-        if (posEqual(cell, secondLast)) {
-          removeFromPath();
-          return;
-        }
-      }
-
       // New direction from the current endpoint.
       const lastPos = current.length > 0 ? current[current.length - 1] : myPos;
       if (
