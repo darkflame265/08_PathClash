@@ -7,6 +7,7 @@ import {
   calcPathPoints, detectCollisions, getInitialPositions,
   isValidPath, calcAnimationDuration, toClientPlayer,
 } from './GameEngine';
+import { createAiPath } from './AiPlanner';
 import { ServerTimer } from './ServerTimer';
 
 const PLANNING_TIME_MS = 10_000;
@@ -23,6 +24,7 @@ export class GameRoom {
   private attackerColor: PlayerColor = 'red';
   private timer = new ServerTimer();
   private rematchSet: Set<string> = new Set();
+  private aiColor: PlayerColor | null = null;
 
   constructor(roomId: string, code: string, io: Server) {
     this.roomId = roomId;
@@ -36,21 +38,19 @@ export class GameRoom {
   addPlayer(socket: Socket, nickname: string): PlayerColor | null {
     if (this.isFull) return null;
     const color: PlayerColor = this.players.size === 0 ? 'red' : 'blue';
-    const pos = getInitialPositions();
-    const player: PlayerState = {
-      id: socket.id,
-      socketId: socket.id,
-      nickname,
-      color,
-      hp: 3,
-      position: pos[color],
-      plannedPath: [],
-      pathSubmitted: false,
-      role: color === 'red' ? 'attacker' : 'escaper',
-      stats: { wins: 0, losses: 0 },
-    };
+    const player = this.createPlayerState(color, socket.id, nickname);
     this.players.set(color, player);
     socket.join(this.roomId);
+    return color;
+  }
+
+  addAiPlayer(nickname = 'AI Bot'): PlayerColor | null {
+    if (this.isFull) return null;
+    const color: PlayerColor = this.players.size === 0 ? 'red' : 'blue';
+    const aiId = `ai_${this.roomId}_${color}`;
+    const player = this.createPlayerState(color, aiId, nickname);
+    this.players.set(color, player);
+    this.aiColor = color;
     return color;
   }
 
@@ -58,10 +58,15 @@ export class GameRoom {
     for (const [color, p] of this.players) {
       if (p.socketId === socketId) {
         this.players.delete(color);
+        if (this.aiColor === color) this.aiColor = null;
         this.timer.clear();
         break;
       }
     }
+  }
+
+  hasHumanPlayers(): boolean {
+    return [...this.players.values()].some((player) => player.color !== this.aiColor);
   }
 
   // ─── Game flow ─────────────────────────────────────────────────────────────
@@ -100,6 +105,8 @@ export class GameRoom {
   }
 
   private onPlanningTimeout(): void {
+    this.submitAiPath();
+
     // Give the timer-end submission a brief grace window to arrive.
     setTimeout(() => {
       if (this.phase !== 'planning') return;
@@ -212,6 +219,12 @@ export class GameRoom {
 
   requestRematch(socketId: string): void {
     if (this.phase !== 'gameover') return;
+    if (this.aiColor) {
+      this.rematchSet.clear();
+      this.resetGame();
+      this.startGame();
+      return;
+    }
     if (this.rematchSet.has(socketId)) return;
     this.rematchSet.add(socketId);
 
@@ -278,6 +291,7 @@ export class GameRoom {
   private emitToOpponent(socketId: string, event: string, data: unknown): void {
     for (const p of this.players.values()) {
       if (p.socketId !== socketId) {
+        if (p.color === this.aiColor) return;
         this.io.to(p.socketId).emit(event, data);
         return;
       }
@@ -303,5 +317,40 @@ export class GameRoom {
 
   getPlayerColor(socketId: string): PlayerColor | undefined {
     return this.getPlayerBySocket(socketId)?.color;
+  }
+
+  private createPlayerState(color: PlayerColor, id: string, nickname: string): PlayerState {
+    const pos = getInitialPositions();
+    return {
+      id,
+      socketId: id,
+      nickname,
+      color,
+      hp: 3,
+      position: pos[color],
+      plannedPath: [],
+      pathSubmitted: false,
+      role: color === 'red' ? 'attacker' : 'escaper',
+      stats: { wins: 0, losses: 0 },
+    };
+  }
+
+  private submitAiPath(): void {
+    if (!this.aiColor || this.phase !== 'planning') return;
+    const aiPlayer = this.players.get(this.aiColor);
+    if (!aiPlayer || aiPlayer.pathSubmitted) return;
+
+    const opponentColor: PlayerColor = this.aiColor === 'red' ? 'blue' : 'red';
+    const opponent = this.players.get(opponentColor);
+    if (!opponent) return;
+
+    aiPlayer.plannedPath = createAiPath({
+      color: aiPlayer.color,
+      role: aiPlayer.role,
+      selfPosition: aiPlayer.position,
+      opponentPosition: opponent.position,
+      pathPoints: calcPathPoints(this.turn),
+    });
+    aiPlayer.pathSubmitted = true;
   }
 }

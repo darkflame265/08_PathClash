@@ -41,7 +41,7 @@ export class RoomStore {
     const room = this.rooms.get(roomId);
     if (!room) return undefined;
     room.removePlayer(socketId);
-    if (room.playerCount === 0) {
+    if (room.playerCount === 0 || !room.hasHumanPlayers()) {
       this.rooms.delete(roomId);
       this.codeToRoom.delete(room.code);
     }

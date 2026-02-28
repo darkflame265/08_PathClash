@@ -21,6 +21,12 @@ export function LobbyScreen({ onGameStart }: Props) {
   const startSocket = () => {
     const socket = connectSocket();
 
+    socket.off('room_created');
+    socket.off('room_joined');
+    socket.off('opponent_joined');
+    socket.off('join_error');
+    socket.off('matchmaking_waiting');
+
     socket.on('room_created', ({ code, color }: { roomId: string; code: string; color: 'red' | 'blue' }) => {
       setMyColor(color);
       setRoomCode(code);
@@ -55,7 +61,10 @@ export function LobbyScreen({ onGameStart }: Props) {
   };
 
   const handleJoinRoom = () => {
-    if (!joinCode.trim()) { setError('코드를 입력하세요.'); return; }
+    if (!joinCode.trim()) {
+      setError('코드를 입력하세요.');
+      return;
+    }
     setError('');
     const socket = startSocket();
     socket.emit('join_room', { code: joinCode.trim().toUpperCase(), nickname: getNick() });
@@ -66,15 +75,20 @@ export function LobbyScreen({ onGameStart }: Props) {
     socket.emit('join_random', { nickname: getNick() });
   };
 
+  const handleAiMatch = () => {
+    const socket = startSocket();
+    socket.emit('join_ai', { nickname: getNick() });
+  };
+
   if (view === 'create') {
     return (
       <div className="lobby-screen">
         <h1 className="logo">PathClash</h1>
         <div className="lobby-card">
           <h2>방 생성 완료</h2>
-          <p>친구에게 코드를 알려주세요:</p>
+          <p>친구에게 아래 코드를 공유하세요.</p>
           <div className="room-code">{createdCode}</div>
-          <p className="waiting-text">상대방 입장 대기 중...</p>
+          <p className="waiting-text">상대가 입장할 때까지 기다리는 중...</p>
         </div>
       </div>
     );
@@ -87,7 +101,7 @@ export function LobbyScreen({ onGameStart }: Props) {
         <div className="lobby-card">
           <h2>매칭 중...</h2>
           <div className="spinner" />
-          <p>상대방을 찾고 있습니다</p>
+          <p>상대를 찾고 있습니다.</p>
         </div>
       </div>
     );
@@ -103,14 +117,14 @@ export function LobbyScreen({ onGameStart }: Props) {
             className="lobby-input"
             placeholder="닉네임 (선택)"
             value={myNickname}
-            onChange={e => setNickname(e.target.value)}
+            onChange={(e) => setNickname(e.target.value)}
             maxLength={16}
           />
           <input
             className="lobby-input code-input"
             placeholder="방 코드 입력"
             value={joinCode}
-            onChange={e => setJoinCode(e.target.value.toUpperCase())}
+            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
             maxLength={6}
           />
           {error && <p className="error-msg">{error}</p>}
@@ -121,7 +135,6 @@ export function LobbyScreen({ onGameStart }: Props) {
     );
   }
 
-  // Main
   return (
     <div className="lobby-screen">
       <h1 className="logo">PathClash</h1>
@@ -130,12 +143,13 @@ export function LobbyScreen({ onGameStart }: Props) {
           className="lobby-input"
           placeholder="닉네임 입력 (미입력 시 Guest)"
           value={myNickname}
-          onChange={e => setNickname(e.target.value)}
+          onChange={(e) => setNickname(e.target.value)}
           maxLength={16}
         />
-        <button className="lobby-btn primary" onClick={handleCreateRoom}>🤝 친구 대전 (방 만들기)</button>
-        <button className="lobby-btn secondary" onClick={() => setView('join')}>🔑 친구 대전 (코드 입력)</button>
-        <button className="lobby-btn accent" onClick={handleRandom}>🎲 랜덤 매칭</button>
+        <button className="lobby-btn ai" onClick={handleAiMatch}>AI와 대전</button>
+        <button className="lobby-btn primary" onClick={handleCreateRoom}>친구 대전 (방 만들기)</button>
+        <button className="lobby-btn secondary" onClick={() => setView('join')}>친구 대전 (코드 입력)</button>
+        <button className="lobby-btn accent" onClick={handleRandom}>랜덤 매칭</button>
       </div>
     </div>
   );

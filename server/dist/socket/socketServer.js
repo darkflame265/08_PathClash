@@ -17,6 +17,26 @@ function initSocketServer(io) {
             store.registerSocket(socket.id, roomId);
             socket.emit('room_created', { roomId, code, color });
         });
+        socket.on('join_ai', ({ nickname }) => {
+            const roomId = store.generateRoomId();
+            const code = store.generateCode();
+            const room = new GameRoom_1.GameRoom(roomId, code, io);
+            store.add(room);
+            const humanColor = room.addPlayer(socket, nickname.slice(0, 16) || 'Guest');
+            if (!humanColor) {
+                socket.emit('join_error', { message: 'AI room creation failed.' });
+                return;
+            }
+            room.addAiPlayer('PathClash AI');
+            store.registerSocket(socket.id, roomId);
+            const opponent = room.toClientState().players[humanColor === 'red' ? 'blue' : 'red'];
+            socket.emit('room_joined', {
+                roomId: room.roomId,
+                color: humanColor,
+                opponentNickname: opponent.nickname,
+            });
+            setTimeout(() => room.startGame(), 300);
+        });
         // ─── Join by code ────────────────────────────────────────────────────────
         socket.on('join_room', ({ code, nickname }) => {
             const room = store.getByCode(code.toUpperCase());

@@ -65,6 +65,8 @@
 .lobby-btn.primary:hover { background: #4338ca; }
 .lobby-btn.secondary { background: #1e40af; color: white; }
 .lobby-btn.secondary:hover { background: #1d4ed8; }
+.lobby-btn.ai { background: #dc2626; color: white; }
+.lobby-btn.ai:hover { background: #b91c1c; }
 .lobby-btn.accent { background: #7c3aed; color: white; }
 .lobby-btn.accent:hover { background: #6d28d9; }
 
