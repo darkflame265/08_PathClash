@@ -73,7 +73,7 @@ class GameRoom {
         red.pathSubmitted = false;
         blue.plannedPath = [];
         blue.pathSubmitted = false;
-        this.obstacles = (0, GameEngine_1.generateObstacles)(red.position, blue.position);
+        this.obstacles = (0, GameEngine_1.generateObstacles)(this.roomId, this.turn, red.position, blue.position);
         const payload = {
             turn: this.turn,
             pathPoints: (0, GameEngine_1.calcPathPoints)(this.turn),

@@ -35,26 +35,25 @@ function isValidPath(start, path, maxPoints, obstacles = []) {
     }
     return true;
 }
-function generateObstacles(redPosition, bluePosition) {
+function generateObstacles(matchId, turn, redPosition, bluePosition) {
     const occupied = new Set([toKey(redPosition), toKey(bluePosition)]);
     const candidates = [];
-    const rowMin = Math.min(redPosition.row, bluePosition.row);
-    const rowMax = Math.max(redPosition.row, bluePosition.row);
-    const colMin = Math.min(redPosition.col, bluePosition.col);
-    const colMax = Math.max(redPosition.col, bluePosition.col);
     for (let row = GRID_MIN; row <= GRID_MAX; row++) {
         for (let col = GRID_MIN; col <= GRID_MAX; col++) {
             const cell = { row, col };
-            const key = toKey(cell);
-            if (occupied.has(key))
-                continue;
-            if (!isBetweenPlayers(cell, redPosition, bluePosition, rowMin, rowMax, colMin, colMax))
+            if (occupied.has(toKey(cell)))
                 continue;
             candidates.push(cell);
         }
     }
-    shuffle(candidates);
-    return candidates.slice(0, Math.min(MAX_OBSTACLES, candidates.length));
+    const random = createSeededRandom(`${matchId}:${turn}`);
+    const picked = [];
+    while (picked.length < MAX_OBSTACLES && candidates.length > 0) {
+        const index = Math.floor(random() * candidates.length);
+        const [cell] = candidates.splice(index, 1);
+        picked.push(cell);
+    }
+    return picked;
 }
 function detectCollisions(redPath, bluePath, redStart, blueStart, attackerColor, escaperHp) {
     const events = [];
@@ -108,20 +107,21 @@ function toClientPlayer(p) {
 function isObstacle(cell, obstacles) {
     return obstacles.some((obstacle) => obstacle.row === cell.row && obstacle.col === cell.col);
 }
-function isBetweenPlayers(cell, redPosition, bluePosition, rowMin, rowMax, colMin, colMax) {
-    const withinBox = cell.row >= rowMin && cell.row <= rowMax && cell.col >= colMin && cell.col <= colMax;
-    const betweenDistance = manhattan(redPosition, cell) + manhattan(cell, bluePosition) === manhattan(redPosition, bluePosition);
-    return withinBox || betweenDistance;
-}
-function manhattan(a, b) {
-    return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
-}
 function toKey(position) {
     return `${position.row},${position.col}`;
 }
-function shuffle(items) {
-    for (let i = items.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [items[i], items[j]] = [items[j], items[i]];
+function createSeededRandom(seedInput) {
+    let seed = hashString(seedInput);
+    return () => {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed / 0x100000000;
+    };
+}
+function hashString(value) {
+    let hash = 2166136261;
+    for (let i = 0; i < value.length; i++) {
+        hash ^= value.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
     }
+    return hash >>> 0;
 }

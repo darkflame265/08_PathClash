@@ -90,7 +90,7 @@ export class GameRoom {
     red.pathSubmitted = false;
     blue.plannedPath = [];
     blue.pathSubmitted = false;
-    this.obstacles = generateObstacles(red.position, blue.position);
+    this.obstacles = generateObstacles(this.roomId, this.turn, red.position, blue.position);
 
     const payload: RoundStartPayload = {
       turn: this.turn,
