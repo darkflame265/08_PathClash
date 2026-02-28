@@ -15,6 +15,7 @@ import "./GameGrid.css";
 
 const DEFAULT_CELL_SIZE = 96;
 const GRID_SIZE = 5;
+const PRE_SUBMIT_LEAD_MS = 250;
 
 interface GridProps {
   cellSize?: number;
@@ -241,9 +242,10 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
     if (gameState.players[myColor].pathSubmitted) return;
 
     const submitAtMs = roundInfo.serverTime + roundInfo.timeLimit * 1000;
-    const delayMs = Math.max(0, submitAtMs - Date.now());
+    const preSubmitDelayMs = Math.max(0, submitAtMs - Date.now() - PRE_SUBMIT_LEAD_MS);
+    const finalSubmitDelayMs = Math.max(0, submitAtMs - Date.now());
 
-    const timeoutId = window.setTimeout(() => {
+    const submitCurrentPath = () => {
       const state = useGameStore.getState();
       const latestGameState = state.gameState;
       if (!latestGameState || latestGameState.phase !== "planning") return;
@@ -262,9 +264,20 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
           },
         },
       });
-    }, delayMs);
+    };
 
-    return () => window.clearTimeout(timeoutId);
+    const preSubmitTimeoutId = window.setTimeout(() => {
+      submitCurrentPath();
+    }, preSubmitDelayMs);
+
+    const finalSubmitTimeoutId = window.setTimeout(() => {
+      submitCurrentPath();
+    }, finalSubmitDelayMs);
+
+    return () => {
+      window.clearTimeout(preSubmitTimeoutId);
+      window.clearTimeout(finalSubmitTimeoutId);
+    };
   }, [isPlanning, myColor, roundInfo, gameState]);
 
   const cells = Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, i) => ({
