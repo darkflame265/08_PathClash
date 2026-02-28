@@ -4,53 +4,58 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 .game-grid {
   position: relative;
   box-sizing: border-box;
   max-width: 100%;
-  background: var(--panel, #1E252B);
-  border: 1px solid var(--tile-border, #3A444D);
+  background: var(--panel, #1e252b);
+  border: 1px solid var(--tile-border, #3a444d);
   border-radius: 1rem;
   overflow: visible;
   cursor: crosshair;
   touch-action: none;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.03);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .grid-cell {
   position: absolute;
-  border: 1px solid var(--tile-border, #3A444D);
-  background: var(--tile, #2A3137);
+  border: 1px solid var(--tile-border, #3a444d);
+  background: var(--tile, #2a3137);
   border-radius: 4px;
   transition: background 0.12s;
 }
 
 .grid-cell:hover {
-  background: var(--tile-hover, #333C44);
+  background: var(--tile-hover, #333c44);
 }
 
 .grid-cell.obstacle {
   background:
     linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(248, 113, 113, 0.08)),
-    var(--tile, #2A3137);
+    var(--tile, #2a3137);
   border-color: rgba(248, 113, 113, 0.45);
 }
 
 .grid-cell.obstacle:hover {
   background:
     linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(248, 113, 113, 0.08)),
-    var(--tile, #2A3137);
+    var(--tile, #2a3137);
 }
 
 .obstacle-mark {
   position: absolute;
   inset: 18%;
   border-radius: calc(var(--cell-size, 96px) * 0.125);
-  background:
-    linear-gradient(135deg, rgba(248, 113, 113, 0.75), rgba(185, 28, 28, 0.9));
+  background: linear-gradient(
+    135deg,
+    rgba(248, 113, 113, 0.75),
+    rgba(185, 28, 28, 0.9)
+  );
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.08) inset,
     0 8px 18px rgba(127, 29, 29, 0.28);
@@ -58,7 +63,7 @@
 
 .obstacle-mark::before,
 .obstacle-mark::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
