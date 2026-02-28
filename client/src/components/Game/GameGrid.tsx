@@ -44,13 +44,6 @@ export function GameGrid() {
     }
   }, [isPlanning, myPos, pathPoints, setMyPath]);
 
-  const removeFromPath = useCallback(() => {
-    const current = useGameStore.getState().myPath;
-    if (current.length > 0) {
-      setMyPath(current.slice(0, -1));
-    }
-  }, [setMyPath]);
-
   // Mouse handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!isPlanning || !myPos || !gridRef.current) return;
@@ -77,17 +70,7 @@ export function GameGrid() {
     const current = useGameStore.getState().myPath;
 
     if (dragState.current.fromEnd) {
-      // Undo mode: check if dragging back
-      if (current.length > 0) {
-        const secondLast = current.length >= 2
-          ? current[current.length - 2]
-          : myPos;
-        if (posEqual(cell, secondLast)) {
-          removeFromPath();
-          return;
-        }
-      }
-      // New direction
+      // Continue from the current path end, including immediate backtracking.
       const lastPos = current.length > 0 ? current[current.length - 1] : myPos;
       if (!posEqual(cell, lastPos) && isValidMove(lastPos, cell) && current.length < pathPoints) {
         setMyPath([...current, cell]);
@@ -96,7 +79,7 @@ export function GameGrid() {
       // Add mode
       addToPath(cell);
     }
-  }, [isPlanning, myPos, addToPath, removeFromPath, pathPoints, setMyPath]);
+  }, [isPlanning, myPos, addToPath, pathPoints, setMyPath]);
 
   const handleMouseUp = useCallback(() => {
     dragState.current = { active: false, fromPiece: false, fromEnd: false };
