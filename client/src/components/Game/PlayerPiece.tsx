@@ -8,15 +8,17 @@ interface Props {
   isAttacker: boolean;
   isHit: boolean;
   isExploding: boolean;
+  isMe: boolean;
 }
 
-export function PlayerPiece({ color, position, cellSize, isAttacker, isHit, isExploding }: Props) {
+export function PlayerPiece({ color, position, cellSize, isAttacker, isHit, isExploding, isMe }: Props) {
   const x = position.col * cellSize + cellSize / 2;
   const y = position.row * cellSize + cellSize / 2;
 
   const classes = [
     'player-piece',
     `piece-${color}`,
+    isMe ? 'piece-me' : '',
     isHit ? 'hit' : '',
     isExploding ? 'exploding' : '',
   ].filter(Boolean).join(' ');

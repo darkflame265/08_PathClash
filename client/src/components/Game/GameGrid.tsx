@@ -238,6 +238,7 @@ export function GameGrid() {
         isAttacker={gameState?.attackerColor === 'red'}
         isHit={hitEffect.red}
         isExploding={explosionEffect === 'red'}
+        isMe={myColor === 'red'}
       />
       <PlayerPiece
         color="blue"
@@ -246,6 +247,7 @@ export function GameGrid() {
         isAttacker={gameState?.attackerColor === 'blue'}
         isHit={hitEffect.blue}
         isExploding={explosionEffect === 'blue'}
+        isMe={myColor === 'blue'}
       />
     </div>
   );
