@@ -26,13 +26,15 @@ function createAttackerPath(selfPosition: Position, targetPosition: Position, pa
   if (path.length === pathPoints) return path;
 
   let current = path.length > 0 ? path[path.length - 1] : selfPosition;
-  let previous = path.length > 1 ? path[path.length - 2] : selfPosition;
+  let previous = path.length > 1 ? path[path.length - 2] : null;
 
   while (path.length < pathPoints) {
-    const bounceTarget = chooseBounceTarget(current, previous);
-    path.push(bounceTarget);
+    const nextMove = chooseAttackerExtension(current, previous, targetPosition);
+    if (!nextMove) break;
+
+    path.push(nextMove);
     previous = current;
-    current = bounceTarget;
+    current = nextMove;
   }
 
   return path;
@@ -47,7 +49,7 @@ function createEscaperPath(selfPosition: Position, threatPosition: Position, pat
   let previous: Position | null = null;
 
   for (let step = 0; step < spend; step++) {
-    const candidates = getNeighbors(current);
+    const candidates = getNeighbors(current).filter((candidate) => !isSamePosition(candidate, previous));
     if (candidates.length === 0) break;
 
     const scored = candidates
@@ -72,9 +74,9 @@ function createEscaperPath(selfPosition: Position, threatPosition: Position, pat
 
 function scoreEscaperMove(candidate: Position, threat: Position, previous: Position | null): number {
   const distance = manhattan(candidate, threat);
-  const repeatPenalty = previous && candidate.row === previous.row && candidate.col === previous.col ? 1.5 : 0;
   const edgePenalty = isEdge(candidate) ? 0.5 : 0;
-  return distance * 10 - repeatPenalty - edgePenalty + Math.random();
+  const centerBias = isEdge(candidate) ? 0 : 0.35;
+  return distance * 10 - edgePenalty + centerBias + Math.random();
 }
 
 function buildShortestPath(from: Position, to: Position): Position[] {
@@ -100,9 +102,14 @@ function buildShortestPath(from: Position, to: Position): Position[] {
   return path;
 }
 
-function chooseBounceTarget(current: Position, previous: Position): Position {
-  if (isValidMove(current, previous)) return previous;
-  return getNeighbors(current)[0] ?? current;
+function chooseAttackerExtension(current: Position, previous: Position | null, target: Position): Position | null {
+  const candidates = getNeighbors(current).filter((candidate) => !isSamePosition(candidate, previous));
+  if (candidates.length === 0) return null;
+
+  candidates.sort((a, b) => manhattan(a, target) - manhattan(b, target));
+  const bestDistance = manhattan(candidates[0], target);
+  const bestMoves = candidates.filter((candidate) => manhattan(candidate, target) === bestDistance);
+  return bestMoves[Math.floor(Math.random() * bestMoves.length)] ?? null;
 }
 
 function getNeighbors(position: Position): Position[] {
@@ -120,4 +127,8 @@ function manhattan(a: Position, b: Position): number {
 
 function isEdge(position: Position): boolean {
   return position.row === 0 || position.row === 4 || position.col === 0 || position.col === 4;
+}
+
+function isSamePosition(a: Position, b: Position | null): boolean {
+  return !!b && a.row === b.row && a.col === b.col;
 }
