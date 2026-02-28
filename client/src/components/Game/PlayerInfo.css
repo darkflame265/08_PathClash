@@ -1,42 +1,58 @@
 .player-info { position: relative; }
 
 .nickname-btn {
-  background: none;
-  border: 1px solid #334155;
-  border-radius: 0.5rem;
-  padding: 0.3rem 0.6rem;
-  font-size: 0.9rem;
-  font-weight: 600;
+  background: var(--tile, #2A3137);
+  border: 1px solid var(--tile-border, #3A444D);
+  border-radius: 0.6rem;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: all 0.15s;
+  letter-spacing: 0.01em;
 }
 
-.nickname-btn.color-red  { color: #f87171; border-color: #7f1d1d; }
-.nickname-btn.color-blue { color: #60a5fa; border-color: #1e3a5f; }
-.nickname-btn:hover { border-color: #6366f1; }
+.nickname-btn.color-red {
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+.nickname-btn.color-blue {
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.nickname-btn.color-red:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+.nickname-btn.color-blue:hover {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.5);
+}
 
 .profile-box {
   position: absolute;
   top: 110%;
   left: 0;
   z-index: 100;
-  background: #1e293b;
-  border: 1px solid #475569;
-  border-radius: 0.5rem;
+  background: var(--panel, #1E252B);
+  border: 1px solid var(--tile-border, #3A444D);
+  border-radius: 0.75rem;
   padding: 0.75rem;
-  min-width: 180px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  min-width: 190px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
 }
 
 .profile-row {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.2rem 0;
-  font-size: 0.85rem;
-  border-bottom: 1px solid #334155;
+  padding: 0.25rem 0;
+  font-size: 0.82rem;
+  border-bottom: 1px solid var(--tile, #2A3137);
 }
 
 .profile-row:last-child { border-bottom: none; }
-.profile-row span:first-child { color: #94a3b8; }
-.profile-row span:last-child  { color: #e2e8f0; font-weight: 600; }
+.profile-row span:first-child { color: var(--text-muted, #9AA4AE); }
+.profile-row span:last-child  { color: var(--text, #F0F4F8); font-weight: 600; }

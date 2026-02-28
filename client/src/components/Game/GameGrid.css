@@ -1,18 +1,21 @@
 .game-grid {
   position: relative;
-  background: #1e293b;
-  border: 2px solid #334155;
-  border-radius: 0.75rem;
+  background: var(--panel, #1E252B);
+  border: 1px solid var(--tile-border, #3A444D);
+  border-radius: 1rem;
   overflow: visible;
   cursor: crosshair;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.03);
 }
 
 .grid-cell {
   position: absolute;
-  border: 1px solid #334155;
-  background: #0f172a;
-  border-radius: 2px;
-  transition: background 0.1s;
+  border: 1px solid var(--tile-border, #3A444D);
+  background: var(--tile, #2A3137);
+  border-radius: 4px;
+  transition: background 0.12s;
 }
 
-.grid-cell:hover { background: #1e293b; }
+.grid-cell:hover {
+  background: var(--tile-hover, #333C44);
+}

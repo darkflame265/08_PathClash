@@ -1,34 +1,39 @@
 .timer-container {
   position: relative;
   width: 100%;
-  height: 24px;
-  background: #1e293b;
+  height: 22px;
+  background: var(--tile, #2A3137);
   border-radius: 999px;
-  border: 1px solid #334155;
+  border: 1px solid var(--tile-border, #3A444D);
   overflow: hidden;
 }
 
 .timer-bar {
   height: 100%;
   border-radius: 999px;
-  transition: width 0.05s linear, background-color 0.5s;
+  transition: width 0.05s linear, background-color 0.4s;
 }
 
-.timer-bar.green  { background: #22c55e; }
-.timer-bar.yellow { background: #eab308; }
-.timer-bar.red    { background: #ef4444; animation: timer-pulse 0.4s ease infinite alternate; }
+.timer-bar.green  { background: linear-gradient(90deg, #16a34a, #22c55e); }
+.timer-bar.yellow { background: linear-gradient(90deg, #ca8a04, #eab308); }
+.timer-bar.red    {
+  background: linear-gradient(90deg, #b91c1c, #EF4444);
+  animation: timer-pulse 0.35s ease infinite alternate;
+}
 
 @keyframes timer-pulse {
   from { opacity: 1; }
-  to   { opacity: 0.6; }
+  to   { opacity: 0.55; }
 }
 
 .timer-text {
   position: absolute;
-  right: 8px;
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: rgba(255,255,255,0.85);
+  font-family: var(--mono, monospace);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.04em;
 }

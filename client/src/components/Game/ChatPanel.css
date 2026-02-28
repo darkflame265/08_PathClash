@@ -1,59 +1,66 @@
 .chat-panel {
   width: 100%;
   max-width: 480px;
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 0.75rem;
+  background: var(--panel, #1E252B);
+  border: 1px solid var(--tile-border, #3A444D);
+  border-radius: 0.875rem;
   overflow: hidden;
-  margin-top: 0.5rem;
+  margin-top: 0.4rem;
 }
 
 .chat-messages {
   height: 80px;
   overflow-y: auto;
-  padding: 0.5rem;
+  padding: 0.5rem 0.75rem;
   display: flex;
   flex-direction: column;
   gap: 2px;
   scrollbar-width: thin;
-  scrollbar-color: #334155 transparent;
+  scrollbar-color: var(--tile-border, #3A444D) transparent;
 }
 
 .chat-msg {
   font-size: 0.8rem;
-  line-height: 1.4;
+  line-height: 1.45;
   word-break: break-word;
+  color: var(--text, #F0F4F8);
 }
 
-.chat-msg.color-red .chat-sender  { color: #f87171; font-weight: 700; }
+.chat-msg.color-red  .chat-sender { color: #f87171; font-weight: 700; }
 .chat-msg.color-blue .chat-sender { color: #60a5fa; font-weight: 700; }
 
 .chat-input-row {
   display: flex;
-  border-top: 1px solid #334155;
+  border-top: 1px solid var(--tile-border, #3A444D);
 }
 
 .chat-input {
   flex: 1;
   background: transparent;
   border: none;
-  color: #f1f5f9;
-  font-size: 0.85rem;
-  padding: 0.5rem 0.75rem;
+  color: var(--text, #F0F4F8);
+  font-size: 0.82rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  padding: 0.55rem 0.875rem;
   outline: none;
 }
 
-.chat-input::placeholder { color: #475569; }
+.chat-input::placeholder { color: var(--text-muted, #9AA4AE); }
 
 .chat-send-btn {
   background: none;
   border: none;
-  border-left: 1px solid #334155;
-  color: #6366f1;
+  border-left: 1px solid var(--tile-border, #3A444D);
+  color: var(--primary, #386641);
   cursor: pointer;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.85rem;
-  font-weight: 600;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: 0.02em;
+  transition: background 0.15s;
 }
 
-.chat-send-btn:hover { background: #1d4ed820; }
+.chat-send-btn:hover {
+  background: rgba(56, 102, 65, 0.12);
+}

@@ -1,9 +1,9 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: #0f172a;
-  color: #f1f5f9;
-  font-family: 'Segoe UI', sans-serif;
+  background: var(--bg, #12181B);
+  color: var(--text, #F0F4F8);
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   user-select: none;
 }
 
@@ -16,6 +16,8 @@ body {
 }
 
 .loading {
-  color: #94a3b8;
-  font-size: 1.2rem;
+  color: var(--text-muted, #9AA4AE);
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
 }

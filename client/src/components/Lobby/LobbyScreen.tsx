@@ -85,7 +85,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       <div className="lobby-screen">
         <h1 className="logo">PathClash</h1>
         <div className="lobby-card">
-          <h2>방 생성 완료</h2>
+          <h2 data-step="✓">방 생성 완료</h2>
           <p>친구에게 아래 코드를 공유하세요.</p>
           <div className="room-code">{createdCode}</div>
           <p className="waiting-text">상대가 입장할 때까지 기다리는 중...</p>
@@ -99,7 +99,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       <div className="lobby-screen">
         <h1 className="logo">PathClash</h1>
         <div className="lobby-card">
-          <h2>매칭 중...</h2>
+          <h2 data-step="⋯">매칭 중...</h2>
           <div className="spinner" />
           <p>상대를 찾고 있습니다.</p>
         </div>
@@ -112,7 +112,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       <div className="lobby-screen">
         <h1 className="logo">PathClash</h1>
         <div className="lobby-card">
-          <h2>방 참가</h2>
+          <h2 data-step="3">방 참가</h2>
           <input
             className="lobby-input"
             placeholder="닉네임 (선택)"
@@ -138,7 +138,10 @@ export function LobbyScreen({ onGameStart }: Props) {
   return (
     <div className="lobby-screen">
       <h1 className="logo">PathClash</h1>
+
+      {/* Section 1 — Nickname */}
       <div className="lobby-card">
+        <h2 data-step="1">닉네임</h2>
         <input
           className="lobby-input"
           placeholder="닉네임 입력 (미입력 시 Guest)"
@@ -146,10 +149,28 @@ export function LobbyScreen({ onGameStart }: Props) {
           onChange={(e) => setNickname(e.target.value)}
           maxLength={16}
         />
-        <button className="lobby-btn ai" onClick={handleAiMatch}>AI와 대전</button>
-        <button className="lobby-btn primary" onClick={handleCreateRoom}>친구 대전 (방 만들기)</button>
-        <button className="lobby-btn secondary" onClick={() => setView('join')}>친구 대전 (코드 입력)</button>
-        <button className="lobby-btn accent" onClick={handleRandom}>랜덤 매칭</button>
+      </div>
+
+      {/* Section 2 — AI match */}
+      <div className="lobby-card">
+        <h2 data-step="2">AI 대전</h2>
+        <p>AI 봇과 연습 대전을 즐겨보세요.</p>
+        <button className="lobby-btn ai" onClick={handleAiMatch}>AI와 대전 시작</button>
+      </div>
+
+      {/* Section 3 — Friend match */}
+      <div className="lobby-card">
+        <h2 data-step="3">친구 대전</h2>
+        <div className="btn-divider">
+          <button className="lobby-btn primary" onClick={handleCreateRoom}>방 만들기</button>
+          <button className="lobby-btn secondary" onClick={() => setView('join')}>코드 입력</button>
+        </div>
+      </div>
+
+      {/* Section 4 — Random matchmaking */}
+      <div className="lobby-card">
+        <h2 data-step="4">랜덤 매칭</h2>
+        <button className="lobby-btn accent" onClick={handleRandom}>매칭 시작</button>
       </div>
     </div>
   );

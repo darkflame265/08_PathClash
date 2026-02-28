@@ -1,17 +1,32 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
   line-height: 1.5;
   color-scheme: dark;
-  background-color: #0f172a;
-  color: #f1f5f9;
+  background-color: #12181B;
+  color: #F0F4F8;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+
+  /* Design tokens */
+  --bg:          #12181B;
+  --panel:       #1E252B;
+  --tile:        #2A3137;
+  --tile-border: #3A444D;
+  --tile-hover:  #333C44;
+  --text:        #F0F4F8;
+  --text-muted:  #9AA4AE;
+  --primary:     #386641;
+  --primary-hov: #2a4d31;
+  --red:         #EF4444;
+  --red-dim:     #bc4749;
+  --blue:        #3b82f6;
+  --mono:        'JetBrains Mono', monospace;
 }
 
 body { margin: 0; min-height: 100vh; }
 
-button { font-family: inherit; }
+button { font-family: inherit; cursor: pointer; }
 input  { font-family: inherit; color: inherit; }
