@@ -387,7 +387,7 @@
 .game-screen {
   overflow-y: visible;
   overflow-x: hidden;
-  max-width: 720px;
+  max-width: 800px;
 }
 
 .gs-grid-area {

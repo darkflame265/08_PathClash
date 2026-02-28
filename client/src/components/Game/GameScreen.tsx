@@ -21,7 +21,7 @@ interface Props {
 
 const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
-const MAX_CELL = 144;
+const MAX_CELL = 160;
 
 function computeInitialCellSize(): number {
   // Width-only fast estimate before ResizeObserver fires.
