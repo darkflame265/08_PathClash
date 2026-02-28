@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getSocket } from '../../socket/socketClient';
 import { registerSocketHandlers } from '../../socket/socketHandlers';
 import { useGameStore } from '../../store/gameStore';
@@ -14,8 +14,49 @@ interface Props {
   onLeaveToLobby: () => void;
 }
 
+// ── Adaptive scaling ────────────────────────────────────────────
+// Measures the gs-grid-area element's available space with
+// ResizeObserver so the grid and all UI chrome scale together.
+// cellSize drives the grid; --gs-scale drives the CSS chrome.
+
+const DEFAULT_CELL = 96;
+const MIN_CELL = 52;
+const MAX_CELL = 120;
+
+function computeInitialCellSize(): number {
+  // Width-only fast estimate before ResizeObserver fires.
+  const availW = Math.min(window.innerWidth, 560) - 24;
+  return Math.max(MIN_CELL, Math.min(MAX_CELL, Math.floor(availW / 5)));
+}
+
+function useAdaptiveCellSize(gridAreaRef: React.RefObject<HTMLDivElement | null>) {
+  const [cellSize, setCellSize] = useState(computeInitialCellSize);
+
+  useEffect(() => {
+    const el = gridAreaRef.current;
+    if (!el) return;
+
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      // Grid is square — constrain by the smaller of available W/H
+      const squareSide = Math.min(width, height > 60 ? height : width);
+      const next = Math.max(MIN_CELL, Math.min(MAX_CELL, Math.floor(squareSide / 5)));
+      setCellSize(next);
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [gridAreaRef]);
+
+  return cellSize;
+}
+
+// ── Component ───────────────────────────────────────────────────
 export function GameScreen({ onLeaveToLobby }: Props) {
   const { gameState, myColor, roundInfo, winner, myPath } = useGameStore();
+  const gridAreaRef = useRef<HTMLDivElement>(null);
+  const cellSize = useAdaptiveCellSize(gridAreaRef);
+  const scale = cellSize / DEFAULT_CELL;
 
   useEffect(() => {
     const socket = getSocket();
@@ -30,7 +71,10 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   const opponent = gameState.players[opponentColor];
 
   return (
-    <div className="game-screen">
+    <div
+      className="game-screen"
+      style={{ '--gs-scale': scale } as React.CSSProperties}
+    >
 
       {/* ── 유틸리티 바: 타이머 + 버튼 ─────────────────── */}
       <div className="gs-utility-bar">
@@ -70,8 +114,8 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       </div>
 
       {/* ── 그리드 ──────────────────────────────────────── */}
-      <div className="gs-grid-area">
-        <GameGrid />
+      <div className="gs-grid-area" ref={gridAreaRef}>
+        <GameGrid cellSize={cellSize} />
       </div>
 
       {/* ── 내 패널 ─────────────────────────────────────── */}

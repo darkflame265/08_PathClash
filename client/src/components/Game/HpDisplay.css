@@ -3,11 +3,11 @@
 .hp-display {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: calc(0.45rem * var(--gs-scale, 1));
 }
 
 .hp-label {
-  font-size: 0.7rem;
+  font-size: clamp(0.6rem, calc(0.7rem * var(--gs-scale, 1)), 0.85rem);
   font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -22,11 +22,11 @@
 
 .hearts {
   display: flex;
-  gap: 2px;
+  gap: calc(2px * var(--gs-scale, 1));
 }
 
 .heart {
-  font-size: 1.25rem;
+  font-size: clamp(0.9rem, calc(1.25rem * var(--gs-scale, 1)), 1.6rem);
   display: inline-block;
   line-height: 1;
   transition: transform 0.15s;
