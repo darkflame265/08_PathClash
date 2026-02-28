@@ -355,9 +355,8 @@
 }
 
 .game-screen {
-  overflow-y: auto;
+  overflow-y: visible;
   overflow-x: hidden;
-  overscroll-behavior-y: contain;
 }
 
 .gs-grid-area {
