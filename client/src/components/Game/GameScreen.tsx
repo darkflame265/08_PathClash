@@ -90,9 +90,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       </div>
 
       {/* ── 경로 포인트 게이지 ───────────────────────────── */}
-      {gameState.phase === 'planning' && (
-        <PathProgressBar current={myPath.length} max={gameState.pathPoints} />
-      )}
+      <PathProgressBar current={myPath.length} max={gameState.pathPoints} />
 
       <ChatPanel />
       {winner && <GameOverOverlay winner={winner} myColor={myColor!} />}

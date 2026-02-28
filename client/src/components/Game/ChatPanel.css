@@ -1,6 +1,6 @@
 .chat-panel {
   width: 100%;
-  max-width: 480px;
+  max-width: none;
   background: var(--panel, #1E252B);
   border: 1px solid var(--tile-border, #3A444D);
   border-radius: 0.875rem;

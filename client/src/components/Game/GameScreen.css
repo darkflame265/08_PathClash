@@ -118,7 +118,7 @@
   border: 1px solid var(--tile-border);
   border-radius: 0.875rem;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   transition: border-color 0.2s;
   /* 코너 브라켓 장식 */
   --corner-color: var(--tile-border);
