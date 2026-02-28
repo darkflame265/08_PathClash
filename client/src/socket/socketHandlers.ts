@@ -28,10 +28,24 @@ export function registerSocketHandlers(socket: Socket): () => void {
 
   const onGameOver = ({ winner }: { winner: PlayerColor }) => {
     store().setWinner(winner);
+    store().setGameOverMessage(null);
     const gs = store().gameState;
     if (gs) {
       useGameStore.setState({ gameState: { ...gs, phase: 'gameover' } });
     }
+  };
+
+  const onOpponentDisconnected = () => {
+    const gs = store().gameState;
+    const myColor = store().myColor;
+    if (!gs || !myColor) return;
+
+    store().setWinner(myColor);
+    store().setGameOverMessage('The opponent has left the game.');
+    useGameStore.setState({
+      gameState: { ...gs, phase: 'gameover' },
+      rematchRequested: false,
+    });
   };
 
   const onRematchRequested = () => {
@@ -52,6 +66,7 @@ export function registerSocketHandlers(socket: Socket): () => void {
   socket.on('opponent_submitted', onOpponentSubmitted);
   socket.on('paths_reveal', onPathsReveal);
   socket.on('game_over', onGameOver);
+  socket.on('opponent_disconnected', onOpponentDisconnected);
   socket.on('rematch_requested', onRematchRequested);
   socket.on('rematch_start', onRematchStart);
   socket.on('chat_receive', onChatReceive);
@@ -62,6 +77,7 @@ export function registerSocketHandlers(socket: Socket): () => void {
     socket.off('opponent_submitted', onOpponentSubmitted);
     socket.off('paths_reveal', onPathsReveal);
     socket.off('game_over', onGameOver);
+    socket.off('opponent_disconnected', onOpponentDisconnected);
     socket.off('rematch_requested', onRematchRequested);
     socket.off('rematch_start', onRematchStart);
     socket.off('chat_receive', onChatReceive);

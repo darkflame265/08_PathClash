@@ -10,7 +10,11 @@ import { ChatPanel } from './ChatPanel';
 import { GameOverOverlay } from './GameOverOverlay';
 import './GameScreen.css';
 
-export function GameScreen() {
+interface Props {
+  onLeaveToLobby: () => void;
+}
+
+export function GameScreen({ onLeaveToLobby }: Props) {
   const { gameState, myColor, roundInfo, winner } = useGameStore();
 
   useEffect(() => {
@@ -42,6 +46,9 @@ export function GameScreen() {
           )}
         </div>
         <div className="top-right">
+          <button className="lobby-btn" onClick={onLeaveToLobby}>
+            Lobby
+          </button>
           <MuteButton />
         </div>
       </div>

@@ -42,6 +42,7 @@ interface GameStore {
 
   // Game over
   winner: PlayerColor | null;
+  gameOverMessage: string | null;
   rematchRequested: boolean; // opponent requested
 
   // Chat
@@ -66,6 +67,7 @@ interface GameStore {
   triggerCollisionEffect: (pos: Position) => void;
   triggerExplosion: (color: PlayerColor) => void;
   setWinner: (w: PlayerColor) => void;
+  setGameOverMessage: (message: string | null) => void;
   setRematchRequested: (v: boolean) => void;
   addMessage: (msg: ChatMessage) => void;
   toggleMute: () => void;
@@ -91,6 +93,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   collisionEffects: [],
   explosionEffect: null,
   winner: null,
+  gameOverMessage: null,
   rematchRequested: false,
   messages: [],
   isMuted: false,
@@ -104,6 +107,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     redDisplayPos: gs.players.red.position,
     blueDisplayPos: gs.players.blue.position,
     winner: null,
+    gameOverMessage: null,
     rematchRequested: false,
     myPath: [],
     opponentSubmitted: false,
@@ -184,6 +188,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   setWinner: (w) => set({ winner: w }),
+  setGameOverMessage: (message) => set({ gameOverMessage: message }),
   setRematchRequested: (v) => set({ rematchRequested: v }),
   addMessage: (msg) => set({ messages: [...get().messages.slice(-99), msg] }),
   toggleMute: () => set({ isMuted: !get().isMuted }),
@@ -201,6 +206,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     collisionEffects: [],
     explosionEffect: null,
     winner: null,
+    gameOverMessage: null,
     rematchRequested: false,
     messages: [],
   }),
