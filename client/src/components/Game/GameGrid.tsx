@@ -82,9 +82,10 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
     }
   }, [setMyPath]);
 
-  // Mouse handlers
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+  // Pointer handlers cover mouse and touch input with one path.
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!isPlanning || !myPos || !gridRef.current) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
     const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
     if (!cell) return;
 
@@ -98,10 +99,15 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
     } else if (isOnEnd) {
       dragState.current = { active: true, fromPiece: false, fromEnd: true };
     }
+    if (dragState.current.active) {
+      e.preventDefault();
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
   }, [isPlanning, myPos, responsiveCellSize]);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!dragState.current.active || !isPlanning || !myPos) return;
+    e.preventDefault();
     const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
     if (!cell) return;
 
@@ -134,7 +140,10 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
     }
   }, [isPlanning, myPos, responsiveCellSize, addToPath, removeFromPath, obstacles, pathPoints, setMyPath]);
 
-  const handleMouseUp = useCallback(() => {
+  const handlePointerEnd = useCallback((e?: React.PointerEvent<HTMLDivElement>) => {
+    if (e?.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
     dragState.current = { active: false, fromPiece: false, fromEnd: false };
   }, []);
 
@@ -230,10 +239,10 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
       <div
         ref={gridRef}
         className="game-grid"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerEnd}
+        onPointerCancel={handlePointerEnd}
         style={{ width: boardSize, height: boardSize }}
       >
       {cells.map(({ row, col }) => (
