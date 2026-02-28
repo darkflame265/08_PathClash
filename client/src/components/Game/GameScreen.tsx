@@ -1,0 +1,95 @@
+import { useEffect } from 'react';
+import { getSocket } from '../../socket/socketClient';
+import { registerSocketHandlers } from '../../socket/socketHandlers';
+import { useGameStore } from '../../store/gameStore';
+import { GameGrid } from './GameGrid';
+import { TimerBar } from './TimerBar';
+import { HpDisplay } from './HpDisplay';
+import { PlayerInfo } from './PlayerInfo';
+import { ChatPanel } from './ChatPanel';
+import { GameOverOverlay } from './GameOverOverlay';
+import './GameScreen.css';
+
+export function GameScreen() {
+  const { gameState, myColor, roundInfo, winner } = useGameStore();
+
+  useEffect(() => {
+    const socket = getSocket();
+    const cleanup = registerSocketHandlers(socket);
+    return cleanup;
+  }, []);
+
+  if (!gameState) return <div className="loading">게임 로딩 중...</div>;
+
+  const opponentColor = myColor === 'red' ? 'blue' : 'red';
+  const me = myColor ? gameState.players[myColor] : null;
+  const opponent = gameState.players[opponentColor];
+
+  return (
+    <div className="game-screen">
+      {/* Top: opponent info + timer */}
+      <div className="top-bar">
+        <PlayerInfo player={opponent} isMe={false} />
+        <div className="center-top">
+          {gameState.phase === 'planning' && roundInfo && (
+            <TimerBar
+              duration={roundInfo.timeLimit}
+              serverStartTime={roundInfo.serverTime}
+            />
+          )}
+          {gameState.phase === 'moving' && (
+            <div className="phase-label moving">이동 중...</div>
+          )}
+        </div>
+        <div className="top-right">
+          <MuteButton />
+        </div>
+      </div>
+
+      {/* HP bars */}
+      <div className="hp-row">
+        <HpDisplay color={opponentColor} hp={gameState.players[opponentColor].hp} myColor={myColor!} />
+        <div className="role-badge">
+          {gameState.players[opponentColor].role === 'attacker' ? '⚔️ 공격' : '🏃 도망'}
+        </div>
+      </div>
+
+      {/* Grid */}
+      <div className="grid-area">
+        <GameGrid />
+      </div>
+
+      {/* My HP + info */}
+      <div className="hp-row bottom">
+        <div className="role-badge">
+          {me?.role === 'attacker' ? '⚔️ 공격' : '🏃 도망'}
+        </div>
+        <HpDisplay color={myColor!} hp={me?.hp ?? 3} myColor={myColor!} />
+      </div>
+
+      <div className="bottom-bar">
+        <PlayerInfo player={me!} isMe={true} />
+        <div className="path-points-info">
+          {gameState.phase === 'planning' && (
+            <span className="path-points">경로: {useGameStore.getState().myPath.length} / {gameState.pathPoints}</span>
+          )}
+        </div>
+      </div>
+
+      {/* Chat */}
+      <ChatPanel />
+
+      {/* Game Over */}
+      {winner && <GameOverOverlay winner={winner} myColor={myColor!} />}
+    </div>
+  );
+}
+
+function MuteButton() {
+  const { isMuted, toggleMute } = useGameStore();
+  return (
+    <button className="mute-btn" onClick={toggleMute} title={isMuted ? '음소거 해제' : '음소거'}>
+      {isMuted ? '🔇' : '🔊'}
+    </button>
+  );
+}

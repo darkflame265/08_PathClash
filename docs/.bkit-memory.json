@@ -1,0 +1,12 @@
+{
+  "sessionCount": 2,
+  "lastSession": {
+    "startedAt": "2026-02-28T02:58:09.185Z",
+    "platform": "claude",
+    "level": "Starter"
+  },
+  "currentFeature": "web-turn-game",
+  "phase": "completed",
+  "matchRate": 92,
+  "completedAt": "2026-02-28T00:00:00.000Z"
+}

@@ -1,0 +1,43 @@
+.collision-effect {
+  position: absolute;
+  width: 70px;
+  height: 70px;
+  pointer-events: none;
+  z-index: 20;
+  animation: collision-burst 500ms ease-out forwards;
+}
+
+.collision-effect::before,
+.collision-effect::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.collision-effect::before {
+  background: radial-gradient(circle, #fbbf24 0%, #ef4444 50%, transparent 70%);
+  animation: burst-inner 500ms ease-out forwards;
+}
+
+.collision-effect::after {
+  background: radial-gradient(circle, transparent 40%, #fbbf24 60%, transparent 80%);
+  animation: burst-outer 500ms ease-out forwards;
+}
+
+@keyframes burst-inner {
+  0%   { transform: scale(0); opacity: 1; }
+  60%  { transform: scale(1.2); opacity: 0.9; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+@keyframes burst-outer {
+  0%   { transform: scale(0.5); opacity: 0; }
+  30%  { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes collision-burst {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}

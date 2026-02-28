@@ -1,0 +1,18 @@
+.game-grid {
+  position: relative;
+  background: #1e293b;
+  border: 2px solid #334155;
+  border-radius: 0.75rem;
+  overflow: visible;
+  cursor: crosshair;
+}
+
+.grid-cell {
+  position: absolute;
+  border: 1px solid #334155;
+  background: #0f172a;
+  border-radius: 2px;
+  transition: background 0.1s;
+}
+
+.grid-cell:hover { background: #1e293b; }

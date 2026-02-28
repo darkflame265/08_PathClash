@@ -1,0 +1,60 @@
+.player-piece {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  transition: transform 200ms linear;
+  will-change: transform;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.piece-inner {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.3);
+}
+
+.piece-red .piece-inner { background: radial-gradient(circle at 35% 35%, #ff6b6b, #dc2626); }
+.piece-blue .piece-inner { background: radial-gradient(circle at 35% 35%, #60a5fa, #1d4ed8); }
+
+/* Attacker glow */
+.attacker-glow {
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  animation: glow-pulse 1s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.glow-red { background: radial-gradient(circle, rgba(239,68,68,0.6) 0%, transparent 70%); }
+.glow-blue { background: radial-gradient(circle, rgba(59,130,246,0.6) 0%, transparent 70%); }
+
+@keyframes glow-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50%       { transform: scale(1.4); opacity: 1; }
+}
+
+/* Hit flash */
+@keyframes hit-flash {
+  0%, 100% { opacity: 1; }
+  25%, 75%  { opacity: 0.1; }
+}
+
+.player-piece.hit { animation: hit-flash 600ms ease 3; }
+
+/* Explosion */
+@keyframes explode {
+  0%   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  40%  { transform: translate(-50%, -50%) scale(2.2); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
+}
+
+.player-piece.exploding {
+  animation: explode 500ms ease-out forwards !important;
+  transition: none !important;
+}

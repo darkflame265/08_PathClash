@@ -1,0 +1,42 @@
+.player-info { position: relative; }
+
+.nickname-btn {
+  background: none;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.nickname-btn.color-red  { color: #f87171; border-color: #7f1d1d; }
+.nickname-btn.color-blue { color: #60a5fa; border-color: #1e3a5f; }
+.nickname-btn:hover { border-color: #6366f1; }
+
+.profile-box {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  z-index: 100;
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  min-width: 180px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+
+.profile-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.2rem 0;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #334155;
+}
+
+.profile-row:last-child { border-bottom: none; }
+.profile-row span:first-child { color: #94a3b8; }
+.profile-row span:last-child  { color: #e2e8f0; font-weight: 600; }

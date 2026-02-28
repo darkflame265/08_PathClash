@@ -1,0 +1,81 @@
+.game-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+.center-top { flex: 1; }
+
+.top-right { display: flex; align-items: center; }
+
+.hp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 0.25rem;
+}
+
+.grid-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 0.25rem;
+}
+
+.role-badge {
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+
+.phase-label {
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #94a3b8;
+  padding: 0.25rem;
+}
+
+.phase-label.moving { color: #60a5fa; }
+
+.path-points-info { font-size: 0.85rem; color: #64748b; }
+
+.mute-btn {
+  background: none;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 1.25rem;
+  padding: 0.25rem 0.5rem;
+  line-height: 1;
+}
+.mute-btn:hover { border-color: #6366f1; }

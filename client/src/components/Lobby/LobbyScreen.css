@@ -1,0 +1,95 @@
+.lobby-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+  min-width: 360px;
+}
+
+.logo {
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  background: linear-gradient(135deg, #ef4444, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+}
+
+.lobby-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 1rem;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 360px;
+}
+
+.lobby-card h2 {
+  text-align: center;
+  font-size: 1.25rem;
+  color: #e2e8f0;
+}
+
+.lobby-input {
+  background: #0f172a;
+  border: 1px solid #475569;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  color: #f1f5f9;
+  font-size: 1rem;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.lobby-input:focus { border-color: #6366f1; }
+.code-input { letter-spacing: 0.3em; text-align: center; font-size: 1.2rem; text-transform: uppercase; }
+
+.lobby-btn {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.lobby-btn.primary { background: #4f46e5; color: white; }
+.lobby-btn.primary:hover { background: #4338ca; }
+.lobby-btn.secondary { background: #1e40af; color: white; }
+.lobby-btn.secondary:hover { background: #1d4ed8; }
+.lobby-btn.accent { background: #7c3aed; color: white; }
+.lobby-btn.accent:hover { background: #6d28d9; }
+
+.room-code {
+  font-size: 2.5rem;
+  font-weight: 900;
+  letter-spacing: 0.4em;
+  text-align: center;
+  color: #fbbf24;
+  background: #0f172a;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.waiting-text { text-align: center; color: #94a3b8; }
+
+.spinner {
+  width: 40px; height: 40px;
+  border: 4px solid #334155;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 1rem auto;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error-msg { color: #f87171; font-size: 0.875rem; text-align: center; }
