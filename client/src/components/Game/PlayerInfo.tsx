@@ -19,14 +19,13 @@ export function PlayerInfo({ player, isMe }: Props) {
     <div className="player-info">
       <button
         className={`nickname-btn color-${player.color}`}
-        onClick={() => !isMe && setShowProfile(v => !v)}
-        style={{ cursor: isMe ? 'default' : 'pointer' }}
+        onClick={() => setShowProfile((value) => !value)}
       >
-        {player.nickname} {!isMe && (showProfile ? '▲' : '▼')}
+        {player.nickname} {showProfile ? '▲' : '▼'}
       </button>
 
-      {showProfile && !isMe && (
-        <div className="profile-box">
+      {showProfile && (
+        <div className={`profile-box ${isMe ? 'profile-box-self' : ''}`}>
           <div className="profile-row"><span>닉네임</span><span>{player.nickname}</span></div>
           <div className="profile-row"><span>전적</span><span>{player.stats.wins}승 {player.stats.losses}패</span></div>
           <div className="profile-row"><span>승률</span><span>{winRate}%</span></div>

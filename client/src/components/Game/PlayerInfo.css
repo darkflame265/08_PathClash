@@ -44,6 +44,11 @@
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
 }
 
+.profile-box.profile-box-self {
+  left: auto;
+  right: 0;
+}
+
 .profile-row {
   display: flex;
   justify-content: space-between;
