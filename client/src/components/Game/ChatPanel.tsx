@@ -9,7 +9,14 @@ export function ChatPanel() {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Tab key to focus/unfocus chat
+  const scrollGameToTop = () => {
+    window.setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 0);
+  };
+
   useEffect(() => {
     const handler = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Tab') {
@@ -25,7 +32,6 @@ export function ChatPanel() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  // Scroll to bottom
   useEffect(() => {
     if (listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight;
@@ -57,12 +63,23 @@ export function ChatPanel() {
           ref={inputRef}
           className="chat-input"
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={(e) => setInput(e.target.value)}
           onKeyDown={onKey}
-          placeholder="Tab으로 채팅 입력 (Enter 전송)"
+          onFocus={scrollGameToTop}
+          onTouchStart={scrollGameToTop}
+          placeholder="Tab to focus chat (Enter to send)"
           maxLength={200}
         />
-        <button className="chat-send-btn" onClick={send}>전송</button>
+        <button
+          className="chat-send-btn"
+          onTouchStart={scrollGameToTop}
+          onClick={() => {
+            scrollGameToTop();
+            send();
+          }}
+        >
+          Send
+        </button>
       </div>
     </div>
   );
