@@ -62,17 +62,19 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
     const element = shellRef.current;
     if (!element) return;
 
-    const updateSize = (width: number) => {
-      if (!width) return;
-      setBoardSize(width * 0.92);
+    const updateSize = (width: number, height: number) => {
+      const side = Math.min(width, height > 60 ? height : width);
+      if (!side) return;
+      setBoardSize(side * 0.92);
     };
 
-    updateSize(element.getBoundingClientRect().width);
+    const rect = element.getBoundingClientRect();
+    updateSize(rect.width, rect.height);
 
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (!entry) return;
-      updateSize(entry.contentRect.width);
+      updateSize(entry.contentRect.width, entry.contentRect.height);
     });
 
     observer.observe(element);
