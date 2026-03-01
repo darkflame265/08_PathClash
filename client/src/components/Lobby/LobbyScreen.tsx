@@ -3,7 +3,6 @@ import {
   getSocketAuthPayload,
   linkGoogleAccount,
   logoutToGuestMode,
-  mergeGuestThenSwitchToGoogleAccount,
   refreshAccountSummary,
   resolveUpgradeFlowAfterRedirect,
   switchToLinkedGoogleAccount,
@@ -150,12 +149,12 @@ export function LobbyScreen({ onGameStart }: Props) {
         return;
       }
 
-      if (result.kind === "link_ok" || result.kind === "switch_ok" || result.kind === "merge_ok") {
+      if (result.kind === "link_ok" || result.kind === "switch_ok") {
         applyProfileToStore(result.profile, setAuthState);
         setUpgradeConflict(null);
         setUpgradeMessage(
-          result.kind === "merge_ok"
-            ? "게스트 전적을 병합하고 계정을 전환했습니다."
+          result.kind === "switch_ok"
+            ? "기존 구글 계정으로 로그인했습니다."
             : "구글 계정 연동이 완료되었습니다.",
         );
         return;
@@ -273,11 +272,6 @@ export function LobbyScreen({ onGameStart }: Props) {
     await switchToLinkedGoogleAccount();
   };
 
-  const handleMergeAndSwitch = async () => {
-    setUpgradeMessage("");
-    await mergeGuestThenSwitchToGoogleAccount();
-  };
-
   const handleLogout = async () => {
     setUpgradeMessage("");
     setUpgradeConflict(null);
@@ -387,7 +381,6 @@ export function LobbyScreen({ onGameStart }: Props) {
       {upgradeConflict && (
         <UpgradeConflictDialog
           onSwitch={() => void handleSwitchAccount()}
-          onMerge={() => void handleMergeAndSwitch()}
           onCancel={() => setUpgradeConflict(null)}
         />
       )}
@@ -397,11 +390,9 @@ export function LobbyScreen({ onGameStart }: Props) {
 
 function UpgradeConflictDialog({
   onSwitch,
-  onMerge,
   onCancel,
 }: {
   onSwitch: () => void;
-  onMerge: () => void;
   onCancel: () => void;
 }) {
   return (
@@ -412,9 +403,6 @@ function UpgradeConflictDialog({
         <div className="upgrade-modal-actions">
           <button className="lobby-btn primary" onClick={onSwitch}>
             계정으로 전환(로그인)
-          </button>
-          <button className="lobby-btn secondary" onClick={onMerge}>
-            게스트 전적 병합 후 로그인
           </button>
           <button className="lobby-btn cancel" onClick={onCancel}>
             취소

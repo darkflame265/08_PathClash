@@ -35,7 +35,7 @@ export interface AccountProfile {
   isGuestUser: boolean;
 }
 
-export type UpgradeFlowIntent = "link" | "switch" | "merge";
+export type UpgradeFlowIntent = "link" | "switch";
 
 export interface PendingUpgradeContext {
   guestAuth: {
@@ -55,23 +55,10 @@ export type UpgradeResolution =
   | { kind: "link_ok"; profile: AccountProfile }
   | { kind: "link_conflict"; context: PendingUpgradeContext }
   | { kind: "switch_ok"; profile: AccountProfile }
-  | { kind: "merge_ok"; profile: AccountProfile }
-  | { kind: "merge_error"; message: string }
   | { kind: "auth_error"; message: string };
 
 interface ServerResolveAccountResponse {
   status: "ACCOUNT_OK" | "AUTH_REQUIRED" | "AUTH_INVALID";
-  profile?: AccountProfile;
-}
-
-interface ServerMergeResponse {
-  status:
-    | "MERGE_OK"
-    | "AUTH_REQUIRED"
-    | "AUTH_INVALID"
-    | "MERGE_ALREADY_USED"
-    | "MERGE_SELF"
-    | "MERGE_FAILED";
   profile?: AccountProfile;
 }
 
@@ -214,20 +201,6 @@ async function emitSocketAck<T>(event: string, payload: unknown): Promise<T> {
   });
 }
 
-function mapMergeError(status: ServerMergeResponse["status"]) {
-  switch (status) {
-    case "MERGE_ALREADY_USED":
-      return "이 게스트 계정은 이미 병합이 완료되었습니다.";
-    case "MERGE_SELF":
-      return "같은 계정끼리는 병합할 수 없습니다.";
-    case "AUTH_REQUIRED":
-    case "AUTH_INVALID":
-      return "인증 상태를 확인한 뒤 다시 시도해주세요.";
-    default:
-      return "계정 병합에 실패했습니다.";
-  }
-}
-
 async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
   if (!supabase) {
     return {
@@ -284,7 +257,7 @@ export async function initializeGuestAuth(): Promise<AuthStatePayload> {
     };
   }
 
-  let session = await getCurrentSession();
+  const session = await getCurrentSession();
 
   if (!session) {
     return restoreGuestSessionOrCreate();
@@ -397,10 +370,6 @@ export async function switchToLinkedGoogleAccount(): Promise<void> {
   await startGoogleOAuth("switch");
 }
 
-export async function mergeGuestThenSwitchToGoogleAccount(): Promise<void> {
-  await startGoogleOAuth("merge");
-}
-
 export async function logoutToGuestMode(): Promise<AuthStatePayload> {
   if (!supabase) {
     return {
@@ -427,10 +396,7 @@ export async function resolveUpgradeFlowAfterRedirect(): Promise<UpgradeResoluti
   if (!pending) return { kind: "none" };
 
   const url = new URL(window.location.href);
-  const errorCode =
-    url.searchParams.get("error_code") ??
-    url.hash.match(/error_code=([^&]+)/)?.[1] ??
-    null;
+  const errorCode = url.searchParams.get("error_code") ?? url.hash.match(/error_code=([^&]+)/)?.[1] ?? null;
 
   if (errorCode === "identity_already_exists") {
     clearUpgradeQueryFromUrl();
@@ -453,42 +419,19 @@ export async function resolveUpgradeFlowAfterRedirect(): Promise<UpgradeResoluti
     return { kind: "auth_error", message: "계정 정보를 불러오지 못했습니다." };
   }
 
+  clearPendingUpgradeContext();
+  clearUpgradeQueryFromUrl();
+
   if (pending.intent === "link") {
-    clearPendingUpgradeContext();
-    clearUpgradeQueryFromUrl();
     return {
       kind: "link_ok",
       profile: accountSync.profile,
     };
   }
 
-  if (pending.intent === "switch") {
-    clearPendingUpgradeContext();
-    clearUpgradeQueryFromUrl();
-    return {
-      kind: "switch_ok",
-      profile: accountSync.profile,
-    };
-  }
-
-  const mergeResult = await emitSocketAck<ServerMergeResponse>("merge_guest_account", {
-    auth: await getSocketAuthPayload(),
-    guestAuth: pending.guestAuth,
-  });
-
-  clearPendingUpgradeContext();
-  clearUpgradeQueryFromUrl();
-
-  if (mergeResult.status !== "MERGE_OK" || !mergeResult.profile) {
-    return {
-      kind: "merge_error",
-      message: mapMergeError(mergeResult.status),
-    };
-  }
-
   return {
-    kind: "merge_ok",
-    profile: mergeResult.profile,
+    kind: "switch_ok",
+    profile: accountSync.profile,
   };
 }
 
@@ -522,9 +465,7 @@ export function onAuthStateChanged(callback: (payload: AuthStatePayload) => void
         saveGuestSession(session);
       }
 
-      const snapshot = session?.user
-        ? await getAccountSnapshot(session.user.id)
-        : undefined;
+      const snapshot = session?.user ? await getAccountSnapshot(session.user.id) : undefined;
       callback(toAuthState(session, snapshot));
     })();
   });
