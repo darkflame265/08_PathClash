@@ -8,6 +8,14 @@ A real-time 1v1 strategy game played on a 5×5 grid. Every turn, you have 10 sec
 
 ---
 
+## Screenshots
+
+| Lobby | In-Game |
+|---|---|
+| ![Lobby](docs/screenshots/lobby.png) | ![In-Game](docs/screenshots/ingame.png) |
+
+---
+
 ## How It Works
 
 ```
