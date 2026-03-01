@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  getSocketAuthPayload,
-  refreshAccountSummary,
-} from "../../auth/guestAuth";
+import { getSocketAuthPayload, refreshAccountSummary } from "../../auth/guestAuth";
 import { connectSocket } from "../../socket/socketClient";
 import { useGameStore } from "../../store/gameStore";
 import "./LobbyScreen.css";
@@ -45,8 +42,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     });
   }, [authUserId, isGuestUser, setAuthState]);
 
-  const getNick = () =>
-    myNickname.trim() || `Guest${Math.floor(Math.random() * 9999)}`;
+  const getNick = () => myNickname.trim() || `Guest${Math.floor(Math.random() * 9999)}`;
 
   const startSocket = () => {
     const socket = connectSocket();
@@ -57,42 +53,22 @@ export function LobbyScreen({ onGameStart }: Props) {
     socket.off("join_error");
     socket.off("matchmaking_waiting");
 
-    socket.on(
-      "room_created",
-      ({
-        code,
-        color,
-      }: {
-        roomId: string;
-        code: string;
-        color: "red" | "blue";
-      }) => {
-        setMyColor(color);
-        setRoomCode(code);
-        setCreatedCode(code);
-        setError("");
-        setIsMatchmaking(false);
-        setView("create");
-      },
-    );
+    socket.on("room_created", ({ code, color }: { roomId: string; code: string; color: "red" | "blue" }) => {
+      setMyColor(color);
+      setRoomCode(code);
+      setCreatedCode(code);
+      setError("");
+      setIsMatchmaking(false);
+      setView("create");
+    });
 
-    socket.on(
-      "room_joined",
-      ({
-        color,
-        roomId,
-      }: {
-        roomId: string;
-        color: "red" | "blue";
-        opponentNickname: string;
-      }) => {
-        setMyColor(color);
-        setRoomCode(roomId);
-        setError("");
-        setIsMatchmaking(false);
-        onGameStart();
-      },
-    );
+    socket.on("room_joined", ({ color, roomId }: { roomId: string; color: "red" | "blue"; opponentNickname: string }) => {
+      setMyColor(color);
+      setRoomCode(roomId);
+      setError("");
+      setIsMatchmaking(false);
+      onGameStart();
+    });
 
     socket.on("opponent_joined", () => {
       setError("");
@@ -163,12 +139,6 @@ export function LobbyScreen({ onGameStart }: Props) {
     ? `전적과 닉네임은 이 기기 계정에 연결됩니다. (${accountWins}승 ${accountLosses}패)`
     : "Supabase 미설정 상태입니다.";
 
-  const accountCode = authUserId ? (
-    <code className="account-id">
-      {view === "main" ? authUserId : `${authUserId.slice(0, 8)}...`}
-    </code>
-  ) : null;
-
   if (view === "create") {
     return (
       <div className="lobby-screen">
@@ -176,7 +146,13 @@ export function LobbyScreen({ onGameStart }: Props) {
         <div className="lobby-card account-card">
           <h2 data-step="G">게스트 계정</h2>
           <p>{accountBlurb}</p>
-          {accountCode}
+          <input
+            className="lobby-input"
+            placeholder="닉네임 입력 (미입력 시 Guest)"
+            value={myNickname}
+            onChange={(e) => setNickname(e.target.value)}
+            maxLength={16}
+          />
         </div>
         <div className="lobby-card">
           <h2 data-step="C">방 생성 완료</h2>
@@ -196,18 +172,17 @@ export function LobbyScreen({ onGameStart }: Props) {
         <div className="lobby-card account-card">
           <h2 data-step="G">게스트 계정</h2>
           <p>{accountBlurb}</p>
-          {accountCode}
-        </div>
-
-        <div className="lobby-card">
-          <h2 data-step="3">방 참가</h2>
           <input
             className="lobby-input"
-            placeholder="닉네임 (선택)"
+            placeholder="닉네임 입력 (미입력 시 Guest)"
             value={myNickname}
             onChange={(e) => setNickname(e.target.value)}
             maxLength={16}
           />
+        </div>
+
+        <div className="lobby-card">
+          <h2 data-step="3">방 참가</h2>
           <input
             className="lobby-input code-input"
             placeholder="방 코드 입력"
@@ -216,10 +191,7 @@ export function LobbyScreen({ onGameStart }: Props) {
             maxLength={6}
           />
           {error && <p className="error-msg">{error}</p>}
-          <button
-            className="lobby-btn primary"
-            onClick={() => void handleJoinRoom()}
-          >
+          <button className="lobby-btn primary" onClick={() => void handleJoinRoom()}>
             입장
           </button>
           <button
@@ -243,11 +215,6 @@ export function LobbyScreen({ onGameStart }: Props) {
       <div className="lobby-card account-card">
         <h2 data-step="G">게스트 계정</h2>
         <p>{accountBlurb}</p>
-        {accountCode}
-      </div>
-
-      <div className="lobby-card">
-        <h2 data-step="1">닉네임</h2>
         <input
           className="lobby-input"
           placeholder="닉네임 입력 (미입력 시 Guest)"
@@ -268,16 +235,10 @@ export function LobbyScreen({ onGameStart }: Props) {
       <div className="lobby-card">
         <h2 data-step="3">친구 대전</h2>
         <div className="btn-divider">
-          <button
-            className="lobby-btn primary"
-            onClick={() => void handleCreateRoom()}
-          >
+          <button className="lobby-btn primary" onClick={() => void handleCreateRoom()}>
             방 만들기
           </button>
-          <button
-            className="lobby-btn secondary"
-            onClick={() => setView("join")}
-          >
+          <button className="lobby-btn secondary" onClick={() => setView("join")}>
             코드 입력
           </button>
         </div>
@@ -300,10 +261,7 @@ export function LobbyScreen({ onGameStart }: Props) {
             </button>
           </>
         ) : (
-          <button
-            className="lobby-btn accent"
-            onClick={() => void handleRandom()}
-          >
+          <button className="lobby-btn accent" onClick={() => void handleRandom()}>
             매칭 시작
           </button>
         )}
