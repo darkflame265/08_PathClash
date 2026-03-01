@@ -4,7 +4,7 @@ import { RoomStore } from '../store/RoomStore';
 import { Position } from '../types/game.types';
 import {
   AuthPayload,
-  mergeGuestIntoAccount,
+  finalizeGoogleUpgrade,
   resolveAccount,
   resolvePlayerProfile,
 } from '../services/playerAuth';
@@ -126,12 +126,22 @@ export function initSocketServer(io: Server): void {
     });
 
     socket.on(
-      'merge_guest_account',
+      'finalize_google_upgrade',
       async (
-        { auth, guestAuth }: { auth?: AuthPayload; guestAuth?: AuthPayload },
+        {
+          auth,
+          guestAuth,
+          guestProfile,
+          flowStartedAt,
+        }: {
+          auth?: AuthPayload;
+          guestAuth?: AuthPayload;
+          guestProfile?: { nickname: string | null; wins: number; losses: number };
+          flowStartedAt?: string;
+        },
         ack?: (response: unknown) => void,
       ) => {
-        ack?.(await mergeGuestIntoAccount(auth, guestAuth));
+        ack?.(await finalizeGoogleUpgrade(auth, guestAuth, guestProfile, flowStartedAt));
       },
     );
 

@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolvePlayerProfile = resolvePlayerProfile;
 exports.resolveAccount = resolveAccount;
 exports.recordMatchmakingResult = recordMatchmakingResult;
-exports.mergeGuestIntoAccount = mergeGuestIntoAccount;
+exports.finalizeGoogleUpgrade = finalizeGoogleUpgrade;
 const supabase_1 = require("../lib/supabase");
 async function getUserFromToken(accessToken) {
     if (!supabase_1.supabaseAdmin || !accessToken)
@@ -109,7 +109,7 @@ async function recordMatchmakingResult(winnerUserId, loserUserId) {
         console.error('[supabase] failed to upsert player_stats', upsertError);
     }
 }
-async function mergeGuestIntoAccount(targetAuth, guestAuth) {
+async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowStartedAt) {
     if (!supabase_1.supabaseAdmin || !targetAuth?.accessToken || !guestAuth?.accessToken) {
         return { status: 'AUTH_REQUIRED' };
     }
@@ -121,62 +121,70 @@ async function mergeGuestIntoAccount(targetAuth, guestAuth) {
         return { status: 'AUTH_INVALID' };
     }
     if (targetUser.id === guestUser.id) {
-        return { status: 'MERGE_SELF' };
+        const { error: profileError } = await supabase_1.supabaseAdmin.from('profiles').upsert({
+            id: targetUser.id,
+            nickname: guestSnapshot?.nickname ?? 'Guest',
+            is_guest: false,
+        });
+        if (profileError) {
+            console.error('[supabase] failed to finalize linked profile', profileError);
+            return { status: 'UPGRADE_FAILED' };
+        }
+        const profile = await readAccountProfile(targetUser.id, guestSnapshot?.nickname ?? 'Guest', false);
+        return { status: 'UPGRADE_OK', profile };
     }
-    const { data: existingMerge } = await supabase_1.supabaseAdmin
-        .from('account_merges')
-        .select('source_user_id')
-        .eq('source_user_id', guestUser.id)
-        .maybeSingle();
-    if (existingMerge) {
-        return { status: 'MERGE_ALREADY_USED' };
-    }
-    const [targetProfile, guestProfile] = await Promise.all([
+    const [targetProfile, guestAccountProfile] = await Promise.all([
         readAccountProfile(targetUser.id, 'Guest', targetUser.is_anonymous ?? false),
         readAccountProfile(guestUser.id, 'Guest', guestUser.is_anonymous ?? false),
     ]);
-    const mergedWins = targetProfile.wins + guestProfile.wins;
-    const mergedLosses = targetProfile.losses + guestProfile.losses;
-    const mergedNickname = targetProfile.nickname || guestProfile.nickname;
+    const targetCreatedAt = targetUser.created_at ? new Date(targetUser.created_at).getTime() : Number.NaN;
+    const startedAt = flowStartedAt ? new Date(flowStartedAt).getTime() : Number.NaN;
+    const targetHasExistingData = Boolean(targetProfile.nickname && targetProfile.nickname !== 'Guest') ||
+        targetProfile.wins > 0 ||
+        targetProfile.losses > 0;
+    const createdDuringFlow = Number.isFinite(targetCreatedAt) &&
+        Number.isFinite(startedAt) &&
+        targetCreatedAt >= startedAt - 5000 &&
+        targetCreatedAt <= startedAt + 5 * 60000;
+    if (targetHasExistingData || !createdDuringFlow) {
+        const profile = await readAccountProfile(targetUser.id, targetProfile.nickname, false);
+        return {
+            status: 'SWITCH_OK',
+            profile,
+        };
+    }
+    const adoptedNickname = guestSnapshot?.nickname ?? guestAccountProfile.nickname ?? 'Guest';
+    const adoptedWins = guestSnapshot?.wins ?? guestAccountProfile.wins;
+    const adoptedLosses = guestSnapshot?.losses ?? guestAccountProfile.losses;
     const { error: upsertProfileError } = await supabase_1.supabaseAdmin.from('profiles').upsert({
         id: targetUser.id,
-        nickname: mergedNickname,
+        nickname: adoptedNickname,
         is_guest: false,
     });
     if (upsertProfileError) {
-        console.error('[supabase] failed to upsert merged profile', upsertProfileError);
-        return { status: 'MERGE_FAILED' };
+        console.error('[supabase] failed to adopt guest profile', upsertProfileError);
+        return { status: 'UPGRADE_FAILED' };
     }
     const { error: upsertStatsError } = await supabase_1.supabaseAdmin.from('player_stats').upsert({
         user_id: targetUser.id,
-        wins: mergedWins,
-        losses: mergedLosses,
+        wins: adoptedWins,
+        losses: adoptedLosses,
     }, { onConflict: 'user_id' });
     if (upsertStatsError) {
-        console.error('[supabase] failed to upsert merged stats', upsertStatsError);
-        return { status: 'MERGE_FAILED' };
+        console.error('[supabase] failed to adopt guest stats', upsertStatsError);
+        return { status: 'UPGRADE_FAILED' };
     }
-    const { error: auditError } = await supabase_1.supabaseAdmin.from('account_merges').insert({
-        source_user_id: guestUser.id,
-        target_user_id: targetUser.id,
-        merged_wins: guestProfile.wins,
-        merged_losses: guestProfile.losses,
-    });
-    if (auditError) {
-        console.error('[supabase] failed to write merge audit', auditError);
-        return { status: 'MERGE_FAILED' };
-    }
-    const { error: clearStatsError } = await supabase_1.supabaseAdmin.from('player_stats').upsert({
+    const { error: clearGuestStatsError } = await supabase_1.supabaseAdmin.from('player_stats').upsert({
         user_id: guestUser.id,
         wins: 0,
         losses: 0,
     }, { onConflict: 'user_id' });
-    if (clearStatsError) {
-        console.error('[supabase] failed to clear guest stats after merge', clearStatsError);
+    if (clearGuestStatsError) {
+        console.error('[supabase] failed to clear guest stats after upgrade', clearGuestStatsError);
     }
-    const profile = await readAccountProfile(targetUser.id, mergedNickname, false);
+    const profile = await readAccountProfile(targetUser.id, adoptedNickname, false);
     return {
-        status: 'MERGE_OK',
+        status: 'UPGRADE_OK',
         profile,
     };
 }

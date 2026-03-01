@@ -5,9 +5,7 @@ import {
   logoutToGuestMode,
   refreshAccountSummary,
   resolveUpgradeFlowAfterRedirect,
-  switchToLinkedGoogleAccount,
   type AccountProfile,
-  type PendingUpgradeContext,
 } from "../../auth/guestAuth";
 import { connectSocket } from "../../socket/socketClient";
 import { useGameStore } from "../../store/gameStore";
@@ -120,7 +118,7 @@ export function LobbyScreen({ onGameStart }: Props) {
   const [createdCode, setCreatedCode] = useState("");
   const [error, setError] = useState("");
   const [isMatchmaking, setIsMatchmaking] = useState(false);
-  const [upgradeConflict, setUpgradeConflict] = useState<PendingUpgradeContext | null>(null);
+  const [upgradeNotice, setUpgradeNotice] = useState("");
   const [upgradeMessage, setUpgradeMessage] = useState("");
 
   useEffect(() => {
@@ -143,24 +141,20 @@ export function LobbyScreen({ onGameStart }: Props) {
     void resolveUpgradeFlowAfterRedirect().then((result) => {
       if (!active || result.kind === "none") return;
 
-      if (result.kind === "link_conflict") {
-        setUpgradeConflict(result.context);
-        setUpgradeMessage("");
-        return;
-      }
-
-      if (result.kind === "link_ok" || result.kind === "switch_ok") {
+      if (result.kind === "upgrade_ok" || result.kind === "switch_ok") {
         applyProfileToStore(result.profile, setAuthState);
-        setUpgradeConflict(null);
-        setUpgradeMessage(
-          result.kind === "switch_ok"
-            ? "기존 구글 계정으로 로그인했습니다."
-            : "구글 계정 연동이 완료되었습니다.",
-        );
+        setUpgradeMessage(result.message);
+
+        if (result.kind === "switch_ok") {
+          setUpgradeNotice(result.message);
+        } else {
+          setUpgradeNotice("");
+        }
         return;
       }
 
       setUpgradeMessage(result.message);
+      setUpgradeNotice("");
     });
 
     return () => {
@@ -263,18 +257,13 @@ export function LobbyScreen({ onGameStart }: Props) {
 
   const handleLinkGoogle = async () => {
     setUpgradeMessage("");
-    setUpgradeConflict(null);
+    setUpgradeNotice("");
     await linkGoogleAccount();
-  };
-
-  const handleSwitchAccount = async () => {
-    setUpgradeMessage("");
-    await switchToLinkedGoogleAccount();
   };
 
   const handleLogout = async () => {
     setUpgradeMessage("");
-    setUpgradeConflict(null);
+    setUpgradeNotice("");
     const guestState = await logoutToGuestMode();
     setAuthState(guestState);
   };
@@ -378,34 +367,31 @@ export function LobbyScreen({ onGameStart }: Props) {
         </>
       )}
 
-      {upgradeConflict && (
-        <UpgradeConflictDialog
-          onSwitch={() => void handleSwitchAccount()}
-          onCancel={() => setUpgradeConflict(null)}
+      {upgradeNotice && (
+        <UpgradeNoticeDialog
+          message={upgradeNotice}
+          onClose={() => setUpgradeNotice("")}
         />
       )}
     </div>
   );
 }
 
-function UpgradeConflictDialog({
-  onSwitch,
-  onCancel,
+function UpgradeNoticeDialog({
+  message,
+  onClose,
 }: {
-  onSwitch: () => void;
-  onCancel: () => void;
+  message: string;
+  onClose: () => void;
 }) {
   return (
     <div className="upgrade-modal-backdrop">
       <div className="upgrade-modal">
-        <h3>이미 연결된 Google 계정</h3>
-        <p>이미 이 Google 계정에 저장된 전적이 있습니다. 해당 계정으로 로그인하시겠습니까?</p>
+        <h3>기존 Google 계정으로 전환되었습니다</h3>
+        <p>{message}</p>
         <div className="upgrade-modal-actions">
-          <button className="lobby-btn primary" onClick={onSwitch}>
-            계정으로 전환(로그인)
-          </button>
-          <button className="lobby-btn cancel" onClick={onCancel}>
-            취소
+          <button className="lobby-btn primary" onClick={onClose}>
+            확인
           </button>
         </div>
       </div>

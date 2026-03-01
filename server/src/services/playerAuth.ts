@@ -23,9 +23,10 @@ export type ResolveAccountResponse =
   | { status: 'ACCOUNT_OK'; profile: AccountProfile }
   | { status: 'AUTH_REQUIRED' | 'AUTH_INVALID' };
 
-export type MergeGuestAccountResponse =
-  | { status: 'MERGE_OK'; profile: AccountProfile }
-  | { status: 'AUTH_REQUIRED' | 'AUTH_INVALID' | 'MERGE_ALREADY_USED' | 'MERGE_SELF' | 'MERGE_FAILED' };
+export type FinalizeGoogleUpgradeResponse =
+  | { status: 'UPGRADE_OK'; profile: AccountProfile }
+  | { status: 'SWITCH_OK'; profile: AccountProfile }
+  | { status: 'AUTH_REQUIRED' | 'AUTH_INVALID' | 'UPGRADE_FAILED' };
 
 interface ProfileRow {
   nickname: string | null;
@@ -34,10 +35,6 @@ interface ProfileRow {
 interface StatsRow {
   wins: number | null;
   losses: number | null;
-}
-
-interface MergeRow {
-  source_user_id: string;
 }
 
 async function getUserFromToken(accessToken?: string) {
@@ -176,10 +173,12 @@ export async function recordMatchmakingResult(
   }
 }
 
-export async function mergeGuestIntoAccount(
+export async function finalizeGoogleUpgrade(
   targetAuth: AuthPayload | undefined,
   guestAuth: AuthPayload | undefined,
-): Promise<MergeGuestAccountResponse> {
+  guestSnapshot: { nickname: string | null; wins: number; losses: number } | undefined,
+  flowStartedAt: string | undefined,
+): Promise<FinalizeGoogleUpgradeResponse> {
   if (!supabaseAdmin || !targetAuth?.accessToken || !guestAuth?.accessToken) {
     return { status: 'AUTH_REQUIRED' };
   }
@@ -194,63 +193,74 @@ export async function mergeGuestIntoAccount(
   }
 
   if (targetUser.id === guestUser.id) {
-    return { status: 'MERGE_SELF' };
+    const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
+      id: targetUser.id,
+      nickname: guestSnapshot?.nickname ?? 'Guest',
+      is_guest: false,
+    });
+
+    if (profileError) {
+      console.error('[supabase] failed to finalize linked profile', profileError);
+      return { status: 'UPGRADE_FAILED' };
+    }
+
+    const profile = await readAccountProfile(targetUser.id, guestSnapshot?.nickname ?? 'Guest', false);
+    return { status: 'UPGRADE_OK', profile };
   }
 
-  const { data: existingMerge } = await supabaseAdmin
-    .from('account_merges')
-    .select('source_user_id')
-    .eq('source_user_id', guestUser.id)
-    .maybeSingle<MergeRow>();
-
-  if (existingMerge) {
-    return { status: 'MERGE_ALREADY_USED' };
-  }
-
-  const [targetProfile, guestProfile] = await Promise.all([
+  const [targetProfile, guestAccountProfile] = await Promise.all([
     readAccountProfile(targetUser.id, 'Guest', targetUser.is_anonymous ?? false),
     readAccountProfile(guestUser.id, 'Guest', guestUser.is_anonymous ?? false),
   ]);
 
-  const mergedWins = targetProfile.wins + guestProfile.wins;
-  const mergedLosses = targetProfile.losses + guestProfile.losses;
-  const mergedNickname = targetProfile.nickname || guestProfile.nickname;
+  const targetCreatedAt = targetUser.created_at ? new Date(targetUser.created_at).getTime() : Number.NaN;
+  const startedAt = flowStartedAt ? new Date(flowStartedAt).getTime() : Number.NaN;
+  const targetHasExistingData =
+    Boolean(targetProfile.nickname && targetProfile.nickname !== 'Guest') ||
+    targetProfile.wins > 0 ||
+    targetProfile.losses > 0;
+  const createdDuringFlow =
+    Number.isFinite(targetCreatedAt) &&
+    Number.isFinite(startedAt) &&
+    targetCreatedAt >= startedAt - 5_000 &&
+    targetCreatedAt <= startedAt + 5 * 60_000;
+
+  if (targetHasExistingData || !createdDuringFlow) {
+    const profile = await readAccountProfile(targetUser.id, targetProfile.nickname, false);
+    return {
+      status: 'SWITCH_OK',
+      profile,
+    };
+  }
+
+  const adoptedNickname = guestSnapshot?.nickname ?? guestAccountProfile.nickname ?? 'Guest';
+  const adoptedWins = guestSnapshot?.wins ?? guestAccountProfile.wins;
+  const adoptedLosses = guestSnapshot?.losses ?? guestAccountProfile.losses;
 
   const { error: upsertProfileError } = await supabaseAdmin.from('profiles').upsert({
     id: targetUser.id,
-    nickname: mergedNickname,
+    nickname: adoptedNickname,
     is_guest: false,
   });
   if (upsertProfileError) {
-    console.error('[supabase] failed to upsert merged profile', upsertProfileError);
-    return { status: 'MERGE_FAILED' };
+    console.error('[supabase] failed to adopt guest profile', upsertProfileError);
+    return { status: 'UPGRADE_FAILED' };
   }
 
   const { error: upsertStatsError } = await supabaseAdmin.from('player_stats').upsert(
     {
       user_id: targetUser.id,
-      wins: mergedWins,
-      losses: mergedLosses,
+      wins: adoptedWins,
+      losses: adoptedLosses,
     },
     { onConflict: 'user_id' },
   );
   if (upsertStatsError) {
-    console.error('[supabase] failed to upsert merged stats', upsertStatsError);
-    return { status: 'MERGE_FAILED' };
+    console.error('[supabase] failed to adopt guest stats', upsertStatsError);
+    return { status: 'UPGRADE_FAILED' };
   }
 
-  const { error: auditError } = await supabaseAdmin.from('account_merges').insert({
-    source_user_id: guestUser.id,
-    target_user_id: targetUser.id,
-    merged_wins: guestProfile.wins,
-    merged_losses: guestProfile.losses,
-  });
-  if (auditError) {
-    console.error('[supabase] failed to write merge audit', auditError);
-    return { status: 'MERGE_FAILED' };
-  }
-
-  const { error: clearStatsError } = await supabaseAdmin.from('player_stats').upsert(
+  const { error: clearGuestStatsError } = await supabaseAdmin.from('player_stats').upsert(
     {
       user_id: guestUser.id,
       wins: 0,
@@ -258,13 +268,13 @@ export async function mergeGuestIntoAccount(
     },
     { onConflict: 'user_id' },
   );
-  if (clearStatsError) {
-    console.error('[supabase] failed to clear guest stats after merge', clearStatsError);
+  if (clearGuestStatsError) {
+    console.error('[supabase] failed to clear guest stats after upgrade', clearGuestStatsError);
   }
 
-  const profile = await readAccountProfile(targetUser.id, mergedNickname, false);
+  const profile = await readAccountProfile(targetUser.id, adoptedNickname, false);
   return {
-    status: 'MERGE_OK',
+    status: 'UPGRADE_OK',
     profile,
   };
 }

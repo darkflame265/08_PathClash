@@ -100,8 +100,8 @@ function initSocketServer(io) {
         socket.on('account_sync', async ({ auth }, ack) => {
             ack?.(await (0, playerAuth_1.resolveAccount)(auth));
         });
-        socket.on('merge_guest_account', async ({ auth, guestAuth }, ack) => {
-            ack?.(await (0, playerAuth_1.mergeGuestIntoAccount)(auth, guestAuth));
+        socket.on('finalize_google_upgrade', async ({ auth, guestAuth, guestProfile, flowStartedAt, }, ack) => {
+            ack?.(await (0, playerAuth_1.finalizeGoogleUpgrade)(auth, guestAuth, guestProfile, flowStartedAt));
         });
         socket.on('path_update', ({ path }) => {
             const room = store.getBySocket(socket.id);

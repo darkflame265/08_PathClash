@@ -35,8 +35,6 @@ export interface AccountProfile {
   isGuestUser: boolean;
 }
 
-export type UpgradeFlowIntent = "link" | "switch";
-
 export interface PendingUpgradeContext {
   guestAuth: {
     userId: string;
@@ -47,18 +45,17 @@ export interface PendingUpgradeContext {
     wins: number;
     losses: number;
   };
-  intent: UpgradeFlowIntent;
+  flowStartedAt: string;
 }
 
 export type UpgradeResolution =
   | { kind: "none" }
-  | { kind: "link_ok"; profile: AccountProfile }
-  | { kind: "link_conflict"; context: PendingUpgradeContext }
-  | { kind: "switch_ok"; profile: AccountProfile }
+  | { kind: "upgrade_ok"; profile: AccountProfile; message: string }
+  | { kind: "switch_ok"; profile: AccountProfile; message: string }
   | { kind: "auth_error"; message: string };
 
-interface ServerResolveAccountResponse {
-  status: "ACCOUNT_OK" | "AUTH_REQUIRED" | "AUTH_INVALID";
+interface ServerFinalizeUpgradeResponse {
+  status: "UPGRADE_OK" | "SWITCH_OK" | "AUTH_REQUIRED" | "AUTH_INVALID" | "UPGRADE_FAILED";
   profile?: AccountProfile;
 }
 
@@ -156,7 +153,7 @@ function savePendingUpgradeContext(context: PendingUpgradeContext) {
   window.localStorage.setItem(UPGRADE_CONTEXT_KEY, JSON.stringify(context));
 }
 
-export function getPendingUpgradeContext(): PendingUpgradeContext | null {
+function getPendingUpgradeContext(): PendingUpgradeContext | null {
   const raw = window.localStorage.getItem(UPGRADE_CONTEXT_KEY);
   if (!raw) return null;
 
@@ -167,7 +164,7 @@ export function getPendingUpgradeContext(): PendingUpgradeContext | null {
   }
 }
 
-export function clearPendingUpgradeContext() {
+function clearPendingUpgradeContext() {
   window.localStorage.removeItem(UPGRADE_CONTEXT_KEY);
 }
 
@@ -307,7 +304,7 @@ export async function syncNickname(nickname: string): Promise<void> {
   }
 }
 
-async function startGoogleOAuth(intent: UpgradeFlowIntent): Promise<void> {
+export async function linkGoogleAccount(): Promise<void> {
   if (!supabase) return;
   const auth = await getCurrentAuthPayload();
   if (!auth) return;
@@ -328,30 +325,16 @@ async function startGoogleOAuth(intent: UpgradeFlowIntent): Promise<void> {
       wins: snapshot.wins ?? 0,
       losses: snapshot.losses ?? 0,
     },
-    intent,
+    flowStartedAt: new Date().toISOString(),
   });
 
-  const commonOptions = {
-    provider: "google" as const,
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
     options: {
       redirectTo: buildRedirectUrl(),
     },
-  };
+  });
 
-  if (intent === "link") {
-    const { data, error } = await supabase.auth.linkIdentity(commonOptions);
-    if (error) {
-      console.error("[supabase] failed to link google account", error);
-      return;
-    }
-
-    if (data?.url) {
-      window.location.assign(data.url);
-    }
-    return;
-  }
-
-  const { data, error } = await supabase.auth.signInWithOAuth(commonOptions);
   if (error) {
     console.error("[supabase] failed to sign in with google", error);
     return;
@@ -360,14 +343,6 @@ async function startGoogleOAuth(intent: UpgradeFlowIntent): Promise<void> {
   if (data?.url) {
     window.location.assign(data.url);
   }
-}
-
-export async function linkGoogleAccount(): Promise<void> {
-  await startGoogleOAuth("link");
-}
-
-export async function switchToLinkedGoogleAccount(): Promise<void> {
-  await startGoogleOAuth("switch");
 }
 
 export async function logoutToGuestMode(): Promise<AuthStatePayload> {
@@ -395,43 +370,39 @@ export async function resolveUpgradeFlowAfterRedirect(): Promise<UpgradeResoluti
   const pending = getPendingUpgradeContext();
   if (!pending) return { kind: "none" };
 
-  const url = new URL(window.location.href);
-  const errorCode = url.searchParams.get("error_code") ?? url.hash.match(/error_code=([^&]+)/)?.[1] ?? null;
-
-  if (errorCode === "identity_already_exists") {
-    clearUpgradeQueryFromUrl();
-    return {
-      kind: "link_conflict",
-      context: pending,
-    };
-  }
-
   const auth = await getCurrentAuthPayload();
   if (!auth) {
+    clearPendingUpgradeContext();
+    clearUpgradeQueryFromUrl();
     return { kind: "auth_error", message: "로그인 상태를 확인할 수 없습니다." };
   }
 
-  const accountSync = await emitSocketAck<ServerResolveAccountResponse>("account_sync", {
+  const finalizeResult = await emitSocketAck<ServerFinalizeUpgradeResponse>("finalize_google_upgrade", {
     auth: await getSocketAuthPayload(),
+    guestAuth: pending.guestAuth,
+    guestProfile: pending.guestProfile,
+    flowStartedAt: pending.flowStartedAt,
   });
-
-  if (accountSync.status !== "ACCOUNT_OK" || !accountSync.profile) {
-    return { kind: "auth_error", message: "계정 정보를 불러오지 못했습니다." };
-  }
 
   clearPendingUpgradeContext();
   clearUpgradeQueryFromUrl();
 
-  if (pending.intent === "link") {
+  if ((finalizeResult.status !== "UPGRADE_OK" && finalizeResult.status !== "SWITCH_OK") || !finalizeResult.profile) {
+    return { kind: "auth_error", message: "구글 계정 정보를 불러오지 못했습니다." };
+  }
+
+  if (finalizeResult.status === "SWITCH_OK") {
     return {
-      kind: "link_ok",
-      profile: accountSync.profile,
+      kind: "switch_ok",
+      profile: finalizeResult.profile,
+      message: `이 Google 계정의 저장된 전적을 불러왔습니다. (${finalizeResult.profile.wins}승 ${finalizeResult.profile.losses}패) 현재 기기 게스트는 그대로 유지됩니다.`,
     };
   }
 
   return {
-    kind: "switch_ok",
-    profile: accountSync.profile,
+    kind: "upgrade_ok",
+    profile: finalizeResult.profile,
+    message: "Google 계정 연동 완료. 이제 전적이 계정에 저장됩니다.",
   };
 }
 
