@@ -77,6 +77,31 @@
   gap: 0.625rem;
 }
 
+.account-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.account-header h2 {
+  margin-bottom: 0;
+}
+
+.account-logout {
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #9AA4AE);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: lowercase;
+  cursor: pointer;
+}
+
+.account-logout:hover {
+  color: #f8fafc;
+}
+
 .account-record {
   color: var(--blue, #3b82f6);
   font-weight: 700;

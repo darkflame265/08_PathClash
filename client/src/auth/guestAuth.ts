@@ -1,6 +1,6 @@
 import type { Session } from "@supabase/supabase-js";
-import { connectSocket } from "../socket/socketClient";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
+import { connectSocket } from "../socket/socketClient";
 
 export interface AuthStatePayload {
   ready: boolean;
@@ -75,7 +75,14 @@ interface ServerMergeResponse {
   profile?: AccountProfile;
 }
 
+interface StoredGuestSession {
+  userId: string;
+  accessToken: string;
+  refreshToken: string;
+}
+
 const UPGRADE_CONTEXT_KEY = "pathclash.pendingUpgrade";
+const GUEST_SESSION_KEY = "pathclash.guestSession";
 
 function buildRedirectUrl() {
   return `${window.location.origin}${window.location.pathname}`;
@@ -91,6 +98,30 @@ function toAuthState(session: Session | null, snapshot?: AccountSnapshot): AuthS
     wins: snapshot?.wins ?? 0,
     losses: snapshot?.losses ?? 0,
   };
+}
+
+function saveGuestSession(session: Session | null) {
+  if (!session?.user || !session.user.is_anonymous || !session.refresh_token) {
+    return;
+  }
+
+  const stored: StoredGuestSession = {
+    userId: session.user.id,
+    accessToken: session.access_token,
+    refreshToken: session.refresh_token,
+  };
+  window.localStorage.setItem(GUEST_SESSION_KEY, JSON.stringify(stored));
+}
+
+function getStoredGuestSession(): StoredGuestSession | null {
+  const raw = window.localStorage.getItem(GUEST_SESSION_KEY);
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as StoredGuestSession;
+  } catch {
+    return null;
+  }
 }
 
 async function ensureProfile(userId: string): Promise<void> {
@@ -158,11 +189,16 @@ function clearUpgradeQueryFromUrl() {
   window.history.replaceState({}, document.title, cleanUrl);
 }
 
-async function getCurrentAuthPayload() {
+async function getCurrentSession() {
   if (!supabase) return null;
   const {
     data: { session },
   } = await supabase.auth.getSession();
+  return session;
+}
+
+async function getCurrentAuthPayload() {
+  const session = await getCurrentSession();
   if (!session?.user || !session.access_token) return null;
   return {
     userId: session.user.id,
@@ -192,6 +228,50 @@ function mapMergeError(status: ServerMergeResponse["status"]) {
   }
 }
 
+async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
+  if (!supabase) {
+    return {
+      ready: true,
+      userId: null,
+      accessToken: null,
+      isGuestUser: false,
+      wins: 0,
+      losses: 0,
+    };
+  }
+
+  const storedGuest = getStoredGuestSession();
+  if (storedGuest) {
+    const { data, error } = await supabase.auth.setSession({
+      access_token: storedGuest.accessToken,
+      refresh_token: storedGuest.refreshToken,
+    });
+
+    if (!error && data.session?.user?.is_anonymous) {
+      saveGuestSession(data.session);
+      const snapshot = await getAccountSnapshot(data.session.user.id);
+      return toAuthState(data.session, snapshot);
+    }
+  }
+
+  const { data, error } = await supabase.auth.signInAnonymously();
+  if (error || !data.session) {
+    console.error("[supabase] failed to create guest session after logout", error);
+    return {
+      ready: true,
+      userId: null,
+      accessToken: null,
+      isGuestUser: false,
+      wins: 0,
+      losses: 0,
+    };
+  }
+
+  saveGuestSession(data.session);
+  const snapshot = await getAccountSnapshot(data.session.user.id);
+  return toAuthState(data.session, snapshot);
+}
+
 export async function initializeGuestAuth(): Promise<AuthStatePayload> {
   if (!isSupabaseConfigured || !supabase) {
     return {
@@ -204,27 +284,17 @@ export async function initializeGuestAuth(): Promise<AuthStatePayload> {
     };
   }
 
-  let {
-    data: { session },
-  } = await supabase.auth.getSession();
+  let session = await getCurrentSession();
 
   if (!session) {
-    const { data, error } = await supabase.auth.signInAnonymously();
-    if (error) {
-      console.error("[supabase] anonymous sign-in failed", error);
-      return {
-        ready: true,
-        userId: null,
-        accessToken: null,
-        isGuestUser: false,
-        wins: 0,
-        losses: 0,
-      };
-    }
-    session = data.session;
+    return restoreGuestSessionOrCreate();
   }
 
-  const snapshot = session?.user ? await getAccountSnapshot(session.user.id) : undefined;
+  if (session.user.is_anonymous) {
+    saveGuestSession(session);
+  }
+
+  const snapshot = await getAccountSnapshot(session.user.id);
   return toAuthState(session, snapshot);
 }
 
@@ -233,10 +303,7 @@ export async function refreshAccountSummary(): Promise<Pick<AuthStatePayload, "n
     return { nickname: null, wins: 0, losses: 0 };
   }
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
+  const session = await getCurrentSession();
   if (!session?.user) {
     return { nickname: null, wins: 0, losses: 0 };
   }
@@ -252,10 +319,7 @@ export async function refreshAccountSummary(): Promise<Pick<AuthStatePayload, "n
 export async function syncNickname(nickname: string): Promise<void> {
   if (!supabase) return;
   const trimmed = nickname.trim().slice(0, 16) || null;
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = await getCurrentSession();
 
   if (!session?.user) return;
 
@@ -274,7 +338,12 @@ async function startGoogleOAuth(intent: UpgradeFlowIntent): Promise<void> {
   if (!supabase) return;
   const auth = await getCurrentAuthPayload();
   if (!auth) return;
+
   const snapshot = await refreshAccountSummary();
+  if (auth.isGuestUser) {
+    const session = await getCurrentSession();
+    saveGuestSession(session);
+  }
 
   savePendingUpgradeContext({
     guestAuth: {
@@ -332,12 +401,36 @@ export async function mergeGuestThenSwitchToGoogleAccount(): Promise<void> {
   await startGoogleOAuth("merge");
 }
 
+export async function logoutToGuestMode(): Promise<AuthStatePayload> {
+  if (!supabase) {
+    return {
+      ready: true,
+      userId: null,
+      accessToken: null,
+      isGuestUser: false,
+      wins: 0,
+      losses: 0,
+    };
+  }
+
+  const { error } = await supabase.auth.signOut({ scope: "local" });
+  if (error) {
+    console.error("[supabase] failed to sign out current session", error);
+  }
+
+  clearUpgradeQueryFromUrl();
+  return restoreGuestSessionOrCreate();
+}
+
 export async function resolveUpgradeFlowAfterRedirect(): Promise<UpgradeResolution> {
   const pending = getPendingUpgradeContext();
   if (!pending) return { kind: "none" };
 
   const url = new URL(window.location.href);
-  const errorCode = url.searchParams.get("error_code") ?? url.hash.match(/error_code=([^&]+)/)?.[1] ?? null;
+  const errorCode =
+    url.searchParams.get("error_code") ??
+    url.hash.match(/error_code=([^&]+)/)?.[1] ??
+    null;
 
   if (errorCode === "identity_already_exists") {
     clearUpgradeQueryFromUrl();
@@ -425,7 +518,13 @@ export function onAuthStateChanged(callback: (payload: AuthStatePayload) => void
     data: { subscription },
   } = supabase.auth.onAuthStateChange((_event, session) => {
     void (async () => {
-      const snapshot = session?.user ? await getAccountSnapshot(session.user.id) : undefined;
+      if (session?.user?.is_anonymous) {
+        saveGuestSession(session);
+      }
+
+      const snapshot = session?.user
+        ? await getAccountSnapshot(session.user.id)
+        : undefined;
       callback(toAuthState(session, snapshot));
     })();
   });
