@@ -53,7 +53,7 @@ function getRoleLabel(role: "attacker" | "escaper") {
 }
 
 export function GameScreen({ onLeaveToLobby }: Props) {
-  const { gameState, myColor, roundInfo, winner, myPath, gameOverMessage } = useGameStore();
+  const { gameState, myColor, roundInfo, winner, myPath, gameOverMessage, rematchRequestSent, setRematchRequestSent } = useGameStore();
   const gridAreaRef = useRef<HTMLDivElement>(null);
   const cellSize = useAdaptiveCellSize(gridAreaRef);
   const scale = cellSize / DEFAULT_CELL;
@@ -91,15 +91,16 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         return;
       }
 
-      if ((event.key === "r" || event.key === "R") && winner && !gameOverMessage) {
+      if ((event.key === "r" || event.key === "R") && winner && !gameOverMessage && !rematchRequestSent) {
         event.preventDefault();
         getSocket().emit("request_rematch");
+        setRematchRequestSent(true);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [gameOverMessage, onLeaveToLobby, winner]);
+  }, [gameOverMessage, onLeaveToLobby, rematchRequestSent, setRematchRequestSent, winner]);
 
   if (!gameState) {
     return <div className="gs-loading">게임 로딩 중...</div>;
