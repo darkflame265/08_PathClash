@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import {
   getSocketAuthPayload,
   linkGoogleAccount,
+  mergeGuestThenSwitchToGoogleAccount,
   refreshAccountSummary,
+  resolveUpgradeFlowAfterRedirect,
+  switchToLinkedGoogleAccount,
+  type AccountProfile,
+  type PendingUpgradeContext,
 } from "../../auth/guestAuth";
 import { connectSocket } from "../../socket/socketClient";
 import { useGameStore } from "../../store/gameStore";
@@ -12,6 +17,20 @@ type LobbyView = "main" | "create" | "join";
 
 interface Props {
   onGameStart: () => void;
+}
+
+type SetAuthState = ReturnType<typeof useGameStore.getState>["setAuthState"];
+
+function applyProfileToStore(profile: AccountProfile, setAuthState: SetAuthState) {
+  setAuthState({
+    ready: true,
+    userId: profile.userId,
+    accessToken: useGameStore.getState().authAccessToken,
+    isGuestUser: profile.isGuestUser,
+    nickname: profile.nickname,
+    wins: profile.wins,
+    losses: profile.losses,
+  });
 }
 
 export function LobbyScreen({ onGameStart }: Props) {
@@ -31,6 +50,8 @@ export function LobbyScreen({ onGameStart }: Props) {
   const [createdCode, setCreatedCode] = useState("");
   const [error, setError] = useState("");
   const [isMatchmaking, setIsMatchmaking] = useState(false);
+  const [upgradeConflict, setUpgradeConflict] = useState<PendingUpgradeContext | null>(null);
+  const [upgradeMessage, setUpgradeMessage] = useState("");
 
   useEffect(() => {
     void refreshAccountSummary().then(({ nickname, wins, losses }) => {
@@ -45,6 +66,37 @@ export function LobbyScreen({ onGameStart }: Props) {
       });
     });
   }, [authUserId, isGuestUser, setAuthState]);
+
+  useEffect(() => {
+    let active = true;
+
+    void resolveUpgradeFlowAfterRedirect().then((result) => {
+      if (!active || result.kind === "none") return;
+
+      if (result.kind === "link_conflict") {
+        setUpgradeConflict(result.context);
+        setUpgradeMessage("");
+        return;
+      }
+
+      if (result.kind === "link_ok" || result.kind === "switch_ok" || result.kind === "merge_ok") {
+        applyProfileToStore(result.profile, setAuthState);
+        setUpgradeConflict(null);
+        setUpgradeMessage(
+          result.kind === "merge_ok"
+            ? "게스트 전적을 병합하고 계정을 전환했습니다."
+            : "구글 계정 연동이 완료되었습니다.",
+        );
+        return;
+      }
+
+      setUpgradeMessage(result.message);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [setAuthState]);
 
   const getNick = () => myNickname.trim() || `Guest${Math.floor(Math.random() * 9999)}`;
 
@@ -139,6 +191,22 @@ export function LobbyScreen({ onGameStart }: Props) {
     socket.emit("join_ai", await buildPlayerPayload());
   };
 
+  const handleLinkGoogle = async () => {
+    setUpgradeMessage("");
+    setUpgradeConflict(null);
+    await linkGoogleAccount();
+  };
+
+  const handleSwitchAccount = async () => {
+    setUpgradeMessage("");
+    await switchToLinkedGoogleAccount();
+  };
+
+  const handleMergeAndSwitch = async () => {
+    setUpgradeMessage("");
+    await mergeGuestThenSwitchToGoogleAccount();
+  };
+
   const accountDescription = isGuestUser ? (
     <p>
       전적과 닉네임은 이 기기 계정에 연결됩니다.{" "}
@@ -153,36 +221,48 @@ export function LobbyScreen({ onGameStart }: Props) {
   const upgradeSection = isGuestUser ? (
     <div className="account-upgrade">
       <div className="account-upgrade-title">UPGRADE ACCOUNT</div>
-      <button className="google-link-btn" onClick={() => void linkGoogleAccount()}>
+      <button className="google-link-btn" onClick={() => void handleLinkGoogle()}>
         <span className="google-link-mark">G</span>
         <span>Link Google Account</span>
       </button>
     </div>
   ) : null;
 
+  const accountCard = (
+    <div className="lobby-card account-card">
+      <h2 data-step="G">게스트 계정</h2>
+      {accountDescription}
+      <label className="account-input-label">CURRENT NICKNAME</label>
+      <input
+        className="lobby-input"
+        placeholder="닉네임 입력 (미입력 시 Guest)"
+        value={myNickname}
+        onChange={(e) => setNickname(e.target.value)}
+        maxLength={16}
+      />
+      {upgradeSection}
+      {upgradeMessage && <p className="account-info-msg">{upgradeMessage}</p>}
+    </div>
+  );
+
   if (view === "create") {
     return (
       <div className="lobby-screen">
         <h1 className="logo">PathClash</h1>
-        <div className="lobby-card account-card">
-          <h2 data-step="G">게스트 계정</h2>
-          {accountDescription}
-          <label className="account-input-label">CURRENT NICKNAME</label>
-          <input
-            className="lobby-input"
-            placeholder="닉네임 입력 (미입력 시 Guest)"
-            value={myNickname}
-            onChange={(e) => setNickname(e.target.value)}
-            maxLength={16}
-          />
-          {upgradeSection}
-        </div>
+        {accountCard}
         <div className="lobby-card">
           <h2 data-step="C">방 생성 완료</h2>
           <p>친구에게 아래 코드를 공유해주세요.</p>
           <div className="room-code">{createdCode}</div>
           <p className="waiting-text">상대가 입장할 때까지 기다리는 중...</p>
         </div>
+        {upgradeConflict && (
+          <UpgradeConflictDialog
+            onSwitch={handleSwitchAccount}
+            onMerge={handleMergeAndSwitch}
+            onCancel={() => setUpgradeConflict(null)}
+          />
+        )}
       </div>
     );
   }
@@ -191,21 +271,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     return (
       <div className="lobby-screen">
         <h1 className="logo">PathClash</h1>
-
-        <div className="lobby-card account-card">
-          <h2 data-step="G">게스트 계정</h2>
-          {accountDescription}
-          <label className="account-input-label">CURRENT NICKNAME</label>
-          <input
-            className="lobby-input"
-            placeholder="닉네임 입력 (미입력 시 Guest)"
-            value={myNickname}
-            onChange={(e) => setNickname(e.target.value)}
-            maxLength={16}
-          />
-          {upgradeSection}
-        </div>
-
+        {accountCard}
         <div className="lobby-card">
           <h2 data-step="3">방 참가</h2>
           <input
@@ -229,6 +295,13 @@ export function LobbyScreen({ onGameStart }: Props) {
             뒤로
           </button>
         </div>
+        {upgradeConflict && (
+          <UpgradeConflictDialog
+            onSwitch={handleSwitchAccount}
+            onMerge={handleMergeAndSwitch}
+            onCancel={() => setUpgradeConflict(null)}
+          />
+        )}
       </div>
     );
   }
@@ -236,20 +309,7 @@ export function LobbyScreen({ onGameStart }: Props) {
   return (
     <div className="lobby-screen">
       <h1 className="logo">PathClash</h1>
-
-      <div className="lobby-card account-card">
-        <h2 data-step="G">게스트 계정</h2>
-        {accountDescription}
-        <label className="account-input-label">CURRENT NICKNAME</label>
-        <input
-          className="lobby-input"
-          placeholder="닉네임 입력 (미입력 시 Guest)"
-          value={myNickname}
-          onChange={(e) => setNickname(e.target.value)}
-          maxLength={16}
-        />
-        {upgradeSection}
-      </div>
+      {accountCard}
 
       <div className="lobby-card">
         <h2 data-step="2">AI 대전</h2>
@@ -293,6 +353,44 @@ export function LobbyScreen({ onGameStart }: Props) {
           </button>
         )}
         {error && <p className="error-msg">{error}</p>}
+      </div>
+
+      {upgradeConflict && (
+        <UpgradeConflictDialog
+          onSwitch={handleSwitchAccount}
+          onMerge={handleMergeAndSwitch}
+          onCancel={() => setUpgradeConflict(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function UpgradeConflictDialog({
+  onSwitch,
+  onMerge,
+  onCancel,
+}: {
+  onSwitch: () => void;
+  onMerge: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="upgrade-modal-backdrop">
+      <div className="upgrade-modal">
+        <h3>이미 연결된 Google 계정</h3>
+        <p>이미 이 Google 계정에 저장된 전적이 있습니다. 해당 계정으로 로그인하시겠습니까?</p>
+        <div className="upgrade-modal-actions">
+          <button className="lobby-btn primary" onClick={onSwitch}>
+            계정으로 전환(로그인)
+          </button>
+          <button className="lobby-btn secondary" onClick={onMerge}>
+            게스트 전적 병합 후 로그인
+          </button>
+          <button className="lobby-btn cancel" onClick={onCancel}>
+            취소
+          </button>
+        </div>
       </div>
     </div>
   );

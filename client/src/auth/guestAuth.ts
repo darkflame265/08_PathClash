@@ -1,5 +1,6 @@
-import type { Session } from '@supabase/supabase-js';
-import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import type { Session } from "@supabase/supabase-js";
+import { connectSocket } from "../socket/socketClient";
+import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
 export interface AuthStatePayload {
   ready: boolean;
@@ -26,6 +27,60 @@ interface AccountSnapshot {
   losses: number;
 }
 
+export interface AccountProfile {
+  userId: string;
+  nickname: string;
+  wins: number;
+  losses: number;
+  isGuestUser: boolean;
+}
+
+export type UpgradeFlowIntent = "link" | "switch" | "merge";
+
+export interface PendingUpgradeContext {
+  guestAuth: {
+    userId: string;
+    accessToken: string;
+  };
+  guestProfile: {
+    nickname: string | null;
+    wins: number;
+    losses: number;
+  };
+  intent: UpgradeFlowIntent;
+}
+
+export type UpgradeResolution =
+  | { kind: "none" }
+  | { kind: "link_ok"; profile: AccountProfile }
+  | { kind: "link_conflict"; context: PendingUpgradeContext }
+  | { kind: "switch_ok"; profile: AccountProfile }
+  | { kind: "merge_ok"; profile: AccountProfile }
+  | { kind: "merge_error"; message: string }
+  | { kind: "auth_error"; message: string };
+
+interface ServerResolveAccountResponse {
+  status: "ACCOUNT_OK" | "AUTH_REQUIRED" | "AUTH_INVALID";
+  profile?: AccountProfile;
+}
+
+interface ServerMergeResponse {
+  status:
+    | "MERGE_OK"
+    | "AUTH_REQUIRED"
+    | "AUTH_INVALID"
+    | "MERGE_ALREADY_USED"
+    | "MERGE_SELF"
+    | "MERGE_FAILED";
+  profile?: AccountProfile;
+}
+
+const UPGRADE_CONTEXT_KEY = "pathclash.pendingUpgrade";
+
+function buildRedirectUrl() {
+  return `${window.location.origin}${window.location.pathname}`;
+}
+
 function toAuthState(session: Session | null, snapshot?: AccountSnapshot): AuthStatePayload {
   return {
     ready: true,
@@ -42,21 +97,21 @@ async function ensureProfile(userId: string): Promise<void> {
   if (!supabase) return;
 
   const { data: existing } = await supabase
-    .from('profiles')
-    .select('nickname')
-    .eq('id', userId)
+    .from("profiles")
+    .select("nickname")
+    .eq("id", userId)
     .maybeSingle<ProfileRow>();
 
   if (existing) return;
 
-  const { error } = await supabase.from('profiles').upsert({
+  const { error } = await supabase.from("profiles").upsert({
     id: userId,
     nickname: null,
     is_guest: true,
   });
 
   if (error) {
-    console.error('[supabase] failed to create profile', error);
+    console.error("[supabase] failed to create profile", error);
   }
 }
 
@@ -68,8 +123,8 @@ async function getAccountSnapshot(userId: string): Promise<AccountSnapshot> {
   await ensureProfile(userId);
 
   const [profileResult, statsResult] = await Promise.all([
-    supabase.from('profiles').select('nickname').eq('id', userId).maybeSingle<ProfileRow>(),
-    supabase.from('player_stats').select('wins, losses').eq('user_id', userId).maybeSingle<StatsRow>(),
+    supabase.from("profiles").select("nickname").eq("id", userId).maybeSingle<ProfileRow>(),
+    supabase.from("player_stats").select("wins, losses").eq("user_id", userId).maybeSingle<StatsRow>(),
   ]);
 
   return {
@@ -77,6 +132,64 @@ async function getAccountSnapshot(userId: string): Promise<AccountSnapshot> {
     wins: statsResult.data?.wins ?? 0,
     losses: statsResult.data?.losses ?? 0,
   };
+}
+
+function savePendingUpgradeContext(context: PendingUpgradeContext) {
+  window.localStorage.setItem(UPGRADE_CONTEXT_KEY, JSON.stringify(context));
+}
+
+export function getPendingUpgradeContext(): PendingUpgradeContext | null {
+  const raw = window.localStorage.getItem(UPGRADE_CONTEXT_KEY);
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as PendingUpgradeContext;
+  } catch {
+    return null;
+  }
+}
+
+export function clearPendingUpgradeContext() {
+  window.localStorage.removeItem(UPGRADE_CONTEXT_KEY);
+}
+
+function clearUpgradeQueryFromUrl() {
+  const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+  window.history.replaceState({}, document.title, cleanUrl);
+}
+
+async function getCurrentAuthPayload() {
+  if (!supabase) return null;
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.user || !session.access_token) return null;
+  return {
+    userId: session.user.id,
+    accessToken: session.access_token,
+    isGuestUser: session.user.is_anonymous ?? false,
+  };
+}
+
+async function emitSocketAck<T>(event: string, payload: unknown): Promise<T> {
+  const socket = connectSocket();
+  return new Promise((resolve) => {
+    socket.emit(event, payload, (response: T) => resolve(response));
+  });
+}
+
+function mapMergeError(status: ServerMergeResponse["status"]) {
+  switch (status) {
+    case "MERGE_ALREADY_USED":
+      return "이 게스트 계정은 이미 병합이 완료되었습니다.";
+    case "MERGE_SELF":
+      return "같은 계정끼리는 병합할 수 없습니다.";
+    case "AUTH_REQUIRED":
+    case "AUTH_INVALID":
+      return "인증 상태를 확인한 뒤 다시 시도해주세요.";
+    default:
+      return "계정 병합에 실패했습니다.";
+  }
 }
 
 export async function initializeGuestAuth(): Promise<AuthStatePayload> {
@@ -98,7 +211,7 @@ export async function initializeGuestAuth(): Promise<AuthStatePayload> {
   if (!session) {
     const { data, error } = await supabase.auth.signInAnonymously();
     if (error) {
-      console.error('[supabase] anonymous sign-in failed', error);
+      console.error("[supabase] anonymous sign-in failed", error);
       return {
         ready: true,
         userId: null,
@@ -115,7 +228,7 @@ export async function initializeGuestAuth(): Promise<AuthStatePayload> {
   return toAuthState(session, snapshot);
 }
 
-export async function refreshAccountSummary(): Promise<Pick<AuthStatePayload, 'nickname' | 'wins' | 'losses'>> {
+export async function refreshAccountSummary(): Promise<Pick<AuthStatePayload, "nickname" | "wins" | "losses">> {
   if (!supabase) {
     return { nickname: null, wins: 0, losses: 0 };
   }
@@ -146,35 +259,144 @@ export async function syncNickname(nickname: string): Promise<void> {
 
   if (!session?.user) return;
 
-  const { error } = await supabase.from('profiles').upsert({
+  const { error } = await supabase.from("profiles").upsert({
     id: session.user.id,
     nickname: trimmed,
     is_guest: session.user.is_anonymous ?? false,
   });
 
   if (error) {
-    console.error('[supabase] failed to sync nickname', error);
+    console.error("[supabase] failed to sync nickname", error);
   }
 }
 
-export async function linkGoogleAccount(): Promise<void> {
+async function startGoogleOAuth(intent: UpgradeFlowIntent): Promise<void> {
   if (!supabase) return;
+  const auth = await getCurrentAuthPayload();
+  if (!auth) return;
+  const snapshot = await refreshAccountSummary();
 
-  const { data, error } = await supabase.auth.linkIdentity({
-    provider: 'google',
-    options: {
-      redirectTo: window.location.href,
+  savePendingUpgradeContext({
+    guestAuth: {
+      userId: auth.userId,
+      accessToken: auth.accessToken,
     },
+    guestProfile: {
+      nickname: snapshot.nickname ?? null,
+      wins: snapshot.wins ?? 0,
+      losses: snapshot.losses ?? 0,
+    },
+    intent,
   });
 
+  const commonOptions = {
+    provider: "google" as const,
+    options: {
+      redirectTo: buildRedirectUrl(),
+    },
+  };
+
+  if (intent === "link") {
+    const { data, error } = await supabase.auth.linkIdentity(commonOptions);
+    if (error) {
+      console.error("[supabase] failed to link google account", error);
+      return;
+    }
+
+    if (data?.url) {
+      window.location.assign(data.url);
+    }
+    return;
+  }
+
+  const { data, error } = await supabase.auth.signInWithOAuth(commonOptions);
   if (error) {
-    console.error('[supabase] failed to link google account', error);
+    console.error("[supabase] failed to sign in with google", error);
     return;
   }
 
   if (data?.url) {
     window.location.assign(data.url);
   }
+}
+
+export async function linkGoogleAccount(): Promise<void> {
+  await startGoogleOAuth("link");
+}
+
+export async function switchToLinkedGoogleAccount(): Promise<void> {
+  await startGoogleOAuth("switch");
+}
+
+export async function mergeGuestThenSwitchToGoogleAccount(): Promise<void> {
+  await startGoogleOAuth("merge");
+}
+
+export async function resolveUpgradeFlowAfterRedirect(): Promise<UpgradeResolution> {
+  const pending = getPendingUpgradeContext();
+  if (!pending) return { kind: "none" };
+
+  const url = new URL(window.location.href);
+  const errorCode = url.searchParams.get("error_code") ?? url.hash.match(/error_code=([^&]+)/)?.[1] ?? null;
+
+  if (errorCode === "identity_already_exists") {
+    clearUpgradeQueryFromUrl();
+    return {
+      kind: "link_conflict",
+      context: pending,
+    };
+  }
+
+  const auth = await getCurrentAuthPayload();
+  if (!auth) {
+    return { kind: "auth_error", message: "로그인 상태를 확인할 수 없습니다." };
+  }
+
+  const accountSync = await emitSocketAck<ServerResolveAccountResponse>("account_sync", {
+    auth: await getSocketAuthPayload(),
+  });
+
+  if (accountSync.status !== "ACCOUNT_OK" || !accountSync.profile) {
+    return { kind: "auth_error", message: "계정 정보를 불러오지 못했습니다." };
+  }
+
+  if (pending.intent === "link") {
+    clearPendingUpgradeContext();
+    clearUpgradeQueryFromUrl();
+    return {
+      kind: "link_ok",
+      profile: accountSync.profile,
+    };
+  }
+
+  if (pending.intent === "switch") {
+    clearPendingUpgradeContext();
+    clearUpgradeQueryFromUrl();
+    return {
+      kind: "switch_ok",
+      profile: accountSync.profile,
+    };
+  }
+
+  const mergeResult = await emitSocketAck<ServerMergeResponse>("merge_guest_account", {
+    auth: await getSocketAuthPayload(),
+    guestAuth: pending.guestAuth,
+  });
+
+  clearPendingUpgradeContext();
+  clearUpgradeQueryFromUrl();
+
+  if (mergeResult.status !== "MERGE_OK" || !mergeResult.profile) {
+    return {
+      kind: "merge_error",
+      message: mapMergeError(mergeResult.status),
+    };
+  }
+
+  return {
+    kind: "merge_ok",
+    profile: mergeResult.profile,
+  };
 }
 
 export function getSocketAuthPayload() {
@@ -186,9 +408,7 @@ export function getSocketAuthPayload() {
   }));
 }
 
-export function onAuthStateChanged(
-  callback: (payload: AuthStatePayload) => void,
-): () => void {
+export function onAuthStateChanged(callback: (payload: AuthStatePayload) => void): () => void {
   if (!supabase) {
     callback({
       ready: true,

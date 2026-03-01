@@ -2,7 +2,12 @@ import { Server, Socket } from 'socket.io';
 import { GameRoom } from '../game/GameRoom';
 import { RoomStore } from '../store/RoomStore';
 import { Position } from '../types/game.types';
-import { AuthPayload, resolvePlayerProfile } from '../services/playerAuth';
+import {
+  AuthPayload,
+  mergeGuestIntoAccount,
+  resolveAccount,
+  resolvePlayerProfile,
+} from '../services/playerAuth';
 
 export function initSocketServer(io: Server): void {
   const store = RoomStore.getInstance();
@@ -115,6 +120,20 @@ export function initSocketServer(io: Server): void {
     socket.on('cancel_random', () => {
       store.removeFromQueue(socket.id);
     });
+
+    socket.on('account_sync', async ({ auth }: { auth?: AuthPayload }, ack?: (response: unknown) => void) => {
+      ack?.(await resolveAccount(auth));
+    });
+
+    socket.on(
+      'merge_guest_account',
+      async (
+        { auth, guestAuth }: { auth?: AuthPayload; guestAuth?: AuthPayload },
+        ack?: (response: unknown) => void,
+      ) => {
+        ack?.(await mergeGuestIntoAccount(auth, guestAuth));
+      },
+    );
 
     socket.on('path_update', ({ path }: { path: Position[] }) => {
       const room = store.getBySocket(socket.id);
