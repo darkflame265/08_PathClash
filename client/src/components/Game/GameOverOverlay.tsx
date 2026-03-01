@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import type { PlayerColor } from '../../types/game.types';
 import { getSocket } from '../../socket/socketClient';
@@ -12,9 +13,15 @@ export function GameOverOverlay({ winner, myColor }: Props) {
   const { rematchRequested, gameOverMessage } = useGameStore();
   const isWinner = winner === myColor;
   const showRematch = !gameOverMessage;
+  const [requestSent, setRequestSent] = useState(false);
+
+  useEffect(() => {
+    setRequestSent(false);
+  }, [winner, gameOverMessage]);
 
   const handleRematch = () => {
     getSocket().emit('request_rematch');
+    setRequestSent(true);
   };
 
   return (
@@ -30,6 +37,10 @@ export function GameOverOverlay({ winner, myColor }: Props) {
 
         {rematchRequested && (
           <div className="rematch-notice">Opponent requested a rematch.</div>
+        )}
+
+        {requestSent && (
+          <div className="rematch-notice">Rematch request sent.</div>
         )}
 
         {showRematch && (
