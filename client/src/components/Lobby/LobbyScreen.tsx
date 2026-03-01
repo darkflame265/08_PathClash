@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { getSocketAuthPayload } from '../../auth/guestAuth';
+import { useEffect, useState } from 'react';
+import { getSocketAuthPayload, refreshAccountSummary } from '../../auth/guestAuth';
 import { connectSocket } from '../../socket/socketClient';
 import { useGameStore } from '../../store/gameStore';
 import './LobbyScreen.css';
@@ -18,12 +18,29 @@ export function LobbyScreen({ onGameStart }: Props) {
     setRoomCode,
     authUserId,
     isGuestUser,
+    accountWins,
+    accountLosses,
+    setAuthState,
   } = useGameStore();
   const [view, setView] = useState<LobbyView>('main');
   const [joinCode, setJoinCode] = useState('');
   const [createdCode, setCreatedCode] = useState('');
   const [error, setError] = useState('');
   const [isMatchmaking, setIsMatchmaking] = useState(false);
+
+  useEffect(() => {
+    void refreshAccountSummary().then(({ nickname, wins, losses }) => {
+      setAuthState({
+        ready: true,
+        userId: authUserId,
+        accessToken: useGameStore.getState().authAccessToken,
+        isGuestUser,
+        nickname,
+        wins,
+        losses,
+      });
+    });
+  }, [authUserId, isGuestUser, setAuthState]);
 
   const getNick = () => myNickname.trim() || `Guest${Math.floor(Math.random() * 9999)}`;
 
@@ -118,14 +135,24 @@ export function LobbyScreen({ onGameStart }: Props) {
     socket.emit('join_ai', await buildPlayerPayload());
   };
 
+  const accountBlurb = isGuestUser
+    ? `전적과 닉네임은 이 기기 계정에 연결됩니다. 현재 ${accountWins}승 ${accountLosses}패`
+    : 'Supabase 미설정 상태입니다.';
+
+  const accountCode = authUserId ? (
+    <code className="account-id">
+      {view === 'main' ? authUserId : `${authUserId.slice(0, 8)}...`}
+    </code>
+  ) : null;
+
   if (view === 'create') {
     return (
       <div className="lobby-screen">
         <h1 className="logo">PathClash</h1>
         <div className="lobby-card account-card">
           <h2 data-step="G">게스트 계정</h2>
-          <p>{isGuestUser ? '현재 게스트 로그인 상태입니다.' : '로컬 플레이 모드입니다.'}</p>
-          {authUserId && <code className="account-id">{authUserId.slice(0, 8)}...</code>}
+          <p>{accountBlurb}</p>
+          {accountCode}
         </div>
         <div className="lobby-card">
           <h2 data-step="C">방 생성 완료</h2>
@@ -144,8 +171,8 @@ export function LobbyScreen({ onGameStart }: Props) {
 
         <div className="lobby-card account-card">
           <h2 data-step="G">게스트 계정</h2>
-          <p>{isGuestUser ? '현재 게스트 로그인 상태입니다.' : '로컬 플레이 모드입니다.'}</p>
-          {authUserId && <code className="account-id">{authUserId.slice(0, 8)}...</code>}
+          <p>{accountBlurb}</p>
+          {accountCode}
         </div>
 
         <div className="lobby-card">
@@ -178,8 +205,8 @@ export function LobbyScreen({ onGameStart }: Props) {
 
       <div className="lobby-card account-card">
         <h2 data-step="G">게스트 계정</h2>
-        <p>{isGuestUser ? '전적과 닉네임은 이 기기 계정에 연결됩니다.' : 'Supabase 미설정 상태입니다.'}</p>
-        {authUserId && <code className="account-id">{authUserId}</code>}
+        <p>{accountBlurb}</p>
+        {accountCode}
       </div>
 
       <div className="lobby-card">

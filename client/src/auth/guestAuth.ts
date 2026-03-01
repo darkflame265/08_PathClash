@@ -1,5 +1,5 @@
 import type { Session } from '@supabase/supabase-js';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 export interface AuthStatePayload {
   ready: boolean;
@@ -7,24 +7,39 @@ export interface AuthStatePayload {
   accessToken: string | null;
   isGuestUser: boolean;
   nickname?: string | null;
+  wins?: number;
+  losses?: number;
 }
 
 interface ProfileRow {
   nickname: string | null;
 }
 
-function toAuthState(session: Session | null, nickname?: string | null): AuthStatePayload {
+interface StatsRow {
+  wins: number | null;
+  losses: number | null;
+}
+
+interface AccountSnapshot {
+  nickname: string | null;
+  wins: number;
+  losses: number;
+}
+
+function toAuthState(session: Session | null, snapshot?: AccountSnapshot): AuthStatePayload {
   return {
     ready: true,
     userId: session?.user.id ?? null,
     accessToken: session?.access_token ?? null,
     isGuestUser: session?.user.is_anonymous ?? false,
-    nickname,
+    nickname: snapshot?.nickname ?? undefined,
+    wins: snapshot?.wins ?? 0,
+    losses: snapshot?.losses ?? 0,
   };
 }
 
-async function ensureProfile(userId: string): Promise<string | null> {
-  if (!supabase) return null;
+async function ensureProfile(userId: string): Promise<void> {
+  if (!supabase) return;
 
   const { data: existing } = await supabase
     .from('profiles')
@@ -32,9 +47,7 @@ async function ensureProfile(userId: string): Promise<string | null> {
     .eq('id', userId)
     .maybeSingle<ProfileRow>();
 
-  if (existing) {
-    return existing.nickname;
-  }
+  if (existing) return;
 
   const { error } = await supabase.from('profiles').upsert({
     id: userId,
@@ -45,8 +58,25 @@ async function ensureProfile(userId: string): Promise<string | null> {
   if (error) {
     console.error('[supabase] failed to create profile', error);
   }
+}
 
-  return null;
+async function getAccountSnapshot(userId: string): Promise<AccountSnapshot> {
+  if (!supabase) {
+    return { nickname: null, wins: 0, losses: 0 };
+  }
+
+  await ensureProfile(userId);
+
+  const [profileResult, statsResult] = await Promise.all([
+    supabase.from('profiles').select('nickname').eq('id', userId).maybeSingle<ProfileRow>(),
+    supabase.from('player_stats').select('wins, losses').eq('user_id', userId).maybeSingle<StatsRow>(),
+  ]);
+
+  return {
+    nickname: profileResult.data?.nickname ?? null,
+    wins: statsResult.data?.wins ?? 0,
+    losses: statsResult.data?.losses ?? 0,
+  };
 }
 
 export async function initializeGuestAuth(): Promise<AuthStatePayload> {
@@ -56,6 +86,8 @@ export async function initializeGuestAuth(): Promise<AuthStatePayload> {
       userId: null,
       accessToken: null,
       isGuestUser: false,
+      wins: 0,
+      losses: 0,
     };
   }
 
@@ -72,13 +104,36 @@ export async function initializeGuestAuth(): Promise<AuthStatePayload> {
         userId: null,
         accessToken: null,
         isGuestUser: false,
+        wins: 0,
+        losses: 0,
       };
     }
     session = data.session;
   }
 
-  const nickname = session?.user ? await ensureProfile(session.user.id) : null;
-  return toAuthState(session, nickname);
+  const snapshot = session?.user ? await getAccountSnapshot(session.user.id) : undefined;
+  return toAuthState(session, snapshot);
+}
+
+export async function refreshAccountSummary(): Promise<Pick<AuthStatePayload, 'nickname' | 'wins' | 'losses'>> {
+  if (!supabase) {
+    return { nickname: null, wins: 0, losses: 0 };
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.user) {
+    return { nickname: null, wins: 0, losses: 0 };
+  }
+
+  const snapshot = await getAccountSnapshot(session.user.id);
+  return {
+    nickname: snapshot.nickname,
+    wins: snapshot.wins,
+    losses: snapshot.losses,
+  };
 }
 
 export async function syncNickname(nickname: string): Promise<void> {
@@ -120,6 +175,8 @@ export function onAuthStateChanged(
       userId: null,
       accessToken: null,
       isGuestUser: false,
+      wins: 0,
+      losses: 0,
     });
     return () => {};
   }
@@ -127,7 +184,10 @@ export function onAuthStateChanged(
   const {
     data: { subscription },
   } = supabase.auth.onAuthStateChange((_event, session) => {
-    callback(toAuthState(session));
+    void (async () => {
+      const snapshot = session?.user ? await getAccountSnapshot(session.user.id) : undefined;
+      callback(toAuthState(session, snapshot));
+    })();
   });
 
   return () => subscription.unsubscribe();

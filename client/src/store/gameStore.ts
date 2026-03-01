@@ -24,6 +24,8 @@ interface GameStore {
   authUserId: string | null;
   authAccessToken: string | null;
   isGuestUser: boolean;
+  accountWins: number;
+  accountLosses: number;
 
   // Game
   gameState: ClientGameState | null;
@@ -63,6 +65,8 @@ interface GameStore {
     accessToken: string | null;
     isGuestUser: boolean;
     nickname?: string | null;
+    wins?: number;
+    losses?: number;
   }) => void;
   setMyColor: (c: PlayerColor) => void;
   setRoomCode: (c: string) => void;
@@ -96,6 +100,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   authUserId: null,
   authAccessToken: null,
   isGuestUser: false,
+  accountWins: 0,
+  accountLosses: 0,
   gameState: null,
   myPath: [],
   opponentSubmitted: false,
@@ -114,13 +120,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isMuted: false,
 
   setNickname: (n) => set({ myNickname: n }),
-  setAuthState: ({ ready, userId, accessToken, isGuestUser, nickname }) =>
+  setAuthState: ({ ready, userId, accessToken, isGuestUser, nickname, wins, losses }) =>
     set((state) => ({
       authReady: ready,
       authUserId: userId,
       authAccessToken: accessToken,
       isGuestUser,
       myNickname: nickname ?? state.myNickname,
+      accountWins: wins ?? state.accountWins,
+      accountLosses: losses ?? state.accountLosses,
     })),
   setMyColor: (c) => set({ myColor: c }),
   setRoomCode: (c) => set({ roomCode: c }),
@@ -222,6 +230,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     authUserId: get().authUserId,
     authAccessToken: get().authAccessToken,
     isGuestUser: get().isGuestUser,
+    accountWins: get().accountWins,
+    accountLosses: get().accountLosses,
     myNickname: get().myNickname,
     myColor: null,
     roomCode: '',
