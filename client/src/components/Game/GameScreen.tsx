@@ -145,14 +145,16 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         </div>
       </div>
 
-      {winner && (
-        <div className="gs-result-slot">
-          <GameOverOverlay winner={winner} myColor={myColor!} />
-        </div>
-      )}
+      <div className="gs-board-stage">
+        {winner && (
+          <div className="gs-result-slot">
+            <GameOverOverlay winner={winner} myColor={myColor!} />
+          </div>
+        )}
 
-      <div className="gs-grid-area" ref={gridAreaRef}>
-        <GameGrid cellSize={cellSize} />
+        <div className="gs-grid-area" ref={gridAreaRef}>
+          <GameGrid cellSize={cellSize} />
+        </div>
       </div>
 
       <div className={`gs-player-card gs-self gs-color-${myColor}`}>

@@ -400,3 +400,36 @@
   z-index: 5;
   margin-bottom: calc(0.5rem * var(--gs-scale, 1));
 }
+
+.gs-board-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gs-board-stage .gs-grid-area {
+  flex: 1;
+  min-height: 0;
+}
+
+.gs-board-stage .gs-result-slot {
+  position: absolute;
+  top: calc(0.5rem * var(--gs-scale, 1));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(100%, calc(26rem * var(--gs-scale, 1)));
+  margin-bottom: 0;
+  pointer-events: none;
+}
+
+.gs-board-stage .gameover-overlay {
+  pointer-events: none;
+}
+
+.gs-board-stage .gameover-box,
+.gs-board-stage .rematch-btn {
+  pointer-events: auto;
+}
