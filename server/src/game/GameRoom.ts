@@ -1,7 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import {
   GameState, PlayerState, PlayerColor, Position,
-  ClientGameState, PathsRevealPayload, RoundStartPayload,
+  ClientGameState, PathsRevealPayload, RoundStartPayload, MatchType,
 } from '../types/game.types';
 import {
   calcPathPoints, detectCollisions, getInitialPositions,
@@ -9,6 +9,7 @@ import {
 } from './GameEngine';
 import { createAiPath } from './AiPlanner';
 import { ServerTimer } from './ServerTimer';
+import { recordMatchmakingResult } from '../services/playerAuth';
 
 const PLANNING_TIME_MS = 7_000;
 const SUBMIT_GRACE_MS = 350;
@@ -26,20 +27,27 @@ export class GameRoom {
   private timer = new ServerTimer();
   private rematchSet: Set<string> = new Set();
   private aiColor: PlayerColor | null = null;
+  private matchType: MatchType;
 
-  constructor(roomId: string, code: string, io: Server) {
+  constructor(roomId: string, code: string, io: Server, matchType: MatchType) {
     this.roomId = roomId;
     this.code = code;
     this.io = io;
+    this.matchType = matchType;
   }
 
   get playerCount(): number { return this.players.size; }
   get isFull(): boolean { return this.players.size === 2; }
 
-  addPlayer(socket: Socket, nickname: string): PlayerColor | null {
+  addPlayer(
+    socket: Socket,
+    nickname: string,
+    userId: string | null = null,
+    stats: { wins: number; losses: number } = { wins: 0, losses: 0 },
+  ): PlayerColor | null {
     if (this.isFull) return null;
     const color: PlayerColor = this.players.size === 0 ? 'red' : 'blue';
-    const player = this.createPlayerState(color, socket.id, nickname);
+    const player = this.createPlayerState(color, socket.id, nickname, userId, stats);
     this.players.set(color, player);
     socket.join(this.roomId);
     return color;
@@ -49,7 +57,7 @@ export class GameRoom {
     if (this.isFull) return null;
     const color: PlayerColor = this.players.size === 0 ? 'red' : 'blue';
     const aiId = `ai_${this.roomId}_${color}`;
-    const player = this.createPlayerState(color, aiId, nickname);
+    const player = this.createPlayerState(color, aiId, nickname, null, { wins: 0, losses: 0 });
     this.players.set(color, player);
     this.aiColor = color;
     return color;
@@ -211,8 +219,14 @@ export class GameRoom {
       this.phase = 'gameover';
       const winner: PlayerColor = red.hp > 0 ? 'red' : 'blue';
       const loser: PlayerColor = winner === 'red' ? 'blue' : 'red';
-      this.players.get(winner)!.stats.wins++;
-      this.players.get(loser)!.stats.losses++;
+      if (this.matchType === 'random' && !this.aiColor) {
+        this.players.get(winner)!.stats.wins++;
+        this.players.get(loser)!.stats.losses++;
+        void recordMatchmakingResult(
+          this.players.get(winner)!.userId,
+          this.players.get(loser)!.userId,
+        );
+      }
 
       this.io.to(this.roomId).emit('game_over', { winner });
       return;
@@ -338,10 +352,17 @@ export class GameRoom {
     return this.getPlayerBySocket(socketId)?.color;
   }
 
-  private createPlayerState(color: PlayerColor, id: string, nickname: string): PlayerState {
+  private createPlayerState(
+    color: PlayerColor,
+    id: string,
+    nickname: string,
+    userId: string | null,
+    stats: { wins: number; losses: number },
+  ): PlayerState {
     const pos = getInitialPositions();
     return {
-      id,
+      id: userId ?? id,
+      userId,
       socketId: id,
       nickname,
       color,
@@ -350,7 +371,7 @@ export class GameRoom {
       plannedPath: [],
       pathSubmitted: false,
       role: color === 'red' ? 'attacker' : 'escaper',
-      stats: { wins: 0, losses: 0 },
+      stats,
     };
   }
 

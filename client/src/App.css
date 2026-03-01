@@ -23,6 +23,15 @@ body {
   justify-content: center;
 }
 
+.app-loading {
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted, #9AA4AE);
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
 .loading {
   color: var(--text-muted, #9AA4AE);
   font-size: 1.1rem;

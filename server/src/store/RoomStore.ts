@@ -64,13 +64,28 @@ export class RoomStore {
   }
 
   // Random matchmaking queue
-  private matchQueue: { socketId: string; nickname: string }[] = [];
+  private matchQueue: {
+    socketId: string;
+    nickname: string;
+    userId: string | null;
+    stats: { wins: number; losses: number };
+  }[] = [];
 
-  enqueueRandom(socketId: string, nickname: string): void {
-    this.matchQueue.push({ socketId, nickname });
+  enqueueRandom(
+    socketId: string,
+    nickname: string,
+    userId: string | null,
+    stats: { wins: number; losses: number },
+  ): void {
+    this.matchQueue.push({ socketId, nickname, userId, stats });
   }
 
-  dequeueRandom(): { socketId: string; nickname: string } | undefined {
+  dequeueRandom(): {
+    socketId: string;
+    nickname: string;
+    userId: string | null;
+    stats: { wins: number; losses: number };
+  } | undefined {
     return this.matchQueue.shift();
   }
 

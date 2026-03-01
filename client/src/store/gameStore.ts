@@ -20,6 +20,10 @@ interface GameStore {
   myNickname: string;
   myColor: PlayerColor | null;
   roomCode: string;
+  authReady: boolean;
+  authUserId: string | null;
+  authAccessToken: string | null;
+  isGuestUser: boolean;
 
   // Game
   gameState: ClientGameState | null;
@@ -53,6 +57,13 @@ interface GameStore {
 
   // Actions
   setNickname: (n: string) => void;
+  setAuthState: (payload: {
+    ready: boolean;
+    userId: string | null;
+    accessToken: string | null;
+    isGuestUser: boolean;
+    nickname?: string | null;
+  }) => void;
   setMyColor: (c: PlayerColor) => void;
   setRoomCode: (c: string) => void;
   setGameState: (gs: ClientGameState) => void;
@@ -81,6 +92,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   myNickname: '',
   myColor: null,
   roomCode: '',
+  authReady: false,
+  authUserId: null,
+  authAccessToken: null,
+  isGuestUser: false,
   gameState: null,
   myPath: [],
   opponentSubmitted: false,
@@ -99,6 +114,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isMuted: false,
 
   setNickname: (n) => set({ myNickname: n }),
+  setAuthState: ({ ready, userId, accessToken, isGuestUser, nickname }) =>
+    set((state) => ({
+      authReady: ready,
+      authUserId: userId,
+      authAccessToken: accessToken,
+      isGuestUser,
+      myNickname: nickname ?? state.myNickname,
+    })),
   setMyColor: (c) => set({ myColor: c }),
   setRoomCode: (c) => set({ roomCode: c }),
 
@@ -195,6 +218,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   toggleMute: () => set({ isMuted: !get().isMuted }),
 
   resetGame: () => set({
+    authReady: get().authReady,
+    authUserId: get().authUserId,
+    authAccessToken: get().authAccessToken,
+    isGuestUser: get().isGuestUser,
+    myNickname: get().myNickname,
+    myColor: null,
+    roomCode: '',
     gameState: null,
     myPath: [],
     opponentSubmitted: false,
@@ -210,5 +240,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     gameOverMessage: null,
     rematchRequested: false,
     messages: [],
+    isMuted: get().isMuted,
   }),
 }));

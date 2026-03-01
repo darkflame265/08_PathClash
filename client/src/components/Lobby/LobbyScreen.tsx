@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getSocketAuthPayload } from '../../auth/guestAuth';
 import { connectSocket } from '../../socket/socketClient';
 import { useGameStore } from '../../store/gameStore';
 import './LobbyScreen.css';
@@ -10,7 +11,14 @@ interface Props {
 }
 
 export function LobbyScreen({ onGameStart }: Props) {
-  const { myNickname, setNickname, setMyColor, setRoomCode } = useGameStore();
+  const {
+    myNickname,
+    setNickname,
+    setMyColor,
+    setRoomCode,
+    authUserId,
+    isGuestUser,
+  } = useGameStore();
   const [view, setView] = useState<LobbyView>('main');
   const [joinCode, setJoinCode] = useState('');
   const [createdCode, setCreatedCode] = useState('');
@@ -64,14 +72,19 @@ export function LobbyScreen({ onGameStart }: Props) {
     return socket;
   };
 
-  const handleCreateRoom = () => {
+  const buildPlayerPayload = async () => ({
+    nickname: getNick(),
+    auth: await getSocketAuthPayload(),
+  });
+
+  const handleCreateRoom = async () => {
     setError('');
     setIsMatchmaking(false);
     const socket = startSocket();
-    socket.emit('create_room', { nickname: getNick() });
+    socket.emit('create_room', await buildPlayerPayload());
   };
 
-  const handleJoinRoom = () => {
+  const handleJoinRoom = async () => {
     if (!joinCode.trim()) {
       setError('코드를 입력해주세요.');
       return;
@@ -80,13 +93,16 @@ export function LobbyScreen({ onGameStart }: Props) {
     setError('');
     setIsMatchmaking(false);
     const socket = startSocket();
-    socket.emit('join_room', { code: joinCode.trim().toUpperCase(), nickname: getNick() });
+    socket.emit('join_room', {
+      code: joinCode.trim().toUpperCase(),
+      ...(await buildPlayerPayload()),
+    });
   };
 
-  const handleRandom = () => {
+  const handleRandom = async () => {
     setError('');
     const socket = startSocket();
-    socket.emit('join_random', { nickname: getNick() });
+    socket.emit('join_random', await buildPlayerPayload());
   };
 
   const handleCancelRandom = () => {
@@ -95,19 +111,24 @@ export function LobbyScreen({ onGameStart }: Props) {
     setIsMatchmaking(false);
   };
 
-  const handleAiMatch = () => {
+  const handleAiMatch = async () => {
     setError('');
     setIsMatchmaking(false);
     const socket = startSocket();
-    socket.emit('join_ai', { nickname: getNick() });
+    socket.emit('join_ai', await buildPlayerPayload());
   };
 
   if (view === 'create') {
     return (
       <div className="lobby-screen">
         <h1 className="logo">PathClash</h1>
+        <div className="lobby-card account-card">
+          <h2 data-step="G">게스트 계정</h2>
+          <p>{isGuestUser ? '현재 게스트 로그인 상태입니다.' : '로컬 플레이 모드입니다.'}</p>
+          {authUserId && <code className="account-id">{authUserId.slice(0, 8)}...</code>}
+        </div>
         <div className="lobby-card">
-          <h2 data-step="✓">방 생성 완료</h2>
+          <h2 data-step="C">방 생성 완료</h2>
           <p>친구에게 아래 코드를 공유해주세요.</p>
           <div className="room-code">{createdCode}</div>
           <p className="waiting-text">상대가 입장할 때까지 기다리는 중...</p>
@@ -120,6 +141,13 @@ export function LobbyScreen({ onGameStart }: Props) {
     return (
       <div className="lobby-screen">
         <h1 className="logo">PathClash</h1>
+
+        <div className="lobby-card account-card">
+          <h2 data-step="G">게스트 계정</h2>
+          <p>{isGuestUser ? '현재 게스트 로그인 상태입니다.' : '로컬 플레이 모드입니다.'}</p>
+          {authUserId && <code className="account-id">{authUserId.slice(0, 8)}...</code>}
+        </div>
+
         <div className="lobby-card">
           <h2 data-step="3">방 참가</h2>
           <input
@@ -137,7 +165,7 @@ export function LobbyScreen({ onGameStart }: Props) {
             maxLength={6}
           />
           {error && <p className="error-msg">{error}</p>}
-          <button className="lobby-btn primary" onClick={handleJoinRoom}>입장</button>
+          <button className="lobby-btn primary" onClick={() => void handleJoinRoom()}>입장</button>
           <button className="lobby-btn secondary" onClick={() => { setView('main'); setError(''); }}>뒤로</button>
         </div>
       </div>
@@ -147,6 +175,12 @@ export function LobbyScreen({ onGameStart }: Props) {
   return (
     <div className="lobby-screen">
       <h1 className="logo">PathClash</h1>
+
+      <div className="lobby-card account-card">
+        <h2 data-step="G">게스트 계정</h2>
+        <p>{isGuestUser ? '전적과 닉네임은 이 기기 계정에 연결됩니다.' : 'Supabase 미설정 상태입니다.'}</p>
+        {authUserId && <code className="account-id">{authUserId}</code>}
+      </div>
 
       <div className="lobby-card">
         <h2 data-step="1">닉네임</h2>
@@ -161,14 +195,14 @@ export function LobbyScreen({ onGameStart }: Props) {
 
       <div className="lobby-card">
         <h2 data-step="2">AI 대전</h2>
-        <p>AI와 연습 대전을 즐겨보세요.</p>
-        <button className="lobby-btn ai" onClick={handleAiMatch}>AI와 대전 시작</button>
+        <p>AI와 연습 대전을 즐겨보세요. 전적은 저장되지 않습니다.</p>
+        <button className="lobby-btn ai" onClick={() => void handleAiMatch()}>AI와 대전 시작</button>
       </div>
 
       <div className="lobby-card">
         <h2 data-step="3">친구 대전</h2>
         <div className="btn-divider">
-          <button className="lobby-btn primary" onClick={handleCreateRoom}>방 만들기</button>
+          <button className="lobby-btn primary" onClick={() => void handleCreateRoom()}>방 만들기</button>
           <button className="lobby-btn secondary" onClick={() => setView('join')}>코드 입력</button>
         </div>
       </div>
@@ -183,12 +217,12 @@ export function LobbyScreen({ onGameStart }: Props) {
                 <strong>매칭 중...</strong>
               </div>
               <div className="spinner" />
-              <p>상대를 찾고 있습니다.</p>
+              <p>상대를 찾고 있습니다. 이 모드만 전적이 반영됩니다.</p>
             </div>
             <button className="lobby-btn cancel" onClick={handleCancelRandom}>매칭 취소</button>
           </>
         ) : (
-          <button className="lobby-btn accent" onClick={handleRandom}>매칭 시작</button>
+          <button className="lobby-btn accent" onClick={() => void handleRandom()}>매칭 시작</button>
         )}
         {error && <p className="error-msg">{error}</p>}
       </div>

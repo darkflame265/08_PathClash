@@ -73,6 +73,24 @@
   color: var(--text-muted, #9AA4AE);
 }
 
+.account-card {
+  gap: 0.625rem;
+}
+
+.account-id {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--mono, 'JetBrains Mono', monospace);
+  color: #a5f3fc;
+  background: rgba(14, 116, 144, 0.18);
+  border: 1px solid rgba(103, 232, 249, 0.18);
+  border-radius: 0.625rem;
+  padding: 0.625rem 0.75rem;
+}
+
 /* ── Inputs ───────────────────────────────────────────── */
 .lobby-input {
   background: var(--tile, #2A3137);

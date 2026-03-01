@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { GameRoom } from '../game/GameRoom';
 import { RoomStore } from '../store/RoomStore';
 import { Position } from '../types/game.types';
+import { AuthPayload, resolvePlayerProfile } from '../services/playerAuth';
 
 export function initSocketServer(io: Server): void {
   const store = RoomStore.getInstance();
@@ -9,23 +10,25 @@ export function initSocketServer(io: Server): void {
   io.on('connection', (socket: Socket) => {
     console.log(`[+] Connected: ${socket.id}`);
 
-    socket.on('create_room', ({ nickname }: { nickname: string }) => {
+    socket.on('create_room', async ({ nickname, auth }: { nickname: string; auth?: AuthPayload }) => {
+      const profile = await resolvePlayerProfile(auth, nickname);
       const roomId = store.generateRoomId();
       const code = store.generateCode();
-      const room = new GameRoom(roomId, code, io);
-      const color = room.addPlayer(socket, nickname.slice(0, 16) || 'Guest');
+      const room = new GameRoom(roomId, code, io, 'friend');
+      const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats);
       store.add(room);
       store.registerSocket(socket.id, roomId);
       socket.emit('room_created', { roomId, code, color });
     });
 
-    socket.on('join_ai', ({ nickname }: { nickname: string }) => {
+    socket.on('join_ai', async ({ nickname, auth }: { nickname: string; auth?: AuthPayload }) => {
+      const profile = await resolvePlayerProfile(auth, nickname);
       const roomId = store.generateRoomId();
       const code = store.generateCode();
-      const room = new GameRoom(roomId, code, io);
+      const room = new GameRoom(roomId, code, io, 'ai');
       store.add(room);
 
-      const humanColor = room.addPlayer(socket, nickname.slice(0, 16) || 'Guest');
+      const humanColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats);
       if (!humanColor) {
         socket.emit('join_error', { message: 'AI room creation failed.' });
         return;
@@ -44,14 +47,15 @@ export function initSocketServer(io: Server): void {
       setTimeout(() => room.startGame(), 300);
     });
 
-    socket.on('join_room', ({ code, nickname }: { code: string; nickname: string }) => {
+    socket.on('join_room', async ({ code, nickname, auth }: { code: string; nickname: string; auth?: AuthPayload }) => {
+      const profile = await resolvePlayerProfile(auth, nickname);
       const room = store.getByCode(code.toUpperCase());
       if (!room || room.isFull) {
         socket.emit('join_error', { message: '방을 찾을 수 없거나 이미 가득 찼습니다.' });
         return;
       }
 
-      const color = room.addPlayer(socket, nickname.slice(0, 16) || 'Guest');
+      const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats);
       if (!color) {
         socket.emit('join_error', { message: '입장할 수 없습니다.' });
         return;
@@ -60,43 +64,44 @@ export function initSocketServer(io: Server): void {
       store.registerSocket(socket.id, room.roomId);
       const opponent = room.toClientState().players[color === 'red' ? 'blue' : 'red'];
       socket.emit('room_joined', { roomId: room.roomId, color, opponentNickname: opponent.nickname });
-      socket.to(room.roomId).emit('opponent_joined', { nickname: nickname.slice(0, 16) || 'Guest' });
+      socket.to(room.roomId).emit('opponent_joined', { nickname: profile.nickname });
 
       setTimeout(() => room.startGame(), 500);
     });
 
-    socket.on('join_random', ({ nickname }: { nickname: string }) => {
+    socket.on('join_random', async ({ nickname, auth }: { nickname: string; auth?: AuthPayload }) => {
+      const profile = await resolvePlayerProfile(auth, nickname);
       const queued = store.dequeueRandom();
       if (!queued || queued.socketId === socket.id) {
         if (queued) {
-          store.enqueueRandom(queued.socketId, queued.nickname);
+          store.enqueueRandom(queued.socketId, queued.nickname, queued.userId, queued.stats);
         }
-        store.enqueueRandom(socket.id, nickname.slice(0, 16) || 'Guest');
+        store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats);
         socket.emit('matchmaking_waiting', {});
         return;
       }
 
       const roomId = store.generateRoomId();
       const code = store.generateCode();
-      const room = new GameRoom(roomId, code, io);
+      const room = new GameRoom(roomId, code, io, 'random');
       store.add(room);
 
       const queuedSocket = io.sockets.sockets.get(queued.socketId);
       if (!queuedSocket) {
-        store.enqueueRandom(socket.id, nickname.slice(0, 16) || 'Guest');
+        store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats);
         socket.emit('matchmaking_waiting', {});
         return;
       }
 
-      room.addPlayer(queuedSocket, queued.nickname);
+      room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats);
       store.registerSocket(queued.socketId, roomId);
       queuedSocket.emit('room_joined', {
         roomId,
         color: 'red',
-        opponentNickname: nickname.slice(0, 16) || 'Guest',
+        opponentNickname: profile.nickname,
       });
 
-      room.addPlayer(socket, nickname.slice(0, 16) || 'Guest');
+      room.addPlayer(socket, profile.nickname, profile.userId, profile.stats);
       store.registerSocket(socket.id, roomId);
       socket.emit('room_joined', {
         roomId,

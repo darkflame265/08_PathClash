@@ -9,6 +9,7 @@ export type PlayerRole = 'attacker' | 'escaper';
 
 export interface PlayerState {
   id: string;
+  userId: string | null;
   socketId: string;
   nickname: string;
   color: PlayerColor;
@@ -19,6 +20,8 @@ export interface PlayerState {
   role: PlayerRole;
   stats: { wins: number; losses: number };
 }
+
+export type MatchType = 'friend' | 'random' | 'ai';
 
 export interface GameState {
   roomId: string;

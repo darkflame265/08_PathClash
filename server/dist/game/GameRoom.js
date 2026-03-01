@@ -4,10 +4,11 @@ exports.GameRoom = void 0;
 const GameEngine_1 = require("./GameEngine");
 const AiPlanner_1 = require("./AiPlanner");
 const ServerTimer_1 = require("./ServerTimer");
+const playerAuth_1 = require("../services/playerAuth");
 const PLANNING_TIME_MS = 7000;
 const SUBMIT_GRACE_MS = 350;
 class GameRoom {
-    constructor(roomId, code, io) {
+    constructor(roomId, code, io, matchType) {
         this.players = new Map();
         this.phase = 'waiting';
         this.turn = 1;
@@ -19,14 +20,15 @@ class GameRoom {
         this.roomId = roomId;
         this.code = code;
         this.io = io;
+        this.matchType = matchType;
     }
     get playerCount() { return this.players.size; }
     get isFull() { return this.players.size === 2; }
-    addPlayer(socket, nickname) {
+    addPlayer(socket, nickname, userId = null, stats = { wins: 0, losses: 0 }) {
         if (this.isFull)
             return null;
         const color = this.players.size === 0 ? 'red' : 'blue';
-        const player = this.createPlayerState(color, socket.id, nickname);
+        const player = this.createPlayerState(color, socket.id, nickname, userId, stats);
         this.players.set(color, player);
         socket.join(this.roomId);
         return color;
@@ -36,7 +38,7 @@ class GameRoom {
             return null;
         const color = this.players.size === 0 ? 'red' : 'blue';
         const aiId = `ai_${this.roomId}_${color}`;
-        const player = this.createPlayerState(color, aiId, nickname);
+        const player = this.createPlayerState(color, aiId, nickname, null, { wins: 0, losses: 0 });
         this.players.set(color, player);
         this.aiColor = color;
         return color;
@@ -179,8 +181,11 @@ class GameRoom {
             this.phase = 'gameover';
             const winner = red.hp > 0 ? 'red' : 'blue';
             const loser = winner === 'red' ? 'blue' : 'red';
-            this.players.get(winner).stats.wins++;
-            this.players.get(loser).stats.losses++;
+            if (this.matchType === 'random' && !this.aiColor) {
+                this.players.get(winner).stats.wins++;
+                this.players.get(loser).stats.losses++;
+                void (0, playerAuth_1.recordMatchmakingResult)(this.players.get(winner).userId, this.players.get(loser).userId);
+            }
             this.io.to(this.roomId).emit('game_over', { winner });
             return;
         }
@@ -296,10 +301,11 @@ class GameRoom {
     getPlayerColor(socketId) {
         return this.getPlayerBySocket(socketId)?.color;
     }
-    createPlayerState(color, id, nickname) {
+    createPlayerState(color, id, nickname, userId, stats) {
         const pos = (0, GameEngine_1.getInitialPositions)();
         return {
-            id,
+            id: userId ?? id,
+            userId,
             socketId: id,
             nickname,
             color,
@@ -308,7 +314,7 @@ class GameRoom {
             plannedPath: [],
             pathSubmitted: false,
             role: color === 'red' ? 'attacker' : 'escaper',
-            stats: { wins: 0, losses: 0 },
+            stats,
         };
     }
     submitAiPath() {
