@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { getSocketAuthPayload, refreshAccountSummary } from "../../auth/guestAuth";
+import {
+  getSocketAuthPayload,
+  linkGoogleAccount,
+  refreshAccountSummary,
+} from "../../auth/guestAuth";
 import { connectSocket } from "../../socket/socketClient";
 import { useGameStore } from "../../store/gameStore";
 import "./LobbyScreen.css";
@@ -135,9 +139,26 @@ export function LobbyScreen({ onGameStart }: Props) {
     socket.emit("join_ai", await buildPlayerPayload());
   };
 
-  const accountBlurb = isGuestUser
-    ? `전적과 닉네임은 이 기기 계정에 연결됩니다. (${accountWins}승 ${accountLosses}패)`
-    : "Supabase 미설정 상태입니다.";
+  const accountDescription = isGuestUser ? (
+    <p>
+      전적과 닉네임은 이 기기 계정에 연결됩니다.{" "}
+      <span className="account-record">
+        ({accountWins}승 {accountLosses}패)
+      </span>
+    </p>
+  ) : (
+    <p>구글 계정과 연동 중입니다.</p>
+  );
+
+  const upgradeSection = isGuestUser ? (
+    <div className="account-upgrade">
+      <div className="account-upgrade-title">UPGRADE ACCOUNT</div>
+      <button className="google-link-btn" onClick={() => void linkGoogleAccount()}>
+        <span className="google-link-mark">G</span>
+        <span>Link Google Account</span>
+      </button>
+    </div>
+  ) : null;
 
   if (view === "create") {
     return (
@@ -145,7 +166,8 @@ export function LobbyScreen({ onGameStart }: Props) {
         <h1 className="logo">PathClash</h1>
         <div className="lobby-card account-card">
           <h2 data-step="G">게스트 계정</h2>
-          <p>{accountBlurb}</p>
+          {accountDescription}
+          <label className="account-input-label">CURRENT NICKNAME</label>
           <input
             className="lobby-input"
             placeholder="닉네임 입력 (미입력 시 Guest)"
@@ -153,6 +175,7 @@ export function LobbyScreen({ onGameStart }: Props) {
             onChange={(e) => setNickname(e.target.value)}
             maxLength={16}
           />
+          {upgradeSection}
         </div>
         <div className="lobby-card">
           <h2 data-step="C">방 생성 완료</h2>
@@ -171,7 +194,8 @@ export function LobbyScreen({ onGameStart }: Props) {
 
         <div className="lobby-card account-card">
           <h2 data-step="G">게스트 계정</h2>
-          <p>{accountBlurb}</p>
+          {accountDescription}
+          <label className="account-input-label">CURRENT NICKNAME</label>
           <input
             className="lobby-input"
             placeholder="닉네임 입력 (미입력 시 Guest)"
@@ -179,6 +203,7 @@ export function LobbyScreen({ onGameStart }: Props) {
             onChange={(e) => setNickname(e.target.value)}
             maxLength={16}
           />
+          {upgradeSection}
         </div>
 
         <div className="lobby-card">
@@ -214,7 +239,8 @@ export function LobbyScreen({ onGameStart }: Props) {
 
       <div className="lobby-card account-card">
         <h2 data-step="G">게스트 계정</h2>
-        <p>{accountBlurb}</p>
+        {accountDescription}
+        <label className="account-input-label">CURRENT NICKNAME</label>
         <input
           className="lobby-input"
           placeholder="닉네임 입력 (미입력 시 Guest)"
@@ -222,6 +248,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           onChange={(e) => setNickname(e.target.value)}
           maxLength={16}
         />
+        {upgradeSection}
       </div>
 
       <div className="lobby-card">

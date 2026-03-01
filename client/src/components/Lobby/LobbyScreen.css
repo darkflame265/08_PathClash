@@ -77,18 +77,85 @@
   gap: 0.625rem;
 }
 
-.account-id {
-  display: inline-block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: var(--mono, 'JetBrains Mono', monospace);
-  color: #a5f3fc;
-  background: rgba(14, 116, 144, 0.18);
-  border: 1px solid rgba(103, 232, 249, 0.18);
-  border-radius: 0.625rem;
-  padding: 0.625rem 0.75rem;
+.account-record {
+  color: var(--blue, #3b82f6);
+  font-weight: 700;
+}
+
+.account-input-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-muted, #9AA4AE);
+  text-transform: uppercase;
+}
+
+.account-upgrade {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 0.4rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(154, 164, 174, 0.14);
+}
+
+.account-upgrade-title {
+  position: relative;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--text-muted, #9AA4AE);
+  text-transform: uppercase;
+}
+
+.account-upgrade-title::before,
+.account-upgrade-title::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: calc(50% - 5.75rem);
+  height: 1px;
+  background: rgba(154, 164, 174, 0.14);
+}
+
+.account-upgrade-title::before {
+  left: 0;
+}
+
+.account-upgrade-title::after {
+  right: 0;
+}
+
+.google-link-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.75rem;
+  background: #f8fafc;
+  color: #1f2937;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.google-link-btn:hover {
+  background: #ffffff;
+}
+
+.google-link-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  color: #ea4335;
+  font-weight: 800;
 }
 
 /* ── Inputs ───────────────────────────────────────────── */

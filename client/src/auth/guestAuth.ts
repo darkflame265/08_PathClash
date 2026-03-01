@@ -157,6 +157,26 @@ export async function syncNickname(nickname: string): Promise<void> {
   }
 }
 
+export async function linkGoogleAccount(): Promise<void> {
+  if (!supabase) return;
+
+  const { data, error } = await supabase.auth.linkIdentity({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.href,
+    },
+  });
+
+  if (error) {
+    console.error('[supabase] failed to link google account', error);
+    return;
+  }
+
+  if (data?.url) {
+    window.location.assign(data.url);
+  }
+}
+
 export function getSocketAuthPayload() {
   if (!supabase) return undefined;
   const session = supabase.auth.getSession();
