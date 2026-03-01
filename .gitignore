@@ -1,0 +1,12 @@
+# Environment secrets
+.env
+client/.env
+server/.env
+
+# Optional local env variants
+.env.*
+client/.env.*
+server/.env.*
+!.env.example
+!client/.env.example
+!server/.env.example
