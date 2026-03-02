@@ -158,8 +158,8 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         </div>
       </div>
 
-      <div className={`gs-player-card gs-self gs-color-${myColor}`}>
-        <div className="gs-role-badge gs-role-badge-self">
+      <div className={`gs-player-card gs-self gs-color-${myColor} gs-role-${me?.role === "attacker" ? "atk" : "run"}`}>
+        <div className={`gs-role-badge gs-role-badge-self gs-role-badge-${me?.role === "attacker" ? "atk" : "run"}`}>
           <span className="gs-role-icon">{getRoleIcon(me?.role ?? "escaper")}</span>
           <span className="gs-role-label">{getRoleLabel(me?.role ?? "escaper")}</span>
         </div>
