@@ -9,5 +9,5 @@ export function useLang() {
     setLang(lang === 'en' ? 'kr' : 'en');
   };
 
-  return { lang, toggleLang, t: translations[lang] };
+  return { lang, setLang, toggleLang, t: translations[lang] };
 }

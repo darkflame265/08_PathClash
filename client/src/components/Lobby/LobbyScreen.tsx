@@ -125,7 +125,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     accountLosses,
     setAuthState,
   } = useGameStore();
-  const { lang, toggleLang, t } = useLang();
+  const { lang, setLang, t } = useLang();
   const [view, setView] = useState<LobbyView>("main");
   const [joinCode, setJoinCode] = useState("");
   const [createdCode, setCreatedCode] = useState("");
@@ -385,9 +385,24 @@ export function LobbyScreen({ onGameStart }: Props) {
           t={t}
         />
       )}
-      <button className="lang-toggle" onClick={toggleLang}>
-        {lang.toUpperCase()}
-      </button>
+      <div className="lang-toggle" role="group" aria-label="Language toggle">
+        <button
+          className={`lang-toggle-btn ${lang === "kr" ? "is-active" : ""}`}
+          onClick={() => setLang("kr")}
+          aria-pressed={lang === "kr"}
+          type="button"
+        >
+          KR
+        </button>
+        <button
+          className={`lang-toggle-btn ${lang === "en" ? "is-active" : ""}`}
+          onClick={() => setLang("en")}
+          aria-pressed={lang === "en"}
+          type="button"
+        >
+          EN
+        </button>
+      </div>
     </div>
   );
 }
