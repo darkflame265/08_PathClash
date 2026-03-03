@@ -126,7 +126,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
           <button className="gs-lobby-btn" onClick={onLeaveToLobby}>
             Lobby
           </button>
-          <MuteButton muteOnLabel={t.muteOn} muteOffLabel={t.muteOff} />
+          <MuteButton />
         </div>
       </div>
 
@@ -202,13 +202,14 @@ function PathProgressBar({ current, max, pathPointsLabel }: { current: number; m
   );
 }
 
-function MuteButton({ muteOnLabel, muteOffLabel }: { muteOnLabel: string; muteOffLabel: string }) {
+function MuteButton() {
   const { isMuted, toggleMute } = useGameStore();
+  const { t } = useLang();
   return (
     <button
       className="gs-mute-btn"
       onClick={toggleMute}
-      title={isMuted ? muteOffLabel : muteOnLabel}
+      title={isMuted ? t.muteOff : t.muteOn}
     >
       {isMuted ? "Off" : "On"}
     </button>
