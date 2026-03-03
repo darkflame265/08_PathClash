@@ -33,6 +33,23 @@ export type Translations = {
   startBtn: string;
   switchedTitle: string;
   confirmBtn: string;
+  // game screen
+  loading: string;
+  moving: string;
+  roleAttack: string;
+  roleEscape: string;
+  pathPoints: string;
+  muteOn: string;
+  muteOff: string;
+  youWin: string;
+  youLose: string;
+  rematchBtn: string;
+  rematchRequested: string;
+  rematchSent: string;
+  // google upgrade messages
+  upgradeOk: string;
+  switchOk: (w: number, l: number) => string;
+  authError: string;
 };
 
 export const translations: Record<Lang, Translations> = {
@@ -74,6 +91,21 @@ export const translations: Record<Lang, Translations> = {
 
     switchedTitle: "Switched to existing Google account",
     confirmBtn: "OK",
+    loading: "Loading game...",
+    moving: "Moving...",
+    roleAttack: "Attack",
+    roleEscape: "Escape",
+    pathPoints: "Path Points",
+    muteOn: "Sound On",
+    muteOff: "Muted",
+    youWin: "YOU WIN!",
+    youLose: "YOU LOSE",
+    rematchBtn: "REMATCH",
+    rematchRequested: "Opponent requested a rematch.",
+    rematchSent: "Rematch request sent.",
+    upgradeOk: "Google account linked. Stats will now be saved to your account.",
+    switchOk: (w: number, l: number) => `Loaded stats from this Google account. (${w}W ${l}L) Guest stats on this device are preserved.`,
+    authError: "Failed to link Google account. Please try again.",
   },
   kr: {
     accountTitleKey: "guest",
@@ -113,5 +145,20 @@ export const translations: Record<Lang, Translations> = {
 
     switchedTitle: "기존 Google 계정으로 전환했습니다",
     confirmBtn: "확인",
+    loading: "게임 로딩 중...",
+    moving: "이동 중...",
+    roleAttack: "공격",
+    roleEscape: "도망",
+    pathPoints: "경로 포인트",
+    muteOn: "소리 켜짐",
+    muteOff: "음소거",
+    youWin: "YOU WIN!",
+    youLose: "YOU LOSE",
+    rematchBtn: "REMATCH",
+    rematchRequested: "상대가 리매치를 요청했습니다.",
+    rematchSent: "리매치 요청을 보냈습니다.",
+    upgradeOk: "Google 계정 연동 완료. 이제 전적이 계정에 저장됩니다.",
+    switchOk: (w: number, l: number) => `이 Google 계정의 저장된 전적을 불러왔습니다. (${w}승 ${l}패) 현재 기기 게스트는 그대로 유지됩니다.`,
+    authError: "구글 계정 연동에 실패했습니다. 다시 시도해주세요.",
   },
 };
