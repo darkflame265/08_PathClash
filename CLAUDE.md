@@ -60,7 +60,15 @@ PathClash는 브라우저에서 플레이하는 실시간 1대1 전략 게임이
 
 - `client/src/store/gameStore.ts`
   - Zustand 기반 전역 상태
-  - 인증, 로비, 게임, 애니메이션, 리매치, 채팅 상태 관리
+  - 인증, 로비, 게임, 애니메이션, 리매치, 채팅, 언어(lang) 상태 관리
+
+- `client/src/hooks/useLang.ts`
+  - 언어 토글 훅
+  - gameStore의 `lang`/`setLang`을 읽어 `{ lang, toggleLang, t }` 반환
+
+- `client/src/i18n/translations.ts`
+  - EN/KR 번역 객체
+  - `Translations` 타입 정의
 
 - `client/src/socket/`
   - Socket.IO 클라이언트
@@ -155,7 +163,35 @@ PathClash는 브라우저에서 플레이하는 실시간 1대1 전략 게임이
 
 프론트만 바꿔서는 게임 규칙 변경이 끝나지 않는 경우가 많다.
 
-### 4. 전적과 계정 데이터는 Supabase를 사용한다
+### 4. 다국어(i18n) 시스템
+
+언어 상태는 Zustand `gameStore`의 `lang` 필드에 저장되며 localStorage에 영속된다.
+
+핵심 파일:
+
+- `client/src/i18n/translations.ts` — 번역 키/값 정의
+- `client/src/hooks/useLang.ts` — React 컴포넌트용 훅
+- `client/src/store/gameStore.ts` — `lang`/`setLang` 액션
+
+**React 컴포넌트에서 사용:**
+```typescript
+const { t } = useLang();
+// t.someKey 로 번역 문자열 접근
+```
+
+**React 외부(socketHandlers 등)에서 사용:**
+```typescript
+import { translations } from '../i18n/translations';
+const t = translations[useGameStore.getState().lang];
+```
+
+**번역 키 추가 방법:**
+1. `Translations` 타입에 키 추가
+2. `en` 객체에 영어 값 추가
+3. `kr` 객체에 한국어 값 추가
+4. KR에서 의도적으로 영어를 유지하는 경우 `// intentionally English (...)` 주석 필수
+
+### 5. 전적과 계정 데이터는 Supabase를 사용한다
 
 클라이언트:
 
@@ -179,6 +215,7 @@ PathClash는 브라우저에서 플레이하는 실시간 1대1 전략 게임이
 - 매칭/방 흐름 수정은 `server/src/socket/socketServer.ts`와 `server/src/store/RoomStore.ts`부터 본다
 - 실제 게임 규칙 수정은 `server/src/game/GameRoom.ts`부터 본다
 - 인증/보안 변경은 항상 `supabase/schema.sql`까지 교차 확인한다
+- 번역 문자열 추가/수정은 `client/src/i18n/translations.ts`만 건드리면 된다
 
 ## 환경 변수
 
