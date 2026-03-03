@@ -10,7 +10,8 @@
       "Bash(pkill:*)",
       "Bash(npx vite:*)",
       "Bash(winget install:*)",
-      "Bash(/c/Users/ter24/AppData/Local/Microsoft/WinGet/Links/jq.exe:*)"
+      "Bash(/c/Users/ter24/AppData/Local/Microsoft/WinGet/Links/jq.exe:*)",
+      "Bash(./node_modules/.bin/tsc:*)"
     ]
   }
 }
