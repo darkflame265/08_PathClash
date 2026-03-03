@@ -68,8 +68,21 @@ interface StoredGuestSession {
 const UPGRADE_CONTEXT_KEY = "pathclash.pendingUpgrade";
 const GUEST_SESSION_KEY = "pathclash.guestSession";
 
+function getConfiguredAppUrl(): string | null {
+  const raw = import.meta.env.VITE_APP_URL?.trim();
+  if (!raw) return null;
+
+  try {
+    return new URL(raw).origin;
+  } catch {
+    console.warn("[auth] invalid VITE_APP_URL, falling back to current origin");
+    return null;
+  }
+}
+
 function buildRedirectUrl() {
-  return `${window.location.origin}${window.location.pathname}`;
+  const origin = getConfiguredAppUrl() ?? window.location.origin;
+  return `${origin}${window.location.pathname}`;
 }
 
 function toAuthState(session: Session | null, snapshot?: AccountSnapshot): AuthStatePayload {
