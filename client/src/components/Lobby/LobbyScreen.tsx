@@ -6,6 +6,7 @@ import {
   refreshAccountSummary,
   resolveUpgradeFlowAfterRedirect,
   type AccountProfile,
+  type UpgradeResolution,
 } from "../../auth/guestAuth";
 import { connectSocket } from "../../socket/socketClient";
 import { useGameStore } from "../../store/gameStore";
@@ -31,6 +32,13 @@ function applyProfileToStore(profile: AccountProfile, setAuthState: SetAuthState
     wins: profile.wins,
     losses: profile.losses,
   });
+}
+
+function getUpgradeDisplayMsg(result: UpgradeResolution, t: Translations): string {
+  if (result.kind === "upgrade_ok") return t.upgradeOk;
+  if (result.kind === "switch_ok") return t.switchOk(result.profile.wins, result.profile.losses);
+  if (result.kind === "auth_error") return t.authError;
+  return "";
 }
 
 function AccountCard({
@@ -123,8 +131,9 @@ export function LobbyScreen({ onGameStart }: Props) {
   const [createdCode, setCreatedCode] = useState("");
   const [error, setError] = useState("");
   const [isMatchmaking, setIsMatchmaking] = useState(false);
-  const [upgradeNotice, setUpgradeNotice] = useState("");
-  const [upgradeMessage, setUpgradeMessage] = useState("");
+  const [upgradeResult, setUpgradeResult] = useState<UpgradeResolution>({ kind: "none" });
+  const [showUpgradeNotice, setShowUpgradeNotice] = useState(false);
+  const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
 
   useEffect(() => {
     void refreshAccountSummary().then(({ nickname, wins, losses }) => {
@@ -148,18 +157,14 @@ export function LobbyScreen({ onGameStart }: Props) {
 
       if (result.kind === "upgrade_ok" || result.kind === "switch_ok") {
         applyProfileToStore(result.profile, setAuthState);
-        setUpgradeMessage(result.message);
-
+        setUpgradeResult(result);
         if (result.kind === "switch_ok") {
-          setUpgradeNotice(result.message);
-        } else {
-          setUpgradeNotice("");
+          setShowUpgradeNotice(true);
         }
         return;
       }
 
-      setUpgradeMessage(result.message);
-      setUpgradeNotice("");
+      setUpgradeResult(result);
     });
 
     return () => {
@@ -261,14 +266,14 @@ export function LobbyScreen({ onGameStart }: Props) {
   };
 
   const handleLinkGoogle = async () => {
-    setUpgradeMessage("");
-    setUpgradeNotice("");
+    setUpgradeResult({ kind: "none" });
+    setShowUpgradeNotice(false);
     await linkGoogleAccount();
   };
 
   const handleLogout = async () => {
-    setUpgradeMessage("");
-    setUpgradeNotice("");
+    setUpgradeResult({ kind: "none" });
+    setShowUpgradeNotice(false);
     const guestState = await logoutToGuestMode();
     setAuthState(guestState);
   };
@@ -373,10 +378,10 @@ export function LobbyScreen({ onGameStart }: Props) {
         </>
       )}
 
-      {upgradeNotice && (
+      {showUpgradeNotice && (
         <UpgradeNoticeDialog
-          message={upgradeNotice}
-          onClose={() => setUpgradeNotice("")}
+          message={upgradeMessage}
+          onClose={() => { setShowUpgradeNotice(false); setUpgradeResult({ kind: "none" }); }}
           t={t}
         />
       )}
