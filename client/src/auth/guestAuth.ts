@@ -50,9 +50,9 @@ export interface PendingUpgradeContext {
 
 export type UpgradeResolution =
   | { kind: "none" }
-  | { kind: "upgrade_ok"; profile: AccountProfile; message: string }
-  | { kind: "switch_ok"; profile: AccountProfile; message: string }
-  | { kind: "auth_error"; message: string };
+  | { kind: "upgrade_ok"; profile: AccountProfile }
+  | { kind: "switch_ok"; profile: AccountProfile }
+  | { kind: "auth_error" };
 
 interface ServerFinalizeUpgradeResponse {
   status: "UPGRADE_OK" | "SWITCH_OK" | "AUTH_REQUIRED" | "AUTH_INVALID" | "UPGRADE_FAILED";
@@ -387,7 +387,7 @@ export async function resolveUpgradeFlowAfterRedirect(): Promise<UpgradeResoluti
   if (!auth) {
     clearPendingUpgradeContext();
     clearUpgradeQueryFromUrl();
-    return { kind: "auth_error", message: "로그인 상태를 확인할 수 없습니다." };
+    return { kind: "auth_error" };
   }
 
   const finalizeResult = await emitSocketAck<ServerFinalizeUpgradeResponse>("finalize_google_upgrade", {
@@ -401,22 +401,14 @@ export async function resolveUpgradeFlowAfterRedirect(): Promise<UpgradeResoluti
   clearUpgradeQueryFromUrl();
 
   if ((finalizeResult.status !== "UPGRADE_OK" && finalizeResult.status !== "SWITCH_OK") || !finalizeResult.profile) {
-    return { kind: "auth_error", message: "구글 계정 정보를 불러오지 못했습니다." };
+    return { kind: "auth_error" };
   }
 
   if (finalizeResult.status === "SWITCH_OK") {
-    return {
-      kind: "switch_ok",
-      profile: finalizeResult.profile,
-      message: `이 Google 계정의 저장된 전적을 불러왔습니다. (${finalizeResult.profile.wins}승 ${finalizeResult.profile.losses}패) 현재 기기 게스트는 그대로 유지됩니다.`,
-    };
+    return { kind: "switch_ok", profile: finalizeResult.profile };
   }
 
-  return {
-    kind: "upgrade_ok",
-    profile: finalizeResult.profile,
-    message: "Google 계정 연동 완료. 이제 전적이 계정에 저장됩니다.",
-  };
+  return { kind: "upgrade_ok", profile: finalizeResult.profile };
 }
 
 export function getSocketAuthPayload() {

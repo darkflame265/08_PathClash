@@ -1,5 +1,6 @@
 import { Socket } from 'socket.io-client';
 import { useGameStore } from '../store/gameStore';
+import { translations } from '../i18n/translations';
 import type {
   ClientGameState, PathsRevealPayload, RoundStartPayload,
   ChatMessage, PlayerColor,
@@ -41,7 +42,7 @@ export function registerSocketHandlers(socket: Socket): () => void {
     if (!gs || !myColor) return;
 
     store().setWinner(myColor);
-    store().setGameOverMessage('The opponent has left the game.');
+    store().setGameOverMessage(translations[store().lang].opponentLeft);
     useGameStore.setState({
       gameState: { ...gs, phase: 'gameover' },
       rematchRequested: false,
