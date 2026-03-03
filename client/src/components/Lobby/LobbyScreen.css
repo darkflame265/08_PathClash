@@ -466,3 +466,26 @@
   flex-direction: column;
   gap: 0.75rem;
 }
+
+/* ── Language toggle ──────────────────────────────────── */
+.lang-toggle {
+  align-self: center;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--tile-border, #3a444d);
+  background: var(--tile, #2a3137);
+  color: var(--text-muted, #9aa4ae);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: var(--mono);
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.lang-toggle:hover {
+  border-color: var(--text-muted, #9aa4ae);
+  color: var(--text, #f0f4f8);
+}

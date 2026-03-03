@@ -380,6 +380,9 @@ export function LobbyScreen({ onGameStart }: Props) {
           t={t}
         />
       )}
+      <button className="lang-toggle" onClick={toggleLang}>
+        {lang.toUpperCase()}
+      </button>
     </div>
   );
 }
