@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import type { ClientPlayerState } from '../../types/game.types';
-import './PlayerInfo.css';
+import { useState } from "react";
+import type { ClientPlayerState } from "../../types/game.types";
+import { useLang } from "../../hooks/useLang";
+import "./PlayerInfo.css";
 
 interface Props {
   player: ClientPlayerState;
@@ -9,6 +10,7 @@ interface Props {
 
 export function PlayerInfo({ player, isMe }: Props) {
   const [showProfile, setShowProfile] = useState(false);
+  const { t } = useLang();
 
   if (!player) return null;
 
@@ -21,15 +23,31 @@ export function PlayerInfo({ player, isMe }: Props) {
         className={`nickname-btn color-${player.color}`}
         onClick={() => setShowProfile((value) => !value)}
       >
-        {player.nickname} {showProfile ? '▲' : '▼'}
+        {player.nickname} {showProfile ? "▲" : "▼"}
       </button>
 
       {showProfile && (
-        <div className={`profile-box ${isMe ? 'profile-box-self' : ''}`}>
-          <div className="profile-row"><span>닉네임</span><span>{player.nickname}</span></div>
-          <div className="profile-row"><span>전적</span><span>{player.stats.wins}승 {player.stats.losses}패</span></div>
-          <div className="profile-row"><span>승률</span><span>{winRate}%</span></div>
-          <div className="profile-row"><span>ID</span><span>{player.id.slice(0, 8)}</span></div>
+        <div className={`profile-box ${isMe ? "profile-box-self" : ""}`}>
+          <div className="profile-row">
+            <span>{t.profileNickname}</span>
+            <span>{player.nickname}</span>
+          </div>
+          <div className="profile-row">
+            <span>{t.profileRecord}</span>
+            <span>
+              {player.stats.wins}
+              {t.profileWins} {player.stats.losses}
+              {t.profileLosses}
+            </span>
+          </div>
+          <div className="profile-row">
+            <span>{t.profileWinRate}</span>
+            <span>{winRate}%</span>
+          </div>
+          <div className="profile-row">
+            <span>ID</span>
+            <span>{player.id.slice(0, 8)}</span>
+          </div>
         </div>
       )}
     </div>
