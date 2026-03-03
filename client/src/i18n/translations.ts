@@ -52,11 +52,11 @@ export const translations = {
     accountDesc: '전적과 닉네임은 이 기기 계정에 연결됩니다.',
     accountDescGoogle: '구글 계정과 연동 중입니다.',
     record: (w: number, l: number) => `(${w}승 ${l}패)`,
-    nickLabel: 'CURRENT NICKNAME',
+    nickLabel: 'CURRENT NICKNAME', // intentionally English (UI label)
     nickPlaceholder: '닉네임 입력 (미입력 시 Guest)',
-    upgradeTitle: 'UPGRADE ACCOUNT',
-    linkGoogle: 'Link Google Account',
-    logout: 'logout',
+    upgradeTitle: 'UPGRADE ACCOUNT', // intentionally English (brand copy)
+    linkGoogle: 'Link Google Account', // intentionally English (brand copy)
+    logout: 'logout', // intentionally English (brand copy)
 
     // Room created view
     roomCreatedTitle: '방 생성 완료',
