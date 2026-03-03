@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import type { PlayerColor } from '../../types/game.types';
 import { getSocket } from '../../socket/socketClient';
+import { useLang } from '../../hooks/useLang';
 import './GameOverOverlay.css';
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function GameOverOverlay({ winner, myColor }: Props) {
+  const { t } = useLang();
   const { rematchRequested, rematchRequestSent, gameOverMessage, setRematchRequestSent } = useGameStore();
   const isWinner = winner === myColor;
   const showRematch = !gameOverMessage;
@@ -27,7 +29,7 @@ export function GameOverOverlay({ winner, myColor }: Props) {
     <div className="gameover-overlay">
       <div className="gameover-box">
         <div className={`gameover-result ${isWinner ? 'win' : 'lose'}`}>
-          {isWinner ? 'YOU WIN!' : 'YOU LOSE'}
+          {isWinner ? t.youWin : t.youLose}
         </div>
 
         {gameOverMessage && (
@@ -35,16 +37,16 @@ export function GameOverOverlay({ winner, myColor }: Props) {
         )}
 
         {rematchRequested && (
-          <div className="rematch-notice">Opponent requested a rematch.</div>
+          <div className="rematch-notice">{t.rematchRequested}</div>
         )}
 
         {rematchRequestSent && (
-          <div className="rematch-notice">Rematch request sent.</div>
+          <div className="rematch-notice">{t.rematchSent}</div>
         )}
 
         {showRematch && (
           <button className="rematch-btn" onClick={handleRematch}>
-            REMATCH
+            {t.rematchBtn}
           </button>
         )}
       </div>
