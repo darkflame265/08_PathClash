@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { getSocket } from "../../socket/socketClient";
 import { registerSocketHandlers } from "../../socket/socketHandlers";
 import { useGameStore } from "../../store/gameStore";
+import { useLang } from "../../hooks/useLang";
 import { ChatPanel } from "./ChatPanel";
 import { GameGrid } from "./GameGrid";
 import { GameOverOverlay } from "./GameOverOverlay";
@@ -48,12 +49,9 @@ function getRoleIcon(role: "attacker" | "escaper") {
   return role === "attacker" ? "ATK" : "RUN";
 }
 
-function getRoleLabel(role: "attacker" | "escaper") {
-  return role === "attacker" ? "공격" : "도망";
-}
-
 export function GameScreen({ onLeaveToLobby }: Props) {
   const { gameState, myColor, roundInfo, winner, myPath, gameOverMessage, rematchRequestSent, setRematchRequestSent } = useGameStore();
+  const { t } = useLang();
   const gridAreaRef = useRef<HTMLDivElement>(null);
   const cellSize = useAdaptiveCellSize(gridAreaRef);
   const scale = cellSize / DEFAULT_CELL;
@@ -103,7 +101,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   }, [gameOverMessage, onLeaveToLobby, rematchRequestSent, setRematchRequestSent, winner]);
 
   if (!gameState) {
-    return <div className="gs-loading">게임 로딩 중...</div>;
+    return <div className="gs-loading">{t.loading}</div>;
   }
 
   const opponentColor = myColor === "red" ? "blue" : "red";
@@ -120,7 +118,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
           {gameState.phase === "moving" && (
             <div className="gs-phase-moving">
               <span className="gs-moving-pip" />
-              이동 중...
+              {t.moving}
             </div>
           )}
         </div>
@@ -128,14 +126,14 @@ export function GameScreen({ onLeaveToLobby }: Props) {
           <button className="gs-lobby-btn" onClick={onLeaveToLobby}>
             Lobby
           </button>
-          <MuteButton />
+          <MuteButton muteOnLabel={t.muteOn} muteOffLabel={t.muteOff} />
         </div>
       </div>
 
       <div className={`gs-player-card gs-opponent gs-color-${opponentColor}`}>
         <div className="gs-role-badge">
           <span className="gs-role-icon">{getRoleIcon(opponent.role)}</span>
-          <span className="gs-role-label">{getRoleLabel(opponent.role)}</span>
+          <span className="gs-role-label">{opponent.role === 'attacker' ? t.roleAttack : t.roleEscape}</span>
         </div>
         <div className="gs-player-mid">
           <PlayerInfo player={opponent} isMe={false} />
@@ -161,7 +159,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       <div className={`gs-player-card gs-self gs-color-${myColor} gs-role-${me?.role === "attacker" ? "atk" : "run"}`}>
         <div className={`gs-role-badge gs-role-badge-self gs-role-badge-${me?.role === "attacker" ? "atk" : "run"}`}>
           <span className="gs-role-icon">{getRoleIcon(me?.role ?? "escaper")}</span>
-          <span className="gs-role-label">{getRoleLabel(me?.role ?? "escaper")}</span>
+          <span className="gs-role-label">{(me?.role ?? 'escaper') === 'attacker' ? t.roleAttack : t.roleEscape}</span>
         </div>
         <div className="gs-player-mid">
           <PlayerInfo player={me!} isMe={true} />
@@ -172,20 +170,20 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         </div>
       </div>
 
-      <PathProgressBar current={myPath.length} max={gameState.pathPoints} />
+      <PathProgressBar current={myPath.length} max={gameState.pathPoints} pathPointsLabel={t.pathPoints} />
 
       <ChatPanel />
     </div>
   );
 }
 
-function PathProgressBar({ current, max }: { current: number; max: number }) {
+function PathProgressBar({ current, max, pathPointsLabel }: { current: number; max: number; pathPointsLabel: string }) {
   const isFull = current >= max;
 
   return (
     <div className={`gs-path-bar${isFull ? " gs-path-full" : ""}`}>
       <div className="gs-path-header">
-        <span className="gs-path-label">경로 포인트</span>
+        <span className="gs-path-label">{pathPointsLabel}</span>
         <span className="gs-path-count">
           <span className="gs-path-current">{current}</span>
           <span className="gs-path-sep"> / </span>
@@ -204,13 +202,13 @@ function PathProgressBar({ current, max }: { current: number; max: number }) {
   );
 }
 
-function MuteButton() {
+function MuteButton({ muteOnLabel, muteOffLabel }: { muteOnLabel: string; muteOffLabel: string }) {
   const { isMuted, toggleMute } = useGameStore();
   return (
     <button
       className="gs-mute-btn"
       onClick={toggleMute}
-      title={isMuted ? "음소거 해제" : "음소거"}
+      title={isMuted ? muteOffLabel : muteOnLabel}
     >
       {isMuted ? "Off" : "On"}
     </button>
