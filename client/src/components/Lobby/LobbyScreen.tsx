@@ -9,6 +9,8 @@ import {
 } from "../../auth/guestAuth";
 import { connectSocket } from "../../socket/socketClient";
 import { useGameStore } from "../../store/gameStore";
+import { useLang } from "../../hooks/useLang";
+import type { Translations } from "../../i18n/translations";
 import "./LobbyScreen.css";
 
 type LobbyView = "main" | "create" | "join";
@@ -40,6 +42,7 @@ function AccountCard({
   upgradeMessage,
   onLinkGoogle,
   onLogout,
+  t,
 }: {
   myNickname: string;
   setNickname: (value: string) => void;
@@ -49,38 +52,39 @@ function AccountCard({
   upgradeMessage: string;
   onLinkGoogle: () => void;
   onLogout: () => void;
+  t: Translations;
 }) {
   return (
     <div className="lobby-card account-card">
       <div className="account-header">
-        <h2 data-step="G">게스트 계정</h2>
+        <h2 data-step="G">{t.accountTitle}</h2>
         {!isGuestUser && (
           <button className="account-logout" onClick={onLogout}>
-            logout
+            {t.logout}
           </button>
         )}
       </div>
 
       {isGuestUser ? (
         <p>
-          전적과 닉네임은 이 기기 계정에 연결됩니다.{" "}
+          {t.accountDesc}{" "}
           <span className="account-record">
-            ({accountWins}승 {accountLosses}패)
+            {t.record(accountWins, accountLosses)}
           </span>
         </p>
       ) : (
         <p>
-          구글 계정과 연동 중입니다.{" "}
+          {t.accountDescGoogle}{" "}
           <span className="account-record">
-            ({accountWins}승 {accountLosses}패)
+            {t.record(accountWins, accountLosses)}
           </span>
         </p>
       )}
 
-      <label className="account-input-label">CURRENT NICKNAME</label>
+      <label className="account-input-label">{t.nickLabel}</label>
       <input
         className="lobby-input"
-        placeholder="닉네임 입력 (미입력 시 Guest)"
+        placeholder={t.nickPlaceholder}
         value={myNickname}
         onChange={(e) => setNickname(e.target.value)}
         maxLength={16}
@@ -88,10 +92,10 @@ function AccountCard({
 
       {isGuestUser && (
         <div className="account-upgrade">
-          <div className="account-upgrade-title">UPGRADE ACCOUNT</div>
+          <div className="account-upgrade-title">{t.upgradeTitle}</div>
           <button className="google-link-btn" onClick={onLinkGoogle}>
             <span className="google-link-mark">G</span>
-            <span>Link Google Account</span>
+            <span>{t.linkGoogle}</span>
           </button>
         </div>
       )}
@@ -113,6 +117,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     accountLosses,
     setAuthState,
   } = useGameStore();
+  const { lang, toggleLang, t } = useLang();
   const [view, setView] = useState<LobbyView>("main");
   const [joinCode, setJoinCode] = useState("");
   const [createdCode, setCreatedCode] = useState("");
@@ -223,7 +228,7 @@ export function LobbyScreen({ onGameStart }: Props) {
 
   const handleJoinRoom = async () => {
     if (!joinCode.trim()) {
-      setError("코드를 입력해주세요.");
+      setError(t.joinError);
       return;
     }
 
@@ -278,6 +283,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       upgradeMessage={upgradeMessage}
       onLinkGoogle={() => void handleLinkGoogle()}
       onLogout={() => void handleLogout()}
+      t={t}
     />
   );
 
@@ -288,26 +294,26 @@ export function LobbyScreen({ onGameStart }: Props) {
 
       {view === "create" && (
         <div className="lobby-card">
-          <h2 data-step="C">방 생성 완료</h2>
-          <p>친구에게 아래 코드를 공유해주세요.</p>
+          <h2 data-step="C">{t.roomCreatedTitle}</h2>
+          <p>{t.roomCreatedDesc}</p>
           <div className="room-code">{createdCode}</div>
-          <p className="waiting-text">상대가 입장할 때까지 기다리는 중...</p>
+          <p className="waiting-text">{t.waitingText}</p>
         </div>
       )}
 
       {view === "join" ? (
         <div className="lobby-card">
-          <h2 data-step="3">방 참가</h2>
+          <h2 data-step="3">{t.joinTitle}</h2>
           <input
             className="lobby-input code-input"
-            placeholder="방 코드 입력"
+            placeholder={t.joinPlaceholder}
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
             maxLength={6}
           />
           {error && <p className="error-msg">{error}</p>}
           <button className="lobby-btn primary" onClick={() => void handleJoinRoom()}>
-            입장
+            {t.joinBtn}
           </button>
           <button
             className="lobby-btn secondary"
@@ -316,50 +322,50 @@ export function LobbyScreen({ onGameStart }: Props) {
               setError("");
             }}
           >
-            뒤로
+            {t.backBtn}
           </button>
         </div>
       ) : (
         <>
           <div className="lobby-card">
-            <h2 data-step="2">AI 대전</h2>
-            <p>AI와 연습 대전을 즐겨보세요. 전적은 저장되지 않습니다.</p>
+            <h2 data-step="2">{t.aiTitle}</h2>
+            <p>{t.aiDesc}</p>
             <button className="lobby-btn ai" onClick={() => void handleAiMatch()}>
-              AI와 대전 시작
+              {t.aiBtn}
             </button>
           </div>
 
           <div className="lobby-card">
-            <h2 data-step="3">친구 대전</h2>
+            <h2 data-step="3">{t.friendTitle}</h2>
             <div className="btn-divider">
               <button className="lobby-btn primary" onClick={() => void handleCreateRoom()}>
-                방 만들기
+                {t.createRoomBtn}
               </button>
               <button className="lobby-btn secondary" onClick={() => setView("join")}>
-                코드 입력
+                {t.enterCodeBtn}
               </button>
             </div>
           </div>
 
           <div className={`lobby-card ${isMatchmaking ? "is-matchmaking" : ""}`}>
-            <h2 data-step="4">랜덤 매칭</h2>
+            <h2 data-step="4">{t.randomTitle}</h2>
             {isMatchmaking ? (
               <>
                 <div className="matchmaking-status">
                   <div className="matchmaking-status-head">
                     <span className="matchmaking-dot" />
-                    <strong>매칭 중...</strong>
+                    <strong>{t.matchmakingHead}</strong>
                   </div>
                   <div className="spinner" />
-                  <p>상대를 찾고 있습니다. 이 모드만 전적이 반영됩니다.</p>
+                  <p>{t.matchmakingDesc}</p>
                 </div>
                 <button className="lobby-btn cancel" onClick={handleCancelRandom}>
-                  매칭 취소
+                  {t.cancelBtn}
                 </button>
               </>
             ) : (
               <button className="lobby-btn accent" onClick={() => void handleRandom()}>
-                매칭 시작
+                {t.startBtn}
               </button>
             )}
             {error && <p className="error-msg">{error}</p>}
@@ -371,6 +377,7 @@ export function LobbyScreen({ onGameStart }: Props) {
         <UpgradeNoticeDialog
           message={upgradeNotice}
           onClose={() => setUpgradeNotice("")}
+          t={t}
         />
       )}
     </div>
@@ -380,18 +387,20 @@ export function LobbyScreen({ onGameStart }: Props) {
 function UpgradeNoticeDialog({
   message,
   onClose,
+  t,
 }: {
   message: string;
   onClose: () => void;
+  t: Translations;
 }) {
   return (
     <div className="upgrade-modal-backdrop">
       <div className="upgrade-modal">
-        <h3>기존 Google 계정으로 전환되었습니다</h3>
+        <h3>{t.switchedTitle}</h3>
         <p>{message}</p>
         <div className="upgrade-modal-actions">
           <button className="lobby-btn primary" onClick={onClose}>
-            확인
+            {t.confirmBtn}
           </button>
         </div>
       </div>
