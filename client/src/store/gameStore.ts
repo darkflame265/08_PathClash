@@ -4,6 +4,7 @@ import type {
   CollisionEvent, ChatMessage, PathsRevealPayload,
   RoundStartPayload,
 } from '../types/game.types';
+import { type Lang } from '../i18n/translations';
 
 export interface AnimationState {
   isAnimating: boolean;
@@ -57,6 +58,10 @@ interface GameStore {
 
   // Settings
   isMuted: boolean;
+
+  // i18n
+  lang: Lang;
+  setLang: (lang: Lang) => void;
 
   // Actions
   setNickname: (n: string) => void;
@@ -121,6 +126,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   rematchRequestSent: false,
   messages: [],
   isMuted: false,
+  lang: (() => {
+    const stored = localStorage.getItem('lang');
+    return stored === 'en' || stored === 'kr' ? stored : 'en';
+  })() as Lang,
+  setLang: (lang: Lang) => {
+    localStorage.setItem('lang', lang);
+    set({ lang });
+  },
 
   setNickname: (n) => set({ myNickname: n }),
   setAuthState: ({ ready, userId, accessToken, isGuestUser, nickname, wins, losses }) =>
