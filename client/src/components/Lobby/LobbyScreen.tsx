@@ -387,20 +387,20 @@ export function LobbyScreen({ onGameStart }: Props) {
       )}
       <div className="lang-toggle" role="group" aria-label="Language toggle">
         <button
-          className={`lang-toggle-btn ${lang === "kr" ? "is-active" : ""}`}
-          onClick={() => setLang("kr")}
-          aria-pressed={lang === "kr"}
-          type="button"
-        >
-          KR
-        </button>
-        <button
           className={`lang-toggle-btn ${lang === "en" ? "is-active" : ""}`}
           onClick={() => setLang("en")}
           aria-pressed={lang === "en"}
           type="button"
         >
           EN
+        </button>
+        <button
+          className={`lang-toggle-btn ${lang === "kr" ? "is-active" : ""}`}
+          onClick={() => setLang("kr")}
+          aria-pressed={lang === "kr"}
+          type="button"
+        >
+          KR
         </button>
       </div>
     </div>
