@@ -57,7 +57,7 @@ function AccountCard({
   return (
     <div className="lobby-card account-card">
       <div className="account-header">
-        <h2 data-step="G">{t.accountTitle}</h2>
+        <h2 data-step={t.accountTitleKey === "guest" ? "G" : "A"}>{t.accountTitleText}</h2>
         {!isGuestUser && (
           <button className="account-logout" onClick={onLogout}>
             {t.logout}
