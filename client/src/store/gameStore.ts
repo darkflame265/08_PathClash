@@ -128,8 +128,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isMuted: false,
   lang: (() => {
     const stored = localStorage.getItem('lang');
-    return stored === 'en' || stored === 'kr' ? stored : 'en';
-  })() as Lang,
+    return (stored === 'en' || stored === 'kr') ? stored : 'en';
+  })(),
   setLang: (lang: Lang) => {
     localStorage.setItem('lang', lang);
     set({ lang });
