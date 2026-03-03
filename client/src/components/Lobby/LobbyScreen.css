@@ -16,7 +16,13 @@
   font-size: 2.75rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #EF4444 30%, #3b82f6 100%);
+  background: linear-gradient(
+    135deg,
+    #ef4444 10%,
+    #8b5cf6 38%,
+    #3b82f6 72%,
+    #60a5fa 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -25,8 +31,8 @@
 
 /* ── Card ─────────────────────────────────────────────── */
 .lobby-card {
-  background: var(--panel, #1E252B);
-  border: 1px solid var(--tile-border, #3A444D);
+  background: var(--panel, #1e252b);
+  border: 1px solid var(--tile-border, #3a444d);
   border-radius: 1.5rem;
   padding: 1.75rem;
   display: flex;
@@ -47,7 +53,7 @@
   gap: 0.75rem;
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--text, #F0F4F8);
+  color: var(--text, #f0f4f8);
   margin-bottom: 0.25rem;
 }
 
@@ -70,7 +76,7 @@
 
 .lobby-card p {
   font-size: 0.875rem;
-  color: var(--text-muted, #9AA4AE);
+  color: var(--text-muted, #9aa4ae);
 }
 
 .account-card {
@@ -91,7 +97,7 @@
 .account-logout {
   border: none;
   background: transparent;
-  color: var(--text-muted, #9AA4AE);
+  color: var(--text-muted, #9aa4ae);
   font-size: 0.85rem;
   font-weight: 700;
   text-transform: lowercase;
@@ -111,7 +117,7 @@
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.14em;
-  color: var(--text-muted, #9AA4AE);
+  color: var(--text-muted, #9aa4ae);
   text-transform: uppercase;
 }
 
@@ -130,7 +136,7 @@
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.18em;
-  color: var(--text-muted, #9AA4AE);
+  color: var(--text-muted, #9aa4ae);
   text-transform: uppercase;
 }
 
@@ -165,7 +171,7 @@
   color: #1f2937;
   font-size: 0.95rem;
   font-weight: 700;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
 }
 
 .google-link-btn:hover {
@@ -193,19 +199,23 @@
 
 /* ── Inputs ───────────────────────────────────────────── */
 .lobby-input {
-  background: var(--tile, #2A3137);
-  border: 1px solid var(--tile-border, #3A444D);
+  background: var(--tile, #2a3137);
+  border: 1px solid var(--tile-border, #3a444d);
   border-radius: 0.75rem;
   padding: 0.75rem 1rem;
-  color: var(--text, #F0F4F8);
+  color: var(--text, #f0f4f8);
   font-size: 0.95rem;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   width: 100%;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
-.lobby-input::placeholder { color: var(--text-muted, #9AA4AE); }
+.lobby-input::placeholder {
+  color: var(--text-muted, #9aa4ae);
+}
 
 .lobby-input:focus {
   border-color: var(--primary, #386641);
@@ -227,13 +237,15 @@
   border: none;
   font-size: 0.95rem;
   font-weight: 700;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   transition: all 0.15s;
   letter-spacing: 0.01em;
   width: 100%;
 }
 
-.lobby-btn:active { transform: scale(0.98); }
+.lobby-btn:active {
+  transform: scale(0.98);
+}
 
 /* Primary — forest green */
 .lobby-btn.primary {
@@ -260,7 +272,7 @@
 /* AI — red accent */
 .lobby-btn.ai {
   background: rgba(239, 68, 68, 0.12);
-  color: var(--red, #EF4444);
+  color: var(--red, #ef4444);
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 .lobby-btn.ai:hover {
@@ -279,7 +291,7 @@
   overflow: hidden;
 }
 .lobby-btn.accent::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -2px;
   background: linear-gradient(135deg, #386641, #22c55e, #386641);
@@ -292,11 +304,13 @@
   background: var(--primary-hov, #2a4d31);
   box-shadow: 0 6px 28px rgba(56, 102, 65, 0.6);
 }
-.lobby-btn.accent:hover::before { opacity: 0.4; }
+.lobby-btn.accent:hover::before {
+  opacity: 0.4;
+}
 
 .lobby-btn.cancel {
   background: rgba(239, 68, 68, 0.12);
-  color: var(--red, #EF4444);
+  color: var(--red, #ef4444);
   border: 1px solid rgba(239, 68, 68, 0.32);
 }
 
@@ -313,8 +327,8 @@
   letter-spacing: 0.45em;
   text-align: center;
   color: #fbbf24;
-  background: var(--tile, #2A3137);
-  border: 1px solid var(--tile-border, #3A444D);
+  background: var(--tile, #2a3137);
+  border: 1px solid var(--tile-border, #3a444d);
   border-radius: 0.75rem;
   padding: 1.1rem;
   text-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
@@ -322,7 +336,7 @@
 
 .waiting-text {
   text-align: center;
-  color: var(--text-muted, #9AA4AE);
+  color: var(--text-muted, #9aa4ae);
   font-size: 0.875rem;
   display: flex;
   align-items: center;
@@ -331,7 +345,7 @@
 }
 
 .waiting-text::before {
-  content: '';
+  content: "";
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -344,18 +358,29 @@
 .spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid var(--tile-border, #3A444D);
+  border: 3px solid var(--tile-border, #3a444d);
   border-top-color: var(--primary, #386641);
   border-radius: 50%;
   animation: spin 0.75s linear infinite;
   margin: 0.75rem auto;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.5; transform: scale(1.2); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
 }
 
 .is-matchmaking {
@@ -372,7 +397,7 @@
   display: flex;
   align-items: center;
   gap: 0.625rem;
-  color: var(--text, #F0F4F8);
+  color: var(--text, #f0f4f8);
   font-size: 1rem;
 }
 
@@ -417,8 +442,8 @@
 
 .upgrade-modal {
   width: min(100%, 28rem);
-  background: var(--panel, #1E252B);
-  border: 1px solid var(--tile-border, #3A444D);
+  background: var(--panel, #1e252b);
+  border: 1px solid var(--tile-border, #3a444d);
   border-radius: 1.25rem;
   padding: 1.4rem;
   display: flex;
@@ -429,11 +454,11 @@
 
 .upgrade-modal h3 {
   font-size: 1.1rem;
-  color: var(--text, #F0F4F8);
+  color: var(--text, #f0f4f8);
 }
 
 .upgrade-modal p {
-  color: var(--text-muted, #9AA4AE);
+  color: var(--text-muted, #9aa4ae);
 }
 
 .upgrade-modal-actions {
