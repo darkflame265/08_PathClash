@@ -152,9 +152,9 @@ export const translations: Record<Lang, Translations> = {
     pathPoints: "경로 포인트",
     muteOn: "소리 켜짐",
     muteOff: "음소거",
-    youWin: "YOU WIN!",
-    youLose: "YOU LOSE",
-    rematchBtn: "REMATCH",
+    youWin: "YOU WIN!", // intentionally English (game result copy)
+    youLose: "YOU LOSE", // intentionally English (game result copy)
+    rematchBtn: "REMATCH", // intentionally English (game action copy)
     rematchRequested: "상대가 리매치를 요청했습니다.",
     rematchSent: "리매치 요청을 보냈습니다.",
     upgradeOk: "Google 계정 연동 완료. 이제 전적이 계정에 저장됩니다.",
