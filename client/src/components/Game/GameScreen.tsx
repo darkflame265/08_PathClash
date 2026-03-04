@@ -204,14 +204,13 @@ function PathProgressBar({ current, max, pathPointsLabel }: { current: number; m
 
 function MuteButton() {
   const { isMuted, toggleMute } = useGameStore();
-  const { t } = useLang();
   return (
     <button
       className="gs-mute-btn"
       onClick={toggleMute}
-      title={isMuted ? t.muteOff : t.muteOn}
+      title={isMuted ? "SFX OFF" : "SFX ON"}
     >
-      {isMuted ? "Off" : "On"}
+      {isMuted ? "SFX OFF" : "SFX ON"}
     </button>
   );
 }

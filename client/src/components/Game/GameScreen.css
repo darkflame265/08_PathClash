@@ -42,6 +42,7 @@
 .gs-timer-slot {
   flex: 1;
   min-width: 0;
+  max-width: calc(100% - 11.5rem);
 }
 
 .gs-utility-buttons {
@@ -76,8 +77,13 @@
 }
 
 .gs-mute-btn {
-  font-size: clamp(0.75rem, calc(1rem * var(--gs-scale, 1)), 1.2rem);
-  padding: calc(0.35rem * var(--gs-scale, 1)) calc(0.5rem * var(--gs-scale, 1));
+  font-size: clamp(0.62rem, calc(0.78rem * var(--gs-scale, 1)), 0.82rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: calc(0.45rem * var(--gs-scale, 1)) calc(0.65rem * var(--gs-scale, 1));
+  min-width: calc(5.8rem * var(--gs-scale, 1));
+  white-space: nowrap;
 }
 
 .gs-lobby-btn:hover,
