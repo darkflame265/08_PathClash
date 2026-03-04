@@ -100,7 +100,6 @@ function AccountCard({
 
       {isGuestUser && (
         <div className="account-upgrade">
-          <div className="account-upgrade-title">{t.upgradeTitle}</div>
           <button className="google-link-btn" onClick={onLinkGoogle}>
             <span className="google-link-mark">G</span>
             <span>{t.linkGoogle}</span>
