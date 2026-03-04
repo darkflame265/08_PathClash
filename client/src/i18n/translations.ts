@@ -59,7 +59,7 @@ export type Translations = {
 export const translations: Record<Lang, Translations> = {
   en: {
     accountTitleKey: "google",
-    accountTitleText: "Account",
+    accountTitleText: "User Information",
     accountDesc: "Stats and nickname are linked to this device.",
     accountDescGoogle: "Linked with your Google account.",
     record: (w: number, l: number) => `(${w}W ${l}L)`,
@@ -79,7 +79,7 @@ export const translations: Record<Lang, Translations> = {
     backBtn: "Back",
     joinError: "Please enter a room code.",
 
-    aiTitle: "vs AI",
+    aiTitle: "AI Match",
     aiDesc: "Practice against AI. Stats are not recorded.",
     aiBtn: "Start AI Match",
 
@@ -120,7 +120,7 @@ export const translations: Record<Lang, Translations> = {
   },
   kr: {
     accountTitleKey: "guest",
-    accountTitleText: "게스트 계정",
+    accountTitleText: "유저 정보",
     accountDesc: "전적과 닉네임은 이 기기 계정에 연결됩니다.",
     accountDescGoogle: "구글 계정과 연동 중입니다.",
     record: (w: number, l: number) => `(${w}승 ${l}패)`,
