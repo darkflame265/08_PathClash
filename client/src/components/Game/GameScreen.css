@@ -42,7 +42,7 @@
 .gs-timer-slot {
   flex: 1;
   min-width: 0;
-  max-width: calc(100% - 11.5rem);
+  max-width: calc(100% - 10.25rem);
 }
 
 .gs-utility-buttons {
@@ -81,8 +81,8 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: calc(0.45rem * var(--gs-scale, 1)) calc(0.65rem * var(--gs-scale, 1));
-  min-width: calc(5.8rem * var(--gs-scale, 1));
+  padding: calc(0.45rem * var(--gs-scale, 1)) calc(0.5rem * var(--gs-scale, 1));
+  min-width: calc(4.9rem * var(--gs-scale, 1));
   white-space: nowrap;
 }
 

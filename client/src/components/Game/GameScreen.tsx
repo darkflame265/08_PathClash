@@ -123,10 +123,10 @@ export function GameScreen({ onLeaveToLobby }: Props) {
           )}
         </div>
         <div className="gs-utility-buttons">
+          <MuteButton />
           <button className="gs-lobby-btn" onClick={onLeaveToLobby}>
             Lobby
           </button>
-          <MuteButton />
         </div>
       </div>
 
