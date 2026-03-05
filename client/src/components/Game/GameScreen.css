@@ -10,8 +10,12 @@
   align-items: stretch;
   /* gap/padding은 --gs-scale에 비례 */
   gap: calc(0.5rem * var(--gs-scale, 1));
-  padding: calc(0.75rem * var(--gs-scale, 1));
+  padding-top: calc(calc(0.75rem * var(--gs-scale, 1)) + env(safe-area-inset-top, 0px));
+  padding-right: calc(0.75rem * var(--gs-scale, 1));
+  padding-left: calc(0.75rem * var(--gs-scale, 1));
+  padding-bottom: calc(calc(0.75rem * var(--gs-scale, 1)) + env(safe-area-inset-bottom, 0px));
   height: 100svh; /* fixed height → grid-area가 flex:1로 정확한 공간을 받음 */
+  height: 100dvh;
   overflow: visible; /* profile 드롭다운이 카드 바깥으로 나와도 보임 */
   width: 100%;
   max-width: 600px;
@@ -620,7 +624,10 @@
 /* ── 매우 좁은 너비 (작은 폰 세로) ─────────────────────────── */
 @media (max-width: 360px) {
   .game-screen {
-    padding: calc(0.375rem * var(--gs-scale, 1));
+    padding-top: calc(calc(0.375rem * var(--gs-scale, 1)) + env(safe-area-inset-top, 0px));
+    padding-right: calc(0.375rem * var(--gs-scale, 1));
+    padding-left: calc(0.375rem * var(--gs-scale, 1));
+    padding-bottom: calc(calc(0.375rem * var(--gs-scale, 1)) + env(safe-area-inset-bottom, 0px));
     gap: calc(0.25rem * var(--gs-scale, 1));
   }
 }

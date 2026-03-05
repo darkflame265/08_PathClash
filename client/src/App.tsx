@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 import { initializeGuestAuth, installNativeAuthCallbackHandler, onAuthStateChanged, syncNickname } from './auth/guestAuth';
 import { GameScreen } from './components/Game/GameScreen';
 import { LobbyScreen } from './components/Lobby/LobbyScreen';
@@ -56,11 +58,33 @@ function App() {
     };
   }, [authReady, myNickname]);
 
-  const handleReturnToLobby = () => {
+  const handleReturnToLobby = useCallback(() => {
     disconnectSocket();
     useGameStore.getState().resetGame();
     setView('lobby');
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    let cleanup = () => {};
+
+    void CapacitorApp.addListener('backButton', () => {
+      if (view === 'game') {
+        handleReturnToLobby();
+        return;
+      }
+      void CapacitorApp.exitApp();
+    }).then((listener) => {
+      cleanup = () => {
+        void listener.remove();
+      };
+    });
+
+    return () => {
+      cleanup();
+    };
+  }, [handleReturnToLobby, view]);
 
   if (!authReady) {
     return <div className="app app-loading">Connecting guest session...</div>;
