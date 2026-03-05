@@ -1,4 +1,6 @@
 import type { Session } from "@supabase/supabase-js";
+import { App as CapacitorApp } from "@capacitor/app";
+import { Capacitor, type PluginListenerHandle } from "@capacitor/core";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 import { connectSocket } from "../socket/socketClient";
 
@@ -68,6 +70,10 @@ interface StoredGuestSession {
 const UPGRADE_CONTEXT_KEY = "pathclash.pendingUpgrade";
 const GUEST_SESSION_KEY = "pathclash.guestSession";
 
+function getNativeRedirectUrl() {
+  return import.meta.env.VITE_NATIVE_REDIRECT_URL?.trim() || "com.pathclash.game://auth/callback";
+}
+
 function getConfiguredAppUrl(): string | null {
   const raw = import.meta.env.VITE_APP_URL?.trim();
   if (!raw) return null;
@@ -81,8 +87,62 @@ function getConfiguredAppUrl(): string | null {
 }
 
 function buildRedirectUrl() {
+  if (Capacitor.isNativePlatform()) {
+    return getNativeRedirectUrl();
+  }
   const origin = getConfiguredAppUrl() ?? window.location.origin;
   return `${origin}${window.location.pathname}`;
+}
+
+function parseUrlSession(rawUrl: string) {
+  const url = new URL(rawUrl);
+  const hashParams = new URLSearchParams(url.hash.startsWith("#") ? url.hash.slice(1) : url.hash);
+  const queryParams = new URLSearchParams(url.search);
+
+  const accessToken = hashParams.get("access_token");
+  const refreshToken = hashParams.get("refresh_token");
+  const code = queryParams.get("code");
+
+  return { accessToken, refreshToken, code };
+}
+
+async function applyAuthCallbackUrl(rawUrl: string) {
+  if (!supabase) return;
+
+  try {
+    const { accessToken, refreshToken, code } = parseUrlSession(rawUrl);
+
+    if (accessToken && refreshToken) {
+      await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+      return;
+    }
+
+    if (code) {
+      await supabase.auth.exchangeCodeForSession(code);
+    }
+  } catch (error) {
+    console.error("[auth] failed to handle native auth callback", error);
+  }
+}
+
+export async function installNativeAuthCallbackHandler(): Promise<() => void> {
+  if (!Capacitor.isNativePlatform()) return () => {};
+
+  const launch = await CapacitorApp.getLaunchUrl();
+  if (launch?.url) {
+    await applyAuthCallbackUrl(launch.url);
+  }
+
+  const listener: PluginListenerHandle = await CapacitorApp.addListener("appUrlOpen", (event) => {
+    void applyAuthCallbackUrl(event.url);
+  });
+
+  return () => {
+    void listener.remove();
+  };
 }
 
 function toAuthState(session: Session | null, snapshot?: AccountSnapshot): AuthStatePayload {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { initializeGuestAuth, onAuthStateChanged, syncNickname } from './auth/guestAuth';
+import { initializeGuestAuth, installNativeAuthCallbackHandler, onAuthStateChanged, syncNickname } from './auth/guestAuth';
 import { GameScreen } from './components/Game/GameScreen';
 import { LobbyScreen } from './components/Lobby/LobbyScreen';
 import { disconnectSocket } from './socket/socketClient';
@@ -15,12 +15,15 @@ function App() {
 
   useEffect(() => {
     let active = true;
+    let cleanupNativeAuth = () => {};
 
-    initializeGuestAuth().then((payload) => {
+    void (async () => {
+      cleanupNativeAuth = await installNativeAuthCallbackHandler();
+      const payload = await initializeGuestAuth();
       if (active) {
         setAuthState(payload);
       }
-    });
+    })();
 
     const unsubscribe = onAuthStateChanged((payload) => {
       if (active) {
@@ -30,6 +33,7 @@ function App() {
 
     return () => {
       active = false;
+      cleanupNativeAuth();
       unsubscribe();
     };
   }, [setAuthState]);

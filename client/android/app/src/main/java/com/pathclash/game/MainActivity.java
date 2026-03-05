@@ -1,4 +1,4 @@
-package com.yourname.pathclash;
+package com.pathclash.game;
 
 import com.getcapacitor.BridgeActivity;
 
