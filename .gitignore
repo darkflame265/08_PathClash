@@ -10,3 +10,8 @@ server/.env.*
 !.env.example
 !client/.env.example
 !server/.env.example
+
+# Android signing secrets
+client/android/*.jks
+client/android/*.keystore
+client/android/keystore.properties

@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "android:sync": "npx cap sync android",
+    "android:bundle": "cd android && gradlew.bat bundleRelease",
     "lint": "eslint .",
     "preview": "vite preview"
   },
