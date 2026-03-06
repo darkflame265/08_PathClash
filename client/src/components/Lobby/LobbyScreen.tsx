@@ -20,7 +20,8 @@ interface Props {
   onGameStart: () => void;
 }
 
-const POLICY_URL = import.meta.env.VITE_POLICY_URL?.trim() || "https://pathclash.com/privacy.html";
+const POLICY_URL_KR = import.meta.env.VITE_POLICY_URL_KR?.trim() || "https://pathclash.com/privacy.html";
+const POLICY_URL_EN = import.meta.env.VITE_POLICY_URL_EN?.trim() || "https://pathclash.com/privacy-en.html";
 const DONATE_URL = import.meta.env.VITE_DONATE_URL?.trim() || "https://pathclash.com";
 
 type SetAuthState = ReturnType<typeof useGameStore.getState>["setAuthState"];
@@ -128,6 +129,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     setAuthState,
   } = useGameStore();
   const { lang, setLang, t } = useLang();
+  const policyUrl = lang === "en" ? POLICY_URL_EN : POLICY_URL_KR;
   const [view, setView] = useState<LobbyView>("main");
   const [joinCode, setJoinCode] = useState("");
   const [createdCode, setCreatedCode] = useState("");
@@ -408,7 +410,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       <div className="lobby-utility-links">
         <a
           className="lobby-utility-link"
-          href={POLICY_URL}
+          href={policyUrl}
           target="_blank"
           rel="noreferrer"
         >
