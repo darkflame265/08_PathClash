@@ -34,6 +34,8 @@ export function PlayerPiece({ color, position, cellSize, isAttacker, isHit, isEx
       className={classes}
       style={{
         transform: `translate(${x}px, ${y}px) translate(-50%, -50%)`,
+        ['--piece-x' as string]: `${x}px`,
+        ['--piece-y' as string]: `${y}px`,
         ['--piece-size' as string]: `${pieceSize}px`,
         ['--piece-inner-size' as string]: `${innerSize}px`,
         ['--attacker-inset' as string]: `${-attackerInset}px`,
