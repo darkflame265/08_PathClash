@@ -51,6 +51,8 @@ export type Translations = {
   profileWinRate: string;
   profileWins: string;
   profileLosses: string;
+  policyBtn: string;
+  donateBtn: string;
   upgradeOk: string;
   switchOk: (w: number, l: number) => string;
   authError: string;
@@ -113,6 +115,8 @@ export const translations: Record<Lang, Translations> = {
     profileWinRate: "Win Rate",
     profileWins: "W",
     profileLosses: "L",
+    policyBtn: "Policy",
+    donateBtn: "Donate",
     upgradeOk: "Google account linked. Stats will now be saved to your account.",
     switchOk: (w: number, l: number) =>
       `Loaded stats from this Google account. (${w}W ${l}L) Guest stats on this device are preserved.`,
@@ -174,6 +178,8 @@ export const translations: Record<Lang, Translations> = {
     profileWinRate: "승률",
     profileWins: "승",
     profileLosses: "패",
+    policyBtn: "정책",
+    donateBtn: "기부하기",
     upgradeOk: "Google 계정 연동 완료. 이제 전적이 계정에 저장됩니다.",
     switchOk: (w: number, l: number) =>
       `이 Google 계정의 저장된 전적을 불러왔습니다. (${w}승 ${l}패) 현재 기기 게스트는 그대로 유지됩니다.`,

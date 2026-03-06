@@ -20,6 +20,9 @@ interface Props {
   onGameStart: () => void;
 }
 
+const POLICY_URL = import.meta.env.VITE_POLICY_URL?.trim() || "https://pathclash.com/privacy.html";
+const DONATE_URL = import.meta.env.VITE_DONATE_URL?.trim() || "https://pathclash.com";
+
 type SetAuthState = ReturnType<typeof useGameStore.getState>["setAuthState"];
 
 function applyProfileToStore(profile: AccountProfile, setAuthState: SetAuthState) {
@@ -401,6 +404,24 @@ export function LobbyScreen({ onGameStart }: Props) {
         >
           KR
         </button>
+      </div>
+      <div className="lobby-utility-links">
+        <a
+          className="lobby-utility-link"
+          href={POLICY_URL}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {t.policyBtn}
+        </a>
+        <a
+          className="lobby-utility-link"
+          href={DONATE_URL}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {t.donateBtn}
+        </a>
       </div>
     </div>
   );
