@@ -12,6 +12,7 @@ import { connectSocket } from "../../socket/socketClient";
 import { useGameStore } from "../../store/gameStore";
 import { useLang } from "../../hooks/useLang";
 import type { Translations } from "../../i18n/translations";
+import { startDonation } from "../../payments/donate";
 import "./LobbyScreen.css";
 
 type LobbyView = "main" | "create" | "join";
@@ -282,6 +283,28 @@ export function LobbyScreen({ onGameStart }: Props) {
     setAuthState(guestState);
   };
 
+  const handleDonate = async () => {
+    const result = await startDonation({
+      webUrl: DONATE_URL,
+      appUserId: authUserId,
+    });
+
+    if (result === "opened_web") return;
+    if (result === "purchased") {
+      window.alert(t.donateSuccess);
+      return;
+    }
+    if (result === "cancelled") {
+      window.alert(t.donateCancelled);
+      return;
+    }
+    if (result === "unavailable") {
+      window.alert(t.donateUnavailable);
+      return;
+    }
+    window.alert(t.donateFailed);
+  };
+
   const accountCard = (
     <AccountCard
       myNickname={myNickname}
@@ -416,14 +439,13 @@ export function LobbyScreen({ onGameStart }: Props) {
         >
           {t.policyBtn}
         </a>
-        <a
+        <button
           className="lobby-utility-link"
-          href={DONATE_URL}
-          target="_blank"
-          rel="noreferrer"
+          onClick={() => void handleDonate()}
+          type="button"
         >
           {t.donateBtn}
-        </a>
+        </button>
       </div>
     </div>
   );
