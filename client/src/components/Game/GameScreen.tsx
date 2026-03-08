@@ -18,6 +18,7 @@ interface Props {
 const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
+const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
 
 function computeInitialCellSize(): number {
   const availW = Math.max(260, window.innerWidth - 24);
@@ -50,11 +51,22 @@ function getRoleIcon(role: "attacker" | "escaper") {
 }
 
 export function GameScreen({ onLeaveToLobby }: Props) {
-  const { gameState, myColor, roundInfo, winner, myPath, gameOverMessage, rematchRequestSent, setRematchRequestSent } = useGameStore();
+  const {
+    gameState,
+    myColor,
+    roundInfo,
+    winner,
+    myPath,
+    gameOverMessage,
+    rematchRequestSent,
+    setRematchRequestSent,
+    currentMatchType,
+  } = useGameStore();
   const { t } = useLang();
   const gridAreaRef = useRef<HTMLDivElement>(null);
   const cellSize = useAdaptiveCellSize(gridAreaRef);
   const scale = cellSize / DEFAULT_CELL;
+  const [showAiTutorialHint, setShowAiTutorialHint] = useState(false);
 
   useEffect(() => {
     const socket = getSocket();
@@ -67,6 +79,28 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
   }, []);
+
+  useEffect(() => {
+    if (currentMatchType !== "ai") {
+      setShowAiTutorialHint(false);
+      return;
+    }
+
+    const hasSeenTutorial = window.localStorage.getItem(AI_TUTORIAL_SEEN_KEY) === "1";
+    setShowAiTutorialHint(!hasSeenTutorial);
+  }, [currentMatchType]);
+
+  useEffect(() => {
+    if (!showAiTutorialHint) return;
+
+    const dismissTutorialHint = () => {
+      window.localStorage.setItem(AI_TUTORIAL_SEEN_KEY, "1");
+      setShowAiTutorialHint(false);
+    };
+
+    window.addEventListener("pointerdown", dismissTutorialHint, true);
+    return () => window.removeEventListener("pointerdown", dismissTutorialHint, true);
+  }, [showAiTutorialHint]);
 
   useEffect(() => {
     const isTypingTarget = () => {
@@ -152,7 +186,10 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         )}
 
         <div className="gs-grid-area" ref={gridAreaRef}>
-          <GameGrid cellSize={cellSize} />
+          <GameGrid
+            cellSize={cellSize}
+            tutorialHint={showAiTutorialHint ? t.dragPathTutorial : null}
+          />
         </div>
       </div>
 

@@ -20,9 +20,10 @@ const PATH_UPDATE_THROTTLE_MS = 150;
 
 interface GridProps {
   cellSize?: number;
+  tutorialHint?: string | null;
 }
 
-export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
+export function GameGrid({ cellSize = DEFAULT_CELL_SIZE, tutorialHint = null }: GridProps) {
   const {
     gameState,
     myColor,
@@ -82,6 +83,7 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
   }, []);
 
   const responsiveCellSize = boardSize / GRID_SIZE;
+  const tutorialAnchorPos = myColor === "red" ? redDisplayPos : myColor === "blue" ? blueDisplayPos : null;
 
   const emitPathUpdate = useCallback((path: Position[]) => {
     getSocket().emit("path_update", { path });
@@ -435,6 +437,18 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE }: GridProps) {
           isExploding={explosionEffect === "blue"}
           isMe={myColor === "blue"}
         />
+
+        {tutorialHint && tutorialAnchorPos && (
+          <div
+            className="ai-tutorial-hint"
+            style={{
+              left: tutorialAnchorPos.col * responsiveCellSize + responsiveCellSize / 2,
+              top: tutorialAnchorPos.row * responsiveCellSize + responsiveCellSize + 12,
+            }}
+          >
+            {tutorialHint}
+          </div>
+        )}
       </div>
     </div>
   );

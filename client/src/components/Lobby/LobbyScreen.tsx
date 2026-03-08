@@ -128,6 +128,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     accountWins,
     accountLosses,
     setAuthState,
+    setMatchType,
   } = useGameStore();
   const { lang, setLang, t } = useLang();
   const policyUrl = lang === "en" ? POLICY_URL_EN : POLICY_URL_KR;
@@ -232,6 +233,7 @@ export function LobbyScreen({ onGameStart }: Props) {
   const handleCreateRoom = async () => {
     setError("");
     setIsMatchmaking(false);
+    setMatchType("friend");
     const socket = startSocket();
     socket.emit("create_room", await buildPlayerPayload());
   };
@@ -244,6 +246,7 @@ export function LobbyScreen({ onGameStart }: Props) {
 
     setError("");
     setIsMatchmaking(false);
+    setMatchType("friend");
     const socket = startSocket();
     socket.emit("join_room", {
       code: joinCode.trim().toUpperCase(),
@@ -253,6 +256,7 @@ export function LobbyScreen({ onGameStart }: Props) {
 
   const handleRandom = async () => {
     setError("");
+    setMatchType("random");
     const socket = startSocket();
     socket.emit("join_random", await buildPlayerPayload());
   };
@@ -261,11 +265,13 @@ export function LobbyScreen({ onGameStart }: Props) {
     const socket = connectSocket();
     socket.emit("cancel_random");
     setIsMatchmaking(false);
+    setMatchType(null);
   };
 
   const handleAiMatch = async () => {
     setError("");
     setIsMatchmaking(false);
+    setMatchType("ai");
     const socket = startSocket();
     socket.emit("join_ai", await buildPlayerPayload());
   };

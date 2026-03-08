@@ -35,6 +35,7 @@ export type Translations = {
   confirmBtn: string;
   loading: string;
   moving: string;
+  dragPathTutorial: string;
   roleAttack: string;
   roleEscape: string;
   pathPoints: string;
@@ -103,6 +104,7 @@ export const translations: Record<Lang, Translations> = {
     confirmBtn: "OK",
     loading: "Loading game...",
     moving: "Moving...",
+    dragPathTutorial: "Drag your piece to draw a path.",
     roleAttack: "Attack",
     roleEscape: "Escape",
     pathPoints: "Path Points",
@@ -170,6 +172,7 @@ export const translations: Record<Lang, Translations> = {
     confirmBtn: "확인",
     loading: "게임 로딩 중...",
     moving: "이동 중...",
+    dragPathTutorial: "자신의 말을 드래그하여 경로를 작성하세요.",
     roleAttack: "공격",
     roleEscape: "도주",
     pathPoints: "경로 포인트",

@@ -27,6 +27,7 @@ interface GameStore {
   isGuestUser: boolean;
   accountWins: number;
   accountLosses: number;
+  currentMatchType: "friend" | "random" | "ai" | null;
 
   // Game
   gameState: ClientGameState | null;
@@ -76,6 +77,7 @@ interface GameStore {
   }) => void;
   setMyColor: (c: PlayerColor) => void;
   setRoomCode: (c: string) => void;
+  setMatchType: (matchType: "friend" | "random" | "ai" | null) => void;
   setGameState: (gs: ClientGameState) => void;
   setRoundInfo: (r: RoundStartPayload) => void;
   setMyPath: (p: Position[]) => void;
@@ -109,6 +111,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isGuestUser: false,
   accountWins: 0,
   accountLosses: 0,
+  currentMatchType: null,
   gameState: null,
   myPath: [],
   opponentSubmitted: false,
@@ -148,6 +151,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     })),
   setMyColor: (c) => set({ myColor: c }),
   setRoomCode: (c) => set({ roomCode: c }),
+  setMatchType: (matchType) => set({ currentMatchType: matchType }),
 
   setGameState: (gs) => set({
     gameState: gs,
@@ -253,6 +257,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     myNickname: get().myNickname,
     myColor: null,
     roomCode: '',
+    currentMatchType: null,
     gameState: null,
     myPath: [],
     opponentSubmitted: false,
