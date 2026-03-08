@@ -61,6 +61,8 @@ A real-time 1v1 strategy game played on a 5×5 grid. Every turn, you have 10 sec
 
 | Layer | Technology |
 |---|---|
+| AI / Dev Tools | Claude (bkit) |
+| AI / Dev Tools | Codex |
 | Frontend | React 19, TypeScript, Vite |
 | State | Zustand |
 | Realtime | Socket.io |
