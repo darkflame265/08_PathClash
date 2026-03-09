@@ -23,7 +23,10 @@ interface GridProps {
   tutorialHint?: string | null;
 }
 
-export function GameGrid({ cellSize = DEFAULT_CELL_SIZE, tutorialHint = null }: GridProps) {
+export function GameGrid({
+  cellSize = DEFAULT_CELL_SIZE,
+  tutorialHint = null,
+}: GridProps) {
   const {
     gameState,
     myColor,
@@ -83,7 +86,12 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE, tutorialHint = null }: 
   }, []);
 
   const responsiveCellSize = boardSize / GRID_SIZE;
-  const tutorialAnchorPos = myColor === "red" ? redDisplayPos : myColor === "blue" ? blueDisplayPos : null;
+  const tutorialAnchorPos =
+    myColor === "red"
+      ? redDisplayPos
+      : myColor === "blue"
+        ? blueDisplayPos
+        : null;
 
   const emitPathUpdate = useCallback((path: Position[]) => {
     getSocket().emit("path_update", { path });
@@ -292,7 +300,10 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE, tutorialHint = null }: 
     if (gameState.players[myColor].pathSubmitted) return;
 
     const submitAtMs = roundInfo.serverTime + roundInfo.timeLimit * 1000;
-    const preSubmitDelayMs = Math.max(0, submitAtMs - Date.now() - PRE_SUBMIT_LEAD_MS);
+    const preSubmitDelayMs = Math.max(
+      0,
+      submitAtMs - Date.now() - PRE_SUBMIT_LEAD_MS,
+    );
     const finalSubmitDelayMs = Math.max(0, submitAtMs - Date.now());
 
     const submitCurrentPath = () => {
@@ -442,8 +453,13 @@ export function GameGrid({ cellSize = DEFAULT_CELL_SIZE, tutorialHint = null }: 
           <div
             className="ai-tutorial-hint"
             style={{
-              left: tutorialAnchorPos.col * responsiveCellSize + responsiveCellSize / 2,
-              top: tutorialAnchorPos.row * responsiveCellSize + responsiveCellSize + 12,
+              left:
+                tutorialAnchorPos.col * responsiveCellSize +
+                responsiveCellSize / 2,
+              top:
+                tutorialAnchorPos.row * responsiveCellSize +
+                responsiveCellSize +
+                12,
             }}
           >
             {tutorialHint}
