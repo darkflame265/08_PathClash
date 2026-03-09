@@ -21,11 +21,13 @@ const PATH_UPDATE_THROTTLE_MS = 150;
 interface GridProps {
   cellSize?: number;
   tutorialHint?: string | null;
+  tutorialHintTarget?: "self" | "opponent";
 }
 
 export function GameGrid({
   cellSize = DEFAULT_CELL_SIZE,
   tutorialHint = null,
+  tutorialHintTarget = "self",
 }: GridProps) {
   const {
     gameState,
@@ -87,11 +89,17 @@ export function GameGrid({
 
   const responsiveCellSize = boardSize / GRID_SIZE;
   const tutorialAnchorPos =
-    myColor === "red"
-      ? redDisplayPos
-      : myColor === "blue"
+    tutorialHintTarget === "opponent"
+      ? myColor === "red"
         ? blueDisplayPos
-        : null;
+        : myColor === "blue"
+          ? redDisplayPos
+          : null
+      : myColor === "red"
+        ? redDisplayPos
+        : myColor === "blue"
+          ? blueDisplayPos
+          : null;
 
   const emitPathUpdate = useCallback((path: Position[]) => {
     getSocket().emit("path_update", { path });
@@ -451,7 +459,7 @@ export function GameGrid({
 
         {tutorialHint && tutorialAnchorPos && (
           <div
-            className="ai-tutorial-hint"
+            className={`ai-tutorial-hint in-grid${tutorialHintTarget === "opponent" ? " is-mirrored" : ""}`}
             style={{
               left:
                 tutorialAnchorPos.col * responsiveCellSize +

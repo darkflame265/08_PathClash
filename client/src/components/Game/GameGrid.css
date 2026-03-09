@@ -108,6 +108,11 @@
   animation: tutorial-hint-in 0.22s ease-out;
 }
 
+.ai-tutorial-hint.in-grid {
+  width: min(74vw, 320px);
+  max-width: 320px;
+}
+
 .ai-tutorial-hint::before {
   content: "";
   position: absolute;
@@ -128,6 +133,20 @@
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
   border-bottom: 6px solid rgba(8, 13, 22, 0.96);
+}
+
+.ai-tutorial-hint.is-mirrored {
+  transform: translateX(-80%);
+}
+
+.ai-tutorial-hint.is-mirrored::before,
+.ai-tutorial-hint.is-mirrored::after {
+  left: 80%;
+}
+
+.ai-tutorial-hint.no-arrow::before,
+.ai-tutorial-hint.no-arrow::after {
+  display: none;
 }
 
 @keyframes tutorial-hint-in {

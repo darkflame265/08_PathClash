@@ -19,14 +19,16 @@ const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
-type TutorialStep = 0 | 1 | 2 | 3;
+type TutorialStep = 0 | 1 | 2 | 3 | 4 | 5;
 
 function computeInitialCellSize(): number {
   const availW = Math.max(260, window.innerWidth - 24);
   return Math.max(MIN_CELL, Math.min(MAX_CELL, availW / 5));
 }
 
-function useAdaptiveCellSize(gridAreaRef: React.RefObject<HTMLDivElement | null>) {
+function useAdaptiveCellSize(
+  gridAreaRef: React.RefObject<HTMLDivElement | null>,
+) {
   const [cellSize, setCellSize] = useState(computeInitialCellSize);
 
   useEffect(() => {
@@ -70,7 +72,10 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   const cellSize = useAdaptiveCellSize(gridAreaRef);
   const scale = cellSize / DEFAULT_CELL;
   const [tutorialStep, setTutorialStep] = useState<TutorialStep>(0);
-  const [roleTutorialPos, setRoleTutorialPos] = useState<{ left: number; top: number } | null>(null);
+  const [roleTutorialPos, setRoleTutorialPos] = useState<{
+    left: number;
+    top: number;
+  } | null>(null);
 
   useEffect(() => {
     const socket = getSocket();
@@ -90,7 +95,8 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       return;
     }
 
-    const hasSeenTutorial = window.localStorage.getItem(AI_TUTORIAL_SEEN_KEY) === "1";
+    const hasSeenTutorial =
+      window.localStorage.getItem(AI_TUTORIAL_SEEN_KEY) === "1";
     setTutorialStep(hasSeenTutorial ? 0 : 1);
   }, [currentMatchType]);
 
@@ -118,7 +124,8 @@ export function GameScreen({ onLeaveToLobby }: Props) {
 
     updateRoleTutorialPosition();
     window.addEventListener("resize", updateRoleTutorialPosition);
-    return () => window.removeEventListener("resize", updateRoleTutorialPosition);
+    return () =>
+      window.removeEventListener("resize", updateRoleTutorialPosition);
   }, [tutorialStep, gameState, myColor]);
 
   useEffect(() => {
@@ -133,13 +140,22 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         setTutorialStep(3);
         return;
       }
+      if (tutorialStep === 3) {
+        setTutorialStep(4);
+        return;
+      }
+      if (tutorialStep === 4) {
+        setTutorialStep(5);
+        return;
+      }
       window.localStorage.setItem(AI_TUTORIAL_SEEN_KEY, "1");
       getSocket().emit("resume_tutorial");
       setTutorialStep(0);
     };
 
     window.addEventListener("pointerdown", dismissTutorialHint, true);
-    return () => window.removeEventListener("pointerdown", dismissTutorialHint, true);
+    return () =>
+      window.removeEventListener("pointerdown", dismissTutorialHint, true);
   }, [tutorialStep]);
 
   useEffect(() => {
@@ -163,7 +179,12 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         return;
       }
 
-      if ((event.key === "r" || event.key === "R") && winner && !gameOverMessage && !rematchRequestSent) {
+      if (
+        (event.key === "r" || event.key === "R") &&
+        winner &&
+        !gameOverMessage &&
+        !rematchRequestSent
+      ) {
         event.preventDefault();
         getSocket().emit("request_rematch");
         setRematchRequestSent(true);
@@ -172,7 +193,13 @@ export function GameScreen({ onLeaveToLobby }: Props) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [gameOverMessage, onLeaveToLobby, rematchRequestSent, setRematchRequestSent, winner]);
+  }, [
+    gameOverMessage,
+    onLeaveToLobby,
+    rematchRequestSent,
+    setRematchRequestSent,
+    winner,
+  ]);
 
   if (!gameState) {
     return <div className="gs-loading">{t.loading}</div>;
@@ -183,11 +210,18 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   const opponent = gameState.players[opponentColor];
 
   return (
-    <div className="game-screen" style={{ "--gs-scale": scale } as CSSProperties} ref={screenRef}>
+    <div
+      className="game-screen"
+      style={{ "--gs-scale": scale } as CSSProperties}
+      ref={screenRef}
+    >
       <div className="gs-utility-bar">
         <div className="gs-timer-slot">
           {gameState.phase === "planning" && roundInfo && (
-            <TimerBar duration={roundInfo.timeLimit} serverStartTime={roundInfo.serverTime} />
+            <TimerBar
+              duration={roundInfo.timeLimit}
+              serverStartTime={roundInfo.serverTime}
+            />
           )}
           {gameState.phase === "moving" && (
             <div className="gs-phase-moving">
@@ -207,14 +241,22 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       <div className={`gs-player-card gs-opponent gs-color-${opponentColor}`}>
         <div className="gs-role-badge">
           <span className="gs-role-icon">{getRoleIcon(opponent.role)}</span>
-          <span className="gs-role-label">{opponent.role === 'attacker' ? t.roleAttack : t.roleEscape}</span>
+          <span className="gs-role-label">
+            {opponent.role === "attacker" ? t.roleAttack : t.roleEscape}
+          </span>
         </div>
         <div className="gs-player-mid">
           <PlayerInfo player={opponent} isMe={false} />
-          <span className="gs-color-tag">{opponentColor === "red" ? "RED" : "BLU"}</span>
+          <span className="gs-color-tag">
+            {opponentColor === "red" ? "RED" : "BLU"}
+          </span>
         </div>
         <div className="gs-hp-slot">
-          <HpDisplay color={opponentColor} hp={gameState.players[opponentColor].hp} myColor={myColor!} />
+          <HpDisplay
+            color={opponentColor}
+            hp={gameState.players[opponentColor].hp}
+            myColor={myColor!}
+          />
         </div>
       </div>
 
@@ -228,37 +270,60 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         <div className="gs-grid-area" ref={gridAreaRef}>
           <GameGrid
             cellSize={cellSize}
-            tutorialHint={tutorialStep === 3 ? t.dragPathTutorial : null}
+            tutorialHint={
+              tutorialStep === 3
+                ? t.attackCollisionTutorialHint
+                : tutorialStep === 4
+                  ? t.escapePredictionTutorialHint
+                  : tutorialStep === 5
+                  ? t.dragPathTutorial
+                  : null
+            }
+            tutorialHintTarget={tutorialStep === 4 ? "opponent" : "self"}
           />
         </div>
       </div>
 
-      <div className={`gs-player-card gs-self gs-color-${myColor} gs-role-${me?.role === "attacker" ? "atk" : "run"}`}>
+      <div
+        className={`gs-player-card gs-self gs-color-${myColor} gs-role-${me?.role === "attacker" ? "atk" : "run"}`}
+      >
         <div
           ref={selfRoleBadgeRef}
           className={`gs-role-badge gs-role-badge-self gs-role-badge-${me?.role === "attacker" ? "atk" : "run"}`}
         >
-          <span className="gs-role-icon">{getRoleIcon(me?.role ?? "escaper")}</span>
-          <span className="gs-role-label">{(me?.role ?? 'escaper') === 'attacker' ? t.roleAttack : t.roleEscape}</span>
+          <span className="gs-role-icon">
+            {getRoleIcon(me?.role ?? "escaper")}
+          </span>
+          <span className="gs-role-label">
+            {(me?.role ?? "escaper") === "attacker"
+              ? t.roleAttack
+              : t.roleEscape}
+          </span>
         </div>
         <div className="gs-player-mid">
           <PlayerInfo player={me!} isMe={true} />
-          <span className="gs-color-tag">{myColor === "red" ? "RED" : "BLU"}</span>
+          <span className="gs-color-tag">
+            {myColor === "red" ? "RED" : "BLU"}
+          </span>
         </div>
         <div className="gs-hp-slot">
           <HpDisplay color={myColor!} hp={me?.hp ?? 3} myColor={myColor!} />
         </div>
       </div>
 
-      <PathProgressBar current={myPath.length} max={gameState.pathPoints} pathPointsLabel={t.pathPoints} />
+      <PathProgressBar
+        current={myPath.length}
+        max={gameState.pathPoints}
+        pathPointsLabel={t.pathPoints}
+      />
 
       <ChatPanel />
       {tutorialStep === 1 && (
         <div
-          className="ai-tutorial-hint"
+          className="ai-tutorial-hint no-arrow"
           style={{
             left: "50%",
-            top: "50%",
+            top: "42%",
             transform: "translate(-50%, -50%)",
           }}
         >
@@ -280,7 +345,15 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   );
 }
 
-function PathProgressBar({ current, max, pathPointsLabel }: { current: number; max: number; pathPointsLabel: string }) {
+function PathProgressBar({
+  current,
+  max,
+  pathPointsLabel,
+}: {
+  current: number;
+  max: number;
+  pathPointsLabel: string;
+}) {
   const isFull = current >= max;
 
   return (

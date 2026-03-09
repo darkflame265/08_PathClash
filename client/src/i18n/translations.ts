@@ -37,6 +37,8 @@ export type Translations = {
   moving: string;
   introTutorialHint: string;
   roleTutorialHint: string;
+  attackCollisionTutorialHint: string;
+  escapePredictionTutorialHint: string;
   dragPathTutorial: string;
   roleAttack: string;
   roleEscape: string;
@@ -110,6 +112,10 @@ export const translations: Record<Lang, Translations> = {
       "Welcome to Path Clash.\nWe will now explain how the game works.",
     roleTutorialHint:
       "Your current role is Attack.\nRoles swap every round.",
+    attackCollisionTutorialHint:
+      "As the attacker, if your piece collides with the opponent's piece, you can deal damage.",
+    escapePredictionTutorialHint:
+      "Conversely, the opponent in the escape role must predict the attacker's path and plan an escape route.",
     dragPathTutorial: "Drag your piece to draw a path.",
     roleAttack: "Attack",
     roleEscape: "Escape",
@@ -182,6 +188,10 @@ export const translations: Record<Lang, Translations> = {
       "Path Clash에 오신 것을 확연합니다.\n지금부터 게임 방식을 알려드리겠습니다.",
     roleTutorialHint:
       "현재 당신의 역할은 공격 입니다.\n역할은 매 라운드마다 서로 뒤바뀝니다.",
+    attackCollisionTutorialHint:
+      "공격 역할인 당신은 상대방의 말과 충돌시, 대상에게 피해를 입힐 수 있습니다.",
+    escapePredictionTutorialHint:
+      "반대로 도주 역할인 상대방은 공격자의 경로를 예측하여, 도주 경로를 짜야합니다.",
     dragPathTutorial: "자신의 말을 드래그하여 경로를 작성하세요.",
     roleAttack: "공격",
     roleEscape: "도주",
