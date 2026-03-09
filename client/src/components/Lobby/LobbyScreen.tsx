@@ -24,6 +24,7 @@ interface Props {
 const POLICY_URL_KR = import.meta.env.VITE_POLICY_URL_KR?.trim() || "https://pathclash.com/privacy.html";
 const POLICY_URL_EN = import.meta.env.VITE_POLICY_URL_EN?.trim() || "https://pathclash.com/privacy-en.html";
 const DONATE_URL = import.meta.env.VITE_DONATE_URL?.trim() || "https://pathclash.com";
+const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
 
 type SetAuthState = ReturnType<typeof useGameStore.getState>["setAuthState"];
 
@@ -273,7 +274,11 @@ export function LobbyScreen({ onGameStart }: Props) {
     setIsMatchmaking(false);
     setMatchType("ai");
     const socket = startSocket();
-    socket.emit("join_ai", await buildPlayerPayload());
+    const hasSeenAiTutorial = window.localStorage.getItem(AI_TUTORIAL_SEEN_KEY) === "1";
+    socket.emit("join_ai", {
+      ...(await buildPlayerPayload()),
+      tutorialPending: !hasSeenAiTutorial,
+    });
   };
 
   const handleLinkGoogle = async () => {

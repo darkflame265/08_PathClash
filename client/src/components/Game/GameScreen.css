@@ -5,6 +5,7 @@
 
 /* ── 루트 컨테이너 ─────────────────────────────────────────── */
 .game-screen {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;

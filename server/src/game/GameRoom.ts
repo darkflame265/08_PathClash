@@ -80,13 +80,22 @@ export class GameRoom {
 
   // ─── Game flow ─────────────────────────────────────────────────────────────
 
-  startGame(): void {
-    this.phase = 'planning';
+  startGame(startPaused = false): void {
+    this.phase = startPaused ? 'waiting' : 'planning';
     this.turn = 1;
     this.attackerColor = 'red';
     this.resetPositions();
     this.updateRoles();
     this.io.to(this.roomId).emit('game_start', this.toClientState());
+    if (startPaused) return;
+    this.startRound();
+  }
+
+  resumeTutorial(socketId: string): void {
+    if (this.matchType !== 'ai') return;
+    if (this.phase !== 'waiting') return;
+    const player = this.getPlayerBySocket(socketId);
+    if (!player || player.color === this.aiColor) return;
     this.startRound();
   }
 

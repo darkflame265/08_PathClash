@@ -58,13 +58,25 @@ class GameRoom {
         return [...this.players.values()].some((player) => player.color !== this.aiColor);
     }
     // ─── Game flow ─────────────────────────────────────────────────────────────
-    startGame() {
-        this.phase = 'planning';
+    startGame(startPaused = false) {
+        this.phase = startPaused ? 'waiting' : 'planning';
         this.turn = 1;
         this.attackerColor = 'red';
         this.resetPositions();
         this.updateRoles();
         this.io.to(this.roomId).emit('game_start', this.toClientState());
+        if (startPaused)
+            return;
+        this.startRound();
+    }
+    resumeTutorial(socketId) {
+        if (this.matchType !== 'ai')
+            return;
+        if (this.phase !== 'waiting')
+            return;
+        const player = this.getPlayerBySocket(socketId);
+        if (!player || player.color === this.aiColor)
+            return;
         this.startRound();
     }
     startRound() {

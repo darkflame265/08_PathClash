@@ -18,7 +18,7 @@ function initSocketServer(io) {
             store.registerSocket(socket.id, roomId);
             socket.emit('room_created', { roomId, code, color });
         });
-        socket.on('join_ai', async ({ nickname, auth }) => {
+        socket.on('join_ai', async ({ nickname, auth, tutorialPending, }) => {
             const profile = await (0, playerAuth_1.resolvePlayerProfile)(auth, nickname);
             const roomId = store.generateRoomId();
             const code = store.generateCode();
@@ -37,7 +37,7 @@ function initSocketServer(io) {
                 color: humanColor,
                 opponentNickname: opponent.nickname,
             });
-            setTimeout(() => room.startGame(), 300);
+            setTimeout(() => room.startGame(Boolean(tutorialPending)), 300);
         });
         socket.on('join_room', async ({ code, nickname, auth }) => {
             const profile = await (0, playerAuth_1.resolvePlayerProfile)(auth, nickname);
@@ -115,6 +115,10 @@ function initSocketServer(io) {
         socket.on('request_rematch', () => {
             const room = store.getBySocket(socket.id);
             room?.requestRematch(socket.id);
+        });
+        socket.on('resume_tutorial', () => {
+            const room = store.getBySocket(socket.id);
+            room?.resumeTutorial(socket.id);
         });
         socket.on('chat_send', ({ message }) => {
             const room = store.getBySocket(socket.id);

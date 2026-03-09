@@ -19,6 +19,7 @@ const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
+type TutorialStep = 0 | 1 | 2 | 3;
 
 function computeInitialCellSize(): number {
   const availW = Math.max(260, window.innerWidth - 24);
@@ -64,9 +65,12 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   } = useGameStore();
   const { t } = useLang();
   const gridAreaRef = useRef<HTMLDivElement>(null);
+  const screenRef = useRef<HTMLDivElement>(null);
+  const selfRoleBadgeRef = useRef<HTMLDivElement>(null);
   const cellSize = useAdaptiveCellSize(gridAreaRef);
   const scale = cellSize / DEFAULT_CELL;
-  const [showAiTutorialHint, setShowAiTutorialHint] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState<TutorialStep>(0);
+  const [roleTutorialPos, setRoleTutorialPos] = useState<{ left: number; top: number } | null>(null);
 
   useEffect(() => {
     const socket = getSocket();
@@ -82,25 +86,61 @@ export function GameScreen({ onLeaveToLobby }: Props) {
 
   useEffect(() => {
     if (currentMatchType !== "ai") {
-      setShowAiTutorialHint(false);
+      setTutorialStep(0);
       return;
     }
 
     const hasSeenTutorial = window.localStorage.getItem(AI_TUTORIAL_SEEN_KEY) === "1";
-    setShowAiTutorialHint(!hasSeenTutorial);
+    setTutorialStep(hasSeenTutorial ? 0 : 1);
   }, [currentMatchType]);
 
   useEffect(() => {
-    if (!showAiTutorialHint) return;
+    if (tutorialStep !== 2) {
+      setRoleTutorialPos(null);
+      return;
+    }
+
+    const updateRoleTutorialPosition = () => {
+      const screenEl = screenRef.current;
+      const badgeEl = selfRoleBadgeRef.current;
+      if (!screenEl || !badgeEl) {
+        setRoleTutorialPos(null);
+        return;
+      }
+
+      const screenRect = screenEl.getBoundingClientRect();
+      const badgeRect = badgeEl.getBoundingClientRect();
+      setRoleTutorialPos({
+        left: badgeRect.left - screenRect.left + badgeRect.width / 2,
+        top: badgeRect.bottom - screenRect.top + 10,
+      });
+    };
+
+    updateRoleTutorialPosition();
+    window.addEventListener("resize", updateRoleTutorialPosition);
+    return () => window.removeEventListener("resize", updateRoleTutorialPosition);
+  }, [tutorialStep, gameState, myColor]);
+
+  useEffect(() => {
+    if (tutorialStep === 0) return;
 
     const dismissTutorialHint = () => {
+      if (tutorialStep === 1) {
+        setTutorialStep(2);
+        return;
+      }
+      if (tutorialStep === 2) {
+        setTutorialStep(3);
+        return;
+      }
       window.localStorage.setItem(AI_TUTORIAL_SEEN_KEY, "1");
-      setShowAiTutorialHint(false);
+      getSocket().emit("resume_tutorial");
+      setTutorialStep(0);
     };
 
     window.addEventListener("pointerdown", dismissTutorialHint, true);
     return () => window.removeEventListener("pointerdown", dismissTutorialHint, true);
-  }, [showAiTutorialHint]);
+  }, [tutorialStep]);
 
   useEffect(() => {
     const isTypingTarget = () => {
@@ -143,7 +183,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   const opponent = gameState.players[opponentColor];
 
   return (
-    <div className="game-screen" style={{ "--gs-scale": scale } as CSSProperties}>
+    <div className="game-screen" style={{ "--gs-scale": scale } as CSSProperties} ref={screenRef}>
       <div className="gs-utility-bar">
         <div className="gs-timer-slot">
           {gameState.phase === "planning" && roundInfo && (
@@ -188,13 +228,16 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         <div className="gs-grid-area" ref={gridAreaRef}>
           <GameGrid
             cellSize={cellSize}
-            tutorialHint={showAiTutorialHint ? t.dragPathTutorial : null}
+            tutorialHint={tutorialStep === 3 ? t.dragPathTutorial : null}
           />
         </div>
       </div>
 
       <div className={`gs-player-card gs-self gs-color-${myColor} gs-role-${me?.role === "attacker" ? "atk" : "run"}`}>
-        <div className={`gs-role-badge gs-role-badge-self gs-role-badge-${me?.role === "attacker" ? "atk" : "run"}`}>
+        <div
+          ref={selfRoleBadgeRef}
+          className={`gs-role-badge gs-role-badge-self gs-role-badge-${me?.role === "attacker" ? "atk" : "run"}`}
+        >
           <span className="gs-role-icon">{getRoleIcon(me?.role ?? "escaper")}</span>
           <span className="gs-role-label">{(me?.role ?? 'escaper') === 'attacker' ? t.roleAttack : t.roleEscape}</span>
         </div>
@@ -210,6 +253,29 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       <PathProgressBar current={myPath.length} max={gameState.pathPoints} pathPointsLabel={t.pathPoints} />
 
       <ChatPanel />
+      {tutorialStep === 1 && (
+        <div
+          className="ai-tutorial-hint"
+          style={{
+            left: "50%",
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          {t.introTutorialHint}
+        </div>
+      )}
+      {tutorialStep === 2 && roleTutorialPos && (
+        <div
+          className="ai-tutorial-hint"
+          style={{
+            left: roleTutorialPos.left,
+            top: roleTutorialPos.top,
+          }}
+        >
+          {t.roleTutorialHint}
+        </div>
+      )}
     </div>
   );
 }

@@ -26,7 +26,15 @@ export function initSocketServer(io: Server): void {
       socket.emit('room_created', { roomId, code, color });
     });
 
-    socket.on('join_ai', async ({ nickname, auth }: { nickname: string; auth?: AuthPayload }) => {
+    socket.on(
+      'join_ai',
+      async (
+        {
+          nickname,
+          auth,
+          tutorialPending,
+        }: { nickname: string; auth?: AuthPayload; tutorialPending?: boolean },
+      ) => {
       const profile = await resolvePlayerProfile(auth, nickname);
       const roomId = store.generateRoomId();
       const code = store.generateCode();
@@ -49,8 +57,9 @@ export function initSocketServer(io: Server): void {
         opponentNickname: opponent.nickname,
       });
 
-      setTimeout(() => room.startGame(), 300);
-    });
+        setTimeout(() => room.startGame(Boolean(tutorialPending)), 300);
+      },
+    );
 
     socket.on('join_room', async ({ code, nickname, auth }: { code: string; nickname: string; auth?: AuthPayload }) => {
       const profile = await resolvePlayerProfile(auth, nickname);
@@ -159,6 +168,11 @@ export function initSocketServer(io: Server): void {
     socket.on('request_rematch', () => {
       const room = store.getBySocket(socket.id);
       room?.requestRematch(socket.id);
+    });
+
+    socket.on('resume_tutorial', () => {
+      const room = store.getBySocket(socket.id);
+      room?.resumeTutorial(socket.id);
     });
 
     socket.on('chat_send', ({ message }: { message: string }) => {
