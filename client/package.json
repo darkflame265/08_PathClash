@@ -16,6 +16,7 @@
     "@capacitor/app": "^8.0.1",
     "@capacitor/cli": "^8.1.0",
     "@capacitor/core": "^8.1.0",
+    "@capgo/native-purchases": "^8.2.2",
     "@supabase/supabase-js": "^2.98.0",
     "howler": "^2.2.4",
     "react": "^19.2.0",
