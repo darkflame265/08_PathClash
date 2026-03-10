@@ -19,7 +19,7 @@ const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
-type TutorialStep = 0 | 1 | 2 | 3 | 4 | 5;
+type TutorialStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 function computeInitialCellSize(): number {
   const availW = Math.max(260, window.innerWidth - 24);
@@ -69,10 +69,15 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   const gridAreaRef = useRef<HTMLDivElement>(null);
   const screenRef = useRef<HTMLDivElement>(null);
   const selfRoleBadgeRef = useRef<HTMLDivElement>(null);
+  const pathBarRef = useRef<HTMLDivElement>(null);
   const cellSize = useAdaptiveCellSize(gridAreaRef);
   const scale = cellSize / DEFAULT_CELL;
   const [tutorialStep, setTutorialStep] = useState<TutorialStep>(0);
   const [roleTutorialPos, setRoleTutorialPos] = useState<{
+    left: number;
+    top: number;
+  } | null>(null);
+  const [pathBarTutorialPos, setPathBarTutorialPos] = useState<{
     left: number;
     top: number;
   } | null>(null);
@@ -129,6 +134,33 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   }, [tutorialStep, gameState, myColor]);
 
   useEffect(() => {
+    if (tutorialStep !== 5) {
+      setPathBarTutorialPos(null);
+      return;
+    }
+
+    const updatePathBarPos = () => {
+      const screenEl = screenRef.current;
+      const barEl = pathBarRef.current;
+      if (!screenEl || !barEl) {
+        setPathBarTutorialPos(null);
+        return;
+      }
+
+      const screenRect = screenEl.getBoundingClientRect();
+      const barRect = barEl.getBoundingClientRect();
+      setPathBarTutorialPos({
+        left: barRect.left - screenRect.left + barRect.width / 2,
+        top: barRect.top - screenRect.top - 8,
+      });
+    };
+
+    updatePathBarPos();
+    window.addEventListener("resize", updatePathBarPos);
+    return () => window.removeEventListener("resize", updatePathBarPos);
+  }, [tutorialStep]);
+
+  useEffect(() => {
     if (tutorialStep === 0) return;
 
     const dismissTutorialHint = () => {
@@ -146,6 +178,14 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       }
       if (tutorialStep === 4) {
         setTutorialStep(5);
+        return;
+      }
+      if (tutorialStep === 5) {
+        setTutorialStep(6);
+        return;
+      }
+      if (tutorialStep === 6) {
+        setTutorialStep(7);
         return;
       }
       window.localStorage.setItem(AI_TUTORIAL_SEEN_KEY, "1");
@@ -275,7 +315,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
                 ? t.attackCollisionTutorialHint
                 : tutorialStep === 4
                   ? t.escapePredictionTutorialHint
-                  : tutorialStep === 5
+                  : tutorialStep === 7
                   ? t.dragPathTutorial
                   : null
             }
@@ -311,11 +351,13 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         </div>
       </div>
 
-      <PathProgressBar
-        current={myPath.length}
-        max={gameState.pathPoints}
-        pathPointsLabel={t.pathPoints}
-      />
+      <div ref={pathBarRef}>
+        <PathProgressBar
+          current={myPath.length}
+          max={gameState.pathPoints}
+          pathPointsLabel={t.pathPoints}
+        />
+      </div>
 
       <ChatPanel />
       {tutorialStep === 1 && (
@@ -339,6 +381,29 @@ export function GameScreen({ onLeaveToLobby }: Props) {
           }}
         >
           {t.roleTutorialHint}
+        </div>
+      )}
+      {tutorialStep === 5 && pathBarTutorialPos && (
+        <div
+          className="ai-tutorial-hint arrow-down"
+          style={{
+            left: pathBarTutorialPos.left,
+            top: pathBarTutorialPos.top,
+          }}
+        >
+          {t.pathPointsTutorialHint}
+        </div>
+      )}
+      {tutorialStep === 6 && (
+        <div
+          className="ai-tutorial-hint no-arrow"
+          style={{
+            left: "50%",
+            top: "42%",
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          {t.winConditionTutorialHint}
         </div>
       )}
     </div>

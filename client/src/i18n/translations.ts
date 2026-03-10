@@ -40,6 +40,8 @@ export type Translations = {
   attackCollisionTutorialHint: string;
   escapePredictionTutorialHint: string;
   dragPathTutorial: string;
+  pathPointsTutorialHint: string;
+  winConditionTutorialHint: string;
   roleAttack: string;
   roleEscape: string;
   pathPoints: string;
@@ -109,14 +111,18 @@ export const translations: Record<Lang, Translations> = {
     loading: "Loading game...",
     moving: "Moving...",
     introTutorialHint:
-      "Welcome to Path Clash.\nWe will now explain how the game works.",
+      "Welcome to Path Clash.\nThis is how the game works.",
     roleTutorialHint:
-      "Your current role is Attack.\nRoles swap every round.",
+      "Your current role is Attack.\nYour role swaps every round.",
     attackCollisionTutorialHint:
-      "As the attacker, if your piece collides with the opponent's piece, you can deal damage.",
+      "As the attacker, you can deal damage by colliding with the opponent's piece.",
     escapePredictionTutorialHint:
-      "Conversely, the opponent in the escape role must predict the attacker's path and plan an escape route.",
-    dragPathTutorial: "Drag your piece to draw a path.",
+      "On the other hand, the escaper must predict the attacker's path and plan an escape route.",
+    dragPathTutorial:
+      "Let's start the game.\nDrag your piece to draw a path.",
+    pathPointsTutorialHint:
+      "These are Path Points.\nThey show how many cells you can draw your path through.\nThey increase by 1 each round, up to a maximum of 10.",
+    winConditionTutorialHint: "Hit your opponent three times to win!",
     roleAttack: "Attack",
     roleEscape: "Escape",
     pathPoints: "Path Points",
@@ -185,14 +191,18 @@ export const translations: Record<Lang, Translations> = {
     loading: "게임 로딩 중...",
     moving: "이동 중...",
     introTutorialHint:
-      "Path Clash에 오신 것을 확연합니다.\n지금부터 게임 방식을 알려드리겠습니다.",
+      "Path Clash에 오신 것을 환영합니다.\n지금부터 게임 방식을 알려드리겠습니다.",
     roleTutorialHint:
       "현재 당신의 역할은 공격 입니다.\n역할은 매 라운드마다 서로 뒤바뀝니다.",
     attackCollisionTutorialHint:
-      "공격 역할인 당신은 상대방의 말과 충돌시, 대상에게 피해를 입힐 수 있습니다.",
+      "공격 역할일 때, 상대 말과 충돌하면 피해를 입힐 수 있습니다.",
     escapePredictionTutorialHint:
-      "반대로 도주 역할인 상대방은 공격자의 경로를 예측하여, 도주 경로를 짜야합니다.",
-    dragPathTutorial: "자신의 말을 드래그하여 경로를 작성하세요.",
+      "반면, 도주 역할인 상대는 공격자의 경로를 예측하여 탈출로를 짜야 합니다.",
+    dragPathTutorial:
+      "이제 게임을 시작하겠습니다.\n자신의 말을 드래그하여 경로를 작성하세요.",
+    pathPointsTutorialHint:
+      "이건 패스 포인트 입니다.\n자신이 경로를 몇 칸이나 그릴 수 있는지를 나타냅니다.\n매 라운드마다 1씩 증가하며, 최대 10까지 증가합니다.",
+    winConditionTutorialHint: "상대방을 세 번 맞히면 승리합니다!",
     roleAttack: "공격",
     roleEscape: "도주",
     pathPoints: "경로 포인트",
