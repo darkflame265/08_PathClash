@@ -11,7 +11,11 @@
       "Bash(npx vite:*)",
       "Bash(winget install:*)",
       "Bash(/c/Users/ter24/AppData/Local/Microsoft/WinGet/Links/jq.exe:*)",
-      "Bash(./node_modules/.bin/tsc:*)"
+      "Bash(./node_modules/.bin/tsc:*)",
+      "Bash(python:*)",
+      "mcp__plugin_playwright_playwright__browser_wait_for",
+      "mcp__plugin_playwright_playwright__browser_resize",
+      "mcp__plugin_playwright_playwright__browser_click"
     ]
   }
 }
