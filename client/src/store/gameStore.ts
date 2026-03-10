@@ -58,7 +58,8 @@ interface GameStore {
   messages: ChatMessage[];
 
   // Settings
-  isMuted: boolean;
+  isSfxMuted: boolean;
+  isMusicMuted: boolean;
 
   // i18n
   lang: Lang;
@@ -94,7 +95,8 @@ interface GameStore {
   setRematchRequested: (v: boolean) => void;
   setRematchRequestSent: (v: boolean) => void;
   addMessage: (msg: ChatMessage) => void;
-  toggleMute: () => void;
+  toggleSfxMute: () => void;
+  toggleMusicMute: () => void;
   resetGame: () => void;
 }
 
@@ -128,7 +130,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   rematchRequested: false,
   rematchRequestSent: false,
   messages: [],
-  isMuted: false,
+  isSfxMuted: false,
+  isMusicMuted: false,
   lang: (() => {
     const stored = localStorage.getItem('lang');
     return (stored === 'en' || stored === 'kr') ? stored : 'en';
@@ -245,7 +248,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setRematchRequested: (v) => set({ rematchRequested: v }),
   setRematchRequestSent: (v) => set({ rematchRequestSent: v }),
   addMessage: (msg) => set({ messages: [...get().messages.slice(-99), msg] }),
-  toggleMute: () => set({ isMuted: !get().isMuted }),
+  toggleSfxMute: () => set({ isSfxMuted: !get().isSfxMuted }),
+  toggleMusicMute: () => set({ isMusicMuted: !get().isMusicMuted }),
 
   resetGame: () => set({
     authReady: get().authReady,
@@ -274,6 +278,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     rematchRequested: false,
     rematchRequestSent: false,
     messages: [],
-    isMuted: get().isMuted,
+    isSfxMuted: get().isSfxMuted,
+    isMusicMuted: get().isMusicMuted,
   }),
 }));

@@ -470,13 +470,19 @@
 }
 
 /* ── Language toggle ──────────────────────────────────── */
+.lobby-control-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.25rem;
+  margin-bottom: 1rem;
+}
+
 .lang-toggle {
   align-self: center;
   display: inline-flex;
   align-items: center;
   padding: 0.25rem;
-  margin-top: 0.25rem;
-  margin-bottom: 1rem;
   border-radius: 999px;
   border: 1px solid var(--tile-border, #3a444d);
   background: var(--panel, #1e252b);
@@ -503,6 +509,40 @@
 .lang-toggle-btn.is-active {
   background: var(--tile, #2a3137);
   color: var(--text, #f0f4f8);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.sound-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--tile-border, #3a444d);
+  background: var(--panel, #1e252b);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.24);
+}
+
+.sound-toggle-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #9aa4ae);
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sound-toggle-btn:hover {
+  color: var(--text, #f0f4f8);
+}
+
+.sound-toggle-btn.is-active {
+  background: var(--tile, #2a3137);
+  color: #60a5fa;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 

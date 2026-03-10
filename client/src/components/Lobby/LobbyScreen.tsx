@@ -130,6 +130,10 @@ export function LobbyScreen({ onGameStart }: Props) {
     accountLosses,
     setAuthState,
     setMatchType,
+    isMusicMuted,
+    isSfxMuted,
+    toggleMusicMute,
+    toggleSfxMute,
   } = useGameStore();
   const { lang, setLang, t } = useLang();
   const policyUrl = lang === "en" ? POLICY_URL_EN : POLICY_URL_KR;
@@ -423,23 +427,45 @@ export function LobbyScreen({ onGameStart }: Props) {
           t={t}
         />
       )}
-      <div className="lang-toggle" role="group" aria-label="Language toggle">
-        <button
-          className={`lang-toggle-btn ${lang === "en" ? "is-active" : ""}`}
-          onClick={() => setLang("en")}
-          aria-pressed={lang === "en"}
-          type="button"
-        >
-          EN
-        </button>
-        <button
-          className={`lang-toggle-btn ${lang === "kr" ? "is-active" : ""}`}
-          onClick={() => setLang("kr")}
-          aria-pressed={lang === "kr"}
-          type="button"
-        >
-          KR
-        </button>
+      <div className="lobby-control-row">
+        <div className="lang-toggle" role="group" aria-label="Language toggle">
+          <button
+            className={`lang-toggle-btn ${lang === "en" ? "is-active" : ""}`}
+            onClick={() => setLang("en")}
+            aria-pressed={lang === "en"}
+            type="button"
+          >
+            EN
+          </button>
+          <button
+            className={`lang-toggle-btn ${lang === "kr" ? "is-active" : ""}`}
+            onClick={() => setLang("kr")}
+            aria-pressed={lang === "kr"}
+            type="button"
+          >
+            KR
+          </button>
+        </div>
+        <div className="sound-toggle" role="group" aria-label="Sound controls">
+          <button
+            className={`sound-toggle-btn ${!isMusicMuted ? "is-active" : ""}`}
+            onClick={toggleMusicMute}
+            aria-pressed={!isMusicMuted}
+            title={!isMusicMuted ? "Music On" : "Music Off"}
+            type="button"
+          >
+            ♪
+          </button>
+          <button
+            className={`sound-toggle-btn ${!isSfxMuted ? "is-active" : ""}`}
+            onClick={toggleSfxMute}
+            aria-pressed={!isSfxMuted}
+            title={!isSfxMuted ? "SFX On" : "SFX Off"}
+            type="button"
+          >
+            ♫
+          </button>
+        </div>
       </div>
       <div className="lobby-utility-links">
         <a
