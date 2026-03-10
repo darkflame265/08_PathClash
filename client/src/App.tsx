@@ -12,8 +12,32 @@ type AppView = 'lobby' | 'game';
 
 function App() {
   const [view, setView] = useState<AppView>('lobby');
-  const { authReady, myNickname, setAuthState } = useGameStore();
+  const { authReady, myNickname, setAuthState, isMuted } = useGameStore();
   const nicknameSyncTimeoutRef = useRef<number | null>(null);
+  const lobbyBgmRef = useRef<HTMLAudioElement | null>(null);
+  const inGameBgmRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const lobbyBgm = new Audio('/music/Lobby_bgm_1.mp3');
+    lobbyBgm.loop = true;
+    lobbyBgm.preload = 'auto';
+    lobbyBgm.volume = 0.28;
+
+    const inGameBgm = new Audio('/music/InGame_bgm_1.mp3');
+    inGameBgm.loop = true;
+    inGameBgm.preload = 'auto';
+    inGameBgm.volume = 0.3;
+
+    lobbyBgmRef.current = lobbyBgm;
+    inGameBgmRef.current = inGameBgm;
+
+    return () => {
+      lobbyBgm.pause();
+      inGameBgm.pause();
+      lobbyBgmRef.current = null;
+      inGameBgmRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -64,6 +88,27 @@ function App() {
     setView('lobby');
   }, []);
 
+  const tryStartBgm = useCallback(() => {
+    const lobbyBgm = lobbyBgmRef.current;
+    const inGameBgm = inGameBgmRef.current;
+    if (!lobbyBgm || !inGameBgm) return;
+
+    if (isMuted) {
+      lobbyBgm.pause();
+      inGameBgm.pause();
+      return;
+    }
+
+    const targetBgm = view === 'game' ? inGameBgm : lobbyBgm;
+    const otherBgm = view === 'game' ? lobbyBgm : inGameBgm;
+
+    otherBgm.pause();
+    otherBgm.currentTime = 0;
+    void targetBgm.play().catch(() => {
+      // Autoplay can fail until the user interacts with the screen.
+    });
+  }, [isMuted, view]);
+
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
@@ -85,6 +130,19 @@ function App() {
       cleanup();
     };
   }, [handleReturnToLobby, view]);
+
+  useEffect(() => {
+    tryStartBgm();
+  }, [tryStartBgm]);
+
+  useEffect(() => {
+    const onUserInteraction = () => {
+      tryStartBgm();
+    };
+
+    window.addEventListener('pointerdown', onUserInteraction, true);
+    return () => window.removeEventListener('pointerdown', onUserInteraction, true);
+  }, [tryStartBgm]);
 
   if (!authReady) {
     return <div className="app app-loading">Connecting guest session...</div>;
