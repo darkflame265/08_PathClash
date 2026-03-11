@@ -14,6 +14,7 @@ import { connectSocket } from "../../socket/socketClient";
 import { useGameStore } from "../../store/gameStore";
 import { useLang } from "../../hooks/useLang";
 import type { Translations } from "../../i18n/translations";
+import type { PieceSkin } from "../../types/game.types";
 import "./LobbyScreen.css";
 
 type LobbyView = "main" | "create" | "join";
@@ -182,6 +183,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       | "nova"
       | "aurora"
       | "void"
+      | "plasma"
       | "flag_kr"
       | "flag_jp"
       | "flag_cn"
@@ -235,6 +237,15 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Deep violet core."
           : "\uC9D9\uC740 \uBCF4\uB78F\uBE5B \uCF54\uC5B4 \uC2A4\uD0C0\uC77C.",
       requiredWins: 500,
+    },
+    {
+      id: "plasma",
+      name: lang === "en" ? "Plasma" : "\uD50C\uB77C\uC988\uB9C8",
+      desc:
+        lang === "en"
+          ? "Plasma energy core."
+          : "\uD50C\uB77C\uC988\uB9C8 \uC5D0\uB108\uC9C0 \uCF54\uC5B4.",
+      requiredWins: null,
     },
     {
       id: "flag_kr",
@@ -345,7 +356,7 @@ export function LobbyScreen({ onGameStart }: Props) {
         roomId: string;
         code: string;
         color: "red" | "blue";
-        pieceSkin?: "classic" | "ember" | "nova";
+        pieceSkin?: PieceSkin;
       }) => {
         setMyColor(color);
         setRoomCode(code);
@@ -371,8 +382,8 @@ export function LobbyScreen({ onGameStart }: Props) {
         roomId: string;
         color: "red" | "blue";
         opponentNickname: string;
-        selfPieceSkin?: "classic" | "ember" | "nova";
-        opponentPieceSkin?: "classic" | "ember" | "nova";
+        selfPieceSkin?: PieceSkin;
+        opponentPieceSkin?: PieceSkin;
       }) => {
         setMyColor(color);
         setRoomCode(roomId);
@@ -400,7 +411,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       }: {
         nickname: string;
         color?: "red" | "blue";
-        pieceSkin?: "classic" | "ember" | "nova";
+        pieceSkin?: PieceSkin;
       }) => {
       const myCurrentColor = useGameStore.getState().myColor;
       const myCurrentPieceSkin = useGameStore.getState().pieceSkin;

@@ -12,6 +12,7 @@ export type PieceSkin =
   | 'nova'
   | 'aurora'
   | 'void'
+  | 'plasma'
   | 'flag_kr'
   | 'flag_jp'
   | 'flag_cn'
