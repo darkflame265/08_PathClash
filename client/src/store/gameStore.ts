@@ -197,7 +197,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setMatchType: (matchType) => set({ currentMatchType: matchType }),
 
   setGameState: (gs) =>
-    set((state) => ({
+    set(() => ({
       gameState: gs,
       playerPieceSkins: {
         red: gs.players.red.pieceSkin,
