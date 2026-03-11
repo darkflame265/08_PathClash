@@ -444,14 +444,16 @@ function PathProgressBar({
 }
 
 function MuteButton() {
-  const { isSfxMuted, toggleSfxMute } = useGameStore();
+  const { isSfxMuted, isMusicMuted, toggleAllAudio } = useGameStore();
+  const isAudioMuted = isSfxMuted && isMusicMuted;
   return (
     <button
       className="gs-mute-btn"
-      onClick={toggleSfxMute}
-      title={isSfxMuted ? "SFX OFF" : "SFX ON"}
+      onClick={toggleAllAudio}
+      title={isAudioMuted ? "AUDIO OFF" : "AUDIO ON"}
+      aria-label={isAudioMuted ? "Audio off" : "Audio on"}
     >
-      {isSfxMuted ? "SFX OFF" : "SFX ON"}
+      {isAudioMuted ? "🔇" : "🔊"}
     </button>
   );
 }

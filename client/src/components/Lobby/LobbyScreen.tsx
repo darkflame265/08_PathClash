@@ -8,11 +8,11 @@ import {
   type AccountProfile,
   type UpgradeResolution,
 } from "../../auth/guestAuth";
+import { startDonation } from "../../payments/donate";
 import { connectSocket } from "../../socket/socketClient";
 import { useGameStore } from "../../store/gameStore";
 import { useLang } from "../../hooks/useLang";
 import type { Translations } from "../../i18n/translations";
-import { startDonation } from "../../payments/donate";
 import "./LobbyScreen.css";
 
 type LobbyView = "main" | "create" | "join";
@@ -21,14 +21,22 @@ interface Props {
   onGameStart: () => void;
 }
 
-const POLICY_URL_KR = import.meta.env.VITE_POLICY_URL_KR?.trim() || "https://pathclash.com/privacy.html";
-const POLICY_URL_EN = import.meta.env.VITE_POLICY_URL_EN?.trim() || "https://pathclash.com/privacy-en.html";
-const DONATE_URL = import.meta.env.VITE_DONATE_URL?.trim() || "https://pathclash.com";
+const POLICY_URL_KR =
+  import.meta.env.VITE_POLICY_URL_KR?.trim() ||
+  "https://pathclash.com/privacy.html";
+const POLICY_URL_EN =
+  import.meta.env.VITE_POLICY_URL_EN?.trim() ||
+  "https://pathclash.com/privacy-en.html";
+const DONATE_URL =
+  import.meta.env.VITE_DONATE_URL?.trim() || "https://pathclash.com";
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
 
 type SetAuthState = ReturnType<typeof useGameStore.getState>["setAuthState"];
 
-function applyProfileToStore(profile: AccountProfile, setAuthState: SetAuthState) {
+function applyProfileToStore(
+  profile: AccountProfile,
+  setAuthState: SetAuthState,
+) {
   setAuthState({
     ready: true,
     userId: profile.userId,
@@ -40,9 +48,14 @@ function applyProfileToStore(profile: AccountProfile, setAuthState: SetAuthState
   });
 }
 
-function getUpgradeDisplayMsg(result: UpgradeResolution, t: Translations): string {
+function getUpgradeDisplayMsg(
+  result: UpgradeResolution,
+  t: Translations,
+): string {
   if (result.kind === "upgrade_ok") return t.upgradeOk;
-  if (result.kind === "switch_ok") return t.switchOk(result.profile.wins, result.profile.losses);
+  if (result.kind === "switch_ok") {
+    return t.switchOk(result.profile.wins, result.profile.losses);
+  }
   if (result.kind === "auth_error") return t.authError;
   return "";
 }
@@ -132,8 +145,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     setMatchType,
     isMusicMuted,
     isSfxMuted,
-    toggleMusicMute,
-    toggleSfxMute,
+    toggleAllAudio,
   } = useGameStore();
   const { lang, setLang, t } = useLang();
   const policyUrl = lang === "en" ? POLICY_URL_EN : POLICY_URL_KR;
@@ -142,9 +154,12 @@ export function LobbyScreen({ onGameStart }: Props) {
   const [createdCode, setCreatedCode] = useState("");
   const [error, setError] = useState("");
   const [isMatchmaking, setIsMatchmaking] = useState(false);
-  const [upgradeResult, setUpgradeResult] = useState<UpgradeResolution>({ kind: "none" });
+  const [upgradeResult, setUpgradeResult] = useState<UpgradeResolution>({
+    kind: "none",
+  });
   const [showUpgradeNotice, setShowUpgradeNotice] = useState(false);
   const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
+  const isAudioMuted = isMusicMuted && isSfxMuted;
 
   useEffect(() => {
     void refreshAccountSummary().then(({ nickname, wins, losses }) => {
@@ -183,7 +198,8 @@ export function LobbyScreen({ onGameStart }: Props) {
     };
   }, [setAuthState]);
 
-  const getNick = () => myNickname.trim() || `Guest${Math.floor(Math.random() * 9999)}`;
+  const getNick = () =>
+    myNickname.trim() || `Guest${Math.floor(Math.random() * 9999)}`;
 
   const startSocket = () => {
     const socket = connectSocket();
@@ -194,22 +210,42 @@ export function LobbyScreen({ onGameStart }: Props) {
     socket.off("join_error");
     socket.off("matchmaking_waiting");
 
-    socket.on("room_created", ({ code, color }: { roomId: string; code: string; color: "red" | "blue" }) => {
-      setMyColor(color);
-      setRoomCode(code);
-      setCreatedCode(code);
-      setError("");
-      setIsMatchmaking(false);
-      setView("create");
-    });
+    socket.on(
+      "room_created",
+      ({
+        code,
+        color,
+      }: {
+        roomId: string;
+        code: string;
+        color: "red" | "blue";
+      }) => {
+        setMyColor(color);
+        setRoomCode(code);
+        setCreatedCode(code);
+        setError("");
+        setIsMatchmaking(false);
+        setView("create");
+      },
+    );
 
-    socket.on("room_joined", ({ color, roomId }: { roomId: string; color: "red" | "blue"; opponentNickname: string }) => {
-      setMyColor(color);
-      setRoomCode(roomId);
-      setError("");
-      setIsMatchmaking(false);
-      onGameStart();
-    });
+    socket.on(
+      "room_joined",
+      ({
+        color,
+        roomId,
+      }: {
+        roomId: string;
+        color: "red" | "blue";
+        opponentNickname: string;
+      }) => {
+        setMyColor(color);
+        setRoomCode(roomId);
+        setError("");
+        setIsMatchmaking(false);
+        onGameStart();
+      },
+    );
 
     socket.on("opponent_joined", () => {
       setError("");
@@ -278,7 +314,8 @@ export function LobbyScreen({ onGameStart }: Props) {
     setIsMatchmaking(false);
     setMatchType("ai");
     const socket = startSocket();
-    const hasSeenAiTutorial = window.localStorage.getItem(AI_TUTORIAL_SEEN_KEY) === "1";
+    const hasSeenAiTutorial =
+      window.localStorage.getItem(AI_TUTORIAL_SEEN_KEY) === "1";
     socket.emit("join_ai", {
       ...(await buildPlayerPayload()),
       tutorialPending: !hasSeenAiTutorial,
@@ -359,7 +396,10 @@ export function LobbyScreen({ onGameStart }: Props) {
             maxLength={6}
           />
           {error && <p className="error-msg">{error}</p>}
-          <button className="lobby-btn primary" onClick={() => void handleJoinRoom()}>
+          <button
+            className="lobby-btn primary"
+            onClick={() => void handleJoinRoom()}
+          >
             {t.joinBtn}
           </button>
           <button
@@ -385,10 +425,16 @@ export function LobbyScreen({ onGameStart }: Props) {
           <div className="lobby-card">
             <h2 data-step="3">{t.friendTitle}</h2>
             <div className="btn-divider">
-              <button className="lobby-btn primary" onClick={() => void handleCreateRoom()}>
+              <button
+                className="lobby-btn primary"
+                onClick={() => void handleCreateRoom()}
+              >
                 {t.createRoomBtn}
               </button>
-              <button className="lobby-btn secondary" onClick={() => setView("join")}>
+              <button
+                className="lobby-btn secondary"
+                onClick={() => setView("join")}
+              >
                 {t.enterCodeBtn}
               </button>
             </div>
@@ -423,7 +469,10 @@ export function LobbyScreen({ onGameStart }: Props) {
       {showUpgradeNotice && (
         <UpgradeNoticeDialog
           message={upgradeMessage}
-          onClose={() => { setShowUpgradeNotice(false); setUpgradeResult({ kind: "none" }); }}
+          onClose={() => {
+            setShowUpgradeNotice(false);
+            setUpgradeResult({ kind: "none" });
+          }}
           t={t}
         />
       )}
@@ -446,24 +495,15 @@ export function LobbyScreen({ onGameStart }: Props) {
             KR
           </button>
         </div>
-        <div className="sound-toggle" role="group" aria-label="Sound controls">
+        <div className="audio-toggle" role="group" aria-label="Audio toggle">
           <button
-            className={`sound-toggle-btn ${!isMusicMuted ? "is-active" : ""}`}
-            onClick={toggleMusicMute}
-            aria-pressed={!isMusicMuted}
-            title={!isMusicMuted ? "Music On" : "Music Off"}
+            className={`audio-toggle-btn ${!isAudioMuted ? "is-active" : ""}`}
+            onClick={toggleAllAudio}
+            aria-pressed={!isAudioMuted}
+            title={isAudioMuted ? "Audio Off" : "Audio On"}
             type="button"
           >
-            ♪
-          </button>
-          <button
-            className={`sound-toggle-btn ${!isSfxMuted ? "is-active" : ""}`}
-            onClick={toggleSfxMute}
-            aria-pressed={!isSfxMuted}
-            title={!isSfxMuted ? "SFX On" : "SFX Off"}
-            type="button"
-          >
-            ♫
+            {isAudioMuted ? "🔇" : "🔊"}
           </button>
         </div>
       </div>

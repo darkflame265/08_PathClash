@@ -97,11 +97,39 @@ interface GameStore {
   addMessage: (msg: ChatMessage) => void;
   toggleSfxMute: () => void;
   toggleMusicMute: () => void;
+  toggleAllAudio: () => void;
   resetGame: () => void;
 }
 
 const INITIAL_RED: Position = { row: 2, col: 0 };
 const INITIAL_BLUE: Position = { row: 2, col: 4 };
+const AUDIO_PREFS_KEY = 'audioPrefs';
+
+function getStoredAudioPrefs() {
+  const raw = localStorage.getItem(AUDIO_PREFS_KEY);
+  if (!raw) {
+    return { isSfxMuted: false, isMusicMuted: false };
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as {
+      isSfxMuted?: boolean;
+      isMusicMuted?: boolean;
+    };
+    return {
+      isSfxMuted: Boolean(parsed.isSfxMuted),
+      isMusicMuted: Boolean(parsed.isMusicMuted),
+    };
+  } catch {
+    return { isSfxMuted: false, isMusicMuted: false };
+  }
+}
+
+function saveAudioPrefs(prefs: { isSfxMuted: boolean; isMusicMuted: boolean }) {
+  localStorage.setItem(AUDIO_PREFS_KEY, JSON.stringify(prefs));
+}
+
+const initialAudioPrefs = getStoredAudioPrefs();
 
 export const useGameStore = create<GameStore>((set, get) => ({
   myNickname: '',
@@ -130,8 +158,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   rematchRequested: false,
   rematchRequestSent: false,
   messages: [],
-  isSfxMuted: false,
-  isMusicMuted: false,
+  isSfxMuted: initialAudioPrefs.isSfxMuted,
+  isMusicMuted: initialAudioPrefs.isMusicMuted,
   lang: (() => {
     const stored = localStorage.getItem('lang');
     return (stored === 'en' || stored === 'kr') ? stored : 'en';
@@ -248,8 +276,34 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setRematchRequested: (v) => set({ rematchRequested: v }),
   setRematchRequestSent: (v) => set({ rematchRequestSent: v }),
   addMessage: (msg) => set({ messages: [...get().messages.slice(-99), msg] }),
-  toggleSfxMute: () => set({ isSfxMuted: !get().isSfxMuted }),
-  toggleMusicMute: () => set({ isMusicMuted: !get().isMusicMuted }),
+  toggleSfxMute: () => {
+    const next = {
+      isSfxMuted: !get().isSfxMuted,
+      isMusicMuted: get().isMusicMuted,
+    };
+    saveAudioPrefs(next);
+    set({ isSfxMuted: next.isSfxMuted });
+  },
+  toggleMusicMute: () => {
+    const next = {
+      isSfxMuted: get().isSfxMuted,
+      isMusicMuted: !get().isMusicMuted,
+    };
+    saveAudioPrefs(next);
+    set({ isMusicMuted: next.isMusicMuted });
+  },
+  toggleAllAudio: () => {
+    const nextMuted = !(get().isSfxMuted && get().isMusicMuted);
+    const next = {
+      isSfxMuted: nextMuted,
+      isMusicMuted: nextMuted,
+    };
+    saveAudioPrefs(next);
+    set({
+      isSfxMuted: next.isSfxMuted,
+      isMusicMuted: next.isMusicMuted,
+    });
+  },
 
   resetGame: () => set({
     authReady: get().authReady,

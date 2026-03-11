@@ -512,7 +512,7 @@
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
-.sound-toggle {
+.audio-toggle {
   display: inline-flex;
   align-items: center;
   padding: 0.25rem;
@@ -522,25 +522,27 @@
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.24);
 }
 
-.sound-toggle-btn {
+.audio-toggle-btn {
   border: none;
   background: transparent;
   color: var(--text-muted, #9aa4ae);
-  width: 2rem;
+  width: 3rem;
   height: 2rem;
   border-radius: 999px;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   font-family: "Plus Jakarta Sans", sans-serif;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.sound-toggle-btn:hover {
+.audio-toggle-btn:hover {
   color: var(--text, #f0f4f8);
+  background: rgba(59, 130, 246, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
-.sound-toggle-btn.is-active {
+.audio-toggle-btn.is-active {
   background: var(--tile, #2a3137);
   color: #60a5fa;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
