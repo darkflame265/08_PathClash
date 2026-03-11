@@ -1,12 +1,14 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-10T06:11:54.827Z",
+  "lastUpdated": "2026-03-11T07:36:52.369Z",
   "activeFeatures": [
     "web-turn-game",
     "Game",
     "Lobby",
     "screenshots",
-    "i18n"
+    "i18n",
+    "store",
+    "socket"
   ],
   "primaryFeature": "web-turn-game",
   "features": {
@@ -59,7 +61,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-28T02:35:01.997Z",
-        "lastUpdated": "2026-02-28T02:42:21.892Z"
+        "lastUpdated": "2026-03-11T07:36:52.369Z"
       },
       "lastFile": "C:\\08_PathClash\\client\\src\\store\\gameStore.ts"
     },
@@ -72,7 +74,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-28T02:35:20.369Z",
-        "lastUpdated": "2026-02-28T02:42:23.303Z"
+        "lastUpdated": "2026-03-11T07:29:58.504Z"
       },
       "lastFile": "C:\\08_PathClash\\client\\src\\socket\\socketHandlers.ts"
     },
@@ -124,9 +126,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-28T02:39:20.631Z",
-        "lastUpdated": "2026-02-28T06:34:28.185Z"
+        "lastUpdated": "2026-03-11T07:30:15.128Z"
       },
-      "lastFile": "C:/08_PathClash/client/src/components/Lobby/LobbyScreen.tsx"
+      "lastFile": "C:\\08_PathClash\\client\\src\\components\\Lobby\\LobbyScreen.tsx"
     },
     "08_PathClash": {
       "phase": "do",
@@ -178,7 +180,7 @@
   "session": {
     "startedAt": "2026-02-28T00:00:00.000Z",
     "onboardingCompleted": true,
-    "lastActivity": "2026-03-10T06:11:54.827Z"
+    "lastActivity": "2026-03-11T07:36:52.369Z"
   },
   "history": [
     {
@@ -602,6 +604,84 @@
     {
       "timestamp": "2026-03-10T06:11:54.827Z",
       "feature": "Game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-11T06:40:53.135Z",
+      "feature": "store",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-11T06:41:01.899Z",
+      "feature": "Lobby",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-11T06:59:20.444Z",
+      "feature": "socket",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-11T06:59:25.085Z",
+      "feature": "Lobby",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-11T06:59:31.657Z",
+      "feature": "Lobby",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-11T06:59:36.347Z",
+      "feature": "Lobby",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-11T07:01:35.986Z",
+      "feature": "Lobby",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-11T07:29:58.504Z",
+      "feature": "socket",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-11T07:30:03.123Z",
+      "feature": "Lobby",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-11T07:30:08.131Z",
+      "feature": "Lobby",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-11T07:30:11.438Z",
+      "feature": "Lobby",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-11T07:30:15.128Z",
+      "feature": "Lobby",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-11T07:36:52.369Z",
+      "feature": "store",
       "phase": "do",
       "action": "updated"
     }

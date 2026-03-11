@@ -138,7 +138,12 @@ function saveAudioPrefs(prefs: { isSfxMuted: boolean; isMusicMuted: boolean }) {
 const initialAudioPrefs = getStoredAudioPrefs();
 const initialPieceSkin = (() => {
   const stored = localStorage.getItem(PIECE_SKIN_KEY);
-  return stored === 'ember' || stored === 'nova' ? stored : 'classic';
+  return stored === 'ember' ||
+    stored === 'nova' ||
+    stored === 'aurora' ||
+    stored === 'void'
+    ? stored
+    : 'classic';
 })();
 
 export const useGameStore = create<GameStore>((set, get) => ({

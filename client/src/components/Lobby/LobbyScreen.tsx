@@ -172,24 +172,34 @@ export function LobbyScreen({ onGameStart }: Props) {
       : "플레이어 말에 적용할 외형을 선택하세요.";
   const skinApplyLabel = lang === "en" ? "Close" : "닫기";
   const skinChoices: Array<{
-    id: "classic" | "ember" | "nova";
+    id: "classic" | "ember" | "nova" | "aurora" | "void";
     name: string;
     desc: string;
   }> = [
     {
       id: "classic",
-      name: lang === "en" ? "Classic" : "기본",
-      desc: lang === "en" ? "Default red glow." : "기본 붉은 글로우 스타일.",
+      name: lang === "en" ? "Classic" : "??",
+      desc: lang === "en" ? "Default red glow." : "?? ?? ??? ???.",
     },
     {
       id: "ember",
-      name: lang === "en" ? "Ember" : "엠버",
-      desc: lang === "en" ? "Warm orange flare." : "주황빛이 도는 강한 발광.",
+      name: lang === "en" ? "Ember" : "??",
+      desc: lang === "en" ? "Warm orange flare." : "???? ?? ?? ??.",
     },
     {
       id: "nova",
-      name: lang === "en" ? "Nova" : "노바",
-      desc: lang === "en" ? "Cool cyan core." : "청록 계열의 차가운 코어.",
+      name: lang === "en" ? "Nova" : "??",
+      desc: lang === "en" ? "Cool cyan core." : "?? ??? ??? ??.",
+    },
+    {
+      id: "aurora",
+      name: lang === "en" ? "Aurora" : "???",
+      desc: lang === "en" ? "Vivid green-yellow glow." : "???? ???? ?? ??.",
+    },
+    {
+      id: "void",
+      name: lang === "en" ? "Void" : "???",
+      desc: lang === "en" ? "Deep violet core." : "?? ??? ?? ???.",
     },
   ];
 

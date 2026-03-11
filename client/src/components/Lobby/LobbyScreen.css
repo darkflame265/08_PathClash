@@ -627,6 +627,20 @@
     0 0 18px rgba(34, 211, 238, 0.45);
 }
 
+.skin-preview-aurora {
+  background: radial-gradient(circle at 35% 35%, #f6ffb0 0%, #84cc16 72%);
+  box-shadow:
+    0 0 0 2px rgba(250, 204, 21, 0.88),
+    0 0 18px rgba(132, 204, 22, 0.45);
+}
+
+.skin-preview-void {
+  background: radial-gradient(circle at 35% 35%, #d8b4fe 0%, #7c3aed 72%);
+  box-shadow:
+    0 0 0 2px rgba(168, 85, 247, 0.9),
+    0 0 18px rgba(124, 58, 237, 0.45);
+}
+
 .skin-option-copy {
   display: flex;
   flex-direction: column;
