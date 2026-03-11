@@ -558,6 +558,8 @@
 
 .skin-modal {
   max-width: 28rem;
+  max-height: min(46rem, calc(100dvh - 2rem));
+  overflow: hidden;
 }
 
 .skin-option-list {
@@ -565,6 +567,9 @@
   flex-direction: column;
   gap: 0.75rem;
   margin-top: 0.5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.2rem;
 }
 
 .skin-option-card {
@@ -699,6 +704,45 @@
   justify-content: center;
   font-size: 0.92rem;
   opacity: 0.88;
+}
+
+@media (max-width: 640px) {
+  .upgrade-modal-backdrop {
+    align-items: flex-start;
+    padding: 0.85rem;
+  }
+
+  .skin-modal {
+    width: min(100%, 24rem);
+    max-height: calc(100dvh - 1.7rem);
+    padding: 1rem;
+    gap: 0.75rem;
+    border-radius: 1rem;
+  }
+
+  .skin-option-list {
+    gap: 0.6rem;
+    max-height: calc(100dvh - 16.5rem);
+  }
+
+  .skin-option-card {
+    gap: 0.7rem;
+    padding: 0.72rem 0.8rem;
+  }
+
+  .skin-preview {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+
+  .skin-option-copy strong {
+    font-size: 0.84rem;
+  }
+
+  .skin-option-copy span,
+  .skin-lock-meta {
+    font-size: 0.74rem;
+  }
 }
 
 .lobby-utility-links {
