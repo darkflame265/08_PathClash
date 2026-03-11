@@ -35,6 +35,7 @@ export function GameGrid({
     myPath,
     roundInfo,
     setMyPath,
+    pieceSkin,
     redDisplayPos,
     blueDisplayPos,
     hitEffect,
@@ -446,6 +447,7 @@ export function GameGrid({
           isHit={hitEffect.red}
           isExploding={explosionEffect === "red"}
           isMe={myColor === "red"}
+          skin={myColor === "red" ? pieceSkin : "classic"}
         />
         <PlayerPiece
           color="blue"
@@ -455,6 +457,7 @@ export function GameGrid({
           isHit={hitEffect.blue}
           isExploding={explosionEffect === "blue"}
           isMe={myColor === "blue"}
+          skin={myColor === "blue" ? pieceSkin : "classic"}
         />
 
         {tutorialHint && tutorialAnchorPos && (

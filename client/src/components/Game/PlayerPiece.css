@@ -35,6 +35,26 @@
   box-shadow: 0 0 var(--piece-glow, 12px) rgba(59, 130, 246, 0.5);
 }
 
+.piece-skin-classic.piece-red .piece-inner {
+  background: radial-gradient(circle at 35% 30%, #ff8080, #dc2626);
+  box-shadow: 0 0 var(--piece-glow, 12px) rgba(239, 68, 68, 0.5);
+}
+
+.piece-skin-classic.piece-blue .piece-inner {
+  background: radial-gradient(circle at 35% 30%, #93c5fd, #1d4ed8);
+  box-shadow: 0 0 var(--piece-glow, 12px) rgba(59, 130, 246, 0.5);
+}
+
+.piece-skin-ember .piece-inner {
+  background: radial-gradient(circle at 35% 30%, #ffd59d, #f97316 72%);
+  box-shadow: 0 0 var(--piece-glow, 12px) rgba(249, 115, 22, 0.56);
+}
+
+.piece-skin-nova .piece-inner {
+  background: radial-gradient(circle at 35% 30%, #d2f7ff, #22d3ee 72%);
+  box-shadow: 0 0 var(--piece-glow, 12px) rgba(34, 211, 238, 0.56);
+}
+
 /* Attacker glow ring */
 .attacker-glow {
   position: absolute;

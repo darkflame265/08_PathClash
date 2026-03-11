@@ -9,9 +9,19 @@ interface Props {
   isHit: boolean;
   isExploding: boolean;
   isMe: boolean;
+  skin?: "classic" | "ember" | "nova";
 }
 
-export function PlayerPiece({ color, position, cellSize, isAttacker, isHit, isExploding, isMe }: Props) {
+export function PlayerPiece({
+  color,
+  position,
+  cellSize,
+  isAttacker,
+  isHit,
+  isExploding,
+  isMe,
+  skin = "classic",
+}: Props) {
   const x = position.col * cellSize + cellSize / 2;
   const y = position.row * cellSize + cellSize / 2;
   const pieceSize = Math.max(28, Math.round(cellSize * 0.58));
@@ -24,6 +34,7 @@ export function PlayerPiece({ color, position, cellSize, isAttacker, isHit, isEx
   const classes = [
     'player-piece',
     `piece-${color}`,
+    `piece-skin-${skin}`,
     isMe ? 'piece-me' : '',
     isHit ? 'hit' : '',
     isExploding ? 'exploding' : '',
