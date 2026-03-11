@@ -101,6 +101,27 @@
   animation: plasma-ring-spin-reverse 3.6s linear infinite;
 }
 
+.piece-skin-gold_core .piece-inner {
+  background:
+    radial-gradient(circle at 34% 28%, #fffdf2 0%, #fff2a6 20%, #f5c542 55%, #9a670f 100%);
+  box-shadow:
+    0 0 calc(var(--piece-glow, 12px) * 0.95) rgba(245, 197, 66, 0.45),
+    inset 0 0 12px rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 215, 106, 0.92);
+}
+
+.piece-skin-gold_core .piece-inner::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 242, 166, 0.82);
+  box-shadow:
+    inset 0 0 10px rgba(255, 255, 255, 0.18),
+    0 0 6px rgba(245, 197, 66, 0.28);
+  pointer-events: none;
+}
+
 .piece-skin-flag_kr .piece-inner,
 .piece-skin-flag_jp .piece-inner,
 .piece-skin-flag_cn .piece-inner,

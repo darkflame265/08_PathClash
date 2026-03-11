@@ -17,6 +17,7 @@ interface Props {
     | "aurora"
     | "void"
     | "plasma"
+    | "gold_core"
     | "flag_kr"
     | "flag_jp"
     | "flag_cn"

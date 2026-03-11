@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { FlagSkin, isFlagSkin } from "../shared/FlagSkin";
 import {
   getSocketAuthPayload,
@@ -168,14 +168,16 @@ export function LobbyScreen({ onGameStart }: Props) {
   const [showUpgradeNotice, setShowUpgradeNotice] = useState(false);
   const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
   const isAudioMuted = isMusicMuted && isSfxMuted;
-  const skinButtonLabel = lang === "en" ? "Skin" : "스킨";
+  const skinButtonLabel = lang === "en" ? "Skin" : "\uC2A4\uD0A8";
   const skinModalTitle =
-    lang === "en" ? "Choose Piece Skin" : "말 스킨 선택";
+    lang === "en"
+      ? "Choose Piece Skin"
+      : "\uB9D0 \uC2A4\uD0A8 \uC120\uD0DD";
   const skinModalDesc =
     lang === "en"
       ? "Select the look you want to use for your piece."
-      : "플레이어 말에 적용할 외형을 선택하세요.";
-  const skinApplyLabel = lang === "en" ? "Close" : "닫기";
+      : "\uD50C\uB808\uC774\uC5B4 \uB9D0\uC5D0 \uC801\uC6A9\uD560 \uC678\uD615\uC744 \uC120\uD0DD\uD558\uC138\uC694.";
+  const skinApplyLabel = lang === "en" ? "Close" : "\uB2EB\uAE30";
   const skinChoices: Array<{
     id:
       | "classic"
@@ -184,6 +186,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       | "aurora"
       | "void"
       | "plasma"
+      | "gold_core"
       | "flag_kr"
       | "flag_jp"
       | "flag_cn"
@@ -192,6 +195,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     name: string;
     desc: string;
     requiredWins: number | null;
+    tokenPrice?: number | null;
   }> = [
     {
       id: "classic",
@@ -201,6 +205,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Default red glow."
           : "\uAE30\uBCF8 \uBD89\uC740 \uAE00\uB85C\uC6B0 \uC2A4\uD0C0\uC77C.",
       requiredWins: null,
+      tokenPrice: null,
     },
     {
       id: "ember",
@@ -210,6 +215,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Warm orange flare."
           : "\uC8FC\uD669\uBE5B\uC774 \uB3C4\uB294 \uAC15\uD55C \uBC1C\uAD11.",
       requiredWins: 10,
+      tokenPrice: null,
     },
     {
       id: "nova",
@@ -219,6 +225,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Cool cyan core."
           : "\uCCAD\uB85D \uACC4\uC5F4\uC758 \uCC28\uAC00\uC6B4 \uCF54\uC5B4.",
       requiredWins: 50,
+      tokenPrice: null,
     },
     {
       id: "aurora",
@@ -228,6 +235,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Vivid green-yellow glow."
           : "\uC5F0\uB450\uBE5B\uACFC \uD669\uAE08\uBE5B\uC774 \uC11E\uC778 \uBC1C\uAD11.",
       requiredWins: 100,
+      tokenPrice: null,
     },
     {
       id: "void",
@@ -237,6 +245,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Deep violet core."
           : "\uC9D9\uC740 \uBCF4\uB78F\uBE5B \uCF54\uC5B4 \uC2A4\uD0C0\uC77C.",
       requiredWins: 500,
+      tokenPrice: null,
     },
     {
       id: "plasma",
@@ -246,6 +255,17 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Plasma energy core."
           : "\uD50C\uB77C\uC988\uB9C8 \uC5D0\uB108\uC9C0 \uCF54\uC5B4.",
       requiredWins: null,
+      tokenPrice: null,
+    },
+    {
+      id: "gold_core",
+      name: lang === "en" ? "Gold Core" : "\uACE8\uB4DC \uCF54\uC5B4",
+      desc:
+        lang === "en"
+          ? "Radiant golden core."
+          : "\uCC2C\uB780\uD55C \uD669\uAE08 \uCF54\uC5B4.",
+      requiredWins: null,
+      tokenPrice: null,
     },
     {
       id: "flag_kr",
@@ -255,6 +275,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Korean flag motif."
           : "\uB300\uD55C\uBBFC\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
       requiredWins: null,
+      tokenPrice: null,
     },
     {
       id: "flag_jp",
@@ -264,6 +285,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Japanese flag motif."
           : "\uC77C\uBCF8 \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
       requiredWins: null,
+      tokenPrice: null,
     },
     {
       id: "flag_cn",
@@ -273,6 +295,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Chinese flag motif."
           : "\uC911\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
       requiredWins: null,
+      tokenPrice: null,
     },
     {
       id: "flag_us",
@@ -282,6 +305,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "American flag motif."
           : "\uBBF8\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
       requiredWins: null,
+      tokenPrice: null,
     },
     {
       id: "flag_uk",
@@ -291,11 +315,22 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "British flag motif."
           : "\uC601\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
       requiredWins: null,
+      tokenPrice: null,
     },
   ];
-  const getSkinRequirementLabel = (requiredWins: number) =>
-    lang === "en" ? `Wins ${requiredWins}` : `승리 ${requiredWins}`;
-
+  const getSkinRequirementLabel = (
+    requiredWins: number | null,
+    tokenPrice?: number | null,
+  ) => {
+    if (tokenPrice !== null && tokenPrice !== undefined) {
+      return lang === "en"
+        ? `Tokens ${tokenPrice}`
+        : `\uD1A0\uD070 ${tokenPrice}`;
+    }
+    return lang === "en"
+      ? `Wins ${requiredWins}`
+      : `\uC2B9\uB9AC ${requiredWins}`;
+  };
   useEffect(() => {
     void refreshAccountSummary().then(({ nickname, wins, losses, tokens }) => {
       setAuthState({
@@ -668,7 +703,7 @@ export function LobbyScreen({ onGameStart }: Props) {
               <h3>{skinModalTitle}</h3>
               <div className="skin-token-badge" aria-label="Current tokens">
                 <span className="skin-token-icon" aria-hidden="true">
-                  💎
+                  {"\uD83D\uDC8E"}
                 </span>
                 <span>{accountTokens}</span>
               </div>
@@ -676,8 +711,14 @@ export function LobbyScreen({ onGameStart }: Props) {
             <p>{skinModalDesc}</p>
             <div className="skin-option-list">
               {skinChoices.map((choice) => {
-                const isLocked =
-                  choice.requiredWins !== null && accountWins < choice.requiredWins;
+                const lockedByWins =
+                  choice.requiredWins !== null &&
+                  accountWins < choice.requiredWins;
+                const lockedByTokens =
+                  choice.tokenPrice !== null &&
+                  choice.tokenPrice !== undefined &&
+                  accountTokens < choice.tokenPrice;
+                const isLocked = lockedByWins || lockedByTokens;
                 return (
                   <button
                     key={choice.id}
@@ -703,9 +744,14 @@ export function LobbyScreen({ onGameStart }: Props) {
                     {isLocked && (
                       <span className="skin-lock-meta" aria-label="Locked skin">
                         <span className="skin-lock-icon" aria-hidden="true">
-                          🔒
+                          {"\uD83D\uDD12"}
                         </span>
-                        <span>{getSkinRequirementLabel(choice.requiredWins!)}</span>
+                        <span>
+                          {getSkinRequirementLabel(
+                            choice.requiredWins,
+                            choice.tokenPrice,
+                          )}
+                        </span>
                       </span>
                     )}
                   </button>
@@ -751,7 +797,7 @@ export function LobbyScreen({ onGameStart }: Props) {
             title={isAudioMuted ? "Audio Off" : "Audio On"}
             type="button"
           >
-            {isAudioMuted ? "🔇" : "🔊"}
+            {isAudioMuted ? "\uD83D\uDD07" : "\uD83D\uDD0A"}
           </button>
         </div>
         <div className="audio-toggle" role="group" aria-label="Skin picker">
@@ -812,3 +858,4 @@ function UpgradeNoticeDialog({
     </div>
   );
 }
+
