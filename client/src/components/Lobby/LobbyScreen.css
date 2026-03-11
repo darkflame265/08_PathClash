@@ -690,8 +690,13 @@
 }
 
 .skin-preview-plasma {
-  background:
-    radial-gradient(circle at 44% 42%, #d8b4fe 0%, #7c3aed 42%, #1d4ed8 76%, #081121 100%);
+  background: radial-gradient(
+    circle at 44% 42%,
+    #d8b4fe 0%,
+    #7c3aed 42%,
+    #1d4ed8 76%,
+    #081121 100%
+  );
   box-shadow:
     0 0 0 2px rgba(96, 165, 250, 0.9),
     0 0 18px rgba(59, 130, 246, 0.42),
@@ -699,8 +704,14 @@
 }
 
 .skin-preview-gold_core {
-  background:
-    radial-gradient(circle at 34% 28%, #fffef5 0%, #fef08a 18%, #eab308 50%, #92400e 80%, #1c0800 100%);
+  background: radial-gradient(
+    circle at 34% 28%,
+    #fffef5 0%,
+    #fef08a 18%,
+    #eab308 50%,
+    #92400e 80%,
+    #1c0800 100%
+  );
   box-shadow:
     0 0 0 2px rgba(253, 224, 71, 0.95),
     0 0 14px rgba(234, 179, 8, 0.65),
@@ -732,8 +743,13 @@
 }
 
 .skin-preview-neon_pulse {
-  background:
-    radial-gradient(circle at 38% 34%, #fff0fd 0%, #ff4fd8 28%, #b832d9 55%, #1a2daa 100%);
+  background: radial-gradient(
+    circle at 38% 34%,
+    #fff0fd 0%,
+    #ff4fd8 28%,
+    #b832d9 55%,
+    #1a2daa 100%
+  );
   box-shadow:
     0 0 0 2px rgba(127, 219, 255, 0.96),
     0 0 14px rgba(255, 79, 216, 0.65),
@@ -756,7 +772,7 @@
     0 0 8px rgba(79, 195, 255, 0.55),
     0 0 12px rgba(255, 79, 216, 0.24);
   opacity: 0;
-  animation: neon-wave-expand-preview 2s ease-out infinite;
+  animation: neon-wave-expand-preview 1.4s ease-out infinite;
 }
 
 .skin-preview-neon_pulse::after {
@@ -766,7 +782,7 @@
     0 0 6px rgba(255, 79, 216, 0.45),
     0 0 10px rgba(79, 195, 255, 0.2);
   opacity: 0;
-  animation: neon-wave-expand-preview 2s ease-out infinite 0.9s;
+  animation: neon-wave-expand-preview 1.4s ease-out infinite 0.6s;
 }
 
 @keyframes neon-wave-expand-preview {
@@ -786,8 +802,13 @@
 }
 
 .skin-preview-cosmic {
-  background:
-    radial-gradient(circle at 32% 28%, #f0e8ff 0%, #c084fc 20%, #6d28d9 52%, #1a0530 100%);
+  background: radial-gradient(
+    circle at 32% 28%,
+    #f0e8ff 0%,
+    #c084fc 20%,
+    #6d28d9 52%,
+    #1a0530 100%
+  );
   box-shadow:
     0 0 0 2px rgba(167, 139, 250, 0.95),
     0 0 14px rgba(139, 92, 246, 0.6),
@@ -815,15 +836,33 @@
   inset: 5px;
   border: 1px solid rgba(196, 181, 253, 0.48);
   background:
-    radial-gradient(circle at 24% 28%, rgba(255, 255, 255, 0.9) 0 1px, transparent 2px),
-    radial-gradient(circle at 75% 24%, rgba(255, 255, 255, 0.6) 0 0.5px, transparent 1.5px),
-    radial-gradient(circle at 62% 74%, rgba(196, 181, 253, 0.72) 0 0.5px, transparent 1.5px);
+    radial-gradient(
+      circle at 24% 28%,
+      rgba(255, 255, 255, 0.9) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 75% 24%,
+      rgba(255, 255, 255, 0.6) 0 0.5px,
+      transparent 1.5px
+    ),
+    radial-gradient(
+      circle at 62% 74%,
+      rgba(196, 181, 253, 0.72) 0 0.5px,
+      transparent 1.5px
+    );
   opacity: 0.92;
 }
 
 .skin-preview-inferno {
-  background:
-    radial-gradient(circle at 36% 28%, #fff4bf 0%, #ffd24a 18%, #ff8a3c 42%, #ff5a36 64%, #78140d 100%);
+  background: radial-gradient(
+    circle at 36% 28%,
+    #fff4bf 0%,
+    #ffd24a 18%,
+    #ff8a3c 42%,
+    #ff5a36 64%,
+    #78140d 100%
+  );
   box-shadow:
     0 0 0 2px rgba(255, 154, 60, 0.95),
     0 0 16px rgba(255, 90, 54, 0.55),
@@ -853,8 +892,14 @@
 }
 
 .skin-preview-phantom {
-  background:
-    radial-gradient(circle at 36% 30%, #c9b9ff 0%, #8b5cf6 16%, #3d2a68 34%, #1e1b2e 62%, #090711 100%);
+  background: radial-gradient(
+    circle at 36% 30%,
+    #c9b9ff 0%,
+    #8b5cf6 16%,
+    #3d2a68 34%,
+    #1e1b2e 62%,
+    #090711 100%
+  );
   box-shadow:
     0 0 0 2px rgba(109, 77, 214, 0.95),
     0 0 14px rgba(139, 92, 246, 0.48),
@@ -885,8 +930,15 @@
 }
 
 .skin-preview-arc_reactor {
-  background:
-    radial-gradient(circle at 50% 50%, #effcff 0%, #99f8ff 16%, #43d7ff 30%, #0ea5e9 48%, #08243f 72%, #020617 100%);
+  background: radial-gradient(
+    circle at 50% 50%,
+    #effcff 0%,
+    #99f8ff 16%,
+    #43d7ff 30%,
+    #0ea5e9 48%,
+    #08243f 72%,
+    #020617 100%
+  );
   box-shadow:
     0 0 0 2px rgba(125, 245, 255, 0.96),
     0 0 14px rgba(67, 215, 255, 0.72),
@@ -917,7 +969,12 @@
       rgba(223, 251, 255, 0.92) 0deg 6deg,
       transparent 6deg 18deg
     ),
-    radial-gradient(circle at 50% 50%, transparent 0 36%, rgba(125, 245, 255, 0.25) 36% 41%, transparent 41% 100%);
+    radial-gradient(
+      circle at 50% 50%,
+      transparent 0 36%,
+      rgba(125, 245, 255, 0.25) 36% 41%,
+      transparent 41% 100%
+    );
   opacity: 0.92;
 }
 
@@ -943,7 +1000,14 @@
 
 .skin-preview-quantum {
   background:
-    radial-gradient(circle at 34% 28%, #f0fff8 0%, #7cffb2 22%, #1ec47a 52%, #0a3d2e 82%, #020c08 100%),
+    radial-gradient(
+      circle at 34% 28%,
+      #f0fff8 0%,
+      #7cffb2 22%,
+      #1ec47a 52%,
+      #0a3d2e 82%,
+      #020c08 100%
+    ),
     repeating-radial-gradient(
       circle at 50% 50%,
       rgba(158, 247, 200, 0.16) 0 2%,
@@ -973,10 +1037,26 @@
     0 0 8px rgba(124, 255, 178, 0.55),
     inset 0 0 6px rgba(158, 247, 200, 0.16);
   background:
-    radial-gradient(circle at 22% 28%, rgba(255, 255, 255, 0.9) 0 1px, transparent 2px),
-    radial-gradient(circle at 76% 22%, rgba(124, 255, 178, 0.82) 0 1px, transparent 2px),
-    radial-gradient(circle at 64% 78%, rgba(167, 139, 250, 0.78) 0 1px, transparent 2px),
-    radial-gradient(circle at 30% 70%, rgba(240, 255, 248, 0.7) 0 1px, transparent 2px);
+    radial-gradient(
+      circle at 22% 28%,
+      rgba(255, 255, 255, 0.9) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 76% 22%,
+      rgba(124, 255, 178, 0.82) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 64% 78%,
+      rgba(167, 139, 250, 0.78) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 30% 70%,
+      rgba(240, 255, 248, 0.7) 0 1px,
+      transparent 2px
+    );
   animation: quantum-preview-orbit-cw 1.9s linear infinite;
 }
 
@@ -986,31 +1066,45 @@
   box-shadow:
     0 0 6px rgba(167, 139, 250, 0.48),
     inset 0 0 4px rgba(167, 139, 250, 0.12);
-  background:
-    repeating-radial-gradient(
-      circle at 50% 50%,
-      rgba(124, 255, 178, 0.12) 0 1px,
-      rgba(124, 255, 178, 0) 1px 11%,
-      rgba(167, 139, 250, 0.12) 11% 12%,
-      rgba(167, 139, 250, 0) 12% 19%
-    );
+  background: repeating-radial-gradient(
+    circle at 50% 50%,
+    rgba(124, 255, 178, 0.12) 0 1px,
+    rgba(124, 255, 178, 0) 1px 11%,
+    rgba(167, 139, 250, 0.12) 11% 12%,
+    rgba(167, 139, 250, 0) 12% 19%
+  );
   opacity: 0.92;
   animation: quantum-preview-orbit-ccw 2.8s linear infinite;
 }
 
 @keyframes quantum-preview-orbit-cw {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes quantum-preview-orbit-ccw {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(-360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
 }
 
 .skin-preview-crystal {
-  background:
-    radial-gradient(circle at 28% 22%, #ffffff 0%, #d8f7ff 12%, #7ee7ff 30%, #22b8d4 56%, #085f7a 80%, #020e14 100%);
+  background: radial-gradient(
+    circle at 28% 22%,
+    #ffffff 0%,
+    #d8f7ff 12%,
+    #7ee7ff 30%,
+    #22b8d4 56%,
+    #085f7a 80%,
+    #020e14 100%
+  );
   box-shadow:
     0 0 0 2px rgba(166, 240, 255, 0.95),
     0 0 14px rgba(126, 231, 255, 0.68),
@@ -1036,30 +1130,29 @@
 
 .skin-preview-crystal::after {
   inset: 5px;
-  background:
-    conic-gradient(
-      from 0deg,
-      rgba(255, 255, 255, 0.65) 0deg 12deg,
-      rgba(126, 231, 255, 0.15) 12deg 36deg,
-      rgba(255, 255, 255, 0.52) 36deg 48deg,
-      rgba(166, 240, 255, 0.12) 48deg 72deg,
-      rgba(255, 255, 255, 0.62) 72deg 84deg,
-      rgba(126, 231, 255, 0.14) 84deg 108deg,
-      rgba(255, 255, 255, 0.48) 108deg 120deg,
-      rgba(216, 247, 255, 0.10) 120deg 144deg,
-      rgba(255, 255, 255, 0.60) 144deg 156deg,
-      rgba(126, 231, 255, 0.13) 156deg 180deg,
-      rgba(255, 255, 255, 0.65) 180deg 192deg,
-      rgba(166, 240, 255, 0.11) 192deg 216deg,
-      rgba(255, 255, 255, 0.50) 216deg 228deg,
-      rgba(126, 231, 255, 0.15) 228deg 252deg,
-      rgba(255, 255, 255, 0.58) 252deg 264deg,
-      rgba(216, 247, 255, 0.12) 264deg 288deg,
-      rgba(255, 255, 255, 0.52) 288deg 300deg,
-      rgba(126, 231, 255, 0.14) 300deg 324deg,
-      rgba(255, 255, 255, 0.64) 324deg 336deg,
-      rgba(166, 240, 255, 0.10) 336deg 360deg
-    );
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 255, 255, 0.65) 0deg 12deg,
+    rgba(126, 231, 255, 0.15) 12deg 36deg,
+    rgba(255, 255, 255, 0.52) 36deg 48deg,
+    rgba(166, 240, 255, 0.12) 48deg 72deg,
+    rgba(255, 255, 255, 0.62) 72deg 84deg,
+    rgba(126, 231, 255, 0.14) 84deg 108deg,
+    rgba(255, 255, 255, 0.48) 108deg 120deg,
+    rgba(216, 247, 255, 0.1) 120deg 144deg,
+    rgba(255, 255, 255, 0.6) 144deg 156deg,
+    rgba(126, 231, 255, 0.13) 156deg 180deg,
+    rgba(255, 255, 255, 0.65) 180deg 192deg,
+    rgba(166, 240, 255, 0.11) 192deg 216deg,
+    rgba(255, 255, 255, 0.5) 216deg 228deg,
+    rgba(126, 231, 255, 0.15) 228deg 252deg,
+    rgba(255, 255, 255, 0.58) 252deg 264deg,
+    rgba(216, 247, 255, 0.12) 264deg 288deg,
+    rgba(255, 255, 255, 0.52) 288deg 300deg,
+    rgba(126, 231, 255, 0.14) 300deg 324deg,
+    rgba(255, 255, 255, 0.64) 324deg 336deg,
+    rgba(166, 240, 255, 0.1) 336deg 360deg
+  );
   opacity: 0.78;
   border-radius: 999px;
 }
@@ -1185,4 +1278,3 @@
   border-color: rgba(59, 130, 246, 0.45);
   background: rgba(59, 130, 246, 0.08);
 }
-
