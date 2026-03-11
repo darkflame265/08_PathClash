@@ -144,13 +144,14 @@
 
 .piece-skin-neon_pulse .piece-inner {
   background:
-    radial-gradient(circle at 38% 32%, #ffe3f8 0%, #ff4fd8 30%, #b833d9 58%, #2744b3 100%);
+    radial-gradient(circle at 38% 32%, #fff0fd 0%, #ff4fd8 22%, #b833d9 52%, #1a2daa 100%);
   box-shadow:
-    0 0 calc(var(--piece-glow, 12px) * 0.9) rgba(255, 79, 216, 0.35),
-    0 0 calc(var(--piece-glow, 12px) * 1.4) rgba(79, 195, 255, 0.3),
-    inset 0 0 10px rgba(255, 255, 255, 0.18);
-  border-color: rgba(127, 219, 255, 0.9);
-  animation: neon-pulse-breathe 1.9s ease-in-out infinite;
+    0 0 calc(var(--piece-glow, 12px) * 1.2) rgba(255, 79, 216, 0.78),
+    0 0 calc(var(--piece-glow, 12px) * 2.2) rgba(79, 195, 255, 0.58),
+    0 0 calc(var(--piece-glow, 12px) * 3.6) rgba(184, 51, 217, 0.24),
+    inset 0 0 14px rgba(255, 255, 255, 0.26);
+  border-color: rgba(127, 219, 255, 0.96);
+  animation: neon-pulse-breathe 1.7s ease-in-out infinite;
 }
 
 .piece-skin-neon_pulse .piece-inner::before,
@@ -162,16 +163,20 @@
 }
 
 .piece-skin-neon_pulse .piece-inner::before {
-  inset: 3px;
-  border: 1px solid rgba(127, 219, 255, 0.78);
-  box-shadow: 0 0 8px rgba(79, 195, 255, 0.34);
+  inset: 2px;
+  border: 1.5px solid rgba(127, 219, 255, 0.92);
+  box-shadow:
+    0 0 10px rgba(79, 195, 255, 0.72),
+    inset 0 0 8px rgba(127, 219, 255, 0.22);
+  animation: neon-outer-spin 1.6s linear infinite;
 }
 
 .piece-skin-neon_pulse .piece-inner::after {
   inset: 6px;
-  border: 1px dashed rgba(255, 79, 216, 0.62);
-  opacity: 0.9;
-  animation: neon-pulse-ring 3.2s linear infinite;
+  border: 1.5px dashed rgba(255, 79, 216, 0.92);
+  box-shadow: 0 0 8px rgba(255, 79, 216, 0.58);
+  opacity: 0.95;
+  animation: neon-inner-spin 2.2s linear infinite;
 }
 
 .piece-skin-cosmic .piece-inner {
@@ -284,24 +289,34 @@
   0%,
   100% {
     transform: scale(1);
-    filter: saturate(1) brightness(1);
+    filter: saturate(1) brightness(1) hue-rotate(0deg);
   }
-  50% {
-    transform: scale(1.04);
-    filter: saturate(1.14) brightness(1.08);
+  35% {
+    transform: scale(1.06);
+    filter: saturate(1.45) brightness(1.2) hue-rotate(26deg);
+  }
+  70% {
+    transform: scale(1.02);
+    filter: saturate(1.18) brightness(1.09) hue-rotate(-20deg);
   }
 }
 
-@keyframes neon-pulse-ring {
-  from {
-    transform: rotate(0deg) scale(1);
-  }
-  50% {
-    transform: rotate(180deg) scale(1.03);
-  }
-  to {
-    transform: rotate(360deg) scale(1);
-  }
+/* 파동감 있는 시계방향 회전: 90도마다 scale이 부풀었다 수축 */
+@keyframes neon-outer-spin {
+  0%   { transform: rotate(0deg)   scale(1);    opacity: 0.72; }
+  25%  { transform: rotate(90deg)  scale(1.08); opacity: 1; }
+  50%  { transform: rotate(180deg) scale(1);    opacity: 0.72; }
+  75%  { transform: rotate(270deg) scale(1.08); opacity: 1; }
+  100% { transform: rotate(360deg) scale(1);    opacity: 0.72; }
+}
+
+/* 파동감 있는 반시계방향 회전: 외부와 위상 반전 */
+@keyframes neon-inner-spin {
+  0%   { transform: rotate(0deg)    scale(0.94); opacity: 1; }
+  25%  { transform: rotate(-90deg)  scale(1.06); opacity: 0.78; }
+  50%  { transform: rotate(-180deg) scale(0.94); opacity: 1; }
+  75%  { transform: rotate(-270deg) scale(1.06); opacity: 0.78; }
+  100% { transform: rotate(-360deg) scale(0.94); opacity: 1; }
 }
 
 @keyframes cosmic-nebula-pulse {

@@ -733,11 +733,12 @@
 
 .skin-preview-neon_pulse {
   background:
-    radial-gradient(circle at 38% 34%, #ffd8f5 0%, #ff4fd8 34%, #b832d9 58%, #233a9f 100%);
+    radial-gradient(circle at 38% 34%, #fff0fd 0%, #ff4fd8 28%, #b832d9 55%, #1a2daa 100%);
   box-shadow:
-    0 0 0 2px #7fdbff,
-    0 0 16px rgba(255, 79, 216, 0.3),
-    0 0 24px rgba(79, 195, 255, 0.28);
+    0 0 0 2px rgba(127, 219, 255, 0.96),
+    0 0 14px rgba(255, 79, 216, 0.65),
+    0 0 24px rgba(79, 195, 255, 0.5),
+    0 0 36px rgba(184, 51, 217, 0.28);
 }
 
 .skin-preview-neon_pulse::before,
@@ -750,13 +751,33 @@
 
 .skin-preview-neon_pulse::before {
   inset: 3px;
-  border: 1px solid rgba(127, 219, 255, 0.72);
+  border: 1.5px solid rgba(127, 219, 255, 0.88);
+  box-shadow: 0 0 8px rgba(79, 195, 255, 0.55);
+  animation: neon-outer-spin 1.6s linear infinite;
 }
 
 .skin-preview-neon_pulse::after {
-  inset: 6px;
-  border: 1px dashed rgba(255, 79, 216, 0.55);
-  opacity: 0.9;
+  inset: 5px;
+  border: 1px dashed rgba(255, 79, 216, 0.82);
+  box-shadow: 0 0 6px rgba(255, 79, 216, 0.45);
+  opacity: 0.95;
+  animation: neon-inner-spin 2.2s linear infinite;
+}
+
+@keyframes neon-outer-spin {
+  0%   { transform: rotate(0deg)   scale(1);    opacity: 0.72; }
+  25%  { transform: rotate(90deg)  scale(1.08); opacity: 1; }
+  50%  { transform: rotate(180deg) scale(1);    opacity: 0.72; }
+  75%  { transform: rotate(270deg) scale(1.08); opacity: 1; }
+  100% { transform: rotate(360deg) scale(1);    opacity: 0.72; }
+}
+
+@keyframes neon-inner-spin {
+  0%   { transform: rotate(0deg)    scale(0.94); opacity: 1; }
+  25%  { transform: rotate(-90deg)  scale(1.06); opacity: 0.78; }
+  50%  { transform: rotate(-180deg) scale(0.94); opacity: 1; }
+  75%  { transform: rotate(-270deg) scale(1.06); opacity: 0.78; }
+  100% { transform: rotate(-360deg) scale(0.94); opacity: 1; }
 }
 
 .skin-preview-cosmic {

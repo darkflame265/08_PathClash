@@ -207,6 +207,26 @@ const t = translations[useGameStore.getState().lang];
 - `server/src/services/playerAuth.ts`
 - `supabase/schema.sql`
 
+## 스킨 디자인 수정
+
+스킨 관련 작업은 아래 4개 파일만 건드린다. 다른 파일은 탐색할 필요 없다.
+
+| 파일 | 역할 |
+|------|------|
+| `client/src/components/Game/PlayerPiece.css` | 인게임 말(piece) 시각 디자인 — `.piece-skin-{id}` 클래스 |
+| `client/src/components/Lobby/LobbyScreen.css` | 스킨 선택창 미리보기 — `.skin-preview-{id}` 클래스 |
+| `client/src/components/Lobby/LobbyScreen.tsx` | 스킨 목록 정의 (id, name, desc, requiredWins, tokenPrice) |
+| `client/src/components/Game/FlagSkin.tsx` | 국기 스킨 SVG 모양만 담당 |
+
+### 스킨 CSS 패턴
+
+- **인게임** — `.piece-skin-{id} .piece-inner` + `::before` + `::after` 로 구성
+- **미리보기** — `.skin-preview-{id}` + `::before` + `::after` 로 구성
+- `piece-inner`는 `border-radius: 50%; overflow: hidden;` 이므로 내부 자식은 자동으로 원형 클리핑됨
+- keyframe 이름은 `{스킨id}-{역할}` 규칙으로 네이밍 (예: `gold-orbit-cw`, `cosmic-nebula-pulse`)
+
+---
+
 ## 앞으로 수정할 때의 기본 원칙
 
 - 큰 리팩터링보다, 필요한 범위만 최소 수정하는 편이 좋다
