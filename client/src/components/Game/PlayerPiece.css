@@ -1,4 +1,4 @@
-.player-piece {
+﻿.player-piece {
   position: absolute;
   width: var(--piece-size, 56px);
   height: var(--piece-size, 56px);
@@ -121,7 +121,7 @@
   pointer-events: none;
 }
 
-/* 황금 궤도 링 — 시계방향 회전 */
+/* ?⑷툑 沅ㅻ룄 留????쒓퀎諛⑺뼢 ?뚯쟾 */
 .piece-skin-gold_core .piece-inner::before {
   inset: 3px;
   border: 2px dashed rgba(253, 224, 71, 0.88);
@@ -131,7 +131,7 @@
   animation: gold-orbit-cw 3.2s linear infinite;
 }
 
-/* 선버스트 만다라 패턴 — 느린 회전 */
+/* ?좊쾭?ㅽ듃 留뚮떎???⑦꽩 ???먮┛ ?뚯쟾 */
 .piece-skin-gold_core .piece-inner::after {
   inset: 7px;
   background: repeating-conic-gradient(
@@ -163,20 +163,23 @@
 }
 
 .piece-skin-neon_pulse .piece-inner::before {
-  inset: 2px;
-  border: 1.5px solid rgba(127, 219, 255, 0.92);
+  inset: 50%;
+  border: 3.5px solid rgba(127, 219, 255, 0.92);
   box-shadow:
     0 0 10px rgba(79, 195, 255, 0.72),
-    inset 0 0 8px rgba(127, 219, 255, 0.22);
-  animation: neon-outer-spin 1.6s linear infinite;
+    0 0 14px rgba(255, 79, 216, 0.28);
+  opacity: 0;
+  animation: neon-wave-expand 2s ease-out infinite;
 }
 
 .piece-skin-neon_pulse .piece-inner::after {
-  inset: 6px;
-  border: 1.5px dashed rgba(255, 79, 216, 0.92);
-  box-shadow: 0 0 8px rgba(255, 79, 216, 0.58);
-  opacity: 0.95;
-  animation: neon-inner-spin 2.2s linear infinite;
+  inset: 50%;
+  border: 3px solid rgba(255, 79, 216, 0.86);
+  box-shadow:
+    0 0 8px rgba(255, 79, 216, 0.58),
+    0 0 12px rgba(79, 195, 255, 0.22);
+  opacity: 0;
+  animation: neon-wave-expand 2s ease-out infinite 0.9s;
 }
 
 .piece-skin-cosmic .piece-inner {
@@ -199,7 +202,7 @@
   pointer-events: none;
 }
 
-/* 외부 궤도 링 — 시계방향 회전 */
+/* ?몃? 沅ㅻ룄 留????쒓퀎諛⑺뼢 ?뚯쟾 */
 .piece-skin-cosmic .piece-inner::before {
   inset: 2px;
   border: 2px dashed rgba(167, 139, 250, 0.82);
@@ -209,7 +212,7 @@
   animation: cosmic-orbit-cw 2.6s linear infinite;
 }
 
-/* 내부 궤도 링 + 별 입자 — 반시계방향 회전 */
+/* ?대? 沅ㅻ룄 留?+ 蹂??낆옄 ??諛섏떆怨꾨갑???뚯쟾 */
 .piece-skin-cosmic .piece-inner::after {
   inset: 6px;
   border: 1.5px dashed rgba(216, 180, 254, 0.7);
@@ -452,7 +455,7 @@
   pointer-events: none;
 }
 
-/* 민트 외부 링 — 빠른 시계방향 */
+/* 誘쇳듃 ?몃? 留???鍮좊Ⅸ ?쒓퀎諛⑺뼢 */
 .piece-skin-quantum .piece-inner::before {
   inset: 2px;
   border: 1.5px solid rgba(124, 255, 178, 0.88);
@@ -470,7 +473,7 @@
   animation: quantum-ring-cw 1.4s linear infinite;
 }
 
-/* 라벤더 내부 링 — 파동 반시계방향 */
+/* ?쇰깽???대? 留????뚮룞 諛섏떆怨꾨갑??*/
 .piece-skin-quantum .piece-inner::after {
   inset: 6px;
   border: 1.5px dashed rgba(167, 139, 250, 0.88);
@@ -561,7 +564,7 @@
   background: linear-gradient(90deg, rgba(240, 255, 248, 0), rgba(240, 255, 248, 0.36));
 }
 
-/* ── Crystal ─────────────────────────────────────── */
+/* ?? Crystal ??????????????????????????????????????? */
 .piece-skin-crystal .piece-inner {
   background:
     radial-gradient(circle at 28% 22%, #ffffff 0%, #d8f7ff 10%, #7ee7ff 28%, #22b8d4 54%, #085f7a 78%, #020e14 100%);
@@ -582,7 +585,7 @@
   pointer-events: none;
 }
 
-/* 외부 크리스탈 링 — 천천히 시계방향 */
+/* ?몃? ?щ━?ㅽ깉 留???泥쒖쿇???쒓퀎諛⑺뼢 */
 .piece-skin-crystal .piece-inner::before {
   inset: 2px;
   border: 2px solid rgba(166, 240, 255, 0.88);
@@ -592,7 +595,7 @@
   animation: crystal-ring-cw 3.5s linear infinite;
 }
 
-/* 내부 팩셋(굴절면) 패턴 — 느린 반시계방향 회전 */
+/* ?대? ?⑹뀑(援댁젅硫? ?⑦꽩 ???먮┛ 諛섏떆怨꾨갑???뚯쟾 */
 .piece-skin-crystal .piece-inner::after {
   inset: 6px;
   background:
@@ -690,40 +693,39 @@
   0%,
   100% {
     transform: scale(1);
-    filter: saturate(1) brightness(1) hue-rotate(0deg);
+    filter: saturate(1) brightness(1);
   }
   35% {
     transform: scale(1.06);
-    filter: saturate(1.45) brightness(1.2) hue-rotate(26deg);
+    filter: saturate(1.18) brightness(1.16);
   }
   70% {
     transform: scale(1.02);
-    filter: saturate(1.18) brightness(1.09) hue-rotate(-20deg);
+    filter: saturate(1.08) brightness(1.08);
   }
 }
 
-/* 파동감 있는 시계방향 회전: 90도마다 scale이 부풀었다 수축 */
-@keyframes neon-outer-spin {
-  0%   { transform: rotate(0deg)   scale(1);    opacity: 0.72; }
-  25%  { transform: rotate(90deg)  scale(1.08); opacity: 1; }
-  50%  { transform: rotate(180deg) scale(1);    opacity: 0.72; }
-  75%  { transform: rotate(270deg) scale(1.08); opacity: 1; }
-  100% { transform: rotate(360deg) scale(1);    opacity: 0.72; }
-}
-
-/* 파동감 있는 반시계방향 회전: 외부와 위상 반전 */
-@keyframes neon-inner-spin {
-  0%   { transform: rotate(0deg)    scale(0.94); opacity: 1; }
-  25%  { transform: rotate(-90deg)  scale(1.06); opacity: 0.78; }
-  50%  { transform: rotate(-180deg) scale(0.94); opacity: 1; }
-  75%  { transform: rotate(-270deg) scale(1.06); opacity: 0.78; }
-  100% { transform: rotate(-360deg) scale(0.94); opacity: 1; }
+/* ?뚮룞媛??덈뒗 ?쒓퀎諛⑺뼢 ?뚯쟾: 90?꾨쭏??scale??遺??덈떎 ?섏텞 */
+@keyframes neon-wave-expand {
+  0% {
+    inset: 50%;
+    opacity: 0;
+    transform: scale(0.22);
+  }
+  15% {
+    opacity: 0.96;
+  }
+  100% {
+    inset: 4%;
+    opacity: 0;
+    transform: scale(1.12);
+  }
 }
 
 @keyframes cosmic-nebula-pulse {
   0%,
   100% {
-    filter: saturate(1) brightness(1) hue-rotate(0deg);
+    filter: saturate(1) brightness(1);
     transform: scale(1);
   }
   40% {
@@ -1003,3 +1005,4 @@
   animation: explode 500ms ease-out forwards !important;
   transition: none !important;
 }
+

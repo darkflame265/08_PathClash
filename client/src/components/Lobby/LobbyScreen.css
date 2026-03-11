@@ -1,4 +1,4 @@
-/* ── Lobby layout ─────────────────────────────────────── */
+﻿/* ?? Lobby layout ??????????????????????????????????????? */
 .lobby-screen {
   display: flex;
   flex-direction: column;
@@ -11,7 +11,7 @@
   margin: 0 auto;
 }
 
-/* ── Logo ─────────────────────────────────────────────── */
+/* ?? Logo ??????????????????????????????????????????????? */
 .logo {
   font-size: 2.75rem;
   font-weight: 800;
@@ -29,7 +29,7 @@
   margin-bottom: 0.25rem;
 }
 
-/* ── Card ─────────────────────────────────────────────── */
+/* ?? Card ??????????????????????????????????????????????? */
 .lobby-card {
   background: var(--panel, #1e252b);
   border: 1px solid var(--tile-border, #3a444d);
@@ -197,7 +197,7 @@
   padding: 0.75rem 0.9rem;
 }
 
-/* ── Inputs ───────────────────────────────────────────── */
+/* ?? Inputs ????????????????????????????????????????????? */
 .lobby-input {
   background: var(--tile, #2a3137);
   border: 1px solid var(--tile-border, #3a444d);
@@ -230,7 +230,7 @@
   text-transform: uppercase;
 }
 
-/* ── Buttons ──────────────────────────────────────────── */
+/* ?? Buttons ???????????????????????????????????????????? */
 .lobby-btn {
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
@@ -249,7 +249,7 @@
   transform: scale(0.98);
 }
 
-/* Primary — forest green */
+/* Primary ??forest green */
 .lobby-btn.primary {
   background: var(--primary, #386641);
   color: #fff;
@@ -260,7 +260,7 @@
   box-shadow: 0 6px 20px rgba(56, 102, 65, 0.5);
 }
 
-/* Secondary — blue */
+/* Secondary ??blue */
 .lobby-btn.secondary {
   background: rgba(59, 130, 246, 0.12);
   color: var(--blue, #3b82f6);
@@ -271,7 +271,7 @@
   border-color: rgba(59, 130, 246, 0.5);
 }
 
-/* AI — red accent */
+/* AI ??red accent */
 .lobby-btn.ai {
   background: rgba(239, 68, 68, 0.12);
   color: var(--red, #ef4444);
@@ -282,7 +282,7 @@
   border-color: rgba(239, 68, 68, 0.5);
 }
 
-/* Accent (Random) — glow CTA */
+/* Accent (Random) ??glow CTA */
 .lobby-btn.accent {
   position: relative;
   background: var(--primary, #386641);
@@ -321,7 +321,7 @@
   border-color: rgba(239, 68, 68, 0.5);
 }
 
-/* ── Room code display ────────────────────────────────── */
+/* ?? Room code display ?????????????????????????????????? */
 .room-code {
   font-family: var(--mono);
   font-size: 2.25rem;
@@ -356,7 +356,7 @@
   flex-shrink: 0;
 }
 
-/* ── Matchmaking spinner ──────────────────────────────── */
+/* ?? Matchmaking spinner ???????????????????????????????? */
 .spinner {
   width: 40px;
   height: 40px;
@@ -413,7 +413,7 @@
   flex-shrink: 0;
 }
 
-/* ── Error message ────────────────────────────────────── */
+/* ?? Error message ?????????????????????????????????????? */
 .error-msg {
   color: #f87171;
   font-size: 0.825rem;
@@ -424,7 +424,7 @@
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
-/* ── Divider / button group ───────────────────────────── */
+/* ?? Divider / button group ????????????????????????????? */
 .btn-divider {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -469,7 +469,7 @@
   gap: 0.75rem;
 }
 
-/* ── Language toggle ──────────────────────────────────── */
+/* ?? Language toggle ???????????????????????????????????? */
 .lobby-control-row {
   display: flex;
   align-items: center;
@@ -750,34 +750,39 @@
 }
 
 .skin-preview-neon_pulse::before {
-  inset: 3px;
-  border: 1.5px solid rgba(127, 219, 255, 0.88);
-  box-shadow: 0 0 8px rgba(79, 195, 255, 0.55);
-  animation: neon-outer-spin 1.6s linear infinite;
+  inset: 50%;
+  border: 3px solid rgba(127, 219, 255, 0.88);
+  box-shadow:
+    0 0 8px rgba(79, 195, 255, 0.55),
+    0 0 12px rgba(255, 79, 216, 0.24);
+  opacity: 0;
+  animation: neon-wave-expand-preview 2s ease-out infinite;
 }
 
 .skin-preview-neon_pulse::after {
-  inset: 5px;
-  border: 1px dashed rgba(255, 79, 216, 0.82);
-  box-shadow: 0 0 6px rgba(255, 79, 216, 0.45);
-  opacity: 0.95;
-  animation: neon-inner-spin 2.2s linear infinite;
+  inset: 50%;
+  border: 2.75px solid rgba(255, 79, 216, 0.82);
+  box-shadow:
+    0 0 6px rgba(255, 79, 216, 0.45),
+    0 0 10px rgba(79, 195, 255, 0.2);
+  opacity: 0;
+  animation: neon-wave-expand-preview 2s ease-out infinite 0.9s;
 }
 
-@keyframes neon-outer-spin {
-  0%   { transform: rotate(0deg)   scale(1);    opacity: 0.72; }
-  25%  { transform: rotate(90deg)  scale(1.08); opacity: 1; }
-  50%  { transform: rotate(180deg) scale(1);    opacity: 0.72; }
-  75%  { transform: rotate(270deg) scale(1.08); opacity: 1; }
-  100% { transform: rotate(360deg) scale(1);    opacity: 0.72; }
-}
-
-@keyframes neon-inner-spin {
-  0%   { transform: rotate(0deg)    scale(0.94); opacity: 1; }
-  25%  { transform: rotate(-90deg)  scale(1.06); opacity: 0.78; }
-  50%  { transform: rotate(-180deg) scale(0.94); opacity: 1; }
-  75%  { transform: rotate(-270deg) scale(1.06); opacity: 0.78; }
-  100% { transform: rotate(-360deg) scale(0.94); opacity: 1; }
+@keyframes neon-wave-expand-preview {
+  0% {
+    inset: 50%;
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  18% {
+    opacity: 0.94;
+  }
+  100% {
+    inset: 6%;
+    opacity: 0;
+    transform: scale(1.08);
+  }
 }
 
 .skin-preview-cosmic {
@@ -1180,3 +1185,4 @@
   border-color: rgba(59, 130, 246, 0.45);
   background: rgba(59, 130, 246, 0.08);
 }
+
