@@ -27,6 +27,7 @@ interface GameStore {
   isGuestUser: boolean;
   accountWins: number;
   accountLosses: number;
+  accountTokens: number;
   currentMatchType: "friend" | "random" | "ai" | null;
 
   // Game
@@ -77,6 +78,7 @@ interface GameStore {
     nickname?: string | null;
     wins?: number;
     losses?: number;
+    tokens?: number;
   }) => void;
   setMyColor: (c: PlayerColor) => void;
   setRoomCode: (c: string) => void;
@@ -161,6 +163,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isGuestUser: false,
   accountWins: 0,
   accountLosses: 0,
+  accountTokens: 0,
   currentMatchType: null,
   gameState: null,
   myPath: [],
@@ -192,7 +195,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   setNickname: (n) => set({ myNickname: n }),
-  setAuthState: ({ ready, userId, accessToken, isGuestUser, nickname, wins, losses }) =>
+  setAuthState: ({ ready, userId, accessToken, isGuestUser, nickname, wins, losses, tokens }) =>
     set((state) => ({
       authReady: ready,
       authUserId: userId,
@@ -201,6 +204,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       myNickname: nickname ?? state.myNickname,
       accountWins: wins ?? state.accountWins,
       accountLosses: losses ?? state.accountLosses,
+      accountTokens: tokens ?? state.accountTokens,
     })),
   setMyColor: (c) => set({ myColor: c }),
   setRoomCode: (c) => set({ roomCode: c }),
@@ -352,6 +356,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     isGuestUser: get().isGuestUser,
     accountWins: get().accountWins,
     accountLosses: get().accountLosses,
+    accountTokens: get().accountTokens,
     myNickname: get().myNickname,
     pieceSkin: get().pieceSkin,
     playerPieceSkins: null,

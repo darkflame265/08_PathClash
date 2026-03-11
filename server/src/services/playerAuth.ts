@@ -16,6 +16,7 @@ export interface AccountProfile {
   nickname: string;
   wins: number;
   losses: number;
+  tokens: number;
   isGuestUser: boolean;
 }
 
@@ -35,6 +36,7 @@ interface ProfileRow {
 interface StatsRow {
   wins: number | null;
   losses: number | null;
+  tokens: number | null;
 }
 
 async function getUserFromToken(accessToken?: string) {
@@ -53,7 +55,7 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
 
   const statsPromise = supabaseAdmin
     ?.from('player_stats')
-    .select('wins, losses')
+    .select('wins, losses, tokens')
     .eq('user_id', userId)
     .maybeSingle<StatsRow>();
 
@@ -65,6 +67,7 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
     nickname,
     wins: statsResult?.data?.wins ?? 0,
     losses: statsResult?.data?.losses ?? 0,
+    tokens: statsResult?.data?.tokens ?? 0,
     isGuestUser,
   };
 }
@@ -131,7 +134,7 @@ export async function recordMatchmakingResult(
 
   const { data: rows, error } = await supabaseAdmin
     .from('player_stats')
-    .select('user_id, wins, losses')
+    .select('user_id, wins, losses, tokens')
     .in('user_id', [winnerUserId, loserUserId]);
 
   if (error) {
@@ -145,12 +148,13 @@ export async function recordMatchmakingResult(
       {
         wins: Number(row.wins ?? 0),
         losses: Number(row.losses ?? 0),
+        tokens: Number(row.tokens ?? 0),
       },
     ]),
   );
 
-  const winner = byId.get(winnerUserId) ?? { wins: 0, losses: 0 };
-  const loser = byId.get(loserUserId) ?? { wins: 0, losses: 0 };
+  const winner = byId.get(winnerUserId) ?? { wins: 0, losses: 0, tokens: 0 };
+  const loser = byId.get(loserUserId) ?? { wins: 0, losses: 0, tokens: 0 };
 
   const { error: upsertError } = await supabaseAdmin.from('player_stats').upsert(
     [
@@ -158,11 +162,13 @@ export async function recordMatchmakingResult(
         user_id: winnerUserId,
         wins: winner.wins + 1,
         losses: winner.losses,
+        tokens: winner.tokens,
       },
       {
         user_id: loserUserId,
         wins: loser.wins,
         losses: loser.losses + 1,
+        tokens: loser.tokens,
       },
     ],
     { onConflict: 'user_id' },
@@ -236,6 +242,7 @@ export async function finalizeGoogleUpgrade(
   const adoptedNickname = guestSnapshot?.nickname ?? guestAccountProfile.nickname ?? 'Guest';
   const adoptedWins = guestSnapshot?.wins ?? guestAccountProfile.wins;
   const adoptedLosses = guestSnapshot?.losses ?? guestAccountProfile.losses;
+  const adoptedTokens = guestAccountProfile.tokens;
 
   const { error: upsertProfileError } = await supabaseAdmin.from('profiles').upsert({
     id: targetUser.id,
@@ -252,6 +259,7 @@ export async function finalizeGoogleUpgrade(
       user_id: targetUser.id,
       wins: adoptedWins,
       losses: adoptedLosses,
+      tokens: adoptedTokens,
     },
     { onConflict: 'user_id' },
   );
@@ -265,6 +273,7 @@ export async function finalizeGoogleUpgrade(
       user_id: guestUser.id,
       wins: 0,
       losses: 0,
+      tokens: 0,
     },
     { onConflict: 'user_id' },
   );

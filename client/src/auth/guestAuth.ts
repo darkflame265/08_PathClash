@@ -12,6 +12,7 @@ export interface AuthStatePayload {
   nickname?: string | null;
   wins?: number;
   losses?: number;
+  tokens?: number;
 }
 
 interface ProfileRow {
@@ -21,12 +22,14 @@ interface ProfileRow {
 interface StatsRow {
   wins: number | null;
   losses: number | null;
+  tokens: number | null;
 }
 
 interface AccountSnapshot {
   nickname: string | null;
   wins: number;
   losses: number;
+  tokens: number;
 }
 
 export interface AccountProfile {
@@ -34,6 +37,7 @@ export interface AccountProfile {
   nickname: string;
   wins: number;
   losses: number;
+  tokens: number;
   isGuestUser: boolean;
 }
 
@@ -46,6 +50,7 @@ export interface PendingUpgradeContext {
     nickname: string | null;
     wins: number;
     losses: number;
+    tokens: number;
   };
   flowStartedAt: string;
 }
@@ -154,6 +159,7 @@ function toAuthState(session: Session | null, snapshot?: AccountSnapshot): AuthS
     nickname: snapshot?.nickname ?? undefined,
     wins: snapshot?.wins ?? 0,
     losses: snapshot?.losses ?? 0,
+    tokens: snapshot?.tokens ?? 0,
   };
 }
 
@@ -205,20 +211,21 @@ async function ensureProfile(userId: string): Promise<void> {
 
 async function getAccountSnapshot(userId: string): Promise<AccountSnapshot> {
   if (!supabase) {
-    return { nickname: null, wins: 0, losses: 0 };
+    return { nickname: null, wins: 0, losses: 0, tokens: 0 };
   }
 
   await ensureProfile(userId);
 
   const [profileResult, statsResult] = await Promise.all([
     supabase.from("profiles").select("nickname").eq("id", userId).maybeSingle<ProfileRow>(),
-    supabase.from("player_stats").select("wins, losses").eq("user_id", userId).maybeSingle<StatsRow>(),
+    supabase.from("player_stats").select("wins, losses, tokens").eq("user_id", userId).maybeSingle<StatsRow>(),
   ]);
 
   return {
     nickname: profileResult.data?.nickname ?? null,
     wins: statsResult.data?.wins ?? 0,
     losses: statsResult.data?.losses ?? 0,
+    tokens: statsResult.data?.tokens ?? 0,
   };
 }
 
@@ -280,6 +287,7 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
       isGuestUser: false,
       wins: 0,
       losses: 0,
+      tokens: 0,
     };
   }
 
@@ -307,6 +315,7 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
       isGuestUser: false,
       wins: 0,
       losses: 0,
+      tokens: 0,
     };
   }
 
@@ -324,6 +333,7 @@ export async function initializeGuestAuth(): Promise<AuthStatePayload> {
       isGuestUser: false,
       wins: 0,
       losses: 0,
+      tokens: 0,
     };
   }
 
@@ -341,14 +351,14 @@ export async function initializeGuestAuth(): Promise<AuthStatePayload> {
   return toAuthState(session, snapshot);
 }
 
-export async function refreshAccountSummary(): Promise<Pick<AuthStatePayload, "nickname" | "wins" | "losses">> {
+export async function refreshAccountSummary(): Promise<Pick<AuthStatePayload, "nickname" | "wins" | "losses" | "tokens">> {
   if (!supabase) {
-    return { nickname: null, wins: 0, losses: 0 };
+    return { nickname: null, wins: 0, losses: 0, tokens: 0 };
   }
 
   const session = await getCurrentSession();
   if (!session?.user) {
-    return { nickname: null, wins: 0, losses: 0 };
+    return { nickname: null, wins: 0, losses: 0, tokens: 0 };
   }
 
   const snapshot = await getAccountSnapshot(session.user.id);
@@ -356,6 +366,7 @@ export async function refreshAccountSummary(): Promise<Pick<AuthStatePayload, "n
     nickname: snapshot.nickname,
     wins: snapshot.wins,
     losses: snapshot.losses,
+    tokens: snapshot.tokens,
   };
 }
 
@@ -397,6 +408,7 @@ export async function linkGoogleAccount(): Promise<void> {
       nickname: snapshot.nickname ?? null,
       wins: snapshot.wins ?? 0,
       losses: snapshot.losses ?? 0,
+      tokens: snapshot.tokens ?? 0,
     },
     flowStartedAt: new Date().toISOString(),
   });

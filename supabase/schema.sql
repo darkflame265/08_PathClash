@@ -10,8 +10,12 @@ create table if not exists public.player_stats (
   user_id uuid primary key references auth.users(id) on delete cascade,
   wins integer not null default 0,
   losses integer not null default 0,
+  tokens integer not null default 0,
   updated_at timestamptz not null default now()
 );
+
+alter table public.player_stats
+add column if not exists tokens integer not null default 0;
 
 create table if not exists public.account_merges (
   source_user_id uuid primary key references auth.users(id) on delete cascade,

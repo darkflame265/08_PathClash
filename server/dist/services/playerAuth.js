@@ -21,7 +21,7 @@ async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUse
         .maybeSingle();
     const statsPromise = supabase_1.supabaseAdmin
         ?.from('player_stats')
-        .select('wins, losses')
+        .select('wins, losses, tokens')
         .eq('user_id', userId)
         .maybeSingle();
     const [profileResult, statsResult] = await Promise.all([profilePromise, statsPromise]);
@@ -31,6 +31,7 @@ async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUse
         nickname,
         wins: statsResult?.data?.wins ?? 0,
         losses: statsResult?.data?.losses ?? 0,
+        tokens: statsResult?.data?.tokens ?? 0,
         isGuestUser,
     };
 }
@@ -78,7 +79,7 @@ async function recordMatchmakingResult(winnerUserId, loserUserId) {
         return;
     const { data: rows, error } = await supabase_1.supabaseAdmin
         .from('player_stats')
-        .select('user_id, wins, losses')
+        .select('user_id, wins, losses, tokens')
         .in('user_id', [winnerUserId, loserUserId]);
     if (error) {
         console.error('[supabase] failed to read player_stats', error);
@@ -89,20 +90,23 @@ async function recordMatchmakingResult(winnerUserId, loserUserId) {
         {
             wins: Number(row.wins ?? 0),
             losses: Number(row.losses ?? 0),
+            tokens: Number(row.tokens ?? 0),
         },
     ]));
-    const winner = byId.get(winnerUserId) ?? { wins: 0, losses: 0 };
-    const loser = byId.get(loserUserId) ?? { wins: 0, losses: 0 };
+    const winner = byId.get(winnerUserId) ?? { wins: 0, losses: 0, tokens: 0 };
+    const loser = byId.get(loserUserId) ?? { wins: 0, losses: 0, tokens: 0 };
     const { error: upsertError } = await supabase_1.supabaseAdmin.from('player_stats').upsert([
         {
             user_id: winnerUserId,
             wins: winner.wins + 1,
             losses: winner.losses,
+            tokens: winner.tokens,
         },
         {
             user_id: loserUserId,
             wins: loser.wins,
             losses: loser.losses + 1,
+            tokens: loser.tokens,
         },
     ], { onConflict: 'user_id' });
     if (upsertError) {
@@ -156,6 +160,7 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
     const adoptedNickname = guestSnapshot?.nickname ?? guestAccountProfile.nickname ?? 'Guest';
     const adoptedWins = guestSnapshot?.wins ?? guestAccountProfile.wins;
     const adoptedLosses = guestSnapshot?.losses ?? guestAccountProfile.losses;
+    const adoptedTokens = guestAccountProfile.tokens;
     const { error: upsertProfileError } = await supabase_1.supabaseAdmin.from('profiles').upsert({
         id: targetUser.id,
         nickname: adoptedNickname,
@@ -169,6 +174,7 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
         user_id: targetUser.id,
         wins: adoptedWins,
         losses: adoptedLosses,
+        tokens: adoptedTokens,
     }, { onConflict: 'user_id' });
     if (upsertStatsError) {
         console.error('[supabase] failed to adopt guest stats', upsertStatsError);
@@ -178,6 +184,7 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
         user_id: guestUser.id,
         wins: 0,
         losses: 0,
+        tokens: 0,
     }, { onConflict: 'user_id' });
     if (clearGuestStatsError) {
         console.error('[supabase] failed to clear guest stats after upgrade', clearGuestStatsError);

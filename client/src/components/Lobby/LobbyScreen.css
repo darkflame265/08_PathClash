@@ -562,6 +562,35 @@
   overflow: hidden;
 }
 
+.skin-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.skin-modal-head h3 {
+  margin: 0;
+}
+
+.skin-token-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  background: rgba(59, 130, 246, 0.08);
+  color: #dbeafe;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.skin-token-icon {
+  font-size: 0.9rem;
+}
+
 .skin-option-list {
   display: flex;
   flex-direction: column;
@@ -723,6 +752,11 @@
   .skin-option-list {
     gap: 0.6rem;
     max-height: calc(100dvh - 16.5rem);
+  }
+
+  .skin-token-badge {
+    padding: 0.4rem 0.62rem;
+    font-size: 0.76rem;
   }
 
   .skin-option-card {

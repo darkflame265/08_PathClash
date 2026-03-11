@@ -46,6 +46,7 @@ function applyProfileToStore(
     nickname: profile.nickname,
     wins: profile.wins,
     losses: profile.losses,
+    tokens: profile.tokens,
   });
 }
 
@@ -142,6 +143,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     isGuestUser,
     accountWins,
     accountLosses,
+    accountTokens,
     setAuthState,
     setMatchType,
     setPlayerPieceSkins,
@@ -284,7 +286,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     lang === "en" ? `Wins ${requiredWins}` : `승리 ${requiredWins}`;
 
   useEffect(() => {
-    void refreshAccountSummary().then(({ nickname, wins, losses }) => {
+    void refreshAccountSummary().then(({ nickname, wins, losses, tokens }) => {
       setAuthState({
         ready: true,
         userId: authUserId,
@@ -293,6 +295,7 @@ export function LobbyScreen({ onGameStart }: Props) {
         nickname,
         wins,
         losses,
+        tokens,
       });
     });
   }, [authUserId, isGuestUser, setAuthState]);
@@ -650,7 +653,15 @@ export function LobbyScreen({ onGameStart }: Props) {
             className="upgrade-modal skin-modal"
             onClick={(event) => event.stopPropagation()}
           >
-            <h3>{skinModalTitle}</h3>
+            <div className="skin-modal-head">
+              <h3>{skinModalTitle}</h3>
+              <div className="skin-token-badge" aria-label="Current tokens">
+                <span className="skin-token-icon" aria-hidden="true">
+                  💎
+                </span>
+                <span>{accountTokens}</span>
+              </div>
+            </div>
             <p>{skinModalDesc}</p>
             <div className="skin-option-list">
               {skinChoices.map((choice) => {
