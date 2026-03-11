@@ -187,6 +187,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       | "void"
       | "plasma"
       | "gold_core"
+      | "neon_pulse"
       | "flag_kr"
       | "flag_jp"
       | "flag_cn"
@@ -264,6 +265,16 @@ export function LobbyScreen({ onGameStart }: Props) {
         lang === "en"
           ? "Radiant golden core."
           : "\uCC2C\uB780\uD55C \uD669\uAE08 \uCF54\uC5B4.",
+      requiredWins: null,
+      tokenPrice: null,
+    },
+    {
+      id: "neon_pulse",
+      name: lang === "en" ? "Neon Pulse" : "\uB124\uC628 \uD384\uC2A4",
+      desc:
+        lang === "en"
+          ? "Vibrant neon pulse."
+          : "\uC120\uBA85\uD55C \uB124\uC628 \uD384\uC2A4.",
       requiredWins: null,
       tokenPrice: null,
     },

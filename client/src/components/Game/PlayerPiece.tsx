@@ -18,6 +18,7 @@ interface Props {
     | "void"
     | "plasma"
     | "gold_core"
+    | "neon_pulse"
     | "flag_kr"
     | "flag_jp"
     | "flag_cn"
