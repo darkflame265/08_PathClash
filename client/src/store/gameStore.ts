@@ -149,6 +149,7 @@ const initialPieceSkin = (() => {
     stored === 'neon_pulse' ||
     stored === 'cosmic' ||
     stored === 'inferno' ||
+    stored === 'arc_reactor' ||
     stored === 'quantum' ||
     stored === 'crystal' ||
     stored === 'flag_kr' ||

@@ -190,6 +190,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       | "neon_pulse"
       | "cosmic"
       | "inferno"
+      | "arc_reactor"
       | "quantum"
       | "crystal"
       | "flag_kr"
@@ -299,6 +300,16 @@ export function LobbyScreen({ onGameStart }: Props) {
         lang === "en"
           ? "Burning inferno core."
           : "\uD0C0\uC624\uB974\uB294 \uC778\uD398\uB974\uB178 \uCF54\uC5B4.",
+      requiredWins: null,
+      tokenPrice: null,
+    },
+    {
+      id: "arc_reactor",
+      name: lang === "en" ? "Arc Reactor" : "\uC544\uD06C \uB9AC\uC561\uD130",
+      desc:
+        lang === "en"
+          ? "High-energy reactor core."
+          : "\uACE0\uCD9C\uB825 \uB9AC\uC561\uD130 \uCF54\uC5B4.",
       requiredWins: null,
       tokenPrice: null,
     },

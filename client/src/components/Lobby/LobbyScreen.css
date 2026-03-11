@@ -847,6 +847,43 @@
   opacity: 0.9;
 }
 
+.skin-preview-arc_reactor {
+  background:
+    radial-gradient(circle at 50% 50%, #effcff 0%, #99f8ff 16%, #43d7ff 30%, #0ea5e9 48%, #08243f 72%, #020617 100%);
+  box-shadow:
+    0 0 0 2px rgba(125, 245, 255, 0.96),
+    0 0 14px rgba(67, 215, 255, 0.72),
+    0 0 28px rgba(14, 165, 233, 0.38);
+}
+
+.skin-preview-arc_reactor::before,
+.skin-preview-arc_reactor::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.skin-preview-arc_reactor::before {
+  inset: 2px;
+  border: 1.5px solid rgba(125, 245, 255, 0.88);
+  box-shadow:
+    0 0 8px rgba(67, 215, 255, 0.62),
+    inset 0 0 8px rgba(239, 252, 255, 0.2);
+}
+
+.skin-preview-arc_reactor::after {
+  inset: 5px;
+  background:
+    repeating-conic-gradient(
+      from 0deg,
+      rgba(223, 251, 255, 0.92) 0deg 6deg,
+      transparent 6deg 18deg
+    ),
+    radial-gradient(circle at 50% 50%, transparent 0 36%, rgba(125, 245, 255, 0.25) 36% 41%, transparent 41% 100%);
+  opacity: 0.92;
+}
+
 .skin-preview-plasma::before,
 .skin-preview-plasma::after {
   content: "";
@@ -869,7 +906,14 @@
 
 .skin-preview-quantum {
   background:
-    radial-gradient(circle at 34% 28%, #f0fff8 0%, #7cffb2 22%, #1ec47a 52%, #0a3d2e 82%, #020c08 100%);
+    radial-gradient(circle at 34% 28%, #f0fff8 0%, #7cffb2 22%, #1ec47a 52%, #0a3d2e 82%, #020c08 100%),
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      rgba(158, 247, 200, 0.16) 0 2%,
+      rgba(158, 247, 200, 0) 2% 7%,
+      rgba(167, 139, 250, 0.12) 7% 9%,
+      rgba(167, 139, 250, 0) 9% 14%
+    );
   box-shadow:
     0 0 0 2px rgba(158, 247, 200, 0.95),
     0 0 14px rgba(124, 255, 178, 0.65),
@@ -891,13 +935,40 @@
   box-shadow:
     0 0 8px rgba(124, 255, 178, 0.55),
     inset 0 0 6px rgba(158, 247, 200, 0.16);
+  background:
+    radial-gradient(circle at 22% 28%, rgba(255, 255, 255, 0.9) 0 1px, transparent 2px),
+    radial-gradient(circle at 76% 22%, rgba(124, 255, 178, 0.82) 0 1px, transparent 2px),
+    radial-gradient(circle at 64% 78%, rgba(167, 139, 250, 0.78) 0 1px, transparent 2px),
+    radial-gradient(circle at 30% 70%, rgba(240, 255, 248, 0.7) 0 1px, transparent 2px);
+  animation: quantum-preview-orbit-cw 1.9s linear infinite;
 }
 
 .skin-preview-quantum::after {
   inset: 5px;
   border: 1px dashed rgba(167, 139, 250, 0.78);
-  box-shadow: 0 0 6px rgba(167, 139, 250, 0.48);
+  box-shadow:
+    0 0 6px rgba(167, 139, 250, 0.48),
+    inset 0 0 4px rgba(167, 139, 250, 0.12);
+  background:
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      rgba(124, 255, 178, 0.12) 0 1px,
+      rgba(124, 255, 178, 0) 1px 11%,
+      rgba(167, 139, 250, 0.12) 11% 12%,
+      rgba(167, 139, 250, 0) 12% 19%
+    );
   opacity: 0.92;
+  animation: quantum-preview-orbit-ccw 2.8s linear infinite;
+}
+
+@keyframes quantum-preview-orbit-cw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes quantum-preview-orbit-ccw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
 }
 
 .skin-preview-crystal {
