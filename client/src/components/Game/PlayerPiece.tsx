@@ -9,7 +9,17 @@ interface Props {
   isHit: boolean;
   isExploding: boolean;
   isMe: boolean;
-  skin?: "classic" | "ember" | "nova" | "aurora" | "void";
+  skin?:
+    | "classic"
+    | "ember"
+    | "nova"
+    | "aurora"
+    | "void"
+    | "flag_kr"
+    | "flag_jp"
+    | "flag_cn"
+    | "flag_us"
+    | "flag_uk";
 }
 
 export function PlayerPiece({

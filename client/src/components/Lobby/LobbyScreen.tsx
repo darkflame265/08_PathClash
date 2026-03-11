@@ -173,55 +173,110 @@ export function LobbyScreen({ onGameStart }: Props) {
       : "플레이어 말에 적용할 외형을 선택하세요.";
   const skinApplyLabel = lang === "en" ? "Close" : "닫기";
   const skinChoices: Array<{
-    id: "classic" | "ember" | "nova" | "aurora" | "void";
+    id:
+      | "classic"
+      | "ember"
+      | "nova"
+      | "aurora"
+      | "void"
+      | "flag_kr"
+      | "flag_jp"
+      | "flag_cn"
+      | "flag_us"
+      | "flag_uk";
     name: string;
     desc: string;
     requiredWins: number | null;
   }> = [
     {
       id: "classic",
-      name: lang === "en" ? "Classic" : "기본",
+      name: lang === "en" ? "Classic" : "\uAE30\uBCF8",
       desc:
         lang === "en"
           ? "Default red glow."
-          : "기본 붉은 글로우 스타일.",
+          : "\uAE30\uBCF8 \uBD89\uC740 \uAE00\uB85C\uC6B0 \uC2A4\uD0C0\uC77C.",
       requiredWins: null,
     },
     {
       id: "ember",
-      name: lang === "en" ? "Ember" : "엠버",
+      name: lang === "en" ? "Ember" : "\uC5E0\uBC84",
       desc:
         lang === "en"
           ? "Warm orange flare."
-          : "주황빛이 도는 강한 발광.",
+          : "\uC8FC\uD669\uBE5B\uC774 \uB3C4\uB294 \uAC15\uD55C \uBC1C\uAD11.",
       requiredWins: 10,
     },
     {
       id: "nova",
-      name: lang === "en" ? "Nova" : "노바",
+      name: lang === "en" ? "Nova" : "\uB178\uBC14",
       desc:
         lang === "en"
           ? "Cool cyan core."
-          : "청록 계열의 차가운 코어.",
+          : "\uCCAD\uB85D \uACC4\uC5F4\uC758 \uCC28\uAC00\uC6B4 \uCF54\uC5B4.",
       requiredWins: 50,
     },
     {
       id: "aurora",
-      name: lang === "en" ? "Aurora" : "오로라",
+      name: lang === "en" ? "Aurora" : "\uC624\uB85C\uB77C",
       desc:
         lang === "en"
           ? "Vivid green-yellow glow."
-          : "연두빛과 황금빛이 섞인 발광.",
+          : "\uC5F0\uB450\uBE5B\uACFC \uD669\uAE08\uBE5B\uC774 \uC11E\uC778 \uBC1C\uAD11.",
       requiredWins: 100,
     },
     {
       id: "void",
-      name: lang === "en" ? "Void" : "보이드",
+      name: lang === "en" ? "Void" : "\uBCF4\uC774\uB4DC",
       desc:
         lang === "en"
           ? "Deep violet core."
-          : "짙은 보랏빛 코어 스타일.",
+          : "\uC9D9\uC740 \uBCF4\uB78F\uBE5B \uCF54\uC5B4 \uC2A4\uD0C0\uC77C.",
       requiredWins: 500,
+    },
+    {
+      id: "flag_kr",
+      name: lang === "en" ? "Korea" : "\uD55C\uAD6D",
+      desc:
+        lang === "en"
+          ? "Korean flag motif."
+          : "\uB300\uD55C\uBBFC\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
+      requiredWins: null,
+    },
+    {
+      id: "flag_jp",
+      name: lang === "en" ? "Japan" : "\uC77C\uBCF8",
+      desc:
+        lang === "en"
+          ? "Japanese flag motif."
+          : "\uC77C\uBCF8 \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
+      requiredWins: null,
+    },
+    {
+      id: "flag_cn",
+      name: lang === "en" ? "China" : "\uC911\uAD6D",
+      desc:
+        lang === "en"
+          ? "Chinese flag motif."
+          : "\uC911\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
+      requiredWins: null,
+    },
+    {
+      id: "flag_us",
+      name: lang === "en" ? "USA" : "\uBBF8\uAD6D",
+      desc:
+        lang === "en"
+          ? "American flag motif."
+          : "\uBBF8\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
+      requiredWins: null,
+    },
+    {
+      id: "flag_uk",
+      name: lang === "en" ? "UK" : "\uC601\uAD6D",
+      desc:
+        lang === "en"
+          ? "British flag motif."
+          : "\uC601\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
+      requiredWins: null,
     },
   ];
   const getSkinRequirementLabel = (requiredWins: number) =>

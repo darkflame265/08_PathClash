@@ -69,7 +69,17 @@ export class RoomStore {
     nickname: string;
     userId: string | null;
     stats: { wins: number; losses: number };
-    pieceSkin: 'classic' | 'ember' | 'nova' | 'aurora' | 'void';
+    pieceSkin:
+      | 'classic'
+      | 'ember'
+      | 'nova'
+      | 'aurora'
+      | 'void'
+      | 'flag_kr'
+      | 'flag_jp'
+      | 'flag_cn'
+      | 'flag_us'
+      | 'flag_uk';
   }[] = [];
 
   enqueueRandom(
@@ -77,7 +87,17 @@ export class RoomStore {
     nickname: string,
     userId: string | null,
     stats: { wins: number; losses: number },
-    pieceSkin: 'classic' | 'ember' | 'nova' | 'aurora' | 'void',
+    pieceSkin:
+      | 'classic'
+      | 'ember'
+      | 'nova'
+      | 'aurora'
+      | 'void'
+      | 'flag_kr'
+      | 'flag_jp'
+      | 'flag_cn'
+      | 'flag_us'
+      | 'flag_uk',
   ): void {
     this.matchQueue.push({ socketId, nickname, userId, stats, pieceSkin });
   }
@@ -87,7 +107,17 @@ export class RoomStore {
     nickname: string;
     userId: string | null;
     stats: { wins: number; losses: number };
-    pieceSkin: 'classic' | 'ember' | 'nova' | 'aurora' | 'void';
+    pieceSkin:
+      | 'classic'
+      | 'ember'
+      | 'nova'
+      | 'aurora'
+      | 'void'
+      | 'flag_kr'
+      | 'flag_jp'
+      | 'flag_cn'
+      | 'flag_us'
+      | 'flag_uk';
   } | undefined {
     return this.matchQueue.shift();
   }

@@ -141,7 +141,12 @@ const initialPieceSkin = (() => {
   return stored === 'ember' ||
     stored === 'nova' ||
     stored === 'aurora' ||
-    stored === 'void'
+    stored === 'void' ||
+    stored === 'flag_kr' ||
+    stored === 'flag_jp' ||
+    stored === 'flag_cn' ||
+    stored === 'flag_us' ||
+    stored === 'flag_uk'
     ? stored
     : 'classic';
 })();

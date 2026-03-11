@@ -6,7 +6,17 @@ export interface Position {
 export type PlayerColor = 'red' | 'blue';
 export type GamePhase = 'waiting' | 'planning' | 'moving' | 'gameover';
 export type PlayerRole = 'attacker' | 'escaper';
-export type PieceSkin = 'classic' | 'ember' | 'nova' | 'aurora' | 'void';
+export type PieceSkin =
+  | 'classic'
+  | 'ember'
+  | 'nova'
+  | 'aurora'
+  | 'void'
+  | 'flag_kr'
+  | 'flag_jp'
+  | 'flag_cn'
+  | 'flag_us'
+  | 'flag_uk';
 
 export interface PlayerState {
   id: string;
