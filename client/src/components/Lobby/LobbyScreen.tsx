@@ -189,6 +189,8 @@ export function LobbyScreen({ onGameStart }: Props) {
       | "gold_core"
       | "neon_pulse"
       | "cosmic"
+      | "quantum"
+      | "crystal"
       | "flag_kr"
       | "flag_jp"
       | "flag_cn"
@@ -288,6 +290,26 @@ export function LobbyScreen({ onGameStart }: Props) {
           : "희귀 성운 — 이중 궤도 링이 우주 에너지로 맥동.",
       requiredWins: null,
       tokenPrice: null,
+    },
+    {
+      id: "quantum",
+      name: lang === "en" ? "Quantum" : "퀀텀",
+      desc:
+        lang === "en"
+          ? "Quantum flux core — mint and lavender rings oscillate in superposition."
+          : "퀀텀 플럭스 코어 — 민트와 라벤더 링이 중첩 상태로 진동.",
+      requiredWins: null,
+      tokenPrice: null,
+    },
+    {
+      id: "crystal",
+      name: lang === "en" ? "Crystal" : "크리스탈",
+      desc:
+        lang === "en"
+          ? "Prism shard — icy facets refract light into a cascading shimmer."
+          : "프리즘 조각 — 차가운 결정면이 빛을 굴절시켜 흘러내리는 잔광을 만든다.",
+      requiredWins: null,
+      tokenPrice: 0,
     },
     {
       id: "flag_kr",

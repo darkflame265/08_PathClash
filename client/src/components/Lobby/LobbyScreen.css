@@ -836,6 +836,95 @@
   opacity: 0.8;
 }
 
+.skin-preview-quantum {
+  background:
+    radial-gradient(circle at 34% 28%, #f0fff8 0%, #7cffb2 22%, #1ec47a 52%, #0a3d2e 82%, #020c08 100%);
+  box-shadow:
+    0 0 0 2px rgba(158, 247, 200, 0.95),
+    0 0 14px rgba(124, 255, 178, 0.65),
+    0 0 24px rgba(167, 139, 250, 0.42),
+    0 0 36px rgba(124, 255, 178, 0.2);
+}
+
+.skin-preview-quantum::before,
+.skin-preview-quantum::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.skin-preview-quantum::before {
+  inset: 2px;
+  border: 1.5px solid rgba(124, 255, 178, 0.82);
+  box-shadow:
+    0 0 8px rgba(124, 255, 178, 0.55),
+    inset 0 0 6px rgba(158, 247, 200, 0.16);
+}
+
+.skin-preview-quantum::after {
+  inset: 5px;
+  border: 1px dashed rgba(167, 139, 250, 0.78);
+  box-shadow: 0 0 6px rgba(167, 139, 250, 0.48);
+  opacity: 0.92;
+}
+
+.skin-preview-crystal {
+  background:
+    radial-gradient(circle at 28% 22%, #ffffff 0%, #d8f7ff 12%, #7ee7ff 30%, #22b8d4 56%, #085f7a 80%, #020e14 100%);
+  box-shadow:
+    0 0 0 2px rgba(166, 240, 255, 0.95),
+    0 0 14px rgba(126, 231, 255, 0.68),
+    0 0 26px rgba(126, 231, 255, 0.42),
+    0 0 40px rgba(166, 240, 255, 0.18);
+}
+
+.skin-preview-crystal::before,
+.skin-preview-crystal::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.skin-preview-crystal::before {
+  inset: 2px;
+  border: 1.5px solid rgba(166, 240, 255, 0.88);
+  box-shadow:
+    0 0 10px rgba(126, 231, 255, 0.6),
+    inset 0 0 6px rgba(216, 247, 255, 0.2);
+}
+
+.skin-preview-crystal::after {
+  inset: 5px;
+  background:
+    conic-gradient(
+      from 0deg,
+      rgba(255, 255, 255, 0.65) 0deg 12deg,
+      rgba(126, 231, 255, 0.15) 12deg 36deg,
+      rgba(255, 255, 255, 0.52) 36deg 48deg,
+      rgba(166, 240, 255, 0.12) 48deg 72deg,
+      rgba(255, 255, 255, 0.62) 72deg 84deg,
+      rgba(126, 231, 255, 0.14) 84deg 108deg,
+      rgba(255, 255, 255, 0.48) 108deg 120deg,
+      rgba(216, 247, 255, 0.10) 120deg 144deg,
+      rgba(255, 255, 255, 0.60) 144deg 156deg,
+      rgba(126, 231, 255, 0.13) 156deg 180deg,
+      rgba(255, 255, 255, 0.65) 180deg 192deg,
+      rgba(166, 240, 255, 0.11) 192deg 216deg,
+      rgba(255, 255, 255, 0.50) 216deg 228deg,
+      rgba(126, 231, 255, 0.15) 228deg 252deg,
+      rgba(255, 255, 255, 0.58) 252deg 264deg,
+      rgba(216, 247, 255, 0.12) 264deg 288deg,
+      rgba(255, 255, 255, 0.52) 288deg 300deg,
+      rgba(126, 231, 255, 0.14) 300deg 324deg,
+      rgba(255, 255, 255, 0.64) 324deg 336deg,
+      rgba(166, 240, 255, 0.10) 336deg 360deg
+    );
+  opacity: 0.78;
+  border-radius: 999px;
+}
+
 .skin-preview-flag_kr,
 .skin-preview-flag_jp,
 .skin-preview-flag_cn,
