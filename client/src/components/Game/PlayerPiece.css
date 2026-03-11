@@ -361,16 +361,15 @@
 
 .arc-reactor-marks {
   inset: -1px;
-  animation: arc-reactor-spin-ccw 10s linear infinite;
 }
 
 .arc-reactor-mark {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 6%;
+  width: 4%;
   height: 18%;
-  margin-left: -3%;
+  margin-left: -2%;
   margin-top: -9%;
   transform:
     rotate(var(--mark-angle))

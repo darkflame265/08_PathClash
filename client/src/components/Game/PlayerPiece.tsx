@@ -35,8 +35,8 @@ const QUANTUM_ORBIT_PARTICLES = [
   { radius: 0.62, angle: 154, duration: 2.78, delay: -2.28 },
 ];
 
-const ARC_REACTOR_MARKS = Array.from({ length: 30 }, (_, index) => ({
-  angle: index * 12,
+const ARC_REACTOR_MARKS = Array.from({ length: 60 }, (_, index) => ({
+  angle: index * 6,
   delay: -(index % 6) * 0.22,
 }));
 
