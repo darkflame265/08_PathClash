@@ -1,6 +1,6 @@
 import { Server, Socket } from 'socket.io';
 import {
-  GameState, PlayerState, PlayerColor, Position,
+  GameState, PlayerState, PlayerColor, Position, PieceSkin,
   ClientGameState, PathsRevealPayload, RoundStartPayload, MatchType,
 } from '../types/game.types';
 import {
@@ -44,10 +44,11 @@ export class GameRoom {
     nickname: string,
     userId: string | null = null,
     stats: { wins: number; losses: number } = { wins: 0, losses: 0 },
+    pieceSkin: PieceSkin = 'classic',
   ): PlayerColor | null {
     if (this.isFull) return null;
     const color: PlayerColor = this.players.size === 0 ? 'red' : 'blue';
-    const player = this.createPlayerState(color, socket.id, nickname, userId, stats);
+    const player = this.createPlayerState(color, socket.id, nickname, userId, stats, pieceSkin);
     this.players.set(color, player);
     socket.join(this.roomId);
     return color;
@@ -57,10 +58,20 @@ export class GameRoom {
     if (this.isFull) return null;
     const color: PlayerColor = this.players.size === 0 ? 'red' : 'blue';
     const aiId = `ai_${this.roomId}_${color}`;
-    const player = this.createPlayerState(color, aiId, nickname, null, { wins: 0, losses: 0 });
+    const player = this.createPlayerState(color, aiId, nickname, null, { wins: 0, losses: 0 }, 'classic');
     this.players.set(color, player);
     this.aiColor = color;
     return color;
+  }
+
+  updatePlayerSkin(socketId: string, pieceSkin: PieceSkin): void {
+    const player = this.getPlayerBySocket(socketId);
+    if (!player) return;
+    player.pieceSkin = pieceSkin;
+    this.io.to(this.roomId).emit('player_skin_updated', {
+      color: player.color,
+      pieceSkin,
+    });
   }
 
   removePlayer(socketId: string): void {
@@ -367,6 +378,7 @@ export class GameRoom {
     nickname: string,
     userId: string | null,
     stats: { wins: number; losses: number },
+    pieceSkin: PieceSkin,
   ): PlayerState {
     const pos = getInitialPositions();
     return {
@@ -375,6 +387,7 @@ export class GameRoom {
       socketId: id,
       nickname,
       color,
+      pieceSkin,
       hp: 3,
       position: pos[color],
       plannedPath: [],

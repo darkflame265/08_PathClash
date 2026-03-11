@@ -36,6 +36,7 @@ export function GameGrid({
     roundInfo,
     setMyPath,
     pieceSkin,
+    playerPieceSkins,
     redDisplayPos,
     blueDisplayPos,
     hitEffect,
@@ -59,6 +60,12 @@ export function GameGrid({
   const myPos = myColor ? gameState?.players[myColor]?.position : null;
   const pathPoints = gameState?.pathPoints ?? 5;
   const obstacles = gameState?.obstacles ?? roundInfo?.obstacles ?? [];
+  const redPieceSkin =
+    playerPieceSkins?.red ??
+    (myColor === "red" ? pieceSkin : "classic");
+  const bluePieceSkin =
+    playerPieceSkins?.blue ??
+    (myColor === "blue" ? pieceSkin : "classic");
 
   const getGridOffset = () => {
     const rect = gridRef.current?.getBoundingClientRect();
@@ -447,7 +454,7 @@ export function GameGrid({
           isHit={hitEffect.red}
           isExploding={explosionEffect === "red"}
           isMe={myColor === "red"}
-          skin={myColor === "red" ? pieceSkin : "classic"}
+          skin={redPieceSkin}
         />
         <PlayerPiece
           color="blue"
@@ -457,7 +464,7 @@ export function GameGrid({
           isHit={hitEffect.blue}
           isExploding={explosionEffect === "blue"}
           isMe={myColor === "blue"}
-          skin={myColor === "blue" ? pieceSkin : "classic"}
+          skin={bluePieceSkin}
         />
 
         {tutorialHint && tutorialAnchorPos && (

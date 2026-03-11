@@ -24,11 +24,11 @@ class GameRoom {
     }
     get playerCount() { return this.players.size; }
     get isFull() { return this.players.size === 2; }
-    addPlayer(socket, nickname, userId = null, stats = { wins: 0, losses: 0 }) {
+    addPlayer(socket, nickname, userId = null, stats = { wins: 0, losses: 0 }, pieceSkin = 'classic') {
         if (this.isFull)
             return null;
         const color = this.players.size === 0 ? 'red' : 'blue';
-        const player = this.createPlayerState(color, socket.id, nickname, userId, stats);
+        const player = this.createPlayerState(color, socket.id, nickname, userId, stats, pieceSkin);
         this.players.set(color, player);
         socket.join(this.roomId);
         return color;
@@ -38,10 +38,20 @@ class GameRoom {
             return null;
         const color = this.players.size === 0 ? 'red' : 'blue';
         const aiId = `ai_${this.roomId}_${color}`;
-        const player = this.createPlayerState(color, aiId, nickname, null, { wins: 0, losses: 0 });
+        const player = this.createPlayerState(color, aiId, nickname, null, { wins: 0, losses: 0 }, 'classic');
         this.players.set(color, player);
         this.aiColor = color;
         return color;
+    }
+    updatePlayerSkin(socketId, pieceSkin) {
+        const player = this.getPlayerBySocket(socketId);
+        if (!player)
+            return;
+        player.pieceSkin = pieceSkin;
+        this.io.to(this.roomId).emit('player_skin_updated', {
+            color: player.color,
+            pieceSkin,
+        });
     }
     removePlayer(socketId) {
         for (const [color, p] of this.players) {
@@ -313,7 +323,7 @@ class GameRoom {
     getPlayerColor(socketId) {
         return this.getPlayerBySocket(socketId)?.color;
     }
-    createPlayerState(color, id, nickname, userId, stats) {
+    createPlayerState(color, id, nickname, userId, stats, pieceSkin) {
         const pos = (0, GameEngine_1.getInitialPositions)();
         return {
             id: userId ?? id,
@@ -321,6 +331,7 @@ class GameRoom {
             socketId: id,
             nickname,
             color,
+            pieceSkin,
             hp: 3,
             position: pos[color],
             plannedPath: [],

@@ -6,6 +6,7 @@ export interface Position {
 export type PlayerColor = 'red' | 'blue';
 export type GamePhase = 'waiting' | 'planning' | 'moving' | 'gameover';
 export type PlayerRole = 'attacker' | 'escaper';
+export type PieceSkin = 'classic' | 'ember' | 'nova';
 
 export interface PlayerState {
   id: string;
@@ -13,6 +14,7 @@ export interface PlayerState {
   socketId: string;
   nickname: string;
   color: PlayerColor;
+  pieceSkin: PieceSkin;
   hp: number;
   position: Position;
   plannedPath: Position[];
@@ -68,6 +70,7 @@ export interface ClientPlayerState {
   id: string;
   nickname: string;
   color: PlayerColor;
+  pieceSkin: PieceSkin;
   hp: number;
   position: Position;
   pathSubmitted: boolean;

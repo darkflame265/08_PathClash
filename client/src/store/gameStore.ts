@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type {
   ClientGameState, PlayerColor, Position,
   CollisionEvent, ChatMessage, PathsRevealPayload,
-  RoundStartPayload,
+  RoundStartPayload, PieceSkin,
 } from '../types/game.types';
 import { type Lang } from '../i18n/translations';
 
@@ -60,7 +60,8 @@ interface GameStore {
   // Settings
   isSfxMuted: boolean;
   isMusicMuted: boolean;
-  pieceSkin: "classic" | "ember" | "nova";
+  pieceSkin: PieceSkin;
+  playerPieceSkins: { red: PieceSkin; blue: PieceSkin } | null;
 
   // i18n
   lang: Lang;
@@ -99,7 +100,9 @@ interface GameStore {
   toggleSfxMute: () => void;
   toggleMusicMute: () => void;
   toggleAllAudio: () => void;
-  setPieceSkin: (skin: "classic" | "ember" | "nova") => void;
+  setPieceSkin: (skin: PieceSkin) => void;
+  setPlayerPieceSkins: (skins: { red: PieceSkin; blue: PieceSkin }) => void;
+  setPlayerPieceSkin: (color: PlayerColor, skin: PieceSkin) => void;
   resetGame: () => void;
 }
 
@@ -168,6 +171,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isSfxMuted: initialAudioPrefs.isSfxMuted,
   isMusicMuted: initialAudioPrefs.isMusicMuted,
   pieceSkin: initialPieceSkin,
+  playerPieceSkins: null,
   lang: (() => {
     const stored = localStorage.getItem('lang');
     return (stored === 'en' || stored === 'kr') ? stored : 'en';
@@ -192,17 +196,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setRoomCode: (c) => set({ roomCode: c }),
   setMatchType: (matchType) => set({ currentMatchType: matchType }),
 
-  setGameState: (gs) => set({
-    gameState: gs,
-    redDisplayPos: gs.players.red.position,
-    blueDisplayPos: gs.players.blue.position,
-    winner: null,
-    gameOverMessage: null,
-    rematchRequested: false,
-    rematchRequestSent: false,
-    myPath: [],
-    opponentSubmitted: false,
-  }),
+  setGameState: (gs) =>
+    set((state) => ({
+      gameState: gs,
+      playerPieceSkins: {
+        red: gs.players.red.pieceSkin,
+        blue: gs.players.blue.pieceSkin,
+      },
+      redDisplayPos: gs.players.red.position,
+      blueDisplayPos: gs.players.blue.position,
+      winner: null,
+      gameOverMessage: null,
+      rematchRequested: false,
+      rematchRequestSent: false,
+      myPath: [],
+      opponentSubmitted: false,
+    })),
 
   setRoundInfo: (r) => set({
     roundInfo: r,
@@ -316,6 +325,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     localStorage.setItem(PIECE_SKIN_KEY, skin);
     set({ pieceSkin: skin });
   },
+  setPlayerPieceSkins: (skins) => set({ playerPieceSkins: skins }),
+  setPlayerPieceSkin: (color, skin) =>
+    set((state) => ({
+      playerPieceSkins: {
+        red: state.playerPieceSkins?.red ?? 'classic',
+        blue: state.playerPieceSkins?.blue ?? 'classic',
+        [color]: skin,
+      },
+    })),
 
   resetGame: () => set({
     authReady: get().authReady,
@@ -326,6 +344,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     accountLosses: get().accountLosses,
     myNickname: get().myNickname,
     pieceSkin: get().pieceSkin,
+    playerPieceSkins: null,
     myColor: null,
     roomCode: '',
     currentMatchType: null,

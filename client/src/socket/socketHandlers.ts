@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { translations } from '../i18n/translations';
 import type {
   ClientGameState, PathsRevealPayload, RoundStartPayload,
-  ChatMessage, PlayerColor,
+  ChatMessage, PlayerColor, PieceSkin,
 } from '../types/game.types';
 import { playHit } from '../utils/soundUtils';
 
@@ -74,6 +74,27 @@ export function registerSocketHandlers(socket: Socket): () => void {
     store().addMessage(msg);
   };
 
+  const onPlayerSkinUpdated = ({
+    color,
+    pieceSkin,
+  }: {
+    color: PlayerColor;
+    pieceSkin: PieceSkin;
+  }) => {
+    const gs = store().gameState;
+    store().setPlayerPieceSkin(color, pieceSkin);
+    if (!gs) return;
+    useGameStore.setState({
+      gameState: {
+        ...gs,
+        players: {
+          ...gs.players,
+          [color]: { ...gs.players[color], pieceSkin },
+        },
+      },
+    });
+  };
+
   socket.on('game_start', onGameStart);
   socket.on('round_start', onRoundStart);
   socket.on('opponent_submitted', onOpponentSubmitted);
@@ -83,6 +104,7 @@ export function registerSocketHandlers(socket: Socket): () => void {
   socket.on('rematch_requested', onRematchRequested);
   socket.on('rematch_start', onRematchStart);
   socket.on('chat_receive', onChatReceive);
+  socket.on('player_skin_updated', onPlayerSkinUpdated);
 
   return () => {
     socket.off('game_start', onGameStart);
@@ -94,6 +116,7 @@ export function registerSocketHandlers(socket: Socket): () => void {
     socket.off('rematch_requested', onRematchRequested);
     socket.off('rematch_start', onRematchStart);
     socket.off('chat_receive', onChatReceive);
+    socket.off('player_skin_updated', onPlayerSkinUpdated);
   };
 }
 

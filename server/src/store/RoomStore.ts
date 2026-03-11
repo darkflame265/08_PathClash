@@ -69,6 +69,7 @@ export class RoomStore {
     nickname: string;
     userId: string | null;
     stats: { wins: number; losses: number };
+    pieceSkin: 'classic' | 'ember' | 'nova';
   }[] = [];
 
   enqueueRandom(
@@ -76,8 +77,9 @@ export class RoomStore {
     nickname: string,
     userId: string | null,
     stats: { wins: number; losses: number },
+    pieceSkin: 'classic' | 'ember' | 'nova',
   ): void {
-    this.matchQueue.push({ socketId, nickname, userId, stats });
+    this.matchQueue.push({ socketId, nickname, userId, stats, pieceSkin });
   }
 
   dequeueRandom(): {
@@ -85,6 +87,7 @@ export class RoomStore {
     nickname: string;
     userId: string | null;
     stats: { wins: number; losses: number };
+    pieceSkin: 'classic' | 'ember' | 'nova';
   } | undefined {
     return this.matchQueue.shift();
   }

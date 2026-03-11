@@ -9,7 +9,7 @@ import {
 } from "./auth/guestAuth";
 import { GameScreen } from "./components/Game/GameScreen";
 import { LobbyScreen } from "./components/Lobby/LobbyScreen";
-import { disconnectSocket } from "./socket/socketClient";
+import { disconnectSocket, getSocket } from "./socket/socketClient";
 import { useGameStore } from "./store/gameStore";
 import "./App.css";
 
@@ -17,7 +17,8 @@ type AppView = "lobby" | "game";
 
 function App() {
   const [view, setView] = useState<AppView>("lobby");
-  const { authReady, myNickname, setAuthState, isMusicMuted } = useGameStore();
+  const { authReady, myNickname, pieceSkin, setAuthState, isMusicMuted } =
+    useGameStore();
   const nicknameSyncTimeoutRef = useRef<number | null>(null);
   const lobbyBgmRef = useRef<HTMLAudioElement | null>(null);
   const inGameBgmRef = useRef<HTMLAudioElement | null>(null);
@@ -86,6 +87,12 @@ function App() {
       }
     };
   }, [authReady, myNickname]);
+
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket.connected) return;
+    socket.emit("update_piece_skin", { pieceSkin });
+  }, [pieceSkin]);
 
   const handleReturnToLobby = useCallback(() => {
     disconnectSocket();

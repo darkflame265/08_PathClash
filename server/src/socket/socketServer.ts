@@ -1,7 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import { GameRoom } from '../game/GameRoom';
 import { RoomStore } from '../store/RoomStore';
-import { Position } from '../types/game.types';
+import { PieceSkin, Position } from '../types/game.types';
 import {
   AuthPayload,
   finalizeGoogleUpgrade,
@@ -15,15 +15,15 @@ export function initSocketServer(io: Server): void {
   io.on('connection', (socket: Socket) => {
     console.log(`[+] Connected: ${socket.id}`);
 
-    socket.on('create_room', async ({ nickname, auth }: { nickname: string; auth?: AuthPayload }) => {
+    socket.on('create_room', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
       const profile = await resolvePlayerProfile(auth, nickname);
       const roomId = store.generateRoomId();
       const code = store.generateCode();
       const room = new GameRoom(roomId, code, io, 'friend');
-      const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats);
+      const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
       store.add(room);
       store.registerSocket(socket.id, roomId);
-      socket.emit('room_created', { roomId, code, color });
+      socket.emit('room_created', { roomId, code, color, pieceSkin: pieceSkin ?? 'classic' });
     });
 
     socket.on(
@@ -32,8 +32,9 @@ export function initSocketServer(io: Server): void {
         {
           nickname,
           auth,
+          pieceSkin,
           tutorialPending,
-        }: { nickname: string; auth?: AuthPayload; tutorialPending?: boolean },
+        }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin; tutorialPending?: boolean },
       ) => {
       const profile = await resolvePlayerProfile(auth, nickname);
       const roomId = store.generateRoomId();
@@ -41,7 +42,7 @@ export function initSocketServer(io: Server): void {
       const room = new GameRoom(roomId, code, io, 'ai');
       store.add(room);
 
-      const humanColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats);
+      const humanColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
       if (!humanColor) {
         socket.emit('join_error', { message: 'AI room creation failed.' });
         return;
@@ -55,13 +56,15 @@ export function initSocketServer(io: Server): void {
         roomId: room.roomId,
         color: humanColor,
         opponentNickname: opponent.nickname,
+        selfPieceSkin: pieceSkin ?? 'classic',
+        opponentPieceSkin: opponent.pieceSkin,
       });
 
         setTimeout(() => room.startGame(Boolean(tutorialPending)), 300);
       },
     );
 
-    socket.on('join_room', async ({ code, nickname, auth }: { code: string; nickname: string; auth?: AuthPayload }) => {
+    socket.on('join_room', async ({ code, nickname, auth, pieceSkin }: { code: string; nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
       const profile = await resolvePlayerProfile(auth, nickname);
       const room = store.getByCode(code.toUpperCase());
       if (!room || room.isFull) {
@@ -69,7 +72,7 @@ export function initSocketServer(io: Server): void {
         return;
       }
 
-      const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats);
+      const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
       if (!color) {
         socket.emit('join_error', { message: '입장할 수 없습니다.' });
         return;
@@ -77,20 +80,30 @@ export function initSocketServer(io: Server): void {
 
       store.registerSocket(socket.id, room.roomId);
       const opponent = room.toClientState().players[color === 'red' ? 'blue' : 'red'];
-      socket.emit('room_joined', { roomId: room.roomId, color, opponentNickname: opponent.nickname });
-      socket.to(room.roomId).emit('opponent_joined', { nickname: profile.nickname });
+      socket.emit('room_joined', {
+        roomId: room.roomId,
+        color,
+        opponentNickname: opponent.nickname,
+        selfPieceSkin: pieceSkin ?? 'classic',
+        opponentPieceSkin: opponent.pieceSkin,
+      });
+      socket.to(room.roomId).emit('opponent_joined', {
+        nickname: profile.nickname,
+        color,
+        pieceSkin: pieceSkin ?? 'classic',
+      });
 
       setTimeout(() => room.startGame(), 500);
     });
 
-    socket.on('join_random', async ({ nickname, auth }: { nickname: string; auth?: AuthPayload }) => {
+    socket.on('join_random', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
       const profile = await resolvePlayerProfile(auth, nickname);
       const queued = store.dequeueRandom();
       if (!queued || queued.socketId === socket.id) {
         if (queued) {
-          store.enqueueRandom(queued.socketId, queued.nickname, queued.userId, queued.stats);
+          store.enqueueRandom(queued.socketId, queued.nickname, queued.userId, queued.stats, queued.pieceSkin);
         }
-        store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats);
+        store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
         socket.emit('matchmaking_waiting', {});
         return;
       }
@@ -102,25 +115,29 @@ export function initSocketServer(io: Server): void {
 
       const queuedSocket = io.sockets.sockets.get(queued.socketId);
       if (!queuedSocket) {
-        store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats);
+        store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
         socket.emit('matchmaking_waiting', {});
         return;
       }
 
-      room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats);
+      room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin);
       store.registerSocket(queued.socketId, roomId);
       queuedSocket.emit('room_joined', {
         roomId,
         color: 'red',
         opponentNickname: profile.nickname,
+        selfPieceSkin: queued.pieceSkin,
+        opponentPieceSkin: pieceSkin ?? 'classic',
       });
 
-      room.addPlayer(socket, profile.nickname, profile.userId, profile.stats);
+      room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
       store.registerSocket(socket.id, roomId);
       socket.emit('room_joined', {
         roomId,
         color: 'blue',
         opponentNickname: queued.nickname,
+        selfPieceSkin: pieceSkin ?? 'classic',
+        opponentPieceSkin: queued.pieceSkin,
       });
 
       setTimeout(() => room.startGame(), 500);
@@ -178,6 +195,11 @@ export function initSocketServer(io: Server): void {
     socket.on('chat_send', ({ message }: { message: string }) => {
       const room = store.getBySocket(socket.id);
       room?.sendChat(socket.id, message);
+    });
+
+    socket.on('update_piece_skin', ({ pieceSkin }: { pieceSkin: PieceSkin }) => {
+      const room = store.getBySocket(socket.id);
+      room?.updatePlayerSkin(socket.id, pieceSkin);
     });
 
     socket.on('disconnect', () => {

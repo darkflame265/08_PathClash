@@ -143,6 +143,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     accountLosses,
     setAuthState,
     setMatchType,
+    setPlayerPieceSkins,
     isMusicMuted,
     isSfxMuted,
     toggleAllAudio,
@@ -246,13 +247,19 @@ export function LobbyScreen({ onGameStart }: Props) {
       ({
         code,
         color,
+        pieceSkin: selfPieceSkin,
       }: {
         roomId: string;
         code: string;
         color: "red" | "blue";
+        pieceSkin?: "classic" | "ember" | "nova";
       }) => {
         setMyColor(color);
         setRoomCode(code);
+        setPlayerPieceSkins({
+          red: color === "red" ? selfPieceSkin ?? pieceSkin : "classic",
+          blue: color === "blue" ? selfPieceSkin ?? pieceSkin : "classic",
+        });
         setCreatedCode(code);
         setError("");
         setIsMatchmaking(false);
@@ -265,24 +272,60 @@ export function LobbyScreen({ onGameStart }: Props) {
       ({
         color,
         roomId,
+        selfPieceSkin,
+        opponentPieceSkin,
       }: {
         roomId: string;
         color: "red" | "blue";
         opponentNickname: string;
+        selfPieceSkin?: "classic" | "ember" | "nova";
+        opponentPieceSkin?: "classic" | "ember" | "nova";
       }) => {
         setMyColor(color);
         setRoomCode(roomId);
+        setPlayerPieceSkins({
+          red:
+            color === "red"
+              ? selfPieceSkin ?? pieceSkin
+              : opponentPieceSkin ?? "classic",
+          blue:
+            color === "blue"
+              ? selfPieceSkin ?? pieceSkin
+              : opponentPieceSkin ?? "classic",
+        });
         setError("");
         setIsMatchmaking(false);
         onGameStart();
       },
     );
 
-    socket.on("opponent_joined", () => {
+    socket.on(
+      "opponent_joined",
+      ({
+        color,
+        pieceSkin: opponentPieceSkin,
+      }: {
+        nickname: string;
+        color?: "red" | "blue";
+        pieceSkin?: "classic" | "ember" | "nova";
+      }) => {
+      const myCurrentColor = useGameStore.getState().myColor;
+      const myCurrentPieceSkin = useGameStore.getState().pieceSkin;
+      const opponentColor =
+        color ?? (myCurrentColor === "red" ? "blue" : "red");
+      if (opponentColor) {
+        setPlayerPieceSkins({
+          red:
+            opponentColor === "red" ? opponentPieceSkin ?? "classic" : myCurrentPieceSkin,
+          blue:
+            opponentColor === "blue" ? opponentPieceSkin ?? "classic" : myCurrentPieceSkin,
+        });
+      }
       setError("");
       setIsMatchmaking(false);
       onGameStart();
-    });
+      },
+    );
 
     socket.on("join_error", ({ message }: { message: string }) => {
       setIsMatchmaking(false);
@@ -300,6 +343,7 @@ export function LobbyScreen({ onGameStart }: Props) {
   const buildPlayerPayload = async () => ({
     nickname: getNick(),
     auth: await getSocketAuthPayload(),
+    pieceSkin: useGameStore.getState().pieceSkin,
   });
 
   const handleCreateRoom = async () => {
