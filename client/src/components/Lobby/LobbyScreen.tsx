@@ -189,6 +189,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       | "gold_core"
       | "neon_pulse"
       | "cosmic"
+      | "inferno"
       | "quantum"
       | "crystal"
       | "flag_kr"
@@ -288,6 +289,16 @@ export function LobbyScreen({ onGameStart }: Props) {
         lang === "en"
           ? "Rare nebula — twin orbit rings pulse with cosmic energy."
           : "희귀 성운 — 이중 궤도 링이 우주 에너지로 맥동.",
+      requiredWins: null,
+      tokenPrice: null,
+    },
+    {
+      id: "inferno",
+      name: lang === "en" ? "Inferno" : "\uC778\uD398\uB974\uB178",
+      desc:
+        lang === "en"
+          ? "Burning inferno core."
+          : "\uD0C0\uC624\uB974\uB294 \uC778\uD398\uB974\uB178 \uCF54\uC5B4.",
       requiredWins: null,
       tokenPrice: null,
     },

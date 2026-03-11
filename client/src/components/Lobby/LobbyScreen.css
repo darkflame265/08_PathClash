@@ -816,6 +816,37 @@
   opacity: 0.92;
 }
 
+.skin-preview-inferno {
+  background:
+    radial-gradient(circle at 36% 28%, #fff4bf 0%, #ffd24a 18%, #ff8a3c 42%, #ff5a36 64%, #78140d 100%);
+  box-shadow:
+    0 0 0 2px rgba(255, 154, 60, 0.95),
+    0 0 16px rgba(255, 90, 54, 0.55),
+    0 0 28px rgba(255, 154, 60, 0.28);
+}
+
+.skin-preview-inferno::before,
+.skin-preview-inferno::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.skin-preview-inferno::before {
+  inset: 3px;
+  border: 1px solid rgba(255, 154, 60, 0.86);
+  box-shadow:
+    0 0 8px rgba(255, 90, 54, 0.45),
+    inset 0 0 8px rgba(255, 210, 74, 0.22);
+}
+
+.skin-preview-inferno::after {
+  inset: 6px;
+  border: 1px dashed rgba(255, 210, 74, 0.72);
+  opacity: 0.9;
+}
+
 .skin-preview-plasma::before,
 .skin-preview-plasma::after {
   content: "";

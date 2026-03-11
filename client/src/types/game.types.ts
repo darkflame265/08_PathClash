@@ -16,6 +16,7 @@ export type PieceSkin =
   | 'gold_core'
   | 'neon_pulse'
   | 'cosmic'
+  | 'inferno'
   | 'quantum'
   | 'crystal'
   | 'flag_kr'
