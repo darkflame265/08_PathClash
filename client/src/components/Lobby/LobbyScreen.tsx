@@ -146,6 +146,8 @@ export function LobbyScreen({ onGameStart }: Props) {
     isMusicMuted,
     isSfxMuted,
     toggleAllAudio,
+    pieceSkin,
+    setPieceSkin,
   } = useGameStore();
   const { lang, setLang, t } = useLang();
   const policyUrl = lang === "en" ? POLICY_URL_EN : POLICY_URL_KR;
@@ -154,12 +156,41 @@ export function LobbyScreen({ onGameStart }: Props) {
   const [createdCode, setCreatedCode] = useState("");
   const [error, setError] = useState("");
   const [isMatchmaking, setIsMatchmaking] = useState(false);
+  const [isSkinPickerOpen, setIsSkinPickerOpen] = useState(false);
   const [upgradeResult, setUpgradeResult] = useState<UpgradeResolution>({
     kind: "none",
   });
   const [showUpgradeNotice, setShowUpgradeNotice] = useState(false);
   const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
   const isAudioMuted = isMusicMuted && isSfxMuted;
+  const skinButtonLabel = lang === "en" ? "Skin" : "Skin";
+  const skinModalTitle = lang === "en" ? "Choose Piece Skin" : "말 스킨 선택";
+  const skinModalDesc =
+    lang === "en"
+      ? "Select the look you want to use for your piece."
+      : "플레이어 말에 적용할 외형을 선택하세요.";
+  const skinApplyLabel = lang === "en" ? "Close" : "닫기";
+  const skinChoices: Array<{
+    id: "classic" | "ember" | "nova";
+    name: string;
+    desc: string;
+  }> = [
+    {
+      id: "classic",
+      name: lang === "en" ? "Classic" : "기본",
+      desc: lang === "en" ? "Default red glow." : "기본 붉은 글로우 스타일.",
+    },
+    {
+      id: "ember",
+      name: lang === "en" ? "Ember" : "엠버",
+      desc: lang === "en" ? "Warm orange flare." : "주황빛이 도는 강한 발광.",
+    },
+    {
+      id: "nova",
+      name: lang === "en" ? "Nova" : "노바",
+      desc: lang === "en" ? "Cool cyan core." : "청록 계열의 차가운 코어.",
+    },
+  ];
 
   useEffect(() => {
     void refreshAccountSummary().then(({ nickname, wins, losses }) => {
@@ -476,6 +507,50 @@ export function LobbyScreen({ onGameStart }: Props) {
           t={t}
         />
       )}
+      {isSkinPickerOpen && (
+        <div
+          className="upgrade-modal-backdrop"
+          onClick={() => setIsSkinPickerOpen(false)}
+        >
+          <div
+            className="upgrade-modal skin-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3>{skinModalTitle}</h3>
+            <p>{skinModalDesc}</p>
+            <div className="skin-option-list">
+              {skinChoices.map((choice) => (
+                <button
+                  key={choice.id}
+                  className={`skin-option-card ${
+                    pieceSkin === choice.id ? "is-selected" : ""
+                  }`}
+                  onClick={() => setPieceSkin(choice.id)}
+                  type="button"
+                >
+                  <span
+                    className={`skin-preview skin-preview-${choice.id}`}
+                    aria-hidden="true"
+                  />
+                  <span className="skin-option-copy">
+                    <strong>{choice.name}</strong>
+                    <span>{choice.desc}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+            <div className="upgrade-modal-actions">
+              <button
+                className="lobby-btn primary"
+                onClick={() => setIsSkinPickerOpen(false)}
+                type="button"
+              >
+                {skinApplyLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="lobby-control-row">
         <div className="lang-toggle" role="group" aria-label="Language toggle">
           <button
@@ -504,6 +579,19 @@ export function LobbyScreen({ onGameStart }: Props) {
             type="button"
           >
             {isAudioMuted ? "🔇" : "🔊"}
+          </button>
+        </div>
+        <div className="audio-toggle" role="group" aria-label="Skin picker">
+          <button
+            className={`audio-toggle-btn skin-toggle-btn ${
+              isSkinPickerOpen ? "is-active" : ""
+            }`}
+            onClick={() => setIsSkinPickerOpen((open) => !open)}
+            aria-pressed={isSkinPickerOpen}
+            title={skinButtonLabel}
+            type="button"
+          >
+            {skinButtonLabel}
           </button>
         </div>
       </div>

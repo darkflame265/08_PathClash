@@ -60,6 +60,7 @@ interface GameStore {
   // Settings
   isSfxMuted: boolean;
   isMusicMuted: boolean;
+  pieceSkin: "classic" | "ember" | "nova";
 
   // i18n
   lang: Lang;
@@ -98,12 +99,14 @@ interface GameStore {
   toggleSfxMute: () => void;
   toggleMusicMute: () => void;
   toggleAllAudio: () => void;
+  setPieceSkin: (skin: "classic" | "ember" | "nova") => void;
   resetGame: () => void;
 }
 
 const INITIAL_RED: Position = { row: 2, col: 0 };
 const INITIAL_BLUE: Position = { row: 2, col: 4 };
 const AUDIO_PREFS_KEY = 'audioPrefs';
+const PIECE_SKIN_KEY = 'pieceSkin';
 
 function getStoredAudioPrefs() {
   const raw = localStorage.getItem(AUDIO_PREFS_KEY);
@@ -130,6 +133,10 @@ function saveAudioPrefs(prefs: { isSfxMuted: boolean; isMusicMuted: boolean }) {
 }
 
 const initialAudioPrefs = getStoredAudioPrefs();
+const initialPieceSkin = (() => {
+  const stored = localStorage.getItem(PIECE_SKIN_KEY);
+  return stored === 'ember' || stored === 'nova' ? stored : 'classic';
+})();
 
 export const useGameStore = create<GameStore>((set, get) => ({
   myNickname: '',
@@ -160,6 +167,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   messages: [],
   isSfxMuted: initialAudioPrefs.isSfxMuted,
   isMusicMuted: initialAudioPrefs.isMusicMuted,
+  pieceSkin: initialPieceSkin,
   lang: (() => {
     const stored = localStorage.getItem('lang');
     return (stored === 'en' || stored === 'kr') ? stored : 'en';
@@ -304,6 +312,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       isMusicMuted: next.isMusicMuted,
     });
   },
+  setPieceSkin: (skin) => {
+    localStorage.setItem(PIECE_SKIN_KEY, skin);
+    set({ pieceSkin: skin });
+  },
 
   resetGame: () => set({
     authReady: get().authReady,
@@ -313,6 +325,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     accountWins: get().accountWins,
     accountLosses: get().accountLosses,
     myNickname: get().myNickname,
+    pieceSkin: get().pieceSkin,
     myColor: null,
     roomCode: '',
     currentMatchType: null,
