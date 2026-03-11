@@ -1,4 +1,5 @@
 import type { Position, PlayerColor } from '../../types/game.types';
+import { FlagSkin, isFlagSkin } from '../shared/FlagSkin';
 import './PlayerPiece.css';
 
 interface Props {
@@ -66,7 +67,9 @@ export function PlayerPiece({
       }}
     >
       {isAttacker && <div className={`attacker-glow glow-${color}`} />}
-      <div className="piece-inner" />
+      <div className="piece-inner">
+        {isFlagSkin(skin) && <FlagSkin id={skin} />}
+      </div>
     </div>
   );
 }

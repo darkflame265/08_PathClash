@@ -16,6 +16,8 @@
   height: var(--piece-inner-size, 44px);
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
 }
 
 .player-piece.piece-me .piece-inner {
@@ -65,53 +67,13 @@
   box-shadow: 0 0 var(--piece-glow, 12px) rgba(124, 58, 237, 0.56);
 }
 
-.piece-skin-flag_kr .piece-inner {
-  background:
-    radial-gradient(circle at 38% 42%, #ef4444 0 20%, transparent 21%),
-    radial-gradient(circle at 62% 58%, #2563eb 0 20%, transparent 21%),
-    linear-gradient(#ffffff, #f5f7fb);
-  box-shadow: 0 0 var(--piece-glow, 12px) rgba(255, 255, 255, 0.28);
-}
-
-.piece-skin-flag_jp .piece-inner {
-  background:
-    radial-gradient(circle at 50% 50%, #ef4444 0 28%, transparent 29%),
-    linear-gradient(#ffffff, #f5f7fb);
-  box-shadow: 0 0 var(--piece-glow, 12px) rgba(255, 255, 255, 0.28);
-}
-
-.piece-skin-flag_cn .piece-inner {
-  background:
-    radial-gradient(circle at 30% 28%, #fde047 0 10%, transparent 11%),
-    linear-gradient(135deg, #ef4444, #b91c1c);
-  box-shadow: 0 0 var(--piece-glow, 12px) rgba(239, 68, 68, 0.4);
-}
-
-.piece-skin-flag_us .piece-inner {
-  background:
-    linear-gradient(
-      180deg,
-      #dc2626 0 14%,
-      #ffffff 14% 28%,
-      #dc2626 28% 42%,
-      #ffffff 42% 56%,
-      #dc2626 56% 70%,
-      #ffffff 70% 84%,
-      #dc2626 84% 100%
-    );
-  box-shadow:
-    inset 0.6rem 0 0 #1d4ed8,
-    0 0 var(--piece-glow, 12px) rgba(59, 130, 246, 0.34);
-}
-
+.piece-skin-flag_kr .piece-inner,
+.piece-skin-flag_jp .piece-inner,
+.piece-skin-flag_cn .piece-inner,
+.piece-skin-flag_us .piece-inner,
 .piece-skin-flag_uk .piece-inner {
-  background:
-    linear-gradient(0deg, transparent 42%, #ffffff 42% 58%, transparent 58%),
-    linear-gradient(90deg, transparent 42%, #ffffff 42% 58%, transparent 58%),
-    linear-gradient(135deg, transparent 43%, #ffffff 43% 49%, transparent 49% 51%, #ffffff 51% 57%, transparent 57%),
-    linear-gradient(45deg, transparent 43%, #ffffff 43% 49%, transparent 49% 51%, #ffffff 51% 57%, transparent 57%),
-    linear-gradient(#1d4ed8, #1e3a8a);
-  box-shadow: 0 0 var(--piece-glow, 12px) rgba(59, 130, 246, 0.34);
+  background: none;
+  box-shadow: 0 0 var(--piece-glow, 12px) rgba(255, 255, 255, 0.22);
 }
 
 /* Attacker glow ring */

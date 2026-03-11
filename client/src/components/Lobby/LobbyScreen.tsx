@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FlagSkin, isFlagSkin } from "../shared/FlagSkin";
 import {
   getSocketAuthPayload,
   linkGoogleAccount,
@@ -670,7 +671,9 @@ export function LobbyScreen({ onGameStart }: Props) {
                     <span
                       className={`skin-preview skin-preview-${choice.id}`}
                       aria-hidden="true"
-                    />
+                    >
+                      {isFlagSkin(choice.id) && <FlagSkin id={choice.id} />}
+                    </span>
                     <span className="skin-option-copy">
                       <strong>{choice.name}</strong>
                       <span>{choice.desc}</span>
