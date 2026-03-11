@@ -190,6 +190,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       | "neon_pulse"
       | "cosmic"
       | "inferno"
+      | "phantom"
       | "arc_reactor"
       | "quantum"
       | "crystal"
@@ -300,6 +301,16 @@ export function LobbyScreen({ onGameStart }: Props) {
         lang === "en"
           ? "Burning inferno core."
           : "\uD0C0\uC624\uB974\uB294 \uC778\uD398\uB974\uB178 \uCF54\uC5B4.",
+      requiredWins: null,
+      tokenPrice: null,
+    },
+    {
+      id: "phantom",
+      name: lang === "en" ? "Phantom" : "\uD32C\uD140",
+      desc:
+        lang === "en"
+          ? "Dark phantom energy."
+          : "\uC5B4\uB450\uC6B4 \uD32C\uD140 \uC5D0\uB108\uC9C0.",
       requiredWins: null,
       tokenPrice: null,
     },

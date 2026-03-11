@@ -258,6 +258,41 @@
   animation: inferno-ring-flicker 1.9s linear infinite;
 }
 
+.piece-skin-phantom .piece-inner {
+  background:
+    radial-gradient(circle at 34% 28%, #d9ccff 0%, #8b5cf6 14%, #43306b 34%, #1e1b2e 62%, #06050a 100%);
+  box-shadow:
+    0 0 calc(var(--piece-glow, 12px) * 1.05) rgba(139, 92, 246, 0.32),
+    0 0 calc(var(--piece-glow, 12px) * 2.2) rgba(109, 77, 214, 0.18),
+    inset 0 0 12px rgba(167, 139, 250, 0.1);
+  border-color: rgba(109, 77, 214, 0.95);
+  animation: phantom-core-breathe 2.8s ease-in-out infinite;
+}
+
+.piece-skin-phantom .piece-inner::before,
+.piece-skin-phantom .piece-inner::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.piece-skin-phantom .piece-inner::before {
+  inset: 2px;
+  border: 1.5px solid rgba(109, 77, 214, 0.78);
+  box-shadow:
+    0 0 9px rgba(139, 92, 246, 0.28),
+    inset 0 0 8px rgba(12, 9, 20, 0.28);
+}
+
+.piece-skin-phantom .piece-inner::after {
+  inset: 6px;
+  border: 1px dashed rgba(167, 139, 250, 0.44);
+  box-shadow: 0 0 8px rgba(109, 77, 214, 0.18);
+  opacity: 0.88;
+  animation: phantom-aura-drift 5.2s linear infinite;
+}
+
 .piece-skin-arc_reactor .piece-inner {
   background:
     radial-gradient(circle at 50% 50%, #f6feff 0%, #b8fbff 16%, #67e8f9 28%, #38bdf8 42%, #0f3c66 64%, #05111f 100%);
@@ -745,6 +780,33 @@
     opacity: 0.94;
   }
   100% {
+    transform: rotate(360deg) scale(0.98);
+    opacity: 0.72;
+  }
+}
+
+@keyframes phantom-core-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(0.96) saturate(1);
+  }
+  50% {
+    transform: scale(1.03);
+    filter: brightness(1.06) saturate(1.08);
+  }
+}
+
+@keyframes phantom-aura-drift {
+  from {
+    transform: rotate(0deg) scale(0.98);
+    opacity: 0.72;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.03);
+    opacity: 0.96;
+  }
+  to {
     transform: rotate(360deg) scale(0.98);
     opacity: 0.72;
   }
