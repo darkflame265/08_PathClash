@@ -15,6 +15,7 @@ export type PieceSkin =
   | 'plasma'
   | 'gold_core'
   | 'neon_pulse'
+  | 'cosmic'
   | 'flag_kr'
   | 'flag_jp'
   | 'flag_cn'

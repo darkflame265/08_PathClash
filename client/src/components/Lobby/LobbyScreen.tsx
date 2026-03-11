@@ -188,6 +188,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       | "plasma"
       | "gold_core"
       | "neon_pulse"
+      | "cosmic"
       | "flag_kr"
       | "flag_jp"
       | "flag_cn"
@@ -263,8 +264,8 @@ export function LobbyScreen({ onGameStart }: Props) {
       name: lang === "en" ? "Gold Core" : "\uACE8\uB4DC \uCF54\uC5B4",
       desc:
         lang === "en"
-          ? "Radiant golden core."
-          : "\uCC2C\uB780\uD55C \uD669\uAE08 \uCF54\uC5B4.",
+          ? "Gilded core — a sunburst mandala spins within molten gold."
+          : "황금 코어 — 녹아내린 금 속에서 선버스트 만다라가 회전.",
       requiredWins: null,
       tokenPrice: null,
     },
@@ -275,6 +276,16 @@ export function LobbyScreen({ onGameStart }: Props) {
         lang === "en"
           ? "Vibrant neon pulse."
           : "\uC120\uBA85\uD55C \uB124\uC628 \uD384\uC2A4.",
+      requiredWins: null,
+      tokenPrice: null,
+    },
+    {
+      id: "cosmic",
+      name: lang === "en" ? "Cosmic" : "\uCF54\uC2A4\uBBF9",
+      desc:
+        lang === "en"
+          ? "Rare nebula — twin orbit rings pulse with cosmic energy."
+          : "희귀 성운 — 이중 궤도 링이 우주 에너지로 맥동.",
       requiredWins: null,
       tokenPrice: null,
     },

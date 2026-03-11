@@ -103,23 +103,43 @@
 
 .piece-skin-gold_core .piece-inner {
   background:
-    radial-gradient(circle at 34% 28%, #fffdf2 0%, #fff2a6 20%, #f5c542 55%, #9a670f 100%);
+    radial-gradient(circle at 34% 28%, #fffef5 0%, #fef08a 16%, #eab308 46%, #92400e 78%, #1c0800 100%);
   box-shadow:
-    0 0 calc(var(--piece-glow, 12px) * 0.95) rgba(245, 197, 66, 0.45),
-    inset 0 0 12px rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 215, 106, 0.92);
+    0 0 calc(var(--piece-glow, 12px) * 1.1) rgba(234, 179, 8, 0.75),
+    0 0 calc(var(--piece-glow, 12px) * 2.2) rgba(202, 138, 4, 0.5),
+    0 0 calc(var(--piece-glow, 12px) * 3.4) rgba(161, 98, 7, 0.22),
+    inset 0 0 14px rgba(255, 249, 180, 0.28);
+  border-color: rgba(253, 224, 71, 0.96);
+  animation: gold-core-pulse 2.2s ease-in-out infinite;
 }
 
-.piece-skin-gold_core .piece-inner::before {
+.piece-skin-gold_core .piece-inner::before,
+.piece-skin-gold_core .piece-inner::after {
   content: "";
   position: absolute;
-  inset: 4px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 242, 166, 0.82);
-  box-shadow:
-    inset 0 0 10px rgba(255, 255, 255, 0.18),
-    0 0 6px rgba(245, 197, 66, 0.28);
   pointer-events: none;
+}
+
+/* 황금 궤도 링 — 시계방향 회전 */
+.piece-skin-gold_core .piece-inner::before {
+  inset: 3px;
+  border: 2px dashed rgba(253, 224, 71, 0.88);
+  box-shadow:
+    0 0 10px rgba(234, 179, 8, 0.6),
+    inset 0 0 8px rgba(255, 249, 180, 0.18);
+  animation: gold-orbit-cw 3.2s linear infinite;
+}
+
+/* 선버스트 만다라 패턴 — 느린 회전 */
+.piece-skin-gold_core .piece-inner::after {
+  inset: 7px;
+  background: repeating-conic-gradient(
+    rgba(255, 249, 160, 0.58) 0deg 20deg,
+    transparent 20deg 45deg
+  );
+  opacity: 0.8;
+  animation: gold-rays-spin 7s linear infinite;
 }
 
 .piece-skin-neon_pulse .piece-inner {
@@ -152,6 +172,49 @@
   border: 1px dashed rgba(255, 79, 216, 0.62);
   opacity: 0.9;
   animation: neon-pulse-ring 3.2s linear infinite;
+}
+
+.piece-skin-cosmic .piece-inner {
+  background:
+    radial-gradient(circle at 32% 28%, #f5f0ff 0%, #c084fc 15%, #7c3aed 42%, #3730a3 70%, #07020f 100%);
+  box-shadow:
+    0 0 calc(var(--piece-glow, 12px) * 1.1) rgba(139, 92, 246, 0.75),
+    0 0 calc(var(--piece-glow, 12px) * 2.2) rgba(109, 40, 217, 0.5),
+    0 0 calc(var(--piece-glow, 12px) * 3.5) rgba(67, 56, 202, 0.22),
+    inset 0 0 14px rgba(196, 181, 253, 0.22);
+  border-color: rgba(167, 139, 250, 0.96);
+  animation: cosmic-nebula-pulse 2.4s ease-in-out infinite;
+}
+
+.piece-skin-cosmic .piece-inner::before,
+.piece-skin-cosmic .piece-inner::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* 외부 궤도 링 — 시계방향 회전 */
+.piece-skin-cosmic .piece-inner::before {
+  inset: 2px;
+  border: 2px dashed rgba(167, 139, 250, 0.82);
+  box-shadow:
+    0 0 10px rgba(139, 92, 246, 0.55),
+    inset 0 0 8px rgba(167, 139, 250, 0.14);
+  animation: cosmic-orbit-cw 2.6s linear infinite;
+}
+
+/* 내부 궤도 링 + 별 입자 — 반시계방향 회전 */
+.piece-skin-cosmic .piece-inner::after {
+  inset: 6px;
+  border: 1.5px dashed rgba(216, 180, 254, 0.7);
+  background:
+    radial-gradient(circle at 22% 28%, rgba(255, 255, 255, 0.92) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 76% 22%, rgba(255, 255, 255, 0.65) 0 1px, transparent 2px),
+    radial-gradient(circle at 62% 76%, rgba(196, 181, 253, 0.75) 0 1px, transparent 2px),
+    radial-gradient(circle at 30% 64%, rgba(255, 255, 255, 0.5) 0 1px, transparent 2px);
+  opacity: 0.96;
+  animation: cosmic-orbit-ccw 4s linear infinite;
 }
 
 .piece-skin-flag_kr .piece-inner,
@@ -239,6 +302,58 @@
   to {
     transform: rotate(360deg) scale(1);
   }
+}
+
+@keyframes cosmic-nebula-pulse {
+  0%,
+  100% {
+    filter: saturate(1) brightness(1) hue-rotate(0deg);
+    transform: scale(1);
+  }
+  40% {
+    filter: saturate(1.35) brightness(1.18) hue-rotate(24deg);
+    transform: scale(1.045);
+  }
+  75% {
+    filter: saturate(1.1) brightness(1.07) hue-rotate(-14deg);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes cosmic-orbit-cw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes cosmic-orbit-ccw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+@keyframes gold-core-pulse {
+  0%,
+  100% {
+    filter: brightness(1) saturate(1);
+    transform: scale(1);
+  }
+  45% {
+    filter: brightness(1.2) saturate(1.28);
+    transform: scale(1.045);
+  }
+  80% {
+    filter: brightness(1.08) saturate(1.1);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes gold-orbit-cw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes gold-rays-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
 /* Hit flash */
