@@ -582,7 +582,8 @@
     border-color 0.15s ease,
     background 0.15s ease,
     transform 0.15s ease,
-    box-shadow 0.15s ease;
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .skin-option-card:hover {
@@ -595,6 +596,17 @@
   border-color: rgba(96, 165, 250, 0.75);
   background: rgba(59, 130, 246, 0.12);
   box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.18);
+}
+
+.skin-option-card.is-locked {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.skin-option-card.is-locked:hover {
+  border-color: rgba(154, 164, 174, 0.18);
+  background: rgba(42, 49, 55, 0.78);
+  transform: none;
 }
 
 .skin-preview {
@@ -647,6 +659,7 @@
   align-items: flex-start;
   gap: 0.18rem;
   text-align: left;
+  flex: 1;
 }
 
 .skin-option-copy strong {
@@ -656,6 +669,25 @@
 .skin-option-copy span {
   font-size: 0.8rem;
   color: var(--text-muted, #9aa4ae);
+}
+
+.skin-lock-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  margin-left: auto;
+  color: #7f91ab;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.skin-lock-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.92rem;
+  opacity: 0.88;
 }
 
 .lobby-utility-links {

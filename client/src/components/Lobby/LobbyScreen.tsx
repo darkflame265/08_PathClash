@@ -164,8 +164,9 @@ export function LobbyScreen({ onGameStart }: Props) {
   const [showUpgradeNotice, setShowUpgradeNotice] = useState(false);
   const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
   const isAudioMuted = isMusicMuted && isSfxMuted;
-  const skinButtonLabel = lang === "en" ? "Skin" : "Skin";
-  const skinModalTitle = lang === "en" ? "Choose Piece Skin" : "말 스킨 선택";
+  const skinButtonLabel = lang === "en" ? "Skin" : "스킨";
+  const skinModalTitle =
+    lang === "en" ? "Choose Piece Skin" : "말 스킨 선택";
   const skinModalDesc =
     lang === "en"
       ? "Select the look you want to use for your piece."
@@ -175,33 +176,56 @@ export function LobbyScreen({ onGameStart }: Props) {
     id: "classic" | "ember" | "nova" | "aurora" | "void";
     name: string;
     desc: string;
+    requiredWins: number | null;
   }> = [
     {
       id: "classic",
       name: lang === "en" ? "Classic" : "기본",
-      desc: lang === "en" ? "Default red glow." : "기본 붉은 글로우 스타일.",
+      desc:
+        lang === "en"
+          ? "Default red glow."
+          : "기본 붉은 글로우 스타일.",
+      requiredWins: null,
     },
     {
       id: "ember",
       name: lang === "en" ? "Ember" : "엠버",
-      desc: lang === "en" ? "Warm orange flare." : "주황빛이 도는 강한 발광.",
+      desc:
+        lang === "en"
+          ? "Warm orange flare."
+          : "주황빛이 도는 강한 발광.",
+      requiredWins: 10,
     },
     {
       id: "nova",
       name: lang === "en" ? "Nova" : "노바",
-      desc: lang === "en" ? "Cool cyan core." : "청록 계열의 차가운 코어.",
+      desc:
+        lang === "en"
+          ? "Cool cyan core."
+          : "청록 계열의 차가운 코어.",
+      requiredWins: 50,
     },
     {
       id: "aurora",
       name: lang === "en" ? "Aurora" : "오로라",
-      desc: lang === "en" ? "Vivid green-yellow glow." : "연두빛과 황금빛이 섞인 발광.",
+      desc:
+        lang === "en"
+          ? "Vivid green-yellow glow."
+          : "연두빛과 황금빛이 섞인 발광.",
+      requiredWins: 100,
     },
     {
       id: "void",
       name: lang === "en" ? "Void" : "보이드",
-      desc: lang === "en" ? "Deep violet core." : "짙은 보랏빛 코어 스타일.",
+      desc:
+        lang === "en"
+          ? "Deep violet core."
+          : "짙은 보랏빛 코어 스타일.",
+      requiredWins: 500,
     },
   ];
+  const getSkinRequirementLabel = (requiredWins: number) =>
+    lang === "en" ? `Wins ${requiredWins}` : `승리 ${requiredWins}`;
 
   useEffect(() => {
     void refreshAccountSummary().then(({ nickname, wins, losses }) => {
@@ -573,25 +597,40 @@ export function LobbyScreen({ onGameStart }: Props) {
             <h3>{skinModalTitle}</h3>
             <p>{skinModalDesc}</p>
             <div className="skin-option-list">
-              {skinChoices.map((choice) => (
-                <button
-                  key={choice.id}
-                  className={`skin-option-card ${
-                    pieceSkin === choice.id ? "is-selected" : ""
-                  }`}
-                  onClick={() => setPieceSkin(choice.id)}
-                  type="button"
-                >
-                  <span
-                    className={`skin-preview skin-preview-${choice.id}`}
-                    aria-hidden="true"
-                  />
-                  <span className="skin-option-copy">
-                    <strong>{choice.name}</strong>
-                    <span>{choice.desc}</span>
-                  </span>
-                </button>
-              ))}
+              {skinChoices.map((choice) => {
+                const isLocked =
+                  choice.requiredWins !== null && accountWins < choice.requiredWins;
+                return (
+                  <button
+                    key={choice.id}
+                    className={`skin-option-card ${
+                      pieceSkin === choice.id ? "is-selected" : ""
+                    } ${isLocked ? "is-locked" : ""}`}
+                    onClick={() => {
+                      if (!isLocked) setPieceSkin(choice.id);
+                    }}
+                    disabled={isLocked}
+                    type="button"
+                  >
+                    <span
+                      className={`skin-preview skin-preview-${choice.id}`}
+                      aria-hidden="true"
+                    />
+                    <span className="skin-option-copy">
+                      <strong>{choice.name}</strong>
+                      <span>{choice.desc}</span>
+                    </span>
+                    {isLocked && (
+                      <span className="skin-lock-meta" aria-label="Locked skin">
+                        <span className="skin-lock-icon" aria-hidden="true">
+                          🔒
+                        </span>
+                        <span>{getSkinRequirementLabel(choice.requiredWins!)}</span>
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
             <div className="upgrade-modal-actions">
               <button
