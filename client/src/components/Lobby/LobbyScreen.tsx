@@ -853,11 +853,11 @@ export function LobbyScreen({ onGameStart }: Props) {
                         </span>
                       )}
                       {choice.id === "crystal" && (
-                        <span className="skin-preview-crystal-atom">
-                          <span className="skin-preview-crystal-nucleus" />
-                          <span className="skin-preview-crystal-electron skin-preview-crystal-electron-1" />
-                          <span className="skin-preview-crystal-electron skin-preview-crystal-electron-2" />
-                          <span className="skin-preview-crystal-electron skin-preview-crystal-electron-3" />
+                        <span className="skin-preview-atomic-atom">
+                          <span className="skin-preview-atomic-nucleus" />
+                          <span className="skin-preview-atomic-electron skin-preview-atomic-electron-1" />
+                          <span className="skin-preview-atomic-electron skin-preview-atomic-electron-2" />
+                          <span className="skin-preview-atomic-electron skin-preview-atomic-electron-3" />
                         </span>
                       )}
                     </span>

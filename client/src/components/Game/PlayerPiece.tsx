@@ -151,21 +151,21 @@ export function PlayerPiece({
           </div>
         )}
         {skin === "crystal" && (
-          <div className="crystal-atom" aria-hidden="true">
-            <div className="crystal-nucleus" />
-            <div className="crystal-electron crystal-electron-1">
-              <div className="crystal-electron-ring">
-                <div className="crystal-electron-particle" />
+          <div className="atomic-atom" aria-hidden="true">
+            <div className="atomic-nucleus" />
+            <div className="atomic-electron atomic-electron-1">
+              <div className="atomic-electron-ring">
+                <div className="atomic-electron-particle" />
               </div>
             </div>
-            <div className="crystal-electron crystal-electron-2">
-              <div className="crystal-electron-ring">
-                <div className="crystal-electron-particle" />
+            <div className="atomic-electron atomic-electron-2">
+              <div className="atomic-electron-ring">
+                <div className="atomic-electron-particle" />
               </div>
             </div>
-            <div className="crystal-electron crystal-electron-3">
-              <div className="crystal-electron-ring">
-                <div className="crystal-electron-particle" />
+            <div className="atomic-electron atomic-electron-3">
+              <div className="atomic-electron-ring">
+                <div className="atomic-electron-particle" />
               </div>
             </div>
           </div>

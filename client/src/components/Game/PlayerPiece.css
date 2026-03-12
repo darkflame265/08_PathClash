@@ -611,7 +611,7 @@
   border: 1px solid rgba(204, 204, 204, 0.12);
 }
 
-.crystal-atom {
+.atomic-atom {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -625,7 +625,7 @@
   backface-visibility: hidden;
 }
 
-.crystal-nucleus {
+.atomic-nucleus {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -649,8 +649,8 @@
   backface-visibility: hidden;
 }
 
-.crystal-nucleus::before,
-.crystal-nucleus::after {
+.atomic-nucleus::before,
+.atomic-nucleus::after {
   content: "";
   position: absolute;
   left: 50%;
@@ -661,7 +661,7 @@
   backface-visibility: hidden;
 }
 
-.crystal-nucleus::before {
+.atomic-nucleus::before {
   width: 58%;
   height: 58%;
   background: radial-gradient(
@@ -678,7 +678,7 @@
   animation: atomic-core-white-pulse 1.45s ease-in-out infinite;
 }
 
-.crystal-nucleus::after {
+.atomic-nucleus::after {
   width: 88%;
   height: 88%;
   background: radial-gradient(
@@ -692,7 +692,7 @@
   animation: atomic-core-white-glow 2s ease-in-out infinite;
 }
 
-.crystal-electron {
+.atomic-electron {
   position: absolute;
   left: 120%;
   top: 120%;
@@ -704,7 +704,7 @@
   backface-visibility: hidden;
 }
 
-.crystal-electron-ring {
+.atomic-electron-ring {
   position: absolute;
   inset: 0;
   border: 1px solid rgba(204, 204, 204, 0.76);
@@ -716,7 +716,7 @@
   animation-fill-mode: both;
 }
 
-.crystal-electron-particle {
+.atomic-electron-particle {
   position: absolute;
   top: 0;
   left: 50%;
@@ -740,27 +740,27 @@
   animation-fill-mode: both;
 }
 
-.crystal-electron-1 {
+.atomic-electron-1 {
   transform: translate3d(-50%, -50%, 0);
 }
 
-.crystal-electron-1 .crystal-electron-ring {
-  animation: crystal-orbit-1 6s linear infinite;
+.atomic-electron-1 .atomic-electron-ring {
+  animation: atomic-orbit-1 6s linear infinite;
 }
 
-.crystal-electron-1 .crystal-electron-particle {
-  animation: crystal-orbit-particle-1 6s linear infinite;
+.atomic-electron-1 .atomic-electron-particle {
+  animation: atomic-orbit-particle-1 6s linear infinite;
 }
 
-.crystal-electron-2 {
+.atomic-electron-2 {
   transform: translate3d(-50%, -50%, 0);
 }
 
-.crystal-electron-2 .crystal-electron-ring {
-  animation: crystal-orbit-2 6s linear infinite;
+.atomic-electron-2 .atomic-electron-ring {
+  animation: atomic-orbit-2 6s linear infinite;
 }
 
-.crystal-electron-2 .crystal-electron-particle {
+.atomic-electron-2 .atomic-electron-particle {
   background: radial-gradient(
     circle at 30% 30%,
     #fef3c7 0%,
@@ -771,18 +771,18 @@
   box-shadow:
     0 0 8px rgba(250, 204, 21, 0.58),
     0 0 14px rgba(253, 224, 71, 0.3);
-  animation: crystal-orbit-particle-2 6s linear infinite;
+  animation: atomic-orbit-particle-2 6s linear infinite;
 }
 
-.crystal-electron-3 {
+.atomic-electron-3 {
   transform: translate3d(-50%, -50%, 0);
 }
 
-.crystal-electron-3 .crystal-electron-ring {
-  animation: crystal-orbit-3 6s linear infinite;
+.atomic-electron-3 .atomic-electron-ring {
+  animation: atomic-orbit-3 6s linear infinite;
 }
 
-.crystal-electron-3 .crystal-electron-particle {
+.atomic-electron-3 .atomic-electron-particle {
   background: radial-gradient(
     circle at 30% 30%,
     #e9d5ff 0%,
@@ -793,7 +793,7 @@
   box-shadow:
     0 0 8px rgba(168, 85, 247, 0.58),
     0 0 14px rgba(216, 180, 254, 0.3);
-  animation: crystal-orbit-particle-3 6s linear infinite;
+  animation: atomic-orbit-particle-3 6s linear infinite;
 }
 
 @keyframes inferno-core-pulse {
@@ -989,7 +989,7 @@
   }
 }
 
-@keyframes crystal-orbit-1 {
+@keyframes atomic-orbit-1 {
   0% {
     transform: translate(-50%, -50%) rotateY(60deg) rotateX(-30deg) rotate(0deg);
   }
@@ -999,7 +999,7 @@
   }
 }
 
-@keyframes crystal-orbit-particle-1 {
+@keyframes atomic-orbit-particle-1 {
   0% {
     transform: rotateZ(0deg) rotateX(30deg) rotateY(-40deg) scale(0.8);
   }
@@ -1017,7 +1017,7 @@
   }
 }
 
-@keyframes crystal-orbit-2 {
+@keyframes atomic-orbit-2 {
   0% {
     transform: translate(-50%, -50%) rotateY(60deg) rotateX(30deg)
       rotate(180deg);
@@ -1028,7 +1028,7 @@
   }
 }
 
-@keyframes crystal-orbit-particle-2 {
+@keyframes atomic-orbit-particle-2 {
   0% {
     transform: rotateZ(-180deg) rotateX(-30deg) rotateY(-40deg) scale(0.8);
   }
@@ -1046,7 +1046,7 @@
   }
 }
 
-@keyframes crystal-orbit-3 {
+@keyframes atomic-orbit-3 {
   0% {
     transform: translate(-50%, -50%) rotateY(0deg) rotateX(75deg) rotate(180deg);
   }
@@ -1055,7 +1055,7 @@
   }
 }
 
-@keyframes crystal-orbit-particle-3 {
+@keyframes atomic-orbit-particle-3 {
   0% {
     transform: rotateZ(-180deg) rotateX(-80deg) rotateY(0deg) scale(1);
   }
