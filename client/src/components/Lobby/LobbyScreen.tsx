@@ -191,7 +191,6 @@ export function LobbyScreen({ onGameStart }: Props) {
       | "neon_pulse"
       | "cosmic"
       | "inferno"
-      | "phantom"
       | "arc_reactor"
       | "quantum"
       | "crystal"
@@ -286,16 +285,6 @@ export function LobbyScreen({ onGameStart }: Props) {
       tokenPrice: null,
     },
     {
-      id: "cosmic",
-      name: lang === "en" ? "Cosmic" : "\uCF54\uC2A4\uBBF9",
-      desc:
-        lang === "en"
-          ? "Rare nebula — twin orbit rings pulse with cosmic energy."
-          : "희귀 성운 — 이중 궤도 링이 우주 에너지로 맥동.",
-      requiredWins: null,
-      tokenPrice: null,
-    },
-    {
       id: "inferno",
       name: lang === "en" ? "Inferno" : "\uC778\uD398\uB974\uB178",
       desc:
@@ -306,12 +295,22 @@ export function LobbyScreen({ onGameStart }: Props) {
       tokenPrice: null,
     },
     {
-      id: "phantom",
-      name: lang === "en" ? "Phantom" : "\uD32C\uD140",
+      id: "quantum",
+      name: lang === "en" ? "Quantum" : "퀀텀",
       desc:
         lang === "en"
-          ? "Dark phantom energy."
-          : "\uC5B4\uB450\uC6B4 \uD32C\uD140 \uC5D0\uB108\uC9C0.",
+          ? "Quantum flux core — mint and lavender rings oscillate in superposition."
+          : "퀀텀 플럭스 코어 — 민트와 라벤더 링이 중첩 상태로 진동.",
+      requiredWins: null,
+      tokenPrice: null,
+    },
+    {
+      id: "cosmic",
+      name: lang === "en" ? "Cosmic" : "\uCF54\uC2A4\uBBF9",
+      desc:
+        lang === "en"
+          ? "Rare nebula — twin orbit rings pulse with cosmic energy."
+          : "희귀 성운 — 이중 궤도 링이 우주 에너지로 맥동.",
       requiredWins: null,
       tokenPrice: null,
     },
@@ -322,16 +321,6 @@ export function LobbyScreen({ onGameStart }: Props) {
         lang === "en"
           ? "High-energy reactor core."
           : "\uACE0\uCD9C\uB825 \uB9AC\uC561\uD130 \uCF54\uC5B4.",
-      requiredWins: null,
-      tokenPrice: null,
-    },
-    {
-      id: "quantum",
-      name: lang === "en" ? "Quantum" : "퀀텀",
-      desc:
-        lang === "en"
-          ? "Quantum flux core — mint and lavender rings oscillate in superposition."
-          : "퀀텀 플럭스 코어 — 민트와 라벤더 링이 중첩 상태로 진동.",
       requiredWins: null,
       tokenPrice: null,
     },

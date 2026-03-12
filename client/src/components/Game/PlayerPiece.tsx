@@ -60,7 +60,6 @@ interface Props {
     | "neon_pulse"
     | "cosmic"
     | "inferno"
-    | "phantom"
     | "arc_reactor"
     | "quantum"
     | "crystal"

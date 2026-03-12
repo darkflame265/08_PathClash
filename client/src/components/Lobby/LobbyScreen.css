@@ -876,44 +876,6 @@
   filter: blur(0.5px);
 }
 
-.skin-preview-phantom {
-  background: radial-gradient(
-    circle at 36% 30%,
-    #c9b9ff 0%,
-    #8b5cf6 16%,
-    #3d2a68 34%,
-    #1e1b2e 62%,
-    #090711 100%
-  );
-  box-shadow:
-    0 0 0 2px rgba(109, 77, 214, 0.95),
-    0 0 14px rgba(139, 92, 246, 0.48),
-    0 0 28px rgba(109, 77, 214, 0.22);
-}
-
-.skin-preview-phantom::before,
-.skin-preview-phantom::after {
-  content: "";
-  position: absolute;
-  border-radius: 999px;
-  pointer-events: none;
-}
-
-.skin-preview-phantom::before {
-  inset: 2px;
-  border: 1px solid rgba(139, 92, 246, 0.72);
-  box-shadow:
-    0 0 8px rgba(139, 92, 246, 0.38),
-    inset 0 0 8px rgba(17, 11, 28, 0.26);
-}
-
-.skin-preview-phantom::after {
-  inset: 5px;
-  border: 1px dashed rgba(167, 139, 250, 0.48);
-  box-shadow: 0 0 6px rgba(109, 77, 214, 0.2);
-  opacity: 0.82;
-}
-
 .skin-preview-arc_reactor {
   background: transparent;
   overflow: visible;
