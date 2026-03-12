@@ -1374,6 +1374,21 @@
   font-size: 0.9rem;
 }
 
+.skin-name-tier-common {
+  color: #7dd3fc;
+}
+
+.skin-name-tier-rare {
+  color: #c084fc;
+}
+
+.skin-name-tier-legendary {
+  background: linear-gradient(90deg, #ffd700, #fff3b0, #ffd700);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 .skin-option-copy span {
   font-size: 0.8rem;
   color: var(--text-muted, #9aa4ae);

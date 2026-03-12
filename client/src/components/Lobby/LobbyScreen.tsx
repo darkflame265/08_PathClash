@@ -203,6 +203,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     desc: string;
     requiredWins: number | null;
     tokenPrice?: number | null;
+    tier?: "common" | "rare" | "legendary" | null;
   }> = [
     {
       id: "classic",
@@ -263,6 +264,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           : "\uD50C\uB77C\uC988\uB9C8 \uC5D0\uB108\uC9C0 \uCF54\uC5B4.",
       requiredWins: null,
       tokenPrice: null,
+      tier: "common",
     },
     {
       id: "gold_core",
@@ -273,6 +275,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           : "황금 코어 — 녹아내린 금 속에서 선버스트 만다라가 회전.",
       requiredWins: null,
       tokenPrice: null,
+      tier: "common",
     },
     {
       id: "neon_pulse",
@@ -283,6 +286,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           : "\uC120\uBA85\uD55C \uB124\uC628 \uD384\uC2A4.",
       requiredWins: null,
       tokenPrice: null,
+      tier: "common",
     },
     {
       id: "inferno",
@@ -293,6 +297,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           : "\uD0C0\uC624\uB974\uB294 \uC778\uD398\uB974\uB178 \uCF54\uC5B4.",
       requiredWins: null,
       tokenPrice: null,
+      tier: "common",
     },
     {
       id: "quantum",
@@ -303,6 +308,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           : "퀀텀 플럭스 코어 — 민트와 라벤더 링이 중첩 상태로 진동.",
       requiredWins: null,
       tokenPrice: null,
+      tier: "common",
     },
     {
       id: "cosmic",
@@ -313,6 +319,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           : "희귀 성운 — 이중 궤도 링이 우주 에너지로 맥동.",
       requiredWins: null,
       tokenPrice: null,
+      tier: "rare",
     },
     {
       id: "arc_reactor",
@@ -323,6 +330,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           : "\uACE0\uCD9C\uB825 \uB9AC\uC561\uD130 \uCF54\uC5B4.",
       requiredWins: null,
       tokenPrice: null,
+      tier: "rare",
     },
     {
       id: "crystal",
@@ -333,6 +341,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           : "\uC6D0\uC790 \uADA4\uB3C4 \uC5D0\uB108\uC9C0 \uCF54\uC5B4.",
       requiredWins: null,
       tokenPrice: 0,
+      tier: "legendary",
     },
     {
       id: "flag_kr",
@@ -343,6 +352,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           : "\uB300\uD55C\uBBFC\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
       requiredWins: null,
       tokenPrice: null,
+      tier: null,
     },
     {
       id: "flag_jp",
@@ -353,6 +363,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           : "\uC77C\uBCF8 \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
       requiredWins: null,
       tokenPrice: null,
+      tier: null,
     },
     {
       id: "flag_cn",
@@ -363,6 +374,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           : "\uC911\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
       requiredWins: null,
       tokenPrice: null,
+      tier: null,
     },
     {
       id: "flag_us",
@@ -373,6 +385,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           : "\uBBF8\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
       requiredWins: null,
       tokenPrice: null,
+      tier: null,
     },
     {
       id: "flag_uk",
@@ -383,6 +396,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           : "\uC601\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
       requiredWins: null,
       tokenPrice: null,
+      tier: null,
     },
   ];
   const getSkinRequirementLabel = (
@@ -848,7 +862,13 @@ export function LobbyScreen({ onGameStart }: Props) {
                       )}
                     </span>
                     <span className="skin-option-copy">
-                      <strong>{choice.name}</strong>
+                      <strong
+                        className={
+                          choice.tier ? `skin-name-tier-${choice.tier}` : undefined
+                        }
+                      >
+                        {choice.name}
+                      </strong>
                       <span>{choice.desc}</span>
                     </span>
                     {isLocked && (
