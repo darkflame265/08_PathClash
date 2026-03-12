@@ -267,17 +267,18 @@
 .piece-skin-inferno .piece-inner {
   background: radial-gradient(
     circle at 50% 50%,
-    #fff5d6 0%,
-    #ffd24a 12%,
-    #ff9a3c 26%,
-    #c2410c 52%,
-    #2a0905 100%
+    rgba(255, 248, 214, 0.98) 0%,
+    rgba(255, 221, 122, 0.94) 14%,
+    rgba(255, 161, 58, 0.92) 30%,
+    rgba(255, 96, 32, 0.72) 52%,
+    rgba(120, 20, 10, 0.24) 72%,
+    rgba(20, 5, 5, 0) 100%
   );
   box-shadow:
-    0 0 calc(var(--piece-glow, 12px) * 1.2) rgba(255, 90, 54, 0.55),
-    0 0 calc(var(--piece-glow, 12px) * 2.5) rgba(255, 154, 60, 0.34),
-    0 0 calc(var(--piece-glow, 12px) * 4) rgba(255, 210, 74, 0.16),
-    inset 0 0 16px rgba(255, 210, 74, 0.2);
+    0 0 calc(var(--piece-glow, 12px) * 1.3) rgba(255, 102, 32, 0.52),
+    0 0 calc(var(--piece-glow, 12px) * 2.4) rgba(255, 170, 52, 0.32),
+    0 0 calc(var(--piece-glow, 12px) * 3.8) rgba(255, 221, 122, 0.14),
+    inset 0 0 16px rgba(255, 246, 196, 0.18);
   border-color: rgba(255, 154, 60, 0.95);
   animation: inferno-core-pulse 1.7s ease-in-out infinite;
 }
@@ -291,160 +292,33 @@
 }
 
 .piece-skin-inferno .piece-inner::before {
-  inset: 3px;
-  border: 1px solid rgba(255, 219, 120, 0.82);
+  inset: 18%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(255, 248, 214, 0.96) 22%,
+    rgba(255, 214, 92, 0.92) 40%,
+    rgba(255, 124, 40, 0.72) 64%,
+    rgba(255, 72, 24, 0.12) 88%,
+    rgba(255, 72, 24, 0) 100%
+  );
   box-shadow:
-    0 0 8px rgba(255, 154, 60, 0.34),
-    inset 0 0 8px rgba(255, 210, 74, 0.16);
+    0 0 12px rgba(255, 235, 160, 0.7),
+    0 0 20px rgba(255, 132, 40, 0.36);
+  animation: inferno-core-bloom 1.45s ease-in-out infinite;
 }
 
 .piece-skin-inferno .piece-inner::after {
-  inset: 0;
+  inset: 6%;
   background: radial-gradient(
     circle,
-    rgba(255, 210, 74, 0.2) 0%,
-    rgba(255, 154, 60, 0.08) 32%,
-    rgba(255, 90, 54, 0) 72%
+    rgba(255, 217, 84, 0.08) 0%,
+    rgba(255, 124, 40, 0.18) 38%,
+    rgba(255, 72, 24, 0.08) 58%,
+    rgba(255, 72, 24, 0) 82%
   );
-  opacity: 0.88;
-}
-
-.inferno-field {
-  position: absolute;
-  inset: -6%;
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.inferno-ring,
-.inferno-core,
-.inferno-fireband {
-  position: absolute;
-  border-radius: 50%;
-}
-
-.inferno-ring-outer {
-  inset: 0;
-  background:
-    radial-gradient(circle, transparent 58%, rgba(255, 120, 32, 0.22) 59%, rgba(255, 120, 32, 0.08) 66%, transparent 72%),
-    conic-gradient(
-      from 0deg,
-      rgba(255, 248, 190, 0) 0deg 10deg,
-      rgba(255, 248, 190, 0.78) 10deg 22deg,
-      rgba(255, 145, 43, 0.96) 22deg 54deg,
-      rgba(255, 87, 34, 0.48) 54deg 72deg,
-      rgba(255, 248, 190, 0) 72deg 96deg,
-      rgba(255, 248, 190, 0.82) 96deg 110deg,
-      rgba(255, 145, 43, 0.96) 110deg 146deg,
-      rgba(255, 87, 34, 0.42) 146deg 164deg,
-      rgba(255, 248, 190, 0) 164deg 192deg,
-      rgba(255, 248, 190, 0.76) 192deg 206deg,
-      rgba(255, 145, 43, 0.94) 206deg 238deg,
-      rgba(255, 87, 34, 0.46) 238deg 256deg,
-      rgba(255, 248, 190, 0) 256deg 284deg,
-      rgba(255, 248, 190, 0.78) 284deg 298deg,
-      rgba(255, 145, 43, 0.94) 298deg 330deg,
-      rgba(255, 87, 34, 0.44) 330deg 348deg,
-      rgba(255, 248, 190, 0) 348deg 360deg
-    );
-  filter: blur(1px);
-  animation: inferno-ring-spin 1.3s linear infinite;
-}
-
-.inferno-ring-inner {
-  inset: 11%;
-  background:
-    radial-gradient(circle, transparent 56%, rgba(255, 229, 143, 0.16) 57%, transparent 66%),
-    conic-gradient(
-      from 180deg,
-      rgba(255, 243, 178, 0) 0deg 16deg,
-      rgba(255, 243, 178, 0.7) 16deg 28deg,
-      rgba(255, 169, 58, 0.85) 28deg 60deg,
-      rgba(255, 89, 42, 0.34) 60deg 86deg,
-      rgba(255, 243, 178, 0) 86deg 112deg,
-      rgba(255, 243, 178, 0.7) 112deg 124deg,
-      rgba(255, 169, 58, 0.85) 124deg 156deg,
-      rgba(255, 89, 42, 0.34) 156deg 182deg,
-      rgba(255, 243, 178, 0) 182deg 208deg,
-      rgba(255, 243, 178, 0.7) 208deg 220deg,
-      rgba(255, 169, 58, 0.85) 220deg 252deg,
-      rgba(255, 89, 42, 0.34) 252deg 278deg,
-      rgba(255, 243, 178, 0) 278deg 304deg,
-      rgba(255, 243, 178, 0.7) 304deg 316deg,
-      rgba(255, 169, 58, 0.85) 316deg 348deg,
-      rgba(255, 89, 42, 0.34) 348deg 360deg
-    );
   filter: blur(0.8px);
-  animation: inferno-ring-spin-reverse 1.8s linear infinite;
-}
-
-.inferno-core {
-  inset: 27%;
-  background: radial-gradient(
-    circle,
-    rgba(255, 253, 222, 0.98) 0%,
-    rgba(255, 225, 138, 0.94) 22%,
-    rgba(255, 163, 58, 0.8) 48%,
-    rgba(255, 90, 54, 0.18) 78%,
-    rgba(255, 90, 54, 0) 100%
-  );
-  box-shadow:
-    0 0 12px rgba(255, 225, 138, 0.65),
-    0 0 22px rgba(255, 90, 54, 0.35);
-  animation: inferno-core-bloom 1.5s ease-in-out infinite;
-}
-
-.inferno-fireband {
-  inset: 0;
-  animation: inferno-ring-drift 2.4s ease-in-out infinite;
-}
-
-.inferno-fire {
-  --fire-rotate: 0deg;
-  --fire-y: -168%;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 18%;
-  height: 42%;
-  margin-left: -9%;
-  margin-top: -21%;
-  transform-origin: 50% 92%;
-}
-
-.inferno-fire::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  clip-path: polygon(50% 0%, 88% 30%, 100% 100%, 0% 100%, 12% 30%);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 249, 202, 0.98) 0%,
-    rgba(255, 205, 91, 0.92) 26%,
-    rgba(255, 124, 45, 0.9) 60%,
-    rgba(255, 66, 32, 0.2) 100%
-  );
-  filter: blur(0.2px);
-  box-shadow:
-    0 0 8px rgba(255, 169, 58, 0.45),
-    0 0 14px rgba(255, 90, 54, 0.24);
-  transform: rotate(var(--fire-rotate)) translateY(var(--fire-y));
-}
-
-.inferno-fire-1 { --fire-rotate: 8deg; --fire-y: -168%; animation: inferno-fire-flicker-a 1.2s ease-in-out infinite; }
-.inferno-fire-2 { --fire-rotate: 78deg; --fire-y: -170%; animation: inferno-fire-flicker-b 1.45s ease-in-out infinite; }
-.inferno-fire-3 { --fire-rotate: 150deg; --fire-y: -166%; animation: inferno-fire-flicker-c 1.32s ease-in-out infinite; }
-.inferno-fire-4 { --fire-rotate: 224deg; --fire-y: -172%; animation: inferno-fire-flicker-b 1.56s ease-in-out infinite; }
-.inferno-fire-5 { --fire-rotate: 300deg; --fire-y: -169%; animation: inferno-fire-flicker-a 1.28s ease-in-out infinite; }
-
-.inferno-fire-2::before,
-.inferno-fire-4::before {
-  transform: scale(0.88, 1.12);
-}
-
-.inferno-fire-3::before,
-.inferno-fire-5::before {
-  transform: scale(1.04, 0.96);
+  opacity: 0.9;
 }
 
 .piece-skin-phantom .piece-inner {
@@ -1167,93 +1041,17 @@
   }
 }
 
-@keyframes inferno-ring-spin {
-  from {
-    transform: rotate(0deg) scale(0.98);
-    opacity: 0.82;
-  }
-  50% {
-    transform: rotate(180deg) scale(1.03);
-    opacity: 1;
-  }
-  to {
-    transform: rotate(360deg) scale(0.98);
-    opacity: 0.82;
-  }
-}
-
-@keyframes inferno-ring-spin-reverse {
-  from {
-    transform: rotate(360deg) scale(1);
-    opacity: 0.64;
-  }
-  50% {
-    transform: rotate(180deg) scale(1.05);
-    opacity: 0.88;
-  }
-  to {
-    transform: rotate(0deg) scale(1);
-    opacity: 0.64;
-  }
-}
-
 @keyframes inferno-core-bloom {
   0%,
   100% {
-    transform: scale(0.96);
+    transform: scale(0.92);
     opacity: 0.78;
     filter: brightness(1);
   }
   50% {
-    transform: scale(1.1);
+    transform: scale(1.12);
     opacity: 1;
-    filter: brightness(1.14);
-  }
-}
-
-@keyframes inferno-ring-drift {
-  0%,
-  100% {
-    transform: rotate(0deg) scale(1);
-  }
-  50% {
-    transform: rotate(6deg) scale(1.02);
-  }
-}
-
-@keyframes inferno-fire-flicker-a {
-  0%,
-  100% {
-    opacity: 0.82;
-    transform: rotate(var(--fire-rotate)) translateY(var(--fire-y)) scale(0.94, 0.9);
-  }
-  45% {
-    opacity: 1;
-    transform: rotate(calc(var(--fire-rotate) - 6deg)) translateY(calc(var(--fire-y) - 8%)) scale(1.08, 1.12);
-  }
-}
-
-@keyframes inferno-fire-flicker-b {
-  0%,
-  100% {
-    opacity: 0.78;
-    transform: rotate(var(--fire-rotate)) translateY(var(--fire-y)) scale(0.9, 0.92);
-  }
-  50% {
-    opacity: 1;
-    transform: rotate(calc(var(--fire-rotate) + 6deg)) translateY(calc(var(--fire-y) - 10%)) scale(1.06, 1.14);
-  }
-}
-
-@keyframes inferno-fire-flicker-c {
-  0%,
-  100% {
-    opacity: 0.8;
-    transform: rotate(var(--fire-rotate)) translateY(var(--fire-y)) scale(0.92, 0.92);
-  }
-  50% {
-    opacity: 1;
-    transform: rotate(calc(var(--fire-rotate) - 6deg)) translateY(calc(var(--fire-y) - 10%)) scale(1.08, 1.16);
+    filter: brightness(1.16);
   }
 }
 

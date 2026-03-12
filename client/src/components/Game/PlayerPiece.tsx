@@ -141,20 +141,6 @@ export function PlayerPiece({
             </div>
           </div>
         )}
-        {skin === "inferno" && (
-          <div className="inferno-field" aria-hidden="true">
-            <div className="inferno-ring inferno-ring-outer" />
-            <div className="inferno-ring inferno-ring-inner" />
-            <div className="inferno-core" />
-            <div className="inferno-fireband">
-              <span className="inferno-fire inferno-fire-1" />
-              <span className="inferno-fire inferno-fire-2" />
-              <span className="inferno-fire inferno-fire-3" />
-              <span className="inferno-fire inferno-fire-4" />
-              <span className="inferno-fire inferno-fire-5" />
-            </div>
-          </div>
-        )}
         {skin === "crystal" && (
           <div className="crystal-atom" aria-hidden="true">
             <div className="crystal-nucleus" />
