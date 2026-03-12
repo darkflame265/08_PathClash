@@ -1,5 +1,6 @@
 import type { Position, PlayerColor } from '../../types/game.types';
 import { FlagSkin, isFlagSkin } from '../shared/FlagSkin';
+import { StarrySkySkin } from '../shared/StarrySkySkin';
 import './PlayerPiece.css';
 
 const QUANTUM_ORBIT_PARTICLES = [
@@ -117,6 +118,9 @@ export function PlayerPiece({
       {isAttacker && <div className={`attacker-glow glow-${color}`} />}
       <div className="piece-inner">
         {isFlagSkin(skin) && <FlagSkin id={skin} />}
+        {skin === "cosmic" && (
+          <StarrySkySkin className="cosmic-canvas" density={0.3} />
+        )}
         {skin === "arc_reactor" && (
           <div className="arc-reactor-scale" aria-hidden="true">
             <div className="arc_reactor">

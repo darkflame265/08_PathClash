@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState } from "react";
 import { FlagSkin, isFlagSkin } from "../shared/FlagSkin";
+import { StarrySkySkin } from "../shared/StarrySkySkin";
 import {
   getSocketAuthPayload,
   linkGoogleAccount,
@@ -813,6 +814,12 @@ export function LobbyScreen({ onGameStart }: Props) {
                       aria-hidden="true"
                     >
                       {isFlagSkin(choice.id) && <FlagSkin id={choice.id} />}
+                      {choice.id === "cosmic" && (
+                        <StarrySkySkin
+                          className="skin-preview-cosmic-canvas"
+                          density={0.16}
+                        />
+                      )}
                       {choice.id === "arc_reactor" && (
                         <span className="skin-preview-arc-scale">
                           <span className="skin-preview-arc_reactor-wrap">
