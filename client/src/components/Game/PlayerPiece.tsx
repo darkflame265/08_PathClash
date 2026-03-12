@@ -141,6 +141,14 @@ export function PlayerPiece({
             </div>
           </div>
         )}
+        {skin === "crystal" && (
+          <div className="crystal-atom" aria-hidden="true">
+            <div className="crystal-nucleus" />
+            <div className="crystal-electron crystal-electron-1" />
+            <div className="crystal-electron crystal-electron-2" />
+            <div className="crystal-electron crystal-electron-3" />
+          </div>
+        )}
         {skin === "quantum" && (
           <div className="quantum-orbit-field" aria-hidden="true">
             {QUANTUM_ORBIT_PARTICLES.map((particle, index) => (

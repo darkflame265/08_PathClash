@@ -336,11 +336,11 @@ export function LobbyScreen({ onGameStart }: Props) {
     },
     {
       id: "crystal",
-      name: lang === "en" ? "Crystal" : "크리스탈",
+      name: lang === "en" ? "Atomic" : "\uC544\uD1A0\uBBF9",
       desc:
         lang === "en"
-          ? "Prism shard — icy facets refract light into a cascading shimmer."
-          : "프리즘 조각 — 차가운 결정면이 빛을 굴절시켜 흘러내리는 잔광을 만든다.",
+          ? "Atomic orbit energy core."
+          : "\uC6D0\uC790 \uADA4\uB3C4 \uC5D0\uB108\uC9C0 \uCF54\uC5B4.",
       requiredWins: null,
       tokenPrice: 0,
     },
@@ -813,6 +813,14 @@ export function LobbyScreen({ onGameStart }: Props) {
                       aria-hidden="true"
                     >
                       {isFlagSkin(choice.id) && <FlagSkin id={choice.id} />}
+                      {choice.id === "crystal" && (
+                        <span className="skin-preview-crystal-atom">
+                          <span className="skin-preview-crystal-nucleus" />
+                          <span className="skin-preview-crystal-electron skin-preview-crystal-electron-1" />
+                          <span className="skin-preview-crystal-electron skin-preview-crystal-electron-2" />
+                          <span className="skin-preview-crystal-electron skin-preview-crystal-electron-3" />
+                        </span>
+                      )}
                     </span>
                     <span className="skin-option-copy">
                       <strong>{choice.name}</strong>
