@@ -17,6 +17,8 @@ export interface AccountProfile {
   wins: number;
   losses: number;
   tokens: number;
+  dailyRewardWins: number;
+  dailyRewardTokens: number;
   isGuestUser: boolean;
 }
 
@@ -37,6 +39,23 @@ interface StatsRow {
   wins: number | null;
   losses: number | null;
   tokens: number | null;
+  daily_reward_wins: number | null;
+  daily_reward_day: string | null;
+}
+
+const DAILY_REWARD_TOKENS_PER_WIN = 6;
+const DAILY_REWARD_MAX_WINS = 20;
+
+function getUtcDayKey(now = new Date()): string {
+  return now.toISOString().slice(0, 10);
+}
+
+function getActiveDailyRewardWins(
+  stats: Pick<StatsRow, 'daily_reward_wins' | 'daily_reward_day'> | null | undefined,
+  utcDayKey = getUtcDayKey(),
+): number {
+  if (!stats || stats.daily_reward_day !== utcDayKey) return 0;
+  return Math.min(DAILY_REWARD_MAX_WINS, Math.max(0, Number(stats.daily_reward_wins ?? 0)));
 }
 
 async function getUserFromToken(accessToken?: string) {
@@ -55,12 +74,13 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
 
   const statsPromise = supabaseAdmin
     ?.from('player_stats')
-    .select('wins, losses, tokens')
+    .select('wins, losses, tokens, daily_reward_wins, daily_reward_day')
     .eq('user_id', userId)
     .maybeSingle<StatsRow>();
 
   const [profileResult, statsResult] = await Promise.all([profilePromise, statsPromise]);
   const nickname = profileResult?.data?.nickname?.trim() || fallbackNickname;
+  const dailyRewardWins = getActiveDailyRewardWins(statsResult?.data);
 
   return {
     userId,
@@ -68,6 +88,8 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
     wins: statsResult?.data?.wins ?? 0,
     losses: statsResult?.data?.losses ?? 0,
     tokens: statsResult?.data?.tokens ?? 0,
+    dailyRewardWins,
+    dailyRewardTokens: dailyRewardWins * DAILY_REWARD_TOKENS_PER_WIN,
     isGuestUser,
   };
 }
@@ -134,7 +156,7 @@ export async function recordMatchmakingResult(
 
   const { data: rows, error } = await supabaseAdmin
     .from('player_stats')
-    .select('user_id, wins, losses, tokens')
+    .select('user_id, wins, losses, tokens, daily_reward_wins, daily_reward_day')
     .in('user_id', [winnerUserId, loserUserId]);
 
   if (error) {
@@ -149,12 +171,34 @@ export async function recordMatchmakingResult(
         wins: Number(row.wins ?? 0),
         losses: Number(row.losses ?? 0),
         tokens: Number(row.tokens ?? 0),
+        dailyRewardWins: Number(row.daily_reward_wins ?? 0),
+        dailyRewardDay: row.daily_reward_day ?? null,
       },
     ]),
   );
 
-  const winner = byId.get(winnerUserId) ?? { wins: 0, losses: 0, tokens: 0 };
-  const loser = byId.get(loserUserId) ?? { wins: 0, losses: 0, tokens: 0 };
+  const winner = byId.get(winnerUserId) ?? {
+    wins: 0,
+    losses: 0,
+    tokens: 0,
+    dailyRewardWins: 0,
+    dailyRewardDay: null,
+  };
+  const loser = byId.get(loserUserId) ?? {
+    wins: 0,
+    losses: 0,
+    tokens: 0,
+    dailyRewardWins: 0,
+    dailyRewardDay: null,
+  };
+  const utcDayKey = getUtcDayKey();
+  const winnerActiveDailyWins = winner.dailyRewardDay === utcDayKey
+    ? Math.min(DAILY_REWARD_MAX_WINS, Math.max(0, winner.dailyRewardWins))
+    : 0;
+  const winnerEarnedReward = winnerActiveDailyWins < DAILY_REWARD_MAX_WINS;
+  const nextWinnerDailyRewardWins = winnerEarnedReward
+    ? winnerActiveDailyWins + 1
+    : winnerActiveDailyWins;
 
   const { error: upsertError } = await supabaseAdmin.from('player_stats').upsert(
     [
@@ -162,13 +206,17 @@ export async function recordMatchmakingResult(
         user_id: winnerUserId,
         wins: winner.wins + 1,
         losses: winner.losses,
-        tokens: winner.tokens,
+        tokens: winner.tokens + (winnerEarnedReward ? DAILY_REWARD_TOKENS_PER_WIN : 0),
+        daily_reward_wins: nextWinnerDailyRewardWins,
+        daily_reward_day: utcDayKey,
       },
       {
         user_id: loserUserId,
         wins: loser.wins,
         losses: loser.losses + 1,
         tokens: loser.tokens,
+        daily_reward_wins: loser.dailyRewardWins,
+        daily_reward_day: loser.dailyRewardDay,
       },
     ],
     { onConflict: 'user_id' },
@@ -182,7 +230,13 @@ export async function recordMatchmakingResult(
 export async function finalizeGoogleUpgrade(
   targetAuth: AuthPayload | undefined,
   guestAuth: AuthPayload | undefined,
-  guestSnapshot: { nickname: string | null; wins: number; losses: number } | undefined,
+  guestSnapshot: {
+    nickname: string | null;
+    wins: number;
+    losses: number;
+    tokens?: number;
+    dailyRewardWins?: number;
+  } | undefined,
   flowStartedAt: string | undefined,
 ): Promise<FinalizeGoogleUpgradeResponse> {
   if (!supabaseAdmin || !targetAuth?.accessToken || !guestAuth?.accessToken) {
@@ -242,7 +296,10 @@ export async function finalizeGoogleUpgrade(
   const adoptedNickname = guestSnapshot?.nickname ?? guestAccountProfile.nickname ?? 'Guest';
   const adoptedWins = guestSnapshot?.wins ?? guestAccountProfile.wins;
   const adoptedLosses = guestSnapshot?.losses ?? guestAccountProfile.losses;
-  const adoptedTokens = guestAccountProfile.tokens;
+  const adoptedTokens = guestSnapshot?.tokens ?? guestAccountProfile.tokens;
+  const adoptedDailyRewardWins =
+    guestSnapshot?.dailyRewardWins ?? guestAccountProfile.dailyRewardWins;
+  const adoptedDailyRewardDay = adoptedDailyRewardWins > 0 ? getUtcDayKey() : null;
 
   const { error: upsertProfileError } = await supabaseAdmin.from('profiles').upsert({
     id: targetUser.id,
@@ -260,6 +317,8 @@ export async function finalizeGoogleUpgrade(
       wins: adoptedWins,
       losses: adoptedLosses,
       tokens: adoptedTokens,
+      daily_reward_wins: adoptedDailyRewardWins,
+      daily_reward_day: adoptedDailyRewardDay,
     },
     { onConflict: 'user_id' },
   );
@@ -274,6 +333,8 @@ export async function finalizeGoogleUpgrade(
       wins: 0,
       losses: 0,
       tokens: 0,
+      daily_reward_wins: 0,
+      daily_reward_day: null,
     },
     { onConflict: 'user_id' },
   );

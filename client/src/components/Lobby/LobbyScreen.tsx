@@ -49,6 +49,8 @@ function applyProfileToStore(
     wins: profile.wins,
     losses: profile.losses,
     tokens: profile.tokens,
+    dailyRewardWins: profile.dailyRewardWins,
+    dailyRewardTokens: profile.dailyRewardTokens,
   });
 }
 
@@ -146,6 +148,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     accountWins,
     accountLosses,
     accountTokens,
+    accountDailyRewardTokens,
     setAuthState,
     setMatchType,
     setPlayerPieceSkins,
@@ -413,7 +416,14 @@ export function LobbyScreen({ onGameStart }: Props) {
       : `\uC2B9\uB9AC ${requiredWins}`;
   };
   useEffect(() => {
-    void refreshAccountSummary().then(({ nickname, wins, losses, tokens }) => {
+    void refreshAccountSummary().then(({
+      nickname,
+      wins,
+      losses,
+      tokens,
+      dailyRewardWins,
+      dailyRewardTokens,
+    }) => {
       setAuthState({
         ready: true,
         userId: authUserId,
@@ -423,6 +433,8 @@ export function LobbyScreen({ onGameStart }: Props) {
         wins,
         losses,
         tokens,
+        dailyRewardWins,
+        dailyRewardTokens,
       });
     });
   }, [authUserId, isGuestUser, setAuthState]);
@@ -736,7 +748,17 @@ export function LobbyScreen({ onGameStart }: Props) {
           </div>
 
           <div className={`lobby-card ${isMatchmaking ? "is-matchmaking" : ""}`}>
-            <h2 data-step="4">{t.randomTitle}</h2>
+            <div className="lobby-card-title-row">
+              <h2 data-step="4">{t.randomTitle}</h2>
+              <div className="daily-reward-badge" aria-label="Daily tokens earned">
+                <span className="daily-reward-icon" aria-hidden="true">
+                  {"\uD83D\uDC8E"}
+                </span>
+                <span>{accountDailyRewardTokens}</span>
+                <span className="daily-reward-separator">/</span>
+                <span>120</span>
+              </div>
+            </div>
             {isMatchmaking ? (
               <>
                 <div className="matchmaking-status">

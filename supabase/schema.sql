@@ -11,11 +11,19 @@ create table if not exists public.player_stats (
   wins integer not null default 0,
   losses integer not null default 0,
   tokens integer not null default 0,
+  daily_reward_wins integer not null default 0,
+  daily_reward_day date,
   updated_at timestamptz not null default now()
 );
 
 alter table public.player_stats
 add column if not exists tokens integer not null default 0;
+
+alter table public.player_stats
+add column if not exists daily_reward_wins integer not null default 0;
+
+alter table public.player_stats
+add column if not exists daily_reward_day date;
 
 create table if not exists public.account_merges (
   source_user_id uuid primary key references auth.users(id) on delete cascade,

@@ -28,6 +28,8 @@ interface GameStore {
   accountWins: number;
   accountLosses: number;
   accountTokens: number;
+  accountDailyRewardWins: number;
+  accountDailyRewardTokens: number;
   currentMatchType: "friend" | "random" | "ai" | null;
 
   // Game
@@ -79,6 +81,8 @@ interface GameStore {
     wins?: number;
     losses?: number;
     tokens?: number;
+    dailyRewardWins?: number;
+    dailyRewardTokens?: number;
   }) => void;
   setMyColor: (c: PlayerColor) => void;
   setRoomCode: (c: string) => void;
@@ -172,6 +176,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   accountWins: 0,
   accountLosses: 0,
   accountTokens: 0,
+  accountDailyRewardWins: 0,
+  accountDailyRewardTokens: 0,
   currentMatchType: null,
   gameState: null,
   myPath: [],
@@ -203,7 +209,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   setNickname: (n) => set({ myNickname: n }),
-  setAuthState: ({ ready, userId, accessToken, isGuestUser, nickname, wins, losses, tokens }) =>
+  setAuthState: ({
+    ready,
+    userId,
+    accessToken,
+    isGuestUser,
+    nickname,
+    wins,
+    losses,
+    tokens,
+    dailyRewardWins,
+    dailyRewardTokens,
+  }) =>
     set((state) => ({
       authReady: ready,
       authUserId: userId,
@@ -213,6 +230,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       accountWins: wins ?? state.accountWins,
       accountLosses: losses ?? state.accountLosses,
       accountTokens: tokens ?? state.accountTokens,
+      accountDailyRewardWins: dailyRewardWins ?? state.accountDailyRewardWins,
+      accountDailyRewardTokens:
+        dailyRewardTokens ?? state.accountDailyRewardTokens,
     })),
   setMyColor: (c) => set({ myColor: c }),
   setRoomCode: (c) => set({ roomCode: c }),

@@ -162,7 +162,13 @@ export function initSocketServer(io: Server): void {
         }: {
           auth?: AuthPayload;
           guestAuth?: AuthPayload;
-          guestProfile?: { nickname: string | null; wins: number; losses: number };
+          guestProfile?: {
+            nickname: string | null;
+            wins: number;
+            losses: number;
+            tokens?: number;
+            dailyRewardWins?: number;
+          };
           flowStartedAt?: string;
         },
         ack?: (response: unknown) => void,

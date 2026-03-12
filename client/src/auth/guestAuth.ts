@@ -13,6 +13,8 @@ export interface AuthStatePayload {
   wins?: number;
   losses?: number;
   tokens?: number;
+  dailyRewardWins?: number;
+  dailyRewardTokens?: number;
 }
 
 interface ProfileRow {
@@ -23,6 +25,8 @@ interface StatsRow {
   wins: number | null;
   losses: number | null;
   tokens: number | null;
+  daily_reward_wins: number | null;
+  daily_reward_day: string | null;
 }
 
 interface AccountSnapshot {
@@ -30,6 +34,8 @@ interface AccountSnapshot {
   wins: number;
   losses: number;
   tokens: number;
+  dailyRewardWins: number;
+  dailyRewardTokens: number;
 }
 
 export interface AccountProfile {
@@ -38,6 +44,8 @@ export interface AccountProfile {
   wins: number;
   losses: number;
   tokens: number;
+  dailyRewardWins: number;
+  dailyRewardTokens: number;
   isGuestUser: boolean;
 }
 
@@ -51,6 +59,8 @@ export interface PendingUpgradeContext {
     wins: number;
     losses: number;
     tokens: number;
+    dailyRewardWins: number;
+    dailyRewardTokens: number;
   };
   flowStartedAt: string;
 }
@@ -64,6 +74,20 @@ export type UpgradeResolution =
 interface ServerFinalizeUpgradeResponse {
   status: "UPGRADE_OK" | "SWITCH_OK" | "AUTH_REQUIRED" | "AUTH_INVALID" | "UPGRADE_FAILED";
   profile?: AccountProfile;
+}
+
+const DAILY_REWARD_TOKENS_PER_WIN = 6;
+const DAILY_REWARD_MAX_WINS = 20;
+
+function getUtcDayKey(now = new Date()): string {
+  return now.toISOString().slice(0, 10);
+}
+
+function getActiveDailyRewardWins(
+  stats: Pick<StatsRow, "daily_reward_wins" | "daily_reward_day"> | undefined,
+): number {
+  if (!stats || stats.daily_reward_day !== getUtcDayKey()) return 0;
+  return Math.min(DAILY_REWARD_MAX_WINS, Math.max(0, Number(stats.daily_reward_wins ?? 0)));
 }
 
 interface StoredGuestSession {
@@ -160,6 +184,8 @@ function toAuthState(session: Session | null, snapshot?: AccountSnapshot): AuthS
     wins: snapshot?.wins ?? 0,
     losses: snapshot?.losses ?? 0,
     tokens: snapshot?.tokens ?? 0,
+    dailyRewardWins: snapshot?.dailyRewardWins ?? 0,
+    dailyRewardTokens: snapshot?.dailyRewardTokens ?? 0,
   };
 }
 
@@ -211,21 +237,35 @@ async function ensureProfile(userId: string): Promise<void> {
 
 async function getAccountSnapshot(userId: string): Promise<AccountSnapshot> {
   if (!supabase) {
-    return { nickname: null, wins: 0, losses: 0, tokens: 0 };
+    return {
+      nickname: null,
+      wins: 0,
+      losses: 0,
+      tokens: 0,
+      dailyRewardWins: 0,
+      dailyRewardTokens: 0,
+    };
   }
 
   await ensureProfile(userId);
 
   const [profileResult, statsResult] = await Promise.all([
     supabase.from("profiles").select("nickname").eq("id", userId).maybeSingle<ProfileRow>(),
-    supabase.from("player_stats").select("wins, losses, tokens").eq("user_id", userId).maybeSingle<StatsRow>(),
+    supabase
+      .from("player_stats")
+      .select("wins, losses, tokens, daily_reward_wins, daily_reward_day")
+      .eq("user_id", userId)
+      .maybeSingle<StatsRow>(),
   ]);
+  const dailyRewardWins = getActiveDailyRewardWins(statsResult.data ?? undefined);
 
   return {
     nickname: profileResult.data?.nickname ?? null,
     wins: statsResult.data?.wins ?? 0,
     losses: statsResult.data?.losses ?? 0,
     tokens: statsResult.data?.tokens ?? 0,
+    dailyRewardWins,
+    dailyRewardTokens: dailyRewardWins * DAILY_REWARD_TOKENS_PER_WIN,
   };
 }
 
@@ -351,14 +391,33 @@ export async function initializeGuestAuth(): Promise<AuthStatePayload> {
   return toAuthState(session, snapshot);
 }
 
-export async function refreshAccountSummary(): Promise<Pick<AuthStatePayload, "nickname" | "wins" | "losses" | "tokens">> {
+export async function refreshAccountSummary(): Promise<
+  Pick<
+    AuthStatePayload,
+    "nickname" | "wins" | "losses" | "tokens" | "dailyRewardWins" | "dailyRewardTokens"
+  >
+> {
   if (!supabase) {
-    return { nickname: null, wins: 0, losses: 0, tokens: 0 };
+    return {
+      nickname: null,
+      wins: 0,
+      losses: 0,
+      tokens: 0,
+      dailyRewardWins: 0,
+      dailyRewardTokens: 0,
+    };
   }
 
   const session = await getCurrentSession();
   if (!session?.user) {
-    return { nickname: null, wins: 0, losses: 0, tokens: 0 };
+    return {
+      nickname: null,
+      wins: 0,
+      losses: 0,
+      tokens: 0,
+      dailyRewardWins: 0,
+      dailyRewardTokens: 0,
+    };
   }
 
   const snapshot = await getAccountSnapshot(session.user.id);
@@ -367,6 +426,8 @@ export async function refreshAccountSummary(): Promise<Pick<AuthStatePayload, "n
     wins: snapshot.wins,
     losses: snapshot.losses,
     tokens: snapshot.tokens,
+    dailyRewardWins: snapshot.dailyRewardWins,
+    dailyRewardTokens: snapshot.dailyRewardTokens,
   };
 }
 
@@ -409,6 +470,8 @@ export async function linkGoogleAccount(): Promise<void> {
       wins: snapshot.wins ?? 0,
       losses: snapshot.losses ?? 0,
       tokens: snapshot.tokens ?? 0,
+      dailyRewardWins: snapshot.dailyRewardWins ?? 0,
+      dailyRewardTokens: snapshot.dailyRewardTokens ?? 0,
     },
     flowStartedAt: new Date().toISOString(),
   });
@@ -439,6 +502,9 @@ export async function logoutToGuestMode(): Promise<AuthStatePayload> {
       isGuestUser: false,
       wins: 0,
       losses: 0,
+      tokens: 0,
+      dailyRewardWins: 0,
+      dailyRewardTokens: 0,
     };
   }
 
@@ -501,6 +567,9 @@ export function onAuthStateChanged(callback: (payload: AuthStatePayload) => void
       isGuestUser: false,
       wins: 0,
       losses: 0,
+      tokens: 0,
+      dailyRewardWins: 0,
+      dailyRewardTokens: 0,
     });
     return () => {};
   }
