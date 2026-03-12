@@ -383,12 +383,12 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 3px;
-  height: 11px;
+  width: 5px;
+  height: 20px;
   margin-left: 105px;
   margin-top: 100px;
   display: block;
-  transform: rotate(var(--mark-angle)) translateY(90px);
+  transform: rotate(var(--mark-angle)) translateY(150px);
   animation: colour_ease2 3s infinite ease-in-out;
   animation-delay: var(--mark-delay);
   background: rgba(2, 254, 255, 0.8);
