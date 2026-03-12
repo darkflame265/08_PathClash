@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+﻿import { useCallback, useEffect, useRef, useState } from "react";
 import { FlagSkin, isFlagSkin } from "../shared/FlagSkin";
 import { StarrySkySkin } from "../shared/StarrySkySkin";
 import {
@@ -35,6 +35,23 @@ const DONATE_URL =
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
 
 type SetAuthState = ReturnType<typeof useGameStore.getState>["setAuthState"];
+
+function getUtcDayKey(now = new Date()) {
+  return now.toISOString().slice(0, 10);
+}
+
+function getMsUntilNextUtcMidnight(now = new Date()) {
+  const nextUtcMidnight = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + 1,
+    0,
+    0,
+    0,
+    50,
+  );
+  return Math.max(1_000, nextUtcMidnight - now.getTime());
+}
 
 function applyProfileToStore(
   profile: AccountProfile,
@@ -170,6 +187,8 @@ export function LobbyScreen({ onGameStart }: Props) {
     kind: "none",
   });
   const [showUpgradeNotice, setShowUpgradeNotice] = useState(false);
+  const dailyResetTimeoutRef = useRef<number | null>(null);
+  const lastRewardSyncDayRef = useRef<string>(getUtcDayKey());
   const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
   const isAudioMuted = isMusicMuted && isSfxMuted;
   const skinButtonLabel = lang === "en" ? "Skin" : "\uC2A4\uD0A8";
@@ -415,8 +434,8 @@ export function LobbyScreen({ onGameStart }: Props) {
       ? `Wins ${requiredWins}`
       : `\uC2B9\uB9AC ${requiredWins}`;
   };
-  useEffect(() => {
-    void refreshAccountSummary().then(({
+  const syncAccountSummary = useCallback(() => {
+    return refreshAccountSummary().then(({
       nickname,
       wins,
       losses,
@@ -436,8 +455,47 @@ export function LobbyScreen({ onGameStart }: Props) {
         dailyRewardWins,
         dailyRewardTokens,
       });
+      lastRewardSyncDayRef.current = getUtcDayKey();
     });
   }, [authUserId, isGuestUser, setAuthState]);
+
+  useEffect(() => {
+    void syncAccountSummary();
+  }, [syncAccountSummary]);
+
+  useEffect(() => {
+    const clearDailyResetTimeout = () => {
+      if (dailyResetTimeoutRef.current !== null) {
+        window.clearTimeout(dailyResetTimeoutRef.current);
+        dailyResetTimeoutRef.current = null;
+      }
+    };
+
+    const scheduleDailyResetRefresh = () => {
+      clearDailyResetTimeout();
+      dailyResetTimeoutRef.current = window.setTimeout(() => {
+        void syncAccountSummary().finally(() => {
+          scheduleDailyResetRefresh();
+        });
+      }, getMsUntilNextUtcMidnight());
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      const currentUtcDay = getUtcDayKey();
+      if (currentUtcDay === lastRewardSyncDayRef.current) return;
+      void syncAccountSummary();
+      scheduleDailyResetRefresh();
+    };
+
+    scheduleDailyResetRefresh();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearDailyResetTimeout();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [syncAccountSummary]);
 
   useEffect(() => {
     let active = true;
