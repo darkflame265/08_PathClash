@@ -363,151 +363,141 @@
 }
 
 .piece-skin-arc_reactor .piece-inner {
-  background: radial-gradient(
-    circle at 50% 50%,
-    #f6feff 0%,
-    #b8fbff 16%,
-    #67e8f9 28%,
-    #38bdf8 42%,
-    #0f3c66 64%,
-    #05111f 100%
-  );
-  box-shadow:
-    0 0 calc(var(--piece-glow, 12px) * 1.2) rgba(103, 232, 249, 0.85),
-    0 0 calc(var(--piece-glow, 12px) * 2.4) rgba(56, 189, 248, 0.5),
-    0 0 calc(var(--piece-glow, 12px) * 3.8) rgba(14, 165, 233, 0.22),
-    inset 0 0 14px rgba(239, 252, 255, 0.26);
-  border-color: rgba(153, 248, 255, 0.96);
+  background: transparent;
+  overflow: visible;
+  box-shadow: none;
+  border-color: transparent;
 }
 
-.arc-reactor-field {
+.arc-reactor-scale {
   position: absolute;
-  inset: 0;
-  border-radius: 50%;
+  left: 50%;
+  top: 50%;
+  width: 250px;
+  height: 250px;
+  transform: translate(-50%, -50%) scale(var(--arc-reactor-scale, 0.176));
+  transform-origin: center;
   pointer-events: none;
 }
 
-.arc-reactor-ring,
-.arc-reactor-core,
-.arc-reactor-arcs,
-.arc-reactor-marks {
+.arc_reactor {
+  position: relative;
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow:
+    0 0 50px 15px rgba(2, 255, 255, 0.3),
+    inset 0 0 50px 15px rgba(2, 255, 255, 0.3);
+}
+
+.case_container {
   position: absolute;
-  inset: 0;
+  width: 210px;
+  height: 210px;
+  margin-left: 20px;
+  margin-top: 20px;
   border-radius: 50%;
 }
 
-.arc-reactor-ring {
-  border: 1.4px solid rgba(165, 243, 252, 0.26);
-  box-shadow:
-    0 0 6px rgba(103, 232, 249, 0.4),
-    inset 0 0 6px rgba(224, 247, 250, 0.12);
+.e7 {
+  position: absolute;
+  width: 95.25%;
+  height: 95.25%;
+  left: 2.5475%;
+  right: 2.5475%;
+  border: 6px solid transparent;
+  background: transparent;
+  transform: rotateZ(0deg);
+  transition: box-shadow 3s ease;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 100px;
 }
 
-.arc-reactor-ring-outer {
-  inset: 1px;
-  border-color: rgba(186, 251, 255, 0.65);
-  animation: arc-reactor-spin-cw 4.2s linear infinite;
+.semi_arc_3 {
+  position: absolute;
+  width: 94%;
+  height: 94%;
+  left: 3%;
+  top: 3%;
+  border-radius: 50%;
+  border: 5px solid #02feff;
+  box-sizing: border-box;
+  animation: rotate 4s linear infinite;
+  text-align: center;
+  line-height: 129px;
 }
 
-.arc-reactor-ring-mid {
-  inset: 6px;
-  border-style: dashed;
-  border-color: rgba(125, 245, 255, 0.9);
-  box-shadow:
-    0 0 8px rgba(67, 215, 255, 0.56),
-    inset 0 0 6px rgba(125, 245, 255, 0.14);
-  animation: arc-reactor-spin-ccw 2.6s linear infinite;
+.e5_1 {
+  color: rgba(2, 255, 255, 0.15);
+  border: 2px solid;
+  border-left: 2px solid transparent;
+  animation: rotate 5s linear infinite;
 }
 
-.arc-reactor-ring-inner {
-  inset: 10px;
-  border-width: 1px;
-  border-color: rgba(224, 247, 250, 0.72);
-  animation: arc-reactor-pulse 1.8s ease-in-out infinite;
+.e5_2 {
+  color: rgba(2, 255, 255, 0.7);
+  border: 4px solid;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  animation: rotate_anti 4s linear infinite;
 }
 
-.arc-reactor-core {
-  inset: 12px;
-  background: radial-gradient(
-    circle at 50% 50%,
-    #ffffff 0%,
-    #dafeff 20%,
-    #7dd3fc 42%,
-    #0ea5e9 64%,
-    rgba(8, 36, 63, 0.16) 100%
-  );
-  box-shadow:
-    0 0 10px rgba(125, 245, 255, 0.72),
-    0 0 18px rgba(56, 189, 248, 0.36),
-    inset 0 0 10px rgba(255, 255, 255, 0.22);
-  animation: arc-reactor-core-pulse 1.3s ease-in-out infinite;
+.e5_3 {
+  color: rgba(2, 255, 255, 0.5);
+  border: 2px solid;
+  border-left: 2px solid transparent;
+  border-right: 2px solid transparent;
+  animation: rotate 3s linear infinite;
 }
 
-.arc-reactor-arcs {
-  inset: 3px;
-  animation: arc-reactor-spin-cw 7.5s linear infinite;
+.e5_4 {
+  color: rgba(2, 255, 255, 0.15);
+  border: 4px solid;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  animation: rotate_anti 2s linear infinite;
 }
 
-.arc-reactor-arc {
+.core2 {
+  position: absolute;
+  width: 110px;
+  height: 110px;
+  left: 50%;
+  top: 40px;
+  transform: translateX(-50%);
+  background: #cedce0;
+  border: 5px solid rgba(2, 255, 255, 0.15);
+  border-radius: 50%;
+  animation: flicker2 0.2s infinite;
+}
+
+.marks {
   position: absolute;
   inset: 0;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  filter: drop-shadow(0 0 4px rgba(125, 245, 255, 0.62));
-}
-
-.arc-reactor-arc-a {
-  border-top-color: rgba(220, 252, 255, 0.96);
-  border-left-color: rgba(125, 245, 255, 0.72);
-  transform: rotate(18deg) scale(0.98);
-}
-
-.arc-reactor-arc-b {
-  inset: 5px;
-  border-right-color: rgba(125, 245, 255, 0.88);
-  border-bottom-color: rgba(34, 211, 238, 0.62);
-  transform: rotate(132deg) scale(0.86);
-}
-
-.arc-reactor-arc-c {
-  inset: 9px;
-  border-top-color: rgba(224, 247, 250, 0.9);
-  border-left-color: rgba(56, 189, 248, 0.5);
-  transform: rotate(252deg) scale(0.78);
-}
-
-.arc-reactor-marks {
-  inset: -1px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .arc-reactor-mark {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 4%;
-  height: 18%;
-  margin-left: -2%;
-  margin-top: -9%;
-  transform: rotate(var(--mark-angle)) translateY(-224%)
-    rotate(calc(var(--mark-angle) * -1));
-  animation: arc-reactor-mark-flicker 1.6s ease-in-out infinite;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 11px;
+  margin-left: 105px;
+  margin-top: 100px;
+  display: block;
+  transform: rotate(var(--mark-angle)) translateY(90px);
+  animation: colour_ease2 3s infinite ease-in-out;
   animation-delay: var(--mark-delay);
 }
 
-.arc-reactor-mark::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  background: linear-gradient(
-    180deg,
-    rgba(238, 254, 255, 1) 0%,
-    rgba(125, 245, 255, 0.92) 52%,
-    rgba(34, 211, 238, 0.08) 100%
-  );
-  box-shadow:
-    0 0 4px rgba(125, 245, 255, 0.82),
-    0 0 9px rgba(56, 189, 248, 0.28);
+.arc-reactor-mark {
+  background: rgba(2, 254, 255, 0.8);
 }
 
 .piece-skin-quantum .piece-inner {
@@ -1082,61 +1072,47 @@
   }
 }
 
-@keyframes arc-reactor-core-pulse {
+@keyframes rotate {
+  0% {
+    transform: rotateZ(0deg);
+  }
+  100% {
+    transform: rotateZ(360deg);
+  }
+}
+
+@keyframes rotate_anti {
+  0% {
+    transform: rotateZ(360deg);
+  }
+  100% {
+    transform: rotateZ(0deg);
+  }
+}
+
+@keyframes flicker2 {
   0%,
   100% {
-    transform: scale(1);
-    filter: brightness(1) saturate(1);
+    box-shadow:
+      0 0 60px 25px rgba(150, 255, 255, 0.5),
+      inset 0 1px 4px 2px rgba(21, 211, 233, 0.3);
   }
   50% {
-    transform: scale(1.055);
-    filter: brightness(1.18) saturate(1.12);
+    box-shadow:
+      0 0 50px 17px rgba(150, 255, 255, 0.5),
+      inset 0 1px 100px 2px rgba(21, 211, 233, 0.3);
   }
 }
 
-@keyframes arc-reactor-pulse {
-  0%,
-  100% {
-    opacity: 0.7;
-    transform: scale(1);
+@keyframes colour_ease2 {
+  0% {
+    background: rgba(2, 254, 255, 1);
   }
   50% {
-    opacity: 1;
-    transform: scale(1.04);
+    background: rgba(2, 254, 255, 0.3);
   }
-}
-
-@keyframes arc-reactor-spin-cw {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes arc-reactor-spin-ccw {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(-360deg);
-  }
-}
-
-@keyframes arc-reactor-mark-flicker {
-  0%,
   100% {
-    opacity: 0.48;
-    filter: brightness(0.96);
-  }
-  35% {
-    opacity: 1;
-    filter: brightness(1.24);
-  }
-  70% {
-    opacity: 0.78;
-    filter: brightness(1.08);
+    background: rgba(2, 254, 255, 1);
   }
 }
 

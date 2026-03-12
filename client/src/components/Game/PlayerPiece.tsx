@@ -111,33 +111,39 @@ export function PlayerPiece({
         ['--me-border-width' as string]: `${meBorder}px`,
         ['--me-glow-width' as string]: `${meGlow}px`,
         ['--piece-glow' as string]: `${pieceGlow}px`,
+        ['--arc-reactor-scale' as string]: `${innerSize / 250}`,
       }}
     >
       {isAttacker && <div className={`attacker-glow glow-${color}`} />}
       <div className="piece-inner">
         {isFlagSkin(skin) && <FlagSkin id={skin} />}
         {skin === "arc_reactor" && (
-          <div className="arc-reactor-field" aria-hidden="true">
-            <div className="arc-reactor-ring arc-reactor-ring-outer" />
-            <div className="arc-reactor-ring arc-reactor-ring-mid" />
-            <div className="arc-reactor-ring arc-reactor-ring-inner" />
-            <div className="arc-reactor-core" />
-            <div className="arc-reactor-arcs">
-              <span className="arc-reactor-arc arc-reactor-arc-a" />
-              <span className="arc-reactor-arc arc-reactor-arc-b" />
-              <span className="arc-reactor-arc arc-reactor-arc-c" />
-            </div>
-            <div className="arc-reactor-marks">
-              {ARC_REACTOR_MARKS.map((mark, index) => (
-                <span
-                  key={`${mark.angle}-${index}`}
-                  className="arc-reactor-mark"
-                  style={{
-                    ["--mark-angle" as string]: `${mark.angle}deg`,
-                    ["--mark-delay" as string]: `${mark.delay}s`,
-                  }}
-                />
-              ))}
+          <div className="arc-reactor-scale" aria-hidden="true">
+            <div className="arc_reactor">
+              <div className="case_container">
+                <div className="e7">
+                  <div className="semi_arc_3 e5_1">
+                    <div className="semi_arc_3 e5_2">
+                      <div className="semi_arc_3 e5_3">
+                        <div className="semi_arc_3 e5_4" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="core2" />
+                </div>
+                <ul className="marks">
+                  {ARC_REACTOR_MARKS.map((mark, index) => (
+                    <li
+                      key={`${mark.angle}-${index}`}
+                      className="arc-reactor-mark"
+                      style={{
+                        ["--mark-angle" as string]: `${mark.angle}deg`,
+                        ["--mark-delay" as string]: `${mark.delay}s`,
+                      }}
+                    />
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         )}
