@@ -722,10 +722,16 @@
 
 .crystal-atom {
   position: absolute;
-  inset: -26%;
+  left: 50%;
+  top: 50%;
+  width: 148%;
+  height: 148%;
+  transform: translate3d(-50%, -50%, 0);
   border-radius: 50%;
   transform-style: preserve-3d;
   perspective: 1000px;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .crystal-nucleus {
@@ -734,7 +740,7 @@
   top: 50%;
   width: 58%;
   height: 58%;
-  transform: translate(-50%, -50%);
+  transform: translate3d(-50%, -50%, 0);
   border-radius: 50%;
   border: 1px solid rgba(96, 165, 250, 0.78);
   background: radial-gradient(
@@ -747,6 +753,8 @@
   box-shadow:
     0 0 12px rgba(59, 130, 246, 0.46),
     inset 0 0 10px rgba(255, 255, 255, 0.12);
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .crystal-nucleus::before,
@@ -756,8 +764,9 @@
   left: 50%;
   top: 50%;
   border-radius: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate3d(-50%, -50%, 0);
   pointer-events: none;
+  backface-visibility: hidden;
 }
 
 .crystal-nucleus::before {
@@ -793,26 +802,35 @@
 
 .crystal-electron {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 148%;
-  height: 148%;
+  left: 120%;
+  top: 120%;
+  width: 140%;
+  height: 140%;
+  transform: translate3d(-50%, -50%, 0);
+  transform-origin: 50% 50%;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.crystal-electron-ring {
+  position: absolute;
+  inset: 0;
   border: 1px solid rgba(204, 204, 204, 0.76);
   border-radius: 50%;
   transform-style: preserve-3d;
-  transform: translate(-50%, -50%) rotateY(0deg) rotate(0deg);
   transform-origin: 50% 50%;
+  will-change: transform;
+  backface-visibility: hidden;
+  animation-fill-mode: both;
 }
 
-.crystal-electron::before {
-  content: "";
+.crystal-electron-particle {
   position: absolute;
   top: 0;
   left: 50%;
   width: 16%;
   height: 16%;
-  transform: translate(-50%, -50%) rotateZ(0deg) rotateX(30deg) rotateY(-40deg)
-    scale(0.8);
+  transform: translate3d(-50%, -50%, 0) scale(0.8);
   transform-origin: 50% 50%;
   border-radius: 50%;
   background: radial-gradient(
@@ -825,18 +843,27 @@
   box-shadow:
     0 0 8px rgba(239, 68, 68, 0.58),
     0 0 14px rgba(252, 165, 165, 0.3);
+  will-change: transform;
+  backface-visibility: hidden;
+  animation-fill-mode: both;
 }
 
 .crystal-electron-1 {
+  transform: translate3d(-50%, -50%, 0);
+}
+.crystal-electron-1 .crystal-electron-ring {
   animation: crystal-orbit-1 6s linear infinite;
 }
-.crystal-electron-1::before {
+.crystal-electron-1 .crystal-electron-particle {
   animation: crystal-orbit-particle-1 6s linear infinite;
 }
 .crystal-electron-2 {
+  transform: translate3d(-50%, -50%, 0);
+}
+.crystal-electron-2 .crystal-electron-ring {
   animation: crystal-orbit-2 6s linear infinite;
 }
-.crystal-electron-2::before {
+.crystal-electron-2 .crystal-electron-particle {
   background: radial-gradient(
     circle at 30% 30%,
     #fef3c7 0%,
@@ -850,9 +877,12 @@
   animation: crystal-orbit-particle-2 6s linear infinite;
 }
 .crystal-electron-3 {
+  transform: translate3d(-50%, -50%, 0);
+}
+.crystal-electron-3 .crystal-electron-ring {
   animation: crystal-orbit-3 6s linear infinite;
 }
-.crystal-electron-3::before {
+.crystal-electron-3 .crystal-electron-particle {
   background: radial-gradient(
     circle at 30% 30%,
     #e9d5ff 0%,
@@ -1247,24 +1277,19 @@
 
 @keyframes crystal-orbit-particle-1 {
   0% {
-    transform: translate(-50%, -50%) rotateZ(0deg) rotateX(30deg)
-      rotateY(-40deg) scale(0.8);
+    transform: rotateZ(0deg) rotateX(30deg) rotateY(-40deg) scale(0.8);
   }
   25% {
-    transform: translate(-50%, -50%) rotateZ(-90deg) rotateX(30deg)
-      rotateY(-40deg) scale(0.6);
+    transform: rotateZ(-90deg) rotateX(30deg) rotateY(-40deg) scale(0.6);
   }
   50% {
-    transform: translate(-50%, -50%) rotateZ(-180deg) rotateX(30deg)
-      rotateY(-40deg) scale(0.8);
+    transform: rotateZ(-180deg) rotateX(30deg) rotateY(-40deg) scale(0.8);
   }
   75% {
-    transform: translate(-50%, -50%) rotateZ(-270deg) rotateX(30deg)
-      rotateY(-40deg) scale(1);
+    transform: rotateZ(-270deg) rotateX(30deg) rotateY(-40deg) scale(1);
   }
   100% {
-    transform: translate(-50%, -50%) rotateZ(-360deg) rotateX(30deg)
-      rotateY(-40deg) scale(0.8);
+    transform: rotateZ(-360deg) rotateX(30deg) rotateY(-40deg) scale(0.8);
   }
 }
 
@@ -1281,24 +1306,19 @@
 
 @keyframes crystal-orbit-particle-2 {
   0% {
-    transform: translate(-50%, -50%) rotateZ(-180deg) rotateX(-30deg)
-      rotateY(-40deg) scale(0.8);
+    transform: rotateZ(-180deg) rotateX(-30deg) rotateY(-40deg) scale(0.8);
   }
   25% {
-    transform: translate(-50%, -50%) rotateZ(-270deg) rotateX(-30deg)
-      rotateY(-40deg) scale(1);
+    transform: rotateZ(-270deg) rotateX(-30deg) rotateY(-40deg) scale(1);
   }
   50% {
-    transform: translate(-50%, -50%) rotateZ(-360deg) rotateX(-30deg)
-      rotateY(-40deg) scale(0.8);
+    transform: rotateZ(-360deg) rotateX(-30deg) rotateY(-40deg) scale(0.8);
   }
   75% {
-    transform: translate(-50%, -50%) rotateZ(-450deg) rotateX(-30deg)
-      rotateY(-40deg) scale(0.6);
+    transform: rotateZ(-450deg) rotateX(-30deg) rotateY(-40deg) scale(0.6);
   }
   100% {
-    transform: translate(-50%, -50%) rotateZ(-540deg) rotateX(-30deg)
-      rotateY(-40deg) scale(0.8);
+    transform: rotateZ(-540deg) rotateX(-30deg) rotateY(-40deg) scale(0.8);
   }
 }
 
@@ -1313,24 +1333,19 @@
 
 @keyframes crystal-orbit-particle-3 {
   0% {
-    transform: translate(-50%, -50%) rotateZ(-180deg) rotateX(-80deg)
-      rotateY(0deg) scale(1);
+    transform: rotateZ(-180deg) rotateX(-80deg) rotateY(0deg) scale(1);
   }
   25% {
-    transform: translate(-50%, -50%) rotateZ(-270deg) rotateX(-80deg)
-      rotateY(0deg) scale(0.8);
+    transform: rotateZ(-270deg) rotateX(-80deg) rotateY(0deg) scale(0.8);
   }
   50% {
-    transform: translate(-50%, -50%) rotateZ(-360deg) rotateX(-80deg)
-      rotateY(0deg) scale(0.6);
+    transform: rotateZ(-360deg) rotateX(-80deg) rotateY(0deg) scale(0.6);
   }
   75% {
-    transform: translate(-50%, -50%) rotateZ(-450deg) rotateX(-80deg)
-      rotateY(0deg) scale(0.8);
+    transform: rotateZ(-450deg) rotateX(-80deg) rotateY(0deg) scale(0.8);
   }
   100% {
-    transform: translate(-50%, -50%) rotateZ(-540deg) rotateX(-80deg)
-      rotateY(0deg) scale(1);
+    transform: rotateZ(-540deg) rotateX(-80deg) rotateY(0deg) scale(1);
   }
 }
 
