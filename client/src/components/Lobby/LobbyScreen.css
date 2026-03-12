@@ -856,17 +856,17 @@
 
 .skin-preview-inferno {
   background: radial-gradient(
-    circle at 36% 28%,
-    #fff4bf 0%,
-    #ffd24a 18%,
-    #ff8a3c 42%,
-    #ff5a36 64%,
-    #78140d 100%
+    circle at 50% 50%,
+    #fff5d6 0%,
+    #ffd24a 12%,
+    #ff9a3c 26%,
+    #c2410c 52%,
+    #2a0905 100%
   );
   box-shadow:
     0 0 0 2px rgba(255, 154, 60, 0.95),
-    0 0 16px rgba(255, 90, 54, 0.55),
-    0 0 28px rgba(255, 154, 60, 0.28);
+    0 0 16px rgba(255, 90, 54, 0.62),
+    0 0 28px rgba(255, 154, 60, 0.36);
 }
 
 .skin-preview-inferno::before,
@@ -878,17 +878,44 @@
 }
 
 .skin-preview-inferno::before {
-  inset: 3px;
-  border: 1px solid rgba(255, 154, 60, 0.86);
-  box-shadow:
-    0 0 8px rgba(255, 90, 54, 0.45),
-    inset 0 0 8px rgba(255, 210, 74, 0.22);
+  inset: 0;
+  background:
+    radial-gradient(circle, transparent 56%, rgba(255, 120, 32, 0.16) 58%, transparent 70%),
+    conic-gradient(
+      from 0deg,
+      rgba(255, 248, 190, 0) 0deg 12deg,
+      rgba(255, 248, 190, 0.76) 12deg 24deg,
+      rgba(255, 145, 43, 0.96) 24deg 58deg,
+      rgba(255, 87, 34, 0.42) 58deg 86deg,
+      rgba(255, 248, 190, 0) 86deg 104deg,
+      rgba(255, 248, 190, 0.76) 104deg 116deg,
+      rgba(255, 145, 43, 0.96) 116deg 150deg,
+      rgba(255, 87, 34, 0.42) 150deg 178deg,
+      rgba(255, 248, 190, 0) 178deg 196deg,
+      rgba(255, 248, 190, 0.76) 196deg 208deg,
+      rgba(255, 145, 43, 0.96) 208deg 242deg,
+      rgba(255, 87, 34, 0.42) 242deg 270deg,
+      rgba(255, 248, 190, 0) 270deg 288deg,
+      rgba(255, 248, 190, 0.76) 288deg 300deg,
+      rgba(255, 145, 43, 0.96) 300deg 334deg,
+      rgba(255, 87, 34, 0.42) 334deg 360deg
+    );
+  filter: blur(0.6px);
 }
 
 .skin-preview-inferno::after {
-  inset: 6px;
-  border: 1px dashed rgba(255, 210, 74, 0.72);
-  opacity: 0.9;
+  inset: 24%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 253, 222, 0.98) 0%,
+    rgba(255, 225, 138, 0.94) 22%,
+    rgba(255, 163, 58, 0.8) 48%,
+    rgba(255, 90, 54, 0.18) 78%,
+    rgba(255, 90, 54, 0) 100%
+  );
+  box-shadow:
+    0 0 8px rgba(255, 225, 138, 0.58),
+    0 0 14px rgba(255, 90, 54, 0.28);
 }
 
 .skin-preview-phantom {
