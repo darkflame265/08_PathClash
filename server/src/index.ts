@@ -11,6 +11,8 @@ const defaultOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "https://zero8-pathclash-1.onrender.com",
+  "https://pathclash.com",
+  "https://www.pathclash.com",
 ];
 const configuredOrigins = [
   process.env.CLIENT_URL,
@@ -24,7 +26,7 @@ const allowedOrigins = [...new Set([...defaultOrigins, ...configuredOrigins])];
 const io = new Server(httpServer, {
   cors: {
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.length === defaultOrigins.length) {
+      if (!origin) {
         callback(null, true);
         return;
       }
