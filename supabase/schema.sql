@@ -33,9 +33,74 @@ create table if not exists public.account_merges (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.google_play_token_purchases (
+  purchase_token text primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  pack_id text not null,
+  product_id text not null,
+  tokens integer not null,
+  created_at timestamptz not null default now()
+);
+
+create or replace function public.grant_tokens_from_google_purchase(
+  p_purchase_token text,
+  p_user_id uuid,
+  p_pack_id text,
+  p_product_id text,
+  p_tokens integer
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.google_play_token_purchases (
+    purchase_token,
+    user_id,
+    pack_id,
+    product_id,
+    tokens
+  )
+  values (
+    p_purchase_token,
+    p_user_id,
+    p_pack_id,
+    p_product_id,
+    p_tokens
+  )
+  on conflict (purchase_token) do nothing;
+
+  if not found then
+    return false;
+  end if;
+
+  insert into public.player_stats (
+    user_id,
+    wins,
+    losses,
+    tokens,
+    updated_at
+  )
+  values (
+    p_user_id,
+    0,
+    0,
+    p_tokens,
+    now()
+  )
+  on conflict (user_id) do update
+    set tokens = public.player_stats.tokens + excluded.tokens,
+        updated_at = now();
+
+  return true;
+end;
+$$;
+
 alter table public.profiles enable row level security;
 alter table public.player_stats enable row level security;
 alter table public.account_merges enable row level security;
+alter table public.google_play_token_purchases enable row level security;
 
 drop policy if exists "profiles_select_own" on public.profiles;
 create policy "profiles_select_own"
@@ -67,3 +132,9 @@ create policy "account_merges_select_involved"
 on public.account_merges
 for select
 using (auth.uid() = source_user_id or auth.uid() = target_user_id);
+
+drop policy if exists "google_play_token_purchases_select_own" on public.google_play_token_purchases;
+create policy "google_play_token_purchases_select_own"
+on public.google_play_token_purchases
+for select
+using (auth.uid() = user_id);

@@ -11,6 +11,7 @@ import {
   type UpgradeResolution,
 } from "../../auth/guestAuth";
 import { startDonation } from "../../payments/donate";
+import { startTokenPackPurchase, type TokenPackId } from "../../payments/tokenShop";
 import { connectSocket } from "../../socket/socketClient";
 import { useGameStore } from "../../store/gameStore";
 import { useLang } from "../../hooks/useLang";
@@ -161,6 +162,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     setMyColor,
     setRoomCode,
     authUserId,
+    authAccessToken,
     isGuestUser,
     accountWins,
     accountLosses,
@@ -209,11 +211,30 @@ export function LobbyScreen({ onGameStart }: Props) {
       ? "Choose a token pack that matches how you want to unlock skins."
       : "\uC2A4\uD0A8 \uD574\uAE08 \uC18D\uB3C4\uC5D0 \uB9DE\uB294 \uD1A0\uD070 \uD329\uC744 \uC120\uD0DD\uD558\uC138\uC694.";
   const tokenShopCta = lang === "en" ? "Buy" : "\uAD6C\uB9E4";
-  const tokenShopSoonMsg =
+  const tokenShopUnavailableMsg =
     lang === "en"
-      ? "Token pack billing products are not wired yet."
-      : "\uD1A0\uD070 \uD329 \uACB0\uC81C \uC0C1\uD488 \uC5F0\uB3D9\uC740 \uC544\uC9C1 \uC801\uC6A9\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
-  const tokenPacks = [
+      ? "Token packs are available in the Android app only."
+      : "\uD1A0\uD070 \uD329\uC740 \uC548\uB4DC\uB85C\uC774\uB4DC \uC571\uC5D0\uC11C\uB9CC \uAD6C\uB9E4\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.";
+  const tokenShopFailedMsg =
+    lang === "en"
+      ? "Token purchase failed."
+      : "\uD1A0\uD070 \uAD6C\uB9E4\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.";
+  const tokenShopCancelledMsg =
+    lang === "en"
+      ? "Token purchase was cancelled."
+      : "\uD1A0\uD070 \uAD6C\uB9E4\uAC00 \uCDE8\uC18C\uB418\uC5C8\uC2B5\uB2C8\uB2E4.";
+  const tokenShopSuccessMsg = (tokens: number) =>
+    lang === "en"
+      ? `${tokens} tokens were added to your account.`
+      : `${tokens}\uD1A0\uD070\uC774 \uACC4\uC815\uC5D0 \uCD94\uAC00\uB418\uC5C8\uC2B5\uB2C8\uB2E4.`;
+  const tokenPacks: Array<{
+    id: TokenPackId;
+    name: string;
+    price: string;
+    tokens: number;
+    blurb: string;
+    benefit: string;
+  }> = [
     {
       id: "starter",
       name: "Starter",
@@ -827,12 +848,33 @@ export function LobbyScreen({ onGameStart }: Props) {
     window.alert(t.donateFailed);
   };
 
-  const handleTokenPackPurchase = (packName: string) => {
-    window.alert(
-      lang === "en"
-        ? `${packName}: ${tokenShopSoonMsg}`
-        : `${packName}: ${tokenShopSoonMsg}`,
-    );
+  const handleTokenPackPurchase = async (
+    packId: TokenPackId,
+    tokenAmount: number,
+  ) => {
+    const result = await startTokenPackPurchase({
+      packId,
+      accessToken: authAccessToken,
+      appUserId: authUserId,
+    });
+
+    if (result === "purchased") {
+      window.alert(tokenShopSuccessMsg(tokenAmount));
+      void syncAccountSummary();
+      return;
+    }
+
+    if (result === "cancelled") {
+      window.alert(tokenShopCancelledMsg);
+      return;
+    }
+
+    if (result === "unavailable") {
+      window.alert(tokenShopUnavailableMsg);
+      return;
+    }
+
+    window.alert(tokenShopFailedMsg);
   };
 
   const accountCard = (
@@ -1159,7 +1201,7 @@ export function LobbyScreen({ onGameStart }: Props) {
                   <button
                     className="lobby-btn primary token-pack-btn"
                     type="button"
-                    onClick={() => handleTokenPackPurchase(pack.name)}
+                    onClick={() => void handleTokenPackPurchase(pack.id, pack.tokens)}
                   >
                     {tokenShopCta}
                   </button>
