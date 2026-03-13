@@ -700,7 +700,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  min-height: 13.25rem;
+  min-height: 15.25rem;
   padding: 1rem;
   border-radius: 1.1rem;
   border: 1px solid rgba(148, 163, 184, 0.16);
@@ -802,6 +802,7 @@
 
 .token-pack-btn {
   margin-top: auto;
+  min-height: 3.25rem;
 }
 
 .skin-option-list {
@@ -1764,7 +1765,7 @@
   }
 
   .token-pack-card {
-    min-height: unset;
+    min-height: 14rem;
     padding: 0.9rem;
   }
 
