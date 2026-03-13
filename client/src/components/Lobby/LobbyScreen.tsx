@@ -187,6 +187,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     kind: "none",
   });
   const [showUpgradeNotice, setShowUpgradeNotice] = useState(false);
+  const [atomicPreviewReady, setAtomicPreviewReady] = useState(false);
   const dailyResetTimeoutRef = useRef<number | null>(null);
   const lastRewardSyncDayRef = useRef<string>(getUtcDayKey());
   const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
@@ -519,6 +520,27 @@ export function LobbyScreen({ onGameStart }: Props) {
       active = false;
     };
   }, [setAuthState]);
+
+  useEffect(() => {
+    if (!isSkinPickerOpen) {
+      setAtomicPreviewReady(false);
+      return;
+    }
+
+    let raf1 = 0;
+    let raf2 = 0;
+    setAtomicPreviewReady(false);
+    raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(() => {
+        setAtomicPreviewReady(true);
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      window.cancelAnimationFrame(raf2);
+    };
+  }, [isSkinPickerOpen]);
 
   const getNick = () =>
     myNickname.trim() || `Guest${Math.floor(Math.random() * 9999)}`;
@@ -933,11 +955,25 @@ export function LobbyScreen({ onGameStart }: Props) {
                         </span>
                       )}
                       {choice.id === "crystal" && (
-                        <span className="skin-preview-atomic-atom">
+                        <span
+                          className={`skin-preview-atomic-atom ${atomicPreviewReady ? "atomic-preview-ready" : ""}`}
+                        >
                           <span className="skin-preview-atomic-nucleus" />
-                          <span className="skin-preview-atomic-electron skin-preview-atomic-electron-1" />
-                          <span className="skin-preview-atomic-electron skin-preview-atomic-electron-2" />
-                          <span className="skin-preview-atomic-electron skin-preview-atomic-electron-3" />
+                          <span className="skin-preview-atomic-electron skin-preview-atomic-electron-1">
+                            <span className="skin-preview-atomic-electron-ring">
+                              <span className="skin-preview-atomic-electron-particle" />
+                            </span>
+                          </span>
+                          <span className="skin-preview-atomic-electron skin-preview-atomic-electron-2">
+                            <span className="skin-preview-atomic-electron-ring">
+                              <span className="skin-preview-atomic-electron-particle" />
+                            </span>
+                          </span>
+                          <span className="skin-preview-atomic-electron skin-preview-atomic-electron-3">
+                            <span className="skin-preview-atomic-electron-ring">
+                              <span className="skin-preview-atomic-electron-particle" />
+                            </span>
+                          </span>
                         </span>
                       )}
                     </span>

@@ -766,10 +766,12 @@
 
 .atomic-electron-1 .atomic-electron-ring {
   animation: atomic-orbit-1 6s linear infinite;
+  animation-play-state: paused;
 }
 
 .atomic-electron-1 .atomic-electron-particle {
   animation: atomic-orbit-particle-1 6s linear infinite;
+  animation-play-state: paused;
 }
 
 .atomic-electron-2 {
@@ -778,6 +780,7 @@
 
 .atomic-electron-2 .atomic-electron-ring {
   animation: atomic-orbit-2 6s linear infinite;
+  animation-play-state: paused;
 }
 
 .atomic-electron-2 .atomic-electron-particle {
@@ -792,6 +795,7 @@
     0 0 8px rgba(250, 204, 21, 0.58),
     0 0 14px rgba(253, 224, 71, 0.3);
   animation: atomic-orbit-particle-2 6s linear infinite;
+  animation-play-state: paused;
 }
 
 .atomic-electron-3 {
@@ -800,6 +804,7 @@
 
 .atomic-electron-3 .atomic-electron-ring {
   animation: atomic-orbit-3 6s linear infinite;
+  animation-play-state: paused;
 }
 
 .atomic-electron-3 .atomic-electron-particle {
@@ -814,6 +819,12 @@
     0 0 8px rgba(168, 85, 247, 0.58),
     0 0 14px rgba(216, 180, 254, 0.3);
   animation: atomic-orbit-particle-3 6s linear infinite;
+  animation-play-state: paused;
+}
+
+.atomic-atom.atomic-ready .atomic-electron-ring,
+.atomic-atom.atomic-ready .atomic-electron-particle {
+  animation-play-state: running;
 }
 
 @keyframes inferno-core-pulse {
