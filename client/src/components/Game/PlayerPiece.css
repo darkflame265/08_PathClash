@@ -133,6 +133,26 @@
   pointer-events: none;
 }
 
+.piece-skin-gold_core .piece-inner::before {
+  inset: 5px;
+  border: 1px dashed rgba(253, 224, 71, 0.88);
+  box-shadow:
+    0 0 10px rgba(250, 204, 21, 0.56),
+    inset 0 0 8px rgba(255, 249, 180, 0.18);
+  opacity: 0.85;
+  animation: gold-orbit-cw 3.4s linear infinite;
+}
+
+.piece-skin-gold_core .piece-inner::after {
+  inset: 6px;
+  background: repeating-conic-gradient(
+    rgba(255, 249, 160, 0.55) 0deg 20deg,
+    transparent 20deg 45deg
+  );
+  opacity: 0.75;
+  animation: gold-rays-spin 5.8s linear infinite;
+}
+
 .piece-skin-neon_pulse .piece-inner {
   background: radial-gradient(
     circle at 38% 32%,
