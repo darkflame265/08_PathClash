@@ -78,6 +78,7 @@ interface GameStore {
     accessToken: string | null;
     isGuestUser: boolean;
     nickname?: string | null;
+    equippedSkin?: PieceSkin;
     wins?: number;
     losses?: number;
     tokens?: number;
@@ -215,25 +216,32 @@ export const useGameStore = create<GameStore>((set, get) => ({
     accessToken,
     isGuestUser,
     nickname,
+    equippedSkin,
     wins,
     losses,
     tokens,
     dailyRewardWins,
     dailyRewardTokens,
-  }) =>
+  }) => {
+    if (equippedSkin) {
+      localStorage.setItem(PIECE_SKIN_KEY, equippedSkin);
+    }
+
     set((state) => ({
       authReady: ready,
       authUserId: userId,
       authAccessToken: accessToken,
       isGuestUser,
       myNickname: nickname ?? state.myNickname,
+      pieceSkin: equippedSkin ?? state.pieceSkin,
       accountWins: wins ?? state.accountWins,
       accountLosses: losses ?? state.accountLosses,
       accountTokens: tokens ?? state.accountTokens,
       accountDailyRewardWins: dailyRewardWins ?? state.accountDailyRewardWins,
       accountDailyRewardTokens:
         dailyRewardTokens ?? state.accountDailyRewardTokens,
-    })),
+    }));
+  },
   setMyColor: (c) => set({ myColor: c }),
   setRoomCode: (c) => set({ roomCode: c }),
   setMatchType: (matchType) => set({ currentMatchType: matchType }),

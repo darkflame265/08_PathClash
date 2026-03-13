@@ -1,10 +1,14 @@
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   nickname text,
+  equipped_skin text not null default 'classic',
   is_guest boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.profiles
+add column if not exists equipped_skin text not null default 'classic';
 
 create table if not exists public.player_stats (
   user_id uuid primary key references auth.users(id) on delete cascade,

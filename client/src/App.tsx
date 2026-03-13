@@ -5,6 +5,7 @@ import {
   initializeGuestAuth,
   installNativeAuthCallbackHandler,
   onAuthStateChanged,
+  syncEquippedSkin,
   syncNickname,
 } from "./auth/guestAuth";
 import { GameScreen } from "./components/Game/GameScreen";
@@ -87,6 +88,11 @@ function App() {
       }
     };
   }, [authReady, myNickname]);
+
+  useEffect(() => {
+    if (!authReady) return;
+    void syncEquippedSkin(pieceSkin);
+  }, [authReady, pieceSkin]);
 
   useEffect(() => {
     const socket = getSocket();

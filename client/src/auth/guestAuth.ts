@@ -3,6 +3,7 @@ import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor, type PluginListenerHandle } from "@capacitor/core";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 import { connectSocket } from "../socket/socketClient";
+import type { PieceSkin } from "../types/game.types";
 
 export interface AuthStatePayload {
   ready: boolean;
@@ -10,6 +11,7 @@ export interface AuthStatePayload {
   accessToken: string | null;
   isGuestUser: boolean;
   nickname?: string | null;
+  equippedSkin?: PieceSkin;
   wins?: number;
   losses?: number;
   tokens?: number;
@@ -19,6 +21,7 @@ export interface AuthStatePayload {
 
 interface ProfileRow {
   nickname: string | null;
+  equipped_skin: PieceSkin | null;
 }
 
 interface StatsRow {
@@ -31,6 +34,7 @@ interface StatsRow {
 
 interface AccountSnapshot {
   nickname: string | null;
+  equippedSkin: PieceSkin;
   wins: number;
   losses: number;
   tokens: number;
@@ -41,6 +45,7 @@ interface AccountSnapshot {
 export interface AccountProfile {
   userId: string;
   nickname: string;
+  equippedSkin: PieceSkin;
   wins: number;
   losses: number;
   tokens: number;
@@ -56,6 +61,7 @@ export interface PendingUpgradeContext {
   };
   guestProfile: {
     nickname: string | null;
+    equippedSkin: PieceSkin;
     wins: number;
     losses: number;
     tokens: number;
@@ -181,6 +187,7 @@ function toAuthState(session: Session | null, snapshot?: AccountSnapshot): AuthS
     accessToken: session?.access_token ?? null,
     isGuestUser: session?.user.is_anonymous ?? false,
     nickname: snapshot?.nickname ?? undefined,
+    equippedSkin: snapshot?.equippedSkin ?? "classic",
     wins: snapshot?.wins ?? 0,
     losses: snapshot?.losses ?? 0,
     tokens: snapshot?.tokens ?? 0,
@@ -218,7 +225,7 @@ async function ensureProfile(userId: string): Promise<void> {
 
   const { data: existing } = await supabase
     .from("profiles")
-    .select("nickname")
+    .select("nickname, equipped_skin")
     .eq("id", userId)
     .maybeSingle<ProfileRow>();
 
@@ -239,6 +246,7 @@ async function getAccountSnapshot(userId: string): Promise<AccountSnapshot> {
   if (!supabase) {
     return {
       nickname: null,
+      equippedSkin: "classic",
       wins: 0,
       losses: 0,
       tokens: 0,
@@ -250,7 +258,11 @@ async function getAccountSnapshot(userId: string): Promise<AccountSnapshot> {
   await ensureProfile(userId);
 
   const [profileResult, statsResult] = await Promise.all([
-    supabase.from("profiles").select("nickname").eq("id", userId).maybeSingle<ProfileRow>(),
+    supabase
+      .from("profiles")
+      .select("nickname, equipped_skin")
+      .eq("id", userId)
+      .maybeSingle<ProfileRow>(),
     supabase
       .from("player_stats")
       .select("wins, losses, tokens, daily_reward_wins, daily_reward_day")
@@ -261,6 +273,7 @@ async function getAccountSnapshot(userId: string): Promise<AccountSnapshot> {
 
   return {
     nickname: profileResult.data?.nickname ?? null,
+    equippedSkin: profileResult.data?.equipped_skin ?? "classic",
     wins: statsResult.data?.wins ?? 0,
     losses: statsResult.data?.losses ?? 0,
     tokens: statsResult.data?.tokens ?? 0,
@@ -394,12 +407,19 @@ export async function initializeGuestAuth(): Promise<AuthStatePayload> {
 export async function refreshAccountSummary(): Promise<
   Pick<
     AuthStatePayload,
-    "nickname" | "wins" | "losses" | "tokens" | "dailyRewardWins" | "dailyRewardTokens"
+    | "nickname"
+    | "equippedSkin"
+    | "wins"
+    | "losses"
+    | "tokens"
+    | "dailyRewardWins"
+    | "dailyRewardTokens"
   >
 > {
   if (!supabase) {
     return {
       nickname: null,
+      equippedSkin: "classic",
       wins: 0,
       losses: 0,
       tokens: 0,
@@ -412,6 +432,7 @@ export async function refreshAccountSummary(): Promise<
   if (!session?.user) {
     return {
       nickname: null,
+      equippedSkin: "classic",
       wins: 0,
       losses: 0,
       tokens: 0,
@@ -423,6 +444,7 @@ export async function refreshAccountSummary(): Promise<
   const snapshot = await getAccountSnapshot(session.user.id);
   return {
     nickname: snapshot.nickname,
+    equippedSkin: snapshot.equippedSkin,
     wins: snapshot.wins,
     losses: snapshot.losses,
     tokens: snapshot.tokens,
@@ -449,6 +471,23 @@ export async function syncNickname(nickname: string): Promise<void> {
   }
 }
 
+export async function syncEquippedSkin(equippedSkin: PieceSkin): Promise<void> {
+  if (!supabase) return;
+  const session = await getCurrentSession();
+
+  if (!session?.user) return;
+
+  const { error } = await supabase.from("profiles").upsert({
+    id: session.user.id,
+    equipped_skin: equippedSkin,
+    is_guest: session.user.is_anonymous ?? false,
+  });
+
+  if (error) {
+    console.error("[supabase] failed to sync equipped skin", error);
+  }
+}
+
 export async function linkGoogleAccount(): Promise<void> {
   if (!supabase) return;
   const auth = await getCurrentAuthPayload();
@@ -467,6 +506,7 @@ export async function linkGoogleAccount(): Promise<void> {
     },
     guestProfile: {
       nickname: snapshot.nickname ?? null,
+      equippedSkin: snapshot.equippedSkin ?? "classic",
       wins: snapshot.wins ?? 0,
       losses: snapshot.losses ?? 0,
       tokens: snapshot.tokens ?? 0,
@@ -500,6 +540,7 @@ export async function logoutToGuestMode(): Promise<AuthStatePayload> {
       userId: null,
       accessToken: null,
       isGuestUser: false,
+      equippedSkin: "classic",
       wins: 0,
       losses: 0,
       tokens: 0,

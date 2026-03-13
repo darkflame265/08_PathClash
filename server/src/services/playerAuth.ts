@@ -1,3 +1,4 @@
+import type { PieceSkin } from '../types/game.types';
 import { supabaseAdmin } from '../lib/supabase';
 
 export interface AuthPayload {
@@ -14,6 +15,7 @@ export interface PersistentPlayerProfile {
 export interface AccountProfile {
   userId: string;
   nickname: string;
+  equippedSkin: PieceSkin;
   wins: number;
   losses: number;
   tokens: number;
@@ -33,6 +35,7 @@ export type FinalizeGoogleUpgradeResponse =
 
 interface ProfileRow {
   nickname: string | null;
+  equipped_skin: PieceSkin | null;
 }
 
 interface StatsRow {
@@ -68,7 +71,7 @@ async function getUserFromToken(accessToken?: string) {
 async function readAccountProfile(userId: string, fallbackNickname = 'Guest', isGuestUser = false): Promise<AccountProfile> {
   const profilePromise = supabaseAdmin
     ?.from('profiles')
-    .select('nickname')
+    .select('nickname, equipped_skin')
     .eq('id', userId)
     .maybeSingle<ProfileRow>();
 
@@ -85,6 +88,7 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
   return {
     userId,
     nickname,
+    equippedSkin: profileResult?.data?.equipped_skin ?? 'classic',
     wins: statsResult?.data?.wins ?? 0,
     losses: statsResult?.data?.losses ?? 0,
     tokens: statsResult?.data?.tokens ?? 0,
@@ -232,6 +236,7 @@ export async function finalizeGoogleUpgrade(
   guestAuth: AuthPayload | undefined,
   guestSnapshot: {
     nickname: string | null;
+    equippedSkin?: PieceSkin;
     wins: number;
     losses: number;
     tokens?: number;
@@ -256,6 +261,7 @@ export async function finalizeGoogleUpgrade(
     const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
       id: targetUser.id,
       nickname: guestSnapshot?.nickname ?? 'Guest',
+      equipped_skin: guestSnapshot?.equippedSkin ?? 'classic',
       is_guest: false,
     });
 
@@ -294,6 +300,8 @@ export async function finalizeGoogleUpgrade(
   }
 
   const adoptedNickname = guestSnapshot?.nickname ?? guestAccountProfile.nickname ?? 'Guest';
+  const adoptedEquippedSkin =
+    guestSnapshot?.equippedSkin ?? guestAccountProfile.equippedSkin ?? 'classic';
   const adoptedWins = guestSnapshot?.wins ?? guestAccountProfile.wins;
   const adoptedLosses = guestSnapshot?.losses ?? guestAccountProfile.losses;
   const adoptedTokens = guestSnapshot?.tokens ?? guestAccountProfile.tokens;
@@ -304,6 +312,7 @@ export async function finalizeGoogleUpgrade(
   const { error: upsertProfileError } = await supabaseAdmin.from('profiles').upsert({
     id: targetUser.id,
     nickname: adoptedNickname,
+    equipped_skin: adoptedEquippedSkin,
     is_guest: false,
   });
   if (upsertProfileError) {

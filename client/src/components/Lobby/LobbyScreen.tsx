@@ -64,6 +64,7 @@ function applyProfileToStore(
     accessToken: useGameStore.getState().authAccessToken,
     isGuestUser: profile.isGuestUser,
     nickname: profile.nickname,
+    equippedSkin: profile.equippedSkin,
     wins: profile.wins,
     losses: profile.losses,
     tokens: profile.tokens,
@@ -542,6 +543,7 @@ export function LobbyScreen({ onGameStart }: Props) {
   const syncAccountSummary = useCallback(() => {
     return refreshAccountSummary().then(({
       nickname,
+      equippedSkin,
       wins,
       losses,
       tokens,
@@ -554,6 +556,7 @@ export function LobbyScreen({ onGameStart }: Props) {
         accessToken: useGameStore.getState().authAccessToken,
         isGuestUser,
         nickname,
+        equippedSkin,
         wins,
         losses,
         tokens,

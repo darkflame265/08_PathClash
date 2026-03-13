@@ -26,7 +26,7 @@ async function getUserFromToken(accessToken) {
 async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUser = false) {
     const profilePromise = supabase_1.supabaseAdmin
         ?.from('profiles')
-        .select('nickname')
+        .select('nickname, equipped_skin')
         .eq('id', userId)
         .maybeSingle();
     const statsPromise = supabase_1.supabaseAdmin
@@ -40,6 +40,7 @@ async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUse
     return {
         userId,
         nickname,
+        equippedSkin: profileResult?.data?.equipped_skin ?? 'classic',
         wins: statsResult?.data?.wins ?? 0,
         losses: statsResult?.data?.losses ?? 0,
         tokens: statsResult?.data?.tokens ?? 0,
@@ -167,6 +168,7 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
         const { error: profileError } = await supabase_1.supabaseAdmin.from('profiles').upsert({
             id: targetUser.id,
             nickname: guestSnapshot?.nickname ?? 'Guest',
+            equipped_skin: guestSnapshot?.equippedSkin ?? 'classic',
             is_guest: false,
         });
         if (profileError) {
@@ -197,6 +199,7 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
         };
     }
     const adoptedNickname = guestSnapshot?.nickname ?? guestAccountProfile.nickname ?? 'Guest';
+    const adoptedEquippedSkin = guestSnapshot?.equippedSkin ?? guestAccountProfile.equippedSkin ?? 'classic';
     const adoptedWins = guestSnapshot?.wins ?? guestAccountProfile.wins;
     const adoptedLosses = guestSnapshot?.losses ?? guestAccountProfile.losses;
     const adoptedTokens = guestSnapshot?.tokens ?? guestAccountProfile.tokens;
@@ -205,6 +208,7 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
     const { error: upsertProfileError } = await supabase_1.supabaseAdmin.from('profiles').upsert({
         id: targetUser.id,
         nickname: adoptedNickname,
+        equipped_skin: adoptedEquippedSkin,
         is_guest: false,
     });
     if (upsertProfileError) {
