@@ -183,6 +183,7 @@ export function LobbyScreen({ onGameStart }: Props) {
   const [error, setError] = useState("");
   const [isMatchmaking, setIsMatchmaking] = useState(false);
   const [isSkinPickerOpen, setIsSkinPickerOpen] = useState(false);
+  const [isTokenShopOpen, setIsTokenShopOpen] = useState(false);
   const [upgradeResult, setUpgradeResult] = useState<UpgradeResolution>({
     kind: "none",
   });
@@ -202,6 +203,88 @@ export function LobbyScreen({ onGameStart }: Props) {
       ? "Select the look you want to use for your piece."
       : "\uD50C\uB808\uC774\uC5B4 \uB9D0\uC5D0 \uC801\uC6A9\uD560 \uC678\uD615\uC744 \uC120\uD0DD\uD558\uC138\uC694.";
   const skinApplyLabel = lang === "en" ? "Close" : "\uB2EB\uAE30";
+  const tokenShopTitle = lang === "en" ? "Token Shop" : "\uD1A0\uD070 \uC0F5";
+  const tokenShopDesc =
+    lang === "en"
+      ? "Choose a token pack that matches how you want to unlock skins."
+      : "\uC2A4\uD0A8 \uD574\uAE08 \uC18D\uB3C4\uC5D0 \uB9DE\uB294 \uD1A0\uD070 \uD329\uC744 \uC120\uD0DD\uD558\uC138\uC694.";
+  const tokenShopCta = lang === "en" ? "Buy" : "\uAD6C\uB9E4";
+  const tokenShopSoonMsg =
+    lang === "en"
+      ? "Token pack billing products are not wired yet."
+      : "\uD1A0\uD070 \uD329 \uACB0\uC81C \uC0C1\uD488 \uC5F0\uB3D9\uC740 \uC544\uC9C1 \uC801\uC6A9\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
+  const tokenPacks = [
+    {
+      id: "starter",
+      name: "Starter",
+      price: "$0.99",
+      tokens: 150,
+      blurb:
+        lang === "en"
+          ? "A little more than a day of play"
+          : "\uD558\uB8E8 \uD50C\uB808\uC774\uBCF4\uB2E4 \uC870\uAE08 \uB354",
+      benefit:
+        lang === "en"
+          ? "Can buy 1 Common skin"
+          : "Common \uC2A4\uD0A8 1\uAC1C \uAD6C\uB9E4 \uAC00\uB2A5",
+    },
+    {
+      id: "small",
+      name: "Small",
+      price: "$2.99",
+      tokens: 500,
+      blurb:
+        lang === "en"
+          ? "A clean step into premium skins"
+          : "\uD504\uB9AC\uBBF8\uC5C4 \uC2A4\uD0A8\uC73C\uB85C \uAC00\uB294 \uAC00\uBCBC\uC6B4 \uC2DC\uC791",
+      benefit:
+        lang === "en"
+          ? "Can buy 1 Rare skin"
+          : "Rare \uC2A4\uD0A8 1\uAC1C \uAD6C\uB9E4 \uAC00\uB2A5",
+    },
+    {
+      id: "medium",
+      name: "Medium",
+      price: "$6.99",
+      tokens: 1200,
+      blurb:
+        lang === "en"
+          ? "Efficient value for a serious upgrade"
+          : "\uBCF8\uACA9\uC801\uC778 \uC5C5\uADF8\uB808\uC774\uB4DC\uB97C \uC704\uD55C \uD6A8\uC728\uC801 \uAD6C\uC131",
+      benefit:
+        lang === "en"
+          ? "1 Legendary skin + leftover"
+          : "Legendary 1\uAC1C + \uC5EC\uC720 \uD1A0\uD070",
+    },
+    {
+      id: "large",
+      name: "Large",
+      price: "$14.99",
+      tokens: 3000,
+      blurb:
+        lang === "en"
+          ? "Built for collecting multiple premium skins"
+          : "\uC5EC\uB7EC \uD504\uB9AC\uBBF8\uC5C4 \uC2A4\uD0A8 \uC218\uC9D1\uC5D0 \uB9DE\uCD98 \uAD6C\uC131",
+      benefit:
+        lang === "en"
+          ? "Several Rares or 3 Legendaries"
+          : "Rare \uC5EC\uB7EC \uAC1C \uB610\uB294 Legendary 3\uAC1C",
+    },
+    {
+      id: "whale",
+      name: "Whale",
+      price: "$29.99",
+      tokens: 7000,
+      blurb:
+        lang === "en"
+          ? "For nearly the full collection"
+          : "\uAC70\uC758 \uC804\uCCB4 \uCF5C\uB809\uC158\uC744 \uC704\uD55C \uAD6C\uC131",
+      benefit:
+        lang === "en"
+          ? "Can buy almost every skin"
+          : "\uAC70\uC758 \uBAA8\uB4E0 \uC2A4\uD0A8 \uAD6C\uB9E4 \uAC00\uB2A5",
+    },
+  ];
   const skinChoices: Array<{
     id:
       | "classic"
@@ -744,6 +827,14 @@ export function LobbyScreen({ onGameStart }: Props) {
     window.alert(t.donateFailed);
   };
 
+  const handleTokenPackPurchase = (packName: string) => {
+    window.alert(
+      lang === "en"
+        ? `${packName}: ${tokenShopSoonMsg}`
+        : `${packName}: ${tokenShopSoonMsg}`,
+    );
+  };
+
   const accountCard = (
     <AccountCard
       myNickname={myNickname}
@@ -885,10 +976,21 @@ export function LobbyScreen({ onGameStart }: Props) {
             <div className="skin-modal-head">
               <h3>{skinModalTitle}</h3>
               <div className="skin-token-badge" aria-label="Current tokens">
-                <span className="skin-token-icon" aria-hidden="true">
-                  {"\uD83D\uDC8E"}
+                <span className="skin-token-badge-main">
+                  <span className="skin-token-icon" aria-hidden="true">
+                    {"\uD83D\uDC8E"}
+                  </span>
+                  <span>{accountTokens}</span>
                 </span>
-                <span>{accountTokens}</span>
+                <button
+                  className="skin-token-plus"
+                  type="button"
+                  aria-label={tokenShopTitle}
+                  title={tokenShopTitle}
+                  onClick={() => setIsTokenShopOpen(true)}
+                >
+                  +
+                </button>
               </div>
             </div>
             <p>{skinModalDesc}</p>
@@ -1008,6 +1110,66 @@ export function LobbyScreen({ onGameStart }: Props) {
               <button
                 className="lobby-btn primary"
                 onClick={() => setIsSkinPickerOpen(false)}
+                type="button"
+              >
+                {skinApplyLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isTokenShopOpen && (
+        <div
+          className="upgrade-modal-backdrop"
+          onClick={() => setIsTokenShopOpen(false)}
+        >
+          <div
+            className="upgrade-modal token-shop-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="skin-modal-head token-shop-head">
+              <div>
+                <h3>{tokenShopTitle}</h3>
+                <p className="token-shop-desc">{tokenShopDesc}</p>
+              </div>
+              <div className="skin-token-badge" aria-label="Current tokens">
+                <span className="skin-token-badge-main">
+                  <span className="skin-token-icon" aria-hidden="true">
+                    {"\uD83D\uDC8E"}
+                  </span>
+                  <span>{accountTokens}</span>
+                </span>
+              </div>
+            </div>
+            <div className="token-pack-grid">
+              {tokenPacks.map((pack) => (
+                <article key={pack.id} className={`token-pack-card token-pack-${pack.id}`}>
+                  <div className="token-pack-topline">
+                    <span className="token-pack-name">{pack.name}</span>
+                    <span className="token-pack-price">{pack.price}</span>
+                  </div>
+                  <div className="token-pack-amount">
+                    <span className="token-pack-gem" aria-hidden="true">
+                      {"\uD83D\uDC8E"}
+                    </span>
+                    <strong>{pack.tokens}</strong>
+                  </div>
+                  <p className="token-pack-blurb">{pack.blurb}</p>
+                  <p className="token-pack-benefit">{pack.benefit}</p>
+                  <button
+                    className="lobby-btn primary token-pack-btn"
+                    type="button"
+                    onClick={() => handleTokenPackPurchase(pack.name)}
+                  >
+                    {tokenShopCta}
+                  </button>
+                </article>
+              ))}
+            </div>
+            <div className="upgrade-modal-actions">
+              <button
+                className="lobby-btn secondary"
+                onClick={() => setIsTokenShopOpen(false)}
                 type="button"
               >
                 {skinApplyLabel}
