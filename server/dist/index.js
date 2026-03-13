@@ -42,6 +42,11 @@ const tokenPackCatalog = {
 const defaultOrigins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost",
+    "http://127.0.0.1",
+    "https://localhost",
+    "capacitor://localhost",
+    "ionic://localhost",
     "https://zero8-pathclash-1.onrender.com",
     "https://pathclash.com",
     "https://www.pathclash.com",
