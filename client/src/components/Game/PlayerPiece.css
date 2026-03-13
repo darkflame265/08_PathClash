@@ -858,6 +858,36 @@
   }
 }
 
+@keyframes plasma-core-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: saturate(1) brightness(1);
+  }
+  50% {
+    transform: scale(1.045);
+    filter: saturate(1.14) brightness(1.1);
+  }
+}
+
+@keyframes plasma-ring-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes plasma-ring-spin-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
 @keyframes neon-pulse-breathe {
   0%,
   100% {
