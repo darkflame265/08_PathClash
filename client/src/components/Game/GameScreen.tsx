@@ -287,7 +287,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         <div className="gs-player-mid">
           <PlayerInfo player={opponent} isMe={false} />
           <span className="gs-color-tag">
-            {opponentColor === "red" ? "RED" : "BLU"}
+            {opponentColor === "red" ? "RED" : "BLUE"}
           </span>
         </div>
         <div className="gs-hp-slot">
@@ -342,7 +342,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         <div className="gs-player-mid">
           <PlayerInfo player={me!} isMe={true} />
           <span className="gs-color-tag">
-            {myColor === "red" ? "RED" : "BLU"}
+            {myColor === "red" ? "RED" : "BLUE"}
           </span>
         </div>
         <div className="gs-hp-slot">
