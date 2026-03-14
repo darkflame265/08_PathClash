@@ -5,6 +5,7 @@ import {
   getSocketAuthPayload,
   linkGoogleAccount,
   logoutToGuestMode,
+  purchaseSkinWithTokens,
   refreshAccountSummary,
   resolveUpgradeFlowAfterRedirect,
   type AccountProfile,
@@ -65,6 +66,7 @@ function applyProfileToStore(
     isGuestUser: profile.isGuestUser,
     nickname: profile.nickname,
     equippedSkin: profile.equippedSkin,
+    ownedSkins: profile.ownedSkins,
     wins: profile.wins,
     losses: profile.losses,
     tokens: profile.tokens,
@@ -168,6 +170,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     accountWins,
     accountLosses,
     accountTokens,
+    ownedSkins,
     accountDailyRewardTokens,
     setAuthState,
     setMatchType,
@@ -228,6 +231,22 @@ export function LobbyScreen({ onGameStart }: Props) {
     lang === "en"
       ? `${tokens} tokens were added to your account.`
       : `${tokens}\uD1A0\uD070\uC774 \uACC4\uC815\uC5D0 \uCD94\uAC00\uB418\uC5C8\uC2B5\uB2C8\uB2E4.`;
+  const skinPurchasePrompt = (skinName: string) =>
+    lang === "en"
+      ? `Purchase ${skinName}?`
+      : `${skinName} \uC2A4\uD0A8\uC744 \uAD6C\uB9E4\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?`;
+  const skinPurchaseSuccessMsg = (skinName: string) =>
+    lang === "en"
+      ? `${skinName} unlocked.`
+      : `${skinName} \uC2A4\uD0A8\uC774 \uD574\uAE08\uB418\uC5C8\uC2B5\uB2C8\uB2E4.`;
+  const skinPurchaseFailedMsg =
+    lang === "en"
+      ? "Skin purchase failed."
+      : "\uC2A4\uD0A8 \uAD6C\uB9E4\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.";
+  const skinPurchaseInsufficientMsg =
+    lang === "en"
+      ? "Not enough tokens."
+      : "\uD1A0\uD070\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.";
   const tokenPacks: Array<{
     id: TokenPackId;
     name: string;
@@ -330,6 +349,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     name: string;
     desc: string;
     requiredWins: number | null;
+    requiredPlays?: number | null;
     tokenPrice?: number | null;
     tier?: "common" | "rare" | "legendary" | null;
   }> = [
@@ -391,7 +411,8 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Plasma energy core."
           : "\uD50C\uB77C\uC988\uB9C8 \uC5D0\uB108\uC9C0 \uCF54\uC5B4.",
       requiredWins: null,
-      tokenPrice: null,
+      requiredPlays: null,
+      tokenPrice: 120,
       tier: "common",
     },
     {
@@ -402,7 +423,8 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Gilded core — a sunburst mandala spins within molten gold."
           : "황금 코어 — 녹아내린 금 속에서 선버스트 만다라가 회전.",
       requiredWins: null,
-      tokenPrice: null,
+      requiredPlays: null,
+      tokenPrice: 120,
       tier: "common",
     },
     {
@@ -413,7 +435,8 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Vibrant neon pulse."
           : "\uC120\uBA85\uD55C \uB124\uC628 \uD384\uC2A4.",
       requiredWins: null,
-      tokenPrice: null,
+      requiredPlays: null,
+      tokenPrice: 120,
       tier: "common",
     },
     {
@@ -424,7 +447,8 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Burning inferno core."
           : "\uD0C0\uC624\uB974\uB294 \uC778\uD398\uB974\uB178 \uCF54\uC5B4.",
       requiredWins: null,
-      tokenPrice: null,
+      requiredPlays: null,
+      tokenPrice: 120,
       tier: "common",
     },
     {
@@ -435,7 +459,8 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Quantum flux core — mint and lavender rings oscillate in superposition."
           : "퀀텀 플럭스 코어 — 민트와 라벤더 링이 중첩 상태로 진동.",
       requiredWins: null,
-      tokenPrice: null,
+      requiredPlays: null,
+      tokenPrice: 120,
       tier: "common",
     },
     {
@@ -446,7 +471,8 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Rare nebula — twin orbit rings pulse with cosmic energy."
           : "희귀 성운 — 이중 궤도 링이 우주 에너지로 맥동.",
       requiredWins: null,
-      tokenPrice: null,
+      requiredPlays: null,
+      tokenPrice: 350,
       tier: "rare",
     },
     {
@@ -457,7 +483,8 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "High-energy reactor core."
           : "\uACE0\uCD9C\uB825 \uB9AC\uC561\uD130 \uCF54\uC5B4.",
       requiredWins: null,
-      tokenPrice: null,
+      requiredPlays: null,
+      tokenPrice: 350,
       tier: "rare",
     },
     {
@@ -468,7 +495,8 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Atomic orbit energy core."
           : "\uC6D0\uC790 \uADA4\uB3C4 \uC5D0\uB108\uC9C0 \uCF54\uC5B4.",
       requiredWins: null,
-      tokenPrice: 0,
+      requiredPlays: null,
+      tokenPrice: 900,
       tier: "legendary",
     },
     {
@@ -479,6 +507,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Korean flag motif."
           : "\uB300\uD55C\uBBFC\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
       requiredWins: null,
+      requiredPlays: 100,
       tokenPrice: null,
       tier: null,
     },
@@ -490,6 +519,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Japanese flag motif."
           : "\uC77C\uBCF8 \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
       requiredWins: null,
+      requiredPlays: 100,
       tokenPrice: null,
       tier: null,
     },
@@ -501,6 +531,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "Chinese flag motif."
           : "\uC911\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
       requiredWins: null,
+      requiredPlays: 100,
       tokenPrice: null,
       tier: null,
     },
@@ -512,6 +543,7 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "American flag motif."
           : "\uBBF8\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
       requiredWins: null,
+      requiredPlays: 100,
       tokenPrice: null,
       tier: null,
     },
@@ -523,18 +555,25 @@ export function LobbyScreen({ onGameStart }: Props) {
           ? "British flag motif."
           : "\uC601\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
       requiredWins: null,
+      requiredPlays: 100,
       tokenPrice: null,
       tier: null,
     },
   ];
   const getSkinRequirementLabel = (
     requiredWins: number | null,
+    requiredPlays?: number | null,
     tokenPrice?: number | null,
   ) => {
     if (tokenPrice !== null && tokenPrice !== undefined) {
       return lang === "en"
         ? `Tokens ${tokenPrice}`
         : `\uD1A0\uD070 ${tokenPrice}`;
+    }
+    if (requiredPlays !== null && requiredPlays !== undefined) {
+      return lang === "en"
+        ? `Plays ${requiredPlays}`
+        : `\uD50C\uB808\uC774 ${requiredPlays}`;
     }
     return lang === "en"
       ? `Wins ${requiredWins}`
@@ -544,6 +583,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     return refreshAccountSummary().then(({
       nickname,
       equippedSkin,
+      ownedSkins,
       wins,
       losses,
       tokens,
@@ -557,6 +597,7 @@ export function LobbyScreen({ onGameStart }: Props) {
         isGuestUser,
         nickname,
         equippedSkin,
+        ownedSkins,
         wins,
         losses,
         tokens,
@@ -880,6 +921,37 @@ export function LobbyScreen({ onGameStart }: Props) {
     window.alert(tokenShopFailedMsg);
   };
 
+  const handleSkinChoiceSelect = async (
+    choice: (typeof skinChoices)[number],
+    isLocked: boolean,
+    isOwned: boolean,
+  ) => {
+    if (isLocked) return;
+
+    if (choice.tokenPrice !== null && choice.tokenPrice !== undefined && !isOwned) {
+      const confirmed = window.confirm(skinPurchasePrompt(choice.name));
+      if (!confirmed) return;
+
+      const result = await purchaseSkinWithTokens(choice.id, choice.tokenPrice);
+      if (result === "purchased" || result === "already_owned") {
+        await syncAccountSummary();
+        setPieceSkin(choice.id);
+        window.alert(skinPurchaseSuccessMsg(choice.name));
+        return;
+      }
+
+      if (result === "insufficient_tokens") {
+        window.alert(skinPurchaseInsufficientMsg);
+        return;
+      }
+
+      window.alert(skinPurchaseFailedMsg);
+      return;
+    }
+
+    setPieceSkin(choice.id);
+  };
+
   const accountCard = (
     <AccountCard
       myNickname={myNickname}
@@ -1041,24 +1113,29 @@ export function LobbyScreen({ onGameStart }: Props) {
             <p>{skinModalDesc}</p>
             <div className="skin-option-list">
               {skinChoices.map((choice) => {
+                const totalPlays = accountWins + accountLosses;
+                const isOwned = ownedSkins.includes(choice.id);
                 const lockedByWins =
                   choice.requiredWins !== null &&
                   accountWins < choice.requiredWins;
+                const lockedByPlays =
+                  choice.requiredPlays !== null &&
+                  choice.requiredPlays !== undefined &&
+                  totalPlays < choice.requiredPlays;
                 const lockedByTokens =
                   choice.tokenPrice !== null &&
                   choice.tokenPrice !== undefined &&
+                  !isOwned &&
                   accountTokens < choice.tokenPrice;
-                const isLocked = lockedByWins || lockedByTokens;
+                const isLocked = lockedByWins || lockedByPlays || lockedByTokens;
                 return (
                   <button
                     key={choice.id}
                     className={`skin-option-card ${
                       pieceSkin === choice.id ? "is-selected" : ""
                     } ${isLocked ? "is-locked" : ""}`}
-                    onClick={() => {
-                      if (!isLocked) setPieceSkin(choice.id);
-                    }}
-                    disabled={isLocked}
+                    onClick={() => void handleSkinChoiceSelect(choice, isLocked, isOwned)}
+                    disabled={false}
                     type="button"
                   >
                     <span
@@ -1134,14 +1211,15 @@ export function LobbyScreen({ onGameStart }: Props) {
                       </strong>
                       <span>{choice.desc}</span>
                     </span>
-                    {isLocked && (
+                    {(isLocked || (choice.tokenPrice !== null && choice.tokenPrice !== undefined && !isOwned)) && (
                       <span className="skin-lock-meta" aria-label="Locked skin">
                         <span className="skin-lock-icon" aria-hidden="true">
-                          {"\uD83D\uDD12"}
+                          {isLocked ? "\uD83D\uDD12" : "\uD83D\uDC8E"}
                         </span>
                         <span>
                           {getSkinRequirementLabel(
                             choice.requiredWins,
+                            choice.requiredPlays,
                             choice.tokenPrice,
                           )}
                         </span>

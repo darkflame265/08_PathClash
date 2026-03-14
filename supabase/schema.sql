@@ -37,6 +37,13 @@ create table if not exists public.account_merges (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.owned_skins (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  skin_id text not null,
+  purchased_at timestamptz not null default now(),
+  primary key (user_id, skin_id)
+);
+
 create table if not exists public.google_play_token_purchases (
   purchase_token text primary key,
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -101,9 +108,65 @@ begin
 end;
 $$;
 
+create or replace function public.purchase_skin_with_tokens(
+  p_skin_id text,
+  p_cost integer
+)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid;
+  v_tokens integer;
+begin
+  v_user_id := auth.uid();
+
+  if v_user_id is null then
+    return 'AUTH_REQUIRED';
+  end if;
+
+  select tokens
+    into v_tokens
+    from public.player_stats
+   where user_id = v_user_id
+   for update;
+
+  if exists (
+    select 1
+      from public.owned_skins
+     where user_id = v_user_id
+       and skin_id = p_skin_id
+  ) then
+    return 'ALREADY_OWNED';
+  end if;
+
+  if coalesce(v_tokens, 0) < p_cost then
+    return 'INSUFFICIENT_TOKENS';
+  end if;
+
+  insert into public.owned_skins (user_id, skin_id)
+  values (v_user_id, p_skin_id)
+  on conflict (user_id, skin_id) do nothing;
+
+  if not found then
+    return 'ALREADY_OWNED';
+  end if;
+
+  update public.player_stats
+     set tokens = tokens - p_cost,
+         updated_at = now()
+   where user_id = v_user_id;
+
+  return 'PURCHASED';
+end;
+$$;
+
 alter table public.profiles enable row level security;
 alter table public.player_stats enable row level security;
 alter table public.account_merges enable row level security;
+alter table public.owned_skins enable row level security;
 alter table public.google_play_token_purchases enable row level security;
 
 drop policy if exists "profiles_select_own" on public.profiles;
@@ -136,6 +199,12 @@ create policy "account_merges_select_involved"
 on public.account_merges
 for select
 using (auth.uid() = source_user_id or auth.uid() = target_user_id);
+
+drop policy if exists "owned_skins_select_own" on public.owned_skins;
+create policy "owned_skins_select_own"
+on public.owned_skins
+for select
+using (auth.uid() = user_id);
 
 drop policy if exists "google_play_token_purchases_select_own" on public.google_play_token_purchases;
 create policy "google_play_token_purchases_select_own"

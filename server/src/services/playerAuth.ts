@@ -16,6 +16,7 @@ export interface AccountProfile {
   userId: string;
   nickname: string;
   equippedSkin: PieceSkin;
+  ownedSkins: PieceSkin[];
   wins: number;
   losses: number;
   tokens: number;
@@ -44,6 +45,10 @@ interface StatsRow {
   tokens: number | null;
   daily_reward_wins: number | null;
   daily_reward_day: string | null;
+}
+
+interface OwnedSkinRow {
+  skin_id: PieceSkin | null;
 }
 
 const DAILY_REWARD_TOKENS_PER_WIN = 6;
@@ -81,7 +86,17 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
     .eq('user_id', userId)
     .maybeSingle<StatsRow>();
 
-  const [profileResult, statsResult] = await Promise.all([profilePromise, statsPromise]);
+  const ownedSkinsPromise = supabaseAdmin
+    ?.from('owned_skins')
+    .select('skin_id')
+    .eq('user_id', userId)
+    .returns<OwnedSkinRow[]>();
+
+  const [profileResult, statsResult, ownedSkinsResult] = await Promise.all([
+    profilePromise,
+    statsPromise,
+    ownedSkinsPromise,
+  ]);
   const nickname = profileResult?.data?.nickname?.trim() || fallbackNickname;
   const dailyRewardWins = getActiveDailyRewardWins(statsResult?.data);
 
@@ -89,6 +104,9 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
     userId,
     nickname,
     equippedSkin: profileResult?.data?.equipped_skin ?? 'classic',
+    ownedSkins: (ownedSkinsResult?.data ?? [])
+      .map((row) => row.skin_id)
+      .filter((skin): skin is PieceSkin => Boolean(skin)),
     wins: statsResult?.data?.wins ?? 0,
     losses: statsResult?.data?.losses ?? 0,
     tokens: statsResult?.data?.tokens ?? 0,
@@ -349,6 +367,31 @@ export async function finalizeGoogleUpgrade(
   );
   if (clearGuestStatsError) {
     console.error('[supabase] failed to clear guest stats after upgrade', clearGuestStatsError);
+  }
+
+  if (guestAccountProfile.ownedSkins.length > 0) {
+    const { error: mergeOwnedSkinsError } = await supabaseAdmin
+      .from('owned_skins')
+      .upsert(
+        guestAccountProfile.ownedSkins.map((skinId) => ({
+          user_id: targetUser.id,
+          skin_id: skinId,
+        })),
+        { onConflict: 'user_id,skin_id' },
+      );
+
+    if (mergeOwnedSkinsError) {
+      console.error('[supabase] failed to merge owned skins after upgrade', mergeOwnedSkinsError);
+    }
+  }
+
+  const { error: clearGuestOwnedSkinsError } = await supabaseAdmin
+    .from('owned_skins')
+    .delete()
+    .eq('user_id', guestUser.id);
+
+  if (clearGuestOwnedSkinsError) {
+    console.error('[supabase] failed to clear guest owned skins after upgrade', clearGuestOwnedSkinsError);
   }
 
   const profile = await readAccountProfile(targetUser.id, adoptedNickname, false);

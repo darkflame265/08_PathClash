@@ -12,6 +12,7 @@ export interface AuthStatePayload {
   isGuestUser: boolean;
   nickname?: string | null;
   equippedSkin?: PieceSkin;
+  ownedSkins?: PieceSkin[];
   wins?: number;
   losses?: number;
   tokens?: number;
@@ -32,9 +33,14 @@ interface StatsRow {
   daily_reward_day: string | null;
 }
 
+interface OwnedSkinRow {
+  skin_id: PieceSkin | null;
+}
+
 interface AccountSnapshot {
   nickname: string | null;
   equippedSkin: PieceSkin;
+  ownedSkins: PieceSkin[];
   wins: number;
   losses: number;
   tokens: number;
@@ -46,6 +52,7 @@ export interface AccountProfile {
   userId: string;
   nickname: string;
   equippedSkin: PieceSkin;
+  ownedSkins: PieceSkin[];
   wins: number;
   losses: number;
   tokens: number;
@@ -188,6 +195,7 @@ function toAuthState(session: Session | null, snapshot?: AccountSnapshot): AuthS
     isGuestUser: session?.user.is_anonymous ?? false,
     nickname: snapshot?.nickname ?? undefined,
     equippedSkin: snapshot?.equippedSkin ?? "classic",
+    ownedSkins: snapshot?.ownedSkins ?? [],
     wins: snapshot?.wins ?? 0,
     losses: snapshot?.losses ?? 0,
     tokens: snapshot?.tokens ?? 0,
@@ -247,6 +255,7 @@ async function getAccountSnapshot(userId: string): Promise<AccountSnapshot> {
     return {
       nickname: null,
       equippedSkin: "classic",
+      ownedSkins: [],
       wins: 0,
       losses: 0,
       tokens: 0,
@@ -269,11 +278,19 @@ async function getAccountSnapshot(userId: string): Promise<AccountSnapshot> {
       .eq("user_id", userId)
       .maybeSingle<StatsRow>(),
   ]);
+  const { data: ownedSkinRows } = await supabase
+    .from("owned_skins")
+    .select("skin_id")
+    .eq("user_id", userId)
+    .returns<OwnedSkinRow[]>();
   const dailyRewardWins = getActiveDailyRewardWins(statsResult.data ?? undefined);
 
   return {
     nickname: profileResult.data?.nickname ?? null,
     equippedSkin: profileResult.data?.equipped_skin ?? "classic",
+    ownedSkins: (ownedSkinRows ?? [])
+      .map((row) => row.skin_id)
+      .filter((skin): skin is PieceSkin => Boolean(skin)),
     wins: statsResult.data?.wins ?? 0,
     losses: statsResult.data?.losses ?? 0,
     tokens: statsResult.data?.tokens ?? 0,
@@ -409,6 +426,7 @@ export async function refreshAccountSummary(): Promise<
     AuthStatePayload,
     | "nickname"
     | "equippedSkin"
+    | "ownedSkins"
     | "wins"
     | "losses"
     | "tokens"
@@ -420,6 +438,7 @@ export async function refreshAccountSummary(): Promise<
     return {
       nickname: null,
       equippedSkin: "classic",
+      ownedSkins: [],
       wins: 0,
       losses: 0,
       tokens: 0,
@@ -433,6 +452,7 @@ export async function refreshAccountSummary(): Promise<
     return {
       nickname: null,
       equippedSkin: "classic",
+      ownedSkins: [],
       wins: 0,
       losses: 0,
       tokens: 0,
@@ -445,6 +465,7 @@ export async function refreshAccountSummary(): Promise<
   return {
     nickname: snapshot.nickname,
     equippedSkin: snapshot.equippedSkin,
+    ownedSkins: snapshot.ownedSkins,
     wins: snapshot.wins,
     losses: snapshot.losses,
     tokens: snapshot.tokens,
@@ -486,6 +507,29 @@ export async function syncEquippedSkin(equippedSkin: PieceSkin): Promise<void> {
   if (error) {
     console.error("[supabase] failed to sync equipped skin", error);
   }
+}
+
+export async function purchaseSkinWithTokens(
+  skinId: PieceSkin,
+  tokenPrice: number,
+): Promise<"purchased" | "already_owned" | "insufficient_tokens" | "auth_required" | "failed"> {
+  if (!supabase) return "failed";
+
+  const { data, error } = await supabase.rpc("purchase_skin_with_tokens", {
+    p_skin_id: skinId,
+    p_cost: tokenPrice,
+  });
+
+  if (error) {
+    console.error("[supabase] failed to purchase skin", error);
+    return "failed";
+  }
+
+  if (data === "PURCHASED") return "purchased";
+  if (data === "ALREADY_OWNED") return "already_owned";
+  if (data === "INSUFFICIENT_TOKENS") return "insufficient_tokens";
+  if (data === "AUTH_REQUIRED") return "auth_required";
+  return "failed";
 }
 
 export async function linkGoogleAccount(): Promise<void> {

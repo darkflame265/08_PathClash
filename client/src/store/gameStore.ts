@@ -28,6 +28,7 @@ interface GameStore {
   accountWins: number;
   accountLosses: number;
   accountTokens: number;
+  ownedSkins: PieceSkin[];
   accountDailyRewardWins: number;
   accountDailyRewardTokens: number;
   currentMatchType: "friend" | "random" | "ai" | null;
@@ -79,6 +80,7 @@ interface GameStore {
     isGuestUser: boolean;
     nickname?: string | null;
     equippedSkin?: PieceSkin;
+    ownedSkins?: PieceSkin[];
     wins?: number;
     losses?: number;
     tokens?: number;
@@ -177,6 +179,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   accountWins: 0,
   accountLosses: 0,
   accountTokens: 0,
+  ownedSkins: [],
   accountDailyRewardWins: 0,
   accountDailyRewardTokens: 0,
   currentMatchType: null,
@@ -217,6 +220,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     isGuestUser,
     nickname,
     equippedSkin,
+    ownedSkins,
     wins,
     losses,
     tokens,
@@ -237,6 +241,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       accountWins: wins ?? state.accountWins,
       accountLosses: losses ?? state.accountLosses,
       accountTokens: tokens ?? state.accountTokens,
+      ownedSkins: ownedSkins ?? state.ownedSkins,
       accountDailyRewardWins: dailyRewardWins ?? state.accountDailyRewardWins,
       accountDailyRewardTokens:
         dailyRewardTokens ?? state.accountDailyRewardTokens,
