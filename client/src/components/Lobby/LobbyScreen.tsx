@@ -208,6 +208,7 @@ export function LobbyScreen({ onGameStart }: Props) {
   const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
   const isAudioMuted = isMusicMuted && isSfxMuted;
   const settingsButtonLabel = lang === "en" ? "Settings" : "\uC124\uC815";
+  const skinButtonLabel = lang === "en" ? "Skin" : "\uC2A4\uD0A8";
   const termsButtonLabel = lang === "en" ? "Terms" : "\uC774\uC6A9\uC57D\uAD00";
   const skinModalTitle =
     lang === "en"
@@ -1389,18 +1390,25 @@ export function LobbyScreen({ onGameStart }: Props) {
         <div className="audio-toggle" role="group" aria-label="Skin picker">
           <button
             className={`audio-toggle-btn skin-toggle-btn ${
-              isSettingsOpen ? "is-active" : ""
+              isSkinPickerOpen ? "is-active" : ""
             }`}
-            onClick={() => setIsSettingsOpen((open) => !open)}
-            aria-pressed={isSettingsOpen}
-            title={settingsButtonLabel}
+            onClick={() => setIsSkinPickerOpen((open) => !open)}
+            aria-pressed={isSkinPickerOpen}
+            title={skinButtonLabel}
             type="button"
           >
-            {settingsButtonLabel}
+            {skinButtonLabel}
           </button>
         </div>
       </div>
       <div className="lobby-utility-links">
+        <button
+          className="lobby-utility-link"
+          onClick={() => setIsSettingsOpen(true)}
+          type="button"
+        >
+          {settingsButtonLabel}
+        </button>
         <button
           className="lobby-utility-link"
           onClick={() => void handleDonate()}
