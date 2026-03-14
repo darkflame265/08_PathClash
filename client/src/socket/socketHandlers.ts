@@ -152,7 +152,7 @@ function runAnimation(payload: PathsRevealPayload): void {
       store().triggerCollisionEffect(collision.position);
       const prevHp = collision.newHp + 1;
       store().triggerHeartShake(escapee, prevHp - 1);
-      if (!store().isSfxMuted) playHit();
+      if (!store().isSfxMuted) playHit(store().sfxVolume);
 
       // Update HP in game state
       const gs = store().gameState;

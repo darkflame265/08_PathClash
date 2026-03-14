@@ -6,7 +6,7 @@ function getCtx(): AudioContext {
   return audioCtx;
 }
 
-export function playHit(): void {
+export function playHit(volume = 0.55): void {
   try {
     const ctx = getCtx();
     const osc = ctx.createOscillator();
@@ -16,7 +16,8 @@ export function playHit(): void {
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(220, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.15);
-    gain.gain.setValueAtTime(0.4, ctx.currentTime);
+    const normalized = Math.max(0, Math.min(1, volume));
+    gain.gain.setValueAtTime(0.4 * normalized, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.15);

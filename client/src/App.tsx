@@ -11,6 +11,7 @@ import {
 import { GameScreen } from "./components/Game/GameScreen";
 import { LobbyScreen } from "./components/Lobby/LobbyScreen";
 import { disconnectSocket, getSocket } from "./socket/socketClient";
+import { useLang } from "./hooks/useLang";
 import { useGameStore } from "./store/gameStore";
 import "./App.css";
 
@@ -18,8 +19,17 @@ type AppView = "lobby" | "game";
 
 function App() {
   const [view, setView] = useState<AppView>("lobby");
-  const { authReady, myNickname, pieceSkin, setAuthState, isMusicMuted } =
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const {
+    authReady,
+    myNickname,
+    pieceSkin,
+    setAuthState,
+    isMusicMuted,
+    musicVolume,
+  } =
     useGameStore();
+  const { lang } = useLang();
   const nicknameSyncTimeoutRef = useRef<number | null>(null);
   const lobbyBgmRef = useRef<HTMLAudioElement | null>(null);
   const inGameBgmRef = useRef<HTMLAudioElement | null>(null);
@@ -28,12 +38,12 @@ function App() {
     const lobbyBgm = new Audio("/music/Lobby_bgm_1.ogg");
     lobbyBgm.loop = true;
     lobbyBgm.preload = "auto";
-    lobbyBgm.volume = 0.15;
+    lobbyBgm.volume = musicVolume;
 
     const inGameBgm = new Audio("/music/InGame_bgm_1.ogg");
     inGameBgm.loop = true;
     inGameBgm.preload = "auto";
-    inGameBgm.volume = 0.15;
+    inGameBgm.volume = musicVolume;
 
     lobbyBgmRef.current = lobbyBgm;
     inGameBgmRef.current = inGameBgm;
@@ -45,6 +55,14 @@ function App() {
       inGameBgmRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    const lobbyBgm = lobbyBgmRef.current;
+    const inGameBgm = inGameBgmRef.current;
+    if (!lobbyBgm || !inGameBgm) return;
+    lobbyBgm.volume = musicVolume;
+    inGameBgm.volume = musicVolume;
+  }, [musicVolume]);
 
   useEffect(() => {
     let active = true;
@@ -103,8 +121,14 @@ function App() {
   const handleReturnToLobby = useCallback(() => {
     disconnectSocket();
     useGameStore.getState().resetGame();
+    setShowExitConfirm(false);
     setView("lobby");
   }, []);
+
+  const exitTitle =
+    lang === "en" ? "Exit PathClash?" : "\uC815\uB9D0\uB85C \uAC8C\uC784\uC744 \uC885\uB8CC\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?";
+  const exitConfirmLabel = lang === "en" ? "Yes" : "\uC608";
+  const exitCancelLabel = lang === "en" ? "No" : "\uC544\uB2C8\uC694";
 
   const tryStartBgm = useCallback(() => {
     const lobbyBgm = lobbyBgmRef.current;
@@ -137,7 +161,11 @@ function App() {
         handleReturnToLobby();
         return;
       }
-      void CapacitorApp.exitApp();
+      if (showExitConfirm) {
+        setShowExitConfirm(false);
+        return;
+      }
+      setShowExitConfirm(true);
     }).then((listener) => {
       cleanup = () => {
         void listener.remove();
@@ -147,7 +175,7 @@ function App() {
     return () => {
       cleanup();
     };
-  }, [handleReturnToLobby, view]);
+  }, [handleReturnToLobby, showExitConfirm, view]);
 
   useEffect(() => {
     tryStartBgm();
@@ -163,6 +191,34 @@ function App() {
       window.removeEventListener("pointerdown", onUserInteraction, true);
   }, [tryStartBgm]);
 
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    let cleanup = () => {};
+
+    void CapacitorApp.addListener("appStateChange", ({ isActive }) => {
+      const lobbyBgm = lobbyBgmRef.current;
+      const inGameBgm = inGameBgmRef.current;
+      if (!lobbyBgm || !inGameBgm) return;
+
+      if (!isActive) {
+        lobbyBgm.pause();
+        inGameBgm.pause();
+        return;
+      }
+
+      tryStartBgm();
+    }).then((listener) => {
+      cleanup = () => {
+        void listener.remove();
+      };
+    });
+
+    return () => {
+      cleanup();
+    };
+  }, [tryStartBgm]);
+
   if (!authReady) {
     return <div className="app app-loading">Connecting guest session...</div>;
   }
@@ -171,6 +227,35 @@ function App() {
     <div className={`app ${view === "game" ? "app-game" : "app-lobby"}`}>
       {view === "lobby" && <LobbyScreen onGameStart={() => setView("game")} />}
       {view === "game" && <GameScreen onLeaveToLobby={handleReturnToLobby} />}
+      {showExitConfirm && view === "lobby" && (
+        <div
+          className="app-confirm-backdrop"
+          onClick={() => setShowExitConfirm(false)}
+        >
+          <div
+            className="app-confirm-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3>{exitTitle}</h3>
+            <div className="app-confirm-actions">
+              <button
+                className="app-confirm-btn app-confirm-btn-secondary"
+                onClick={() => setShowExitConfirm(false)}
+                type="button"
+              >
+                {exitCancelLabel}
+              </button>
+              <button
+                className="app-confirm-btn app-confirm-btn-primary"
+                onClick={() => void CapacitorApp.exitApp()}
+                type="button"
+              >
+                {exitConfirmLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

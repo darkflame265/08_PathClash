@@ -64,6 +64,8 @@ interface GameStore {
   // Settings
   isSfxMuted: boolean;
   isMusicMuted: boolean;
+  musicVolume: number;
+  sfxVolume: number;
   pieceSkin: PieceSkin;
   playerPieceSkins: { red: PieceSkin; blue: PieceSkin } | null;
 
@@ -109,6 +111,8 @@ interface GameStore {
   toggleSfxMute: () => void;
   toggleMusicMute: () => void;
   toggleAllAudio: () => void;
+  setMusicVolume: (volume: number) => void;
+  setSfxVolume: (volume: number) => void;
   setPieceSkin: (skin: PieceSkin) => void;
   setPlayerPieceSkins: (skins: { red: PieceSkin; blue: PieceSkin }) => void;
   setPlayerPieceSkin: (color: PlayerColor, skin: PieceSkin) => void;
@@ -123,24 +127,49 @@ const PIECE_SKIN_KEY = 'pieceSkin';
 function getStoredAudioPrefs() {
   const raw = localStorage.getItem(AUDIO_PREFS_KEY);
   if (!raw) {
-    return { isSfxMuted: false, isMusicMuted: false };
+    return {
+      isSfxMuted: false,
+      isMusicMuted: false,
+      musicVolume: 0.15,
+      sfxVolume: 0.55,
+    };
   }
 
   try {
     const parsed = JSON.parse(raw) as {
       isSfxMuted?: boolean;
       isMusicMuted?: boolean;
+      musicVolume?: number;
+      sfxVolume?: number;
     };
     return {
       isSfxMuted: Boolean(parsed.isSfxMuted),
       isMusicMuted: Boolean(parsed.isMusicMuted),
+      musicVolume:
+        typeof parsed.musicVolume === 'number'
+          ? Math.max(0, Math.min(1, parsed.musicVolume))
+          : 0.15,
+      sfxVolume:
+        typeof parsed.sfxVolume === 'number'
+          ? Math.max(0, Math.min(1, parsed.sfxVolume))
+          : 0.55,
     };
   } catch {
-    return { isSfxMuted: false, isMusicMuted: false };
+    return {
+      isSfxMuted: false,
+      isMusicMuted: false,
+      musicVolume: 0.15,
+      sfxVolume: 0.55,
+    };
   }
 }
 
-function saveAudioPrefs(prefs: { isSfxMuted: boolean; isMusicMuted: boolean }) {
+function saveAudioPrefs(prefs: {
+  isSfxMuted: boolean;
+  isMusicMuted: boolean;
+  musicVolume: number;
+  sfxVolume: number;
+}) {
   localStorage.setItem(AUDIO_PREFS_KEY, JSON.stringify(prefs));
 }
 
@@ -201,6 +230,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   messages: [],
   isSfxMuted: initialAudioPrefs.isSfxMuted,
   isMusicMuted: initialAudioPrefs.isMusicMuted,
+  musicVolume: initialAudioPrefs.musicVolume,
+  sfxVolume: initialAudioPrefs.sfxVolume,
   pieceSkin: initialPieceSkin,
   playerPieceSkins: null,
   lang: (() => {
@@ -352,6 +383,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const next = {
       isSfxMuted: !get().isSfxMuted,
       isMusicMuted: get().isMusicMuted,
+      musicVolume: get().musicVolume,
+      sfxVolume: get().sfxVolume,
     };
     saveAudioPrefs(next);
     set({ isSfxMuted: next.isSfxMuted });
@@ -360,6 +393,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const next = {
       isSfxMuted: get().isSfxMuted,
       isMusicMuted: !get().isMusicMuted,
+      musicVolume: get().musicVolume,
+      sfxVolume: get().sfxVolume,
     };
     saveAudioPrefs(next);
     set({ isMusicMuted: next.isMusicMuted });
@@ -369,12 +404,36 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const next = {
       isSfxMuted: nextMuted,
       isMusicMuted: nextMuted,
+      musicVolume: get().musicVolume,
+      sfxVolume: get().sfxVolume,
     };
     saveAudioPrefs(next);
     set({
       isSfxMuted: next.isSfxMuted,
       isMusicMuted: next.isMusicMuted,
     });
+  },
+  setMusicVolume: (volume) => {
+    const normalized = Math.max(0, Math.min(1, volume));
+    const next = {
+      isSfxMuted: get().isSfxMuted,
+      isMusicMuted: get().isMusicMuted,
+      musicVolume: normalized,
+      sfxVolume: get().sfxVolume,
+    };
+    saveAudioPrefs(next);
+    set({ musicVolume: normalized });
+  },
+  setSfxVolume: (volume) => {
+    const normalized = Math.max(0, Math.min(1, volume));
+    const next = {
+      isSfxMuted: get().isSfxMuted,
+      isMusicMuted: get().isMusicMuted,
+      musicVolume: get().musicVolume,
+      sfxVolume: normalized,
+    };
+    saveAudioPrefs(next);
+    set({ sfxVolume: normalized });
   },
   setPieceSkin: (skin) => {
     localStorage.setItem(PIECE_SKIN_KEY, skin);
@@ -422,5 +481,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     messages: [],
     isSfxMuted: get().isSfxMuted,
     isMusicMuted: get().isMusicMuted,
+    musicVolume: get().musicVolume,
+    sfxVolume: get().sfxVolume,
   }),
 }));

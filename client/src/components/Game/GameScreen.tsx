@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+﻿import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { getSocket } from "../../socket/socketClient";
 import { registerSocketHandlers } from "../../socket/socketHandlers";
 import { useGameStore } from "../../store/gameStore";
@@ -450,10 +450,11 @@ function MuteButton() {
     <button
       className="gs-mute-btn"
       onClick={toggleAllAudio}
-      title={isAudioMuted ? "AUDIO OFF" : "AUDIO ON"}
-      aria-label={isAudioMuted ? "Audio off" : "Audio on"}
+      title={isAudioMuted ? "\uD83D\uDD07" : "\uD83D\uDD0A"}
+      aria-label={isAudioMuted ? "\uD83D\uDD07" : "\uD83D\uDD0A"}
     >
-      {isAudioMuted ? "🔇" : "🔊"}
+      {isAudioMuted ? "\uD83D\uDD07" : "\uD83D\uDD0A"}
     </button>
   );
 }
+

@@ -38,3 +38,76 @@ body {
   font-weight: 500;
   letter-spacing: 0.05em;
 }
+
+.app-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(7, 12, 18, 0.7);
+  backdrop-filter: blur(10px);
+}
+
+.app-confirm-modal {
+  width: min(100%, 22rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.2rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(90, 104, 118, 0.45);
+  background:
+    linear-gradient(180deg, rgba(33, 40, 47, 0.97), rgba(26, 32, 38, 0.98));
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.app-confirm-modal h3 {
+  margin: 0;
+  color: var(--text, #f0f4f8);
+  font-size: 1.05rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.app-confirm-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.app-confirm-btn {
+  min-width: 0;
+  min-height: 3rem;
+  border-radius: 0.85rem;
+  border: 1px solid transparent;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.app-confirm-btn-secondary {
+  background: rgba(42, 49, 55, 0.92);
+  border-color: rgba(154, 164, 174, 0.2);
+  color: #cbd5e1;
+}
+
+.app-confirm-btn-secondary:hover {
+  background: rgba(56, 65, 73, 0.95);
+  color: #f0f4f8;
+}
+
+.app-confirm-btn-primary {
+  background: rgba(67, 122, 72, 0.95);
+  border-color: rgba(101, 163, 108, 0.35);
+  color: #f8fff9;
+}
+
+.app-confirm-btn-primary:hover {
+  background: rgba(82, 145, 88, 0.98);
+}

@@ -183,7 +183,12 @@ export function LobbyScreen({ onGameStart }: Props) {
     setPlayerPieceSkins,
     isMusicMuted,
     isSfxMuted,
-    toggleAllAudio,
+    toggleMusicMute,
+    toggleSfxMute,
+    musicVolume,
+    sfxVolume,
+    setMusicVolume,
+    setSfxVolume,
     pieceSkin,
     setPieceSkin,
   } = useGameStore();
@@ -198,6 +203,7 @@ export function LobbyScreen({ onGameStart }: Props) {
   const [isSkinPickerOpen, setIsSkinPickerOpen] = useState(false);
   const [isTokenShopOpen, setIsTokenShopOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAudioSettingsOpen, setIsAudioSettingsOpen] = useState(false);
   const [upgradeResult, setUpgradeResult] = useState<UpgradeResolution>({
     kind: "none",
   });
@@ -206,9 +212,9 @@ export function LobbyScreen({ onGameStart }: Props) {
   const dailyResetTimeoutRef = useRef<number | null>(null);
   const lastRewardSyncDayRef = useRef<string>(getUtcDayKey());
   const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
-  const isAudioMuted = isMusicMuted && isSfxMuted;
   const settingsButtonLabel = lang === "en" ? "Settings" : "\uC124\uC815";
   const skinButtonLabel = lang === "en" ? "Skin" : "\uC2A4\uD0A8";
+  const soundButtonLabel = lang === "en" ? "SOUND" : "\uC18C\uB9AC";
   const termsButtonLabel = lang === "en" ? "Terms" : "\uC774\uC6A9\uC57D\uAD00";
   const skinModalTitle =
     lang === "en"
@@ -239,6 +245,13 @@ export function LobbyScreen({ onGameStart }: Props) {
   const userIdLabel = lang === "en" ? "User ID" : "\uC0AC\uC6A9\uC790 ID";
   const skinLabel = lang === "en" ? "Current Skin" : "\uD604\uC7AC \uC2A4\uD0A8";
   const recordLabel = lang === "en" ? "Record" : "\uC804\uC801";
+  const audioModalTitle = lang === "en" ? "Audio Settings" : "\uC624\uB514\uC624 \uC124\uC815";
+  const musicLabel = lang === "en" ? "Music" : "\uC74C\uC545";
+  const sfxLabel = lang === "en" ? "SFX" : "\uD6A8\uACFC\uC74C";
+  const onLabel = lang === "en" ? "ON" : "\uCF2C";
+  const offLabel = lang === "en" ? "OFF" : "\uB054";
+  const musicVolumeLabel = lang === "en" ? "Music Volume" : "\uC74C\uC545 \uBCFC\uB968";
+  const sfxVolumeLabel = lang === "en" ? "SFX Volume" : "\uD6A8\uACFC\uC74C \uBCFC\uB968";
   const accountTypeValue = isGuestUser
     ? lang === "en"
       ? "Guest"
@@ -1376,17 +1389,6 @@ export function LobbyScreen({ onGameStart }: Props) {
             KR
           </button>
         </div>
-        <div className="audio-toggle" role="group" aria-label="Audio toggle">
-          <button
-            className={`audio-toggle-btn ${!isAudioMuted ? "is-active" : ""}`}
-            onClick={toggleAllAudio}
-            aria-pressed={!isAudioMuted}
-            title={isAudioMuted ? "Audio Off" : "Audio On"}
-            type="button"
-          >
-            {isAudioMuted ? "\uD83D\uDD07" : "\uD83D\uDD0A"}
-          </button>
-        </div>
         <div className="audio-toggle" role="group" aria-label="Skin picker">
           <button
             className={`audio-toggle-btn skin-toggle-btn ${
@@ -1462,6 +1464,13 @@ export function LobbyScreen({ onGameStart }: Props) {
                 </div>
               </div>
               <div className="upgrade-modal-actions settings-actions">
+                <button
+                  className="lobby-btn secondary settings-policy-btn"
+                  onClick={() => setIsAudioSettingsOpen(true)}
+                  type="button"
+                >
+                  {soundButtonLabel}
+                </button>
                 <a
                   className="lobby-btn secondary settings-policy-btn"
                   href={termsUrl}
@@ -1493,6 +1502,88 @@ export function LobbyScreen({ onGameStart }: Props) {
                   {skinApplyLabel}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {isAudioSettingsOpen && (
+        <div
+          className="upgrade-modal-backdrop"
+          onClick={() => setIsAudioSettingsOpen(false)}
+        >
+          <div
+            className="upgrade-modal skin-modal audio-settings-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="skin-modal-head">
+              <h3>{audioModalTitle}</h3>
+            </div>
+            <div className="audio-settings-body">
+              <div className="audio-settings-row">
+                <div className="audio-settings-card">
+                  <span className="audio-settings-label">{musicLabel}</span>
+                  <button
+                    className={`audio-settings-toggle ${!isMusicMuted ? "is-on" : "is-off"}`}
+                    onClick={toggleMusicMute}
+                    type="button"
+                  >
+                    {!isMusicMuted ? onLabel : offLabel}
+                  </button>
+                </div>
+                <div className="audio-settings-card">
+                  <span className="audio-settings-label">{sfxLabel}</span>
+                  <button
+                    className={`audio-settings-toggle ${!isSfxMuted ? "is-on" : "is-off"}`}
+                    onClick={toggleSfxMute}
+                    type="button"
+                  >
+                    {!isSfxMuted ? onLabel : offLabel}
+                  </button>
+                </div>
+              </div>
+              <div className="audio-slider-block">
+                <div className="audio-slider-head">
+                  <span>{musicVolumeLabel}</span>
+                  <strong>{Math.round(musicVolume * 100)}</strong>
+                </div>
+                <input
+                  className="audio-slider"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={Math.round(musicVolume * 100)}
+                  onChange={(event) =>
+                    setMusicVolume(Number(event.target.value) / 100)
+                  }
+                />
+              </div>
+              <div className="audio-slider-block">
+                <div className="audio-slider-head">
+                  <span>{sfxVolumeLabel}</span>
+                  <strong>{Math.round(sfxVolume * 100)}</strong>
+                </div>
+                <input
+                  className="audio-slider"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={Math.round(sfxVolume * 100)}
+                  onChange={(event) =>
+                    setSfxVolume(Number(event.target.value) / 100)
+                  }
+                />
+              </div>
+            </div>
+            <div className="upgrade-modal-actions">
+              <button
+                className="lobby-btn primary"
+                onClick={() => setIsAudioSettingsOpen(false)}
+                type="button"
+              >
+                {skinApplyLabel}
+              </button>
             </div>
           </div>
         </div>
