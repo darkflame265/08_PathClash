@@ -557,8 +557,8 @@ export function LobbyScreen({ onGameStart }: Props) {
       name: lang === "en" ? "Korea" : "\uD55C\uAD6D",
       desc:
         lang === "en"
-          ? "Korean flag motif."
-          : "\uB300\uD55C\uBBFC\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
+          ? "The Korean flag."
+          : "\uB300\uD55C\uBBFC\uAD6D \uAD6D\uAE30.",
       requiredWins: null,
       requiredPlays: 100,
       tokenPrice: null,
@@ -569,8 +569,8 @@ export function LobbyScreen({ onGameStart }: Props) {
       name: lang === "en" ? "Japan" : "\uC77C\uBCF8",
       desc:
         lang === "en"
-          ? "Japanese flag motif."
-          : "\uC77C\uBCF8 \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
+          ? "The Japanese flag."
+          : "\uC77C\uBCF8 \uAD6D\uAE30.",
       requiredWins: null,
       requiredPlays: 100,
       tokenPrice: null,
@@ -581,8 +581,8 @@ export function LobbyScreen({ onGameStart }: Props) {
       name: lang === "en" ? "China" : "\uC911\uAD6D",
       desc:
         lang === "en"
-          ? "Chinese flag motif."
-          : "\uC911\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
+          ? "The Chinese flag."
+          : "\uC911\uAD6D \uAD6D\uAE30.",
       requiredWins: null,
       requiredPlays: 100,
       tokenPrice: null,
@@ -593,8 +593,8 @@ export function LobbyScreen({ onGameStart }: Props) {
       name: lang === "en" ? "USA" : "\uBBF8\uAD6D",
       desc:
         lang === "en"
-          ? "American flag motif."
-          : "\uBBF8\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
+          ? "The American flag."
+          : "\uBBF8\uAD6D \uAD6D\uAE30.",
       requiredWins: null,
       requiredPlays: 100,
       tokenPrice: null,
@@ -605,8 +605,8 @@ export function LobbyScreen({ onGameStart }: Props) {
       name: lang === "en" ? "UK" : "\uC601\uAD6D",
       desc:
         lang === "en"
-          ? "British flag motif."
-          : "\uC601\uAD6D \uAD6D\uAE30 \uBAA8\uD2F0\uBE0C.",
+          ? "The British flag."
+          : "\uC601\uAD6D \uAD6D\uAE30.",
       requiredWins: null,
       requiredPlays: 100,
       tokenPrice: null,

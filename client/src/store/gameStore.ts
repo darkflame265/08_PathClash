@@ -6,6 +6,10 @@ import type {
 } from '../types/game.types';
 import { type Lang } from '../i18n/translations';
 
+type LocalRoundInfo = RoundStartPayload & {
+  localStartTime: number;
+};
+
 export interface AnimationState {
   isAnimating: boolean;
   redPath: Position[];
@@ -39,7 +43,7 @@ interface GameStore {
   opponentSubmitted: boolean;
 
   // Round
-  roundInfo: RoundStartPayload | null;
+  roundInfo: LocalRoundInfo | null;
 
   // Animation
   animation: AnimationState | null;
@@ -300,7 +304,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     })),
 
   setRoundInfo: (r) => set({
-    roundInfo: r,
+    roundInfo: {
+      ...r,
+      localStartTime: performance.now(),
+    },
     myPath: [],
     opponentSubmitted: false,
     gameState: get().gameState ? {
