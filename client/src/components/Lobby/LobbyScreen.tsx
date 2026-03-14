@@ -214,7 +214,7 @@ export function LobbyScreen({ onGameStart }: Props) {
   const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
   const settingsButtonLabel = lang === "en" ? "Settings" : "\uC124\uC815";
   const skinButtonLabel = lang === "en" ? "Skin" : "\uC2A4\uD0A8";
-  const soundButtonLabel = lang === "en" ? "SOUND" : "\uC18C\uB9AC";
+  const soundButtonLabel = lang === "en" ? "Sound" : "\uC18C\uB9AC";
   const termsButtonLabel = lang === "en" ? "Terms" : "\uC774\uC6A9\uC57D\uAD00";
   const skinModalTitle =
     lang === "en"
@@ -1494,14 +1494,16 @@ export function LobbyScreen({ onGameStart }: Props) {
                 >
                   {t.donateBtn}
                 </button>
-                <button
-                  className="lobby-btn primary"
-                  onClick={() => setIsSettingsOpen(false)}
-                  type="button"
-                >
-                  {skinApplyLabel}
-                </button>
               </div>
+            </div>
+            <div className="upgrade-modal-actions">
+              <button
+                className="lobby-btn primary"
+                onClick={() => setIsSettingsOpen(false)}
+                type="button"
+              >
+                {skinApplyLabel}
+              </button>
             </div>
           </div>
         </div>
