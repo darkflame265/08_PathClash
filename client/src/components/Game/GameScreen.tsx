@@ -271,7 +271,6 @@ export function GameScreen({ onLeaveToLobby }: Props) {
           )}
         </div>
         <div className="gs-utility-buttons">
-          <MuteButton />
           <button className="gs-lobby-btn" onClick={onLeaveToLobby}>
             Lobby
           </button>
@@ -440,21 +439,6 @@ function PathProgressBar({
         ))}
       </div>
     </div>
-  );
-}
-
-function MuteButton() {
-  const { isSfxMuted, isMusicMuted, toggleAllAudio } = useGameStore();
-  const isAudioMuted = isSfxMuted && isMusicMuted;
-  return (
-    <button
-      className="gs-mute-btn"
-      onClick={toggleAllAudio}
-      title={isAudioMuted ? "\uD83D\uDD07" : "\uD83D\uDD0A"}
-      aria-label={isAudioMuted ? "\uD83D\uDD07" : "\uD83D\uDD0A"}
-    >
-      {isAudioMuted ? "\uD83D\uDD07" : "\uD83D\uDD0A"}
-    </button>
   );
 }
 

@@ -10,12 +10,29 @@ interface Props {
 
 export function PlayerInfo({ player, isMe }: Props) {
   const [showProfile, setShowProfile] = useState(false);
-  const { t } = useLang();
+  const [copied, setCopied] = useState(false);
+  const { t, lang } = useLang();
 
   if (!player) return null;
 
   const total = player.stats.wins + player.stats.losses;
   const winRate = total > 0 ? Math.round((player.stats.wins / total) * 100) : 0;
+  const copyLabel = lang === "en" ? "Copy" : "\uBCF5\uC0AC";
+  const copiedLabel = lang === "en" ? "Copied" : "\uBCF5\uC0AC\uB428";
+  const displayId =
+    player.id.length >= 12
+      ? `${player.id.slice(0, 8)}-${player.id.slice(9, 13)}`
+      : player.id.slice(0, 8);
+
+  const handleCopyId = async () => {
+    try {
+      await navigator.clipboard.writeText(player.id);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1200);
+    } catch {
+      setCopied(false);
+    }
+  };
 
   return (
     <div className="player-info">
@@ -46,7 +63,16 @@ export function PlayerInfo({ player, isMe }: Props) {
           </div>
           <div className="profile-row">
             <span>ID</span>
-            <span>{player.id.slice(0, 8)}</span>
+            <button
+              className={`profile-id-btn ${copied ? "is-copied" : ""}`}
+              onClick={() => void handleCopyId()}
+              type="button"
+            >
+              <span>{displayId}</span>
+              <span className="profile-id-copy">
+                {copied ? copiedLabel : copyLabel}
+              </span>
+            </button>
           </div>
         </div>
       )}

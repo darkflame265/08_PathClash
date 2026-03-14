@@ -86,3 +86,41 @@
   user-select: text;
   -webkit-user-select: text;
 }
+
+.profile-id-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--text, #f0f4f8);
+  border-radius: 999px;
+  padding: 0.28rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: var(--mono, 'JetBrains Mono', monospace);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.profile-id-btn:hover {
+  background: rgba(59, 130, 246, 0.16);
+  border-color: rgba(59, 130, 246, 0.42);
+}
+
+.profile-id-btn.is-copied {
+  border-color: rgba(72, 187, 120, 0.38);
+  background: rgba(72, 187, 120, 0.12);
+}
+
+.profile-id-copy {
+  color: #93c5fd;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.profile-id-btn.is-copied .profile-id-copy {
+  color: #86efac;
+}
