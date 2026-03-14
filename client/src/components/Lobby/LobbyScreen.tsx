@@ -32,6 +32,12 @@ const POLICY_URL_KR =
 const POLICY_URL_EN =
   import.meta.env.VITE_POLICY_URL_EN?.trim() ||
   "https://pathclash.com/privacy-en.html";
+const TERMS_URL_KR =
+  import.meta.env.VITE_TERMS_URL_KR?.trim() ||
+  "https://pathclash.com/terms.html";
+const TERMS_URL_EN =
+  import.meta.env.VITE_TERMS_URL_EN?.trim() ||
+  "https://pathclash.com/terms-en.html";
 const DONATE_URL =
   import.meta.env.VITE_DONATE_URL?.trim() || "https://pathclash.com";
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
@@ -183,6 +189,7 @@ export function LobbyScreen({ onGameStart }: Props) {
   } = useGameStore();
   const { lang, setLang, t } = useLang();
   const policyUrl = lang === "en" ? POLICY_URL_EN : POLICY_URL_KR;
+  const termsUrl = lang === "en" ? TERMS_URL_EN : TERMS_URL_KR;
   const [view, setView] = useState<LobbyView>("main");
   const [joinCode, setJoinCode] = useState("");
   const [createdCode, setCreatedCode] = useState("");
@@ -201,6 +208,7 @@ export function LobbyScreen({ onGameStart }: Props) {
   const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
   const isAudioMuted = isMusicMuted && isSfxMuted;
   const settingsButtonLabel = lang === "en" ? "Settings" : "\uC124\uC815";
+  const termsButtonLabel = lang === "en" ? "Terms" : "\uC774\uC6A9\uC57D\uAD00";
   const skinModalTitle =
     lang === "en"
       ? "Choose Piece Skin"
@@ -1452,6 +1460,14 @@ export function LobbyScreen({ onGameStart }: Props) {
               </div>
             </div>
             <div className="upgrade-modal-actions settings-actions">
+              <a
+                className="lobby-btn secondary settings-policy-btn"
+                href={termsUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {termsButtonLabel}
+              </a>
               <a
                 className="lobby-btn secondary settings-policy-btn"
                 href={policyUrl}
