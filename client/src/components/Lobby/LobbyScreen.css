@@ -1740,8 +1740,8 @@
     max-height: calc(100dvh - 16.5rem);
   }
 
-  .settings-section {
-    max-height: calc(100dvh - 18.5rem);
+  .settings-scroll-body {
+    max-height: calc(100dvh - 9.5rem);
   }
 
   .skin-token-badge {
@@ -1855,14 +1855,24 @@
   overflow: hidden;
 }
 
+.settings-scroll-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  overflow-y: auto;
+  max-height: calc(100dvh - 12.5rem);
+  padding-right: 0.2rem;
+}
+
+.settings-scroll-body p {
+  margin: 0;
+}
+
 .settings-section {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
   padding: 0.2rem 0;
-  overflow-y: auto;
-  max-height: calc(100dvh - 21rem);
-  padding-right: 0.2rem;
 }
 
 .settings-row {
@@ -1922,7 +1932,7 @@
 }
 
 .settings-actions {
-  margin-top: 0.2rem;
+  margin-top: 0;
 }
 
 .settings-policy-btn {

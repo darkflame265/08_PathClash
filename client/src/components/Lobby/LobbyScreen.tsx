@@ -1409,13 +1409,6 @@ export function LobbyScreen({ onGameStart }: Props) {
         >
           {settingsButtonLabel}
         </button>
-        <button
-          className="lobby-utility-link"
-          onClick={() => void handleDonate()}
-          type="button"
-        >
-          {t.donateBtn}
-        </button>
       </div>
       {isSettingsOpen && (
         <div
@@ -1429,68 +1422,77 @@ export function LobbyScreen({ onGameStart }: Props) {
             <div className="skin-modal-head">
               <h3>{settingsModalTitle}</h3>
             </div>
-            <p>{settingsModalDesc}</p>
-            <div className="settings-section">
-              <div className="settings-row">
-                <span className="settings-label">{nicknameLabel}</span>
-                <strong className="settings-value">{myNickname || "-"}</strong>
-              </div>
-              <div className="settings-row">
-                <span className="settings-label">{userIdLabel}</span>
-                <div className="settings-id-group">
-                  <strong className="settings-value settings-id-value">
-                    {formatDisplayUserId(authUserId)}
+            <div className="settings-scroll-body">
+              <p>{settingsModalDesc}</p>
+              <div className="settings-section">
+                <div className="settings-row">
+                  <span className="settings-label">{nicknameLabel}</span>
+                  <strong className="settings-value">{myNickname || "-"}</strong>
+                </div>
+                <div className="settings-row">
+                  <span className="settings-label">{userIdLabel}</span>
+                  <div className="settings-id-group">
+                    <strong className="settings-value settings-id-value">
+                      {formatDisplayUserId(authUserId)}
+                    </strong>
+                    <button
+                      className="settings-copy-btn"
+                      type="button"
+                      onClick={() => void handleCopyUserId()}
+                    >
+                      {settingsCopyLabel}
+                    </button>
+                  </div>
+                </div>
+                <div className="settings-row">
+                  <span className="settings-label">{accountTypeLabel}</span>
+                  <strong className="settings-value">{accountTypeValue}</strong>
+                </div>
+                <div className="settings-row">
+                  <span className="settings-label">{skinLabel}</span>
+                  <strong className="settings-value">{currentSkinName}</strong>
+                </div>
+                <div className="settings-row">
+                  <span className="settings-label">{recordLabel}</span>
+                  <strong className="settings-value">
+                    {lang === "en"
+                      ? `${accountWins}W ${accountLosses}L`
+                      : `${accountWins}\uC2B9 ${accountLosses}\uD328`}
                   </strong>
-                  <button
-                    className="settings-copy-btn"
-                    type="button"
-                    onClick={() => void handleCopyUserId()}
-                  >
-                    {settingsCopyLabel}
-                  </button>
                 </div>
               </div>
-              <div className="settings-row">
-                <span className="settings-label">{accountTypeLabel}</span>
-                <strong className="settings-value">{accountTypeValue}</strong>
+              <div className="upgrade-modal-actions settings-actions">
+                <a
+                  className="lobby-btn secondary settings-policy-btn"
+                  href={termsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {termsButtonLabel}
+                </a>
+                <a
+                  className="lobby-btn secondary settings-policy-btn"
+                  href={policyUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {t.policyBtn}
+                </a>
+                <button
+                  className="lobby-btn secondary settings-policy-btn"
+                  onClick={() => void handleDonate()}
+                  type="button"
+                >
+                  {t.donateBtn}
+                </button>
+                <button
+                  className="lobby-btn primary"
+                  onClick={() => setIsSettingsOpen(false)}
+                  type="button"
+                >
+                  {skinApplyLabel}
+                </button>
               </div>
-              <div className="settings-row">
-                <span className="settings-label">{skinLabel}</span>
-                <strong className="settings-value">{currentSkinName}</strong>
-              </div>
-              <div className="settings-row">
-                <span className="settings-label">{recordLabel}</span>
-                <strong className="settings-value">
-                  {lang === "en"
-                    ? `${accountWins}W ${accountLosses}L`
-                    : `${accountWins}\uC2B9 ${accountLosses}\uD328`}
-                </strong>
-              </div>
-            </div>
-            <div className="upgrade-modal-actions settings-actions">
-              <a
-                className="lobby-btn secondary settings-policy-btn"
-                href={termsUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {termsButtonLabel}
-              </a>
-              <a
-                className="lobby-btn secondary settings-policy-btn"
-                href={policyUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {t.policyBtn}
-              </a>
-              <button
-                className="lobby-btn primary"
-                onClick={() => setIsSettingsOpen(false)}
-                type="button"
-              >
-                {skinApplyLabel}
-              </button>
             </div>
           </div>
         </div>
