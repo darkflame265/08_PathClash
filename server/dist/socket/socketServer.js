@@ -44,6 +44,9 @@ function initSocketServer(io) {
     };
     io.on('connection', (socket) => {
         console.log(`[+] Connected: ${socket.id}`);
+        socket.on('sync_time', (ack) => {
+            ack?.({ serverNow: Date.now() });
+        });
         socket.on('session_register', async ({ auth }, ack) => {
             const userId = await registerSocketSession(socket, auth);
             ack?.({ ok: Boolean(userId) });

@@ -81,6 +81,7 @@ export interface RoundStartPayload {
   obstacles: Position[];
   timeLimit: number;
   serverTime: number;
+  roundEndsAt: number;
 }
 
 // Client-safe version (no socketId)

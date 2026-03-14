@@ -6,6 +6,7 @@ import type {
   ChatMessage, PlayerColor, PieceSkin,
 } from '../types/game.types';
 import { playHit } from '../utils/soundUtils';
+import { syncServerTime } from './timeSync';
 
 export function registerSocketHandlers(socket: Socket): () => void {
   const store = useGameStore.getState;
@@ -15,6 +16,7 @@ export function registerSocketHandlers(socket: Socket): () => void {
   };
 
   const onRoundStart = (payload: RoundStartPayload) => {
+    void syncServerTime(socket);
     store().setRoundInfo(payload);
   };
 

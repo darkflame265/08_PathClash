@@ -260,7 +260,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
           {gameState.phase === "planning" && roundInfo && (
             <TimerBar
               duration={roundInfo.timeLimit}
-              localStartTime={roundInfo.localStartTime}
+              roundEndsAt={roundInfo.roundEndsAt}
             />
           )}
           {gameState.phase === "moving" && (

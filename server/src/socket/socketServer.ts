@@ -63,6 +63,13 @@ export function initSocketServer(io: Server): void {
     console.log(`[+] Connected: ${socket.id}`);
 
     socket.on(
+      'sync_time',
+      (ack?: (response: { serverNow: number }) => void) => {
+        ack?.({ serverNow: Date.now() });
+      },
+    );
+
+    socket.on(
       'session_register',
       async (
         { auth }: { auth?: AuthPayload },

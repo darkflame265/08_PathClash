@@ -98,6 +98,7 @@ class GameRoom {
         blue.plannedPath = [];
         blue.pathSubmitted = false;
         this.obstacles = (0, GameEngine_1.generateObstacles)(this.roomId, this.turn, red.position, blue.position);
+        const now = Date.now();
         const payload = {
             turn: this.turn,
             pathPoints: (0, GameEngine_1.calcPathPoints)(this.turn),
@@ -106,7 +107,8 @@ class GameRoom {
             bluePosition: blue.position,
             obstacles: this.obstacles,
             timeLimit: 7,
-            serverTime: Date.now(),
+            serverTime: now,
+            roundEndsAt: now + PLANNING_TIME_MS,
         };
         this.io.to(this.roomId).emit('round_start', payload);
         this.timer.start(PLANNING_TIME_MS, () => this.onPlanningTimeout());

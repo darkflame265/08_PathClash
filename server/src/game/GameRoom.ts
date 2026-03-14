@@ -120,6 +120,7 @@ export class GameRoom {
     blue.pathSubmitted = false;
     this.obstacles = generateObstacles(this.roomId, this.turn, red.position, blue.position);
 
+    const now = Date.now();
     const payload: RoundStartPayload = {
       turn: this.turn,
       pathPoints: calcPathPoints(this.turn),
@@ -128,7 +129,8 @@ export class GameRoom {
       bluePosition: blue.position,
       obstacles: this.obstacles,
       timeLimit: 7,
-      serverTime: Date.now(),
+      serverTime: now,
+      roundEndsAt: now + PLANNING_TIME_MS,
     };
     this.io.to(this.roomId).emit('round_start', payload);
 

@@ -76,6 +76,7 @@ export interface RoundStartPayload {
   obstacles: Position[];
   timeLimit: number;
   serverTime: number;
+  roundEndsAt: number;
 }
 
 export interface ChatMessage {
