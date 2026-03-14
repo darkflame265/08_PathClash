@@ -190,6 +190,7 @@ export function LobbyScreen({ onGameStart }: Props) {
   const [isMatchmaking, setIsMatchmaking] = useState(false);
   const [isSkinPickerOpen, setIsSkinPickerOpen] = useState(false);
   const [isTokenShopOpen, setIsTokenShopOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [upgradeResult, setUpgradeResult] = useState<UpgradeResolution>({
     kind: "none",
   });
@@ -199,7 +200,7 @@ export function LobbyScreen({ onGameStart }: Props) {
   const lastRewardSyncDayRef = useRef<string>(getUtcDayKey());
   const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
   const isAudioMuted = isMusicMuted && isSfxMuted;
-  const skinButtonLabel = lang === "en" ? "Skin" : "\uC2A4\uD0A8";
+  const settingsButtonLabel = lang === "en" ? "Settings" : "\uC124\uC815";
   const skinModalTitle =
     lang === "en"
       ? "Choose Piece Skin"
@@ -209,6 +210,31 @@ export function LobbyScreen({ onGameStart }: Props) {
       ? "Select the look you want to use for your piece."
       : "\uD50C\uB808\uC774\uC5B4 \uB9D0\uC5D0 \uC801\uC6A9\uD560 \uC678\uD615\uC744 \uC120\uD0DD\uD558\uC138\uC694.";
   const skinApplyLabel = lang === "en" ? "Close" : "\uB2EB\uAE30";
+  const settingsModalTitle =
+    lang === "en" ? "Profile Settings" : "\uD504\uB85C\uD544 \uC124\uC815";
+  const settingsModalDesc =
+    lang === "en"
+      ? "Review your account information and support details."
+      : "\uACC4\uC815 \uC815\uBCF4\uC640 \uBB38\uC758 \uC6A9 \uC138\uBD80 \uC815\uBCF4\uB97C \uD655\uC778\uD558\uC138\uC694.";
+  const settingsCopyLabel = lang === "en" ? "Copy ID" : "ID \uBCF5\uC0AC";
+  const settingsCopiedMsg =
+    lang === "en"
+      ? "User ID copied."
+      : "\uC0AC\uC6A9\uC790 ID\uAC00 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.";
+  const settingsCopyFailedMsg =
+    lang === "en"
+      ? "Failed to copy ID."
+      : "ID \uBCF5\uC0AC\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.";
+  const accountTypeLabel = lang === "en" ? "Account Type" : "\uACC4\uC815 \uC720\uD615";
+  const nicknameLabel = lang === "en" ? "Nickname" : "\uB2C9\uB124\uC784";
+  const userIdLabel = lang === "en" ? "User ID" : "\uC0AC\uC6A9\uC790 ID";
+  const skinLabel = lang === "en" ? "Current Skin" : "\uD604\uC7AC \uC2A4\uD0A8";
+  const recordLabel = lang === "en" ? "Record" : "\uC804\uC801";
+  const accountTypeValue = isGuestUser
+    ? lang === "en"
+      ? "Guest"
+      : "\uAC8C\uC2A4\uD2B8"
+    : "Google";
   const tokenShopTitle = lang === "en" ? "Token Shop" : "\uD1A0\uD070 \uC0F5";
   const tokenShopDesc =
     lang === "en"
@@ -326,6 +352,11 @@ export function LobbyScreen({ onGameStart }: Props) {
           : "\uAC70\uC758 \uBAA8\uB4E0 \uC2A4\uD0A8 \uAD6C\uB9E4 \uAC00\uB2A5",
     },
   ];
+  const formatDisplayUserId = (userId: string | null) => {
+    if (!userId) return "-";
+    if (userId.length <= 13) return userId;
+    return `${userId.slice(0, 8)}-${userId.slice(9, 13)}`;
+  };
   const skinChoices: Array<{
     id:
       | "classic"
@@ -579,6 +610,8 @@ export function LobbyScreen({ onGameStart }: Props) {
       ? `Wins ${requiredWins}`
       : `\uC2B9\uB9AC ${requiredWins}`;
   };
+  const currentSkinName =
+    skinChoices.find((choice) => choice.id === pieceSkin)?.name ?? pieceSkin;
   const syncAccountSummary = useCallback(() => {
     return refreshAccountSummary().then(({
       nickname,
@@ -919,6 +952,18 @@ export function LobbyScreen({ onGameStart }: Props) {
     }
 
     window.alert(tokenShopFailedMsg);
+  };
+
+  const handleCopyUserId = async () => {
+    if (!authUserId) return;
+
+    try {
+      await navigator.clipboard.writeText(authUserId);
+      window.alert(settingsCopiedMsg);
+    } catch (error) {
+      console.error("[clipboard] failed to copy user id", error);
+      window.alert(settingsCopyFailedMsg);
+    }
   };
 
   const handleSkinChoiceSelect = async (
@@ -1336,26 +1381,18 @@ export function LobbyScreen({ onGameStart }: Props) {
         <div className="audio-toggle" role="group" aria-label="Skin picker">
           <button
             className={`audio-toggle-btn skin-toggle-btn ${
-              isSkinPickerOpen ? "is-active" : ""
+              isSettingsOpen ? "is-active" : ""
             }`}
-            onClick={() => setIsSkinPickerOpen((open) => !open)}
-            aria-pressed={isSkinPickerOpen}
-            title={skinButtonLabel}
+            onClick={() => setIsSettingsOpen((open) => !open)}
+            aria-pressed={isSettingsOpen}
+            title={settingsButtonLabel}
             type="button"
           >
-            {skinButtonLabel}
+            {settingsButtonLabel}
           </button>
         </div>
       </div>
       <div className="lobby-utility-links">
-        <a
-          className="lobby-utility-link"
-          href={policyUrl}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {t.policyBtn}
-        </a>
         <button
           className="lobby-utility-link"
           onClick={() => void handleDonate()}
@@ -1364,6 +1401,76 @@ export function LobbyScreen({ onGameStart }: Props) {
           {t.donateBtn}
         </button>
       </div>
+      {isSettingsOpen && (
+        <div
+          className="upgrade-modal-backdrop"
+          onClick={() => setIsSettingsOpen(false)}
+        >
+          <div
+            className="upgrade-modal skin-modal settings-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="skin-modal-head">
+              <h3>{settingsModalTitle}</h3>
+            </div>
+            <p>{settingsModalDesc}</p>
+            <div className="settings-section">
+              <div className="settings-row">
+                <span className="settings-label">{nicknameLabel}</span>
+                <strong className="settings-value">{myNickname || "-"}</strong>
+              </div>
+              <div className="settings-row">
+                <span className="settings-label">{userIdLabel}</span>
+                <div className="settings-id-group">
+                  <strong className="settings-value settings-id-value">
+                    {formatDisplayUserId(authUserId)}
+                  </strong>
+                  <button
+                    className="settings-copy-btn"
+                    type="button"
+                    onClick={() => void handleCopyUserId()}
+                  >
+                    {settingsCopyLabel}
+                  </button>
+                </div>
+              </div>
+              <div className="settings-row">
+                <span className="settings-label">{accountTypeLabel}</span>
+                <strong className="settings-value">{accountTypeValue}</strong>
+              </div>
+              <div className="settings-row">
+                <span className="settings-label">{skinLabel}</span>
+                <strong className="settings-value">{currentSkinName}</strong>
+              </div>
+              <div className="settings-row">
+                <span className="settings-label">{recordLabel}</span>
+                <strong className="settings-value">
+                  {lang === "en"
+                    ? `${accountWins}W ${accountLosses}L`
+                    : `${accountWins}\uC2B9 ${accountLosses}\uD328`}
+                </strong>
+              </div>
+            </div>
+            <div className="upgrade-modal-actions settings-actions">
+              <a
+                className="lobby-btn secondary settings-policy-btn"
+                href={policyUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {t.policyBtn}
+              </a>
+              <button
+                className="lobby-btn primary"
+                onClick={() => setIsSettingsOpen(false)}
+                type="button"
+              >
+                {skinApplyLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
