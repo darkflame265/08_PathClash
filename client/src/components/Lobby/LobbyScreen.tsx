@@ -1214,7 +1214,9 @@ export function LobbyScreen({ onGameStart }: Props) {
                     {(isLocked || (choice.tokenPrice !== null && choice.tokenPrice !== undefined && !isOwned)) && (
                       <span className="skin-lock-meta" aria-label="Locked skin">
                         <span className="skin-lock-icon" aria-hidden="true">
-                          {isLocked ? "\uD83D\uDD12" : "\uD83D\uDC8E"}
+                          {choice.tokenPrice !== null && choice.tokenPrice !== undefined
+                            ? "\uD83D\uDC8E"
+                            : "\uD83D\uDD12"}
                         </span>
                         <span>
                           {getSkinRequirementLabel(
