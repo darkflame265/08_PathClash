@@ -187,7 +187,7 @@ const initialPieceSkin = (() => {
     stored === 'inferno' ||
     stored === 'arc_reactor' ||
     stored === 'quantum' ||
-    stored === 'crystal' ||
+    stored === 'atomic' ||
     stored === 'flag_kr' ||
     stored === 'flag_jp' ||
     stored === 'flag_cn' ||

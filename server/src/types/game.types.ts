@@ -19,7 +19,7 @@ export type PieceSkin =
   | 'inferno'
   | 'arc_reactor'
   | 'quantum'
-  | 'crystal'
+  | 'atomic'
   | 'flag_kr'
   | 'flag_jp'
   | 'flag_cn'

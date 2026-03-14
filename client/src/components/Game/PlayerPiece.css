@@ -596,7 +596,7 @@
   );
 }
 
-.piece-skin-crystal .piece-inner {
+.piece-skin-atomic .piece-inner {
   background: radial-gradient(
     circle at 50% 50%,
     rgba(7, 10, 16, 0.98) 0%,
@@ -611,8 +611,8 @@
   border-color: rgba(204, 204, 204, 0.82);
 }
 
-.piece-skin-crystal .piece-inner::before,
-.piece-skin-crystal .piece-inner::after {
+.piece-skin-atomic .piece-inner::before,
+.piece-skin-atomic .piece-inner::after {
   content: "";
   position: absolute;
   inset: 1px;
@@ -620,14 +620,14 @@
   pointer-events: none;
 }
 
-.piece-skin-crystal .piece-inner::before {
+.piece-skin-atomic .piece-inner::before {
   border: 1.5px solid rgba(204, 204, 204, 0.34);
   box-shadow:
     0 0 8px rgba(203, 213, 225, 0.08),
     inset 0 0 8px rgba(255, 255, 255, 0.03);
 }
 
-.piece-skin-crystal .piece-inner::after {
+.piece-skin-atomic .piece-inner::after {
   border: 1px solid rgba(204, 204, 204, 0.12);
 }
 

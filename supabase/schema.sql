@@ -44,6 +44,14 @@ create table if not exists public.owned_skins (
   primary key (user_id, skin_id)
 );
 
+update public.owned_skins
+set skin_id = 'atomic'
+where skin_id = 'crystal';
+
+update public.profiles
+set equipped_skin = 'atomic'
+where equipped_skin = 'crystal';
+
 create table if not exists public.google_play_token_purchases (
   purchase_token text primary key,
   user_id uuid not null references auth.users(id) on delete cascade,

@@ -393,7 +393,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       | "inferno"
       | "arc_reactor"
       | "quantum"
-      | "crystal"
+      | "atomic"
       | "flag_kr"
       | "flag_jp"
       | "flag_cn"
@@ -541,7 +541,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       tier: "rare",
     },
     {
-      id: "crystal",
+      id: "atomic",
       name: lang === "en" ? "Atomic" : "\uC544\uD1A0\uBBF9",
       desc:
         lang === "en"
@@ -1245,7 +1245,7 @@ export function LobbyScreen({ onGameStart }: Props) {
                           </span>
                         </span>
                       )}
-                      {choice.id === "crystal" && (
+                      {choice.id === "atomic" && (
                         <span
                           className={`skin-preview-atomic-atom ${atomicPreviewReady ? "atomic-preview-ready" : ""}`}
                         >

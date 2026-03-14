@@ -63,7 +63,7 @@ interface Props {
     | "inferno"
     | "arc_reactor"
     | "quantum"
-    | "crystal"
+    | "atomic"
     | "flag_kr"
     | "flag_jp"
     | "flag_cn"
@@ -92,7 +92,7 @@ export function PlayerPiece({
   const [atomicReady, setAtomicReady] = useState(false);
 
   useEffect(() => {
-    if (skin !== 'crystal') {
+    if (skin !== 'atomic') {
       setAtomicReady(false);
       return;
     }
@@ -173,7 +173,7 @@ export function PlayerPiece({
             </div>
           </div>
         )}
-        {skin === "crystal" && (
+        {skin === "atomic" && (
           <div
             className={`atomic-atom ${atomicReady ? 'atomic-ready' : ''}`}
             aria-hidden="true"

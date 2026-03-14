@@ -1337,7 +1337,7 @@
   }
 }
 
-.skin-preview-crystal {
+.skin-preview-atomic {
   background: radial-gradient(
     circle at 50% 50%,
     rgba(7, 10, 16, 0.98) 0%,
@@ -1350,15 +1350,15 @@
     0 0 26px rgba(59, 130, 246, 0.12);
 }
 
-.skin-preview-crystal::before,
-.skin-preview-crystal::after {
+.skin-preview-atomic::before,
+.skin-preview-atomic::after {
   content: "";
   position: absolute;
   border-radius: 999px;
   pointer-events: none;
 }
 
-.skin-preview-crystal::before {
+.skin-preview-atomic::before {
   inset: 2px;
   border: 1.5px solid rgba(204, 204, 204, 0.34);
   box-shadow:
@@ -1366,7 +1366,7 @@
     inset 0 0 6px rgba(255, 255, 255, 0.03);
 }
 
-.skin-preview-crystal::after {
+.skin-preview-atomic::after {
   inset: 0;
   background: none;
   opacity: 1;
@@ -1385,7 +1385,7 @@
   perspective: 600px;
 }
 
-.skin-preview-crystal {
+.skin-preview-atomic {
   overflow: visible;
 }
 
