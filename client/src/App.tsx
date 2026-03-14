@@ -4,6 +4,7 @@ import { Capacitor } from "@capacitor/core";
 import {
   initializeGuestAuth,
   installNativeAuthCallbackHandler,
+  logoutToGuestMode,
   onAuthStateChanged,
   syncEquippedSkin,
   syncNickname,
@@ -20,15 +21,18 @@ type AppView = "lobby" | "game";
 function App() {
   const [view, setView] = useState<AppView>("lobby");
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showSessionReplaced, setShowSessionReplaced] = useState(false);
+  const [isSessionResetting, setIsSessionResetting] = useState(false);
   const {
     authReady,
+    authUserId,
+    authAccessToken,
     myNickname,
     pieceSkin,
     setAuthState,
     isMusicMuted,
     musicVolume,
-  } =
-    useGameStore();
+  } = useGameStore();
   const { lang } = useLang();
   const nicknameSyncTimeoutRef = useRef<number | null>(null);
   const lobbyBgmRef = useRef<HTMLAudioElement | null>(null);
@@ -118,6 +122,45 @@ function App() {
     socket.emit("update_piece_skin", { pieceSkin });
   }, [pieceSkin]);
 
+  useEffect(() => {
+    if (!authReady || !authAccessToken) return;
+
+    const socket = getSocket();
+    const registerSession = () => {
+      socket.emit("session_register", {
+        auth: {
+          accessToken: authAccessToken,
+          userId: authUserId ?? undefined,
+        },
+      });
+    };
+
+    socket.on("connect", registerSession);
+    if (socket.connected) {
+      registerSession();
+    }
+
+    return () => {
+      socket.off("connect", registerSession);
+    };
+  }, [authAccessToken, authReady, authUserId]);
+
+  useEffect(() => {
+    const socket = getSocket();
+    const onSessionReplaced = () => {
+      disconnectSocket();
+      useGameStore.getState().resetGame();
+      setShowExitConfirm(false);
+      setView("lobby");
+      setShowSessionReplaced(true);
+    };
+
+    socket.on("session_replaced", onSessionReplaced);
+    return () => {
+      socket.off("session_replaced", onSessionReplaced);
+    };
+  }, []);
+
   const handleReturnToLobby = useCallback(() => {
     disconnectSocket();
     useGameStore.getState().resetGame();
@@ -125,10 +168,34 @@ function App() {
     setView("lobby");
   }, []);
 
+  const handleSessionReplacedConfirm = useCallback(async () => {
+    setIsSessionResetting(true);
+    try {
+      const guestState = await logoutToGuestMode();
+      setAuthState(guestState);
+      disconnectSocket();
+      useGameStore.getState().resetGame();
+      setView("lobby");
+      setShowSessionReplaced(false);
+    } finally {
+      setIsSessionResetting(false);
+    }
+  }, [setAuthState]);
+
   const exitTitle =
     lang === "en" ? "Exit PathClash?" : "\uC815\uB9D0\uB85C \uAC8C\uC784\uC744 \uC885\uB8CC\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?";
   const exitConfirmLabel = lang === "en" ? "Yes" : "\uC608";
   const exitCancelLabel = lang === "en" ? "No" : "\uC544\uB2C8\uC694";
+  const sessionReplacedTitle =
+    lang === "en"
+      ? "This account is active on another device."
+      : "\uB2E4\uB978 \uAE30\uAE30\uC5D0\uC11C \uC811\uC18D \uC911\uC785\uB2C8\uB2E4.";
+  const sessionReplacedBody =
+    lang === "en"
+      ? "This session was closed to prevent duplicate matchmaking and state conflicts. Tap OK to continue in guest mode on this device."
+      : "\uC911\uBCF5 \uB9E4\uCE58 \uBC0F \uC0C1\uD0DC \uCDA9\uB3CC\uC744 \uBC29\uC9C0\uD558\uAE30 \uC704\uD574 \uD604\uC7AC \uC138\uC158\uC774 \uC885\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uD655\uC778\uC744 \uB204\uB974\uBA74 \uC774 \uAE30\uAE30\uC5D0\uC11C \uAC8C\uC2A4\uD2B8 \uBAA8\uB4DC\uB85C \uACC4\uC18D\uD569\uB2C8\uB2E4.";
+  const sessionReplacedConfirm =
+    lang === "en" ? "OK" : "\uD655\uC778";
 
   const tryStartBgm = useCallback(() => {
     const lobbyBgm = lobbyBgmRef.current;
@@ -157,6 +224,9 @@ function App() {
     let cleanup = () => {};
 
     void CapacitorApp.addListener("backButton", () => {
+      if (showSessionReplaced) {
+        return;
+      }
       if (view === "game") {
         handleReturnToLobby();
         return;
@@ -175,7 +245,7 @@ function App() {
     return () => {
       cleanup();
     };
-  }, [handleReturnToLobby, showExitConfirm, view]);
+  }, [handleReturnToLobby, showExitConfirm, showSessionReplaced, view]);
 
   useEffect(() => {
     tryStartBgm();
@@ -251,6 +321,24 @@ function App() {
                 type="button"
               >
                 {exitConfirmLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showSessionReplaced && (
+        <div className="app-confirm-backdrop">
+          <div className="app-confirm-modal">
+            <h3>{sessionReplacedTitle}</h3>
+            <p className="app-confirm-copy">{sessionReplacedBody}</p>
+            <div className="app-confirm-actions app-confirm-actions-single">
+              <button
+                className="app-confirm-btn app-confirm-btn-primary"
+                onClick={() => void handleSessionReplacedConfirm()}
+                type="button"
+                disabled={isSessionResetting}
+              >
+                {sessionReplacedConfirm}
               </button>
             </div>
           </div>

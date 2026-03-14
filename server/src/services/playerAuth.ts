@@ -66,7 +66,7 @@ function getActiveDailyRewardWins(
   return Math.min(DAILY_REWARD_MAX_WINS, Math.max(0, Number(stats.daily_reward_wins ?? 0)));
 }
 
-async function getUserFromToken(accessToken?: string) {
+export async function getUserFromToken(accessToken?: string) {
   if (!supabaseAdmin || !accessToken) return null;
   const { data, error } = await supabaseAdmin.auth.getUser(accessToken);
   if (error || !data.user) return null;

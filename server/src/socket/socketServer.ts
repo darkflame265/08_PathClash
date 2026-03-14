@@ -5,17 +5,76 @@ import { PieceSkin, Position } from '../types/game.types';
 import {
   AuthPayload,
   finalizeGoogleUpgrade,
+  getUserFromToken,
   resolveAccount,
   resolvePlayerProfile,
 } from '../services/playerAuth';
 
 export function initSocketServer(io: Server): void {
   const store = RoomStore.getInstance();
+  const activeUserSockets = new Map<string, string>();
+  const socketUsers = new Map<string, string>();
+
+  const unregisterSocketSession = (socketId: string) => {
+    const userId = socketUsers.get(socketId);
+    if (!userId) return;
+    socketUsers.delete(socketId);
+    if (activeUserSockets.get(userId) === socketId) {
+      activeUserSockets.delete(userId);
+    }
+  };
+
+  const registerSocketSession = async (
+    socket: Socket,
+    auth?: AuthPayload,
+  ): Promise<string | null> => {
+    const user = await getUserFromToken(auth?.accessToken);
+    if (!user) {
+      unregisterSocketSession(socket.id);
+      return null;
+    }
+
+    const previousMappedUserId = socketUsers.get(socket.id);
+    if (
+      previousMappedUserId &&
+      previousMappedUserId !== user.id &&
+      activeUserSockets.get(previousMappedUserId) === socket.id
+    ) {
+      activeUserSockets.delete(previousMappedUserId);
+    }
+
+    const previousSocketId = activeUserSockets.get(user.id);
+    activeUserSockets.set(user.id, socket.id);
+    socketUsers.set(socket.id, user.id);
+    socket.data.userId = user.id;
+
+    if (previousSocketId && previousSocketId !== socket.id) {
+      const previousSocket = io.sockets.sockets.get(previousSocketId);
+      if (previousSocket) {
+        previousSocket.emit('session_replaced', {});
+        previousSocket.disconnect(true);
+      }
+    }
+
+    return user.id;
+  };
 
   io.on('connection', (socket: Socket) => {
     console.log(`[+] Connected: ${socket.id}`);
 
+    socket.on(
+      'session_register',
+      async (
+        { auth }: { auth?: AuthPayload },
+        ack?: (response: { ok: boolean }) => void,
+      ) => {
+        const userId = await registerSocketSession(socket, auth);
+        ack?.({ ok: Boolean(userId) });
+      },
+    );
+
     socket.on('create_room', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
+      await registerSocketSession(socket, auth);
       const profile = await resolvePlayerProfile(auth, nickname);
       const roomId = store.generateRoomId();
       const code = store.generateCode();
@@ -36,6 +95,7 @@ export function initSocketServer(io: Server): void {
           tutorialPending,
         }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin; tutorialPending?: boolean },
       ) => {
+      await registerSocketSession(socket, auth);
       const profile = await resolvePlayerProfile(auth, nickname);
       const roomId = store.generateRoomId();
       const code = store.generateCode();
@@ -65,6 +125,7 @@ export function initSocketServer(io: Server): void {
     );
 
     socket.on('join_room', async ({ code, nickname, auth, pieceSkin }: { code: string; nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
+      await registerSocketSession(socket, auth);
       const profile = await resolvePlayerProfile(auth, nickname);
       const room = store.getByCode(code.toUpperCase());
       if (!room || room.isFull) {
@@ -97,6 +158,7 @@ export function initSocketServer(io: Server): void {
     });
 
     socket.on('join_random', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
+      await registerSocketSession(socket, auth);
       const profile = await resolvePlayerProfile(auth, nickname);
       const queued = store.dequeueRandom();
       if (!queued || queued.socketId === socket.id) {
@@ -148,6 +210,7 @@ export function initSocketServer(io: Server): void {
     });
 
     socket.on('account_sync', async ({ auth }: { auth?: AuthPayload }, ack?: (response: unknown) => void) => {
+      await registerSocketSession(socket, auth);
       ack?.(await resolveAccount(auth));
     });
 
@@ -173,6 +236,7 @@ export function initSocketServer(io: Server): void {
         },
         ack?: (response: unknown) => void,
       ) => {
+        await registerSocketSession(socket, auth);
         ack?.(await finalizeGoogleUpgrade(auth, guestAuth, guestProfile, flowStartedAt));
       },
     );
@@ -210,6 +274,7 @@ export function initSocketServer(io: Server): void {
 
     socket.on('disconnect', () => {
       console.log(`[-] Disconnected: ${socket.id}`);
+      unregisterSocketSession(socket.id);
       store.removeFromQueue(socket.id);
       const room = store.removeSocket(socket.id);
       if (room && room.playerCount > 0) {

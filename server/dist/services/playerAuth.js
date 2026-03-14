@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getUserFromToken = getUserFromToken;
 exports.resolvePlayerProfile = resolvePlayerProfile;
 exports.resolveAccount = resolveAccount;
 exports.recordMatchmakingResult = recordMatchmakingResult;
