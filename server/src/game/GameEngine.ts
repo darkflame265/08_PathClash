@@ -2,7 +2,8 @@ import { Position, PlayerColor, CollisionEvent, PlayerState } from '../types/gam
 
 const GRID_MIN = 0;
 const GRID_MAX = 4;
-const MAX_OBSTACLES = 3;
+const MAX_OBSTACLES = 4;
+const MIN_OPEN_DIRECTIONS = 2;
 
 export function calcPathPoints(turn: number): number {
   return Math.min(4 + turn, 10);
@@ -47,15 +48,9 @@ export function generateObstacles(
   }
 
   const random = createSeededRandom(`${matchId}:${turn}`);
-  const picked: Position[] = [];
-
-  while (picked.length < MAX_OBSTACLES && candidates.length > 0) {
-    const index = Math.floor(random() * candidates.length);
-    const [cell] = candidates.splice(index, 1);
-    picked.push(cell);
-  }
-
-  return picked;
+  const shuffledCandidates = shuffleCandidates(candidates, random);
+  const picked = pickObstacleLayout(shuffledCandidates, redPosition, bluePosition);
+  return picked ?? shuffledCandidates.slice(0, MAX_OBSTACLES);
 }
 
 export function detectCollisions(
@@ -130,9 +125,99 @@ export function isObstacle(cell: Position, obstacles: Position[]): boolean {
   return obstacles.some((obstacle) => obstacle.row === cell.row && obstacle.col === cell.col);
 }
 
+function pickObstacleLayout(
+  candidates: Position[],
+  redPosition: Position,
+  bluePosition: Position
+): Position[] | null {
+  const picked: Position[] = [];
+  const pickedKeys = new Set<string>();
+
+  const search = (startIndex: number): boolean => {
+    if (!positionsHaveEnoughOpenDirections(redPosition, bluePosition, picked)) {
+      return false;
+    }
+
+    if (picked.length === MAX_OBSTACLES) {
+      return true;
+    }
+
+    const remainingSlots = MAX_OBSTACLES - picked.length;
+    for (let index = startIndex; index <= candidates.length - remainingSlots; index++) {
+      const candidate = candidates[index];
+      const candidateKey = toKey(candidate);
+      if (pickedKeys.has(candidateKey)) continue;
+
+      picked.push(candidate);
+      pickedKeys.add(candidateKey);
+
+      if (search(index + 1)) {
+        return true;
+      }
+
+      picked.pop();
+      pickedKeys.delete(candidateKey);
+    }
+
+    return false;
+  };
+
+  return search(0) ? [...picked] : null;
+}
+
+function positionsHaveEnoughOpenDirections(
+  redPosition: Position,
+  bluePosition: Position,
+  obstacles: Position[]
+): boolean {
+  return (
+    countOpenDirections(redPosition, obstacles) >= MIN_OPEN_DIRECTIONS &&
+    countOpenDirections(bluePosition, obstacles) >= MIN_OPEN_DIRECTIONS
+  );
+}
+
+function countOpenDirections(position: Position, obstacles: Position[]): number {
+  let count = 0;
+  for (const offset of DIRECTIONS) {
+    const next = {
+      row: position.row + offset.row,
+      col: position.col + offset.col,
+    };
+    if (!isWithinGrid(next)) continue;
+    if (isObstacle(next, obstacles)) continue;
+    count += 1;
+  }
+  return count;
+}
+
+function isWithinGrid(position: Position): boolean {
+  return (
+    position.row >= GRID_MIN &&
+    position.row <= GRID_MAX &&
+    position.col >= GRID_MIN &&
+    position.col <= GRID_MAX
+  );
+}
+
+function shuffleCandidates(candidates: Position[], random: () => number): Position[] {
+  const shuffled = [...candidates];
+  for (let index = shuffled.length - 1; index > 0; index--) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
+}
+
 function toKey(position: Position): string {
   return `${position.row},${position.col}`;
 }
+
+const DIRECTIONS: Position[] = [
+  { row: -1, col: 0 },
+  { row: 1, col: 0 },
+  { row: 0, col: -1 },
+  { row: 0, col: 1 },
+];
 
 function createSeededRandom(seedInput: string): () => number {
   let seed = hashString(seedInput);

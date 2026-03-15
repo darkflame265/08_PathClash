@@ -11,7 +11,8 @@ exports.toClientPlayer = toClientPlayer;
 exports.isObstacle = isObstacle;
 const GRID_MIN = 0;
 const GRID_MAX = 4;
-const MAX_OBSTACLES = 3;
+const MAX_OBSTACLES = 4;
+const MIN_OPEN_DIRECTIONS = 2;
 function calcPathPoints(turn) {
     return Math.min(4 + turn, 10);
 }
@@ -47,13 +48,9 @@ function generateObstacles(matchId, turn, redPosition, bluePosition) {
         }
     }
     const random = createSeededRandom(`${matchId}:${turn}`);
-    const picked = [];
-    while (picked.length < MAX_OBSTACLES && candidates.length > 0) {
-        const index = Math.floor(random() * candidates.length);
-        const [cell] = candidates.splice(index, 1);
-        picked.push(cell);
-    }
-    return picked;
+    const shuffledCandidates = shuffleCandidates(candidates, random);
+    const picked = pickObstacleLayout(shuffledCandidates, redPosition, bluePosition);
+    return picked ?? shuffledCandidates.slice(0, MAX_OBSTACLES);
 }
 function detectCollisions(redPath, bluePath, redStart, blueStart, attackerColor, escaperHp) {
     const events = [];
@@ -107,9 +104,76 @@ function toClientPlayer(p) {
 function isObstacle(cell, obstacles) {
     return obstacles.some((obstacle) => obstacle.row === cell.row && obstacle.col === cell.col);
 }
+function pickObstacleLayout(candidates, redPosition, bluePosition) {
+    const picked = [];
+    const pickedKeys = new Set();
+    const search = (startIndex) => {
+        if (!positionsHaveEnoughOpenDirections(redPosition, bluePosition, picked)) {
+            return false;
+        }
+        if (picked.length === MAX_OBSTACLES) {
+            return true;
+        }
+        const remainingSlots = MAX_OBSTACLES - picked.length;
+        for (let index = startIndex; index <= candidates.length - remainingSlots; index++) {
+            const candidate = candidates[index];
+            const candidateKey = toKey(candidate);
+            if (pickedKeys.has(candidateKey))
+                continue;
+            picked.push(candidate);
+            pickedKeys.add(candidateKey);
+            if (search(index + 1)) {
+                return true;
+            }
+            picked.pop();
+            pickedKeys.delete(candidateKey);
+        }
+        return false;
+    };
+    return search(0) ? [...picked] : null;
+}
+function positionsHaveEnoughOpenDirections(redPosition, bluePosition, obstacles) {
+    return (countOpenDirections(redPosition, obstacles) >= MIN_OPEN_DIRECTIONS &&
+        countOpenDirections(bluePosition, obstacles) >= MIN_OPEN_DIRECTIONS);
+}
+function countOpenDirections(position, obstacles) {
+    let count = 0;
+    for (const offset of DIRECTIONS) {
+        const next = {
+            row: position.row + offset.row,
+            col: position.col + offset.col,
+        };
+        if (!isWithinGrid(next))
+            continue;
+        if (isObstacle(next, obstacles))
+            continue;
+        count += 1;
+    }
+    return count;
+}
+function isWithinGrid(position) {
+    return (position.row >= GRID_MIN &&
+        position.row <= GRID_MAX &&
+        position.col >= GRID_MIN &&
+        position.col <= GRID_MAX);
+}
+function shuffleCandidates(candidates, random) {
+    const shuffled = [...candidates];
+    for (let index = shuffled.length - 1; index > 0; index--) {
+        const swapIndex = Math.floor(random() * (index + 1));
+        [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+    }
+    return shuffled;
+}
 function toKey(position) {
     return `${position.row},${position.col}`;
 }
+const DIRECTIONS = [
+    { row: -1, col: 0 },
+    { row: 1, col: 0 },
+    { row: 0, col: -1 },
+    { row: 0, col: 1 },
+];
 function createSeededRandom(seedInput) {
     let seed = hashString(seedInput);
     return () => {
