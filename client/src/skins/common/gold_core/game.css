@@ -13,7 +13,6 @@
     0 0 calc(var(--piece-glow, 12px) * 3.4) rgba(161, 98, 7, 0.22),
     inset 0 0 14px rgba(255, 249, 180, 0.28);
   border-color: rgba(253, 224, 71, 0.96);
-  animation: gold-core-pulse 2.2s ease-in-out infinite;
 }
 
 .player-piece.piece-skin-gold_core .piece-inner::before,
