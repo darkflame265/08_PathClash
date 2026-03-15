@@ -396,7 +396,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       )}
       {tutorialStep === 6 && (
         <div
-          className="ai-tutorial-hint no-arrow"
+          className="ai-tutorial-hint ai-tutorial-hint-center no-arrow"
           style={{
             left: "50%",
             top: "42%",
