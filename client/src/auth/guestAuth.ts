@@ -511,13 +511,11 @@ export async function syncEquippedSkin(equippedSkin: PieceSkin): Promise<void> {
 
 export async function purchaseSkinWithTokens(
   skinId: PieceSkin,
-  tokenPrice: number,
 ): Promise<"purchased" | "already_owned" | "insufficient_tokens" | "auth_required" | "failed"> {
   if (!supabase) return "failed";
 
   const { data, error } = await supabase.rpc("purchase_skin_with_tokens", {
     p_skin_id: skinId,
-    p_cost: tokenPrice,
   });
 
   if (error) {

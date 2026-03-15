@@ -117,8 +117,7 @@ end;
 $$;
 
 create or replace function public.purchase_skin_with_tokens(
-  p_skin_id text,
-  p_cost integer
+  p_skin_id text
 )
 returns text
 language plpgsql
@@ -128,6 +127,7 @@ as $$
 declare
   v_user_id uuid;
   v_tokens integer;
+  v_cost integer;
 begin
   v_user_id := auth.uid();
 
@@ -135,11 +135,31 @@ begin
     return 'AUTH_REQUIRED';
   end if;
 
+  v_cost := case p_skin_id
+    when 'plasma' then 120
+    when 'gold_core' then 120
+    when 'neon_pulse' then 120
+    when 'inferno' then 120
+    when 'quantum' then 120
+    when 'cosmic' then 350
+    when 'arc_reactor' then 350
+    when 'atomic' then 900
+    else null
+  end;
+
+  if v_cost is null then
+    return 'INVALID_SKIN';
+  end if;
+
   select tokens
     into v_tokens
     from public.player_stats
    where user_id = v_user_id
    for update;
+
+  if not found then
+    return 'INSUFFICIENT_TOKENS';
+  end if;
 
   if exists (
     select 1
@@ -150,7 +170,7 @@ begin
     return 'ALREADY_OWNED';
   end if;
 
-  if coalesce(v_tokens, 0) < p_cost then
+  if coalesce(v_tokens, 0) < v_cost then
     return 'INSUFFICIENT_TOKENS';
   end if;
 
@@ -163,7 +183,7 @@ begin
   end if;
 
   update public.player_stats
-     set tokens = tokens - p_cost,
+     set tokens = tokens - v_cost,
          updated_at = now()
    where user_id = v_user_id;
 

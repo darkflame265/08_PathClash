@@ -999,7 +999,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       const confirmed = window.confirm(skinPurchasePrompt(choice.name));
       if (!confirmed) return;
 
-      const result = await purchaseSkinWithTokens(choice.id, choice.tokenPrice);
+      const result = await purchaseSkinWithTokens(choice.id);
       if (result === "purchased" || result === "already_owned") {
         await syncAccountSummary();
         setPieceSkin(choice.id);
