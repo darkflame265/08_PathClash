@@ -1,7 +1,8 @@
 ﻿import { useCallback, useEffect, useRef, useState } from "react";
 import { FlagSkin, isFlagSkin } from "../shared/FlagSkin";
-import { StarrySkySkin } from "../shared/StarrySkySkin";
 import { AtomicPreview } from "../../skins/legendary/atomic/Preview";
+import { CosmicPreview } from "../../skins/rare/cosmic/Preview";
+import { ArcReactorPreview } from "../../skins/rare/arc_reactor/Preview";
 import {
   cancelPendingGoogleUpgradeSwitch,
   confirmPendingGoogleUpgradeSwitch,
@@ -1306,41 +1307,8 @@ export function LobbyScreen({ onGameStart }: Props) {
                       aria-hidden="true"
                     >
                       {isFlagSkin(choice.id) && <FlagSkin id={choice.id} />}
-                      {choice.id === "cosmic" && (
-                        <StarrySkySkin
-                          className="skin-preview-cosmic-canvas"
-                          density={0.16}
-                        />
-                      )}
-                      {choice.id === "arc_reactor" && (
-                        <span className="skin-preview-arc-scale">
-                          <span className="skin-preview-arc_reactor-wrap">
-                            <span className="skin-preview-case_container">
-                              <span className="skin-preview-e7">
-                                <span className="skin-preview-semi_arc_3 skin-preview-e5_1">
-                                  <span className="skin-preview-semi_arc_3 skin-preview-e5_2">
-                                    <span className="skin-preview-semi_arc_3 skin-preview-e5_3">
-                                      <span className="skin-preview-semi_arc_3 skin-preview-e5_4" />
-                                    </span>
-                                  </span>
-                                </span>
-                                <span className="skin-preview-core2" />
-                              </span>
-                              <span className="skin-preview-marks">
-                                {Array.from({ length: 60 }, (_, index) => (
-                                  <span
-                                    key={`arc-preview-${index}`}
-                                    className="skin-preview-arc-mark"
-                                    style={{
-                                      ["--mark-angle" as string]: `${(index + 1) * 6}deg`,
-                                    }}
-                                  />
-                                ))}
-                              </span>
-                            </span>
-                          </span>
-                        </span>
-                      )}
+                      {choice.id === "cosmic" && <CosmicPreview />}
+                      {choice.id === "arc_reactor" && <ArcReactorPreview />}
                       {choice.id === "atomic" && (
                         <AtomicPreview ready={atomicPreviewReady} />
                       )}

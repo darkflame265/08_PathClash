@@ -1,0 +1,23 @@
+.player-piece.piece-skin-cosmic .piece-inner {
+  background: linear-gradient(to bottom, #131b23 0%, #0a1443 100%);
+  box-shadow:
+    0 0 calc(var(--piece-glow, 12px) * 0.9) rgba(71, 132, 191, 0.34),
+    0 0 calc(var(--piece-glow, 12px) * 2.1) rgba(77, 67, 152, 0.22),
+    inset 0 0 10px rgba(255, 255, 255, 0.04);
+  border-color: rgba(71, 132, 191, 0.55);
+}
+
+.player-piece.piece-skin-cosmic .piece-inner::before,
+.player-piece.piece-skin-cosmic .piece-inner::after {
+  content: none;
+}
+
+.cosmic-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 50%;
+  pointer-events: none;
+}

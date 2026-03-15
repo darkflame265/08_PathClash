@@ -1,6 +1,7 @@
 import type { Position, PlayerColor } from '../../types/game.types';
 import { FlagSkin, isFlagSkin } from '../shared/FlagSkin';
-import { StarrySkySkin } from '../shared/StarrySkySkin';
+import { CosmicGame } from '../../skins/rare/cosmic/Game';
+import { ArcReactorGame } from '../../skins/rare/arc_reactor/Game';
 import { AtomicGame } from '../../skins/legendary/atomic/Game';
 import './PlayerPiece.css';
 
@@ -36,11 +37,6 @@ const QUANTUM_ORBIT_PARTICLES = [
   { radius: 0.86, angle: 352, duration: 1.86, delay: -0.88 },
   { radius: 0.62, angle: 154, duration: 2.78, delay: -2.28 },
 ];
-
-const ARC_REACTOR_MARKS = Array.from({ length: 60 }, (_, index) => ({
-  angle: index * 6,
-  delay: -(index % 6) * 0.22,
-}));
 
 interface Props {
   color: PlayerColor;
@@ -117,39 +113,8 @@ export function PlayerPiece({
       {isAttacker && <div className={`attacker-glow glow-${color}`} />}
       <div className="piece-inner">
         {isFlagSkin(skin) && <FlagSkin id={skin} />}
-        {skin === "cosmic" && (
-          <StarrySkySkin className="cosmic-canvas" density={0.3} />
-        )}
-        {skin === "arc_reactor" && (
-          <div className="arc-reactor-scale" aria-hidden="true">
-            <div className="arc_reactor">
-              <div className="case_container">
-                <div className="e7">
-                  <div className="semi_arc_3 e5_1">
-                    <div className="semi_arc_3 e5_2">
-                      <div className="semi_arc_3 e5_3">
-                        <div className="semi_arc_3 e5_4" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="core2" />
-                </div>
-                <ul className="marks">
-                  {ARC_REACTOR_MARKS.map((mark, index) => (
-                    <li
-                      key={`${mark.angle}-${index}`}
-                      className="arc-reactor-mark"
-                      style={{
-                        ["--mark-angle" as string]: `${mark.angle}deg`,
-                        ["--mark-delay" as string]: `${mark.delay}s`,
-                      }}
-                    />
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
+        {skin === "cosmic" && <CosmicGame />}
+        {skin === "arc_reactor" && <ArcReactorGame />}
         {skin === "atomic" && <AtomicGame cellSize={cellSize} />}
         {skin === "quantum" && (
           <div className="quantum-orbit-field" aria-hidden="true">
