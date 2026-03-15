@@ -3,6 +3,7 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { supabaseAdmin } from "./lib/supabase";
+import { verifyGooglePlayProductPurchase } from "./services/googlePlayVerifier";
 import { initSocketServer } from "./socket/socketServer";
 
 const app = express();
@@ -116,6 +117,21 @@ app.post("/payments/google-play/token-grant", async (req, res) => {
   const { data, error } = await supabaseAdmin.auth.getUser(accessToken);
   if (error || !data.user) {
     res.status(401).json({ error: "auth_invalid" });
+    return;
+  }
+
+  const verification = await verifyGooglePlayProductPurchase({
+    productId,
+    purchaseToken,
+  });
+  if (!verification.ok) {
+    const statusCode =
+      verification.reason === "config_missing" ||
+      verification.reason === "invalid_credentials" ||
+      verification.reason === "google_request_failed"
+        ? 503
+        : 400;
+    res.status(statusCode).json({ error: verification.reason });
     return;
   }
 

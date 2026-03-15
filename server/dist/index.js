@@ -8,6 +8,7 @@ const express_1 = __importDefault(require("express"));
 const http_1 = require("http");
 const socket_io_1 = require("socket.io");
 const supabase_1 = require("./lib/supabase");
+const googlePlayVerifier_1 = require("./services/googlePlayVerifier");
 const socketServer_1 = require("./socket/socketServer");
 const app = (0, express_1.default)();
 const httpServer = (0, http_1.createServer)(app);
@@ -97,6 +98,19 @@ app.post("/payments/google-play/token-grant", async (req, res) => {
     const { data, error } = await supabase_1.supabaseAdmin.auth.getUser(accessToken);
     if (error || !data.user) {
         res.status(401).json({ error: "auth_invalid" });
+        return;
+    }
+    const verification = await (0, googlePlayVerifier_1.verifyGooglePlayProductPurchase)({
+        productId,
+        purchaseToken,
+    });
+    if (!verification.ok) {
+        const statusCode = verification.reason === "config_missing" ||
+            verification.reason === "invalid_credentials" ||
+            verification.reason === "google_request_failed"
+            ? 503
+            : 400;
+        res.status(statusCode).json({ error: verification.reason });
         return;
     }
     const { data: granted, error: grantError } = await supabase_1.supabaseAdmin.rpc("grant_tokens_from_google_purchase", {
