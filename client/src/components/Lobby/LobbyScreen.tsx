@@ -1,6 +1,7 @@
 ﻿import { useCallback, useEffect, useRef, useState } from "react";
 import { FlagSkin, isFlagSkin } from "../shared/FlagSkin";
 import { StarrySkySkin } from "../shared/StarrySkySkin";
+import { AtomicPreview } from "../../skins/legendary/atomic/Preview";
 import {
   cancelPendingGoogleUpgradeSwitch,
   confirmPendingGoogleUpgradeSwitch,
@@ -1341,26 +1342,7 @@ export function LobbyScreen({ onGameStart }: Props) {
                         </span>
                       )}
                       {choice.id === "atomic" && (
-                        <span
-                          className={`skin-preview-atomic-atom ${atomicPreviewReady ? "atomic-preview-ready" : ""}`}
-                        >
-                          <span className="skin-preview-atomic-nucleus" />
-                          <span className="skin-preview-atomic-electron skin-preview-atomic-electron-1">
-                            <span className="skin-preview-atomic-electron-ring">
-                              <span className="skin-preview-atomic-electron-particle" />
-                            </span>
-                          </span>
-                          <span className="skin-preview-atomic-electron skin-preview-atomic-electron-2">
-                            <span className="skin-preview-atomic-electron-ring">
-                              <span className="skin-preview-atomic-electron-particle" />
-                            </span>
-                          </span>
-                          <span className="skin-preview-atomic-electron skin-preview-atomic-electron-3">
-                            <span className="skin-preview-atomic-electron-ring">
-                              <span className="skin-preview-atomic-electron-particle" />
-                            </span>
-                          </span>
-                        </span>
+                        <AtomicPreview ready={atomicPreviewReady} />
                       )}
                     </span>
                     <span className="skin-option-copy">

@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
 import type { Position, PlayerColor } from '../../types/game.types';
 import { FlagSkin, isFlagSkin } from '../shared/FlagSkin';
 import { StarrySkySkin } from '../shared/StarrySkySkin';
+import { AtomicGame } from '../../skins/legendary/atomic/Game';
 import './PlayerPiece.css';
 
 const QUANTUM_ORBIT_PARTICLES = [
@@ -89,29 +89,6 @@ export function PlayerPiece({
   const meBorder = Math.max(2, Math.round(pieceSize * 0.055));
   const meGlow = Math.max(2, Math.round(pieceSize * 0.055));
   const pieceGlow = Math.max(8, Math.round(pieceSize * 0.22));
-  const [atomicReady, setAtomicReady] = useState(false);
-
-  useEffect(() => {
-    if (skin !== 'atomic') {
-      setAtomicReady(false);
-      return;
-    }
-
-    let raf1 = 0;
-    let raf2 = 0;
-    setAtomicReady(false);
-    raf1 = window.requestAnimationFrame(() => {
-      raf2 = window.requestAnimationFrame(() => {
-        setAtomicReady(true);
-      });
-    });
-
-    return () => {
-      window.cancelAnimationFrame(raf1);
-      window.cancelAnimationFrame(raf2);
-    };
-  }, [skin, cellSize]);
-
   const classes = [
     'player-piece',
     `piece-${color}`,
@@ -173,29 +150,7 @@ export function PlayerPiece({
             </div>
           </div>
         )}
-        {skin === "atomic" && (
-          <div
-            className={`atomic-atom ${atomicReady ? 'atomic-ready' : ''}`}
-            aria-hidden="true"
-          >
-            <div className="atomic-nucleus" />
-            <div className="atomic-electron atomic-electron-1">
-              <div className="atomic-electron-ring">
-                <div className="atomic-electron-particle" />
-              </div>
-            </div>
-            <div className="atomic-electron atomic-electron-2">
-              <div className="atomic-electron-ring">
-                <div className="atomic-electron-particle" />
-              </div>
-            </div>
-            <div className="atomic-electron atomic-electron-3">
-              <div className="atomic-electron-ring">
-                <div className="atomic-electron-particle" />
-              </div>
-            </div>
-          </div>
-        )}
+        {skin === "atomic" && <AtomicGame cellSize={cellSize} />}
         {skin === "quantum" && (
           <div className="quantum-orbit-field" aria-hidden="true">
             {QUANTUM_ORBIT_PARTICLES.map((particle, index) => (
