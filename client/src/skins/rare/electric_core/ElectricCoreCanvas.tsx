@@ -16,7 +16,7 @@ type BoltState = {
 };
 
 const ELECTRIC_CORE_SPEED = 0.6;
-const ELECTRIC_CORE_EXTENDED_CHANCE = 0.5;
+const ELECTRIC_CORE_EXTENDED_CHANCE = 0;
 const ELECTRIC_CORE_EXTENDED_LENGTH_MIN = 1;
 const ELECTRIC_CORE_EXTENDED_LENGTH_MAX = 3;
 const ELECTRIC_CORE_EXTENDED_INTENSITY = 1;
@@ -56,10 +56,7 @@ interface Props {
   speedMultiplier?: number;
 }
 
-export function ElectricCoreCanvas({
-  className,
-  speedMultiplier = 1,
-}: Props) {
+export function ElectricCoreCanvas({ className, speedMultiplier = 1 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
