@@ -17,7 +17,9 @@
       "mcp__plugin_playwright_playwright__browser_resize",
       "mcp__plugin_playwright_playwright__browser_click",
       "Bash(node_modules/.bin/tsc:*)",
-      "Bash(./client/node_modules/.bin/tsc:*)"
+      "Bash(./client/node_modules/.bin/tsc:*)",
+      "Bash(python3 -c \"from PIL import Image; print\\('Pillow OK'\\)\" 2>/dev/null || python -c \"from PIL import Image; print\\('Pillow OK'\\)\" 2>/dev/null || echo \"Pillow not found\")",
+      "Bash(python3:*)"
     ]
   }
 }

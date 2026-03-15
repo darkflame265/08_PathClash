@@ -39,12 +39,12 @@ function App() {
   const inGameBgmRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    const lobbyBgm = new Audio("/music/Lobby_bgm_1.ogg");
+    const lobbyBgm = new Audio("/music/Lobby_bgm_3.ogg");
     lobbyBgm.loop = true;
     lobbyBgm.preload = "auto";
     lobbyBgm.volume = musicVolume;
 
-    const inGameBgm = new Audio("/music/InGame_bgm_1.ogg");
+    const inGameBgm = new Audio("/music/InGame_bgm_3.ogg");
     inGameBgm.loop = true;
     inGameBgm.preload = "auto";
     inGameBgm.volume = musicVolume;
