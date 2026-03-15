@@ -872,6 +872,14 @@
   overflow: hidden;
 }
 
+.skin-preview.skin-preview-atomic {
+  overflow: visible;
+}
+
+.skin-preview.skin-preview-arc_reactor {
+  overflow: visible;
+}
+
 .skin-preview-classic {
   background: radial-gradient(circle at 35% 35%, #ff8b8b 0%, #ef4444 70%);
   box-shadow:
