@@ -16,6 +16,7 @@ export function initSocketServer(io: Server): void {
   const activeUserSockets = new Map<string, string>();
   const socketUsers = new Map<string, string>();
   const authCacheTtlMs = 10 * 60 * 1000;
+  const roomSweepIntervalMs = 60 * 1000;
 
   const unregisterSocketSession = (socketId: string) => {
     const userId = socketUsers.get(socketId);
@@ -25,6 +26,10 @@ export function initSocketServer(io: Server): void {
       activeUserSockets.delete(userId);
     }
   };
+
+  setInterval(() => {
+    store.sweep(new Set(io.sockets.sockets.keys()));
+  }, roomSweepIntervalMs);
 
   const registerSocketSession = async (
     socket: Socket,

@@ -9,6 +9,7 @@ function initSocketServer(io) {
     const activeUserSockets = new Map();
     const socketUsers = new Map();
     const authCacheTtlMs = 10 * 60 * 1000;
+    const roomSweepIntervalMs = 60 * 1000;
     const unregisterSocketSession = (socketId) => {
         const userId = socketUsers.get(socketId);
         if (!userId)
@@ -18,6 +19,9 @@ function initSocketServer(io) {
             activeUserSockets.delete(userId);
         }
     };
+    setInterval(() => {
+        store.sweep(new Set(io.sockets.sockets.keys()));
+    }, roomSweepIntervalMs);
     const registerSocketSession = async (socket, auth, options) => {
         const accessToken = auth?.accessToken?.trim();
         const cachedUserId = typeof socket.data.userId === 'string' ? socket.data.userId : null;

@@ -9,6 +9,8 @@ const PLANNING_TIME_MS = 7000;
 const SUBMIT_GRACE_MS = 350;
 class GameRoom {
     constructor(roomId, code, io, matchType) {
+        this.createdAt = Date.now();
+        this.lastActivityAt = Date.now();
         this.players = new Map();
         this.phase = 'waiting';
         this.turn = 1;
@@ -24,6 +26,9 @@ class GameRoom {
     }
     get playerCount() { return this.players.size; }
     get isFull() { return this.players.size === 2; }
+    get currentPhase() { return this.phase; }
+    get createdTimestamp() { return this.createdAt; }
+    get lastActivityTimestamp() { return this.lastActivityAt; }
     addPlayer(socket, nickname, userId = null, stats = { wins: 0, losses: 0 }, pieceSkin = 'classic') {
         if (this.isFull)
             return null;
@@ -31,6 +36,7 @@ class GameRoom {
         const player = this.createPlayerState(color, socket.id, nickname, userId, stats, pieceSkin);
         this.players.set(color, player);
         socket.join(this.roomId);
+        this.touchActivity();
         return color;
     }
     addAiPlayer(nickname = 'AI Bot') {
@@ -41,6 +47,7 @@ class GameRoom {
         const player = this.createPlayerState(color, aiId, nickname, null, { wins: 0, losses: 0 }, 'classic');
         this.players.set(color, player);
         this.aiColor = color;
+        this.touchActivity();
         return color;
     }
     updatePlayerSkin(socketId, pieceSkin) {
@@ -48,6 +55,7 @@ class GameRoom {
         if (!player)
             return;
         player.pieceSkin = pieceSkin;
+        this.touchActivity();
         this.io.to(this.roomId).emit('player_skin_updated', {
             color: player.color,
             pieceSkin,
@@ -75,6 +83,7 @@ class GameRoom {
                         this.phase = 'gameover';
                     }
                 }
+                this.touchActivity();
                 break;
             }
         }
@@ -94,6 +103,7 @@ class GameRoom {
         this.attackerColor = 'red';
         this.resetPositions();
         this.updateRoles();
+        this.touchActivity();
         this.io.to(this.roomId).emit('game_start', this.toClientState());
         if (startPaused)
             return;
@@ -107,6 +117,7 @@ class GameRoom {
         const player = this.getPlayerBySocket(socketId);
         if (!player || player.color === this.aiColor)
             return;
+        this.touchActivity();
         this.startRound();
     }
     startRound() {
@@ -119,6 +130,7 @@ class GameRoom {
         blue.pathSubmitted = false;
         this.obstacles = (0, GameEngine_1.generateObstacles)(this.roomId, this.turn, red.position, blue.position);
         const now = Date.now();
+        this.touchActivity(now);
         const payload = {
             turn: this.turn,
             pathPoints: (0, GameEngine_1.calcPathPoints)(this.turn),
@@ -134,6 +146,7 @@ class GameRoom {
         this.timer.start(PLANNING_TIME_MS, () => this.onPlanningTimeout());
     }
     onPlanningTimeout() {
+        this.touchActivity();
         this.submitAiPath();
         // Give the timer-end submission a brief grace window to arrive.
         setTimeout(() => {
@@ -161,6 +174,7 @@ class GameRoom {
         if (!(0, GameEngine_1.isValidPath)(player.position, path, maxPoints, this.obstacles))
             return;
         player.plannedPath = path;
+        this.touchActivity();
     }
     submitPath(socketId, path) {
         if (this.phase !== 'planning')
@@ -177,6 +191,7 @@ class GameRoom {
             player.plannedPath = [];
         }
         player.pathSubmitted = true;
+        this.touchActivity();
         // Notify opponent
         this.emitToOpponent(socketId, 'opponent_submitted', {});
         // Both submitted → reveal
@@ -191,6 +206,7 @@ class GameRoom {
         if (this.phase !== 'planning')
             return;
         this.phase = 'moving';
+        this.touchActivity();
         const red = this.players.get('red');
         const blue = this.players.get('blue');
         const escaper = this.attackerColor === 'red' ? blue : red;
@@ -230,6 +246,7 @@ class GameRoom {
                 this.players.get(loser).stats.losses++;
                 void (0, playerAuth_1.recordMatchmakingResult)(this.players.get(winner).userId, this.players.get(loser).userId);
             }
+            this.touchActivity();
             this.io.to(this.roomId).emit('game_over', { winner });
             return;
         }
@@ -237,6 +254,7 @@ class GameRoom {
         this.turn++;
         this.attackerColor = this.attackerColor === 'red' ? 'blue' : 'red';
         this.updateRoles();
+        this.touchActivity();
         this.io.to(this.roomId).emit('round_end', {
             redPosition: red.position,
             bluePosition: blue.position,
@@ -257,6 +275,7 @@ class GameRoom {
         if (this.rematchSet.has(socketId))
             return;
         this.rematchSet.add(socketId);
+        this.touchActivity();
         if (this.rematchSet.size === 1) {
             this.emitToOpponent(socketId, 'rematch_requested', {});
         }
@@ -273,6 +292,7 @@ class GameRoom {
         if (!player)
             return;
         const trimmed = message.slice(0, 200);
+        this.touchActivity();
         this.io.to(this.roomId).emit('chat_receive', {
             sender: player.nickname,
             color: player.color,
@@ -348,6 +368,9 @@ class GameRoom {
     getPlayerByColor(color) {
         return this.players.get(color);
     }
+    getSocketIds() {
+        return [...this.players.values()].map((player) => player.socketId);
+    }
     createPlayerState(color, id, nickname, userId, stats, pieceSkin) {
         const pos = (0, GameEngine_1.getInitialPositions)();
         return {
@@ -384,6 +407,10 @@ class GameRoom {
             obstacles: this.obstacles,
         });
         aiPlayer.pathSubmitted = true;
+        this.touchActivity();
+    }
+    touchActivity(timestamp = Date.now()) {
+        this.lastActivityAt = timestamp;
     }
 }
 exports.GameRoom = GameRoom;

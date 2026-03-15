@@ -2,8 +2,9 @@ import { GameRoom } from '../game/GameRoom';
 
 export class RoomStore {
   private rooms: Map<string, GameRoom> = new Map();
-  private codeToRoom: Map<string, string> = new Map(); // code → roomId
-  private socketToRoom: Map<string, string> = new Map(); // socketId → roomId
+  private codeToRoom: Map<string, string> = new Map();
+  private socketToRoom: Map<string, string> = new Map();
+  private static readonly WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
 
   private static instance: RoomStore;
   static getInstance(): RoomStore {
@@ -88,7 +89,6 @@ export class RoomStore {
     return `room_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
   }
 
-  // Random matchmaking queue
   private matchQueue: {
     socketId: string;
     nickname: string;
@@ -172,6 +172,48 @@ export class RoomStore {
   }
 
   removeFromQueue(socketId: string): void {
-    this.matchQueue = this.matchQueue.filter(e => e.socketId !== socketId);
+    this.matchQueue = this.matchQueue.filter((entry) => entry.socketId !== socketId);
+  }
+
+  sweep(activeSocketIds: Set<string>, now = Date.now()): void {
+    this.sweepQueue(activeSocketIds);
+    this.sweepSocketMappings(activeSocketIds);
+    this.sweepRooms(activeSocketIds, now);
+  }
+
+  private sweepQueue(activeSocketIds: Set<string>): void {
+    this.matchQueue = this.matchQueue.filter((entry) => activeSocketIds.has(entry.socketId));
+  }
+
+  private sweepSocketMappings(activeSocketIds: Set<string>): void {
+    for (const [socketId, roomId] of this.socketToRoom.entries()) {
+      if (!activeSocketIds.has(socketId) || !this.rooms.has(roomId)) {
+        this.socketToRoom.delete(socketId);
+      }
+    }
+  }
+
+  private sweepRooms(activeSocketIds: Set<string>, now: number): void {
+    for (const [roomId, room] of this.rooms.entries()) {
+      const roomSocketIds = room.getSocketIds();
+      const hasLiveSocket = roomSocketIds.some((socketId) => activeSocketIds.has(socketId));
+      const isEmptyRoom = room.playerCount === 0;
+      const isStaleWaitingRoom =
+        room.currentPhase === 'waiting' &&
+        now - room.lastActivityTimestamp >= RoomStore.WAITING_ROOM_TIMEOUT_MS;
+
+      if (!isEmptyRoom && !(isStaleWaitingRoom && !hasLiveSocket)) {
+        continue;
+      }
+
+      this.rooms.delete(roomId);
+      this.codeToRoom.delete(room.code);
+
+      for (const socketId of roomSocketIds) {
+        if (this.socketToRoom.get(socketId) === roomId) {
+          this.socketToRoom.delete(socketId);
+        }
+      }
+    }
   }
 }

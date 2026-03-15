@@ -18,6 +18,8 @@ export class GameRoom {
   readonly roomId: string;
   readonly code: string;
   private io: Server;
+  private readonly createdAt = Date.now();
+  private lastActivityAt = Date.now();
 
   private players: Map<PlayerColor, PlayerState> = new Map();
   private phase: GameState['phase'] = 'waiting';
@@ -38,6 +40,9 @@ export class GameRoom {
 
   get playerCount(): number { return this.players.size; }
   get isFull(): boolean { return this.players.size === 2; }
+  get currentPhase(): GameState['phase'] { return this.phase; }
+  get createdTimestamp(): number { return this.createdAt; }
+  get lastActivityTimestamp(): number { return this.lastActivityAt; }
 
   addPlayer(
     socket: Socket,
@@ -51,6 +56,7 @@ export class GameRoom {
     const player = this.createPlayerState(color, socket.id, nickname, userId, stats, pieceSkin);
     this.players.set(color, player);
     socket.join(this.roomId);
+    this.touchActivity();
     return color;
   }
 
@@ -61,6 +67,7 @@ export class GameRoom {
     const player = this.createPlayerState(color, aiId, nickname, null, { wins: 0, losses: 0 }, 'classic');
     this.players.set(color, player);
     this.aiColor = color;
+    this.touchActivity();
     return color;
   }
 
@@ -68,6 +75,7 @@ export class GameRoom {
     const player = this.getPlayerBySocket(socketId);
     if (!player) return;
     player.pieceSkin = pieceSkin;
+    this.touchActivity();
     this.io.to(this.roomId).emit('player_skin_updated', {
       color: player.color,
       pieceSkin,
@@ -103,6 +111,7 @@ export class GameRoom {
             this.phase = 'gameover';
           }
         }
+        this.touchActivity();
         break;
       }
     }
@@ -126,6 +135,7 @@ export class GameRoom {
     this.attackerColor = 'red';
     this.resetPositions();
     this.updateRoles();
+    this.touchActivity();
     this.io.to(this.roomId).emit('game_start', this.toClientState());
     if (startPaused) return;
     this.startRound();
@@ -136,6 +146,7 @@ export class GameRoom {
     if (this.phase !== 'waiting') return;
     const player = this.getPlayerBySocket(socketId);
     if (!player || player.color === this.aiColor) return;
+    this.touchActivity();
     this.startRound();
   }
 
@@ -150,6 +161,7 @@ export class GameRoom {
     this.obstacles = generateObstacles(this.roomId, this.turn, red.position, blue.position);
 
     const now = Date.now();
+    this.touchActivity(now);
     const payload: RoundStartPayload = {
       turn: this.turn,
       pathPoints: calcPathPoints(this.turn),
@@ -167,6 +179,7 @@ export class GameRoom {
   }
 
   private onPlanningTimeout(): void {
+    this.touchActivity();
     this.submitAiPath();
 
     // Give the timer-end submission a brief grace window to arrive.
@@ -194,6 +207,7 @@ export class GameRoom {
     const maxPoints = calcPathPoints(this.turn);
     if (!isValidPath(player.position, path, maxPoints, this.obstacles)) return;
     player.plannedPath = path;
+    this.touchActivity();
   }
 
   submitPath(socketId: string, path: Position[]): boolean {
@@ -209,6 +223,7 @@ export class GameRoom {
       player.plannedPath = [];
     }
     player.pathSubmitted = true;
+    this.touchActivity();
 
     // Notify opponent
     this.emitToOpponent(socketId, 'opponent_submitted', {});
@@ -225,6 +240,7 @@ export class GameRoom {
   private revealPaths(): void {
     if (this.phase !== 'planning') return;
     this.phase = 'moving';
+    this.touchActivity();
     const red = this.players.get('red')!;
     const blue = this.players.get('blue')!;
     const escaper = this.attackerColor === 'red' ? blue : red;
@@ -279,6 +295,7 @@ export class GameRoom {
         );
       }
 
+      this.touchActivity();
       this.io.to(this.roomId).emit('game_over', { winner });
       return;
     }
@@ -287,6 +304,7 @@ export class GameRoom {
     this.turn++;
     this.attackerColor = this.attackerColor === 'red' ? 'blue' : 'red';
     this.updateRoles();
+    this.touchActivity();
 
     this.io.to(this.roomId).emit('round_end', {
       redPosition: red.position,
@@ -309,6 +327,7 @@ export class GameRoom {
     }
     if (this.rematchSet.has(socketId)) return;
     this.rematchSet.add(socketId);
+    this.touchActivity();
 
     if (this.rematchSet.size === 1) {
       this.emitToOpponent(socketId, 'rematch_requested', {});
@@ -326,6 +345,7 @@ export class GameRoom {
     const player = this.getPlayerBySocket(socketId);
     if (!player) return;
     const trimmed = message.slice(0, 200);
+    this.touchActivity();
     this.io.to(this.roomId).emit('chat_receive', {
       sender: player.nickname,
       color: player.color,
@@ -407,6 +427,10 @@ export class GameRoom {
     return this.players.get(color);
   }
 
+  getSocketIds(): string[] {
+    return [...this.players.values()].map((player) => player.socketId);
+  }
+
   private createPlayerState(
     color: PlayerColor,
     id: string,
@@ -450,5 +474,10 @@ export class GameRoom {
       obstacles: this.obstacles,
     });
     aiPlayer.pathSubmitted = true;
+    this.touchActivity();
+  }
+
+  private touchActivity(timestamp = Date.now()): void {
+    this.lastActivityAt = timestamp;
   }
 }
