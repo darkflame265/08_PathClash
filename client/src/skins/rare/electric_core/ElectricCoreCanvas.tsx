@@ -53,9 +53,13 @@ function makeBolt(angle: number): BoltState {
 
 interface Props {
   className: string;
+  speedMultiplier?: number;
 }
 
-export function ElectricCoreCanvas({ className }: Props) {
+export function ElectricCoreCanvas({
+  className,
+  speedMultiplier = 1,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -72,9 +76,15 @@ export function ElectricCoreCanvas({ className }: Props) {
     let coreRadius = 0;
     let wallRadius = 0;
     const numPoints = 8;
-    const bolts = Array.from({ length: 5 }, (_, index) =>
-      makeBolt((index / 5) * Math.PI * 2),
-    );
+    const speed = ELECTRIC_CORE_SPEED * speedMultiplier;
+    const bolts = Array.from({ length: 5 }, (_, index) => {
+      const bolt = makeBolt((index / 5) * Math.PI * 2);
+      bolt.fadeRate = randFrom(0.045, 0.09) * speed;
+      bolt.drift = randFrom(-0.01, 0.01) * speed;
+      bolt.timerRate = randFrom(0.015, 0.05) * speed;
+      bolt.angVel = randFrom(0.03, 0.07) * speed;
+      return bolt;
+    });
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
@@ -114,8 +124,9 @@ export function ElectricCoreCanvas({ className }: Props) {
           const extended = Math.random() < ELECTRIC_CORE_EXTENDED_CHANCE;
           bolt.angle = randFrom(0, Math.PI * 2);
           bolt.width = randFrom(1.8, 2.8);
-          bolt.fadeRate = randFrom(0.045, 0.09) * ELECTRIC_CORE_SPEED;
-          bolt.timerRate = randFrom(0.015, 0.05) * ELECTRIC_CORE_SPEED;
+          bolt.fadeRate = randFrom(0.045, 0.09) * speed;
+          bolt.drift = randFrom(-0.01, 0.01) * speed;
+          bolt.timerRate = randFrom(0.015, 0.05) * speed;
           bolt.phaseDiff = randFrom(1.4, 1.9);
           bolt.extended = extended;
           bolt.tipBoost = extended
@@ -129,7 +140,7 @@ export function ElectricCoreCanvas({ className }: Props) {
         if (bolt.timer <= 0) {
           bolt.phase = randFrom(0, Math.PI * 2);
           bolt.amp = randFrom(6, 12);
-          bolt.angVel = randFrom(0.03, 0.07) * ELECTRIC_CORE_SPEED;
+          bolt.angVel = randFrom(0.03, 0.07) * speed;
           bolt.timer = 1;
         }
 
@@ -239,7 +250,7 @@ export function ElectricCoreCanvas({ className }: Props) {
       observer?.disconnect();
       window.removeEventListener("resize", resize);
     };
-  }, []);
+  }, [speedMultiplier]);
 
   return <canvas ref={canvasRef} className={className} aria-hidden="true" />;
 }
