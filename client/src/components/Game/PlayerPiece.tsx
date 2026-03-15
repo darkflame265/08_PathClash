@@ -8,6 +8,7 @@ import { GoldCoreGame } from '../../skins/common/gold_core/Game';
 import { NeonPulseGame } from '../../skins/common/neon_pulse/Game';
 import { InfernoGame } from '../../skins/common/inferno/Game';
 import { QuantumGame } from '../../skins/common/quantum/Game';
+import { ElectricCoreGame } from '../../skins/rare/electric_core/Game';
 import './PlayerPiece.css';
 
 interface Props {
@@ -30,6 +31,7 @@ interface Props {
     | "cosmic"
     | "inferno"
     | "arc_reactor"
+    | "electric_core"
     | "quantum"
     | "atomic"
     | "flag_kr"
@@ -91,6 +93,7 @@ export function PlayerPiece({
         {skin === "cosmic" && <CosmicGame />}
         {skin === "inferno" && <InfernoGame />}
         {skin === "arc_reactor" && <ArcReactorGame />}
+        {skin === "electric_core" && <ElectricCoreGame />}
         {skin === "atomic" && <AtomicGame cellSize={cellSize} />}
         {skin === "quantum" && <QuantumGame />}
       </div>

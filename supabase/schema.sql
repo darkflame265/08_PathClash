@@ -143,6 +143,7 @@ begin
     when 'quantum' then 120
     when 'cosmic' then 350
     when 'arc_reactor' then 350
+    when 'electric_core' then 350
     when 'atomic' then 900
     else null
   end;

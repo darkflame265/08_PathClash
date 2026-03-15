@@ -1,4 +1,5 @@
 import { GameRoom } from '../game/GameRoom';
+import type { PieceSkin } from '../types/game.types';
 
 export class RoomStore {
   private rooms: Map<string, GameRoom> = new Map();
@@ -94,25 +95,7 @@ export class RoomStore {
     nickname: string;
     userId: string | null;
     stats: { wins: number; losses: number };
-    pieceSkin:
-      | 'classic'
-      | 'ember'
-      | 'nova'
-      | 'aurora'
-      | 'void'
-      | 'plasma'
-      | 'gold_core'
-      | 'neon_pulse'
-      | 'cosmic'
-      | 'inferno'
-      | 'arc_reactor'
-      | 'quantum'
-      | 'atomic'
-      | 'flag_kr'
-      | 'flag_jp'
-      | 'flag_cn'
-      | 'flag_us'
-      | 'flag_uk';
+    pieceSkin: PieceSkin;
   }[] = [];
 
   enqueueRandom(
@@ -120,25 +103,7 @@ export class RoomStore {
     nickname: string,
     userId: string | null,
     stats: { wins: number; losses: number },
-    pieceSkin:
-      | 'classic'
-      | 'ember'
-      | 'nova'
-      | 'aurora'
-      | 'void'
-      | 'plasma'
-      | 'gold_core'
-      | 'neon_pulse'
-      | 'cosmic'
-      | 'inferno'
-      | 'arc_reactor'
-      | 'quantum'
-      | 'atomic'
-      | 'flag_kr'
-      | 'flag_jp'
-      | 'flag_cn'
-      | 'flag_us'
-      | 'flag_uk',
+    pieceSkin: PieceSkin,
   ): void {
     this.matchQueue.push({ socketId, nickname, userId, stats, pieceSkin });
   }
@@ -148,25 +113,7 @@ export class RoomStore {
     nickname: string;
     userId: string | null;
     stats: { wins: number; losses: number };
-    pieceSkin:
-      | 'classic'
-      | 'ember'
-      | 'nova'
-      | 'aurora'
-      | 'void'
-      | 'plasma'
-      | 'gold_core'
-      | 'neon_pulse'
-      | 'cosmic'
-      | 'inferno'
-      | 'arc_reactor'
-      | 'quantum'
-      | 'atomic'
-      | 'flag_kr'
-      | 'flag_jp'
-      | 'flag_cn'
-      | 'flag_us'
-      | 'flag_uk';
+    pieceSkin: PieceSkin;
   } | undefined {
     return this.matchQueue.shift();
   }

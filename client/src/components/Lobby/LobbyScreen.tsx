@@ -8,6 +8,7 @@ import { GoldCorePreview } from "../../skins/common/gold_core/Preview";
 import { NeonPulsePreview } from "../../skins/common/neon_pulse/Preview";
 import { InfernoPreview } from "../../skins/common/inferno/Preview";
 import { QuantumPreview } from "../../skins/common/quantum/Preview";
+import { ElectricCorePreview } from "../../skins/rare/electric_core/Preview";
 import {
   cancelPendingGoogleUpgradeSwitch,
   confirmPendingGoogleUpgradeSwitch,
@@ -429,6 +430,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       | "cosmic"
       | "inferno"
       | "arc_reactor"
+      | "electric_core"
       | "quantum"
       | "atomic"
       | "flag_kr"
@@ -572,6 +574,18 @@ export function LobbyScreen({ onGameStart }: Props) {
         lang === "en"
           ? "High-energy reactor core."
           : "\uACE0\uCD9C\uB825 \uB9AC\uC561\uD130 \uCF54\uC5B4.",
+      requiredWins: null,
+      requiredPlays: null,
+      tokenPrice: 350,
+      tier: "rare",
+    },
+    {
+      id: "electric_core",
+      name: lang === "en" ? "Electric Core" : "일렉트릭 코어",
+      desc:
+        lang === "en"
+          ? "Electric core — cyan lightning branches orbit a dark reactor shell."
+          : "일렉트릭 코어 — 청록 번개 갈래가 어두운 리액터 코어를 감쌉니다.",
       requiredWins: null,
       requiredPlays: null,
       tokenPrice: 350,
@@ -1318,6 +1332,7 @@ export function LobbyScreen({ onGameStart }: Props) {
                       {choice.id === "cosmic" && <CosmicPreview />}
                       {choice.id === "inferno" && <InfernoPreview />}
                       {choice.id === "arc_reactor" && <ArcReactorPreview />}
+                      {choice.id === "electric_core" && <ElectricCorePreview />}
                       {choice.id === "quantum" && <QuantumPreview />}
                       {choice.id === "atomic" && (
                         <AtomicPreview ready={atomicPreviewReady} />

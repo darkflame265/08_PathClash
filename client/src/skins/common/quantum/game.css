@@ -21,7 +21,6 @@
     0 0 calc(var(--piece-glow, 12px) * 3.2) rgba(124, 255, 178, 0.2),
     inset 0 0 12px rgba(158, 247, 200, 0.26);
   border-color: rgba(158, 247, 200, 0.96);
-  animation: quantum-flux-pulse 1.5s ease-in-out infinite;
 }
 
 .player-piece.piece-skin-quantum .piece-inner::before,
@@ -100,10 +99,8 @@
   transform: rotate(var(--orbit-angle))
     translateX(calc(var(--orbit-radius) * 46%))
     rotate(calc(var(--orbit-angle) * -1));
-  animation:
-    quantum-orbit-spin var(--orbit-duration) linear infinite,
-    quantum-orbit-flicker 1.4s ease-in-out infinite;
-  animation-delay: var(--orbit-delay), calc(var(--orbit-delay) * 0.65);
+  animation: quantum-orbit-spin var(--orbit-duration) linear infinite;
+  animation-delay: var(--orbit-delay);
 }
 
 .quantum-orbit::before {
