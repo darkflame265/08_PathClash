@@ -151,6 +151,7 @@ export function initSocketServer(io: Server): void {
       }
 
       room.addAiPlayer('PathClash AI');
+      room.prepareGameStart(Boolean(tutorialPending));
       store.registerSocket(socket.id, roomId);
 
       const opponent = room.toClientState().players[humanColor === 'red' ? 'blue' : 'red'];
@@ -162,7 +163,6 @@ export function initSocketServer(io: Server): void {
         opponentPieceSkin: opponent.pieceSkin,
       });
 
-        setTimeout(() => room.startGame(Boolean(tutorialPending)), 300);
       },
     );
 
@@ -181,6 +181,7 @@ export function initSocketServer(io: Server): void {
         return;
       }
 
+      room.prepareGameStart();
       store.registerSocket(socket.id, room.roomId);
       const opponent = room.toClientState().players[color === 'red' ? 'blue' : 'red'];
       socket.emit('room_joined', {
@@ -196,7 +197,6 @@ export function initSocketServer(io: Server): void {
         pieceSkin: pieceSkin ?? 'classic',
       });
 
-      setTimeout(() => room.startGame(), 500);
     });
 
     socket.on('join_random', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
@@ -225,6 +225,7 @@ export function initSocketServer(io: Server): void {
       }
 
       room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin);
+      room.prepareGameStart();
       store.registerSocket(queued.socketId, roomId);
       queuedSocket.emit('room_joined', {
         roomId,
@@ -244,7 +245,6 @@ export function initSocketServer(io: Server): void {
         opponentPieceSkin: queued.pieceSkin,
       });
 
-      setTimeout(() => room.startGame(), 500);
     });
 
     socket.on('cancel_random', () => {
@@ -302,6 +302,11 @@ export function initSocketServer(io: Server): void {
     socket.on('resume_tutorial', () => {
       const room = store.getBySocket(socket.id);
       room?.resumeTutorial(socket.id);
+    });
+
+    socket.on('game_client_ready', () => {
+      const room = store.getBySocket(socket.id);
+      room?.markClientReady(socket.id);
     });
 
     socket.on('chat_send', ({ message }: { message: string }) => {

@@ -101,6 +101,7 @@ function initSocketServer(io) {
                 return;
             }
             room.addAiPlayer('PathClash AI');
+            room.prepareGameStart(Boolean(tutorialPending));
             store.registerSocket(socket.id, roomId);
             const opponent = room.toClientState().players[humanColor === 'red' ? 'blue' : 'red'];
             socket.emit('room_joined', {
@@ -110,7 +111,6 @@ function initSocketServer(io) {
                 selfPieceSkin: pieceSkin ?? 'classic',
                 opponentPieceSkin: opponent.pieceSkin,
             });
-            setTimeout(() => room.startGame(Boolean(tutorialPending)), 300);
         });
         socket.on('join_room', async ({ code, nickname, auth, pieceSkin }) => {
             await registerSocketSession(socket, auth);
@@ -125,6 +125,7 @@ function initSocketServer(io) {
                 socket.emit('join_error', { message: '입장할 수 없습니다.' });
                 return;
             }
+            room.prepareGameStart();
             store.registerSocket(socket.id, room.roomId);
             const opponent = room.toClientState().players[color === 'red' ? 'blue' : 'red'];
             socket.emit('room_joined', {
@@ -139,7 +140,6 @@ function initSocketServer(io) {
                 color,
                 pieceSkin: pieceSkin ?? 'classic',
             });
-            setTimeout(() => room.startGame(), 500);
         });
         socket.on('join_random', async ({ nickname, auth, pieceSkin }) => {
             await registerSocketSession(socket, auth);
@@ -164,6 +164,7 @@ function initSocketServer(io) {
                 return;
             }
             room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin);
+            room.prepareGameStart();
             store.registerSocket(queued.socketId, roomId);
             queuedSocket.emit('room_joined', {
                 roomId,
@@ -181,7 +182,6 @@ function initSocketServer(io) {
                 selfPieceSkin: pieceSkin ?? 'classic',
                 opponentPieceSkin: queued.pieceSkin,
             });
-            setTimeout(() => room.startGame(), 500);
         });
         socket.on('cancel_random', () => {
             store.removeFromQueue(socket.id);
@@ -210,6 +210,10 @@ function initSocketServer(io) {
         socket.on('resume_tutorial', () => {
             const room = store.getBySocket(socket.id);
             room?.resumeTutorial(socket.id);
+        });
+        socket.on('game_client_ready', () => {
+            const room = store.getBySocket(socket.id);
+            room?.markClientReady(socket.id);
         });
         socket.on('chat_send', ({ message }) => {
             const room = store.getBySocket(socket.id);

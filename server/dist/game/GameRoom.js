@@ -18,7 +18,10 @@ class GameRoom {
         this.obstacles = [];
         this.timer = new ServerTimer_1.ServerTimer();
         this.rematchSet = new Set();
+        this.readySockets = new Set();
         this.aiColor = null;
+        this.pendingStart = false;
+        this.pendingStartPaused = false;
         this.roomId = roomId;
         this.code = code;
         this.io = io;
@@ -98,6 +101,9 @@ class GameRoom {
     }
     // ─── Game flow ─────────────────────────────────────────────────────────────
     startGame(startPaused = false) {
+        this.pendingStart = false;
+        this.pendingStartPaused = false;
+        this.readySockets.clear();
         this.phase = startPaused ? 'waiting' : 'planning';
         this.turn = 1;
         this.attackerColor = 'red';
@@ -119,6 +125,30 @@ class GameRoom {
             return;
         this.touchActivity();
         this.startRound();
+    }
+    prepareGameStart(startPaused = false) {
+        this.pendingStart = true;
+        this.pendingStartPaused = startPaused;
+        this.readySockets.clear();
+        this.touchActivity();
+    }
+    markClientReady(socketId) {
+        if (!this.pendingStart)
+            return false;
+        const player = this.getPlayerBySocket(socketId);
+        if (!player || player.color === this.aiColor)
+            return false;
+        this.readySockets.add(socketId);
+        this.touchActivity();
+        const humanSocketIds = [...this.players.values()]
+            .filter((entry) => entry.color !== this.aiColor)
+            .map((entry) => entry.socketId);
+        const allHumansReady = humanSocketIds.length > 0 &&
+            humanSocketIds.every((humanSocketId) => this.readySockets.has(humanSocketId));
+        if (!allHumansReady)
+            return false;
+        this.startGame(this.pendingStartPaused);
+        return true;
     }
     startRound() {
         this.phase = 'planning';
@@ -313,6 +343,9 @@ class GameRoom {
             p.pathSubmitted = false;
         }
         this.updateRoles();
+        this.readySockets.clear();
+        this.pendingStart = false;
+        this.pendingStartPaused = false;
     }
     resetPositions() {
         const pos = (0, GameEngine_1.getInitialPositions)();

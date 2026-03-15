@@ -28,8 +28,11 @@ export class GameRoom {
   private obstacles: Position[] = [];
   private timer = new ServerTimer();
   private rematchSet: Set<string> = new Set();
+  private readySockets: Set<string> = new Set();
   private aiColor: PlayerColor | null = null;
   private matchType: MatchType;
+  private pendingStart = false;
+  private pendingStartPaused = false;
 
   constructor(roomId: string, code: string, io: Server, matchType: MatchType) {
     this.roomId = roomId;
@@ -130,6 +133,9 @@ export class GameRoom {
   // ─── Game flow ─────────────────────────────────────────────────────────────
 
   startGame(startPaused = false): void {
+    this.pendingStart = false;
+    this.pendingStartPaused = false;
+    this.readySockets.clear();
     this.phase = startPaused ? 'waiting' : 'planning';
     this.turn = 1;
     this.attackerColor = 'red';
@@ -148,6 +154,36 @@ export class GameRoom {
     if (!player || player.color === this.aiColor) return;
     this.touchActivity();
     this.startRound();
+  }
+
+  prepareGameStart(startPaused = false): void {
+    this.pendingStart = true;
+    this.pendingStartPaused = startPaused;
+    this.readySockets.clear();
+    this.touchActivity();
+  }
+
+  markClientReady(socketId: string): boolean {
+    if (!this.pendingStart) return false;
+
+    const player = this.getPlayerBySocket(socketId);
+    if (!player || player.color === this.aiColor) return false;
+
+    this.readySockets.add(socketId);
+    this.touchActivity();
+
+    const humanSocketIds = [...this.players.values()]
+      .filter((entry) => entry.color !== this.aiColor)
+      .map((entry) => entry.socketId);
+
+    const allHumansReady =
+      humanSocketIds.length > 0 &&
+      humanSocketIds.every((humanSocketId) => this.readySockets.has(humanSocketId));
+
+    if (!allHumansReady) return false;
+
+    this.startGame(this.pendingStartPaused);
+    return true;
   }
 
   private startRound(): void {
@@ -368,6 +404,9 @@ export class GameRoom {
       p.pathSubmitted = false;
     }
     this.updateRoles();
+    this.readySockets.clear();
+    this.pendingStart = false;
+    this.pendingStartPaused = false;
   }
 
   private resetPositions(): void {

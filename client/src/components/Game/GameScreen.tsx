@@ -85,6 +85,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   useEffect(() => {
     const socket = getSocket();
     const cleanup = registerSocketHandlers(socket);
+    socket.emit("game_client_ready");
     return cleanup;
   }, []);
 
