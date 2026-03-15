@@ -57,6 +57,23 @@ function isUserCancelledError(error: unknown): boolean {
   );
 }
 
+function isAlreadyOwnedError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("already owned") ||
+    message.includes("item_already_owned")
+  );
+}
+
+function getPackIdByProductId(productId: string): TokenPackId | null {
+  const entry = (Object.entries(tokenPackCatalog) as Array<
+    [TokenPackId, (typeof tokenPackCatalog)[TokenPackId]]
+  >).find(([, pack]) => pack.productId === productId);
+
+  return entry?.[0] ?? null;
+}
+
 async function grantPurchasedTokens({
   accessToken,
   packId,
@@ -97,6 +114,38 @@ async function grantPurchasedTokens({
   }
 }
 
+async function recoverOwnedTokenPackPurchases(accessToken: string): Promise<void> {
+  const { purchases } = await NativePurchases.getPurchases({
+    productType: PURCHASE_TYPE.INAPP,
+  });
+
+  for (const purchase of purchases) {
+    const productId = purchase.productIdentifier?.trim();
+    const purchaseToken = purchase.purchaseToken?.trim();
+    if (!productId || !purchaseToken) continue;
+
+    const packId = getPackIdByProductId(productId);
+    if (!packId) continue;
+
+    try {
+      await grantPurchasedTokens({
+        accessToken,
+        packId,
+        productId,
+        purchaseToken,
+      });
+
+      try {
+        await NativePurchases.consumePurchase({ purchaseToken });
+      } catch {
+        // Leave stale owned purchase in place; next recovery attempt can retry consume.
+      }
+    } catch {
+      // Keep the purchase unconsumed so it can be retried later.
+    }
+  }
+}
+
 export async function startTokenPackPurchase({
   packId,
   accessToken,
@@ -127,6 +176,8 @@ export async function startTokenPackPurchase({
     if (!isBillingSupported) {
       return "unavailable";
     }
+
+    await recoverOwnedTokenPackPurchases(accessToken);
 
     await NativePurchases.getProduct({
       productIdentifier: pack.productId,
@@ -171,6 +222,14 @@ export async function startTokenPackPurchase({
   } catch (error) {
     if (isUserCancelledError(error)) {
       return "cancelled";
+    }
+
+    if (isAlreadyOwnedError(error)) {
+      try {
+        await recoverOwnedTokenPackPurchases(accessToken);
+      } catch {
+        // Ignore and surface the original purchase failure state.
+      }
     }
 
     return "failed";
