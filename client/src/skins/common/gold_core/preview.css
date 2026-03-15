@@ -1,0 +1,38 @@
+.skin-preview-gold_core {
+  background: radial-gradient(
+    circle at 34% 28%,
+    #fffef5 0%,
+    #fef08a 18%,
+    #eab308 50%,
+    #92400e 80%,
+    #1c0800 100%
+  );
+  box-shadow:
+    0 0 0 2px rgba(253, 224, 71, 0.95),
+    0 0 14px rgba(234, 179, 8, 0.65),
+    0 0 24px rgba(202, 138, 4, 0.42),
+    0 0 36px rgba(161, 98, 7, 0.2);
+}
+
+.skin-preview-gold_core::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 999px;
+  border: 1px dashed rgba(253, 224, 71, 0.85);
+  box-shadow:
+    0 0 8px rgba(234, 179, 8, 0.55),
+    inset 0 0 6px rgba(255, 249, 180, 0.18);
+}
+
+.skin-preview-gold_core::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 999px;
+  background: repeating-conic-gradient(
+    rgba(255, 249, 160, 0.55) 0deg 20deg,
+    transparent 20deg 45deg
+  );
+  opacity: 0.75;
+}

@@ -1,0 +1,44 @@
+.player-piece.piece-skin-neon_pulse .piece-inner {
+  background: radial-gradient(
+    circle at 38% 32%,
+    #fff0fd 0%,
+    #ff4fd8 22%,
+    #b833d9 52%,
+    #1a2daa 100%
+  );
+  box-shadow:
+    0 0 calc(var(--piece-glow, 12px) * 1.2) rgba(255, 79, 216, 0.78),
+    0 0 calc(var(--piece-glow, 12px) * 2.2) rgba(79, 195, 255, 0.58),
+    0 0 calc(var(--piece-glow, 12px) * 3.6) rgba(184, 51, 217, 0.24),
+    inset 0 0 14px rgba(255, 255, 255, 0.26);
+  border-color: rgba(127, 219, 255, 0.96);
+  animation: neon-pulse-breathe 1.7s ease-in-out infinite;
+}
+
+.player-piece.piece-skin-neon_pulse .piece-inner::before,
+.player-piece.piece-skin-neon_pulse .piece-inner::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.player-piece.piece-skin-neon_pulse .piece-inner::before {
+  inset: 50%;
+  border: 3.5px solid rgba(127, 219, 255, 0.92);
+  box-shadow:
+    0 0 10px rgba(79, 195, 255, 0.72),
+    0 0 14px rgba(255, 79, 216, 0.28);
+  opacity: 0;
+  animation: neon-wave-expand 1.4s ease-out infinite;
+}
+
+.player-piece.piece-skin-neon_pulse .piece-inner::after {
+  inset: 50%;
+  border: 3px solid rgba(255, 79, 216, 0.86);
+  box-shadow:
+    0 0 8px rgba(255, 79, 216, 0.58),
+    0 0 12px rgba(79, 195, 255, 0.22);
+  opacity: 0;
+  animation: neon-wave-expand 1.4s ease-out infinite 0.6s;
+}

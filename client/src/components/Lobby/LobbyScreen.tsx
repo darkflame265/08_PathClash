@@ -3,6 +3,11 @@ import { FlagSkin, isFlagSkin } from "../shared/FlagSkin";
 import { AtomicPreview } from "../../skins/legendary/atomic/Preview";
 import { CosmicPreview } from "../../skins/rare/cosmic/Preview";
 import { ArcReactorPreview } from "../../skins/rare/arc_reactor/Preview";
+import { PlasmaPreview } from "../../skins/common/plasma/Preview";
+import { GoldCorePreview } from "../../skins/common/gold_core/Preview";
+import { NeonPulsePreview } from "../../skins/common/neon_pulse/Preview";
+import { InfernoPreview } from "../../skins/common/inferno/Preview";
+import { QuantumPreview } from "../../skins/common/quantum/Preview";
 import {
   cancelPendingGoogleUpgradeSwitch,
   confirmPendingGoogleUpgradeSwitch,
@@ -1307,8 +1312,13 @@ export function LobbyScreen({ onGameStart }: Props) {
                       aria-hidden="true"
                     >
                       {isFlagSkin(choice.id) && <FlagSkin id={choice.id} />}
+                      {choice.id === "plasma" && <PlasmaPreview />}
+                      {choice.id === "gold_core" && <GoldCorePreview />}
+                      {choice.id === "neon_pulse" && <NeonPulsePreview />}
                       {choice.id === "cosmic" && <CosmicPreview />}
+                      {choice.id === "inferno" && <InfernoPreview />}
                       {choice.id === "arc_reactor" && <ArcReactorPreview />}
+                      {choice.id === "quantum" && <QuantumPreview />}
                       {choice.id === "atomic" && (
                         <AtomicPreview ready={atomicPreviewReady} />
                       )}

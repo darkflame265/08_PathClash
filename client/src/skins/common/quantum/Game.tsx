@@ -1,0 +1,53 @@
+import "./game.css";
+
+const QUANTUM_ORBIT_PARTICLES = [
+  { radius: 0.28, angle: 0, duration: 1.45, delay: -0.2 },
+  { radius: 0.34, angle: 18, duration: 1.8, delay: -0.8 },
+  { radius: 0.4, angle: 42, duration: 2.1, delay: -1.4 },
+  { radius: 0.46, angle: 66, duration: 1.65, delay: -0.6 },
+  { radius: 0.52, angle: 88, duration: 2.35, delay: -1.9 },
+  { radius: 0.58, angle: 110, duration: 1.55, delay: -0.35 },
+  { radius: 0.64, angle: 134, duration: 2.6, delay: -2.1 },
+  { radius: 0.7, angle: 156, duration: 1.9, delay: -0.95 },
+  { radius: 0.76, angle: 182, duration: 2.9, delay: -2.45 },
+  { radius: 0.82, angle: 206, duration: 1.72, delay: -0.55 },
+  { radius: 0.88, angle: 228, duration: 2.2, delay: -1.3 },
+  { radius: 0.94, angle: 250, duration: 1.6, delay: -0.9 },
+  { radius: 0.3, angle: 274, duration: 2.45, delay: -1.7 },
+  { radius: 0.42, angle: 296, duration: 1.84, delay: -0.42 },
+  { radius: 0.54, angle: 318, duration: 2.75, delay: -2.05 },
+  { radius: 0.66, angle: 340, duration: 1.68, delay: -0.75 },
+  { radius: 0.78, angle: 12, duration: 2.05, delay: -1.1 },
+  { radius: 0.9, angle: 140, duration: 2.4, delay: -1.85 },
+  { radius: 0.32, angle: 28, duration: 1.58, delay: -0.48 },
+  { radius: 0.38, angle: 58, duration: 2.22, delay: -1.52 },
+  { radius: 0.48, angle: 96, duration: 1.74, delay: -0.82 },
+  { radius: 0.6, angle: 124, duration: 2.48, delay: -1.94 },
+  { radius: 0.72, angle: 168, duration: 1.62, delay: -0.64 },
+  { radius: 0.84, angle: 214, duration: 2.34, delay: -1.18 },
+  { radius: 0.96, angle: 246, duration: 1.92, delay: -1.42 },
+  { radius: 0.36, angle: 286, duration: 2.64, delay: -2.14 },
+  { radius: 0.5, angle: 312, duration: 1.7, delay: -0.58 },
+  { radius: 0.74, angle: 332, duration: 2.16, delay: -1.26 },
+  { radius: 0.86, angle: 352, duration: 1.86, delay: -0.88 },
+  { radius: 0.62, angle: 154, duration: 2.78, delay: -2.28 },
+];
+
+export function QuantumGame() {
+  return (
+    <div className="quantum-orbit-field" aria-hidden="true">
+      {QUANTUM_ORBIT_PARTICLES.map((particle, index) => (
+        <span
+          key={`${particle.radius}-${particle.angle}-${index}`}
+          className={`quantum-orbit quantum-orbit-${index % 3}`}
+          style={{
+            ["--orbit-radius" as string]: `${particle.radius}`,
+            ["--orbit-angle" as string]: `${particle.angle}deg`,
+            ["--orbit-duration" as string]: `${particle.duration}s`,
+            ["--orbit-delay" as string]: `${particle.delay}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
