@@ -22,6 +22,9 @@ class GameRoom {
         this.aiColor = null;
         this.pendingStart = false;
         this.pendingStartPaused = false;
+        this.planningGraceTimeout = null;
+        this.movingCompleteTimeout = null;
+        this.nextRoundTimeout = null;
         this.roomId = roomId;
         this.code = code;
         this.io = io;
@@ -76,6 +79,10 @@ class GameRoom {
                 if (this.aiColor === color)
                     this.aiColor = null;
                 this.timer.clear();
+                this.clearPendingTimeouts();
+                this.readySockets.clear();
+                this.pendingStart = false;
+                this.pendingStartPaused = false;
                 if (this.matchType === 'random' &&
                     !this.aiColor &&
                     wasActiveMatch &&
@@ -151,9 +158,13 @@ class GameRoom {
         return true;
     }
     startRound() {
+        if (!this.hasBothPlayers())
+            return;
         this.phase = 'planning';
         const red = this.players.get('red');
         const blue = this.players.get('blue');
+        if (!red || !blue)
+            return;
         red.plannedPath = [];
         red.pathSubmitted = false;
         blue.plannedPath = [];
@@ -176,11 +187,17 @@ class GameRoom {
         this.timer.start(PLANNING_TIME_MS, () => this.onPlanningTimeout());
     }
     onPlanningTimeout() {
+        if (!this.hasBothPlayers())
+            return;
         this.touchActivity();
         this.submitAiPath();
         // Give the timer-end submission a brief grace window to arrive.
-        setTimeout(() => {
+        this.clearPlanningGraceTimeout();
+        this.planningGraceTimeout = setTimeout(() => {
+            this.planningGraceTimeout = null;
             if (this.phase !== 'planning')
+                return;
+            if (!this.hasBothPlayers())
                 return;
             for (const [, p] of this.players) {
                 if (!p.pathSubmitted) {
@@ -235,10 +252,14 @@ class GameRoom {
     revealPaths() {
         if (this.phase !== 'planning')
             return;
-        this.phase = 'moving';
-        this.touchActivity();
+        if (!this.hasBothPlayers())
+            return;
         const red = this.players.get('red');
         const blue = this.players.get('blue');
+        if (!red || !blue)
+            return;
+        this.phase = 'moving';
+        this.touchActivity();
         const escaper = this.attackerColor === 'red' ? blue : red;
         const collisions = (0, GameEngine_1.detectCollisions)(red.plannedPath, blue.plannedPath, red.position, blue.position, this.attackerColor, escaper.hp);
         const payload = {
@@ -261,11 +282,21 @@ class GameRoom {
             blue.position = blue.plannedPath[blue.plannedPath.length - 1];
         // Wait for animation to finish
         const animTime = (0, GameEngine_1.calcAnimationDuration)(Math.max(red.plannedPath.length, blue.plannedPath.length));
-        setTimeout(() => this.onMovingComplete(), animTime);
+        this.clearMovingCompleteTimeout();
+        this.movingCompleteTimeout = setTimeout(() => {
+            this.movingCompleteTimeout = null;
+            this.onMovingComplete();
+        }, animTime);
     }
     onMovingComplete() {
+        if (this.phase !== 'moving')
+            return;
+        if (!this.hasBothPlayers())
+            return;
         const red = this.players.get('red');
         const blue = this.players.get('blue');
+        if (!red || !blue)
+            return;
         // Check game over
         if (red.hp <= 0 || blue.hp <= 0) {
             this.phase = 'gameover';
@@ -290,7 +321,11 @@ class GameRoom {
             bluePosition: blue.position,
             newTurn: this.turn,
         });
-        setTimeout(() => this.startRound(), 500);
+        this.clearNextRoundTimeout();
+        this.nextRoundTimeout = setTimeout(() => {
+            this.nextRoundTimeout = null;
+            this.startRound();
+        }, 500);
     }
     // ─── Rematch ────────────────────────────────────────────────────────────────
     requestRematch(socketId) {
@@ -332,6 +367,8 @@ class GameRoom {
     }
     // ─── Helpers ─────────────────────────────────────────────────────────────────
     resetGame() {
+        this.timer.clear();
+        this.clearPendingTimeouts();
         this.turn = 1;
         this.attackerColor = 'red';
         this.phase = 'waiting';
@@ -444,6 +481,32 @@ class GameRoom {
     }
     touchActivity(timestamp = Date.now()) {
         this.lastActivityAt = timestamp;
+    }
+    hasBothPlayers() {
+        return this.players.has('red') && this.players.has('blue');
+    }
+    clearPlanningGraceTimeout() {
+        if (this.planningGraceTimeout) {
+            clearTimeout(this.planningGraceTimeout);
+            this.planningGraceTimeout = null;
+        }
+    }
+    clearMovingCompleteTimeout() {
+        if (this.movingCompleteTimeout) {
+            clearTimeout(this.movingCompleteTimeout);
+            this.movingCompleteTimeout = null;
+        }
+    }
+    clearNextRoundTimeout() {
+        if (this.nextRoundTimeout) {
+            clearTimeout(this.nextRoundTimeout);
+            this.nextRoundTimeout = null;
+        }
+    }
+    clearPendingTimeouts() {
+        this.clearPlanningGraceTimeout();
+        this.clearMovingCompleteTimeout();
+        this.clearNextRoundTimeout();
     }
 }
 exports.GameRoom = GameRoom;

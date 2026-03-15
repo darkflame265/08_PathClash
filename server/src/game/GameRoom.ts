@@ -33,6 +33,9 @@ export class GameRoom {
   private matchType: MatchType;
   private pendingStart = false;
   private pendingStartPaused = false;
+  private planningGraceTimeout: ReturnType<typeof setTimeout> | null = null;
+  private movingCompleteTimeout: ReturnType<typeof setTimeout> | null = null;
+  private nextRoundTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor(roomId: string, code: string, io: Server, matchType: MatchType) {
     this.roomId = roomId;
@@ -102,6 +105,10 @@ export class GameRoom {
         this.players.delete(color);
         if (this.aiColor === color) this.aiColor = null;
         this.timer.clear();
+        this.clearPendingTimeouts();
+        this.readySockets.clear();
+        this.pendingStart = false;
+        this.pendingStartPaused = false;
         if (
           this.matchType === 'random' &&
           !this.aiColor &&
@@ -187,9 +194,11 @@ export class GameRoom {
   }
 
   private startRound(): void {
+    if (!this.hasBothPlayers()) return;
     this.phase = 'planning';
-    const red = this.players.get('red')!;
-    const blue = this.players.get('blue')!;
+    const red = this.players.get('red');
+    const blue = this.players.get('blue');
+    if (!red || !blue) return;
     red.plannedPath = [];
     red.pathSubmitted = false;
     blue.plannedPath = [];
@@ -215,12 +224,16 @@ export class GameRoom {
   }
 
   private onPlanningTimeout(): void {
+    if (!this.hasBothPlayers()) return;
     this.touchActivity();
     this.submitAiPath();
 
     // Give the timer-end submission a brief grace window to arrive.
-    setTimeout(() => {
+    this.clearPlanningGraceTimeout();
+    this.planningGraceTimeout = setTimeout(() => {
+      this.planningGraceTimeout = null;
       if (this.phase !== 'planning') return;
+      if (!this.hasBothPlayers()) return;
 
       for (const [, p] of this.players) {
         if (!p.pathSubmitted) {
@@ -275,10 +288,12 @@ export class GameRoom {
 
   private revealPaths(): void {
     if (this.phase !== 'planning') return;
+    if (!this.hasBothPlayers()) return;
+    const red = this.players.get('red');
+    const blue = this.players.get('blue');
+    if (!red || !blue) return;
     this.phase = 'moving';
     this.touchActivity();
-    const red = this.players.get('red')!;
-    const blue = this.players.get('blue')!;
     const escaper = this.attackerColor === 'red' ? blue : red;
 
     const collisions = detectCollisions(
@@ -310,12 +325,19 @@ export class GameRoom {
     const animTime = calcAnimationDuration(
       Math.max(red.plannedPath.length, blue.plannedPath.length)
     );
-    setTimeout(() => this.onMovingComplete(), animTime);
+    this.clearMovingCompleteTimeout();
+    this.movingCompleteTimeout = setTimeout(() => {
+      this.movingCompleteTimeout = null;
+      this.onMovingComplete();
+    }, animTime);
   }
 
   private onMovingComplete(): void {
-    const red = this.players.get('red')!;
-    const blue = this.players.get('blue')!;
+    if (this.phase !== 'moving') return;
+    if (!this.hasBothPlayers()) return;
+    const red = this.players.get('red');
+    const blue = this.players.get('blue');
+    if (!red || !blue) return;
 
     // Check game over
     if (red.hp <= 0 || blue.hp <= 0) {
@@ -348,7 +370,11 @@ export class GameRoom {
       newTurn: this.turn,
     });
 
-    setTimeout(() => this.startRound(), 500);
+    this.clearNextRoundTimeout();
+    this.nextRoundTimeout = setTimeout(() => {
+      this.nextRoundTimeout = null;
+      this.startRound();
+    }, 500);
   }
 
   // ─── Rematch ────────────────────────────────────────────────────────────────
@@ -393,6 +419,8 @@ export class GameRoom {
   // ─── Helpers ─────────────────────────────────────────────────────────────────
 
   private resetGame(): void {
+    this.timer.clear();
+    this.clearPendingTimeouts();
     this.turn = 1;
     this.attackerColor = 'red';
     this.phase = 'waiting';
@@ -518,5 +546,36 @@ export class GameRoom {
 
   private touchActivity(timestamp = Date.now()): void {
     this.lastActivityAt = timestamp;
+  }
+
+  private hasBothPlayers(): boolean {
+    return this.players.has('red') && this.players.has('blue');
+  }
+
+  private clearPlanningGraceTimeout(): void {
+    if (this.planningGraceTimeout) {
+      clearTimeout(this.planningGraceTimeout);
+      this.planningGraceTimeout = null;
+    }
+  }
+
+  private clearMovingCompleteTimeout(): void {
+    if (this.movingCompleteTimeout) {
+      clearTimeout(this.movingCompleteTimeout);
+      this.movingCompleteTimeout = null;
+    }
+  }
+
+  private clearNextRoundTimeout(): void {
+    if (this.nextRoundTimeout) {
+      clearTimeout(this.nextRoundTimeout);
+      this.nextRoundTimeout = null;
+    }
+  }
+
+  private clearPendingTimeouts(): void {
+    this.clearPlanningGraceTimeout();
+    this.clearMovingCompleteTimeout();
+    this.clearNextRoundTimeout();
   }
 }
