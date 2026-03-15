@@ -6,6 +6,7 @@ import {
   AuthPayload,
   finalizeGoogleUpgrade,
   getUserFromToken,
+  recordMatchmakingResult,
   resolveAccount,
   resolvePlayerProfile,
 } from '../services/playerAuth';
@@ -283,7 +284,20 @@ export function initSocketServer(io: Server): void {
       console.log(`[-] Disconnected: ${socket.id}`);
       unregisterSocketSession(socket.id);
       store.removeFromQueue(socket.id);
-      const room = store.removeSocket(socket.id);
+      const { room, disconnectResult } = store.removeSocket(socket.id);
+
+      if (
+        room &&
+        disconnectResult.shouldAwardDisconnectResult &&
+        disconnectResult.winnerColor
+      ) {
+        const winner = room.getPlayerByColor(disconnectResult.winnerColor);
+        void recordMatchmakingResult(
+          winner?.userId ?? null,
+          socket.data.userId ?? null,
+        );
+      }
+
       if (room && room.playerCount > 0) {
         io.to(room.roomId).emit('opponent_disconnected', {});
       }

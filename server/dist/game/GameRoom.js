@@ -54,15 +54,35 @@ class GameRoom {
         });
     }
     removePlayer(socketId) {
+        let disconnectedColor = null;
+        let shouldAwardDisconnectResult = false;
+        let winnerColor = null;
         for (const [color, p] of this.players) {
             if (p.socketId === socketId) {
+                const wasActiveMatch = this.phase === 'planning' || this.phase === 'moving';
+                disconnectedColor = color;
                 this.players.delete(color);
                 if (this.aiColor === color)
                     this.aiColor = null;
                 this.timer.clear();
+                if (this.matchType === 'random' &&
+                    !this.aiColor &&
+                    wasActiveMatch &&
+                    this.players.size === 1) {
+                    winnerColor = [...this.players.keys()][0] ?? null;
+                    shouldAwardDisconnectResult = winnerColor !== null;
+                    if (winnerColor) {
+                        this.phase = 'gameover';
+                    }
+                }
                 break;
             }
         }
+        return {
+            disconnectedColor,
+            shouldAwardDisconnectResult,
+            winnerColor,
+        };
     }
     hasHumanPlayers() {
         return [...this.players.values()].some((player) => player.color !== this.aiColor);
@@ -324,6 +344,9 @@ class GameRoom {
     }
     getPlayerColor(socketId) {
         return this.getPlayerBySocket(socketId)?.color;
+    }
+    getPlayerByColor(color) {
+        return this.players.get(color);
     }
     createPlayerState(color, id, nickname, userId, stats, pieceSkin) {
         const pos = (0, GameEngine_1.getInitialPositions)();

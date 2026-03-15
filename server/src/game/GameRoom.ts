@@ -74,15 +74,44 @@ export class GameRoom {
     });
   }
 
-  removePlayer(socketId: string): void {
+  removePlayer(socketId: string): {
+    disconnectedColor: PlayerColor | null;
+    shouldAwardDisconnectResult: boolean;
+    winnerColor: PlayerColor | null;
+  } {
+    let disconnectedColor: PlayerColor | null = null;
+    let shouldAwardDisconnectResult = false;
+    let winnerColor: PlayerColor | null = null;
+
     for (const [color, p] of this.players) {
       if (p.socketId === socketId) {
+        const wasActiveMatch =
+          this.phase === 'planning' || this.phase === 'moving';
+        disconnectedColor = color;
         this.players.delete(color);
         if (this.aiColor === color) this.aiColor = null;
         this.timer.clear();
+        if (
+          this.matchType === 'random' &&
+          !this.aiColor &&
+          wasActiveMatch &&
+          this.players.size === 1
+        ) {
+          winnerColor = [...this.players.keys()][0] ?? null;
+          shouldAwardDisconnectResult = winnerColor !== null;
+          if (winnerColor) {
+            this.phase = 'gameover';
+          }
+        }
         break;
       }
     }
+
+    return {
+      disconnectedColor,
+      shouldAwardDisconnectResult,
+      winnerColor,
+    };
   }
 
   hasHumanPlayers(): boolean {
@@ -372,6 +401,10 @@ export class GameRoom {
 
   getPlayerColor(socketId: string): PlayerColor | undefined {
     return this.getPlayerBySocket(socketId)?.color;
+  }
+
+  getPlayerByColor(color: PlayerColor): PlayerState | undefined {
+    return this.players.get(color);
   }
 
   private createPlayerState(

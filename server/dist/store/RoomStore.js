@@ -35,17 +35,33 @@ class RoomStore {
     removeSocket(socketId) {
         const roomId = this.socketToRoom.get(socketId);
         this.socketToRoom.delete(socketId);
-        if (!roomId)
-            return undefined;
+        if (!roomId) {
+            return {
+                room: undefined,
+                disconnectResult: {
+                    disconnectedColor: null,
+                    shouldAwardDisconnectResult: false,
+                    winnerColor: null,
+                },
+            };
+        }
         const room = this.rooms.get(roomId);
-        if (!room)
-            return undefined;
-        room.removePlayer(socketId);
+        if (!room) {
+            return {
+                room: undefined,
+                disconnectResult: {
+                    disconnectedColor: null,
+                    shouldAwardDisconnectResult: false,
+                    winnerColor: null,
+                },
+            };
+        }
+        const disconnectResult = room.removePlayer(socketId);
         if (room.playerCount === 0 || !room.hasHumanPlayers()) {
             this.rooms.delete(roomId);
             this.codeToRoom.delete(room.code);
         }
-        return room;
+        return { room, disconnectResult };
     }
     generateCode() {
         const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
