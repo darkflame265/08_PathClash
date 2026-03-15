@@ -190,9 +190,9 @@ function initSocketServer(io) {
             await registerSocketSession(socket, auth, { forceRevalidate: true });
             ack?.(await (0, playerAuth_1.resolveAccount)(auth));
         });
-        socket.on('finalize_google_upgrade', async ({ auth, guestAuth, guestProfile, flowStartedAt, }, ack) => {
+        socket.on('finalize_google_upgrade', async ({ auth, guestAuth, guestProfile, flowStartedAt, allowExistingSwitch, }, ack) => {
             await registerSocketSession(socket, auth, { forceRevalidate: true });
-            ack?.(await (0, playerAuth_1.finalizeGoogleUpgrade)(auth, guestAuth, guestProfile, flowStartedAt));
+            ack?.(await (0, playerAuth_1.finalizeGoogleUpgrade)(auth, guestAuth, guestProfile, flowStartedAt, Boolean(allowExistingSwitch)));
         });
         socket.on('path_update', ({ path }) => {
             const room = store.getBySocket(socket.id);

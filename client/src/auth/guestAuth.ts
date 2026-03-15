@@ -82,10 +82,17 @@ export type UpgradeResolution =
   | { kind: "none" }
   | { kind: "upgrade_ok"; profile: AccountProfile }
   | { kind: "switch_ok"; profile: AccountProfile }
+  | { kind: "switch_confirm_required"; profile: AccountProfile }
   | { kind: "auth_error" };
 
 interface ServerFinalizeUpgradeResponse {
-  status: "UPGRADE_OK" | "SWITCH_OK" | "AUTH_REQUIRED" | "AUTH_INVALID" | "UPGRADE_FAILED";
+  status:
+    | "UPGRADE_OK"
+    | "SWITCH_OK"
+    | "SWITCH_CONFIRM_REQUIRED"
+    | "AUTH_REQUIRED"
+    | "AUTH_INVALID"
+    | "UPGRADE_FAILED";
   profile?: AccountProfile;
 }
 
@@ -618,6 +625,11 @@ export async function resolveUpgradeFlowAfterRedirect(): Promise<UpgradeResoluti
     flowStartedAt: pending.flowStartedAt,
   });
 
+  if (finalizeResult.status === "SWITCH_CONFIRM_REQUIRED" && finalizeResult.profile) {
+    clearUpgradeQueryFromUrl();
+    return { kind: "switch_confirm_required", profile: finalizeResult.profile };
+  }
+
   clearPendingUpgradeContext();
   clearUpgradeQueryFromUrl();
 
@@ -630,6 +642,33 @@ export async function resolveUpgradeFlowAfterRedirect(): Promise<UpgradeResoluti
   }
 
   return { kind: "upgrade_ok", profile: finalizeResult.profile };
+}
+
+export async function confirmPendingGoogleUpgradeSwitch(): Promise<UpgradeResolution> {
+  const pending = getPendingUpgradeContext();
+  if (!pending) return { kind: "auth_error" };
+
+  const finalizeResult = await emitSocketAck<ServerFinalizeUpgradeResponse>("finalize_google_upgrade", {
+    auth: await getSocketAuthPayload(),
+    guestAuth: pending.guestAuth,
+    guestProfile: pending.guestProfile,
+    flowStartedAt: pending.flowStartedAt,
+    allowExistingSwitch: true,
+  });
+
+  clearPendingUpgradeContext();
+  clearUpgradeQueryFromUrl();
+
+  if (finalizeResult.status !== "SWITCH_OK" || !finalizeResult.profile) {
+    return { kind: "auth_error" };
+  }
+
+  return { kind: "switch_ok", profile: finalizeResult.profile };
+}
+
+export async function cancelPendingGoogleUpgradeSwitch(): Promise<AuthStatePayload> {
+  clearPendingUpgradeContext();
+  return logoutToGuestMode();
 }
 
 export function getSocketAuthPayload() {

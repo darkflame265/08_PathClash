@@ -2,6 +2,8 @@
 import { FlagSkin, isFlagSkin } from "../shared/FlagSkin";
 import { StarrySkySkin } from "../shared/StarrySkySkin";
 import {
+  cancelPendingGoogleUpgradeSwitch,
+  confirmPendingGoogleUpgradeSwitch,
   getSocketAuthPayload,
   linkGoogleAccount,
   logoutToGuestMode,
@@ -212,6 +214,34 @@ export function LobbyScreen({ onGameStart }: Props) {
   const dailyResetTimeoutRef = useRef<number | null>(null);
   const lastRewardSyncDayRef = useRef<string>(getUtcDayKey());
   const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
+  const buildExistingAccountSwitchPrompt = (profile: AccountProfile) => {
+    const nickname = profile.nickname?.trim() || "Guest";
+    if (lang === "en") {
+      return [
+        "This Google account already has existing PathClash data.",
+        "",
+        `Nickname: ${nickname}`,
+        `Record: ${profile.wins}W ${profile.losses}L`,
+        `Tokens: ${profile.tokens}`,
+        "",
+        "Your current guest progress will not be moved to that account.",
+        "",
+        "Do you want to switch to the existing Google account?",
+      ].join("\n");
+    }
+
+    return [
+      "이 Google 계정에는 기존 PathClash 데이터가 있습니다.",
+      "",
+      `닉네임: ${nickname}`,
+      `전적: ${profile.wins}승 ${profile.losses}패`,
+      `토큰: ${profile.tokens}`,
+      "",
+      "현재 게스트 진행 상황은 이 계정으로 옮겨지지 않습니다.",
+      "",
+      "기존 Google 계정으로 전환하시겠습니까?",
+    ].join("\n");
+  };
   const settingsButtonLabel = lang === "en" ? "Settings" : "\uC124\uC815";
   const skinButtonLabel = lang === "en" ? "Skin" : "\uC2A4\uD0A8";
   const soundButtonLabel = lang === "en" ? "Sound" : "\uC18C\uB9AC";
@@ -707,6 +737,35 @@ export function LobbyScreen({ onGameStart }: Props) {
     void resolveUpgradeFlowAfterRedirect().then((result) => {
       if (!active || result.kind === "none") return;
 
+      if (result.kind === "switch_confirm_required") {
+        const confirmed = window.confirm(
+          buildExistingAccountSwitchPrompt(result.profile),
+        );
+
+        if (!confirmed) {
+          void cancelPendingGoogleUpgradeSwitch().then((guestState) => {
+            if (!active) return;
+            setAuthState(guestState);
+            setUpgradeResult({ kind: "none" });
+          });
+          return;
+        }
+
+        void confirmPendingGoogleUpgradeSwitch().then((confirmResult) => {
+          if (!active) return;
+
+          if (confirmResult.kind === "switch_ok") {
+            applyProfileToStore(confirmResult.profile, setAuthState);
+            setUpgradeResult(confirmResult);
+            setShowUpgradeNotice(true);
+            return;
+          }
+
+          setUpgradeResult({ kind: "auth_error" });
+        });
+        return;
+      }
+
       if (result.kind === "upgrade_ok" || result.kind === "switch_ok") {
         applyProfileToStore(result.profile, setAuthState);
         setUpgradeResult(result);
@@ -722,7 +781,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     return () => {
       active = false;
     };
-  }, [setAuthState]);
+  }, [buildExistingAccountSwitchPrompt, setAuthState]);
 
   useEffect(() => {
     if (!isSkinPickerOpen) {

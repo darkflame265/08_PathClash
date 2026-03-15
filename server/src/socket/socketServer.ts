@@ -264,6 +264,7 @@ export function initSocketServer(io: Server): void {
           guestAuth,
           guestProfile,
           flowStartedAt,
+          allowExistingSwitch,
         }: {
           auth?: AuthPayload;
           guestAuth?: AuthPayload;
@@ -275,11 +276,18 @@ export function initSocketServer(io: Server): void {
             dailyRewardWins?: number;
           };
           flowStartedAt?: string;
+          allowExistingSwitch?: boolean;
         },
         ack?: (response: unknown) => void,
       ) => {
         await registerSocketSession(socket, auth, { forceRevalidate: true });
-        ack?.(await finalizeGoogleUpgrade(auth, guestAuth, guestProfile, flowStartedAt));
+        ack?.(await finalizeGoogleUpgrade(
+          auth,
+          guestAuth,
+          guestProfile,
+          flowStartedAt,
+          Boolean(allowExistingSwitch),
+        ));
       },
     );
 

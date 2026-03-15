@@ -166,7 +166,7 @@ async function recordMatchmakingResult(winnerUserId, loserUserId) {
         console.error('[supabase] failed to upsert player_stats', upsertError);
     }
 }
-async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowStartedAt) {
+async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowStartedAt, allowExistingSwitch = false) {
     if (!supabase_1.supabaseAdmin || !targetAuth?.accessToken || !guestAuth?.accessToken) {
         return { status: 'AUTH_REQUIRED' };
     }
@@ -206,6 +206,12 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
         targetCreatedAt <= startedAt + 5 * 60000;
     if (targetHasExistingData || !createdDuringFlow) {
         const profile = await readAccountProfile(targetUser.id, targetProfile.nickname, false);
+        if (!allowExistingSwitch) {
+            return {
+                status: 'SWITCH_CONFIRM_REQUIRED',
+                profile,
+            };
+        }
         return {
             status: 'SWITCH_OK',
             profile,

@@ -32,6 +32,7 @@ export type ResolveAccountResponse =
 export type FinalizeGoogleUpgradeResponse =
   | { status: 'UPGRADE_OK'; profile: AccountProfile }
   | { status: 'SWITCH_OK'; profile: AccountProfile }
+  | { status: 'SWITCH_CONFIRM_REQUIRED'; profile: AccountProfile }
   | { status: 'AUTH_REQUIRED' | 'AUTH_INVALID' | 'UPGRADE_FAILED' };
 
 interface ProfileRow {
@@ -261,6 +262,7 @@ export async function finalizeGoogleUpgrade(
     dailyRewardWins?: number;
   } | undefined,
   flowStartedAt: string | undefined,
+  allowExistingSwitch = false,
 ): Promise<FinalizeGoogleUpgradeResponse> {
   if (!supabaseAdmin || !targetAuth?.accessToken || !guestAuth?.accessToken) {
     return { status: 'AUTH_REQUIRED' };
@@ -311,6 +313,12 @@ export async function finalizeGoogleUpgrade(
 
   if (targetHasExistingData || !createdDuringFlow) {
     const profile = await readAccountProfile(targetUser.id, targetProfile.nickname, false);
+    if (!allowExistingSwitch) {
+      return {
+        status: 'SWITCH_CONFIRM_REQUIRED',
+        profile,
+      };
+    }
     return {
       status: 'SWITCH_OK',
       profile,
