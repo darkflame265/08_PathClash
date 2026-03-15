@@ -8,6 +8,7 @@ function initSocketServer(io) {
     const store = RoomStore_1.RoomStore.getInstance();
     const activeUserSockets = new Map();
     const socketUsers = new Map();
+    const authCacheTtlMs = 10 * 60 * 1000;
     const unregisterSocketSession = (socketId) => {
         const userId = socketUsers.get(socketId);
         if (!userId)
@@ -17,10 +18,29 @@ function initSocketServer(io) {
             activeUserSockets.delete(userId);
         }
     };
-    const registerSocketSession = async (socket, auth) => {
+    const registerSocketSession = async (socket, auth, options) => {
+        const accessToken = auth?.accessToken?.trim();
+        const cachedUserId = typeof socket.data.userId === 'string' ? socket.data.userId : null;
+        const cachedAccessToken = typeof socket.data.accessToken === 'string' ? socket.data.accessToken : null;
+        const cachedVerifiedAt = typeof socket.data.authVerifiedAt === 'number' ? socket.data.authVerifiedAt : 0;
+        const cacheIsFresh = Date.now() - cachedVerifiedAt < authCacheTtlMs;
+        const shouldReuseCachedSession = !options?.forceRevalidate &&
+            cachedUserId &&
+            cachedAccessToken &&
+            accessToken &&
+            cachedAccessToken === accessToken &&
+            cacheIsFresh;
+        if (shouldReuseCachedSession) {
+            activeUserSockets.set(cachedUserId, socket.id);
+            socketUsers.set(socket.id, cachedUserId);
+            return cachedUserId;
+        }
         const user = await (0, playerAuth_1.getUserFromToken)(auth?.accessToken);
         if (!user) {
             unregisterSocketSession(socket.id);
+            socket.data.userId = undefined;
+            socket.data.accessToken = undefined;
+            socket.data.authVerifiedAt = undefined;
             return null;
         }
         const previousMappedUserId = socketUsers.get(socket.id);
@@ -33,6 +53,8 @@ function initSocketServer(io) {
         activeUserSockets.set(user.id, socket.id);
         socketUsers.set(socket.id, user.id);
         socket.data.userId = user.id;
+        socket.data.accessToken = accessToken;
+        socket.data.authVerifiedAt = Date.now();
         if (previousSocketId && previousSocketId !== socket.id) {
             const previousSocket = io.sockets.sockets.get(previousSocketId);
             if (previousSocket) {
@@ -161,11 +183,11 @@ function initSocketServer(io) {
             store.removeFromQueue(socket.id);
         });
         socket.on('account_sync', async ({ auth }, ack) => {
-            await registerSocketSession(socket, auth);
+            await registerSocketSession(socket, auth, { forceRevalidate: true });
             ack?.(await (0, playerAuth_1.resolveAccount)(auth));
         });
         socket.on('finalize_google_upgrade', async ({ auth, guestAuth, guestProfile, flowStartedAt, }, ack) => {
-            await registerSocketSession(socket, auth);
+            await registerSocketSession(socket, auth, { forceRevalidate: true });
             ack?.(await (0, playerAuth_1.finalizeGoogleUpgrade)(auth, guestAuth, guestProfile, flowStartedAt));
         });
         socket.on('path_update', ({ path }) => {

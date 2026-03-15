@@ -15,6 +15,7 @@ export function initSocketServer(io: Server): void {
   const store = RoomStore.getInstance();
   const activeUserSockets = new Map<string, string>();
   const socketUsers = new Map<string, string>();
+  const authCacheTtlMs = 10 * 60 * 1000;
 
   const unregisterSocketSession = (socketId: string) => {
     const userId = socketUsers.get(socketId);
@@ -28,10 +29,36 @@ export function initSocketServer(io: Server): void {
   const registerSocketSession = async (
     socket: Socket,
     auth?: AuthPayload,
+    options?: { forceRevalidate?: boolean },
   ): Promise<string | null> => {
+    const accessToken = auth?.accessToken?.trim();
+    const cachedUserId =
+      typeof socket.data.userId === 'string' ? socket.data.userId : null;
+    const cachedAccessToken =
+      typeof socket.data.accessToken === 'string' ? socket.data.accessToken : null;
+    const cachedVerifiedAt =
+      typeof socket.data.authVerifiedAt === 'number' ? socket.data.authVerifiedAt : 0;
+    const cacheIsFresh = Date.now() - cachedVerifiedAt < authCacheTtlMs;
+    const shouldReuseCachedSession =
+      !options?.forceRevalidate &&
+      cachedUserId &&
+      cachedAccessToken &&
+      accessToken &&
+      cachedAccessToken === accessToken &&
+      cacheIsFresh;
+
+    if (shouldReuseCachedSession) {
+      activeUserSockets.set(cachedUserId, socket.id);
+      socketUsers.set(socket.id, cachedUserId);
+      return cachedUserId;
+    }
+
     const user = await getUserFromToken(auth?.accessToken);
     if (!user) {
       unregisterSocketSession(socket.id);
+      socket.data.userId = undefined;
+      socket.data.accessToken = undefined;
+      socket.data.authVerifiedAt = undefined;
       return null;
     }
 
@@ -48,6 +75,8 @@ export function initSocketServer(io: Server): void {
     activeUserSockets.set(user.id, socket.id);
     socketUsers.set(socket.id, user.id);
     socket.data.userId = user.id;
+    socket.data.accessToken = accessToken;
+    socket.data.authVerifiedAt = Date.now();
 
     if (previousSocketId && previousSocketId !== socket.id) {
       const previousSocket = io.sockets.sockets.get(previousSocketId);
@@ -218,7 +247,7 @@ export function initSocketServer(io: Server): void {
     });
 
     socket.on('account_sync', async ({ auth }: { auth?: AuthPayload }, ack?: (response: unknown) => void) => {
-      await registerSocketSession(socket, auth);
+      await registerSocketSession(socket, auth, { forceRevalidate: true });
       ack?.(await resolveAccount(auth));
     });
 
@@ -244,7 +273,7 @@ export function initSocketServer(io: Server): void {
         },
         ack?: (response: unknown) => void,
       ) => {
-        await registerSocketSession(socket, auth);
+        await registerSocketSession(socket, auth, { forceRevalidate: true });
         ack?.(await finalizeGoogleUpgrade(auth, guestAuth, guestProfile, flowStartedAt));
       },
     );
