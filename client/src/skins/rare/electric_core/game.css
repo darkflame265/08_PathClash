@@ -1,14 +1,18 @@
 .player-piece.piece-skin-electric_core .piece-inner {
   background: transparent;
-  border-color: rgba(255, 0, 204, 0.85);
+  border: var(--me-border-width, 1px) solid #22c55e;
   box-shadow: none;
+  overflow: visible;
+  width: 100%;
+  height: 100%;
+  transform: scale(1.25);
 }
 
 .electric-core-canvas {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
+  inset: -56%;
+  width: 212%;
+  height: 212%;
   pointer-events: none;
+  z-index: 1;
 }
