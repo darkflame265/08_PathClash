@@ -1,14 +1,9 @@
 import { JWT } from 'google-auth-library';
 
-interface GooglePlayProductLineItem {
+interface GooglePlayProductPurchase {
   productId?: string;
-}
-
-interface GooglePlayProductPurchaseV2 {
-  productLineItem?: GooglePlayProductLineItem[];
-  purchaseStateContext?: {
-    purchaseState?: string;
-  };
+  purchaseToken?: string;
+  purchaseState?: number;
 }
 
 export type GooglePlayPurchaseVerificationResult =
@@ -75,8 +70,9 @@ export async function verifyGooglePlayProductPurchase({
 
   const packageName = getConfiguredPackageName();
   const encodedPackageName = encodeURIComponent(packageName);
+  const encodedProductId = encodeURIComponent(productId);
   const encodedPurchaseToken = encodeURIComponent(purchaseToken);
-  const endpoint = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodedPackageName}/purchases/productsv2/tokens/${encodedPurchaseToken}`;
+  const endpoint = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodedPackageName}/purchases/products/${encodedProductId}/tokens/${encodedPurchaseToken}`;
 
   try {
     await jwtClient.authorize();
@@ -86,20 +82,17 @@ export async function verifyGooglePlayProductPurchase({
   }
 
   try {
-    const response = await jwtClient.request<GooglePlayProductPurchaseV2>({
+    const response = await jwtClient.request<GooglePlayProductPurchase>({
       url: endpoint,
       method: 'GET',
     });
 
     const purchase = response.data;
-    const lineItems = purchase.productLineItem ?? [];
-    const hasMatchingProduct = lineItems.some((item) => item.productId === productId);
-    if (!hasMatchingProduct) {
+    if (purchase.productId && purchase.productId !== productId) {
       return { ok: false, reason: 'product_mismatch' };
     }
 
-    const purchaseState = purchase.purchaseStateContext?.purchaseState;
-    if (purchaseState !== 'PURCHASED') {
+    if (purchase.purchaseState !== 0) {
       return { ok: false, reason: 'purchase_not_completed' };
     }
 

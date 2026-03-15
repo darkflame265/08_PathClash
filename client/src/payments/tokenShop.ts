@@ -84,7 +84,16 @@ async function grantPurchasedTokens({
   });
 
   if (!response.ok) {
-    throw new Error("token grant failed");
+    let error = "token grant failed";
+    try {
+      const body = (await response.json()) as { error?: string };
+      if (body.error) {
+        error = `token grant failed: ${body.error}`;
+      }
+    } catch {
+      // Ignore response body parse failures and keep generic error text.
+    }
+    throw new Error(error);
   }
 }
 

@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from "express";
+import type { Request, Response } from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { supabaseAdmin } from "./lib/supabase";
@@ -64,6 +65,35 @@ const configuredOrigins = [
 
 const allowedOrigins = [...new Set([...defaultOrigins, ...configuredOrigins])];
 
+function applyApiCors(origin: string | undefined, res: Response) {
+  if (!origin || !allowedOrigins.includes(origin)) {
+    return false;
+  }
+
+  res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Vary", "Origin");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  return true;
+}
+
+app.use((req: Request, res: Response, next) => {
+  const origin = req.header("Origin") ?? undefined;
+  const corsApplied = applyApiCors(origin, res);
+
+  if (req.method === "OPTIONS") {
+    if (origin && !corsApplied) {
+      res.status(403).end();
+      return;
+    }
+
+    res.status(204).end();
+    return;
+  }
+
+  next();
+});
+
 const io = new Server(httpServer, {
   cors: {
     origin: (origin, callback) => {
@@ -99,23 +129,49 @@ app.post("/payments/google-play/token-grant", async (req, res) => {
   };
 
   if (!accessToken || !packId || !purchaseToken || !productId) {
+    console.warn("[google-play] token grant invalid request", {
+      hasAccessToken: Boolean(accessToken),
+      packId,
+      hasPurchaseToken: Boolean(purchaseToken),
+      productId,
+    });
     res.status(400).json({ error: "invalid_request" });
     return;
   }
 
   if (!(packId in tokenPackCatalog)) {
+    console.warn("[google-play] token grant invalid pack", {
+      packId,
+      productId,
+    });
     res.status(400).json({ error: "invalid_pack" });
     return;
   }
 
   const pack = tokenPackCatalog[packId];
   if (productId !== pack.productId) {
+    console.warn("[google-play] token grant product mismatch", {
+      packId,
+      expectedProductId: pack.productId,
+      productId,
+    });
     res.status(400).json({ error: "product_mismatch" });
     return;
   }
 
+  console.info("[google-play] token grant request", {
+    packId,
+    productId,
+    purchaseTokenPrefix: purchaseToken.slice(0, 12),
+  });
+
   const { data, error } = await supabaseAdmin.auth.getUser(accessToken);
   if (error || !data.user) {
+    console.warn("[google-play] token grant auth invalid", {
+      packId,
+      productId,
+      error: error?.message,
+    });
     res.status(401).json({ error: "auth_invalid" });
     return;
   }
@@ -125,6 +181,12 @@ app.post("/payments/google-play/token-grant", async (req, res) => {
     purchaseToken,
   });
   if (!verification.ok) {
+    console.warn("[google-play] token grant rejected", {
+      packId,
+      productId,
+      reason: verification.reason,
+      userId: data.user.id,
+    });
     const statusCode =
       verification.reason === "config_missing" ||
       verification.reason === "invalid_credentials" ||

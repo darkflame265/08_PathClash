@@ -44,8 +44,9 @@ async function verifyGooglePlayProductPurchase({ productId, purchaseToken, }) {
     }
     const packageName = getConfiguredPackageName();
     const encodedPackageName = encodeURIComponent(packageName);
+    const encodedProductId = encodeURIComponent(productId);
     const encodedPurchaseToken = encodeURIComponent(purchaseToken);
-    const endpoint = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodedPackageName}/purchases/productsv2/tokens/${encodedPurchaseToken}`;
+    const endpoint = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodedPackageName}/purchases/products/${encodedProductId}/tokens/${encodedPurchaseToken}`;
     try {
         await jwtClient.authorize();
     }
@@ -59,13 +60,10 @@ async function verifyGooglePlayProductPurchase({ productId, purchaseToken, }) {
             method: 'GET',
         });
         const purchase = response.data;
-        const lineItems = purchase.productLineItem ?? [];
-        const hasMatchingProduct = lineItems.some((item) => item.productId === productId);
-        if (!hasMatchingProduct) {
+        if (purchase.productId && purchase.productId !== productId) {
             return { ok: false, reason: 'product_mismatch' };
         }
-        const purchaseState = purchase.purchaseStateContext?.purchaseState;
-        if (purchaseState !== 'PURCHASED') {
+        if (purchase.purchaseState !== 0) {
             return { ok: false, reason: 'purchase_not_completed' };
         }
         return { ok: true };
