@@ -1727,6 +1727,10 @@
     padding: 0.85rem;
   }
 
+  .audio-modal-backdrop {
+    align-items: center;
+  }
+
   .skin-modal {
     width: min(100%, 24rem);
     max-height: calc(100dvh - 1.7rem);

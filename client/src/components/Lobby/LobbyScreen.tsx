@@ -1510,7 +1510,7 @@ export function LobbyScreen({ onGameStart }: Props) {
       )}
       {isAudioSettingsOpen && (
         <div
-          className="upgrade-modal-backdrop"
+          className="upgrade-modal-backdrop audio-modal-backdrop"
           onClick={() => setIsAudioSettingsOpen(false)}
         >
           <div
