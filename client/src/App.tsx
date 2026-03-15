@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import {
@@ -9,12 +9,21 @@ import {
   syncEquippedSkin,
   syncNickname,
 } from "./auth/guestAuth";
-import { GameScreen } from "./components/Game/GameScreen";
-import { LobbyScreen } from "./components/Lobby/LobbyScreen";
 import { disconnectSocket, getSocket } from "./socket/socketClient";
 import { useLang } from "./hooks/useLang";
 import { useGameStore } from "./store/gameStore";
 import "./App.css";
+
+const LobbyScreen = lazy(() =>
+  import("./components/Lobby/LobbyScreen").then((module) => ({
+    default: module.LobbyScreen,
+  })),
+);
+const GameScreen = lazy(() =>
+  import("./components/Game/GameScreen").then((module) => ({
+    default: module.GameScreen,
+  })),
+);
 
 type AppView = "lobby" | "game";
 
@@ -295,8 +304,10 @@ function App() {
 
   return (
     <div className={`app ${view === "game" ? "app-game" : "app-lobby"}`}>
-      {view === "lobby" && <LobbyScreen onGameStart={() => setView("game")} />}
-      {view === "game" && <GameScreen onLeaveToLobby={handleReturnToLobby} />}
+      <Suspense fallback={<div className="app app-loading">Loading...</div>}>
+        {view === "lobby" && <LobbyScreen onGameStart={() => setView("game")} />}
+        {view === "game" && <GameScreen onLeaveToLobby={handleReturnToLobby} />}
+      </Suspense>
       {showExitConfirm && view === "lobby" && (
         <div
           className="app-confirm-backdrop"
