@@ -1,5 +1,5 @@
 import "./preview.css";
 
 export function GoldCorePreview() {
-  return null;
+  return <span className="skin-preview-gold_core-orb" aria-hidden="true" />;
 }

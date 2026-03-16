@@ -1,4 +1,16 @@
 .skin-preview-inferno {
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+}
+
+.skin-preview-inferno-orb {
+  position: absolute;
+  inset: 0%;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  pointer-events: none;
   background: radial-gradient(
     circle at 50% 50%,
     rgba(255, 248, 214, 0.98) 0%,
@@ -14,15 +26,15 @@
     0 0 28px rgba(255, 170, 52, 0.3);
 }
 
-.skin-preview-inferno::before,
-.skin-preview-inferno::after {
+.skin-preview-inferno-orb::before,
+.skin-preview-inferno-orb::after {
   content: "";
   position: absolute;
   border-radius: 999px;
   pointer-events: none;
 }
 
-.skin-preview-inferno::before {
+.skin-preview-inferno-orb::before {
   inset: 24%;
   background: radial-gradient(
     circle,
@@ -38,7 +50,7 @@
     0 0 14px rgba(255, 132, 40, 0.3);
 }
 
-.skin-preview-inferno::after {
+.skin-preview-inferno-orb::after {
   inset: 6%;
   background: radial-gradient(
     circle,

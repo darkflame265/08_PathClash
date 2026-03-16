@@ -1,5 +1,5 @@
 import "./preview.css";
 
 export function InfernoPreview() {
-  return null;
+  return <span className="skin-preview-inferno-orb" aria-hidden="true" />;
 }

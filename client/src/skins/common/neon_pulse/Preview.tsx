@@ -1,5 +1,5 @@
 import "./preview.css";
 
 export function NeonPulsePreview() {
-  return null;
+  return <span className="skin-preview-neon_pulse-orb" aria-hidden="true" />;
 }
