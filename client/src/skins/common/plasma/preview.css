@@ -22,6 +22,7 @@
     0 0 0 2px rgba(96, 165, 250, 0.9),
     0 0 18px rgba(59, 130, 246, 0.42),
     0 0 28px rgba(124, 58, 237, 0.32);
+  animation: plasma-core-pulse 1.8s ease-in-out infinite;
 }
 
 .skin-preview-plasma-orb::before,
@@ -36,10 +37,42 @@
 .skin-preview-plasma-orb::before {
   border: 1px solid rgba(96, 165, 250, 0.7);
   box-shadow: 0 0 8px rgba(59, 130, 246, 0.45);
+  animation: plasma-ring-spin 2.8s linear infinite;
 }
 
 .skin-preview-plasma-orb::after {
   inset: 5px;
   border: 1px dashed rgba(191, 219, 254, 0.55);
   opacity: 0.8;
+  animation: plasma-ring-spin-reverse 3.6s linear infinite;
+}
+
+@keyframes plasma-core-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: saturate(1);
+  }
+  50% {
+    transform: scale(1.04);
+    filter: saturate(1.12);
+  }
+}
+
+@keyframes plasma-ring-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes plasma-ring-spin-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
 }
