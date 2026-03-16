@@ -1,4 +1,16 @@
 .skin-preview-quantum {
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+}
+
+.skin-preview-quantum-orb {
+  position: absolute;
+  inset: 0%;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  pointer-events: none;
   background:
     radial-gradient(
       circle at 34% 28%,
@@ -22,15 +34,15 @@
     0 0 36px rgba(124, 255, 178, 0.2);
 }
 
-.skin-preview-quantum::before,
-.skin-preview-quantum::after {
+.skin-preview-quantum-orb::before,
+.skin-preview-quantum-orb::after {
   content: "";
   position: absolute;
   border-radius: 999px;
   pointer-events: none;
 }
 
-.skin-preview-quantum::before {
+.skin-preview-quantum-orb::before {
   inset: 2px;
   border: 1.5px solid rgba(124, 255, 178, 0.82);
   box-shadow:
@@ -60,7 +72,7 @@
   animation: quantum-preview-orbit-cw 1.9s linear infinite;
 }
 
-.skin-preview-quantum::after {
+.skin-preview-quantum-orb::after {
   inset: 5px;
   border: 1px dashed rgba(167, 139, 250, 0.78);
   box-shadow:

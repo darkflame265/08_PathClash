@@ -1,5 +1,5 @@
 import "./preview.css";
 
 export function QuantumPreview() {
-  return null;
+  return <span className="skin-preview-quantum-orb" aria-hidden="true" />;
 }
