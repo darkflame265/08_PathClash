@@ -254,6 +254,13 @@ export function LobbyScreen({ onGameStart }: Props) {
   const skinButtonLabel = lang === "en" ? "Skin" : "\uC2A4\uD0A8";
   const soundButtonLabel = lang === "en" ? "Sound" : "\uC18C\uB9AC";
   const termsButtonLabel = lang === "en" ? "Terms" : "\uC774\uC6A9\uC57D\uAD00";
+  const coopTitle = lang === "en" ? "Co-op Mode" : "\uD611\uB3D9\uC804";
+  const coopDesc =
+    lang === "en"
+      ? "A cooperative battle mode is planned here. This feature is not implemented yet."
+      : "\uD611\uB3D9 \uC804\uD22C \uBAA8\uB4DC\uAC00 \uCD94\uAC00\uB420 \uC608\uC815\uC785\uB2C8\uB2E4. \uC544\uC9C1 \uBBF8\uAD6C\uD604 \uC0C1\uD0DC\uC785\uB2C8\uB2E4.";
+  const coopStartLabel =
+    lang === "en" ? "Start Co-op Match" : "\uB9E4\uCE6D \uC2DC\uC791";
   const skinModalTitle =
     lang === "en"
       ? "Choose Piece Skin"
@@ -1028,6 +1035,12 @@ export function LobbyScreen({ onGameStart }: Props) {
     });
   };
 
+  const handleCoopMatch = () => {
+    window.alert(
+      lang === "en" ? "Not implemented yet." : "\uC544\uC9C1 \uBBF8\uAD6C\uD604 \uC785\uB2C8\uB2E4.",
+    );
+  };
+
   const handleLinkGoogle = async () => {
     setUpgradeResult({ kind: "none" });
     setShowUpgradeNotice(false);
@@ -1250,6 +1263,14 @@ export function LobbyScreen({ onGameStart }: Props) {
               </button>
             )}
             {error && <p className="error-msg">{error}</p>}
+          </div>
+
+          <div className="lobby-card">
+            <h2 data-step="5">{coopTitle}</h2>
+            <p>{coopDesc}</p>
+            <button className="lobby-btn accent" onClick={handleCoopMatch}>
+              {coopStartLabel}
+            </button>
           </div>
         </>
       )}
