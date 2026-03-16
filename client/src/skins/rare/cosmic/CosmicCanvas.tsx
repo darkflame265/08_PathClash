@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 
 interface Props {
   className?: string;
+  variant?: "game" | "preview";
 }
 
 interface StarColor {
@@ -40,29 +41,39 @@ interface Star {
   twinklePhase: number;
 }
 
-function buildStars(): Star[] {
+function buildStars(variant: "game" | "preview"): Star[] {
   const stars: Star[] = [];
-  for (const ring of RING_CONFIGS) {
+  for (const [ringIndex, ring] of RING_CONFIGS.entries()) {
     for (let i = 0; i < ring.count; i++) {
       const baseAngle = (i / ring.count) * Math.PI * 2;
-      const jitter = (Math.random() - 0.5) * (Math.PI / ring.count) * 0.5;
+      const isPreview = variant === "preview";
+      const jitter = isPreview
+        ? 0
+        : (Math.random() - 0.5) * (Math.PI / ring.count) * 0.5;
+      const colorIndex = isPreview
+        ? (ringIndex * 3 + i) % PALETTE.length
+        : Math.floor(Math.random() * PALETTE.length);
       stars.push({
         angle: baseAngle + jitter,
-        rf: ring.rf + (Math.random() - 0.5) * 0.04,
-        speed: ring.baseSpeed * (0.8 + Math.random() * 0.4),
-        size: 0.7 + Math.random() * 1.6,
-        color: PALETTE[Math.floor(Math.random() * PALETTE.length)],
-        twinkleBase: 0.65 + Math.random() * 0.3,
-        twinkleAmp: 0.10 + Math.random() * 0.15,
-        twinkleSpeed: 0.025 + Math.random() * 0.035,
-        twinklePhase: Math.random() * Math.PI * 2,
+        rf: isPreview
+          ? ring.rf * 0.92
+          : ring.rf + (Math.random() - 0.5) * 0.04,
+        speed: isPreview
+          ? ring.baseSpeed
+          : ring.baseSpeed * (0.8 + Math.random() * 0.4),
+        size: isPreview ? 1.1 + (ringIndex % 2) * 0.45 : 0.7 + Math.random() * 1.6,
+        color: PALETTE[colorIndex],
+        twinkleBase: isPreview ? 0.82 : 0.65 + Math.random() * 0.3,
+        twinkleAmp: isPreview ? 0.08 : 0.10 + Math.random() * 0.15,
+        twinkleSpeed: isPreview ? 0.03 + ringIndex * 0.006 : 0.025 + Math.random() * 0.035,
+        twinklePhase: isPreview ? i * 0.85 + ringIndex * 0.4 : Math.random() * Math.PI * 2,
       });
     }
   }
   return stars;
 }
 
-export function CosmicCanvas({ className }: Props) {
+export function CosmicCanvas({ className, variant = "game" }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -71,7 +82,7 @@ export function CosmicCanvas({ className }: Props) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const stars = buildStars();
+    const stars = buildStars(variant);
     let frameId = 0;
     let t = 0;
 
@@ -95,7 +106,7 @@ export function CosmicCanvas({ className }: Props) {
 
       const cx = w / 2;
       const cy = h / 2;
-      const halfR = Math.min(cx, cy);
+      const halfR = Math.min(cx, cy) * (variant === "preview" ? 0.92 : 1);
 
       // Background: deep space radial gradient
       const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, halfR);
@@ -170,7 +181,7 @@ export function CosmicCanvas({ className }: Props) {
       cancelAnimationFrame(frameId);
       ro.disconnect();
     };
-  }, []);
+  }, [variant]);
 
   return <canvas ref={canvasRef} className={className} aria-hidden="true" />;
 }
