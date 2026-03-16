@@ -1,10 +1,12 @@
 .skin-preview-cosmic {
-  background: linear-gradient(to bottom, #131b23 0%, #0a1443 100%);
+  background: #080b18;
   box-shadow:
-    0 0 12px rgba(71, 132, 191, 0.34),
-    0 0 28px rgba(77, 67, 152, 0.22),
-    inset 0 0 10px rgba(255, 255, 255, 0.04);
-  border-color: rgba(71, 132, 191, 0.55);
+    0 0 12px rgba(100, 150, 230, 0.50),
+    0 0 28px rgba(120, 90, 210, 0.28),
+    inset 0 0 8px rgba(180, 200, 255, 0.06);
+  border-color: rgba(110, 155, 225, 0.55);
+  overflow: hidden;
+  position: relative;
 }
 
 .skin-preview-cosmic::before,

@@ -1,6 +1,6 @@
-import { StarrySkySkin } from "../../../components/shared/StarrySkySkin";
+import { CosmicCanvas } from "./CosmicCanvas";
 import "./preview.css";
 
 export function CosmicPreview() {
-  return <StarrySkySkin className="skin-preview-cosmic-canvas" density={0.16} />;
+  return <CosmicCanvas className="skin-preview-cosmic-canvas" />;
 }
