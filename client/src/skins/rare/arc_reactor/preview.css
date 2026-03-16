@@ -1,7 +1,19 @@
 .skin-preview-arc_reactor {
-  background: transparent;
   overflow: visible;
+  background: transparent;
   box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.skin-preview-arc_reactor-orb {
+  position: absolute;
+  inset: 0%;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;
