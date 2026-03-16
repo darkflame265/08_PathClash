@@ -28,7 +28,7 @@
 .skin-preview-gold_core::after {
   content: "";
   position: absolute;
-  inset: 6px;
+  inset: 0px;
   border-radius: 999px;
   background: repeating-conic-gradient(
     rgba(255, 249, 160, 0.55) 0deg 20deg,
