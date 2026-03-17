@@ -1,144 +1,49 @@
-# CLAUDE.md
+﻿# CLAUDE.md
 
-이 파일은 새로운 Claude 세션이 이 저장소를 빠르게 이해하고 작업할 수 있도록 최소한의 프로젝트 맥락을 정리한 문서다.
+이 문서는 PathClash 저장소를 빠르게 이해하고, 현재 구조에 맞게 안전하게 수정하기 위한 프로젝트 메모다.
 
-## 이 프로젝트가 무엇인지
+## 1. 프로젝트 개요
+PathClash는 5x5 보드에서 경로를 미리 작성한 뒤, 양쪽 말이 동시에 이동하는 실시간 턴 전략 게임이다.
 
-PathClash는 브라우저에서 플레이하는 실시간 1대1 전략 게임이다.
+현재 지원 모드:
+- AI 대전
+- 친구 대전
+- 랜덤 매칭
+- 협동전 UI 자리만 존재함 (아직 기능 미구현)
 
+기술 스택:
 - 프론트엔드: React + TypeScript + Vite
 - 백엔드: Node.js + Express + Socket.IO
-- 인증 / 데이터 저장: Supabase
-- 핵심 게임 구조: 5x5 보드에서 두 플레이어가 각자 경로를 그린 뒤, 두 경로가 동시에 실행됨
+- 인증/데이터: Supabase
+- 안드로이드 앱: Capacitor
+- 인앱 결제: Google Play + 서버 검증
 
-주요 사용자 흐름:
+## 2. 현재 프로젝트에서 중요한 사실
 
-- 방 생성 후 코드 공유
-- 코드로 방 참가
-- 랜덤 매칭
-- AI 대전
-- 자동 익명 로그인으로 바로 시작
-- 이후 원하면 Google 계정으로 업그레이드
+### 2-1. 게스트 계정이 기본 진입점
+- 세션이 없으면 익명(게스트) 계정으로 바로 시작한다.
+- 이후 필요할 때 Google 계정으로 연동한다.
+- 게스트 -> Google 연동 시, 이미 기존 PathClash 데이터가 있는 Google 계정이면 경고 후 전환 여부를 선택한다.
+- 기존 데이터가 없는 Google 계정이면 게스트 진행을 그대로 승격한다.
 
-## 반드시 지켜야할 점
-
-- OOP 기반 설계
-- 계획부터 말하고 승인 받은 후에 작업 진행
-- 최적화를 고려한 코드 작성성
-
-## 저장소 구조
-
-### 루트
-
-- `client/` - 프론트엔드 앱
-- `server/` - 실시간 게임 서버
-- `supabase/` - SQL 스키마 및 인증 관련 DB 설정
-- `docs/` - 문서 및 Claude/Codex 작업 요청서
-- `my_game_rule.txt` - 게임 규칙 메모
-- `README.md` - 외부 공개용 프로젝트 소개
-
-### 프론트엔드
-
-- `client/src/App.tsx`
-  - 앱 시작점
-  - 게스트 인증 초기화
-  - 인증 상태를 store에 반영
-
+관련 파일:
 - `client/src/auth/guestAuth.ts`
-  - 자동 익명 로그인
-  - 세션 복원
-  - 닉네임 동기화
-  - Google 계정 업그레이드 흐름
-
-- `client/src/components/Lobby/`
-  - 로비 UI
-  - 방 생성, 코드 입장, AI 매치, 랜덤 매칭
-
-- `client/src/components/Game/`
-  - 인게임 UI
-  - 보드, 타이머, HP, 채팅, 게임오버 오버레이, 플레이어 카드
-
-- `client/src/store/gameStore.ts`
-  - Zustand 기반 전역 상태
-  - 인증, 로비, 게임, 애니메이션, 리매치, 채팅, 언어(lang) 상태 관리
-
-- `client/src/hooks/useLang.ts`
-  - 언어 토글 훅
-  - gameStore의 `lang`/`setLang`을 읽어 `{ lang, toggleLang, t }` 반환
-
-- `client/src/i18n/translations.ts`
-  - EN/KR 번역 객체
-  - `Translations` 타입 정의
-
-- `client/src/socket/`
-  - Socket.IO 클라이언트
-  - 서버 이벤트 핸들러
-
-- `client/src/lib/supabase.ts`
-  - 브라우저용 Supabase 클라이언트
-
-### 백엔드
-
-- `server/src/index.ts`
-  - Express 서버 시작
-  - Socket.IO 서버 생성
-  - CORS origin 처리
-
-- `server/src/socket/socketServer.ts`
-  - 소켓 이벤트 진입점
-  - 방 생성/입장/매칭/인증 관련 소켓 이벤트 처리
-
-- `server/src/game/GameRoom.ts`
-  - 실제 매치 룸 로직 핵심
-  - 턴 진행, 경로 제출, 충돌 판정, 리매치 처리
-
-- `server/src/game/GameEngine.ts`
-  - 보드/경로/충돌 계산 함수
-
-- `server/src/game/AiPlanner.ts`
-  - AI 이동 경로 생성
-
-- `server/src/store/RoomStore.ts`
-  - 룸 저장소 및 랜덤 매칭 대기열 관리
-
 - `server/src/services/playerAuth.ts`
-  - 토큰으로 현재 유저 식별
-  - 프로필 및 전적 조회/갱신
-  - 게스트 -> Google 업그레이드 마무리
 
-- `server/src/lib/supabase.ts`
-  - 서버용 Supabase admin 클라이언트
+### 2-2. 게임 규칙의 최종 권한은 서버에 있음
+- 실제 라운드 진행, 충돌 판정, HP 감소, 승패 판정은 서버가 결정한다.
+- 프론트는 대부분 UI와 입력 전달 역할이다.
 
-### 데이터베이스
+관련 파일:
+- `server/src/game/GameRoom.ts`
+- `server/src/game/GameEngine.ts`
+- `server/src/socket/socketServer.ts`
 
-- `supabase/schema.sql`
-  - `profiles`
-  - `player_stats`
-  - `account_merges`
-  - RLS 정책 정의
+### 2-3. Socket.IO가 핵심 통신 채널
+- 방 생성/입장/랜덤 매칭/AI 대전은 Socket.IO 이벤트로 처리한다.
+- REST는 결제 토큰 지급 검증 같은 일부 기능에만 쓴다.
 
-## 중요한 시스템
-
-### 1. 게스트 인증은 핵심 기능이다
-
-이 프로젝트는 세션이 없으면 자동으로 익명 로그인한다.
-
-주요 파일:
-
-- `client/src/auth/guestAuth.ts`
-
-중요한 동작:
-
-- 기존 세션이 있으면 새 익명 계정을 만들면 안 됨
-- 먼저 세션 복원을 시도하고, 없을 때만 새 게스트 계정을 생성함
-- 나중의 Google 로그인은 별도 신규 계정이 아니라 업그레이드 흐름으로 다뤄야 함
-
-### 2. 실시간 게임은 Socket.IO 중심이다
-
-프론트엔드는 REST보다 Socket.IO 이벤트를 중심으로 서버와 통신한다.
-
-대표 이벤트:
-
+중요 이벤트 예시:
 - `create_room`
 - `join_room`
 - `join_random`
@@ -146,145 +51,213 @@ PathClash는 브라우저에서 플레이하는 실시간 1대1 전략 게임이
 - `request_rematch`
 - `finalize_google_upgrade`
 
-게임 흐름이 이상하면 우선 아래 두 파일을 같이 봐야 한다.
-
+관련 파일:
+- `client/src/socket/socketClient.ts`
 - `client/src/socket/socketHandlers.ts`
 - `server/src/socket/socketServer.ts`
 
-### 3. 게임 규칙의 최종 판정은 서버가 가진다
+### 2-4. 결제는 서버 검증이 들어가 있음
+- Google Play 구매 후 바로 토큰을 넣지 않는다.
+- 서버에서 Google Play Developer API로 구매 토큰을 검증한 뒤 토큰을 지급한다.
+- 미완료 구매 복구 흐름도 들어가 있다.
 
-실제 충돌 판정과 턴 진행은 서버가 권한을 가진다.
-
-게임 규칙을 바꾸려면 주로 아래를 봐야 한다.
-
-- `server/src/game/GameRoom.ts`
-- `server/src/game/GameEngine.ts`
-- `server/src/types/game.types.ts`
-
-프론트만 바꿔서는 게임 규칙 변경이 끝나지 않는 경우가 많다.
-
-### 4. 다국어(i18n) 시스템
-
-언어 상태는 Zustand `gameStore`의 `lang` 필드에 저장되며 localStorage에 영속된다.
-
-핵심 파일:
-
-- `client/src/i18n/translations.ts` — 번역 키/값 정의
-- `client/src/hooks/useLang.ts` — React 컴포넌트용 훅
-- `client/src/store/gameStore.ts` — `lang`/`setLang` 액션
-
-**React 컴포넌트에서 사용:**
-```typescript
-const { t } = useLang();
-// t.someKey 로 번역 문자열 접근
-```
-
-**React 외부(socketHandlers 등)에서 사용:**
-```typescript
-import { translations } from '../i18n/translations';
-const t = translations[useGameStore.getState().lang];
-```
-
-**번역 키 추가 방법:**
-1. `Translations` 타입에 키 추가
-2. `en` 객체에 영어 값 추가
-3. `kr` 객체에 한국어 값 추가
-4. KR에서 의도적으로 영어를 유지하는 경우 `// intentionally English (...)` 주석 필수
-
-### 5. 전적과 계정 데이터는 Supabase를 사용한다
-
-클라이언트:
-
-- 일반 사용자 권한으로 본인 프로필/전적 조회 및 일부 업데이트
-
-서버:
-
-- Supabase admin 클라이언트로 인증 검증 및 일부 계정/전적 처리
-
-인증/전적 관련 변경 시 반드시 함께 볼 파일:
-
-- `client/src/auth/guestAuth.ts`
-- `server/src/services/playerAuth.ts`
+관련 파일:
+- `client/src/payments/tokenShop.ts`
+- `server/src/index.ts`
+- `server/src/services/googlePlayVerifier.ts`
 - `supabase/schema.sql`
 
-## 스킨 디자인 수정
+### 2-5. 스킨은 파일 분리 중이며, 일부는 이미 분리됨
+현재 분리된 스킨 구조:
+- `client/src/skins/common/...`
+- `client/src/skins/rare/...`
+- `client/src/skins/legendary/...`
 
-스킨 관련 작업은 아래 4개 파일만 건드린다. 다른 파일은 탐색할 필요 없다.
+이미 분리된 스킨 예시:
+- common: `plasma`, `gold_core`, `neon_pulse`, `inferno`, `quantum`
+- rare: `cosmic`, `arc_reactor`, `electric_core`
+- legendary: `atomic`
 
-| 파일 | 역할 |
-|------|------|
-| `client/src/components/Game/PlayerPiece.css` | 인게임 말(piece) 시각 디자인 — `.piece-skin-{id}` 클래스 |
-| `client/src/components/Lobby/LobbyScreen.css` | 스킨 선택창 미리보기 — `.skin-preview-{id}` 클래스 |
-| `client/src/components/Lobby/LobbyScreen.tsx` | 스킨 목록 정의 (id, name, desc, requiredWins, tokenPrice) |
-| `client/src/components/Game/FlagSkin.tsx` | 국기 스킨 SVG 모양만 담당 |
+프리뷰/인게임 렌더 연결 위치:
+- 인게임: `client/src/components/Game/PlayerPiece.tsx`
+- 로비 미리보기: `client/src/components/Lobby/LobbyScreen.tsx`
 
-### 스킨 CSS 패턴
+## 3. 디렉토리 구조
 
-- **인게임** — `.piece-skin-{id} .piece-inner` + `::before` + `::after` 로 구성
-- **미리보기** — `.skin-preview-{id}` + `::before` + `::after` 로 구성
-- `piece-inner`는 `border-radius: 50%; overflow: hidden;` 이므로 내부 자식은 자동으로 원형 클리핑됨
-- keyframe 이름은 `{스킨id}-{역할}` 규칙으로 네이밍 (예: `gold-orbit-cw`, `cosmic-nebula-pulse`)
+### 루트
+- `client/` - 프론트엔드
+- `server/` - 실시간 게임 서버
+- `supabase/` - 스키마, RPC 함수, 정책
+- `docs/` - 문서
+- `coop_mode.md` - 협동전 규칙 문서
+- `electric_core.md` - Electric Core 참고 문서
+- `README.md` - 공개용 소개 문서
 
----
+### 프론트엔드
+- `client/src/App.tsx`
+  - 앱 진입점
+  - auth 초기화
+  - 로비/게임 화면 분기
+  - lazy load 적용됨
 
-## 앞으로 수정할 때의 기본 원칙
+- `client/src/auth/guestAuth.ts`
+  - 게스트 세션 초기화
+  - Google 연동/전환
+  - Supabase RPC 호출
 
-- 큰 리팩터링보다, 필요한 범위만 최소 수정하는 편이 좋다
-- 인게임 UI 수정은 `client/src/components/Game/`부터 본다
-- 로비/계정 관련 수정은 `client/src/components/Lobby/`와 `client/src/auth/guestAuth.ts`부터 본다
-- 매칭/방 흐름 수정은 `server/src/socket/socketServer.ts`와 `server/src/store/RoomStore.ts`부터 본다
-- 실제 게임 규칙 수정은 `server/src/game/GameRoom.ts`부터 본다
-- 인증/보안 변경은 항상 `supabase/schema.sql`까지 교차 확인한다
-- 번역 문자열 추가/수정은 `client/src/i18n/translations.ts`만 건드리면 된다
+- `client/src/components/Lobby/`
+  - 로비 UI
+  - 계정, AI 대전, 친구 대전, 랜덤 매칭, 협동전 카드 UI
+  - 스킨창 / 설정창 / 오디오창 / 토큰샵 포함
 
-## 환경 변수
+- `client/src/components/Game/`
+  - 인게임 UI
+  - 보드, 타이머, 채팅, 플레이어 패널, 경로 작성
+
+- `client/src/store/gameStore.ts`
+  - Zustand 전역 상태
+  - 인증, 계정, 스킨, 게임 상태, 오디오 설정
+
+- `client/src/i18n/translations.ts`
+  - EN / KR 번역 정의
+
+- `client/src/skins/`
+  - 스킨별 `Game.tsx`, `Preview.tsx`, `game.css`, `preview.css`, `meta.ts`
+
+### 백엔드
+- `server/src/index.ts`
+  - Express 서버
+  - Socket.IO 연결
+  - 결제 검증 REST API
+
+- `server/src/socket/socketServer.ts`
+  - 방 생성/입장/매칭/AI 처리
+  - Google 연동 finalize socket 처리
+
+- `server/src/game/GameRoom.ts`
+  - 실제 매치 진행 로직
+  - 라운드 진행, 경로 공개, 이동 완료, 승패 판정
+  - 타이머/timeout 정리 중요
+
+- `server/src/game/GameEngine.ts`
+  - 보드 계산, 장애물 생성, 충돌 계산
+
+- `server/src/game/AiPlanner.ts`
+  - AI 경로 생성
+
+- `server/src/store/RoomStore.ts`
+  - 방 저장소, socket-room 매핑, random queue 관리
+  - sweep 로직 있음
+
+- `server/src/services/playerAuth.ts`
+  - access token 검증
+  - 계정 요약 조회/생성
+  - 게스트 -> Google 연동 마무리
+
+### 데이터베이스
+- `supabase/schema.sql`
+  - `profiles`
+  - `player_stats`
+  - `owned_skins`
+  - `account_merges`
+  - `google_play_token_purchases`
+  - `grant_tokens_from_google_purchase`
+  - `purchase_skin_with_tokens`
+
+## 4. 지금 구조에서 꼭 기억해야 할 포인트
+
+### 4-1. `GameScreen` lazy load 이슈는 서버 handshake로 막고 있음
+- 예전에는 `GameScreen`이 늦게 마운트되면 AI 첫 진입에서 무한 로딩이 났다.
+- 현재는 `game_client_ready` handshake 후 서버가 게임을 시작한다.
+- 이 구조를 함부로 되돌리면 AI 첫 진입 버그가 재발할 수 있다.
+
+관련 파일:
+- `client/src/components/Game/GameScreen.tsx`
+- `server/src/socket/socketServer.ts`
+- `server/src/game/GameRoom.ts`
+
+### 4-2. 게임 중 이탈은 timeout 정리가 중요
+- 플레이어가 나간 뒤 예약된 timeout이 남아 있으면 서버가 크래시할 수 있었다.
+- 현재는 `GameRoom`에서 pending timeout 정리 로직을 갖고 있다.
+- 라운드 예약 로직을 수정할 때는 stale timeout 문제를 다시 만들지 않도록 주의해야 한다.
+
+### 4-3. 스킨 구매 가격은 DB 함수가 최종 기준
+- 클라이언트가 가격을 정하지 않는다.
+- `purchase_skin_with_tokens(p_skin_id)` 함수가 허용 스킨과 가격을 직접 결정한다.
+- UI에서 가격만 바꾸고 SQL을 안 바꾸면 불일치가 생긴다.
+
+### 4-4. Electric Core는 canvas 기반 특수 스킨
+- `electric_core`는 다른 CSS 기반 스킨과 달리 canvas 애니메이션을 사용한다.
+- 관련 수정은 `ElectricCoreCanvas.tsx`, `game.css`, `preview.css`를 같이 봐야 한다.
+
+## 5. 스킨 작업 규칙
+
+### 5-1. 현재 스킨 연결 방식
+- 인게임 렌더: `PlayerPiece.tsx`
+- 로비 미리보기: `LobbyScreen.tsx`
+- 스킨 목록/가격/설명: `LobbyScreen.tsx`
+- DB 구매 가격 검증: `supabase/schema.sql`
+
+### 5-2. 스킨 파일 구조
+각 스킨 폴더는 보통 아래 구성을 가진다.
+- `Game.tsx`
+- `game.css`
+- `Preview.tsx`
+- `preview.css`
+- `meta.ts`
+
+### 5-3. 프리뷰는 인게임과 별도로 조정 가능
+- 일부 스킨은 preview 전용 레이어를 따로 둔다.
+- 특히 `cosmic`, `quantum`, `arc_reactor`, `electric_core`는 preview 전용 정렬/크기 보정이 들어가 있다.
+
+## 6. 협동전 상태
+- 현재는 로비에 협동전 카드와 버튼만 있다.
+- 버튼 클릭 시 “아직 미구현 입니다.” 경고만 띄운다.
+- 실제 규칙 문서는 `coop_mode.md`에 정리되어 있다.
+- 구현 전에는 반드시 `coop_mode.md`를 기준으로 상태 모델을 먼저 확정해야 한다.
+
+## 7. 환경 변수
 
 ### 클라이언트
-
 - `VITE_SERVER_URL`
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
+- `VITE_POLICY_URL_KR`
+- `VITE_POLICY_URL_EN`
+- `VITE_TERMS_URL_KR`
+- `VITE_TERMS_URL_EN`
+- `VITE_DONATE_URL`
 
 ### 서버
-
 - `PORT`
 - `CLIENT_URL`
 - `ALLOWED_ORIGINS`
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `GOOGLE_PLAY_PACKAGE_NAME`
+- `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`
+- 토큰팩 product env들
 
-중요:
+## 8. 배포 메모
+- 웹 프론트 변경: Render `Static Site` 재배포
+- 서버 변경: Render `Web Service` 재배포
+- Android 앱 변경: AAB / APK 다시 빌드
+- SQL 함수 변경: Supabase SQL Editor에서 해당 함수 재실행 필요
 
-- `.env` 파일은 Git에서 제외되어야 한다
-- 비밀 키는 절대 커밋하면 안 된다
-
-## 실무적으로 알아둘 점
-
-- 일부 파일은 인코딩 이력 때문에 한글이 깨져 보일 수 있다
-- 검색/SEO 관련 수정은 보통 `client/index.html`, `client/public/`을 건드린다
-- 브라우저 탭 / 검색 결과 파비콘은 현재 `client/public/favicon.ico`를 사용한다
-- 인게임 반응형 문제는 주로 아래 파일들에서 발생한다
-  - `client/src/components/Game/GameScreen.tsx`
-  - `client/src/components/Game/GameScreen.css`
-  - `client/src/components/Game/GameGrid.tsx`
-  - `client/src/components/Game/GameGrid.css`
-
-## 프로젝트를 빨리 이해하려면 이 순서로 읽기
-
+## 9. 먼저 읽을 파일 순서
 1. `README.md`
 2. `client/src/App.tsx`
 3. `client/src/auth/guestAuth.ts`
 4. `client/src/components/Lobby/LobbyScreen.tsx`
 5. `client/src/components/Game/GameScreen.tsx`
-6. `server/src/socket/socketServer.ts`
-7. `server/src/game/GameRoom.ts`
-8. `supabase/schema.sql`
+6. `client/src/components/Game/PlayerPiece.tsx`
+7. `server/src/socket/socketServer.ts`
+8. `server/src/game/GameRoom.ts`
+9. `supabase/schema.sql`
+10. `coop_mode.md`
 
-## 이 프로젝트를 보는 기본 관점
-
-이 저장소는 아래 네 가지가 결합된 구조로 이해하면 된다.
-
-- 실시간 멀티플레이 게임
-- 게스트 우선 온보딩
-- Supabase 기반 인증과 전적 저장
-- UI는 프론트가 보여주지만, 실제 게임 판정은 서버가 가진 구조
+## 10. 작업 원칙
+- 규칙 변경은 서버 기준으로 본다.
+- 결제/계정/스킨 가격은 클라이언트만 보고 수정하지 않는다.
+- 스킨은 가능하면 폴더 단위로 분리하고, preview와 game을 따로 본다.
+- 인코딩이 깨진 문서는 부분 수정하지 말고 UTF-8로 전체 교체하는 편이 안전하다.
