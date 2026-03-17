@@ -51,7 +51,6 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
   const [portals, setPortals] = useState<CoopPortal[]>([]);
   const [movingEnemyPaths, setMovingEnemyPaths] = useState<CoopEnemyPreview[] | null>(null);
   const [hitPortalIds, setHitPortalIds] = useState<string[]>([]);
-  const [hitPlayers, setHitPlayers] = useState<{ red: boolean; blue: boolean }>({ red: false, blue: false });
   const [mySubmitted, setMySubmitted] = useState(false);
   const [allySubmitted, setAllySubmitted] = useState(false);
   const [rematchRequested, setRematchRequested] = useState(false);
@@ -97,7 +96,6 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
       setCoopState(state);
       setMovingEnemyPaths(null);
       setHitPortalIds([]);
-      setHitPlayers({ red: false, blue: false });
       setMyPath([]);
       setAllyPath([]);
       setMySubmitted(Boolean(state.players[currentColor]?.pathSubmitted));
@@ -187,31 +185,36 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
 
         const playerHits = playerHitsByStep.get(step) ?? [];
         if (playerHits.length > 0) {
-          const flashedPlayers = new Set<"red" | "blue">();
+          const store = useGameStore.getState();
           setCoopState((prev) => {
             if (!prev) return prev;
             const players = { ...prev.players };
             for (const hit of playerHits) {
               players[hit.color] = { ...players[hit.color], hp: hit.newHp };
-              flashedPlayers.add(hit.color);
             }
             return { ...prev, players };
           });
-          if (flashedPlayers.size > 0) {
-            setHitPlayers((prev) => ({
-              red: prev.red || flashedPlayers.has("red"),
-              blue: prev.blue || flashedPlayers.has("blue"),
-            }));
-            const timeoutId = window.setTimeout(() => {
-              setHitPlayers((prev) => ({
-                red: flashedPlayers.has("red") ? false : prev.red,
-                blue: flashedPlayers.has("blue") ? false : prev.blue,
-              }));
-              playerHitTimeoutsRef.current = playerHitTimeoutsRef.current.filter((id) => id !== timeoutId);
-            }, 600);
-            playerHitTimeoutsRef.current.push(timeoutId);
+
+          for (const hit of playerHits) {
+            const hitPosition =
+              hit.color === "red"
+                ? redSeq[Math.min(step, redSeq.length - 1)]
+                : blueSeq[Math.min(step, blueSeq.length - 1)];
+            const prevHp = hit.newHp + 1;
+            store.triggerHit(hit.color);
+            store.triggerHeartShake(hit.color, prevHp - 1);
+            store.triggerCollisionEffect(hitPosition);
+            if (hit.newHp <= 0) {
+              const timeoutId = window.setTimeout(() => {
+                useGameStore.getState().triggerExplosion(hit.color);
+                playerHitTimeoutsRef.current = playerHitTimeoutsRef.current.filter((id) => id !== timeoutId);
+              }, 600);
+              playerHitTimeoutsRef.current.push(timeoutId);
+            }
           }
-          if (!isSfxMuted) {
+
+          const myWasHit = playerHits.some((hit) => hit.color === currentColor);
+          if (myWasHit && !isSfxMuted) {
             playHit(sfxVolume);
           }
         }
@@ -494,7 +497,6 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
           portals={portals}
           movingEnemyPaths={movingEnemyPaths}
           hitPortalIds={hitPortalIds}
-          hitPlayers={hitPlayers}
         />
         </div>
       </div>

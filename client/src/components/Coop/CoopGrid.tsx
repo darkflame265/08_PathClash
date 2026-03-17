@@ -1,10 +1,12 @@
 import { useRef, useCallback, useEffect, useState } from "react";
+import { useGameStore } from "../../store/gameStore";
 import { getSocket } from "../../socket/socketClient";
 import type { Position } from "../../types/game.types";
 import type { CoopClientState, CoopEnemyPreview, CoopPortal, CoopRoundStartPayload } from "../../types/coop.types";
 import { isBlockedCell, isValidMove, pixelToCell, posEqual } from "../../utils/pathUtils";
 import { PlayerPiece } from "../Game/PlayerPiece";
 import { PathLine } from "../Game/PathLine";
+import { CollisionEffect } from "../Effects/CollisionEffect";
 import "../Game/GameGrid.css";
 import "./CoopScreen.css";
 
@@ -27,7 +29,6 @@ interface Props {
   portals: CoopPortal[];
   movingEnemyPaths: CoopEnemyPreview[] | null;
   hitPortalIds: string[];
-  hitPlayers: { red: boolean; blue: boolean };
 }
 
 function EnemyPathLayer({ paths, cellSize }: { paths: CoopEnemyPreview[]; cellSize: number }) {
@@ -82,8 +83,8 @@ export function CoopGrid({
   portals,
   movingEnemyPaths,
   hitPortalIds,
-  hitPlayers,
 }: Props) {
+  const { hitEffect, collisionEffects, explosionEffect } = useGameStore();
   const shellRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState(DEFAULT_CELL_SIZE * GRID_SIZE);
@@ -356,6 +357,14 @@ export function CoopGrid({
           isPlanning={isPlanning}
         />
 
+        {collisionEffects.map(({ id, position }) => (
+          <CollisionEffect
+            key={id}
+            position={position}
+            cellSize={responsiveCellSize}
+          />
+        ))}
+
         {portals.map((portal) => (
           <div
             key={portal.id}
@@ -387,26 +396,26 @@ export function CoopGrid({
           </div>
         ))}
 
-        {state.players.red.hp > 0 && (
+        {(state.players.red.hp > 0 || hitEffect.red || explosionEffect === "red") && (
           <PlayerPiece
             color="red"
             position={redDisplayPos}
             cellSize={responsiveCellSize}
             isAttacker={false}
-            isHit={hitPlayers.red}
-            isExploding={false}
+            isHit={hitEffect.red}
+            isExploding={explosionEffect === "red"}
             isMe={myColor === 'red'}
             skin={state.players.red.pieceSkin}
           />
         )}
-        {state.players.blue.hp > 0 && (
+        {(state.players.blue.hp > 0 || hitEffect.blue || explosionEffect === "blue") && (
           <PlayerPiece
             color="blue"
             position={blueDisplayPos}
             cellSize={responsiveCellSize}
             isAttacker={false}
-            isHit={hitPlayers.blue}
-            isExploding={false}
+            isHit={hitEffect.blue}
+            isExploding={explosionEffect === "blue"}
             isMe={myColor === 'blue'}
             skin={state.players.blue.pieceSkin}
           />
