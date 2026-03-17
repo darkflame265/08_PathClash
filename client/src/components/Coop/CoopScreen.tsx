@@ -248,7 +248,6 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
       path: Position[];
     }) => {
       if (color === currentColor) {
-        setMyPath(path);
         return;
       }
       setAllyPath(path);
