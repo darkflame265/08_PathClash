@@ -26,6 +26,7 @@ interface Props {
   enemyDisplayPositions: Record<string, Position>;
   portals: CoopPortal[];
   movingEnemyPaths: CoopEnemyPreview[] | null;
+  hitPortalIds: string[];
 }
 
 function EnemyPathLayer({ paths, cellSize }: { paths: CoopEnemyPreview[]; cellSize: number }) {
@@ -79,6 +80,7 @@ export function CoopGrid({
   enemyDisplayPositions,
   portals,
   movingEnemyPaths,
+  hitPortalIds,
 }: Props) {
   const shellRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -343,7 +345,7 @@ export function CoopGrid({
         {portals.map((portal) => (
           <div
             key={portal.id}
-            className={`coop-portal coop-portal-${portal.color}`}
+            className={`coop-portal coop-portal-${portal.color}${hitPortalIds.includes(portal.id) ? ' hit' : ''}`}
             style={{
               left: portal.position.col * responsiveCellSize + responsiveCellSize / 2,
               top: portal.position.row * responsiveCellSize + responsiveCellSize / 2,
@@ -371,26 +373,30 @@ export function CoopGrid({
           </div>
         ))}
 
-        <PlayerPiece
-          color="red"
-          position={redDisplayPos}
-          cellSize={responsiveCellSize}
-          isAttacker={false}
-          isHit={false}
-          isExploding={false}
-          isMe={myColor === 'red'}
-          skin={state.players.red.pieceSkin}
-        />
-        <PlayerPiece
-          color="blue"
-          position={blueDisplayPos}
-          cellSize={responsiveCellSize}
-          isAttacker={false}
-          isHit={false}
-          isExploding={false}
-          isMe={myColor === 'blue'}
-          skin={state.players.blue.pieceSkin}
-        />
+        {state.players.red.hp > 0 && (
+          <PlayerPiece
+            color="red"
+            position={redDisplayPos}
+            cellSize={responsiveCellSize}
+            isAttacker={false}
+            isHit={false}
+            isExploding={false}
+            isMe={myColor === 'red'}
+            skin={state.players.red.pieceSkin}
+          />
+        )}
+        {state.players.blue.hp > 0 && (
+          <PlayerPiece
+            color="blue"
+            position={blueDisplayPos}
+            cellSize={responsiveCellSize}
+            isAttacker={false}
+            isHit={false}
+            isExploding={false}
+            isMe={myColor === 'blue'}
+            skin={state.players.blue.pieceSkin}
+          />
+        )}
       </div>
     </div>
   );

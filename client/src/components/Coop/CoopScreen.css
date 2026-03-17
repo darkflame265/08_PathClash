@@ -109,6 +109,10 @@
   box-shadow: 0 0 8px rgba(244, 114, 182, 0.5);
 }
 
+.coop-portal.hit {
+  animation: hit-flash 600ms ease 3;
+}
+
 .coop-path-bar {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -159,5 +163,16 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes hit-flash {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  25%,
+  75% {
+    opacity: 0.08;
   }
 }

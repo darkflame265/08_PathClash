@@ -50,12 +50,14 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
   const [enemyDisplayPositions, setEnemyDisplayPositions] = useState<EnemyDisplayMap>({});
   const [portals, setPortals] = useState<CoopPortal[]>([]);
   const [movingEnemyPaths, setMovingEnemyPaths] = useState<CoopEnemyPreview[] | null>(null);
+  const [hitPortalIds, setHitPortalIds] = useState<string[]>([]);
   const [mySubmitted, setMySubmitted] = useState(false);
   const [allySubmitted, setAllySubmitted] = useState(false);
   const [rematchRequested, setRematchRequested] = useState(false);
   const [rematchRequestSent, setRematchRequestSent] = useState(false);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const timeoutRef = useRef<number | null>(null);
+  const portalHitTimeoutsRef = useRef<number[]>([]);
 
   const currentColor = myColor ?? "red";
   const allyColor: PlayerColor = currentColor === "red" ? "blue" : "red";
@@ -65,6 +67,13 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
       window.clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+  }, []);
+
+  const clearPortalHitTimeouts = useCallback(() => {
+    for (const timeoutId of portalHitTimeoutsRef.current) {
+      window.clearTimeout(timeoutId);
+    }
+    portalHitTimeoutsRef.current = [];
   }, []);
 
   const syncDisplayFromState = useCallback((state: CoopClientState) => {
@@ -78,6 +87,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
     (state: CoopClientState) => {
       setCoopState(state);
       setMovingEnemyPaths(null);
+      setHitPortalIds([]);
       setMyPath([]);
       setAllyPath([]);
       setMySubmitted(Boolean(state.players[currentColor]?.pathSubmitted));
@@ -142,6 +152,10 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
 
         const portalHits = portalHitsByStep.get(step) ?? [];
         if (portalHits.length > 0) {
+          const flashedPortalIds = portalHits
+            .filter((hit) => !hit.destroyed && hit.newHp > 0)
+            .map((hit) => hit.portalId);
+
           setPortals((prev) =>
             prev.flatMap((portal) => {
               const hit = portalHits.find((entry) => entry.portalId === portal.id);
@@ -150,6 +164,15 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
               return [{ ...portal, hp: hit.newHp }];
             }),
           );
+
+          if (flashedPortalIds.length > 0) {
+            setHitPortalIds((prev) => Array.from(new Set([...prev, ...flashedPortalIds])));
+            const timeoutId = window.setTimeout(() => {
+              setHitPortalIds((prev) => prev.filter((id) => !flashedPortalIds.includes(id)));
+              portalHitTimeoutsRef.current = portalHitTimeoutsRef.current.filter((id) => id !== timeoutId);
+            }, 600);
+            portalHitTimeoutsRef.current.push(timeoutId);
+          }
         }
 
         const playerHits = playerHitsByStep.get(step) ?? [];
@@ -285,6 +308,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
 
     return () => {
       clearAnimationTimeout();
+      clearPortalHitTimeouts();
       socket.off("coop_game_start", onGameStart);
       socket.off("coop_round_start", onRoundStart);
       socket.off("coop_path_updated", onPathUpdated);
@@ -295,7 +319,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
       socket.off("player_skin_updated", onPlayerSkinUpdated);
       socket.off("rematch_requested", onRematchRequested);
     };
-  }, [animateResolution, applyState, clearAnimationTimeout, currentColor]);
+  }, [animateResolution, applyState, clearAnimationTimeout, clearPortalHitTimeouts, currentColor]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -440,10 +464,11 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
             roundInfo={roundInfo}
             redDisplayPos={redDisplayPos}
             blueDisplayPos={blueDisplayPos}
-            enemyDisplayPositions={enemyDisplayPositions}
-            portals={portals}
-            movingEnemyPaths={movingEnemyPaths}
-          />
+          enemyDisplayPositions={enemyDisplayPositions}
+          portals={portals}
+          movingEnemyPaths={movingEnemyPaths}
+          hitPortalIds={hitPortalIds}
+        />
         </div>
       </div>
 
