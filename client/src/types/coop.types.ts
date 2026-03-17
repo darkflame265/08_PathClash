@@ -15,6 +15,7 @@ export interface CoopPortal {
 export interface CoopEnemy {
   id: string;
   position: Position;
+  isBoss?: boolean;
 }
 
 export interface CoopEnemyPreview {
@@ -50,6 +51,8 @@ export interface CoopClientState {
   enemies: CoopEnemy[];
   enemyPreviews: CoopEnemyPreview[];
   finalWave: boolean;
+  bossPhase: boolean;
+  bossRoundsRemaining: number;
   gameResult: CoopResult | null;
 }
 

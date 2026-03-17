@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CoopRoom = void 0;
 const GameEngine_1 = require("../GameEngine");
 const ServerTimer_1 = require("../ServerTimer");
+const AiPlanner_1 = require("../AiPlanner");
 const CoopEngine_1 = require("./CoopEngine");
 const PLANNING_TIME_MS = 7000;
 const SUBMIT_GRACE_MS = 350;
@@ -28,6 +29,8 @@ class CoopRoom {
         this.readySockets = new Set();
         this.pendingStart = false;
         this.finalEnemyPhase = false;
+        this.bossPhase = false;
+        this.bossRoundsRemaining = 0;
         this.gameResult = null;
         this.planningGraceTimeout = null;
         this.nextRoundTimeout = null;
@@ -123,6 +126,8 @@ class CoopRoom {
         this.planningRound = 1;
         this.phase = 'planning';
         this.finalEnemyPhase = false;
+        this.bossPhase = false;
+        this.bossRoundsRemaining = 0;
         this.gameResult = null;
         this.rematchSet.clear();
         this.clearPlanningGraceTimeout();
@@ -244,11 +249,13 @@ class CoopRoom {
         const blueStart = { ...blue.position };
         const redPath = [...red.plannedPath];
         const bluePath = [...blue.plannedPath];
-        const enemyMoves = this.enemyPreviews.map((enemy) => ({
-            ...enemy,
-            start: { ...enemy.start },
-            path: enemy.path.map((position) => ({ ...position })),
-        }));
+        const enemyMoves = this.bossPhase
+            ? this.buildBossMoves(redStart, blueStart)
+            : this.enemyPreviews.map((enemy) => ({
+                ...enemy,
+                start: { ...enemy.start },
+                path: enemy.path.map((position) => ({ ...position })),
+            }));
         this.phase = 'moving';
         const resolution = (0, CoopEngine_1.resolveCoopMovement)({
             redStart,
@@ -271,6 +278,8 @@ class CoopRoom {
         let nextPhase = 'planning';
         let nextResult = null;
         let nextFinalEnemyPhase = this.finalEnemyPhase;
+        let nextBossPhase = this.bossPhase;
+        let nextBossRoundsRemaining = this.bossRoundsRemaining;
         let nextEnemies = [];
         let nextEnemyPreviews = [];
         let nextPortals = [];
@@ -278,14 +287,29 @@ class CoopRoom {
             nextPhase = 'gameover';
             nextResult = 'lose';
         }
-        else if (this.finalEnemyPhase) {
-            nextPhase = 'gameover';
-            nextResult = 'win';
+        else if (this.bossPhase) {
+            nextEnemies = this.enemies.map((enemy, index) => ({
+                id: enemy.id,
+                position: index === 0 ? enemyMoves[0]?.path[enemyMoves[0].path.length - 1] ?? enemyMoves[0]?.start ?? enemy.position : enemy.position,
+                isBoss: true,
+            }));
+            nextEnemyPreviews = [];
+            nextBossPhase = true;
+            nextBossRoundsRemaining = Math.max(0, this.bossRoundsRemaining - 1);
+            if (nextBossRoundsRemaining <= 0) {
+                nextPhase = 'gameover';
+                nextResult = 'win';
+                nextEnemies = [];
+                nextEnemyPreviews = [];
+                nextBossPhase = false;
+            }
         }
         else if (this.getCurrentPortalCount() >= FINAL_PORTAL_COUNT) {
             if (convertedEnemies.length === 0) {
-                nextPhase = 'gameover';
-                nextResult = 'win';
+                nextBossPhase = true;
+                nextBossRoundsRemaining = 5;
+                nextEnemies = [this.createBoss(redEnd, blueEnd)];
+                nextEnemyPreviews = [];
             }
             else {
                 nextFinalEnemyPhase = true;
@@ -344,6 +368,8 @@ class CoopRoom {
             this.enemies = nextEnemies;
             this.enemyPreviews = nextEnemyPreviews;
             this.finalEnemyPhase = nextFinalEnemyPhase;
+            this.bossPhase = nextBossPhase;
+            this.bossRoundsRemaining = nextBossRoundsRemaining;
             this.gameResult = nextResult;
             if (nextPhase === 'gameover') {
                 this.phase = 'gameover';
@@ -435,8 +461,55 @@ class CoopRoom {
                 path: enemy.path.map((position) => ({ ...position })),
             })),
             finalWave: this.finalEnemyPhase || this.getCurrentPortalCount() >= FINAL_PORTAL_COUNT,
+            bossPhase: this.bossPhase,
+            bossRoundsRemaining: this.bossRoundsRemaining,
             gameResult: this.gameResult,
         };
+    }
+    buildBossMoves(redPosition, bluePosition) {
+        return this.enemies
+            .filter((enemy) => enemy.isBoss)
+            .map((enemy) => {
+            const target = this.manhattan(enemy.position, redPosition) <= this.manhattan(enemy.position, bluePosition)
+                ? redPosition
+                : bluePosition;
+            return {
+                id: enemy.id,
+                start: { ...enemy.position },
+                path: (0, AiPlanner_1.createAiPath)({
+                    color: 'red',
+                    role: 'attacker',
+                    selfPosition: enemy.position,
+                    opponentPosition: target,
+                    pathPoints: 10,
+                    obstacles: [],
+                }).slice(0, 10),
+            };
+        });
+    }
+    createBoss(redPosition, bluePosition) {
+        const blocked = new Set([this.toKey(redPosition), this.toKey(bluePosition)]);
+        const candidates = [];
+        for (let row = 0; row < 5; row++) {
+            for (let col = 0; col < 5; col++) {
+                const position = { row, col };
+                if (blocked.has(this.toKey(position)))
+                    continue;
+                candidates.push(position);
+            }
+        }
+        const position = candidates[Math.floor(Math.random() * candidates.length)] ?? { row: 2, col: 2 };
+        return {
+            id: `${this.roomId}_boss`,
+            position,
+            isBoss: true,
+        };
+    }
+    manhattan(a, b) {
+        return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
+    }
+    toKey(position) {
+        return `${position.row},${position.col}`;
     }
 }
 exports.CoopRoom = CoopRoom;
