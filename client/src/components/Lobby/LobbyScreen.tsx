@@ -252,96 +252,107 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
       "기존 Google 계정으로 전환하시겠습니까?",
     ].join("\n");
   };
-  const settingsButtonLabel = lang === "en" ? "Settings" : "\uC124\uC815";
-  const skinButtonLabel = lang === "en" ? "Skin" : "\uC2A4\uD0A8";
-  const soundButtonLabel = lang === "en" ? "Sound" : "\uC18C\uB9AC";
-  const termsButtonLabel = lang === "en" ? "Terms" : "\uC774\uC6A9\uC57D\uAD00";
-  const coopTitle = lang === "en" ? "Co-op Mode" : "\uD611\uB3D9\uC804";
+  const settingsButtonLabel = lang === "en" ? "Settings" : "설정";
+  const skinButtonLabel = lang === "en" ? "Skin" : "스킨";
+  const soundButtonLabel = lang === "en" ? "Sound" : "소리";
+  const termsButtonLabel = lang === "en" ? "Terms" : "이용약관";
+  const coopTitle = lang === "en" ? "Co-op Mode" : "협동전";
   const coopDesc =
     lang === "en"
-      ? "A cooperative battle mode is planned here. This feature is not implemented yet."
-      : "\uD611\uB3D9 \uC804\uD22C \uBAA8\uB4DC\uAC00 \uCD94\uAC00\uB420 \uC608\uC815\uC785\uB2C8\uB2E4. \uC544\uC9C1 \uBBF8\uAD6C\uD604 \uC0C1\uD0DC\uC785\uB2C8\uB2E4.";
+      ? "Destroy the portals and secure the area before enemies emerge from them."
+      : "포탈에서 적들이 나오기 전에, 포탈을 부수고 안전을 확보하세요.";
   const coopStartLabel =
-    lang === "en" ? "Start Co-op Match" : "\uB9E4\uCE6D \uC2DC\uC791";
+    lang === "en" ? "Start Co-op Match" : "매칭 시작";
+  const twoVsTwoTitle = "2v2";
+  const twoVsTwoDesc =
+    lang === "en"
+      ? "A four-player team battle mode is planned here. This feature is still in development."
+      : "2v2 팀 대전 모드입니다. 아직 개발 중이라 이용할 수 없습니다.";
+  const twoVsTwoStartLabel =
+    lang === "en" ? "Start Match" : "매칭 시작";
+  const twoVsTwoUnavailableMsg =
+    lang === "en"
+      ? "This mode is still in development."
+      : "아직 개발 중이라 이용할 수 없습니다.";
   const skinModalTitle =
     lang === "en"
       ? "Choose Piece Skin"
-      : "\uB9D0 \uC2A4\uD0A8 \uC120\uD0DD";
+      : "말 스킨 선택";
   const skinModalDesc =
     lang === "en"
       ? "Select the look you want to use for your piece."
-      : "\uD50C\uB808\uC774\uC5B4 \uB9D0\uC5D0 \uC801\uC6A9\uD560 \uC678\uD615\uC744 \uC120\uD0DD\uD558\uC138\uC694.";
-  const skinApplyLabel = lang === "en" ? "Close" : "\uB2EB\uAE30";
+      : "플레이어 말에 적용할 외형을 선택하세요.";
+  const skinApplyLabel = lang === "en" ? "Close" : "닫기";
   const settingsModalTitle =
-    lang === "en" ? "Profile Settings" : "\uD504\uB85C\uD544 \uC124\uC815";
+    lang === "en" ? "Profile Settings" : "프로필 설정";
   const settingsModalDesc =
     lang === "en"
       ? "Review your account information and support details."
-      : "\uACC4\uC815 \uC815\uBCF4\uC640 \uBB38\uC758 \uC6A9 \uC138\uBD80 \uC815\uBCF4\uB97C \uD655\uC778\uD558\uC138\uC694.";
-  const settingsCopyLabel = lang === "en" ? "Copy ID" : "ID \uBCF5\uC0AC";
+      : "계정 정보와 문의 용 세부 정보를 확인하세요.";
+  const settingsCopyLabel = lang === "en" ? "Copy ID" : "ID 복사";
   const settingsCopiedMsg =
     lang === "en"
       ? "User ID copied."
-      : "\uC0AC\uC6A9\uC790 ID\uAC00 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.";
+      : "사용자 ID가 복사되었습니다.";
   const settingsCopyFailedMsg =
     lang === "en"
       ? "Failed to copy ID."
-      : "ID \uBCF5\uC0AC\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.";
-  const accountTypeLabel = lang === "en" ? "Account Type" : "\uACC4\uC815 \uC720\uD615";
-  const nicknameLabel = lang === "en" ? "Nickname" : "\uB2C9\uB124\uC784";
-  const userIdLabel = lang === "en" ? "User ID" : "\uC0AC\uC6A9\uC790 ID";
-  const skinLabel = lang === "en" ? "Current Skin" : "\uD604\uC7AC \uC2A4\uD0A8";
-  const recordLabel = lang === "en" ? "Record" : "\uC804\uC801";
-  const audioModalTitle = lang === "en" ? "Audio Settings" : "\uC624\uB514\uC624 \uC124\uC815";
-  const musicLabel = lang === "en" ? "Music" : "\uC74C\uC545";
-  const sfxLabel = lang === "en" ? "SFX" : "\uD6A8\uACFC\uC74C";
-  const onLabel = lang === "en" ? "ON" : "\uCF2C";
-  const offLabel = lang === "en" ? "OFF" : "\uB054";
-  const musicVolumeLabel = lang === "en" ? "Music Volume" : "\uC74C\uC545 \uBCFC\uB968";
-  const sfxVolumeLabel = lang === "en" ? "SFX Volume" : "\uD6A8\uACFC\uC74C \uBCFC\uB968";
+      : "ID 복사에 실패했습니다.";
+  const accountTypeLabel = lang === "en" ? "Account Type" : "계정 유형";
+  const nicknameLabel = lang === "en" ? "Nickname" : "닉네임";
+  const userIdLabel = lang === "en" ? "User ID" : "사용자 ID";
+  const skinLabel = lang === "en" ? "Current Skin" : "현재 스킨";
+  const recordLabel = lang === "en" ? "Record" : "전적";
+  const audioModalTitle = lang === "en" ? "Audio Settings" : "오디오 설정";
+  const musicLabel = lang === "en" ? "Music" : "음악";
+  const sfxLabel = lang === "en" ? "SFX" : "효과음";
+  const onLabel = lang === "en" ? "ON" : "켬";
+  const offLabel = lang === "en" ? "OFF" : "끔";
+  const musicVolumeLabel = lang === "en" ? "Music Volume" : "음악 볼륨";
+  const sfxVolumeLabel = lang === "en" ? "SFX Volume" : "효과음 볼륨";
   const accountTypeValue = isGuestUser
     ? lang === "en"
       ? "Guest"
-      : "\uAC8C\uC2A4\uD2B8"
+      : "게스트"
     : "Google";
-  const tokenShopTitle = lang === "en" ? "Token Shop" : "\uD1A0\uD070 \uC0F5";
+  const tokenShopTitle = lang === "en" ? "Token Shop" : "토큰 샵";
   const tokenShopDesc =
     lang === "en"
       ? "Choose a token pack that matches how you want to unlock skins."
-      : "\uC2A4\uD0A8 \uD574\uAE08 \uC18D\uB3C4\uC5D0 \uB9DE\uB294 \uD1A0\uD070 \uD329\uC744 \uC120\uD0DD\uD558\uC138\uC694.";
-  const tokenShopCta = lang === "en" ? "Buy" : "\uAD6C\uB9E4";
+      : "스킨 해금 속도에 맞는 토큰 팩을 선택하세요.";
+  const tokenShopCta = lang === "en" ? "Buy" : "구매";
   const tokenShopUnavailableMsg =
     lang === "en"
       ? "Token packs are available in the Android app only."
-      : "\uD1A0\uD070 \uD329\uC740 \uC548\uB4DC\uB85C\uC774\uB4DC \uC571\uC5D0\uC11C\uB9CC \uAD6C\uB9E4\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.";
+      : "토큰 팩은 안드로이드 앱에서만 구매할 수 있습니다.";
   const tokenShopFailedMsg =
     lang === "en"
       ? "Token purchase failed."
-      : "\uD1A0\uD070 \uAD6C\uB9E4\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.";
+      : "토큰 구매에 실패했습니다.";
   const tokenShopCancelledMsg =
     lang === "en"
       ? "Token purchase was cancelled."
-      : "\uD1A0\uD070 \uAD6C\uB9E4\uAC00 \uCDE8\uC18C\uB418\uC5C8\uC2B5\uB2C8\uB2E4.";
+      : "토큰 구매가 취소되었습니다.";
   const tokenShopSuccessMsg = (tokens: number) =>
     lang === "en"
       ? `${tokens} tokens were added to your account.`
-      : `${tokens}\uD1A0\uD070\uC774 \uACC4\uC815\uC5D0 \uCD94\uAC00\uB418\uC5C8\uC2B5\uB2C8\uB2E4.`;
+      : `${tokens}토큰이 계정에 추가되었습니다.`;
   const skinPurchasePrompt = (skinName: string) =>
     lang === "en"
       ? `Purchase ${skinName}?`
-      : `${skinName} \uC2A4\uD0A8\uC744 \uAD6C\uB9E4\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?`;
+      : `${skinName} 스킨을 구매하시겠습니까?`;
   const skinPurchaseSuccessMsg = (skinName: string) =>
     lang === "en"
       ? `${skinName} unlocked.`
-      : `${skinName} \uC2A4\uD0A8\uC774 \uD574\uAE08\uB418\uC5C8\uC2B5\uB2C8\uB2E4.`;
+      : `${skinName} 스킨이 해금되었습니다.`;
   const skinPurchaseFailedMsg =
     lang === "en"
       ? "Skin purchase failed."
-      : "\uC2A4\uD0A8 \uAD6C\uB9E4\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.";
+      : "스킨 구매에 실패했습니다.";
   const skinPurchaseInsufficientMsg =
     lang === "en"
       ? "Not enough tokens."
-      : "\uD1A0\uD070\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.";
+      : "토큰이 부족합니다.";
   const tokenPacks: Array<{
     id: TokenPackId;
     name: string;
@@ -358,11 +369,11 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
       blurb:
         lang === "en"
           ? "A little more than a day of play"
-          : "\uD558\uB8E8 \uD50C\uB808\uC774\uBCF4\uB2E4 \uC870\uAE08 \uB354",
+          : "하루 플레이보다 조금 더",
       benefit:
         lang === "en"
           ? "Can buy 1 Common skin"
-          : "Common \uC2A4\uD0A8 1\uAC1C \uAD6C\uB9E4 \uAC00\uB2A5",
+          : "Common 스킨 1개 구매 가능",
     },
     {
       id: "small",
@@ -372,11 +383,11 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
       blurb:
         lang === "en"
           ? "A clean step into premium skins"
-          : "\uD504\uB9AC\uBBF8\uC5C4 \uC2A4\uD0A8\uC73C\uB85C \uAC00\uB294 \uAC00\uBCBC\uC6B4 \uC2DC\uC791",
+          : "프리미엄 스킨으로 가는 가벼운 시작",
       benefit:
         lang === "en"
           ? "Can buy 1 Rare skin"
-          : "Rare \uC2A4\uD0A8 1\uAC1C \uAD6C\uB9E4 \uAC00\uB2A5",
+          : "Rare 스킨 1개 구매 가능",
     },
     {
       id: "medium",
@@ -386,11 +397,11 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
       blurb:
         lang === "en"
           ? "Efficient value for a serious upgrade"
-          : "\uBCF8\uACA9\uC801\uC778 \uC5C5\uADF8\uB808\uC774\uB4DC\uB97C \uC704\uD55C \uD6A8\uC728\uC801 \uAD6C\uC131",
+          : "본격적인 업그레이드를 위한 효율적 구성",
       benefit:
         lang === "en"
           ? "1 Legendary skin + leftover"
-          : "Legendary 1\uAC1C + \uC5EC\uC720 \uD1A0\uD070",
+          : "Legendary 1개 + 여유 토큰",
     },
     {
       id: "large",
@@ -400,11 +411,11 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
       blurb:
         lang === "en"
           ? "Built for collecting multiple premium skins"
-          : "\uC5EC\uB7EC \uD504\uB9AC\uBBF8\uC5C4 \uC2A4\uD0A8 \uC218\uC9D1\uC5D0 \uB9DE\uCD98 \uAD6C\uC131",
+          : "여러 프리미엄 스킨 수집에 맞춘 구성",
       benefit:
         lang === "en"
           ? "Several Rares or 3 Legendaries"
-          : "Rare \uC5EC\uB7EC \uAC1C \uB610\uB294 Legendary 3\uAC1C",
+          : "Rare 여러 개 또는 Legendary 3개",
     },
     {
       id: "whale",
@@ -414,11 +425,11 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
       blurb:
         lang === "en"
           ? "For nearly the full collection"
-          : "\uAC70\uC758 \uC804\uCCB4 \uCF5C\uB809\uC158\uC744 \uC704\uD55C \uAD6C\uC131",
+          : "거의 전체 콜렉션을 위한 구성",
       benefit:
         lang === "en"
           ? "Can buy almost every skin"
-          : "\uAC70\uC758 \uBAA8\uB4E0 \uC2A4\uD0A8 \uAD6C\uB9E4 \uAC00\uB2A5",
+          : "거의 모든 스킨 구매 가능",
     },
   ];
   const formatDisplayUserId = (userId: string | null) => {
@@ -456,61 +467,61 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
   }> = [
     {
       id: "classic",
-      name: lang === "en" ? "Classic" : "\uAE30\uBCF8",
+      name: lang === "en" ? "Classic" : "기본",
       desc:
         lang === "en"
           ? "Default red glow."
-          : "\uAE30\uBCF8 \uBD89\uC740 \uAE00\uB85C\uC6B0 \uC2A4\uD0C0\uC77C.",
+          : "기본 붉은 글로우 스타일.",
       requiredWins: null,
       tokenPrice: null,
     },
     {
       id: "ember",
-      name: lang === "en" ? "Ember" : "\uC5E0\uBC84",
+      name: lang === "en" ? "Ember" : "엠버",
       desc:
         lang === "en"
           ? "Warm orange flare."
-          : "\uC8FC\uD669\uBE5B\uC774 \uB3C4\uB294 \uAC15\uD55C \uBC1C\uAD11.",
+          : "주황빛이 도는 강한 발광.",
       requiredWins: 10,
       tokenPrice: null,
     },
     {
       id: "nova",
-      name: lang === "en" ? "Nova" : "\uB178\uBC14",
+      name: lang === "en" ? "Nova" : "노바",
       desc:
         lang === "en"
           ? "Cool cyan core."
-          : "\uCCAD\uB85D \uACC4\uC5F4\uC758 \uCC28\uAC00\uC6B4 \uCF54\uC5B4.",
+          : "청록 계열의 차가운 코어.",
       requiredWins: 50,
       tokenPrice: null,
     },
     {
       id: "aurora",
-      name: lang === "en" ? "Aurora" : "\uC624\uB85C\uB77C",
+      name: lang === "en" ? "Aurora" : "오로라",
       desc:
         lang === "en"
           ? "Vivid green-yellow glow."
-          : "\uC5F0\uB450\uBE5B\uACFC \uD669\uAE08\uBE5B\uC774 \uC11E\uC778 \uBC1C\uAD11.",
+          : "연두빛과 황금빛이 섞인 발광.",
       requiredWins: 100,
       tokenPrice: null,
     },
     {
       id: "void",
-      name: lang === "en" ? "Void" : "\uBCF4\uC774\uB4DC",
+      name: lang === "en" ? "Void" : "보이드",
       desc:
         lang === "en"
           ? "Deep violet core."
-          : "\uC9D9\uC740 \uBCF4\uB78F\uBE5B \uCF54\uC5B4 \uC2A4\uD0C0\uC77C.",
+          : "짙은 보랏빛 코어 스타일.",
       requiredWins: 500,
       tokenPrice: null,
     },
     {
       id: "plasma",
-      name: lang === "en" ? "Plasma" : "\uD50C\uB77C\uC988\uB9C8",
+      name: lang === "en" ? "Plasma" : "플라즈마",
       desc:
         lang === "en"
           ? "Plasma energy core."
-          : "\uD50C\uB77C\uC988\uB9C8 \uC5D0\uB108\uC9C0 \uCF54\uC5B4.",
+          : "플라즈마 에너지 코어.",
       requiredWins: null,
       requiredPlays: null,
       tokenPrice: 120,
@@ -518,7 +529,7 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
     },
     {
       id: "gold_core",
-      name: lang === "en" ? "Gold Core" : "\uACE8\uB4DC \uCF54\uC5B4",
+      name: lang === "en" ? "Gold Core" : "골드 코어",
       desc:
         lang === "en"
           ? "Gilded core — a sunburst mandala spins within molten gold."
@@ -530,11 +541,11 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
     },
     {
       id: "neon_pulse",
-      name: lang === "en" ? "Neon Pulse" : "\uB124\uC628 \uD384\uC2A4",
+      name: lang === "en" ? "Neon Pulse" : "네온 펄스",
       desc:
         lang === "en"
           ? "Vibrant neon pulse."
-          : "\uC120\uBA85\uD55C \uB124\uC628 \uD384\uC2A4.",
+          : "선명한 네온 펄스.",
       requiredWins: null,
       requiredPlays: null,
       tokenPrice: 120,
@@ -542,11 +553,11 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
     },
     {
       id: "inferno",
-      name: lang === "en" ? "Inferno" : "\uC778\uD398\uB974\uB178",
+      name: lang === "en" ? "Inferno" : "인페르노",
       desc:
         lang === "en"
           ? "Burning inferno core."
-          : "\uD0C0\uC624\uB974\uB294 \uC778\uD398\uB974\uB178 \uCF54\uC5B4.",
+          : "타오르는 인페르노 코어.",
       requiredWins: null,
       requiredPlays: null,
       tokenPrice: 120,
@@ -566,7 +577,7 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
     },
     {
       id: "cosmic",
-      name: lang === "en" ? "Cosmic" : "\uCF54\uC2A4\uBBF9",
+      name: lang === "en" ? "Cosmic" : "코스믹",
       desc:
         lang === "en"
           ? "Rare nebula — twin orbit rings pulse with cosmic energy."
@@ -578,11 +589,11 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
     },
     {
       id: "arc_reactor",
-      name: lang === "en" ? "Arc Reactor" : "\uC544\uD06C \uB9AC\uC561\uD130",
+      name: lang === "en" ? "Arc Reactor" : "아크 리액터",
       desc:
         lang === "en"
           ? "High-energy reactor core."
-          : "\uACE0\uCD9C\uB825 \uB9AC\uC561\uD130 \uCF54\uC5B4.",
+          : "고출력 리액터 코어.",
       requiredWins: null,
       requiredPlays: null,
       tokenPrice: 350,
@@ -602,11 +613,11 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
     },
     {
       id: "atomic",
-      name: lang === "en" ? "Atomic" : "\uC544\uD1A0\uBBF9",
+      name: lang === "en" ? "Atomic" : "아토믹",
       desc:
         lang === "en"
           ? "Atomic orbit energy core."
-          : "\uC6D0\uC790 \uADA4\uB3C4 \uC5D0\uB108\uC9C0 \uCF54\uC5B4.",
+          : "원자 궤도 에너지 코어.",
       requiredWins: null,
       requiredPlays: null,
       tokenPrice: 900,
@@ -614,11 +625,11 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
     },
     {
       id: "flag_kr",
-      name: lang === "en" ? "Korea" : "\uD55C\uAD6D",
+      name: lang === "en" ? "Korea" : "한국",
       desc:
         lang === "en"
           ? "The Korean flag."
-          : "\uB300\uD55C\uBBFC\uAD6D \uAD6D\uAE30.",
+          : "대한민국 국기.",
       requiredWins: null,
       requiredPlays: 100,
       tokenPrice: null,
@@ -626,11 +637,11 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
     },
     {
       id: "flag_jp",
-      name: lang === "en" ? "Japan" : "\uC77C\uBCF8",
+      name: lang === "en" ? "Japan" : "일본",
       desc:
         lang === "en"
           ? "The Japanese flag."
-          : "\uC77C\uBCF8 \uAD6D\uAE30.",
+          : "일본 국기.",
       requiredWins: null,
       requiredPlays: 100,
       tokenPrice: null,
@@ -638,11 +649,11 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
     },
     {
       id: "flag_cn",
-      name: lang === "en" ? "China" : "\uC911\uAD6D",
+      name: lang === "en" ? "China" : "중국",
       desc:
         lang === "en"
           ? "The Chinese flag."
-          : "\uC911\uAD6D \uAD6D\uAE30.",
+          : "중국 국기.",
       requiredWins: null,
       requiredPlays: 100,
       tokenPrice: null,
@@ -650,11 +661,11 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
     },
     {
       id: "flag_us",
-      name: lang === "en" ? "USA" : "\uBBF8\uAD6D",
+      name: lang === "en" ? "USA" : "미국",
       desc:
         lang === "en"
           ? "The American flag."
-          : "\uBBF8\uAD6D \uAD6D\uAE30.",
+          : "미국 국기.",
       requiredWins: null,
       requiredPlays: 100,
       tokenPrice: null,
@@ -662,11 +673,11 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
     },
     {
       id: "flag_uk",
-      name: lang === "en" ? "UK" : "\uC601\uAD6D",
+      name: lang === "en" ? "UK" : "영국",
       desc:
         lang === "en"
           ? "The British flag."
-          : "\uC601\uAD6D \uAD6D\uAE30.",
+          : "영국 국기.",
       requiredWins: null,
       requiredPlays: 100,
       tokenPrice: null,
@@ -681,16 +692,16 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
     if (tokenPrice !== null && tokenPrice !== undefined) {
       return lang === "en"
         ? `Tokens ${tokenPrice}`
-        : `\uD1A0\uD070 ${tokenPrice}`;
+        : `토큰 ${tokenPrice}`;
     }
     if (requiredPlays !== null && requiredPlays !== undefined) {
       return lang === "en"
         ? `Plays ${requiredPlays}`
-        : `\uD50C\uB808\uC774 ${requiredPlays}`;
+        : `플레이 ${requiredPlays}`;
     }
     return lang === "en"
       ? `Wins ${requiredWins}`
-      : `\uC2B9\uB9AC ${requiredWins}`;
+      : `승리 ${requiredWins}`;
   };
   const currentSkinName =
     skinChoices.find((choice) => choice.id === pieceSkin)?.name ?? pieceSkin;
@@ -1090,6 +1101,10 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
     socket.emit("join_coop", await buildPlayerPayload());
   };
 
+  const handleTwoVsTwoMatch = () => {
+    window.alert(twoVsTwoUnavailableMsg);
+  };
+
   const handleLinkGoogle = async () => {
     setUpgradeResult({ kind: "none" });
     setShowUpgradeNotice(false);
@@ -1285,7 +1300,7 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
               <h2 data-step="4">{t.randomTitle}</h2>
               <div className="daily-reward-badge" aria-label="Daily tokens earned">
                 <span className="daily-reward-icon" aria-hidden="true">
-                  {"\uD83D\uDC8E"}
+                  {"💎"}
                 </span>
                 <span>{accountDailyRewardTokens}</span>
                 <span className="daily-reward-separator">/</span>
@@ -1337,6 +1352,14 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
               </button>
             )}
           </div>
+
+          <div className="lobby-card">
+            <h2 data-step="6">{twoVsTwoTitle}</h2>
+            <p>{twoVsTwoDesc}</p>
+            <button className="lobby-btn accent" onClick={handleTwoVsTwoMatch}>
+              {twoVsTwoStartLabel}
+            </button>
+          </div>
         </>
       )}
 
@@ -1364,7 +1387,7 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
               <div className="skin-token-badge" aria-label="Current tokens">
                 <span className="skin-token-badge-main">
                   <span className="skin-token-icon" aria-hidden="true">
-                    {"\uD83D\uDC8E"}
+                    {"💎"}
                   </span>
                   <span>{accountTokens}</span>
                 </span>
@@ -1438,8 +1461,8 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
                       <span className="skin-lock-meta" aria-label="Locked skin">
                         <span className="skin-lock-icon" aria-hidden="true">
                           {choice.tokenPrice !== null && choice.tokenPrice !== undefined
-                            ? "\uD83D\uDC8E"
-                            : "\uD83D\uDD12"}
+                            ? "💎"
+                            : "🔒"}
                         </span>
                         <span>
                           {getSkinRequirementLabel(
@@ -1483,7 +1506,7 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
               <div className="skin-token-badge" aria-label="Current tokens">
                 <span className="skin-token-badge-main">
                   <span className="skin-token-icon" aria-hidden="true">
-                    {"\uD83D\uDC8E"}
+                    {"💎"}
                   </span>
                   <span>{accountTokens}</span>
                 </span>
@@ -1498,7 +1521,7 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
                   </div>
                   <div className="token-pack-amount">
                     <span className="token-pack-gem" aria-hidden="true">
-                      {"\uD83D\uDC8E"}
+                      {"💎"}
                     </span>
                     <strong>{pack.tokens}</strong>
                   </div>
@@ -1615,7 +1638,7 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
                   <strong className="settings-value">
                     {lang === "en"
                       ? `${accountWins}W ${accountLosses}L`
-                      : `${accountWins}\uC2B9 ${accountLosses}\uD328`}
+                      : `${accountWins}승 ${accountLosses}패`}
                   </strong>
                 </div>
               </div>
@@ -1773,4 +1796,5 @@ function UpgradeNoticeDialog({
     </div>
   );
 }
+
 
