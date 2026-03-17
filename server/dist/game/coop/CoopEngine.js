@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.calcCoopPathPoints = calcCoopPathPoints;
 exports.createCoopPortalBatch = createCoopPortalBatch;
 exports.createEnemyPreviews = createEnemyPreviews;
+exports.createCoopEnemyAttackPath = createCoopEnemyAttackPath;
 exports.resolveCoopMovement = resolveCoopMovement;
 exports.isValidCoopPath = isValidCoopPath;
 exports.portalColorFromHp = portalColorFromHp;
@@ -50,10 +51,7 @@ function createCoopPortalBatch(params) {
 }
 function createEnemyPreviews(params) {
     return params.enemies.map((enemy) => {
-        const target = manhattan(enemy.position, params.redPosition) <=
-            manhattan(enemy.position, params.bluePosition)
-            ? params.redPosition
-            : params.bluePosition;
+        const target = selectReachableTarget(enemy.position, params.redPosition, params.bluePosition, params.obstacles ?? []);
         return {
             id: enemy.id,
             start: enemy.position,
@@ -67,6 +65,18 @@ function createEnemyPreviews(params) {
             }).slice(0, 4),
         };
     });
+}
+function createCoopEnemyAttackPath(params) {
+    const obstacles = params.obstacles ?? [];
+    const target = selectReachableTarget(params.selfPosition, params.redPosition, params.bluePosition, obstacles);
+    return (0, AiPlanner_1.createAiPath)({
+        color: 'red',
+        role: 'attacker',
+        selfPosition: params.selfPosition,
+        opponentPosition: target,
+        pathPoints: params.pathPoints,
+        obstacles,
+    }).slice(0, params.pathPoints);
 }
 function resolveCoopMovement(params) {
     const redSeq = [params.redStart, ...params.redPath];
@@ -188,6 +198,42 @@ function isWithinGrid(position) {
 }
 function manhattan(a, b) {
     return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
+}
+function selectReachableTarget(selfPosition, redPosition, bluePosition, obstacles) {
+    const redDistance = manhattan(selfPosition, redPosition);
+    const blueDistance = manhattan(selfPosition, bluePosition);
+    const primary = redDistance <= blueDistance ? redPosition : bluePosition;
+    const secondary = primary === redPosition ? bluePosition : redPosition;
+    if (hasReachablePath(selfPosition, primary, obstacles))
+        return primary;
+    if (hasReachablePath(selfPosition, secondary, obstacles))
+        return secondary;
+    return primary;
+}
+function hasReachablePath(from, to, obstacles) {
+    if (samePosition(from, to))
+        return true;
+    const queue = [{ ...from }];
+    const visited = new Set([toKey(from)]);
+    const targetKey = toKey(to);
+    while (queue.length > 0) {
+        const current = queue.shift();
+        if (toKey(current) === targetKey)
+            return true;
+        for (const next of DIRECTIONS
+            .map((direction) => ({
+            row: current.row + direction.row,
+            col: current.col + direction.col,
+        }))
+            .filter((next) => isWithinGrid(next) && !obstacles.some((obstacle) => samePosition(obstacle, next)))) {
+            const nextKey = toKey(next);
+            if (visited.has(nextKey))
+                continue;
+            visited.add(nextKey);
+            queue.push(next);
+        }
+    }
+    return false;
 }
 function shuffle(list, random) {
     for (let index = list.length - 1; index > 0; index--) {

@@ -68,11 +68,12 @@ export function createEnemyPreviews(params: {
   obstacles?: Position[];
 }): CoopEnemyPreview[] {
   return params.enemies.map((enemy) => {
-    const target =
-      manhattan(enemy.position, params.redPosition) <=
-      manhattan(enemy.position, params.bluePosition)
-        ? params.redPosition
-        : params.bluePosition;
+    const target = selectReachableTarget(
+      enemy.position,
+      params.redPosition,
+      params.bluePosition,
+      params.obstacles ?? [],
+    );
 
     return {
       id: enemy.id,
@@ -87,6 +88,31 @@ export function createEnemyPreviews(params: {
       }).slice(0, 4),
     };
   });
+}
+
+export function createCoopEnemyAttackPath(params: {
+  selfPosition: Position;
+  redPosition: Position;
+  bluePosition: Position;
+  pathPoints: number;
+  obstacles?: Position[];
+}): Position[] {
+  const obstacles = params.obstacles ?? [];
+  const target = selectReachableTarget(
+    params.selfPosition,
+    params.redPosition,
+    params.bluePosition,
+    obstacles,
+  );
+
+  return createAiPath({
+    color: 'red',
+    role: 'attacker',
+    selfPosition: params.selfPosition,
+    opponentPosition: target,
+    pathPoints: params.pathPoints,
+    obstacles,
+  }).slice(0, params.pathPoints);
 }
 
 export function resolveCoopMovement(params: {
@@ -229,6 +255,49 @@ function isWithinGrid(position: Position): boolean {
 
 function manhattan(a: Position, b: Position): number {
   return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
+}
+
+function selectReachableTarget(
+  selfPosition: Position,
+  redPosition: Position,
+  bluePosition: Position,
+  obstacles: Position[],
+): Position {
+  const redDistance = manhattan(selfPosition, redPosition);
+  const blueDistance = manhattan(selfPosition, bluePosition);
+  const primary = redDistance <= blueDistance ? redPosition : bluePosition;
+  const secondary = primary === redPosition ? bluePosition : redPosition;
+
+  if (hasReachablePath(selfPosition, primary, obstacles)) return primary;
+  if (hasReachablePath(selfPosition, secondary, obstacles)) return secondary;
+  return primary;
+}
+
+function hasReachablePath(from: Position, to: Position, obstacles: Position[]): boolean {
+  if (samePosition(from, to)) return true;
+
+  const queue: Position[] = [{ ...from }];
+  const visited = new Set<string>([toKey(from)]);
+  const targetKey = toKey(to);
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (toKey(current) === targetKey) return true;
+
+    for (const next of DIRECTIONS
+      .map((direction) => ({
+        row: current.row + direction.row,
+        col: current.col + direction.col,
+      }))
+      .filter((next) => isWithinGrid(next) && !obstacles.some((obstacle) => samePosition(obstacle, next)))) {
+      const nextKey = toKey(next);
+      if (visited.has(nextKey)) continue;
+      visited.add(nextKey);
+      queue.push(next);
+    }
+  }
+
+  return false;
 }
 
 function shuffle<T>(list: T[], random: () => number): void {

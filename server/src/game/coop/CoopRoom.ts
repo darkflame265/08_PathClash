@@ -11,9 +11,9 @@ import {
   toClientPlayer,
 } from "../GameEngine";
 import { ServerTimer } from "../ServerTimer";
-import { createAiPath } from "../AiPlanner";
 import {
   calcCoopPathPoints,
+  createCoopEnemyAttackPath,
   createCoopPortalBatch,
   createEnemyPreviews,
   isValidCoopPath,
@@ -601,23 +601,16 @@ export class CoopRoom {
     return this.enemies
       .filter((enemy) => enemy.isBoss)
       .map((enemy) => {
-        const target =
-          this.manhattan(enemy.position, redPosition) <=
-          this.manhattan(enemy.position, bluePosition)
-            ? redPosition
-            : bluePosition;
-
         return {
           id: enemy.id,
           start: { ...enemy.position },
-          path: createAiPath({
-            color: "red",
-            role: "attacker",
+          path: createCoopEnemyAttackPath({
             selfPosition: enemy.position,
-            opponentPosition: target,
+            redPosition,
+            bluePosition,
             pathPoints: 10,
             obstacles: this.obstacles,
-          }).slice(0, 10),
+          }),
         };
       });
   }
@@ -672,10 +665,6 @@ export class CoopRoom {
       position,
       isBoss: true,
     };
-  }
-
-  private manhattan(a: Position, b: Position): number {
-    return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
   }
 
   private toKey(position: Position): string {

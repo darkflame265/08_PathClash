@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CoopRoom = void 0;
 const GameEngine_1 = require("../GameEngine");
 const ServerTimer_1 = require("../ServerTimer");
-const AiPlanner_1 = require("../AiPlanner");
 const CoopEngine_1 = require("./CoopEngine");
 const PLANNING_TIME_MS = 7000;
 const SUBMIT_GRACE_MS = 350;
@@ -499,21 +498,16 @@ class CoopRoom {
         return this.enemies
             .filter((enemy) => enemy.isBoss)
             .map((enemy) => {
-            const target = this.manhattan(enemy.position, redPosition) <=
-                this.manhattan(enemy.position, bluePosition)
-                ? redPosition
-                : bluePosition;
             return {
                 id: enemy.id,
                 start: { ...enemy.position },
-                path: (0, AiPlanner_1.createAiPath)({
-                    color: "red",
-                    role: "attacker",
+                path: (0, CoopEngine_1.createCoopEnemyAttackPath)({
                     selfPosition: enemy.position,
-                    opponentPosition: target,
+                    redPosition,
+                    bluePosition,
                     pathPoints: 10,
                     obstacles: this.obstacles,
-                }).slice(0, 10),
+                }),
             };
         });
     }
@@ -548,9 +542,6 @@ class CoopRoom {
             position,
             isBoss: true,
         };
-    }
-    manhattan(a, b) {
-        return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
     }
     toKey(position) {
         return `${position.row},${position.col}`;
