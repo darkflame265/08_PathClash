@@ -7,6 +7,11 @@ const CoopEngine_1 = require("./CoopEngine");
 const PLANNING_TIME_MS = 7000;
 const SUBMIT_GRACE_MS = 350;
 const FINAL_PORTAL_COUNT = 12;
+const MOVEMENT_STEP_MS = 200;
+const MOVEMENT_SETTLE_MS = 100;
+function calcCoopAnimationDuration(maxSteps) {
+    return Math.max(350, maxSteps * MOVEMENT_STEP_MS + MOVEMENT_SETTLE_MS);
+}
 class CoopRoom {
     constructor(roomId, code, io) {
         this.createdAt = Date.now();
@@ -255,56 +260,56 @@ class CoopRoom {
             redHp: red.hp,
             blueHp: blue.hp,
         });
-        red.position = resolution.redEnd;
-        blue.position = resolution.blueEnd;
-        red.hp = resolution.redHp;
-        blue.hp = resolution.blueHp;
-        red.plannedPath = [];
-        blue.plannedPath = [];
-        red.pathSubmitted = false;
-        blue.pathSubmitted = false;
         const convertedEnemies = resolution.remainingPortals.map((portal) => ({
             id: `${portal.id}_enemy`,
             position: { ...portal.position },
         }));
-        this.enemies = [];
-        this.portals = [];
-        if (red.hp <= 0 && blue.hp <= 0) {
-            this.phase = 'gameover';
-            this.gameResult = 'lose';
+        const redEnd = { ...resolution.redEnd };
+        const blueEnd = { ...resolution.blueEnd };
+        const nextRound = this.planningRound + 1;
+        const nextPortalWave = this.portalWave + 1;
+        let nextPhase = 'planning';
+        let nextResult = null;
+        let nextFinalEnemyPhase = this.finalEnemyPhase;
+        let nextEnemies = [];
+        let nextEnemyPreviews = [];
+        let nextPortals = [];
+        if (resolution.redHp <= 0 && resolution.blueHp <= 0) {
+            nextPhase = 'gameover';
+            nextResult = 'lose';
         }
         else if (this.finalEnemyPhase) {
-            this.phase = 'gameover';
-            this.gameResult = 'win';
+            nextPhase = 'gameover';
+            nextResult = 'win';
         }
         else if (this.getCurrentPortalCount() >= FINAL_PORTAL_COUNT) {
             if (convertedEnemies.length === 0) {
-                this.phase = 'gameover';
-                this.gameResult = 'win';
+                nextPhase = 'gameover';
+                nextResult = 'win';
             }
             else {
-                this.finalEnemyPhase = true;
-                this.planningRound += 1;
-                this.enemies = convertedEnemies;
-                this.enemyPreviews = (0, CoopEngine_1.createEnemyPreviews)({
-                    enemies: this.enemies,
-                    redPosition: red.position,
-                    bluePosition: blue.position,
+                nextFinalEnemyPhase = true;
+                nextEnemies = convertedEnemies;
+                nextEnemyPreviews = (0, CoopEngine_1.createEnemyPreviews)({
+                    enemies: nextEnemies,
+                    redPosition: redEnd,
+                    bluePosition: blueEnd,
                 });
             }
         }
         else {
-            this.portalWave += 1;
-            this.planningRound += 1;
-            this.enemies = convertedEnemies;
-            this.enemyPreviews = (0, CoopEngine_1.createEnemyPreviews)({
-                enemies: this.enemies,
-                redPosition: red.position,
-                bluePosition: blue.position,
+            nextEnemies = convertedEnemies;
+            nextEnemyPreviews = (0, CoopEngine_1.createEnemyPreviews)({
+                enemies: nextEnemies,
+                redPosition: redEnd,
+                bluePosition: blueEnd,
             });
-            this.spawnPortalsForCurrentWave();
+            nextPortals = (0, CoopEngine_1.createCoopPortalBatch)({
+                count: Math.min(3 + nextPortalWave, FINAL_PORTAL_COUNT),
+                occupied: [redEnd, blueEnd, ...nextEnemies.map((enemy) => enemy.position)],
+                idPrefix: `${this.roomId}_${nextPortalWave}`,
+            });
         }
-        const nextState = this.toClientState();
         const payload = {
             redPath,
             bluePath,
@@ -313,19 +318,43 @@ class CoopRoom {
             enemyMoves,
             playerHits: resolution.playerHits,
             portalHits: resolution.portalHits,
-            nextState,
         };
         this.touchActivity();
         this.io.to(this.roomId).emit('coop_resolution', payload);
-        if (this.phase === 'gameover')
-            return;
         this.clearNextRoundTimeout();
+        const maxSteps = Math.max(redPath.length + 1, bluePath.length + 1, ...enemyMoves.map((enemy) => enemy.path.length + 1));
+        const animTime = calcCoopAnimationDuration(maxSteps);
         this.nextRoundTimeout = setTimeout(() => {
             this.nextRoundTimeout = null;
-            if (this.phase === 'gameover')
+            if (!this.hasBothPlayers())
                 return;
+            const liveRed = this.players.get('red');
+            const liveBlue = this.players.get('blue');
+            if (!liveRed || !liveBlue)
+                return;
+            liveRed.position = redEnd;
+            liveBlue.position = blueEnd;
+            liveRed.hp = resolution.redHp;
+            liveBlue.hp = resolution.blueHp;
+            liveRed.plannedPath = [];
+            liveBlue.plannedPath = [];
+            liveRed.pathSubmitted = false;
+            liveBlue.pathSubmitted = false;
+            this.portals = nextPortals;
+            this.enemies = nextEnemies;
+            this.enemyPreviews = nextEnemyPreviews;
+            this.finalEnemyPhase = nextFinalEnemyPhase;
+            this.gameResult = nextResult;
+            if (nextPhase === 'gameover') {
+                this.phase = 'gameover';
+                this.touchActivity();
+                this.io.to(this.roomId).emit('coop_game_over', { result: nextResult });
+                return;
+            }
+            this.portalWave = nextPortalWave;
+            this.planningRound = nextRound;
             this.emitRoundStart();
-        }, 500);
+        }, animTime);
     }
     spawnPortalsForCurrentWave() {
         const red = this.players.get('red');

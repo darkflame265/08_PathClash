@@ -83,5 +83,4 @@ export interface CoopResolutionPayload {
   enemyMoves: CoopEnemyPreview[];
   playerHits: CoopPlayerHitEvent[];
   portalHits: CoopPortalHitEvent[];
-  nextState: CoopClientState;
 }

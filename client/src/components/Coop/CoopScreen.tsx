@@ -56,7 +56,6 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
   const [rematchRequestSent, setRematchRequestSent] = useState(false);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const timeoutRef = useRef<number | null>(null);
-  const stateRef = useRef<CoopClientState | null>(null);
 
   const currentColor = myColor ?? "red";
   const allyColor: PlayerColor = currentColor === "red" ? "blue" : "red";
@@ -77,8 +76,8 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
 
   const applyState = useCallback(
     (state: CoopClientState) => {
-      stateRef.current = state;
       setCoopState(state);
+      setMovingEnemyPaths(null);
       setMyPath([]);
       setAllyPath([]);
       setMySubmitted(Boolean(state.players[currentColor]?.pathSubmitted));
@@ -129,7 +128,6 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
       const tick = () => {
         if (step >= maxSteps) {
           setMovingEnemyPaths(null);
-          applyState(payload.nextState);
           return;
         }
 
@@ -175,7 +173,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
 
       timeoutRef.current = window.setTimeout(tick, STEP_DURATION_MS);
     },
-    [applyState, clearAnimationTimeout, isSfxMuted, sfxVolume],
+    [clearAnimationTimeout, isSfxMuted, sfxVolume],
   );
 
   useEffect(() => {
@@ -227,6 +225,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
 
     const onResolution = (payload: CoopResolutionPayload) => {
       setRoundInfo(null);
+      setCoopState((prev) => (prev ? { ...prev, phase: "moving" } : prev));
       animateResolution(payload);
     };
 
@@ -239,9 +238,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
     }) => {
       setCoopState((prev) => {
         if (!prev) return prev;
-        const next = { ...prev, phase: "gameover" as const, gameResult: result };
-        stateRef.current = next;
-        return next;
+        return { ...prev, phase: "gameover" as const, gameResult: result };
       });
       if (message) setGameOverMessage(message);
       clearAnimationTimeout();
