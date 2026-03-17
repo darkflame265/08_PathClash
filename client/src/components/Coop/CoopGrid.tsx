@@ -1,6 +1,7 @@
 import { useRef, useCallback, useEffect, useState } from "react";
 import { useGameStore } from "../../store/gameStore";
 import { getSocket } from "../../socket/socketClient";
+import { getEstimatedServerNow } from "../../socket/timeSync";
 import type { Position } from "../../types/game.types";
 import type { CoopClientState, CoopEnemyPreview, CoopPortal, CoopRoundStartPayload } from "../../types/coop.types";
 import { isBlockedCell, isValidMove, pixelToCell, posEqual } from "../../utils/pathUtils";
@@ -283,9 +284,15 @@ export function CoopGrid({
 
   useEffect(() => {
     if (!canPlan || !roundInfo || state.players[myColor].pathSubmitted) return;
-    const submitAtMs = roundInfo.serverTime + roundInfo.timeLimit * 1000;
-    const preSubmitDelayMs = Math.max(0, submitAtMs - Date.now() - PRE_SUBMIT_LEAD_MS);
-    const finalSubmitDelayMs = Math.max(0, submitAtMs - Date.now());
+    const submitAtMs = roundInfo.roundEndsAt;
+    const preSubmitDelayMs = Math.max(
+      0,
+      submitAtMs - getEstimatedServerNow() - PRE_SUBMIT_LEAD_MS,
+    );
+    const finalSubmitDelayMs = Math.max(
+      0,
+      submitAtMs - getEstimatedServerNow(),
+    );
 
     const submitCurrentPath = () => {
       if (state.phase !== 'planning' || !myPlayerAlive || state.players[myColor].pathSubmitted) return;

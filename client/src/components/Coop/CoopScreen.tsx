@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getSocket } from "../../socket/socketClient";
+import { syncServerTime } from "../../socket/timeSync";
 import { useLang } from "../../hooks/useLang";
 import { useGameStore } from "../../store/gameStore";
 import type { ChatMessage, PlayerColor, Position } from "../../types/game.types";
@@ -239,6 +240,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
     };
 
     const onRoundStart = (payload: CoopRoundStartPayload) => {
+      void syncServerTime(socket);
       setRoundInfo(payload);
       applyState(payload.state);
     };
