@@ -325,8 +325,20 @@ export function CoopGrid({
         ))}
 
         <EnemyPathLayer paths={visibleEnemyPaths} cellSize={responsiveCellSize} />
-        <PathLine color="red" path={redPath} startPos={redDisplayPos} cellSize={responsiveCellSize} isPlanning={isPlanning} />
-        <PathLine color="blue" path={bluePath} startPos={blueDisplayPos} cellSize={responsiveCellSize} isPlanning={isPlanning} />
+        <PathLine
+          color="red"
+          path={redPath}
+          startPos={state.players.red.position}
+          cellSize={responsiveCellSize}
+          isPlanning={isPlanning}
+        />
+        <PathLine
+          color="blue"
+          path={bluePath}
+          startPos={state.players.blue.position}
+          cellSize={responsiveCellSize}
+          isPlanning={isPlanning}
+        />
 
         {portals.map((portal) => (
           <div
