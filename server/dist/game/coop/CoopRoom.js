@@ -6,7 +6,7 @@ const ServerTimer_1 = require("../ServerTimer");
 const CoopEngine_1 = require("./CoopEngine");
 const PLANNING_TIME_MS = 7000;
 const SUBMIT_GRACE_MS = 350;
-const FINAL_PORTAL_COUNT = 4;
+const FINAL_PORTAL_COUNT = 14;
 const MOVEMENT_STEP_MS = 200;
 const MOVEMENT_SETTLE_MS = 100;
 function calcCoopAnimationDuration(maxSteps) {

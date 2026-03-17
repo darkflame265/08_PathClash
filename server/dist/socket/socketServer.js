@@ -5,10 +5,13 @@ const GameRoom_1 = require("../game/GameRoom");
 const RoomStore_1 = require("../store/RoomStore");
 const CoopRoom_1 = require("../game/coop/CoopRoom");
 const CoopRoomStore_1 = require("../store/CoopRoomStore");
+const TwoVsTwoRoom_1 = require("../game/twovtwo/TwoVsTwoRoom");
+const TwoVsTwoRoomStore_1 = require("../store/TwoVsTwoRoomStore");
 const playerAuth_1 = require("../services/playerAuth");
 function initSocketServer(io) {
     const store = RoomStore_1.RoomStore.getInstance();
     const coopStore = CoopRoomStore_1.CoopRoomStore.getInstance();
+    const twoVsTwoStore = TwoVsTwoRoomStore_1.TwoVsTwoRoomStore.getInstance();
     const activeUserSockets = new Map();
     const socketUsers = new Map();
     const authCacheTtlMs = 10 * 60 * 1000;
@@ -250,6 +253,57 @@ function initSocketServer(io) {
             const coopRoom = coopStore.getBySocket(socket.id);
             coopRoom?.updatePlannedPath(socket.id, path);
         });
+        socket.on('join_2v2', async ({ nickname, auth, pieceSkin }) => {
+            await registerSocketSession(socket, auth);
+            const profile = await (0, playerAuth_1.resolvePlayerProfile)(auth, nickname);
+            twoVsTwoStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
+            const group = twoVsTwoStore.dequeueGroup(4);
+            if (!group) {
+                socket.emit('twovtwo_matchmaking_waiting', {});
+                return;
+            }
+            const sockets = group
+                .map((entry) => ({ entry, socket: io.sockets.sockets.get(entry.socketId) }))
+                .filter((item) => Boolean(item.socket));
+            if (sockets.length < 4) {
+                for (const item of sockets) {
+                    twoVsTwoStore.enqueue(item.entry.socketId, item.entry.nickname, item.entry.userId, item.entry.stats, item.entry.pieceSkin);
+                    item.socket.emit('twovtwo_matchmaking_waiting', {});
+                }
+                return;
+            }
+            const roomId = twoVsTwoStore.generateRoomId();
+            const room = new TwoVsTwoRoom_1.TwoVsTwoRoom(roomId, roomId, io);
+            twoVsTwoStore.add(room);
+            for (const item of sockets) {
+                const slot = room.addPlayer(item.socket, item.entry.nickname, item.entry.userId, item.entry.stats, item.entry.pieceSkin);
+                if (!slot)
+                    continue;
+                twoVsTwoStore.registerSocket(item.entry.socketId, roomId);
+                item.socket.emit('twovtwo_room_joined', {
+                    roomId,
+                    slot,
+                    team: slot.startsWith('red') ? 'red' : 'blue',
+                });
+            }
+            room.prepareGameStart();
+        });
+        socket.on('cancel_2v2', () => {
+            twoVsTwoStore.removeFromQueue(socket.id);
+        });
+        socket.on('twovtwo_client_ready', () => {
+            const room = twoVsTwoStore.getBySocket(socket.id);
+            room?.markClientReady(socket.id);
+        });
+        socket.on('twovtwo_path_update', ({ path }) => {
+            const room = twoVsTwoStore.getBySocket(socket.id);
+            room?.updatePlannedPath(socket.id, path);
+        });
+        socket.on('twovtwo_submit_path', ({ path }, ack) => {
+            const room = twoVsTwoStore.getBySocket(socket.id);
+            const result = room?.submitPath(socket.id, path) ?? { ok: false, acceptedPath: [] };
+            ack?.(result);
+        });
         socket.on('submit_path', ({ path }, ack) => {
             const room = store.getBySocket(socket.id);
             const ok = room?.submitPath(socket.id, path) ??
@@ -285,7 +339,12 @@ function initSocketServer(io) {
                 return;
             }
             const coopRoom = coopStore.getBySocket(socket.id);
-            coopRoom?.sendChat(socket.id, message);
+            if (coopRoom) {
+                coopRoom.sendChat(socket.id, message);
+                return;
+            }
+            const twoVsTwoRoom = twoVsTwoStore.getBySocket(socket.id);
+            twoVsTwoRoom?.sendChat(socket.id, message);
         });
         socket.on('update_piece_skin', ({ pieceSkin }) => {
             const room = store.getBySocket(socket.id);
@@ -294,7 +353,12 @@ function initSocketServer(io) {
                 return;
             }
             const coopRoom = coopStore.getBySocket(socket.id);
-            coopRoom?.updatePlayerSkin(socket.id, pieceSkin);
+            if (coopRoom) {
+                coopRoom.updatePlayerSkin(socket.id, pieceSkin);
+                return;
+            }
+            const twoVsTwoRoom = twoVsTwoStore.getBySocket(socket.id);
+            twoVsTwoRoom?.updatePlayerSkin(socket.id, pieceSkin);
         });
         socket.on('coop_path_update', ({ path }) => {
             const room = coopStore.getBySocket(socket.id);
@@ -310,8 +374,10 @@ function initSocketServer(io) {
             unregisterSocketSession(socket.id);
             store.removeFromQueue(socket.id);
             coopStore.removeFromQueue(socket.id);
+            twoVsTwoStore.removeFromQueue(socket.id);
             const { room, disconnectResult } = store.removeSocket(socket.id);
             const coopRoom = coopStore.removeSocket(socket.id);
+            const twoVsTwoRoom = twoVsTwoStore.removeSocket(socket.id);
             if (room &&
                 disconnectResult.shouldAwardDisconnectResult &&
                 disconnectResult.winnerColor) {
@@ -325,6 +391,12 @@ function initSocketServer(io) {
                 io.to(coopRoom.roomId).emit('coop_game_over', {
                     result: 'lose',
                     message: 'Ally disconnected.',
+                });
+            }
+            if (twoVsTwoRoom && twoVsTwoRoom.playerCount > 0) {
+                io.to(twoVsTwoRoom.roomId).emit('twovtwo_game_over', {
+                    result: twoVsTwoRoom.currentResult ?? 'draw',
+                    message: 'A player disconnected.',
                 });
             }
         });

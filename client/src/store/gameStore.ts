@@ -31,7 +31,8 @@ interface GameStore {
   ownedSkins: PieceSkin[];
   accountDailyRewardWins: number;
   accountDailyRewardTokens: number;
-  currentMatchType: "friend" | "random" | "ai" | "coop" | null;
+  currentMatchType: "friend" | "random" | "ai" | "coop" | "2v2" | null;
+  twoVsTwoSlot: "red_top" | "red_bottom" | "blue_top" | "blue_bottom" | null;
 
   // Game
   gameState: ClientGameState | null;
@@ -91,7 +92,8 @@ interface GameStore {
   }) => void;
   setMyColor: (c: PlayerColor) => void;
   setRoomCode: (c: string) => void;
-  setMatchType: (matchType: "friend" | "random" | "ai" | "coop" | null) => void;
+  setMatchType: (matchType: "friend" | "random" | "ai" | "coop" | "2v2" | null) => void;
+  setTwoVsTwoSlot: (slot: "red_top" | "red_bottom" | "blue_top" | "blue_bottom" | null) => void;
   setGameState: (gs: ClientGameState) => void;
   setRoundInfo: (r: RoundStartPayload) => void;
   setMyPath: (p: Position[]) => void;
@@ -213,6 +215,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   accountDailyRewardWins: 0,
   accountDailyRewardTokens: 0,
   currentMatchType: null,
+  twoVsTwoSlot: null,
   gameState: null,
   myPath: [],
   opponentSubmitted: false,
@@ -282,6 +285,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setMyColor: (c) => set({ myColor: c }),
   setRoomCode: (c) => set({ roomCode: c }),
   setMatchType: (matchType) => set({ currentMatchType: matchType }),
+  setTwoVsTwoSlot: (slot) => set({ twoVsTwoSlot: slot }),
 
   setGameState: (gs) =>
     set(() => ({
@@ -464,6 +468,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     myColor: null,
     roomCode: '',
     currentMatchType: null,
+    twoVsTwoSlot: null,
     gameState: null,
     myPath: [],
     opponentSubmitted: false,

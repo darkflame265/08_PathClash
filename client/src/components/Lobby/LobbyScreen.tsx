@@ -35,6 +35,7 @@ type LobbyView = "main" | "create" | "join";
 interface Props {
   onGameStart: () => void;
   onCoopStart: () => void;
+  onTwoVsTwoStart: () => void;
 }
 
 const POLICY_URL_KR =
@@ -175,7 +176,7 @@ function AccountCard({
   );
 }
 
-export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
+export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart }: Props) {
   const {
     myNickname,
     setNickname,
@@ -191,6 +192,7 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
     accountDailyRewardTokens,
     setAuthState,
     setMatchType,
+    setTwoVsTwoSlot,
     currentMatchType,
     setPlayerPieceSkins,
     isMusicMuted,
@@ -266,14 +268,10 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
   const twoVsTwoTitle = "2v2";
   const twoVsTwoDesc =
     lang === "en"
-      ? "A four-player team battle mode is planned here. This feature is still in development."
-      : "2v2 팀 대전 모드입니다. 아직 개발 중이라 이용할 수 없습니다.";
+      ? "A 2v2 team battle mode where teammates can share paths during planning."
+      : "같은 팀끼리 경로를 공유하며 싸우는 2v2 팀 대전 모드입니다.";
   const twoVsTwoStartLabel =
     lang === "en" ? "Start Match" : "매칭 시작";
-  const twoVsTwoUnavailableMsg =
-    lang === "en"
-      ? "This mode is still in development."
-      : "아직 개발 중이라 이용할 수 없습니다.";
   const skinModalTitle =
     lang === "en"
       ? "Choose Piece Skin"
@@ -894,6 +892,8 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
     socket.off("matchmaking_waiting");
     socket.off("coop_room_joined");
     socket.off("coop_matchmaking_waiting");
+    socket.off("twovtwo_room_joined");
+    socket.off("twovtwo_matchmaking_waiting");
 
     socket.on(
       "room_created",
@@ -1027,6 +1027,31 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
       setIsMatchmaking(true);
     });
 
+    socket.on(
+      "twovtwo_room_joined",
+      ({
+        roomId,
+        slot,
+        team,
+      }: {
+        roomId: string;
+        slot: "red_top" | "red_bottom" | "blue_top" | "blue_bottom";
+        team: "red" | "blue";
+      }) => {
+        setMyColor(team);
+        setTwoVsTwoSlot(slot);
+        setRoomCode(roomId);
+        setError("");
+        setIsMatchmaking(false);
+        onTwoVsTwoStart();
+      },
+    );
+
+    socket.on("twovtwo_matchmaking_waiting", () => {
+      setError("");
+      setIsMatchmaking(true);
+    });
+
     return socket;
   };
 
@@ -1081,6 +1106,13 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
     setMatchType(null);
   };
 
+  const handleCancelTwoVsTwo = () => {
+    const socket = connectSocket();
+    socket.emit("cancel_2v2");
+    setIsMatchmaking(false);
+    setMatchType(null);
+  };
+
   const handleAiMatch = async () => {
     setError("");
     setIsMatchmaking(false);
@@ -1101,8 +1133,11 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
     socket.emit("join_coop", await buildPlayerPayload());
   };
 
-  const handleTwoVsTwoMatch = () => {
-    window.alert(twoVsTwoUnavailableMsg);
+  const handleTwoVsTwoMatch = async () => {
+    setError("");
+    setMatchType("2v2");
+    const socket = startSocket();
+    socket.emit("join_2v2", await buildPlayerPayload());
   };
 
   const handleLinkGoogle = async () => {
@@ -1353,12 +1388,28 @@ export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
             )}
           </div>
 
-          <div className="lobby-card">
+          <div className={`lobby-card ${isMatchmaking && currentMatchType === "2v2" ? "is-matchmaking" : ""}`}>
             <h2 data-step="6">{twoVsTwoTitle}</h2>
             <p>{twoVsTwoDesc}</p>
-            <button className="lobby-btn accent" onClick={handleTwoVsTwoMatch}>
-              {twoVsTwoStartLabel}
-            </button>
+            {isMatchmaking && currentMatchType === "2v2" ? (
+              <>
+                <div className="matchmaking-status">
+                  <div className="matchmaking-status-head">
+                    <span className="matchmaking-dot" />
+                    <strong>{t.matchmakingHead}</strong>
+                  </div>
+                  <div className="spinner" />
+                  <p>{t.matchmakingDesc}</p>
+                </div>
+                <button className="lobby-btn cancel" onClick={handleCancelTwoVsTwo}>
+                  {t.cancelBtn}
+                </button>
+              </>
+            ) : (
+              <button className="lobby-btn accent" onClick={() => void handleTwoVsTwoMatch()}>
+                {twoVsTwoStartLabel}
+              </button>
+            )}
           </div>
         </>
       )}
