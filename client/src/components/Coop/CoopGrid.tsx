@@ -296,8 +296,8 @@ export function CoopGrid({
   }));
 
   const visibleEnemyPaths = state.phase === 'planning' ? state.enemyPreviews : (movingEnemyPaths ?? []);
-  const redPath = state.phase === 'moving' ? [] : (myColor === 'red' ? myPath : allyPath);
-  const bluePath = state.phase === 'moving' ? [] : (myColor === 'blue' ? myPath : allyPath);
+  const redPath = myColor === 'red' ? myPath : allyPath;
+  const bluePath = myColor === 'blue' ? myPath : allyPath;
 
   return (
     <div ref={shellRef} className="game-grid-shell">
