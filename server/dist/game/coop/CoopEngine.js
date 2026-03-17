@@ -63,7 +63,7 @@ function createEnemyPreviews(params) {
                 selfPosition: enemy.position,
                 opponentPosition: target,
                 pathPoints: 4,
-                obstacles: [],
+                obstacles: params.obstacles ?? [],
             }).slice(0, 4),
         };
     });
@@ -132,12 +132,14 @@ function resolveCoopMovement(params) {
         blueHp,
     };
 }
-function isValidCoopPath(start, path, maxPoints) {
+function isValidCoopPath(start, path, maxPoints, obstacles = []) {
     if (path.length > maxPoints)
         return false;
     let current = start;
     for (const next of path) {
         if (!isWithinGrid(next))
+            return false;
+        if (obstacles.some((obstacle) => samePosition(obstacle, next)))
             return false;
         if (!(0, GameEngine_1.isValidMove)(current, next))
             return false;

@@ -65,6 +65,7 @@ export function createEnemyPreviews(params: {
   enemies: CoopEnemy[];
   redPosition: Position;
   bluePosition: Position;
+  obstacles?: Position[];
 }): CoopEnemyPreview[] {
   return params.enemies.map((enemy) => {
     const target =
@@ -82,7 +83,7 @@ export function createEnemyPreviews(params: {
         selfPosition: enemy.position,
         opponentPosition: target,
         pathPoints: 4,
-        obstacles: [],
+        obstacles: params.obstacles ?? [],
       }).slice(0, 4),
     };
   });
@@ -171,11 +172,12 @@ export function resolveCoopMovement(params: {
   };
 }
 
-export function isValidCoopPath(start: Position, path: Position[], maxPoints: number): boolean {
+export function isValidCoopPath(start: Position, path: Position[], maxPoints: number, obstacles: Position[] = []): boolean {
   if (path.length > maxPoints) return false;
   let current = start;
   for (const next of path) {
     if (!isWithinGrid(next)) return false;
+    if (obstacles.some((obstacle) => samePosition(obstacle, next))) return false;
     if (!isValidMove(current, next)) return false;
     current = next;
   }

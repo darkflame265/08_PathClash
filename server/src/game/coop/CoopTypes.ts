@@ -58,6 +58,7 @@ export interface CoopClientState {
   portalSpawnCount: number;
   phase: CoopPhase;
   pathPoints: number;
+  obstacles: Position[];
   players: {
     red: CoopClientPlayerState;
     blue: CoopClientPlayerState;

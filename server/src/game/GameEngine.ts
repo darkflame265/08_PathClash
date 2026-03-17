@@ -34,7 +34,8 @@ export function generateObstacles(
   matchId: string,
   turn: number,
   redPosition: Position,
-  bluePosition: Position
+  bluePosition: Position,
+  obstacleCount = MAX_OBSTACLES,
 ): Position[] {
   const occupied = new Set([toKey(redPosition), toKey(bluePosition)]);
   const candidates: Position[] = [];
@@ -49,8 +50,8 @@ export function generateObstacles(
 
   const random = createSeededRandom(`${matchId}:${turn}`);
   const shuffledCandidates = shuffleCandidates(candidates, random);
-  const picked = pickObstacleLayout(shuffledCandidates, redPosition, bluePosition);
-  return picked ?? shuffledCandidates.slice(0, MAX_OBSTACLES);
+  const picked = pickObstacleLayout(shuffledCandidates, redPosition, bluePosition, obstacleCount);
+  return picked ?? shuffledCandidates.slice(0, obstacleCount);
 }
 
 export function detectCollisions(
@@ -128,7 +129,8 @@ export function isObstacle(cell: Position, obstacles: Position[]): boolean {
 function pickObstacleLayout(
   candidates: Position[],
   redPosition: Position,
-  bluePosition: Position
+  bluePosition: Position,
+  obstacleCount: number,
 ): Position[] | null {
   const picked: Position[] = [];
   const pickedKeys = new Set<string>();
@@ -138,11 +140,11 @@ function pickObstacleLayout(
       return false;
     }
 
-    if (picked.length === MAX_OBSTACLES) {
+    if (picked.length === obstacleCount) {
       return true;
     }
 
-    const remainingSlots = MAX_OBSTACLES - picked.length;
+    const remainingSlots = obstacleCount - picked.length;
     for (let index = startIndex; index <= candidates.length - remainingSlots; index++) {
       const candidate = candidates[index];
       const candidateKey = toKey(candidate);

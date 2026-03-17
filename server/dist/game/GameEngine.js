@@ -36,7 +36,7 @@ function isValidPath(start, path, maxPoints, obstacles = []) {
     }
     return true;
 }
-function generateObstacles(matchId, turn, redPosition, bluePosition) {
+function generateObstacles(matchId, turn, redPosition, bluePosition, obstacleCount = MAX_OBSTACLES) {
     const occupied = new Set([toKey(redPosition), toKey(bluePosition)]);
     const candidates = [];
     for (let row = GRID_MIN; row <= GRID_MAX; row++) {
@@ -49,8 +49,8 @@ function generateObstacles(matchId, turn, redPosition, bluePosition) {
     }
     const random = createSeededRandom(`${matchId}:${turn}`);
     const shuffledCandidates = shuffleCandidates(candidates, random);
-    const picked = pickObstacleLayout(shuffledCandidates, redPosition, bluePosition);
-    return picked ?? shuffledCandidates.slice(0, MAX_OBSTACLES);
+    const picked = pickObstacleLayout(shuffledCandidates, redPosition, bluePosition, obstacleCount);
+    return picked ?? shuffledCandidates.slice(0, obstacleCount);
 }
 function detectCollisions(redPath, bluePath, redStart, blueStart, attackerColor, escaperHp) {
     const events = [];
@@ -104,17 +104,17 @@ function toClientPlayer(p) {
 function isObstacle(cell, obstacles) {
     return obstacles.some((obstacle) => obstacle.row === cell.row && obstacle.col === cell.col);
 }
-function pickObstacleLayout(candidates, redPosition, bluePosition) {
+function pickObstacleLayout(candidates, redPosition, bluePosition, obstacleCount) {
     const picked = [];
     const pickedKeys = new Set();
     const search = (startIndex) => {
         if (!positionsHaveEnoughOpenDirections(redPosition, bluePosition, picked)) {
             return false;
         }
-        if (picked.length === MAX_OBSTACLES) {
+        if (picked.length === obstacleCount) {
             return true;
         }
-        const remainingSlots = MAX_OBSTACLES - picked.length;
+        const remainingSlots = obstacleCount - picked.length;
         for (let index = startIndex; index <= candidates.length - remainingSlots; index++) {
             const candidate = candidates[index];
             const candidateKey = toKey(candidate);

@@ -51,6 +51,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
   const [portals, setPortals] = useState<CoopPortal[]>([]);
   const [movingEnemyPaths, setMovingEnemyPaths] = useState<CoopEnemyPreview[] | null>(null);
   const [hitPortalIds, setHitPortalIds] = useState<string[]>([]);
+  const [hitPlayers, setHitPlayers] = useState<{ red: boolean; blue: boolean }>({ red: false, blue: false });
   const [mySubmitted, setMySubmitted] = useState(false);
   const [allySubmitted, setAllySubmitted] = useState(false);
   const [rematchRequested, setRematchRequested] = useState(false);
@@ -58,6 +59,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const timeoutRef = useRef<number | null>(null);
   const portalHitTimeoutsRef = useRef<number[]>([]);
+  const playerHitTimeoutsRef = useRef<number[]>([]);
 
   const currentColor = myColor ?? "red";
   const allyColor: PlayerColor = currentColor === "red" ? "blue" : "red";
@@ -76,6 +78,13 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
     portalHitTimeoutsRef.current = [];
   }, []);
 
+  const clearPlayerHitTimeouts = useCallback(() => {
+    for (const timeoutId of playerHitTimeoutsRef.current) {
+      window.clearTimeout(timeoutId);
+    }
+    playerHitTimeoutsRef.current = [];
+  }, []);
+
   const syncDisplayFromState = useCallback((state: CoopClientState) => {
     setRedDisplayPos(state.players.red.position);
     setBlueDisplayPos(state.players.blue.position);
@@ -88,6 +97,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
       setCoopState(state);
       setMovingEnemyPaths(null);
       setHitPortalIds([]);
+      setHitPlayers({ red: false, blue: false });
       setMyPath([]);
       setAllyPath([]);
       setMySubmitted(Boolean(state.players[currentColor]?.pathSubmitted));
@@ -177,14 +187,30 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
 
         const playerHits = playerHitsByStep.get(step) ?? [];
         if (playerHits.length > 0) {
+          const flashedPlayers = new Set<"red" | "blue">();
           setCoopState((prev) => {
             if (!prev) return prev;
             const players = { ...prev.players };
             for (const hit of playerHits) {
               players[hit.color] = { ...players[hit.color], hp: hit.newHp };
+              flashedPlayers.add(hit.color);
             }
             return { ...prev, players };
           });
+          if (flashedPlayers.size > 0) {
+            setHitPlayers((prev) => ({
+              red: prev.red || flashedPlayers.has("red"),
+              blue: prev.blue || flashedPlayers.has("blue"),
+            }));
+            const timeoutId = window.setTimeout(() => {
+              setHitPlayers((prev) => ({
+                red: flashedPlayers.has("red") ? false : prev.red,
+                blue: flashedPlayers.has("blue") ? false : prev.blue,
+              }));
+              playerHitTimeoutsRef.current = playerHitTimeoutsRef.current.filter((id) => id !== timeoutId);
+            }, 600);
+            playerHitTimeoutsRef.current.push(timeoutId);
+          }
           if (!isSfxMuted) {
             playHit(sfxVolume);
           }
@@ -309,6 +335,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
     return () => {
       clearAnimationTimeout();
       clearPortalHitTimeouts();
+      clearPlayerHitTimeouts();
       socket.off("coop_game_start", onGameStart);
       socket.off("coop_round_start", onRoundStart);
       socket.off("coop_path_updated", onPathUpdated);
@@ -319,7 +346,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
       socket.off("player_skin_updated", onPlayerSkinUpdated);
       socket.off("rematch_requested", onRematchRequested);
     };
-  }, [animateResolution, applyState, clearAnimationTimeout, clearPortalHitTimeouts, currentColor]);
+  }, [animateResolution, applyState, clearAnimationTimeout, clearPlayerHitTimeouts, clearPortalHitTimeouts, currentColor]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -468,6 +495,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
           portals={portals}
           movingEnemyPaths={movingEnemyPaths}
           hitPortalIds={hitPortalIds}
+          hitPlayers={hitPlayers}
         />
         </div>
       </div>

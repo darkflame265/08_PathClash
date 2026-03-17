@@ -2,7 +2,7 @@ import { useRef, useCallback, useEffect, useState } from "react";
 import { getSocket } from "../../socket/socketClient";
 import type { Position } from "../../types/game.types";
 import type { CoopClientState, CoopEnemyPreview, CoopPortal, CoopRoundStartPayload } from "../../types/coop.types";
-import { isValidMove, pixelToCell, posEqual } from "../../utils/pathUtils";
+import { isBlockedCell, isValidMove, pixelToCell, posEqual } from "../../utils/pathUtils";
 import { PlayerPiece } from "../Game/PlayerPiece";
 import { PathLine } from "../Game/PathLine";
 import "../Game/GameGrid.css";
@@ -27,6 +27,7 @@ interface Props {
   portals: CoopPortal[];
   movingEnemyPaths: CoopEnemyPreview[] | null;
   hitPortalIds: string[];
+  hitPlayers: { red: boolean; blue: boolean };
 }
 
 function EnemyPathLayer({ paths, cellSize }: { paths: CoopEnemyPreview[]; cellSize: number }) {
@@ -81,6 +82,7 @@ export function CoopGrid({
   portals,
   movingEnemyPaths,
   hitPortalIds,
+  hitPlayers,
 }: Props) {
   const shellRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -96,6 +98,7 @@ export function CoopGrid({
 
   const isPlanning = state.phase === 'planning';
   const myPos = state.players[myColor].position;
+  const obstacles = state.obstacles;
 
   useEffect(() => {
     const element = shellRef.current;
@@ -141,6 +144,7 @@ export function CoopGrid({
       if (!isPlanning) return;
       const current = myPath;
       if (current.length >= state.pathPoints) return;
+      if (isBlockedCell(cell, obstacles)) return;
       const lastPos = current.length > 0 ? current[current.length - 1] : myPos;
       if (isValidMove(lastPos, cell)) {
         setMyPath([...current, cell]);
@@ -194,7 +198,12 @@ export function CoopGrid({
       }
       if (dragState.current.fromEnd) {
         const lastPos = current.length > 0 ? current[current.length - 1] : myPos;
-        if (!posEqual(cell, lastPos) && isValidMove(lastPos, cell) && current.length < state.pathPoints) {
+        if (
+          !posEqual(cell, lastPos) &&
+          !isBlockedCell(cell, obstacles) &&
+          isValidMove(lastPos, cell) &&
+          current.length < state.pathPoints
+        ) {
           setMyPath([...current, cell]);
         }
       } else if (dragState.current.fromPiece) {
@@ -227,6 +236,7 @@ export function CoopGrid({
       const lastPos = myPath.length > 0 ? myPath[myPath.length - 1] : myPos;
       const next = { row: lastPos.row + dir.row, col: lastPos.col + dir.col };
       if (next.row < 0 || next.row > 4 || next.col < 0 || next.col > 4) return;
+      if (isBlockedCell(next, obstacles)) return;
       if (myPath.length > 0) {
         const secondLast = myPath.length >= 2 ? myPath[myPath.length - 2] : myPos;
         if (posEqual(next, secondLast)) {
@@ -241,7 +251,7 @@ export function CoopGrid({
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [isPlanning, myPath, myPos, removeFromPath, setMyPath, state.pathPoints]);
+  }, [isPlanning, myPath, myPos, obstacles, removeFromPath, setMyPath, state.pathPoints]);
 
   useEffect(() => {
     pendingPathRef.current = myPath;
@@ -315,7 +325,7 @@ export function CoopGrid({
         {cells.map(({ row, col }) => (
           <div
             key={`${row}-${col}`}
-            className="grid-cell"
+            className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? "obstacle" : ""}`}
             style={{
               left: col * responsiveCellSize,
               top: row * responsiveCellSize,
@@ -323,7 +333,9 @@ export function CoopGrid({
               height: responsiveCellSize,
               ['--cell-size' as string]: `${responsiveCellSize}px`,
             }}
-          />
+          >
+            {isBlockedCell({ row, col }, obstacles) && <div className="obstacle-mark" />}
+          </div>
         ))}
 
         <EnemyPathLayer paths={visibleEnemyPaths} cellSize={responsiveCellSize} />
@@ -379,7 +391,7 @@ export function CoopGrid({
             position={redDisplayPos}
             cellSize={responsiveCellSize}
             isAttacker={false}
-            isHit={false}
+            isHit={hitPlayers.red}
             isExploding={false}
             isMe={myColor === 'red'}
             skin={state.players.red.pieceSkin}
@@ -391,7 +403,7 @@ export function CoopGrid({
             position={blueDisplayPos}
             cellSize={responsiveCellSize}
             isAttacker={false}
-            isHit={false}
+            isHit={hitPlayers.blue}
             isExploding={false}
             isMe={myColor === 'blue'}
             skin={state.players.blue.pieceSkin}
