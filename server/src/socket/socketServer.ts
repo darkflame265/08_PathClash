@@ -1,6 +1,8 @@
 import { Server, Socket } from 'socket.io';
 import { GameRoom } from '../game/GameRoom';
 import { RoomStore } from '../store/RoomStore';
+import { CoopRoom } from '../game/coop/CoopRoom';
+import { CoopRoomStore } from '../store/CoopRoomStore';
 import { PieceSkin, Position } from '../types/game.types';
 import {
   AuthPayload,
@@ -13,6 +15,7 @@ import {
 
 export function initSocketServer(io: Server): void {
   const store = RoomStore.getInstance();
+  const coopStore = CoopRoomStore.getInstance();
   const activeUserSockets = new Map<string, string>();
   const socketUsers = new Map<string, string>();
   const authCacheTtlMs = 10 * 60 * 1000;
@@ -251,6 +254,57 @@ export function initSocketServer(io: Server): void {
       store.removeFromQueue(socket.id);
     });
 
+    socket.on('join_coop', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
+      await registerSocketSession(socket, auth);
+      const profile = await resolvePlayerProfile(auth, nickname);
+      const queued = coopStore.dequeue();
+      if (!queued || queued.socketId === socket.id) {
+        if (queued) {
+          coopStore.enqueue(queued.socketId, queued.nickname, queued.userId, queued.stats, queued.pieceSkin);
+        }
+        coopStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
+        socket.emit('coop_matchmaking_waiting', {});
+        return;
+      }
+
+      const roomId = coopStore.generateRoomId();
+      const room = new CoopRoom(roomId, roomId, io);
+      coopStore.add(room);
+
+      const queuedSocket = io.sockets.sockets.get(queued.socketId);
+      if (!queuedSocket) {
+        coopStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
+        socket.emit('coop_matchmaking_waiting', {});
+        return;
+      }
+
+      room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin);
+      coopStore.registerSocket(queued.socketId, roomId);
+      queuedSocket.emit('coop_room_joined', {
+        roomId,
+        color: 'red',
+        teammateNickname: profile.nickname,
+        selfPieceSkin: queued.pieceSkin,
+        teammatePieceSkin: pieceSkin ?? 'classic',
+      });
+
+      room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
+      coopStore.registerSocket(socket.id, roomId);
+      socket.emit('coop_room_joined', {
+        roomId,
+        color: 'blue',
+        teammateNickname: queued.nickname,
+        selfPieceSkin: pieceSkin ?? 'classic',
+        teammatePieceSkin: queued.pieceSkin,
+      });
+
+      room.prepareGameStart();
+    });
+
+    socket.on('cancel_coop', () => {
+      coopStore.removeFromQueue(socket.id);
+    });
+
     socket.on('account_sync', async ({ auth }: { auth?: AuthPayload }, ack?: (response: unknown) => void) => {
       await registerSocketSession(socket, auth, { forceRevalidate: true });
       ack?.(await resolveAccount(auth));
@@ -293,18 +347,31 @@ export function initSocketServer(io: Server): void {
 
     socket.on('path_update', ({ path }: { path: Position[] }) => {
       const room = store.getBySocket(socket.id);
-      room?.updatePlannedPath(socket.id, path);
+      if (room) {
+        room.updatePlannedPath(socket.id, path);
+        return;
+      }
+      const coopRoom = coopStore.getBySocket(socket.id);
+      coopRoom?.updatePlannedPath(socket.id, path);
     });
 
     socket.on('submit_path', ({ path }: { path: Position[] }, ack?: (response: { ok: boolean }) => void) => {
       const room = store.getBySocket(socket.id);
-      const ok = room?.submitPath(socket.id, path) ?? false;
+      const ok =
+        room?.submitPath(socket.id, path) ??
+        coopStore.getBySocket(socket.id)?.submitPath(socket.id, path) ??
+        false;
       ack?.({ ok });
     });
 
     socket.on('request_rematch', () => {
       const room = store.getBySocket(socket.id);
-      room?.requestRematch(socket.id);
+      if (room) {
+        room.requestRematch(socket.id);
+        return;
+      }
+      const coopRoom = coopStore.getBySocket(socket.id);
+      coopRoom?.requestRematch(socket.id);
     });
 
     socket.on('resume_tutorial', () => {
@@ -317,21 +384,49 @@ export function initSocketServer(io: Server): void {
       room?.markClientReady(socket.id);
     });
 
+    socket.on('coop_client_ready', () => {
+      const room = coopStore.getBySocket(socket.id);
+      room?.markClientReady(socket.id);
+    });
+
     socket.on('chat_send', ({ message }: { message: string }) => {
       const room = store.getBySocket(socket.id);
-      room?.sendChat(socket.id, message);
+      if (room) {
+        room.sendChat(socket.id, message);
+        return;
+      }
+      const coopRoom = coopStore.getBySocket(socket.id);
+      coopRoom?.sendChat(socket.id, message);
     });
 
     socket.on('update_piece_skin', ({ pieceSkin }: { pieceSkin: PieceSkin }) => {
       const room = store.getBySocket(socket.id);
-      room?.updatePlayerSkin(socket.id, pieceSkin);
+      if (room) {
+        room.updatePlayerSkin(socket.id, pieceSkin);
+        return;
+      }
+      const coopRoom = coopStore.getBySocket(socket.id);
+      coopRoom?.updatePlayerSkin(socket.id, pieceSkin);
+    });
+
+    socket.on('coop_path_update', ({ path }: { path: Position[] }) => {
+      const room = coopStore.getBySocket(socket.id);
+      room?.updatePlannedPath(socket.id, path);
+    });
+
+    socket.on('coop_submit_path', ({ path }: { path: Position[] }, ack?: (response: { ok: boolean }) => void) => {
+      const room = coopStore.getBySocket(socket.id);
+      const ok = room?.submitPath(socket.id, path) ?? false;
+      ack?.({ ok });
     });
 
     socket.on('disconnect', () => {
       console.log(`[-] Disconnected: ${socket.id}`);
       unregisterSocketSession(socket.id);
       store.removeFromQueue(socket.id);
+      coopStore.removeFromQueue(socket.id);
       const { room, disconnectResult } = store.removeSocket(socket.id);
+      const coopRoom = coopStore.removeSocket(socket.id);
 
       if (
         room &&
@@ -347,6 +442,13 @@ export function initSocketServer(io: Server): void {
 
       if (room && room.playerCount > 0) {
         io.to(room.roomId).emit('opponent_disconnected', {});
+      }
+
+      if (coopRoom && coopRoom.playerCount > 0) {
+        io.to(coopRoom.roomId).emit('coop_game_over', {
+          result: 'lose',
+          message: 'Ally disconnected.',
+        });
       }
     });
   });

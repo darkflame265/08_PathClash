@@ -34,6 +34,7 @@ type LobbyView = "main" | "create" | "join";
 
 interface Props {
   onGameStart: () => void;
+  onCoopStart: () => void;
 }
 
 const POLICY_URL_KR =
@@ -174,7 +175,7 @@ function AccountCard({
   );
 }
 
-export function LobbyScreen({ onGameStart }: Props) {
+export function LobbyScreen({ onGameStart, onCoopStart }: Props) {
   const {
     myNickname,
     setNickname,
@@ -190,6 +191,7 @@ export function LobbyScreen({ onGameStart }: Props) {
     accountDailyRewardTokens,
     setAuthState,
     setMatchType,
+    currentMatchType,
     setPlayerPieceSkins,
     isMusicMuted,
     isSfxMuted,
@@ -879,6 +881,8 @@ export function LobbyScreen({ onGameStart }: Props) {
     socket.off("opponent_joined");
     socket.off("join_error");
     socket.off("matchmaking_waiting");
+    socket.off("coop_room_joined");
+    socket.off("coop_matchmaking_waiting");
 
     socket.on(
       "room_created",
@@ -975,6 +979,43 @@ export function LobbyScreen({ onGameStart }: Props) {
       setIsMatchmaking(true);
     });
 
+    socket.on(
+      "coop_room_joined",
+      ({
+        color,
+        roomId,
+        selfPieceSkin,
+        teammatePieceSkin,
+      }: {
+        roomId: string;
+        color: "red" | "blue";
+        teammateNickname: string;
+        selfPieceSkin?: PieceSkin;
+        teammatePieceSkin?: PieceSkin;
+      }) => {
+        setMyColor(color);
+        setRoomCode(roomId);
+        setPlayerPieceSkins({
+          red:
+            color === "red"
+              ? selfPieceSkin ?? pieceSkin
+              : teammatePieceSkin ?? "classic",
+          blue:
+            color === "blue"
+              ? selfPieceSkin ?? pieceSkin
+              : teammatePieceSkin ?? "classic",
+        });
+        setError("");
+        setIsMatchmaking(false);
+        onCoopStart();
+      },
+    );
+
+    socket.on("coop_matchmaking_waiting", () => {
+      setError("");
+      setIsMatchmaking(true);
+    });
+
     return socket;
   };
 
@@ -1022,6 +1063,13 @@ export function LobbyScreen({ onGameStart }: Props) {
     setMatchType(null);
   };
 
+  const handleCancelCoop = () => {
+    const socket = connectSocket();
+    socket.emit("cancel_coop");
+    setIsMatchmaking(false);
+    setMatchType(null);
+  };
+
   const handleAiMatch = async () => {
     setError("");
     setIsMatchmaking(false);
@@ -1035,10 +1083,11 @@ export function LobbyScreen({ onGameStart }: Props) {
     });
   };
 
-  const handleCoopMatch = () => {
-    window.alert(
-      lang === "en" ? "Not implemented yet." : "\uC544\uC9C1 \uBBF8\uAD6C\uD604 \uC785\uB2C8\uB2E4.",
-    );
+  const handleCoopMatch = async () => {
+    setError("");
+    setMatchType("coop");
+    const socket = startSocket();
+    socket.emit("join_coop", await buildPlayerPayload());
   };
 
   const handleLinkGoogle = async () => {
@@ -1231,7 +1280,7 @@ export function LobbyScreen({ onGameStart }: Props) {
             </div>
           </div>
 
-          <div className={`lobby-card ${isMatchmaking ? "is-matchmaking" : ""}`}>
+          <div className={`lobby-card ${isMatchmaking && currentMatchType === "random" ? "is-matchmaking" : ""}`}>
             <div className="lobby-card-title-row">
               <h2 data-step="4">{t.randomTitle}</h2>
               <div className="daily-reward-badge" aria-label="Daily tokens earned">
@@ -1243,7 +1292,7 @@ export function LobbyScreen({ onGameStart }: Props) {
                 <span>120</span>
               </div>
             </div>
-            {isMatchmaking ? (
+            {isMatchmaking && currentMatchType === "random" ? (
               <>
                 <div className="matchmaking-status">
                   <div className="matchmaking-status-head">
@@ -1265,12 +1314,28 @@ export function LobbyScreen({ onGameStart }: Props) {
             {error && <p className="error-msg">{error}</p>}
           </div>
 
-          <div className="lobby-card">
+          <div className={`lobby-card ${isMatchmaking && currentMatchType === "coop" ? "is-matchmaking" : ""}`}>
             <h2 data-step="5">{coopTitle}</h2>
             <p>{coopDesc}</p>
-            <button className="lobby-btn accent" onClick={handleCoopMatch}>
-              {coopStartLabel}
-            </button>
+            {isMatchmaking && currentMatchType === "coop" ? (
+              <>
+                <div className="matchmaking-status">
+                  <div className="matchmaking-status-head">
+                    <span className="matchmaking-dot" />
+                    <strong>{t.matchmakingHead}</strong>
+                  </div>
+                  <div className="spinner" />
+                  <p>{t.matchmakingDesc}</p>
+                </div>
+                <button className="lobby-btn cancel" onClick={handleCancelCoop}>
+                  {t.cancelBtn}
+                </button>
+              </>
+            ) : (
+              <button className="lobby-btn accent" onClick={() => void handleCoopMatch()}>
+                {coopStartLabel}
+              </button>
+            )}
           </div>
         </>
       )}

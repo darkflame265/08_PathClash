@@ -31,7 +31,7 @@ interface GameStore {
   ownedSkins: PieceSkin[];
   accountDailyRewardWins: number;
   accountDailyRewardTokens: number;
-  currentMatchType: "friend" | "random" | "ai" | null;
+  currentMatchType: "friend" | "random" | "ai" | "coop" | null;
 
   // Game
   gameState: ClientGameState | null;
@@ -91,7 +91,7 @@ interface GameStore {
   }) => void;
   setMyColor: (c: PlayerColor) => void;
   setRoomCode: (c: string) => void;
-  setMatchType: (matchType: "friend" | "random" | "ai" | null) => void;
+  setMatchType: (matchType: "friend" | "random" | "ai" | "coop" | null) => void;
   setGameState: (gs: ClientGameState) => void;
   setRoundInfo: (r: RoundStartPayload) => void;
   setMyPath: (p: Position[]) => void;

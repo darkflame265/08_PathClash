@@ -24,8 +24,13 @@ const GameScreen = lazy(() =>
     default: module.GameScreen,
   })),
 );
+const CoopScreen = lazy(() =>
+  import("./components/Coop/CoopScreen").then((module) => ({
+    default: module.CoopScreen,
+  })),
+);
 
-type AppView = "lobby" | "game";
+type AppView = "lobby" | "game" | "coop";
 
 function App() {
   const [view, setView] = useState<AppView>("lobby");
@@ -217,8 +222,9 @@ function App() {
       return;
     }
 
-    const targetBgm = view === "game" ? inGameBgm : lobbyBgm;
-    const otherBgm = view === "game" ? lobbyBgm : inGameBgm;
+    const isBattleView = view === "game" || view === "coop";
+    const targetBgm = isBattleView ? inGameBgm : lobbyBgm;
+    const otherBgm = isBattleView ? lobbyBgm : inGameBgm;
 
     otherBgm.pause();
     otherBgm.currentTime = 0;
@@ -236,7 +242,7 @@ function App() {
       if (showSessionReplaced) {
         return;
       }
-      if (view === "game") {
+      if (view === "game" || view === "coop") {
         handleReturnToLobby();
         return;
       }
@@ -303,10 +309,16 @@ function App() {
   }
 
   return (
-    <div className={`app ${view === "game" ? "app-game" : "app-lobby"}`}>
+    <div className={`app ${view === "lobby" ? "app-lobby" : "app-game"}`}>
       <Suspense fallback={<div className="app app-loading">Loading...</div>}>
-        {view === "lobby" && <LobbyScreen onGameStart={() => setView("game")} />}
+        {view === "lobby" && (
+          <LobbyScreen
+            onGameStart={() => setView("game")}
+            onCoopStart={() => setView("coop")}
+          />
+        )}
         {view === "game" && <GameScreen onLeaveToLobby={handleReturnToLobby} />}
+        {view === "coop" && <CoopScreen onLeaveToLobby={handleReturnToLobby} />}
       </Suspense>
       {showExitConfirm && view === "lobby" && (
         <div
