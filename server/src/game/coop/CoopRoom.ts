@@ -1,15 +1,24 @@
-import { Server, Socket } from 'socket.io';
-import type { PieceSkin, PlayerColor, PlayerState, Position } from '../../types/game.types';
-import { generateObstacles, getInitialPositions, toClientPlayer } from '../GameEngine';
-import { ServerTimer } from '../ServerTimer';
-import { createAiPath } from '../AiPlanner';
+import { Server, Socket } from "socket.io";
+import type {
+  PieceSkin,
+  PlayerColor,
+  PlayerState,
+  Position,
+} from "../../types/game.types";
+import {
+  generateObstacles,
+  getInitialPositions,
+  toClientPlayer,
+} from "../GameEngine";
+import { ServerTimer } from "../ServerTimer";
+import { createAiPath } from "../AiPlanner";
 import {
   calcCoopPathPoints,
   createCoopPortalBatch,
   createEnemyPreviews,
   isValidCoopPath,
   resolveCoopMovement,
-} from './CoopEngine';
+} from "./CoopEngine";
 import type {
   CoopClientState,
   CoopEnemy,
@@ -17,11 +26,11 @@ import type {
   CoopResolutionPayload,
   CoopResult,
   CoopRoundStartPayload,
-} from './CoopTypes';
+} from "./CoopTypes";
 
 const PLANNING_TIME_MS = 7_000;
 const SUBMIT_GRACE_MS = 350;
-const FINAL_PORTAL_COUNT = 12;
+const FINAL_PORTAL_COUNT = 4;
 const MOVEMENT_STEP_MS = 200;
 const MOVEMENT_SETTLE_MS = 100;
 
@@ -36,10 +45,10 @@ export class CoopRoom {
   private readonly createdAt = Date.now();
   private lastActivityAt = Date.now();
   private players: Map<PlayerColor, PlayerState> = new Map();
-  private phase: CoopClientState['phase'] = 'waiting';
+  private phase: CoopClientState["phase"] = "waiting";
   private portalWave = 1;
   private planningRound = 1;
-  private portals = [] as CoopClientState['portals'];
+  private portals = [] as CoopClientState["portals"];
   private enemies: CoopEnemy[] = [];
   private enemyPreviews: CoopEnemyPreview[] = [];
   private obstacles: Position[] = [];
@@ -64,7 +73,7 @@ export class CoopRoom {
     return this.players.size;
   }
 
-  get currentPhase(): CoopClientState['phase'] {
+  get currentPhase(): CoopClientState["phase"] {
     return this.phase;
   }
 
@@ -84,7 +93,7 @@ export class CoopRoom {
     pieceSkin: PieceSkin,
   ): PlayerColor | null {
     if (this.players.size >= 2) return null;
-    const color: PlayerColor = this.players.size === 0 ? 'red' : 'blue';
+    const color: PlayerColor = this.players.size === 0 ? "red" : "blue";
     const pos = getInitialPositions()[color];
     this.players.set(color, {
       id: userId ?? socket.id,
@@ -97,7 +106,7 @@ export class CoopRoom {
       position: { ...pos },
       plannedPath: [],
       pathSubmitted: false,
-      role: 'attacker',
+      role: "attacker",
       stats,
     });
     socket.join(this.roomId);
@@ -110,7 +119,7 @@ export class CoopRoom {
     if (!player) return;
     player.pieceSkin = pieceSkin;
     this.touchActivity();
-    this.io.to(this.roomId).emit('player_skin_updated', {
+    this.io.to(this.roomId).emit("player_skin_updated", {
       color: player.color,
       pieceSkin,
     });
@@ -125,8 +134,8 @@ export class CoopRoom {
       this.clearNextRoundTimeout();
       this.readySockets.clear();
       this.pendingStart = false;
-      this.phase = 'gameover';
-      this.gameResult = 'lose';
+      this.phase = "gameover";
+      this.gameResult = "lose";
       this.touchActivity();
       return;
     }
@@ -144,7 +153,9 @@ export class CoopRoom {
     if (!player) return false;
     this.readySockets.add(socketId);
     this.touchActivity();
-    const allReady = [...this.players.values()].every((entry) => this.readySockets.has(entry.socketId));
+    const allReady = [...this.players.values()].every((entry) =>
+      this.readySockets.has(entry.socketId),
+    );
     if (!allReady) return false;
     this.startGame();
     return true;
@@ -155,7 +166,7 @@ export class CoopRoom {
     this.readySockets.clear();
     this.portalWave = 1;
     this.planningRound = 1;
-    this.phase = 'planning';
+    this.phase = "planning";
     this.finalEnemyPhase = false;
     this.bossPhase = false;
     this.bossRoundsRemaining = 0;
@@ -169,36 +180,56 @@ export class CoopRoom {
     this.obstacles = [];
     this.spawnPortalsForCurrentWave();
     this.touchActivity();
-    this.io.to(this.roomId).emit('coop_game_start', this.toClientState());
+    this.io.to(this.roomId).emit("coop_game_start", this.toClientState());
     this.emitRoundStart();
   }
 
   updatePlannedPath(socketId: string, path: Position[]): void {
-    if (this.phase !== 'planning') return;
+    if (this.phase !== "planning") return;
     const player = this.getPlayerBySocket(socketId);
     if (!player || player.pathSubmitted) return;
-    if (!isValidCoopPath(player.position, path, calcCoopPathPoints(this.planningRound), this.obstacles)) return;
+    if (
+      !isValidCoopPath(
+        player.position,
+        path,
+        calcCoopPathPoints(this.planningRound),
+        this.obstacles,
+      )
+    )
+      return;
     player.plannedPath = path;
     this.touchActivity();
-    this.io.to(this.roomId).emit('coop_path_updated', {
+    this.io.to(this.roomId).emit("coop_path_updated", {
       color: player.color,
       path,
     });
   }
 
   submitPath(socketId: string, path: Position[]): boolean {
-    if (this.phase !== 'planning') return false;
+    if (this.phase !== "planning") return false;
     const player = this.getPlayerBySocket(socketId);
     if (!player || player.pathSubmitted) return false;
     const maxPoints = calcCoopPathPoints(this.planningRound);
-    player.plannedPath = isValidCoopPath(player.position, path, maxPoints, this.obstacles)
+    player.plannedPath = isValidCoopPath(
+      player.position,
+      path,
+      maxPoints,
+      this.obstacles,
+    )
       ? path
-      : isValidCoopPath(player.position, player.plannedPath, maxPoints, this.obstacles)
+      : isValidCoopPath(
+            player.position,
+            player.plannedPath,
+            maxPoints,
+            this.obstacles,
+          )
         ? player.plannedPath
         : [];
     player.pathSubmitted = true;
     this.touchActivity();
-    this.io.to(this.roomId).emit('coop_player_submitted', { color: player.color });
+    this.io
+      .to(this.roomId)
+      .emit("coop_player_submitted", { color: player.color });
 
     if ([...this.players.values()].every((entry) => entry.pathSubmitted)) {
       this.timer.clear();
@@ -209,11 +240,11 @@ export class CoopRoom {
   }
 
   requestRematch(socketId: string): void {
-    if (this.phase !== 'gameover') return;
+    if (this.phase !== "gameover") return;
     if (this.rematchSet.has(socketId)) return;
     this.rematchSet.add(socketId);
     if (this.rematchSet.size === 1) {
-      this.emitToOpponent(socketId, 'rematch_requested', {});
+      this.emitToOpponent(socketId, "rematch_requested", {});
       return;
     }
     this.startGame();
@@ -223,7 +254,7 @@ export class CoopRoom {
     const player = this.getPlayerBySocket(socketId);
     if (!player) return;
     this.touchActivity();
-    this.io.to(this.roomId).emit('chat_receive', {
+    this.io.to(this.roomId).emit("chat_receive", {
       sender: player.nickname,
       color: player.color,
       message: message.slice(0, 200),
@@ -237,7 +268,7 @@ export class CoopRoom {
 
   private emitRoundStart(): void {
     if (!this.hasBothPlayers()) return;
-    this.phase = 'planning';
+    this.phase = "planning";
     this.touchActivity();
     const now = Date.now();
     const payload: CoopRoundStartPayload = {
@@ -246,20 +277,25 @@ export class CoopRoom {
       serverTime: now,
       roundEndsAt: now + PLANNING_TIME_MS,
     };
-    this.io.to(this.roomId).emit('coop_round_start', payload);
+    this.io.to(this.roomId).emit("coop_round_start", payload);
     this.timer.start(PLANNING_TIME_MS, () => this.onPlanningTimeout());
   }
 
   private onPlanningTimeout(): void {
-    if (this.phase !== 'planning') return;
+    if (this.phase !== "planning") return;
     this.clearPlanningGraceTimeout();
     this.planningGraceTimeout = setTimeout(() => {
       this.planningGraceTimeout = null;
-      if (this.phase !== 'planning') return;
+      if (this.phase !== "planning") return;
       const maxPoints = calcCoopPathPoints(this.planningRound);
       for (const player of this.players.values()) {
         if (player.pathSubmitted) continue;
-        player.plannedPath = isValidCoopPath(player.position, player.plannedPath, maxPoints, this.obstacles)
+        player.plannedPath = isValidCoopPath(
+          player.position,
+          player.plannedPath,
+          maxPoints,
+          this.obstacles,
+        )
           ? player.plannedPath
           : [];
         player.pathSubmitted = true;
@@ -270,8 +306,8 @@ export class CoopRoom {
 
   private resolveRound(): void {
     if (!this.hasBothPlayers()) return;
-    const red = this.players.get('red');
-    const blue = this.players.get('blue');
+    const red = this.players.get("red");
+    const blue = this.players.get("blue");
     if (!red || !blue) return;
 
     const redStart = { ...red.position };
@@ -286,7 +322,7 @@ export class CoopRoom {
           path: enemy.path.map((position) => ({ ...position })),
         }));
 
-    this.phase = 'moving';
+    this.phase = "moving";
 
     const resolution = resolveCoopMovement({
       redStart,
@@ -299,45 +335,57 @@ export class CoopRoom {
       blueHp: blue.hp,
     });
 
-    const convertedEnemies: CoopEnemy[] = resolution.remainingPortals.map((portal) => ({
-      id: `${portal.id}_enemy`,
-      position: { ...portal.position },
-    }));
+    const convertedEnemies: CoopEnemy[] = resolution.remainingPortals.map(
+      (portal) => ({
+        id: `${portal.id}_enemy`,
+        position: { ...portal.position },
+      }),
+    );
     const redEnd = { ...resolution.redEnd };
     const blueEnd = { ...resolution.blueEnd };
     const nextRound = this.planningRound + 1;
     const nextPortalWave = this.portalWave + 1;
-    let nextPhase: CoopClientState['phase'] = 'planning';
+    let nextPhase: CoopClientState["phase"] = "planning";
     let nextResult: CoopResult | null = null;
     let nextFinalEnemyPhase = this.finalEnemyPhase;
     let nextBossPhase = this.bossPhase;
     let nextBossRoundsRemaining = this.bossRoundsRemaining;
     let nextEnemies: CoopEnemy[] = [];
     let nextEnemyPreviews: CoopEnemyPreview[] = [];
-    let nextPortals = [] as CoopClientState['portals'];
+    let nextPortals = [] as CoopClientState["portals"];
     let nextObstacles: Position[] = this.obstacles;
 
     if (resolution.redHp <= 0 && resolution.blueHp <= 0) {
-      nextPhase = 'gameover';
-      nextResult = 'lose';
+      nextPhase = "gameover";
+      nextResult = "lose";
     } else if (this.bossPhase) {
       nextEnemies = this.enemies.map((enemy, index) => ({
         id: enemy.id,
-        position: index === 0 ? enemyMoves[0]?.path[enemyMoves[0].path.length - 1] ?? enemyMoves[0]?.start ?? enemy.position : enemy.position,
+        position:
+          index === 0
+            ? (enemyMoves[0]?.path[enemyMoves[0].path.length - 1] ??
+              enemyMoves[0]?.start ??
+              enemy.position)
+            : enemy.position,
         isBoss: true,
       }));
       nextEnemyPreviews = [];
       nextBossPhase = true;
       nextBossRoundsRemaining = Math.max(0, this.bossRoundsRemaining - 1);
       if (nextBossRoundsRemaining <= 0) {
-        nextPhase = 'gameover';
-        nextResult = 'win';
+        nextPhase = "gameover";
+        nextResult = "win";
         nextEnemies = [];
         nextEnemyPreviews = [];
         nextBossPhase = false;
         nextObstacles = [];
       } else {
-        nextObstacles = this.generateBossObstacles(nextBossRoundsRemaining, redEnd, blueEnd, nextEnemies[0]?.position);
+        nextObstacles = this.generateBossObstacles(
+          nextBossRoundsRemaining,
+          redEnd,
+          blueEnd,
+          nextEnemies[0]?.position,
+        );
       }
     } else if (this.getCurrentPortalCount() >= FINAL_PORTAL_COUNT) {
       if (convertedEnemies.length === 0) {
@@ -345,7 +393,12 @@ export class CoopRoom {
         nextBossRoundsRemaining = 5;
         nextEnemies = [this.createBoss(redEnd, blueEnd)];
         nextEnemyPreviews = [];
-        nextObstacles = this.generateBossObstacles(nextBossRoundsRemaining, redEnd, blueEnd, nextEnemies[0]?.position);
+        nextObstacles = this.generateBossObstacles(
+          nextBossRoundsRemaining,
+          redEnd,
+          blueEnd,
+          nextEnemies[0]?.position,
+        );
       } else {
         nextFinalEnemyPhase = true;
         nextEnemies = convertedEnemies;
@@ -367,7 +420,11 @@ export class CoopRoom {
       });
       nextPortals = createCoopPortalBatch({
         count: Math.min(3 + nextPortalWave, FINAL_PORTAL_COUNT),
-        occupied: [redEnd, blueEnd, ...nextEnemies.map((enemy) => enemy.position)],
+        occupied: [
+          redEnd,
+          blueEnd,
+          ...nextEnemies.map((enemy) => enemy.position),
+        ],
         idPrefix: `${this.roomId}_${nextPortalWave}`,
       });
       nextObstacles = [];
@@ -384,7 +441,7 @@ export class CoopRoom {
     };
 
     this.touchActivity();
-    this.io.to(this.roomId).emit('coop_resolution', payload);
+    this.io.to(this.roomId).emit("coop_resolution", payload);
 
     this.clearNextRoundTimeout();
     const maxSteps = Math.max(
@@ -396,8 +453,8 @@ export class CoopRoom {
     this.nextRoundTimeout = setTimeout(() => {
       this.nextRoundTimeout = null;
       if (!this.hasBothPlayers()) return;
-      const liveRed = this.players.get('red');
-      const liveBlue = this.players.get('blue');
+      const liveRed = this.players.get("red");
+      const liveBlue = this.players.get("blue");
       if (!liveRed || !liveBlue) return;
 
       liveRed.position = redEnd;
@@ -418,10 +475,10 @@ export class CoopRoom {
       this.bossRoundsRemaining = nextBossRoundsRemaining;
       this.gameResult = nextResult;
 
-      if (nextPhase === 'gameover') {
-        this.phase = 'gameover';
+      if (nextPhase === "gameover") {
+        this.phase = "gameover";
         this.touchActivity();
-        this.io.to(this.roomId).emit('coop_game_over', { result: nextResult });
+        this.io.to(this.roomId).emit("coop_game_over", { result: nextResult });
         return;
       }
 
@@ -432,10 +489,14 @@ export class CoopRoom {
   }
 
   private spawnPortalsForCurrentWave(): void {
-    const red = this.players.get('red');
-    const blue = this.players.get('blue');
+    const red = this.players.get("red");
+    const blue = this.players.get("blue");
     if (!red || !blue) return;
-    const occupied = [red.position, blue.position, ...this.enemies.map((enemy) => enemy.position)];
+    const occupied = [
+      red.position,
+      blue.position,
+      ...this.enemies.map((enemy) => enemy.position),
+    ];
     this.portals = createCoopPortalBatch({
       count: this.getCurrentPortalCount(),
       occupied,
@@ -448,14 +509,20 @@ export class CoopRoom {
   }
 
   private hasBothPlayers(): boolean {
-    return this.players.has('red') && this.players.has('blue');
+    return this.players.has("red") && this.players.has("blue");
   }
 
   private getPlayerBySocket(socketId: string): PlayerState | undefined {
-    return [...this.players.values()].find((player) => player.socketId === socketId);
+    return [...this.players.values()].find(
+      (player) => player.socketId === socketId,
+    );
   }
 
-  private emitToOpponent(socketId: string, event: string, payload: unknown): void {
+  private emitToOpponent(
+    socketId: string,
+    event: string,
+    payload: unknown,
+  ): void {
     for (const player of this.players.values()) {
       if (player.socketId === socketId) continue;
       this.io.to(player.socketId).emit(event, payload);
@@ -470,7 +537,7 @@ export class CoopRoom {
       player.position = { ...positions[color] };
       player.pathSubmitted = false;
       player.plannedPath = [];
-      player.role = 'attacker';
+      player.role = "attacker";
     }
   }
 
@@ -491,10 +558,12 @@ export class CoopRoom {
   }
 
   toClientState(): CoopClientState {
-    const red = this.players.get('red');
-    const blue = this.players.get('blue');
+    const red = this.players.get("red");
+    const blue = this.players.get("blue");
     if (!red || !blue) {
-      throw new Error('Coop room requires both players before serializing state.');
+      throw new Error(
+        "Coop room requires both players before serializing state.",
+      );
     }
 
     return {
@@ -516,19 +585,25 @@ export class CoopRoom {
         start: { ...enemy.start },
         path: enemy.path.map((position) => ({ ...position })),
       })),
-      finalWave: this.finalEnemyPhase || this.getCurrentPortalCount() >= FINAL_PORTAL_COUNT,
+      finalWave:
+        this.finalEnemyPhase ||
+        this.getCurrentPortalCount() >= FINAL_PORTAL_COUNT,
       bossPhase: this.bossPhase,
       bossRoundsRemaining: this.bossRoundsRemaining,
       gameResult: this.gameResult,
     };
   }
 
-  private buildBossMoves(redPosition: Position, bluePosition: Position): CoopEnemyPreview[] {
+  private buildBossMoves(
+    redPosition: Position,
+    bluePosition: Position,
+  ): CoopEnemyPreview[] {
     return this.enemies
       .filter((enemy) => enemy.isBoss)
       .map((enemy) => {
         const target =
-          this.manhattan(enemy.position, redPosition) <= this.manhattan(enemy.position, bluePosition)
+          this.manhattan(enemy.position, redPosition) <=
+          this.manhattan(enemy.position, bluePosition)
             ? redPosition
             : bluePosition;
 
@@ -536,11 +611,11 @@ export class CoopRoom {
           id: enemy.id,
           start: { ...enemy.position },
           path: createAiPath({
-            color: 'red',
-            role: 'attacker',
-          selfPosition: enemy.position,
-          opponentPosition: target,
-          pathPoints: 10,
+            color: "red",
+            role: "attacker",
+            selfPosition: enemy.position,
+            opponentPosition: target,
+            pathPoints: 10,
             obstacles: this.obstacles,
           }).slice(0, 10),
         };
@@ -562,7 +637,12 @@ export class CoopRoom {
         bluePosition,
         count,
       );
-      if (!bossPosition || !obstacles.some((obstacle) => this.toKey(obstacle) === this.toKey(bossPosition))) {
+      if (
+        !bossPosition ||
+        !obstacles.some(
+          (obstacle) => this.toKey(obstacle) === this.toKey(bossPosition),
+        )
+      ) {
         return obstacles;
       }
     }
@@ -570,7 +650,10 @@ export class CoopRoom {
   }
 
   private createBoss(redPosition: Position, bluePosition: Position): CoopEnemy {
-    const blocked = new Set([this.toKey(redPosition), this.toKey(bluePosition)]);
+    const blocked = new Set([
+      this.toKey(redPosition),
+      this.toKey(bluePosition),
+    ]);
     const candidates: Position[] = [];
 
     for (let row = 0; row < 5; row++) {
@@ -581,7 +664,9 @@ export class CoopRoom {
       }
     }
 
-    const position = candidates[Math.floor(Math.random() * candidates.length)] ?? { row: 2, col: 2 };
+    const position = candidates[
+      Math.floor(Math.random() * candidates.length)
+    ] ?? { row: 2, col: 2 };
     return {
       id: `${this.roomId}_boss`,
       position,

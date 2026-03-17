@@ -128,13 +128,23 @@ export function resolveCoopMovement(params: {
     for (const enemy of enemySeqs) {
       const enemyNow = enemy.seq[Math.min(step, enemy.seq.length - 1)];
       const enemyPrev = enemy.seq[Math.max(0, Math.min(step - 1, enemy.seq.length - 1))];
+      const redStartsOverlapped = samePosition(params.redStart, enemy.seq[0]);
+      const blueStartsOverlapped = samePosition(params.blueStart, enemy.seq[0]);
+      const ignoreRedStartTileCollision = redStartsOverlapped && params.redPath.length > 0;
+      const ignoreBlueStartTileCollision = blueStartsOverlapped && params.bluePath.length > 0;
 
       if (positionsTouch(redNow, redPrev, enemyNow, enemyPrev)) {
+        if (step === 0 && ignoreRedStartTileCollision) {
+          continue;
+        }
         redHp = Math.max(0, redHp - 1);
         playerHits.push({ step, color: 'red', newHp: redHp });
       }
 
       if (positionsTouch(blueNow, bluePrev, enemyNow, enemyPrev)) {
+        if (step === 0 && ignoreBlueStartTileCollision) {
+          continue;
+        }
         blueHp = Math.max(0, blueHp - 1);
         playerHits.push({ step, color: 'blue', newHp: blueHp });
       }
