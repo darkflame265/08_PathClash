@@ -10,6 +10,7 @@ import type {
 import { CollisionEffect } from '../Effects/CollisionEffect';
 import { PathLine } from '../Game/PathLine';
 import { PlayerPiece } from '../Game/PlayerPiece';
+import '../Game/GameGrid.css';
 import {
   isBlockedCell,
   isValidMove,
