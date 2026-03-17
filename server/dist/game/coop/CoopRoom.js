@@ -147,6 +147,8 @@ class CoopRoom {
         const player = this.getPlayerBySocket(socketId);
         if (!player || player.pathSubmitted)
             return;
+        if (player.hp <= 0)
+            return;
         if (!(0, CoopEngine_1.isValidCoopPath)(player.position, path, (0, CoopEngine_1.calcCoopPathPoints)(this.planningRound), this.obstacles))
             return;
         player.plannedPath = path;
@@ -161,6 +163,8 @@ class CoopRoom {
             return false;
         const player = this.getPlayerBySocket(socketId);
         if (!player || player.pathSubmitted)
+            return false;
+        if (player.hp <= 0)
             return false;
         const maxPoints = (0, CoopEngine_1.calcCoopPathPoints)(this.planningRound);
         player.plannedPath = (0, CoopEngine_1.isValidCoopPath)(player.position, path, maxPoints, this.obstacles)
@@ -233,6 +237,11 @@ class CoopRoom {
             for (const player of this.players.values()) {
                 if (player.pathSubmitted)
                     continue;
+                if (player.hp <= 0) {
+                    player.plannedPath = [];
+                    player.pathSubmitted = true;
+                    continue;
+                }
                 player.plannedPath = (0, CoopEngine_1.isValidCoopPath)(player.position, player.plannedPath, maxPoints, this.obstacles)
                     ? player.plannedPath
                     : [];
@@ -250,10 +259,10 @@ class CoopRoom {
             return;
         const redStart = { ...red.position };
         const blueStart = { ...blue.position };
-        const redPath = [...red.plannedPath];
-        const bluePath = [...blue.plannedPath];
+        const redPath = red.hp > 0 ? [...red.plannedPath] : [];
+        const bluePath = blue.hp > 0 ? [...blue.plannedPath] : [];
         const enemyMoves = this.bossPhase
-            ? this.buildBossMoves(redStart, blueStart)
+            ? this.buildBossMoves(redStart, blueStart, red.hp > 0, blue.hp > 0)
             : this.enemyPreviews.map((enemy) => ({
                 ...enemy,
                 start: { ...enemy.start },
@@ -331,6 +340,8 @@ class CoopRoom {
                     enemies: nextEnemies,
                     redPosition: redEnd,
                     bluePosition: blueEnd,
+                    redAlive: resolution.redHp > 0,
+                    blueAlive: resolution.blueHp > 0,
                     obstacles: [],
                 });
                 nextObstacles = [];
@@ -342,6 +353,8 @@ class CoopRoom {
                 enemies: nextEnemies,
                 redPosition: redEnd,
                 bluePosition: blueEnd,
+                redAlive: resolution.redHp > 0,
+                blueAlive: resolution.blueHp > 0,
                 obstacles: [],
             });
             nextPortals = (0, CoopEngine_1.createCoopPortalBatch)({
@@ -494,7 +507,7 @@ class CoopRoom {
             gameResult: this.gameResult,
         };
     }
-    buildBossMoves(redPosition, bluePosition) {
+    buildBossMoves(redPosition, bluePosition, redAlive, blueAlive) {
         return this.enemies
             .filter((enemy) => enemy.isBoss)
             .map((enemy) => {
@@ -505,6 +518,8 @@ class CoopRoom {
                     selfPosition: enemy.position,
                     redPosition,
                     bluePosition,
+                    redAlive,
+                    blueAlive,
                     pathPoints: 10,
                     obstacles: this.obstacles,
                 }),

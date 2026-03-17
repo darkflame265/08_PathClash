@@ -97,6 +97,8 @@ export function CoopGrid({
   });
 
   const isPlanning = state.phase === 'planning';
+  const myPlayerAlive = state.players[myColor].hp > 0;
+  const canPlan = isPlanning && myPlayerAlive;
   const myPos = state.players[myColor].position;
   const obstacles = state.obstacles;
 
@@ -141,7 +143,7 @@ export function CoopGrid({
 
   const addToPath = useCallback(
     (cell: Position) => {
-      if (!isPlanning) return;
+      if (!canPlan) return;
       const current = myPath;
       if (current.length >= state.pathPoints) return;
       if (isBlockedCell(cell, obstacles)) return;
@@ -150,7 +152,7 @@ export function CoopGrid({
         setMyPath([...current, cell]);
       }
     },
-    [isPlanning, myPath, myPos, setMyPath, state.pathPoints],
+    [canPlan, myPath, myPos, setMyPath, state.pathPoints],
   );
 
   const removeFromPath = useCallback(() => {
@@ -161,7 +163,7 @@ export function CoopGrid({
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!isPlanning || !gridRef.current) return;
+      if (!canPlan || !gridRef.current) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
       if (!cell) return;
@@ -178,12 +180,12 @@ export function CoopGrid({
         e.currentTarget.setPointerCapture(e.pointerId);
       }
     },
-    [isPlanning, myPath, myPos, responsiveCellSize],
+    [canPlan, myPath, myPos, responsiveCellSize],
   );
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!dragState.current.active || !isPlanning) return;
+      if (!dragState.current.active || !canPlan) return;
       e.preventDefault();
       const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
       if (!cell) return;
@@ -210,7 +212,7 @@ export function CoopGrid({
         addToPath(cell);
       }
     },
-    [addToPath, isPlanning, myPath, myPos, removeFromPath, responsiveCellSize, setMyPath, state.pathPoints],
+    [addToPath, canPlan, myPath, myPos, removeFromPath, responsiveCellSize, setMyPath, state.pathPoints],
   );
 
   const handlePointerEnd = useCallback((e?: React.PointerEvent<HTMLDivElement>) => {
@@ -222,7 +224,7 @@ export function CoopGrid({
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (!isPlanning) return;
+      if (!canPlan) return;
       if ((e.target as HTMLElement)?.tagName === 'INPUT') return;
       const dirs: Record<string, Position> = {
         ArrowUp: { row: -1, col: 0 },
@@ -251,11 +253,11 @@ export function CoopGrid({
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [isPlanning, myPath, myPos, obstacles, removeFromPath, setMyPath, state.pathPoints]);
+  }, [canPlan, myPath, myPos, obstacles, removeFromPath, setMyPath, state.pathPoints]);
 
   useEffect(() => {
     pendingPathRef.current = myPath;
-    if (!isPlanning || state.players[myColor].pathSubmitted) return;
+    if (!canPlan || state.players[myColor].pathSubmitted) return;
     const elapsed = Date.now() - lastPathUpdateAtRef.current;
     if (elapsed >= PATH_UPDATE_THROTTLE_MS) {
       emitPathUpdate(myPath);
@@ -268,7 +270,7 @@ export function CoopGrid({
       pendingPathUpdateRef.current = null;
       emitPathUpdate(pendingPathRef.current);
     }, PATH_UPDATE_THROTTLE_MS - elapsed);
-  }, [emitPathUpdate, isPlanning, myColor, myPath, state.players]);
+  }, [canPlan, emitPathUpdate, myColor, myPath, state.players]);
 
   useEffect(() => {
     return () => {
@@ -279,13 +281,13 @@ export function CoopGrid({
   }, []);
 
   useEffect(() => {
-    if (!isPlanning || !roundInfo || state.players[myColor].pathSubmitted) return;
+    if (!canPlan || !roundInfo || state.players[myColor].pathSubmitted) return;
     const submitAtMs = roundInfo.serverTime + roundInfo.timeLimit * 1000;
     const preSubmitDelayMs = Math.max(0, submitAtMs - Date.now() - PRE_SUBMIT_LEAD_MS);
     const finalSubmitDelayMs = Math.max(0, submitAtMs - Date.now());
 
     const submitCurrentPath = () => {
-      if (state.phase !== 'planning' || state.players[myColor].pathSubmitted) return;
+      if (state.phase !== 'planning' || !myPlayerAlive || state.players[myColor].pathSubmitted) return;
       flushPendingPathUpdate();
       getSocket().emit('coop_submit_path', { path: myPath }, ({ ok }: { ok: boolean }) => {
         if (!ok) return;
@@ -300,7 +302,7 @@ export function CoopGrid({
       window.clearTimeout(preSubmitTimeoutId);
       window.clearTimeout(finalSubmitTimeoutId);
     };
-  }, [flushPendingPathUpdate, isPlanning, myColor, myPath, roundInfo, setMySubmitted, state]);
+  }, [canPlan, flushPendingPathUpdate, myColor, myPath, myPlayerAlive, roundInfo, setMySubmitted, state]);
 
   const cells = Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, i) => ({
     row: Math.floor(i / GRID_SIZE),

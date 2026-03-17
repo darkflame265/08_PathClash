@@ -65,6 +65,8 @@ export function createEnemyPreviews(params: {
   enemies: CoopEnemy[];
   redPosition: Position;
   bluePosition: Position;
+  redAlive?: boolean;
+  blueAlive?: boolean;
   obstacles?: Position[];
 }): CoopEnemyPreview[] {
   return params.enemies.map((enemy) => {
@@ -72,6 +74,8 @@ export function createEnemyPreviews(params: {
       enemy.position,
       params.redPosition,
       params.bluePosition,
+      params.redAlive ?? true,
+      params.blueAlive ?? true,
       params.obstacles ?? [],
     );
 
@@ -94,6 +98,8 @@ export function createCoopEnemyAttackPath(params: {
   selfPosition: Position;
   redPosition: Position;
   bluePosition: Position;
+  redAlive?: boolean;
+  blueAlive?: boolean;
   pathPoints: number;
   obstacles?: Position[];
 }): Position[] {
@@ -102,6 +108,8 @@ export function createCoopEnemyAttackPath(params: {
     params.selfPosition,
     params.redPosition,
     params.bluePosition,
+    params.redAlive ?? true,
+    params.blueAlive ?? true,
     obstacles,
   );
 
@@ -159,7 +167,7 @@ export function resolveCoopMovement(params: {
       const ignoreRedStartTileCollision = redStartsOverlapped && params.redPath.length > 0;
       const ignoreBlueStartTileCollision = blueStartsOverlapped && params.bluePath.length > 0;
 
-      if (positionsTouch(redNow, redPrev, enemyNow, enemyPrev)) {
+      if (redHp > 0 && positionsTouch(redNow, redPrev, enemyNow, enemyPrev)) {
         if (step === 0 && ignoreRedStartTileCollision) {
           continue;
         }
@@ -167,7 +175,7 @@ export function resolveCoopMovement(params: {
         playerHits.push({ step, color: 'red', newHp: redHp });
       }
 
-      if (positionsTouch(blueNow, bluePrev, enemyNow, enemyPrev)) {
+      if (blueHp > 0 && positionsTouch(blueNow, bluePrev, enemyNow, enemyPrev)) {
         if (step === 0 && ignoreBlueStartTileCollision) {
           continue;
         }
@@ -179,8 +187,8 @@ export function resolveCoopMovement(params: {
     for (const portal of portals) {
       if (destroyedPortalIds.has(portal.id)) continue;
       let damage = 0;
-      if (samePosition(redNow, portal.position)) damage += 1;
-      if (samePosition(blueNow, portal.position)) damage += 1;
+      if (redHp > 0 && samePosition(redNow, portal.position)) damage += 1;
+      if (blueHp > 0 && samePosition(blueNow, portal.position)) damage += 1;
       if (damage === 0) continue;
 
       portal.hp = Math.max(0, portal.hp - damage);
@@ -261,8 +269,13 @@ function selectReachableTarget(
   selfPosition: Position,
   redPosition: Position,
   bluePosition: Position,
+  redAlive: boolean,
+  blueAlive: boolean,
   obstacles: Position[],
 ): Position {
+  if (redAlive && !blueAlive) return redPosition;
+  if (blueAlive && !redAlive) return bluePosition;
+
   const redDistance = manhattan(selfPosition, redPosition);
   const blueDistance = manhattan(selfPosition, bluePosition);
   const primary = redDistance <= blueDistance ? redPosition : bluePosition;

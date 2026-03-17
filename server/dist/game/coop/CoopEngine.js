@@ -51,7 +51,7 @@ function createCoopPortalBatch(params) {
 }
 function createEnemyPreviews(params) {
     return params.enemies.map((enemy) => {
-        const target = selectReachableTarget(enemy.position, params.redPosition, params.bluePosition, params.obstacles ?? []);
+        const target = selectReachableTarget(enemy.position, params.redPosition, params.bluePosition, params.redAlive ?? true, params.blueAlive ?? true, params.obstacles ?? []);
         return {
             id: enemy.id,
             start: enemy.position,
@@ -68,7 +68,7 @@ function createEnemyPreviews(params) {
 }
 function createCoopEnemyAttackPath(params) {
     const obstacles = params.obstacles ?? [];
-    const target = selectReachableTarget(params.selfPosition, params.redPosition, params.bluePosition, obstacles);
+    const target = selectReachableTarget(params.selfPosition, params.redPosition, params.bluePosition, params.redAlive ?? true, params.blueAlive ?? true, obstacles);
     return (0, AiPlanner_1.createAiPath)({
         color: 'red',
         role: 'attacker',
@@ -104,14 +104,14 @@ function resolveCoopMovement(params) {
             const blueStartsOverlapped = samePosition(params.blueStart, enemy.seq[0]);
             const ignoreRedStartTileCollision = redStartsOverlapped && params.redPath.length > 0;
             const ignoreBlueStartTileCollision = blueStartsOverlapped && params.bluePath.length > 0;
-            if (positionsTouch(redNow, redPrev, enemyNow, enemyPrev)) {
+            if (redHp > 0 && positionsTouch(redNow, redPrev, enemyNow, enemyPrev)) {
                 if (step === 0 && ignoreRedStartTileCollision) {
                     continue;
                 }
                 redHp = Math.max(0, redHp - 1);
                 playerHits.push({ step, color: 'red', newHp: redHp });
             }
-            if (positionsTouch(blueNow, bluePrev, enemyNow, enemyPrev)) {
+            if (blueHp > 0 && positionsTouch(blueNow, bluePrev, enemyNow, enemyPrev)) {
                 if (step === 0 && ignoreBlueStartTileCollision) {
                     continue;
                 }
@@ -123,9 +123,9 @@ function resolveCoopMovement(params) {
             if (destroyedPortalIds.has(portal.id))
                 continue;
             let damage = 0;
-            if (samePosition(redNow, portal.position))
+            if (redHp > 0 && samePosition(redNow, portal.position))
                 damage += 1;
-            if (samePosition(blueNow, portal.position))
+            if (blueHp > 0 && samePosition(blueNow, portal.position))
                 damage += 1;
             if (damage === 0)
                 continue;
@@ -199,7 +199,11 @@ function isWithinGrid(position) {
 function manhattan(a, b) {
     return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
 }
-function selectReachableTarget(selfPosition, redPosition, bluePosition, obstacles) {
+function selectReachableTarget(selfPosition, redPosition, bluePosition, redAlive, blueAlive, obstacles) {
+    if (redAlive && !blueAlive)
+        return redPosition;
+    if (blueAlive && !redAlive)
+        return bluePosition;
     const redDistance = manhattan(selfPosition, redPosition);
     const blueDistance = manhattan(selfPosition, bluePosition);
     const primary = redDistance <= blueDistance ? redPosition : bluePosition;
