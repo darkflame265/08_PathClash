@@ -19,6 +19,7 @@ interface Props {
   isHit: boolean;
   isExploding: boolean;
   isMe: boolean;
+  outlineColor?: 'green' | PlayerColor | null;
   skin?:
     | "classic"
     | "ember"
@@ -49,6 +50,7 @@ export function PlayerPiece({
   isHit,
   isExploding,
   isMe,
+  outlineColor = null,
   skin = "classic",
 }: Props) {
   const x = position.col * cellSize + cellSize / 2;
@@ -64,6 +66,7 @@ export function PlayerPiece({
     `piece-${color}`,
     `piece-skin-${skin}`,
     isMe ? 'piece-me' : '',
+    outlineColor ? `piece-outline-${outlineColor}` : '',
     isHit ? 'hit' : '',
     isExploding ? 'exploding' : '',
   ].filter(Boolean).join(' ');

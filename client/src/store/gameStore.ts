@@ -4,6 +4,10 @@ import type {
   CollisionEvent, ChatMessage, PathsRevealPayload,
   RoundStartPayload, PieceSkin,
 } from '../types/game.types';
+import type {
+  TwoVsTwoResolutionPayload,
+  TwoVsTwoSlot,
+} from '../types/twovtwo.types';
 import { type Lang } from '../i18n/translations';
 
 export interface AnimationState {
@@ -13,6 +17,13 @@ export interface AnimationState {
   redStart: Position;
   blueStart: Position;
   collisions: CollisionEvent[];
+  currentStep: number;
+}
+
+export interface TwoVsTwoAnimationState {
+  isAnimating: boolean;
+  paths: Record<TwoVsTwoSlot, Position[]>;
+  starts: Record<TwoVsTwoSlot, Position>;
   currentStep: number;
 }
 
@@ -44,10 +55,12 @@ interface GameStore {
 
   // Animation
   animation: AnimationState | null;
+  twoVsTwoAnimation: TwoVsTwoAnimationState | null;
 
   // Visual state (separate from gameState to allow animation-driven updates)
   redDisplayPos: Position;
   blueDisplayPos: Position;
+  twoVsTwoDisplayPositions: Record<TwoVsTwoSlot, Position> | null;
   hitEffect: { red: boolean; blue: boolean };
   heartShake: { red: number; blue: number }; // hp index that shakes
   collisionEffects: { id: number; position: Position }[];
@@ -101,6 +114,10 @@ interface GameStore {
   startAnimation: (payload: PathsRevealPayload) => void;
   advanceStep: () => void;
   finishAnimation: () => void;
+  startTwoVsTwoAnimation: (payload: TwoVsTwoResolutionPayload) => void;
+  advanceTwoVsTwoStep: () => void;
+  finishTwoVsTwoAnimation: () => void;
+  setTwoVsTwoDisplayPositions: (positions: Record<TwoVsTwoSlot, Position> | null) => void;
   triggerHit: (color: PlayerColor) => void;
   triggerHeartShake: (color: PlayerColor, hpIndex: number) => void;
   triggerCollisionEffect: (pos: Position) => void;
@@ -221,8 +238,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   opponentSubmitted: false,
   roundInfo: null,
   animation: null,
+  twoVsTwoAnimation: null,
   redDisplayPos: INITIAL_RED,
   blueDisplayPos: INITIAL_BLUE,
+  twoVsTwoDisplayPositions: null,
   hitEffect: { red: false, blue: false },
   heartShake: { red: -1, blue: -1 },
   collisionEffects: [],
@@ -358,6 +377,38 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   finishAnimation: () => set({ animation: null }),
 
+  startTwoVsTwoAnimation: (payload) => set({
+    twoVsTwoAnimation: {
+      isAnimating: true,
+      paths: payload.paths,
+      starts: payload.starts,
+      currentStep: 0,
+    },
+    twoVsTwoDisplayPositions: payload.starts,
+  }),
+
+  advanceTwoVsTwoStep: () => {
+    const anim = get().twoVsTwoAnimation;
+    if (!anim) return;
+    const nextStep = anim.currentStep + 1;
+    const nextPositions = Object.fromEntries(
+      (Object.keys(anim.paths) as TwoVsTwoSlot[]).map((slot) => {
+        const sequence = [anim.starts[slot], ...anim.paths[slot]];
+        return [slot, sequence[Math.min(nextStep, sequence.length - 1)]];
+      }),
+    ) as Record<TwoVsTwoSlot, Position>;
+    set({
+      twoVsTwoAnimation: { ...anim, currentStep: nextStep },
+      twoVsTwoDisplayPositions: nextPositions,
+    });
+  },
+
+  finishTwoVsTwoAnimation: () => set({
+    twoVsTwoAnimation: null,
+  }),
+
+  setTwoVsTwoDisplayPositions: (positions) => set({ twoVsTwoDisplayPositions: positions }),
+
   triggerHit: (color) => {
     set({ hitEffect: { ...get().hitEffect, [color]: true } });
     setTimeout(() => set({ hitEffect: { ...get().hitEffect, [color]: false } }), 700);
@@ -474,8 +525,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     opponentSubmitted: false,
     roundInfo: null,
     animation: null,
+    twoVsTwoAnimation: null,
     redDisplayPos: INITIAL_RED,
     blueDisplayPos: INITIAL_BLUE,
+    twoVsTwoDisplayPositions: null,
     hitEffect: { red: false, blue: false },
     heartShake: { red: -1, blue: -1 },
     collisionEffects: [],

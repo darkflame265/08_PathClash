@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSocket } from '../../socket/socketClient';
 import { getEstimatedServerNow } from '../../socket/timeSync';
+import { useGameStore } from '../../store/gameStore';
 import type { Position } from '../../types/game.types';
 import type {
   TwoVsTwoClientState,
@@ -35,7 +36,6 @@ interface Props {
   enemyPaths: Record<TwoVsTwoSlot, Position[]>;
   setMyPath: (path: Position[]) => void;
   setMySubmitted: () => void;
-  displayPositions: DisplayPositions;
   hitSlots: TwoVsTwoSlot[];
   explodingSlots: TwoVsTwoSlot[];
   collisionEffects: { id: number; position: Position }[];
@@ -50,7 +50,6 @@ export function TwoVsTwoGrid({
   enemyPaths,
   setMyPath,
   setMySubmitted,
-  displayPositions,
   hitSlots,
   explodingSlots,
   collisionEffects,
@@ -71,6 +70,13 @@ export function TwoVsTwoGrid({
   const me = state.players[currentSlot];
   const myTeam = me.team;
   const obstacles = state.obstacles;
+  const twoVsTwoDisplayPositions = useGameStore((store) => store.twoVsTwoDisplayPositions);
+  const twoVsTwoAnimation = useGameStore((store) => store.twoVsTwoAnimation);
+  const displayPositions: DisplayPositions =
+    twoVsTwoDisplayPositions ??
+    (Object.fromEntries(
+      (Object.keys(state.players) as TwoVsTwoSlot[]).map((slot) => [slot, state.players[slot].position]),
+    ) as DisplayPositions);
 
   useEffect(() => {
     const element = shellRef.current;
@@ -300,7 +306,7 @@ export function TwoVsTwoGrid({
           </div>
         ))}
 
-        {Object.entries(enemyPaths).map(([slot, path]) => {
+        {Object.entries(twoVsTwoAnimation?.paths ?? enemyPaths).map(([slot, path]) => {
           if (!path || path.length === 0) return null;
           const team = state.players[slot as TwoVsTwoSlot].team;
           return (
@@ -345,6 +351,11 @@ export function TwoVsTwoGrid({
             isHit={hitSlots.includes(player.slot)}
             isExploding={explodingSlots.includes(player.slot)}
             isMe={player.slot === currentSlot}
+            outlineColor={
+              player.slot === currentSlot
+                ? 'green'
+                : player.team
+            }
             skin={player.pieceSkin}
           />
         ))}

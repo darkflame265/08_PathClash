@@ -27,6 +27,27 @@
     0 0 var(--piece-glow, 18px) rgba(34, 197, 94, 0.45);
 }
 
+.player-piece.piece-outline-green .piece-inner {
+  border: var(--me-border-width, 3px) solid #22c55e;
+  box-shadow:
+    0 0 0 var(--me-glow-width, 3px) rgba(34, 197, 94, 0.24),
+    0 0 var(--piece-glow, 18px) rgba(34, 197, 94, 0.45);
+}
+
+.player-piece.piece-outline-red .piece-inner {
+  border: var(--me-border-width, 3px) solid #ef4444;
+  box-shadow:
+    0 0 0 var(--me-glow-width, 3px) rgba(239, 68, 68, 0.2),
+    0 0 var(--piece-glow, 18px) rgba(239, 68, 68, 0.38);
+}
+
+.player-piece.piece-outline-blue .piece-inner {
+  border: var(--me-border-width, 3px) solid #3b82f6;
+  box-shadow:
+    0 0 0 var(--me-glow-width, 3px) rgba(59, 130, 246, 0.2),
+    0 0 var(--piece-glow, 18px) rgba(59, 130, 246, 0.38);
+}
+
 .piece-red .piece-inner {
   background: radial-gradient(circle at 35% 30%, #ff8080, #dc2626);
   box-shadow: 0 0 var(--piece-glow, 12px) rgba(239, 68, 68, 0.5);

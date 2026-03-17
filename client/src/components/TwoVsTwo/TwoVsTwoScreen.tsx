@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSocket } from '../../socket/socketClient';
 import { syncServerTime } from '../../socket/timeSync';
 import { useLang } from '../../hooks/useLang';
@@ -38,7 +38,15 @@ function buildDisplayPositions(state: TwoVsTwoClientState) {
 
 export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
   const { lang } = useLang();
-  const { twoVsTwoSlot, setRematchRequestSent, rematchRequestSent } = useGameStore();
+  const {
+    twoVsTwoSlot,
+    setRematchRequestSent,
+    rematchRequestSent,
+    setTwoVsTwoDisplayPositions,
+    startTwoVsTwoAnimation,
+    advanceTwoVsTwoStep,
+    finishTwoVsTwoAnimation,
+  } = useGameStore();
   const [state, setState] = useState<TwoVsTwoClientState | null>(null);
   const [roundInfo, setRoundInfo] = useState<TwoVsTwoRoundStartPayload | null>(null);
   const [myPath, setMyPath] = useState<Position[]>([]);
@@ -49,7 +57,6 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     blue_top: [],
     blue_bottom: [],
   });
-  const [displayPositions, setDisplayPositions] = useState<Record<TwoVsTwoSlot, Position> | null>(null);
   const [hitSlots, setHitSlots] = useState<TwoVsTwoSlot[]>([]);
   const [explodingSlots, setExplodingSlots] = useState<TwoVsTwoSlot[]>([]);
   const [collisionEffects, setCollisionEffects] = useState<{ id: number; position: Position }[]>([]);
@@ -78,7 +85,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
 
   const applyState = useCallback((nextState: TwoVsTwoClientState) => {
     setState(nextState);
-    setDisplayPositions(buildDisplayPositions(nextState));
+    setTwoVsTwoDisplayPositions(buildDisplayPositions(nextState));
     setMyPath([]);
     setAllyPath([]);
     setEnemyPaths({
@@ -102,20 +109,20 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       setRematchRequested(false);
       setRematchRequestSent(false);
     }
-  }, [currentSlot, setRematchRequestSent]);
+  }, [currentSlot, setRematchRequestSent, setTwoVsTwoDisplayPositions]);
 
   const animateResolution = useCallback((payload: TwoVsTwoResolutionPayload) => {
     clearAnimationTimeout();
     clearEffectTimeouts();
+    startTwoVsTwoAnimation(payload);
 
-    const sequences = Object.fromEntries(
-      (Object.keys(payload.paths) as TwoVsTwoSlot[]).map((slot) => [
-        slot,
-        [payload.starts[slot], ...payload.paths[slot]],
-      ]),
-    ) as Record<TwoVsTwoSlot, Position[]>;
+    const maxSteps = Math.max(
+      ...(Object.keys(payload.paths) as TwoVsTwoSlot[]).map(
+        (slot) => [payload.starts[slot], ...payload.paths[slot]].length,
+      ),
+      1,
+    );
 
-    const maxSteps = Math.max(...(Object.keys(sequences) as TwoVsTwoSlot[]).map((slot) => sequences[slot].length), 1);
     const hitsByStep = new Map<number, TwoVsTwoPlayerHitEvent[]>();
     for (const hit of payload.playerHits) {
       const hits = hitsByStep.get(hit.step) ?? [];
@@ -127,17 +134,12 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     let step = 0;
     const tick = () => {
       if (step >= maxSteps) {
+        finishTwoVsTwoAnimation();
         setEnemyPaths({ red_top: [], red_bottom: [], blue_top: [], blue_bottom: [] });
         return;
       }
 
-      setDisplayPositions((prev) => {
-        const next = { ...(prev ?? payload.starts) };
-        for (const slot of Object.keys(sequences) as TwoVsTwoSlot[]) {
-          next[slot] = sequences[slot][Math.min(step, sequences[slot].length - 1)];
-        }
-        return next;
-      });
+      advanceTwoVsTwoStep();
 
       const stepHits = hitsByStep.get(step) ?? [];
       if (stepHits.length > 0) {
@@ -149,13 +151,17 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
           }
           return { ...prev, players };
         });
+
         setHitSlots(stepHits.map((hit) => hit.slot));
         setCollisionEffects(
           stepHits.map((hit) => ({
             id: Date.now() + Math.random(),
-            position: sequences[hit.slot][Math.min(step, sequences[hit.slot].length - 1)],
+            position: ([payload.starts[hit.slot], ...payload.paths[hit.slot]])[
+              Math.min(step + 1, payload.paths[hit.slot].length)
+            ],
           })),
         );
+
         const resetHitsId = window.setTimeout(() => {
           setHitSlots([]);
           setCollisionEffects([]);
@@ -185,7 +191,13 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     };
 
     timeoutRef.current = window.setTimeout(tick, STEP_DURATION_MS);
-  }, [clearAnimationTimeout, clearEffectTimeouts]);
+  }, [
+    advanceTwoVsTwoStep,
+    clearAnimationTimeout,
+    clearEffectTimeouts,
+    finishTwoVsTwoAnimation,
+    startTwoVsTwoAnimation,
+  ]);
 
   useEffect(() => {
     const socket = getSocket();
@@ -264,6 +276,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       );
       if (message) setGameOverMessage(message);
       clearAnimationTimeout();
+      finishTwoVsTwoAnimation();
       setEnemyPaths({ red_top: [], red_bottom: [], blue_top: [], blue_bottom: [] });
     };
 
@@ -306,6 +319,8 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     return () => {
       clearAnimationTimeout();
       clearEffectTimeouts();
+      finishTwoVsTwoAnimation();
+      setTwoVsTwoDisplayPositions(null);
       socket.off('twovtwo_game_start', onGameStart);
       socket.off('twovtwo_round_start', onRoundStart);
       socket.off('twovtwo_path_updated', onPathUpdated);
@@ -316,9 +331,18 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       socket.off('player_skin_updated', onPlayerSkinUpdated);
       socket.off('rematch_requested', onRematchRequested);
     };
-  }, [animateResolution, applyState, clearAnimationTimeout, clearEffectTimeouts, currentSlot, state]);
+  }, [
+    animateResolution,
+    applyState,
+    clearAnimationTimeout,
+    clearEffectTimeouts,
+    currentSlot,
+    finishTwoVsTwoAnimation,
+    setTwoVsTwoDisplayPositions,
+    state,
+  ]);
 
-  if (!state || !displayPositions) {
+  if (!state) {
     return <div className="gs-loading">{lang === 'en' ? 'Loading 2v2...' : '2v2 로딩 중...'}</div>;
   }
 
@@ -328,6 +352,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     a.slot === currentSlot ? -1 : b.slot === currentSlot ? 1 : a.slot.localeCompare(b.slot),
   );
   const [enemyLeft, enemyRight] = getTeamMates(state, enemyTeam);
+
   const resultCopy = state.gameResult
     ? state.gameResult === 'draw'
       ? lang === 'en'
@@ -346,18 +371,18 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     state.attackerTeam === myTeam
       ? lang === 'en'
         ? 'Attack'
-        : '공격자'
+        : '공격'
       : lang === 'en'
         ? 'Escape'
-        : '도망자';
+        : '도망';
   const enemyRoleLabel =
     state.attackerTeam === enemyTeam
       ? lang === 'en'
         ? 'Attack'
-        : '공격자'
+        : '공격'
       : lang === 'en'
         ? 'Escape'
-        : '도망자';
+        : '도망';
 
   const handleRematch = () => {
     getSocket().emit('request_rematch');
@@ -432,7 +457,6 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
             enemyPaths={enemyPaths}
             setMyPath={setMyPath}
             setMySubmitted={() => setMySubmitted(true)}
-            displayPositions={displayPositions}
             hitSlots={hitSlots}
             explodingSlots={explodingSlots}
             collisionEffects={collisionEffects}
@@ -448,7 +472,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
         <div className="twovtwo-role-box">
           <div>{roleLabel}</div>
           <div className="twovtwo-role-sub">
-            {lang === 'en' ? `Turn ${state.turn}` : `${state.turn} 턴`}
+            {lang === 'en' ? `Turn ${state.turn}` : `${state.turn}턴`}
           </div>
         </div>
         <div className="twovtwo-player-side twovtwo-player-side-right">
@@ -469,7 +493,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
         </div>
         <div className="coop-path-bar__value">
           {myPath.length} / {state.pathPoints}
-          {allySubmitted && state.phase === 'planning' ? ` · ${lang === 'en' ? 'ally ready' : '아군 준비'}` : ''}
+          {allySubmitted && state.phase === 'planning' ? ` · ${lang === 'en' ? 'ally ready' : '팀원 준비'}` : ''}
           {mySubmitted && state.phase === 'planning' ? ` · ${lang === 'en' ? 'ready' : '준비 완료'}` : ''}
         </div>
       </div>
@@ -482,7 +506,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
 function renderHearts(hp: number) {
   return Array.from({ length: 3 }, (_, index) => (
     <span key={index} className={`heart ${index < hp ? 'filled' : 'empty'}`}>
-      {index < hp ? '❤' : '♡'}
+      {index < hp ? '♥' : '♡'}
     </span>
   ));
 }
