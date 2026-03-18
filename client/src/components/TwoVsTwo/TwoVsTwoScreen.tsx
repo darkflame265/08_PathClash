@@ -252,6 +252,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       setRematchRequested(false);
       setRematchRequestSent(false);
       setGameOverMessage(null);
+      socket.emit('twovtwo_client_ready');
     };
 
     const onMatchmakingWaiting = () => {
