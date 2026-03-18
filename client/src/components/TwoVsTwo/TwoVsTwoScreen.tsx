@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { getSocket } from '../../socket/socketClient';
 import { syncServerTime } from '../../socket/timeSync';
 import { useLang } from '../../hooks/useLang';
@@ -25,6 +25,38 @@ interface Props {
 }
 
 const STEP_DURATION_MS = 200;
+const DEFAULT_CELL = 96;
+const MIN_CELL = 52;
+const MAX_CELL = 160;
+
+function computeInitialCellSize(): number {
+  const availW = Math.max(260, window.innerWidth - 24);
+  return Math.max(MIN_CELL, Math.min(MAX_CELL, availW / 5));
+}
+
+function useAdaptiveCellSize(
+  gridAreaRef: React.RefObject<HTMLDivElement | null>,
+) {
+  const [cellSize, setCellSize] = useState(computeInitialCellSize);
+
+  useEffect(() => {
+    const el = gridAreaRef.current;
+    if (!el) return;
+
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      const squareSide = Math.min(width, height > 60 ? height : width);
+      const next = Math.max(MIN_CELL, Math.min(MAX_CELL, squareSide / 5));
+      setCellSize(next);
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [gridAreaRef]);
+
+  return cellSize;
+}
+
 
 function getTeamMates(state: TwoVsTwoClientState, team: 'red' | 'blue') {
   return Object.values(state.players).filter((player) => player.team === team);
@@ -71,8 +103,11 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
   const effectTimeoutsRef = useRef<number[]>([]);
   const stateRef = useRef<TwoVsTwoClientState | null>(null);
   const currentSlotRef = useRef<TwoVsTwoSlot>(twoVsTwoSlot ?? 'red_top');
+  const gridAreaRef = useRef<HTMLDivElement>(null);
 
   const currentSlot = twoVsTwoSlot ?? 'red_top';
+  const cellSize = useAdaptiveCellSize(gridAreaRef);
+  const scale = cellSize / DEFAULT_CELL;
 
   useEffect(() => {
     stateRef.current = state;
@@ -447,7 +482,10 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
   };
 
   return (
-    <div className="game-screen twovtwo-screen">
+    <div
+      className="game-screen twovtwo-screen"
+      style={{ '--gs-scale': scale } as CSSProperties}
+    >
       <div className="gs-utility-bar">
         <div className="gs-timer-slot">
           {state.phase === 'planning' && roundInfo && (
@@ -512,7 +550,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
           </div>
         )}
 
-        <div className="gs-grid-area">
+        <div className="gs-grid-area" ref={gridAreaRef}>
           <TwoVsTwoGrid
             state={state}
             roundInfo={roundInfo}
