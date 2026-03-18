@@ -16,6 +16,7 @@ type TeamQueueEntry = {
 export class TwoVsTwoRoomStore {
   private rooms: Map<string, TwoVsTwoRoom> = new Map();
   private socketToRoom: Map<string, string> = new Map();
+  private static readonly WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
   private queue: QueueEntry[] = [];
   private teamQueue: TeamQueueEntry[] = [];
   private static instance: TwoVsTwoRoomStore;
@@ -82,6 +83,12 @@ export class TwoVsTwoRoomStore {
     return [first, second];
   }
 
+  sweep(activeSocketIds: Set<string>, now = Date.now()): void {
+    this.sweepQueue(activeSocketIds);
+    this.sweepSocketMappings(activeSocketIds);
+    this.sweepRooms(activeSocketIds, now);
+  }
+
   removeSocket(socketId: string): TwoVsTwoRoom | undefined {
     const roomId = this.socketToRoom.get(socketId);
     this.socketToRoom.delete(socketId);
@@ -97,5 +104,44 @@ export class TwoVsTwoRoomStore {
 
   generateRoomId(): string {
     return `twovtwo_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  }
+
+  private sweepQueue(activeSocketIds: Set<string>): void {
+    this.queue = this.queue.filter((entry) => activeSocketIds.has(entry.socketId));
+    this.teamQueue = this.teamQueue
+      .map((team) => ({
+        members: team.members.filter((entry) => activeSocketIds.has(entry.socketId)),
+      }))
+      .filter((team) => team.members.length === 2);
+  }
+
+  private sweepSocketMappings(activeSocketIds: Set<string>): void {
+    for (const [socketId, roomId] of this.socketToRoom.entries()) {
+      if (!activeSocketIds.has(socketId) || !this.rooms.has(roomId)) {
+        this.socketToRoom.delete(socketId);
+      }
+    }
+  }
+
+  private sweepRooms(activeSocketIds: Set<string>, now: number): void {
+    for (const [roomId, room] of this.rooms.entries()) {
+      const roomSocketIds = room.getSocketIds();
+      const hasLiveSocket = roomSocketIds.some((socketId) => activeSocketIds.has(socketId));
+      const isEmptyRoom = room.playerCount === 0;
+      const isStaleWaitingRoom =
+        room.currentPhase === 'waiting' &&
+        now - room.lastActivityTimestamp >= TwoVsTwoRoomStore.WAITING_ROOM_TIMEOUT_MS;
+
+      if (!isEmptyRoom && !(isStaleWaitingRoom && !hasLiveSocket)) {
+        continue;
+      }
+
+      this.rooms.delete(roomId);
+      for (const socketId of roomSocketIds) {
+        if (this.socketToRoom.get(socketId) === roomId) {
+          this.socketToRoom.delete(socketId);
+        }
+      }
+    }
   }
 }

@@ -26,7 +26,10 @@ function initSocketServer(io) {
         }
     };
     setInterval(() => {
-        store.sweep(new Set(io.sockets.sockets.keys()));
+        const activeSocketIds = new Set(io.sockets.sockets.keys());
+        store.sweep(activeSocketIds);
+        coopStore.sweep(activeSocketIds);
+        twoVsTwoStore.sweep(activeSocketIds);
     }, roomSweepIntervalMs);
     const tryStartTwoVsTwoTeamRematch = () => {
         const match = twoVsTwoStore.dequeueTeamMatch();

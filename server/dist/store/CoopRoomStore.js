@@ -32,6 +32,11 @@ class CoopRoomStore {
     removeFromQueue(socketId) {
         this.queue = this.queue.filter((entry) => entry.socketId !== socketId);
     }
+    sweep(activeSocketIds, now = Date.now()) {
+        this.sweepQueue(activeSocketIds);
+        this.sweepSocketMappings(activeSocketIds);
+        this.sweepRooms(activeSocketIds, now);
+    }
     removeSocket(socketId) {
         const roomId = this.socketToRoom.get(socketId);
         this.socketToRoom.delete(socketId);
@@ -49,5 +54,34 @@ class CoopRoomStore {
     generateRoomId() {
         return `coop_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     }
+    sweepQueue(activeSocketIds) {
+        this.queue = this.queue.filter((entry) => activeSocketIds.has(entry.socketId));
+    }
+    sweepSocketMappings(activeSocketIds) {
+        for (const [socketId, roomId] of this.socketToRoom.entries()) {
+            if (!activeSocketIds.has(socketId) || !this.rooms.has(roomId)) {
+                this.socketToRoom.delete(socketId);
+            }
+        }
+    }
+    sweepRooms(activeSocketIds, now) {
+        for (const [roomId, room] of this.rooms.entries()) {
+            const roomSocketIds = room.getSocketIds();
+            const hasLiveSocket = roomSocketIds.some((socketId) => activeSocketIds.has(socketId));
+            const isEmptyRoom = room.playerCount === 0;
+            const isStaleWaitingRoom = room.currentPhase === 'waiting' &&
+                now - room.lastActivityTimestamp >= CoopRoomStore.WAITING_ROOM_TIMEOUT_MS;
+            if (!isEmptyRoom && !(isStaleWaitingRoom && !hasLiveSocket)) {
+                continue;
+            }
+            this.rooms.delete(roomId);
+            for (const socketId of roomSocketIds) {
+                if (this.socketToRoom.get(socketId) === roomId) {
+                    this.socketToRoom.delete(socketId);
+                }
+            }
+        }
+    }
 }
 exports.CoopRoomStore = CoopRoomStore;
+CoopRoomStore.WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
