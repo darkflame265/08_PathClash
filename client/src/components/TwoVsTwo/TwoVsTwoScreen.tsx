@@ -66,8 +66,18 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const timeoutRef = useRef<number | null>(null);
   const effectTimeoutsRef = useRef<number[]>([]);
+  const stateRef = useRef<TwoVsTwoClientState | null>(null);
+  const currentSlotRef = useRef<TwoVsTwoSlot>(twoVsTwoSlot ?? 'red_top');
 
   const currentSlot = twoVsTwoSlot ?? 'red_top';
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  useEffect(() => {
+    currentSlotRef.current = currentSlot;
+  }, [currentSlot]);
 
   const clearAnimationTimeout = useCallback(() => {
     if (timeoutRef.current !== null) {
@@ -84,6 +94,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
   }, []);
 
   const applyState = useCallback((nextState: TwoVsTwoClientState) => {
+    stateRef.current = nextState;
     setState(nextState);
     setTwoVsTwoDisplayPositions(buildDisplayPositions(nextState));
     setMyPath([]);
@@ -222,9 +233,11 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       team: 'red' | 'blue';
       path: Position[];
     }) => {
-      if (!state) return;
-      const myTeam = state.players[currentSlot].team;
-      if (slot === currentSlot) return;
+      const latestState = stateRef.current;
+      const latestSlot = currentSlotRef.current;
+      if (!latestState) return;
+      const myTeam = latestState.players[latestSlot].team;
+      if (slot === latestSlot) return;
       if (team !== myTeam) return;
       setAllyPath(path);
     };
@@ -247,12 +260,14 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
           },
         };
       });
-      if (!state) return;
-      const myTeam = state.players[currentSlot].team;
-      if (slot === currentSlot) {
+      const latestState = stateRef.current;
+      const latestSlot = currentSlotRef.current;
+      if (!latestState) return;
+      const myTeam = latestState.players[latestSlot].team;
+      if (slot === latestSlot) {
         setMyPath(path);
         setMySubmitted(true);
-      } else if (state.players[slot].team === myTeam) {
+      } else if (latestState.players[slot].team === myTeam) {
         setAllyPath(path);
         setAllySubmitted(true);
       }
@@ -336,10 +351,8 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     applyState,
     clearAnimationTimeout,
     clearEffectTimeouts,
-    currentSlot,
     finishTwoVsTwoAnimation,
     setTwoVsTwoDisplayPositions,
-    state,
   ]);
 
   if (!state) {
