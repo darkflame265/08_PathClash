@@ -45,6 +45,7 @@ export class TwoVsTwoRoom {
   private readySockets = new Set<string>();
   private pendingStart = false;
   private rematchSet = new Set<string>();
+  private rematchQueuedTeams = new Set<TwoVsTwoTeam>();
   private gameResult: TwoVsTwoResult | null = null;
   private planningGraceTimeout: ReturnType<typeof setTimeout> | null = null;
   private nextRoundTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -141,6 +142,7 @@ export class TwoVsTwoRoom {
     this.pendingStart = false;
     this.readySockets.clear();
     this.rematchSet.clear();
+    this.rematchQueuedTeams.clear();
     this.gameResult = null;
     this.turn = 1;
     this.attackerTeam = 'red';
@@ -195,15 +197,62 @@ export class TwoVsTwoRoom {
     return { ok: true, acceptedPath: player.plannedPath };
   }
 
-  requestRematch(socketId: string): void {
-    if (this.phase !== 'gameover') return;
-    if (this.rematchSet.has(socketId)) return;
+  requestRematch(socketId: string):
+    | { status: 'ignored' }
+    | {
+        status: 'waiting_teammate';
+        teammateSocketId: string | null;
+        team: TwoVsTwoTeam;
+      }
+    | {
+        status: 'team_ready';
+        team: TwoVsTwoTeam;
+        members: Array<{
+          socketId: string;
+          nickname: string;
+          userId: string | null;
+          stats: { wins: number; losses: number };
+          pieceSkin: PieceSkin;
+          slot: TwoVsTwoSlot;
+        }>;
+      } {
+    if (this.phase !== 'gameover') return { status: 'ignored' };
+    if (this.rematchSet.has(socketId)) return { status: 'ignored' };
+
+    const player = this.getPlayerBySocket(socketId);
+    if (!player) return { status: 'ignored' };
+
     this.rematchSet.add(socketId);
-    if (this.rematchSet.size < this.players.size) {
-      this.io.to(this.roomId).emit('rematch_requested', {});
-      return;
+    const team = player.team;
+    const teamPlayers = [...this.players.values()].filter((entry) => entry.team === team);
+    const teammate = teamPlayers.find((entry) => entry.socketId !== socketId) ?? null;
+    const teamReady = teamPlayers.every((entry) => this.rematchSet.has(entry.socketId));
+
+    if (!teamReady) {
+      return {
+        status: 'waiting_teammate',
+        teammateSocketId: teammate?.socketId ?? null,
+        team,
+      };
     }
-    this.startGame();
+
+    if (this.rematchQueuedTeams.has(team)) {
+      return { status: 'ignored' };
+    }
+
+    this.rematchQueuedTeams.add(team);
+    return {
+      status: 'team_ready',
+      team,
+      members: teamPlayers.map((entry) => ({
+        socketId: entry.socketId,
+        nickname: entry.nickname,
+        userId: entry.userId,
+        stats: entry.stats,
+        pieceSkin: entry.pieceSkin,
+        slot: entry.slot,
+      })),
+    };
   }
 
   sendChat(socketId: string, message: string): void {

@@ -40,6 +40,9 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
   const { lang } = useLang();
   const {
     twoVsTwoSlot,
+    setMyColor,
+    setRoomCode,
+    setTwoVsTwoSlot,
     setRematchRequestSent,
     rematchRequestSent,
     setTwoVsTwoDisplayPositions,
@@ -224,6 +227,38 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       applyState(payload.state);
     };
 
+    const onRoomJoined = ({
+      roomId,
+      slot,
+      team,
+    }: {
+      roomId: string;
+      slot: TwoVsTwoSlot;
+      team: 'red' | 'blue';
+    }) => {
+      setMyColor(team);
+      setTwoVsTwoSlot(slot);
+      setRoomCode(roomId);
+      setRoundInfo(null);
+      setState(null);
+      setMyPath([]);
+      setAllyPath([]);
+      setEnemyPaths({ red_top: [], red_bottom: [], blue_top: [], blue_bottom: [] });
+      setHitSlots([]);
+      setExplodingSlots([]);
+      setCollisionEffects([]);
+      setMySubmitted(false);
+      setAllySubmitted(false);
+      setRematchRequested(false);
+      setRematchRequestSent(false);
+      setGameOverMessage(null);
+    };
+
+    const onMatchmakingWaiting = () => {
+      setRematchRequested(true);
+      setGameOverMessage(lang === 'en' ? 'Waiting for another team...' : '다른 팀을 찾는 중...');
+    };
+
     const onPathUpdated = ({
       slot,
       team,
@@ -322,6 +357,8 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
 
     socket.on('twovtwo_game_start', onGameStart);
     socket.on('twovtwo_round_start', onRoundStart);
+    socket.on('twovtwo_room_joined', onRoomJoined);
+    socket.on('twovtwo_matchmaking_waiting', onMatchmakingWaiting);
     socket.on('twovtwo_path_updated', onPathUpdated);
     socket.on('twovtwo_player_submitted', onPlayerSubmitted);
     socket.on('twovtwo_resolution', onResolution);
@@ -338,6 +375,8 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       setTwoVsTwoDisplayPositions(null);
       socket.off('twovtwo_game_start', onGameStart);
       socket.off('twovtwo_round_start', onRoundStart);
+      socket.off('twovtwo_room_joined', onRoomJoined);
+      socket.off('twovtwo_matchmaking_waiting', onMatchmakingWaiting);
       socket.off('twovtwo_path_updated', onPathUpdated);
       socket.off('twovtwo_player_submitted', onPlayerSubmitted);
       socket.off('twovtwo_resolution', onResolution);
@@ -352,7 +391,11 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     clearAnimationTimeout,
     clearEffectTimeouts,
     finishTwoVsTwoAnimation,
+    lang,
+    setMyColor,
+    setRoomCode,
     setTwoVsTwoDisplayPositions,
+    setTwoVsTwoSlot,
   ]);
 
   if (!state) {

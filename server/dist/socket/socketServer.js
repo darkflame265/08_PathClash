@@ -28,6 +28,42 @@ function initSocketServer(io) {
     setInterval(() => {
         store.sweep(new Set(io.sockets.sockets.keys()));
     }, roomSweepIntervalMs);
+    const tryStartTwoVsTwoTeamRematch = () => {
+        const match = twoVsTwoStore.dequeueTeamMatch();
+        if (!match)
+            return;
+        const [teamA, teamB] = match;
+        const roomId = twoVsTwoStore.generateRoomId();
+        const room = new TwoVsTwoRoom_1.TwoVsTwoRoom(roomId, roomId, io);
+        twoVsTwoStore.add(room);
+        const slots = [
+            'red_top',
+            'red_bottom',
+            'blue_top',
+            'blue_bottom',
+        ];
+        const orderedMembers = [...teamA.members, ...teamB.members].sort((a, b) => a.socketId.localeCompare(b.socketId));
+        for (let index = 0; index < orderedMembers.length; index++) {
+            const member = orderedMembers[index];
+            const memberSocket = io.sockets.sockets.get(member.socketId);
+            if (!memberSocket)
+                continue;
+            const previousRoom = twoVsTwoStore.getBySocket(member.socketId);
+            if (previousRoom) {
+                memberSocket.leave(previousRoom.roomId);
+            }
+            const slot = room.addPlayer(memberSocket, member.nickname, member.userId, member.stats, member.pieceSkin);
+            if (!slot)
+                continue;
+            twoVsTwoStore.registerSocket(member.socketId, roomId);
+            memberSocket.emit('twovtwo_room_joined', {
+                roomId,
+                slot,
+                team: slot.startsWith('red') ? 'red' : 'blue',
+            });
+        }
+        room.prepareGameStart();
+    };
     const registerSocketSession = async (socket, auth, options) => {
         const accessToken = auth?.accessToken?.trim();
         const cachedUserId = typeof socket.data.userId === 'string' ? socket.data.userId : null;
@@ -312,6 +348,29 @@ function initSocketServer(io) {
             ack?.({ ok });
         });
         socket.on('request_rematch', () => {
+            const twoVsTwoRoom = twoVsTwoStore.getBySocket(socket.id);
+            if (twoVsTwoRoom) {
+                const result = twoVsTwoRoom.requestRematch(socket.id);
+                if (result.status === 'waiting_teammate' && result.teammateSocketId) {
+                    const teammateSocket = io.sockets.sockets.get(result.teammateSocketId);
+                    teammateSocket?.emit('rematch_requested', {});
+                }
+                if (result.status === 'team_ready') {
+                    twoVsTwoStore.enqueueTeam(result.members.map((member) => ({
+                        socketId: member.socketId,
+                        nickname: member.nickname,
+                        userId: member.userId,
+                        stats: member.stats,
+                        pieceSkin: member.pieceSkin,
+                    })));
+                    for (const member of result.members) {
+                        const memberSocket = io.sockets.sockets.get(member.socketId);
+                        memberSocket?.emit('twovtwo_matchmaking_waiting', {});
+                    }
+                    tryStartTwoVsTwoTeamRematch();
+                }
+                return;
+            }
             const room = store.getBySocket(socket.id);
             if (room) {
                 room.requestRematch(socket.id);

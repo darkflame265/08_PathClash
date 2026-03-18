@@ -6,6 +6,7 @@ class TwoVsTwoRoomStore {
         this.rooms = new Map();
         this.socketToRoom = new Map();
         this.queue = [];
+        this.teamQueue = [];
     }
     static getInstance() {
         if (!TwoVsTwoRoomStore.instance) {
@@ -33,6 +34,28 @@ class TwoVsTwoRoomStore {
     }
     removeFromQueue(socketId) {
         this.queue = this.queue.filter((entry) => entry.socketId !== socketId);
+        this.teamQueue = this.teamQueue
+            .map((team) => ({
+            members: team.members.filter((entry) => entry.socketId !== socketId),
+        }))
+            .filter((team) => team.members.length > 0);
+    }
+    enqueueTeam(members) {
+        if (members.length !== 2)
+            return;
+        const deduped = members.filter((member, index) => members.findIndex((entry) => entry.socketId === member.socketId) === index);
+        if (deduped.length !== 2)
+            return;
+        this.teamQueue.push({ members: deduped });
+    }
+    dequeueTeamMatch() {
+        if (this.teamQueue.length < 2)
+            return undefined;
+        const first = this.teamQueue.shift();
+        const second = this.teamQueue.shift();
+        if (!first || !second)
+            return undefined;
+        return [first, second];
     }
     removeSocket(socketId) {
         const roomId = this.socketToRoom.get(socketId);

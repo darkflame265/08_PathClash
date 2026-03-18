@@ -9,10 +9,15 @@ type QueueEntry = {
   pieceSkin: PieceSkin;
 };
 
+type TeamQueueEntry = {
+  members: QueueEntry[];
+};
+
 export class TwoVsTwoRoomStore {
   private rooms: Map<string, TwoVsTwoRoom> = new Map();
   private socketToRoom: Map<string, string> = new Map();
   private queue: QueueEntry[] = [];
+  private teamQueue: TeamQueueEntry[] = [];
   private static instance: TwoVsTwoRoomStore;
 
   static getInstance(): TwoVsTwoRoomStore {
@@ -52,6 +57,29 @@ export class TwoVsTwoRoomStore {
 
   removeFromQueue(socketId: string): void {
     this.queue = this.queue.filter((entry) => entry.socketId !== socketId);
+    this.teamQueue = this.teamQueue
+      .map((team) => ({
+        members: team.members.filter((entry) => entry.socketId !== socketId),
+      }))
+      .filter((team) => team.members.length > 0);
+  }
+
+  enqueueTeam(members: QueueEntry[]): void {
+    if (members.length !== 2) return;
+    const deduped = members.filter(
+      (member, index) =>
+        members.findIndex((entry) => entry.socketId === member.socketId) === index,
+    );
+    if (deduped.length !== 2) return;
+    this.teamQueue.push({ members: deduped });
+  }
+
+  dequeueTeamMatch(): [TeamQueueEntry, TeamQueueEntry] | undefined {
+    if (this.teamQueue.length < 2) return undefined;
+    const first = this.teamQueue.shift();
+    const second = this.teamQueue.shift();
+    if (!first || !second) return undefined;
+    return [first, second];
   }
 
   removeSocket(socketId: string): TwoVsTwoRoom | undefined {

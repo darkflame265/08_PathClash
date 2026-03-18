@@ -21,6 +21,7 @@ class TwoVsTwoRoom {
         this.readySockets = new Set();
         this.pendingStart = false;
         this.rematchSet = new Set();
+        this.rematchQueuedTeams = new Set();
         this.gameResult = null;
         this.planningGraceTimeout = null;
         this.nextRoundTimeout = null;
@@ -107,6 +108,7 @@ class TwoVsTwoRoom {
         this.pendingStart = false;
         this.readySockets.clear();
         this.rematchSet.clear();
+        this.rematchQueuedTeams.clear();
         this.gameResult = null;
         this.turn = 1;
         this.attackerTeam = 'red';
@@ -160,15 +162,40 @@ class TwoVsTwoRoom {
     }
     requestRematch(socketId) {
         if (this.phase !== 'gameover')
-            return;
+            return { status: 'ignored' };
         if (this.rematchSet.has(socketId))
-            return;
+            return { status: 'ignored' };
+        const player = this.getPlayerBySocket(socketId);
+        if (!player)
+            return { status: 'ignored' };
         this.rematchSet.add(socketId);
-        if (this.rematchSet.size < this.players.size) {
-            this.io.to(this.roomId).emit('rematch_requested', {});
-            return;
+        const team = player.team;
+        const teamPlayers = [...this.players.values()].filter((entry) => entry.team === team);
+        const teammate = teamPlayers.find((entry) => entry.socketId !== socketId) ?? null;
+        const teamReady = teamPlayers.every((entry) => this.rematchSet.has(entry.socketId));
+        if (!teamReady) {
+            return {
+                status: 'waiting_teammate',
+                teammateSocketId: teammate?.socketId ?? null,
+                team,
+            };
         }
-        this.startGame();
+        if (this.rematchQueuedTeams.has(team)) {
+            return { status: 'ignored' };
+        }
+        this.rematchQueuedTeams.add(team);
+        return {
+            status: 'team_ready',
+            team,
+            members: teamPlayers.map((entry) => ({
+                socketId: entry.socketId,
+                nickname: entry.nickname,
+                userId: entry.userId,
+                stats: entry.stats,
+                pieceSkin: entry.pieceSkin,
+                slot: entry.slot,
+            })),
+        };
     }
     sendChat(socketId, message) {
         const player = this.getPlayerBySocket(socketId);
