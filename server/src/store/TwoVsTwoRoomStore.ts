@@ -76,6 +76,13 @@ export class TwoVsTwoRoomStore {
   }
 
   dequeueTeamMatch(): [TeamQueueEntry, TeamQueueEntry] | undefined {
+    while (this.teamQueue.length < 2 && this.queue.length >= 2) {
+      const pair = this.queue.splice(0, 2);
+      if (pair.length === 2) {
+        this.teamQueue.push({ members: pair });
+      }
+    }
+
     if (this.teamQueue.length < 2) return undefined;
     const first = this.teamQueue.shift();
     const second = this.teamQueue.shift();

@@ -31,7 +31,7 @@ function initSocketServer(io) {
         coopStore.sweep(activeSocketIds);
         twoVsTwoStore.sweep(activeSocketIds);
     }, roomSweepIntervalMs);
-    const tryStartTwoVsTwoTeamRematch = () => {
+    const tryStartTwoVsTwoTeamMatch = () => {
         const match = twoVsTwoStore.dequeueTeamMatch();
         if (!match)
             return;
@@ -296,36 +296,11 @@ function initSocketServer(io) {
             await registerSocketSession(socket, auth);
             const profile = await (0, playerAuth_1.resolvePlayerProfile)(auth, nickname);
             twoVsTwoStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
-            const group = twoVsTwoStore.dequeueGroup(4);
-            if (!group) {
+            const existingRoom = twoVsTwoStore.getBySocket(socket.id);
+            tryStartTwoVsTwoTeamMatch();
+            if (!existingRoom && !twoVsTwoStore.getBySocket(socket.id)) {
                 socket.emit('twovtwo_matchmaking_waiting', {});
-                return;
             }
-            const sockets = group
-                .map((entry) => ({ entry, socket: io.sockets.sockets.get(entry.socketId) }))
-                .filter((item) => Boolean(item.socket));
-            if (sockets.length < 4) {
-                for (const item of sockets) {
-                    twoVsTwoStore.enqueue(item.entry.socketId, item.entry.nickname, item.entry.userId, item.entry.stats, item.entry.pieceSkin);
-                    item.socket.emit('twovtwo_matchmaking_waiting', {});
-                }
-                return;
-            }
-            const roomId = twoVsTwoStore.generateRoomId();
-            const room = new TwoVsTwoRoom_1.TwoVsTwoRoom(roomId, roomId, io);
-            twoVsTwoStore.add(room);
-            for (const item of sockets) {
-                const slot = room.addPlayer(item.socket, item.entry.nickname, item.entry.userId, item.entry.stats, item.entry.pieceSkin);
-                if (!slot)
-                    continue;
-                twoVsTwoStore.registerSocket(item.entry.socketId, roomId);
-                item.socket.emit('twovtwo_room_joined', {
-                    roomId,
-                    slot,
-                    team: slot.startsWith('red') ? 'red' : 'blue',
-                });
-            }
-            room.prepareGameStart();
         });
         socket.on('cancel_2v2', () => {
             twoVsTwoStore.removeFromQueue(socket.id);
@@ -370,7 +345,7 @@ function initSocketServer(io) {
                         const memberSocket = io.sockets.sockets.get(member.socketId);
                         memberSocket?.emit('twovtwo_matchmaking_waiting', {});
                     }
-                    tryStartTwoVsTwoTeamRematch();
+                    tryStartTwoVsTwoTeamMatch();
                 }
                 return;
             }
