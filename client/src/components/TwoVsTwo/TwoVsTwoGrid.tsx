@@ -341,24 +341,30 @@ export function TwoVsTwoGrid({
           <CollisionEffect key={id} position={position} cellSize={responsiveCellSize} />
         ))}
 
-        {Object.values(state.players).map((player) => (
-          <PlayerPiece
-            key={player.slot}
-            color={player.team}
-            position={displayPositions[player.slot]}
-            cellSize={responsiveCellSize}
-            isAttacker={player.role === 'attacker'}
-            isHit={hitSlots.includes(player.slot)}
-            isExploding={explodingSlots.includes(player.slot)}
-            isMe={player.slot === currentSlot}
-            outlineColor={
-              player.slot === currentSlot
-                ? 'green'
-                : player.team
-            }
-            skin={player.pieceSkin}
-          />
-        ))}
+        {Object.values(state.players)
+          .filter((player) => {
+            const isHit = hitSlots.includes(player.slot);
+            const isExploding = explodingSlots.includes(player.slot);
+            return player.hp > 0 || isHit || isExploding;
+          })
+          .map((player) => (
+            <PlayerPiece
+              key={player.slot}
+              color={player.team}
+              position={displayPositions[player.slot]}
+              cellSize={responsiveCellSize}
+              isAttacker={player.role === 'attacker'}
+              isHit={hitSlots.includes(player.slot)}
+              isExploding={explodingSlots.includes(player.slot)}
+              isMe={player.slot === currentSlot}
+              outlineColor={
+                player.slot === currentSlot
+                  ? 'green'
+                  : player.team
+              }
+              skin={player.pieceSkin}
+            />
+          ))}
       </div>
     </div>
   );
