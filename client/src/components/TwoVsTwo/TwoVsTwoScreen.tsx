@@ -426,7 +426,15 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
           <PlayerInfo player={enemyLeft} isMe={false} />
           <div className="twovtwo-hp">{renderHearts(enemyLeft.hp)}</div>
         </div>
-        <div className="twovtwo-role-box">{enemyRoleLabel}</div>
+        <div className="twovtwo-role-box gs-role-badge">
+          <span className="gs-role-icon">
+            {state.attackerTeam === enemyTeam ? 'ATK' : 'RUN'}
+          </span>
+          <span className="gs-role-label">{enemyRoleLabel}</span>
+          <div className="twovtwo-role-sub">
+            {lang === 'en' ? `Turn ${state.turn}` : `${state.turn}턴`}
+          </div>
+        </div>
         <div className="twovtwo-player-side twovtwo-player-side-right">
           <PlayerInfo player={enemyRight} isMe={false} />
           <div className="twovtwo-hp">{renderHearts(enemyRight.hp)}</div>
@@ -477,16 +485,20 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
         </div>
       </div>
 
-      <div className={`twovtwo-team-card twovtwo-team-card-self twovtwo-team-${myTeam}`}>
+      <div
+        className={`twovtwo-team-card twovtwo-team-card-self twovtwo-team-${myTeam} gs-self gs-role-${me?.role === 'attacker' ? 'atk' : 'run'}`}
+      >
         <div className="twovtwo-player-side">
           <PlayerInfo player={me} isMe />
           <div className="twovtwo-hp">{renderHearts(me.hp)}</div>
         </div>
-        <div className="twovtwo-role-box">
-          <div>{roleLabel}</div>
-          <div className="twovtwo-role-sub">
-            {lang === 'en' ? `Turn ${state.turn}` : `${state.turn}턴`}
-          </div>
+        <div
+          className={`twovtwo-role-box gs-role-badge gs-role-badge-self gs-role-badge-${me?.role === 'attacker' ? 'atk' : 'run'}`}
+        >
+          <span className="gs-role-icon">
+            {state.attackerTeam === myTeam ? 'ATK' : 'RUN'}
+          </span>
+          <span className="gs-role-label">{roleLabel}</span>
         </div>
         <div className="twovtwo-player-side twovtwo-player-side-right">
           <PlayerInfo player={ally} isMe={false} />

@@ -35,13 +35,8 @@
 
 .twovtwo-role-box {
   min-width: 120px;
-  padding: 16px 20px;
-  border-radius: 18px;
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.18);
   text-align: center;
-  font-weight: 800;
-  color: #e5e7eb;
+  justify-self: center;
 }
 
 .twovtwo-role-sub {
@@ -49,6 +44,18 @@
   font-size: 12px;
   font-weight: 600;
   color: #94a3b8;
+}
+
+.twovtwo-team-card-opponent .twovtwo-role-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+.twovtwo-team-card-self .twovtwo-role-box {
+  min-width: 96px;
 }
 
 .twovtwo-hp {
