@@ -68,12 +68,12 @@
 @media (max-width: 860px) {
   .twovtwo-team-card {
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    gap: 10px;
-    padding: 14px 16px;
+    gap: 8px;
+    padding: 10px 12px;
   }
 
   .twovtwo-player-side {
-    gap: 6px;
+    gap: 4px;
   }
 
   .twovtwo-player-side-right {
@@ -86,24 +86,40 @@
   }
 
   .twovtwo-role-box {
-    min-width: 82px;
+    min-width: 74px;
   }
 
   .twovtwo-team-card-opponent .twovtwo-role-box {
-    padding: 10px 10px;
+    padding: 8px 8px;
+    gap: 2px;
   }
 
   .twovtwo-team-card-self .twovtwo-role-box {
-    min-width: 82px;
+    min-width: 74px;
   }
 
   .twovtwo-role-sub {
-    margin-top: 2px;
-    font-size: 11px;
+    margin-top: 0;
+    font-size: 12px;
   }
 
   .twovtwo-hp {
-    gap: 4px;
-    font-size: 18px;
+    gap: 3px;
+    font-size: 17px;
+  }
+
+  .twovtwo-screen .nickname-btn {
+    padding: calc(0.12rem * var(--gs-scale, 1)) calc(0.25rem * var(--gs-scale, 1));
+    font-size: clamp(0.68rem, calc(0.74rem * var(--gs-scale, 1)), 0.88rem);
+    line-height: 1.15;
+  }
+
+  .twovtwo-team-card-self {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .twovtwo-team-card-self .twovtwo-player-side {
+    gap: 3px;
   }
 }

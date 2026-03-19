@@ -467,14 +467,6 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       : lang === 'en'
         ? 'Escape'
         : '도망';
-  const enemyRoleLabel =
-    state.attackerTeam === enemyTeam
-      ? lang === 'en'
-        ? 'Attack'
-        : '공격'
-      : lang === 'en'
-        ? 'Escape'
-        : '도망';
 
   const handleRematch = () => {
     getSocket().emit('request_rematch');
@@ -509,10 +501,6 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
           <div className="twovtwo-hp">{renderHearts(enemyLeft.hp)}</div>
         </div>
         <div className="twovtwo-role-box gs-role-badge">
-          <span className="gs-role-icon">
-            {state.attackerTeam === enemyTeam ? 'ATK' : 'RUN'}
-          </span>
-          <span className="gs-role-label">{enemyRoleLabel}</span>
           <div className="twovtwo-role-sub">
             {lang === 'en' ? `Turn ${state.turn}` : `${state.turn}턴`}
           </div>
