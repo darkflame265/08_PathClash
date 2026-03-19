@@ -1,6 +1,6 @@
 .twovtwo-team-card {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 20px;
   padding: 20px 24px;
@@ -67,17 +67,43 @@
 
 @media (max-width: 860px) {
   .twovtwo-team-card {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    padding: 16px;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 10px;
+    padding: 14px 16px;
+  }
+
+  .twovtwo-player-side {
+    gap: 6px;
   }
 
   .twovtwo-player-side-right {
-    align-items: flex-start;
-    text-align: left;
+    align-items: flex-end;
+    text-align: right;
   }
 
   .twovtwo-player-side-right .twovtwo-hp {
-    justify-content: flex-start;
+    justify-content: flex-end;
+  }
+
+  .twovtwo-role-box {
+    min-width: 82px;
+  }
+
+  .twovtwo-team-card-opponent .twovtwo-role-box {
+    padding: 10px 10px;
+  }
+
+  .twovtwo-team-card-self .twovtwo-role-box {
+    min-width: 82px;
+  }
+
+  .twovtwo-role-sub {
+    margin-top: 2px;
+    font-size: 11px;
+  }
+
+  .twovtwo-hp {
+    gap: 4px;
+    font-size: 18px;
   }
 }
