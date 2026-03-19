@@ -193,6 +193,8 @@ function saveAudioPrefs(prefs: {
 }
 
 const initialAudioPrefs = getStoredAudioPrefs();
+const hitTimeouts: Partial<Record<PlayerColor, number>> = {};
+const heartShakeTimeouts: Partial<Record<PlayerColor, number>> = {};
 const initialPieceSkin = (() => {
   const stored = localStorage.getItem(PIECE_SKIN_KEY);
   return stored === 'ember' ||
@@ -410,13 +412,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setTwoVsTwoDisplayPositions: (positions) => set({ twoVsTwoDisplayPositions: positions }),
 
   triggerHit: (color) => {
+    const prevTimeout = hitTimeouts[color];
+    if (prevTimeout !== undefined) {
+      window.clearTimeout(prevTimeout);
+    }
     set({ hitEffect: { ...get().hitEffect, [color]: true } });
-    setTimeout(() => set({ hitEffect: { ...get().hitEffect, [color]: false } }), 700);
+    hitTimeouts[color] = window.setTimeout(() => {
+      hitTimeouts[color] = undefined;
+      set({ hitEffect: { ...get().hitEffect, [color]: false } });
+    }, 700);
   },
 
   triggerHeartShake: (color, hpIndex) => {
+    const prevTimeout = heartShakeTimeouts[color];
+    if (prevTimeout !== undefined) {
+      window.clearTimeout(prevTimeout);
+    }
     set({ heartShake: { ...get().heartShake, [color]: hpIndex } });
-    setTimeout(() => set({ heartShake: { ...get().heartShake, [color]: -1 } }), 500);
+    heartShakeTimeouts[color] = window.setTimeout(() => {
+      heartShakeTimeouts[color] = undefined;
+      set({ heartShake: { ...get().heartShake, [color]: -1 } });
+    }, 500);
   },
 
   triggerCollisionEffect: (pos) => {
