@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TwoVsTwoRoom = void 0;
 const ServerTimer_1 = require("../ServerTimer");
 const TwoVsTwoEngine_1 = require("./TwoVsTwoEngine");
+const playerAuth_1 = require("../../services/playerAuth");
 const PLANNING_TIME_MS = 7000;
 const SUBMIT_GRACE_MS = 350;
 const MOVEMENT_STEP_MS = 200;
@@ -25,6 +26,7 @@ class TwoVsTwoRoom {
         this.rematchSet = new Set();
         this.rematchQueuedTeams = new Set();
         this.gameResult = null;
+        this.rewardsGranted = false;
         this.planningGraceTimeout = null;
         this.nextRoundTimeout = null;
         this.roomId = roomId;
@@ -105,6 +107,12 @@ class TwoVsTwoRoom {
                 this.pendingStart = false;
                 this.phase = 'gameover';
                 this.gameResult = result;
+                if (result !== 'draw' && !this.rewardsGranted) {
+                    this.rewardsGranted = true;
+                    void (0, playerAuth_1.grantDailyRewardTokens)([...this.players.values()]
+                        .filter((entry) => entry.team === result)
+                        .map((entry) => entry.userId), 6);
+                }
                 this.io.to(this.roomId).emit('twovtwo_game_over', {
                     result,
                     message: 'A team disconnected.',
@@ -160,6 +168,7 @@ class TwoVsTwoRoom {
         this.rematchSet.clear();
         this.rematchQueuedTeams.clear();
         this.gameResult = null;
+        this.rewardsGranted = false;
         this.turn = 1;
         this.attackerTeam = 'red';
         this.phase = 'planning';
@@ -379,6 +388,12 @@ class TwoVsTwoRoom {
                 this.phase = 'gameover';
                 this.gameResult = redAlive ? 'red' : 'blue';
                 this.touchActivity();
+                if (!this.rewardsGranted) {
+                    this.rewardsGranted = true;
+                    void (0, playerAuth_1.grantDailyRewardTokens)([...this.players.values()]
+                        .filter((entry) => entry.team === this.gameResult)
+                        .map((entry) => entry.userId), 6);
+                }
                 this.io.to(this.roomId).emit('twovtwo_game_over', { result: this.gameResult });
                 return;
             }

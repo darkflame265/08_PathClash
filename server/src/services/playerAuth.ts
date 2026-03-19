@@ -250,6 +250,76 @@ export async function recordMatchmakingResult(
   }
 }
 
+export async function grantDailyRewardTokens(
+  userIds: Array<string | null | undefined>,
+  tokenAmount: number,
+): Promise<void> {
+  if (!supabaseAdmin) return;
+  const normalizedUserIds = [...new Set(
+    userIds.filter((userId): userId is string => Boolean(userId)),
+  )];
+  if (normalizedUserIds.length === 0) return;
+  if (tokenAmount <= 0 || tokenAmount % DAILY_REWARD_TOKENS_PER_WIN !== 0) return;
+
+  const rewardWins = tokenAmount / DAILY_REWARD_TOKENS_PER_WIN;
+  const utcDayKey = getUtcDayKey();
+
+  const { data: rows, error } = await supabaseAdmin
+    .from('player_stats')
+    .select('user_id, wins, losses, tokens, daily_reward_wins, daily_reward_day')
+    .in('user_id', normalizedUserIds);
+
+  if (error) {
+    console.error('[supabase] failed to read player_stats for reward grant', error);
+    return;
+  }
+
+  const byId = new Map(
+    (rows ?? []).map((row) => [
+      row.user_id as string,
+      {
+        wins: Number(row.wins ?? 0),
+        losses: Number(row.losses ?? 0),
+        tokens: Number(row.tokens ?? 0),
+        dailyRewardWins: Number(row.daily_reward_wins ?? 0),
+        dailyRewardDay: row.daily_reward_day ?? null,
+      },
+    ]),
+  );
+
+  const payload = normalizedUserIds.map((userId) => {
+    const current = byId.get(userId) ?? {
+      wins: 0,
+      losses: 0,
+      tokens: 0,
+      dailyRewardWins: 0,
+      dailyRewardDay: null,
+    };
+    const activeDailyWins = current.dailyRewardDay === utcDayKey
+      ? Math.min(DAILY_REWARD_MAX_WINS, Math.max(0, current.dailyRewardWins))
+      : 0;
+    const remainingRewardWins = Math.max(0, DAILY_REWARD_MAX_WINS - activeDailyWins);
+    const grantedRewardWins = Math.min(rewardWins, remainingRewardWins);
+
+    return {
+      user_id: userId,
+      wins: current.wins,
+      losses: current.losses,
+      tokens: current.tokens + grantedRewardWins * DAILY_REWARD_TOKENS_PER_WIN,
+      daily_reward_wins: activeDailyWins + grantedRewardWins,
+      daily_reward_day: utcDayKey,
+    };
+  });
+
+  const { error: upsertError } = await supabaseAdmin
+    .from('player_stats')
+    .upsert(payload, { onConflict: 'user_id' });
+
+  if (upsertError) {
+    console.error('[supabase] failed to grant daily reward tokens', upsertError);
+  }
+}
+
 export async function finalizeGoogleUpgrade(
   targetAuth: AuthPayload | undefined,
   guestAuth: AuthPayload | undefined,

@@ -10,6 +10,7 @@ import {
   resolveTwoVsTwoMovement,
   TWO_VS_TWO_SLOTS,
 } from './TwoVsTwoEngine';
+import { grantDailyRewardTokens } from '../../services/playerAuth';
 import type {
   TwoVsTwoClientPlayerState,
   TwoVsTwoClientState,
@@ -49,6 +50,7 @@ export class TwoVsTwoRoom {
   private rematchSet = new Set<string>();
   private rematchQueuedTeams = new Set<TwoVsTwoTeam>();
   private gameResult: TwoVsTwoResult | null = null;
+  private rewardsGranted = false;
   private planningGraceTimeout: ReturnType<typeof setTimeout> | null = null;
   private nextRoundTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -144,6 +146,15 @@ export class TwoVsTwoRoom {
         this.pendingStart = false;
         this.phase = 'gameover';
         this.gameResult = result;
+        if (result !== 'draw' && !this.rewardsGranted) {
+          this.rewardsGranted = true;
+          void grantDailyRewardTokens(
+            [...this.players.values()]
+              .filter((entry) => entry.team === result)
+              .map((entry) => entry.userId),
+            6,
+          );
+        }
         this.io.to(this.roomId).emit('twovtwo_game_over', {
           result,
           message: 'A team disconnected.',
@@ -204,6 +215,7 @@ export class TwoVsTwoRoom {
     this.rematchSet.clear();
     this.rematchQueuedTeams.clear();
     this.gameResult = null;
+    this.rewardsGranted = false;
     this.turn = 1;
     this.attackerTeam = 'red';
     this.phase = 'planning';
@@ -472,6 +484,15 @@ export class TwoVsTwoRoom {
         this.phase = 'gameover';
         this.gameResult = redAlive ? 'red' : 'blue';
         this.touchActivity();
+        if (!this.rewardsGranted) {
+          this.rewardsGranted = true;
+          void grantDailyRewardTokens(
+            [...this.players.values()]
+              .filter((entry) => entry.team === this.gameResult)
+              .map((entry) => entry.userId),
+            6,
+          );
+        }
         this.io.to(this.roomId).emit('twovtwo_game_over', { result: this.gameResult });
         return;
       }

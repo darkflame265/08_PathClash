@@ -4,6 +4,7 @@ exports.CoopRoom = void 0;
 const GameEngine_1 = require("../GameEngine");
 const ServerTimer_1 = require("../ServerTimer");
 const CoopEngine_1 = require("./CoopEngine");
+const playerAuth_1 = require("../../services/playerAuth");
 const PLANNING_TIME_MS = 7000;
 const SUBMIT_GRACE_MS = 350;
 const FINAL_PORTAL_COUNT = 14;
@@ -32,6 +33,7 @@ class CoopRoom {
         this.bossPhase = false;
         this.bossRoundsRemaining = 0;
         this.gameResult = null;
+        this.rewardsGranted = false;
         this.planningGraceTimeout = null;
         this.nextRoundTimeout = null;
         this.roomId = roomId;
@@ -129,6 +131,7 @@ class CoopRoom {
         this.bossPhase = false;
         this.bossRoundsRemaining = 0;
         this.gameResult = null;
+        this.rewardsGranted = false;
         this.rematchSet.clear();
         this.clearPlanningGraceTimeout();
         this.clearNextRoundTimeout();
@@ -409,6 +412,10 @@ class CoopRoom {
             if (nextPhase === "gameover") {
                 this.phase = "gameover";
                 this.touchActivity();
+                if (nextResult === "win" && !this.rewardsGranted) {
+                    this.rewardsGranted = true;
+                    void (0, playerAuth_1.grantDailyRewardTokens)([...this.players.values()].map((player) => player.userId), 12);
+                }
                 this.io.to(this.roomId).emit("coop_game_over", { result: nextResult });
                 return;
             }

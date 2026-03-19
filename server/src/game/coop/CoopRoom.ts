@@ -19,6 +19,7 @@ import {
   isValidCoopPath,
   resolveCoopMovement,
 } from "./CoopEngine";
+import { grantDailyRewardTokens } from "../../services/playerAuth";
 import type {
   CoopClientState,
   CoopEnemy,
@@ -60,6 +61,7 @@ export class CoopRoom {
   private bossPhase = false;
   private bossRoundsRemaining = 0;
   private gameResult: CoopResult | null = null;
+  private rewardsGranted = false;
   private planningGraceTimeout: ReturnType<typeof setTimeout> | null = null;
   private nextRoundTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -171,6 +173,7 @@ export class CoopRoom {
     this.bossPhase = false;
     this.bossRoundsRemaining = 0;
     this.gameResult = null;
+    this.rewardsGranted = false;
     this.rematchSet.clear();
     this.clearPlanningGraceTimeout();
     this.clearNextRoundTimeout();
@@ -489,6 +492,13 @@ export class CoopRoom {
       if (nextPhase === "gameover") {
         this.phase = "gameover";
         this.touchActivity();
+        if (nextResult === "win" && !this.rewardsGranted) {
+          this.rewardsGranted = true;
+          void grantDailyRewardTokens(
+            [...this.players.values()].map((player) => player.userId),
+            12,
+          );
+        }
         this.io.to(this.roomId).emit("coop_game_over", { result: nextResult });
         return;
       }
