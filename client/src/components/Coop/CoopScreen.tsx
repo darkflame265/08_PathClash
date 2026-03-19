@@ -25,6 +25,7 @@ interface Props {
 }
 
 const STEP_DURATION_MS = 200;
+const PORTAL_HIT_APPLY_DELAY_MS = STEP_DURATION_MS - 20;
 const INITIAL_RED: Position = { row: 2, col: 0 };
 const INITIAL_BLUE: Position = { row: 2, col: 4 };
 
@@ -59,6 +60,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
   const timeoutRef = useRef<number | null>(null);
   const portalHitTimeoutsRef = useRef<number[]>([]);
   const playerHitTimeoutsRef = useRef<number[]>([]);
+  const stepEffectTimeoutsRef = useRef<number[]>([]);
 
   const currentColor = myColor ?? "red";
   const allyColor: PlayerColor = currentColor === "red" ? "blue" : "red";
@@ -82,6 +84,13 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
       window.clearTimeout(timeoutId);
     }
     playerHitTimeoutsRef.current = [];
+  }, []);
+
+  const clearStepEffectTimeouts = useCallback(() => {
+    for (const timeoutId of stepEffectTimeoutsRef.current) {
+      window.clearTimeout(timeoutId);
+    }
+    stepEffectTimeoutsRef.current = [];
   }, []);
 
   const syncDisplayFromState = useCallback((state: CoopClientState) => {
@@ -150,7 +159,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
         }
 
         setRedDisplayPos(redSeq[Math.min(step, redSeq.length - 1)]);
-        setBlueDisplayPos(blueSeq[Math.min(step, blueSeq.length - 1)]);
+      setBlueDisplayPos(blueSeq[Math.min(step, blueSeq.length - 1)]);
 
         const nextEnemyPositions: EnemyDisplayMap = {};
         for (const enemy of enemySeqs) {
@@ -160,27 +169,28 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
 
         const portalHits = portalHitsByStep.get(step) ?? [];
         if (portalHits.length > 0) {
-          const flashedPortalIds = portalHits
-            .filter((hit) => !hit.destroyed && hit.newHp > 0)
-            .map((hit) => hit.portalId);
+          const stepPortalEffectTimeoutId = window.setTimeout(() => {
+            setPortals((prev) =>
+              prev.flatMap((portal) => {
+                const hit = portalHits.find((entry) => entry.portalId === portal.id);
+                if (!hit) return [portal];
+                if (hit.destroyed || hit.newHp <= 0) return [];
+                return [{ ...portal, hp: hit.newHp }];
+              }),
+            );
 
-          setPortals((prev) =>
-            prev.flatMap((portal) => {
-              const hit = portalHits.find((entry) => entry.portalId === portal.id);
-              if (!hit) return [portal];
-              if (hit.destroyed || hit.newHp <= 0) return [];
-              return [{ ...portal, hp: hit.newHp }];
-            }),
-          );
-
-          if (flashedPortalIds.length > 0) {
+            const flashedPortalIds = portalHits.map((hit) => hit.portalId);
             setHitPortalIds((prev) => Array.from(new Set([...prev, ...flashedPortalIds])));
             const timeoutId = window.setTimeout(() => {
               setHitPortalIds((prev) => prev.filter((id) => !flashedPortalIds.includes(id)));
               portalHitTimeoutsRef.current = portalHitTimeoutsRef.current.filter((id) => id !== timeoutId);
             }, 600);
             portalHitTimeoutsRef.current.push(timeoutId);
-          }
+            stepEffectTimeoutsRef.current = stepEffectTimeoutsRef.current.filter(
+              (id) => id !== stepPortalEffectTimeoutId,
+            );
+          }, PORTAL_HIT_APPLY_DELAY_MS);
+          stepEffectTimeoutsRef.current.push(stepPortalEffectTimeoutId);
         }
 
         const playerHits = playerHitsByStep.get(step) ?? [];
@@ -339,6 +349,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
       clearAnimationTimeout();
       clearPortalHitTimeouts();
       clearPlayerHitTimeouts();
+      clearStepEffectTimeouts();
       socket.off("coop_game_start", onGameStart);
       socket.off("coop_round_start", onRoundStart);
       socket.off("coop_path_updated", onPathUpdated);
@@ -349,7 +360,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
       socket.off("player_skin_updated", onPlayerSkinUpdated);
       socket.off("rematch_requested", onRematchRequested);
     };
-  }, [animateResolution, applyState, clearAnimationTimeout, clearPlayerHitTimeouts, clearPortalHitTimeouts, currentColor]);
+  }, [animateResolution, applyState, clearAnimationTimeout, clearPlayerHitTimeouts, clearPortalHitTimeouts, clearStepEffectTimeouts, currentColor]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
