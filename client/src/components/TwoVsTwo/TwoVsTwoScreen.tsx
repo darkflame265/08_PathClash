@@ -349,6 +349,25 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       }
     };
 
+    const onPlayerDisconnected = ({
+      slot,
+      state: nextState,
+    }: {
+      slot: TwoVsTwoSlot;
+      state: TwoVsTwoClientState;
+    }) => {
+      stateRef.current = nextState;
+      setState(nextState);
+      setTwoVsTwoDisplayPositions(buildDisplayPositions(nextState));
+      if (slot === currentSlotRef.current) {
+        setMyPath([]);
+        setMySubmitted(true);
+      } else if (nextState.players[slot].team === nextState.players[currentSlotRef.current].team) {
+        setAllyPath([]);
+        setAllySubmitted(true);
+      }
+    };
+
     const onResolution = (payload: TwoVsTwoResolutionPayload) => {
       setRoundInfo(null);
       setState((prev) => (prev ? { ...prev, phase: 'moving' } : prev));
@@ -402,6 +421,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     socket.on('twovtwo_matchmaking_waiting', onMatchmakingWaiting);
     socket.on('twovtwo_path_updated', onPathUpdated);
     socket.on('twovtwo_player_submitted', onPlayerSubmitted);
+    socket.on('twovtwo_player_disconnected', onPlayerDisconnected);
     socket.on('twovtwo_resolution', onResolution);
     socket.on('twovtwo_game_over', onGameOver);
     socket.on('chat_receive', onChatReceive);
@@ -420,6 +440,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       socket.off('twovtwo_matchmaking_waiting', onMatchmakingWaiting);
       socket.off('twovtwo_path_updated', onPathUpdated);
       socket.off('twovtwo_player_submitted', onPlayerSubmitted);
+      socket.off('twovtwo_player_disconnected', onPlayerDisconnected);
       socket.off('twovtwo_resolution', onResolution);
       socket.off('twovtwo_game_over', onGameOver);
       socket.off('chat_receive', onChatReceive);
@@ -502,7 +523,13 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
 
       <div className={`twovtwo-team-card twovtwo-team-card-opponent twovtwo-team-${enemyTeam}`}>
         <div className="twovtwo-player-side">
-          <PlayerInfo player={enemyLeft} isMe={false} />
+          {enemyLeft.connected ? (
+            <PlayerInfo player={enemyLeft} isMe={false} />
+          ) : (
+            <div className="twovtwo-player-disconnected">
+              {lang === 'en' ? 'Disconnected' : '연결 끊김'}
+            </div>
+          )}
           <div className="twovtwo-hp">{renderHearts(enemyLeft.hp)}</div>
         </div>
         <div className="twovtwo-role-box gs-role-badge">
@@ -511,7 +538,13 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
           </div>
         </div>
         <div className="twovtwo-player-side twovtwo-player-side-right">
-          <PlayerInfo player={enemyRight} isMe={false} />
+          {enemyRight.connected ? (
+            <PlayerInfo player={enemyRight} isMe={false} />
+          ) : (
+            <div className="twovtwo-player-disconnected">
+              {lang === 'en' ? 'Disconnected' : '연결 끊김'}
+            </div>
+          )}
           <div className="twovtwo-hp">{renderHearts(enemyRight.hp)}</div>
         </div>
       </div>
@@ -564,7 +597,13 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
         className={`twovtwo-team-card twovtwo-team-card-self twovtwo-team-${myTeam} gs-self gs-role-${me?.role === 'attacker' ? 'atk' : 'run'}`}
       >
         <div className="twovtwo-player-side">
-          <PlayerInfo player={me} isMe />
+          {me.connected ? (
+            <PlayerInfo player={me} isMe />
+          ) : (
+            <div className="twovtwo-player-disconnected">
+              {lang === 'en' ? 'Disconnected' : '연결 끊김'}
+            </div>
+          )}
           <div className="twovtwo-hp">{renderHearts(me.hp)}</div>
         </div>
         <div
@@ -576,7 +615,13 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
           <span className="gs-role-label">{roleLabel}</span>
         </div>
         <div className="twovtwo-player-side twovtwo-player-side-right">
-          <PlayerInfo player={ally} isMe={false} />
+          {ally.connected ? (
+            <PlayerInfo player={ally} isMe={false} />
+          ) : (
+            <div className="twovtwo-player-disconnected">
+              {lang === 'en' ? 'Disconnected' : '연결 끊김'}
+            </div>
+          )}
           <div className="twovtwo-hp">{renderHearts(ally.hp)}</div>
         </div>
       </div>

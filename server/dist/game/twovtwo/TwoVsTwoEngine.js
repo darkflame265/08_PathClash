@@ -108,7 +108,7 @@ function resolveTwoVsTwoMovement(params) {
     };
 }
 function positionsHaveEnoughOpenDirections(playerPositions, obstacles) {
-    return exports.TWO_VS_TWO_SLOTS.every((slot) => countOpenDirections(playerPositions[slot], obstacles) >= MIN_OPEN_DIRECTIONS);
+    return Object.values(playerPositions).every((position) => position && countOpenDirections(position, obstacles) >= MIN_OPEN_DIRECTIONS);
 }
 function pickObstacleLayout(candidates, playerPositions, obstacleCount) {
     const picked = [];

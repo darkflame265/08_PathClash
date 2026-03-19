@@ -61,7 +61,7 @@ export function isValidTwoVsTwoPath(
 export function generateTwoVsTwoObstacles(
   matchId: string,
   turn: number,
-  playerPositions: Record<TwoVsTwoSlot, Position>,
+  playerPositions: Partial<Record<TwoVsTwoSlot, Position>>,
   obstacleCount = MAX_OBSTACLES,
 ): Position[] {
   const occupied = new Set(
@@ -153,17 +153,17 @@ export function resolveTwoVsTwoMovement(params: {
 }
 
 function positionsHaveEnoughOpenDirections(
-  playerPositions: Record<TwoVsTwoSlot, Position>,
+  playerPositions: Partial<Record<TwoVsTwoSlot, Position>>,
   obstacles: Position[],
 ): boolean {
-  return TWO_VS_TWO_SLOTS.every(
-    (slot) => countOpenDirections(playerPositions[slot], obstacles) >= MIN_OPEN_DIRECTIONS,
+  return Object.values(playerPositions).every(
+    (position) => position && countOpenDirections(position, obstacles) >= MIN_OPEN_DIRECTIONS,
   );
 }
 
 function pickObstacleLayout(
   candidates: Position[],
-  playerPositions: Record<TwoVsTwoSlot, Position>,
+  playerPositions: Partial<Record<TwoVsTwoSlot, Position>>,
   obstacleCount: number,
 ): Position[] | null {
   const picked: Position[] = [];

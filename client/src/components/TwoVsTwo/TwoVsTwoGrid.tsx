@@ -345,7 +345,7 @@ export function TwoVsTwoGrid({
           .filter((player) => {
             const isHit = hitSlots.includes(player.slot);
             const isExploding = explodingSlots.includes(player.slot);
-            return player.hp > 0 || isHit || isExploding;
+            return (player.connected && player.hp > 0) || isHit || isExploding;
           })
           .map((player) => (
             <PlayerPiece

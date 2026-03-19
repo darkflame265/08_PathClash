@@ -13,6 +13,7 @@ export type TwoVsTwoResult = 'red' | 'blue' | 'draw';
 export interface TwoVsTwoPlayerState extends PlayerState {
   slot: TwoVsTwoSlot;
   team: TwoVsTwoTeam;
+  connected: boolean;
 }
 
 export interface TwoVsTwoClientPlayerState {
@@ -21,6 +22,7 @@ export interface TwoVsTwoClientPlayerState {
   color: TwoVsTwoTeam;
   slot: TwoVsTwoSlot;
   team: TwoVsTwoTeam;
+  connected: boolean;
   pieceSkin: PlayerState['pieceSkin'];
   hp: number;
   position: Position;

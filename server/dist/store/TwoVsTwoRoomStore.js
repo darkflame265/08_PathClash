@@ -77,7 +77,7 @@ class TwoVsTwoRoomStore {
         if (!room)
             return undefined;
         room.removePlayer(socketId);
-        if (room.playerCount === 0) {
+        if (room.connectedPlayerCount === 0 && room.currentPhase === 'waiting') {
             this.rooms.delete(roomId);
         }
         return room;
@@ -104,7 +104,7 @@ class TwoVsTwoRoomStore {
         for (const [roomId, room] of this.rooms.entries()) {
             const roomSocketIds = room.getSocketIds();
             const hasLiveSocket = roomSocketIds.some((socketId) => activeSocketIds.has(socketId));
-            const isEmptyRoom = room.playerCount === 0;
+            const isEmptyRoom = room.connectedPlayerCount === 0;
             const isStaleWaitingRoom = room.currentPhase === 'waiting' &&
                 now - room.lastActivityTimestamp >= TwoVsTwoRoomStore.WAITING_ROOM_TIMEOUT_MS;
             if (!isEmptyRoom && !(isStaleWaitingRoom && !hasLiveSocket)) {

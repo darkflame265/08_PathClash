@@ -62,6 +62,10 @@ export class TwoVsTwoRoom {
     return this.players.size;
   }
 
+  get connectedPlayerCount(): number {
+    return [...this.players.values()].filter((player) => player.connected).length;
+  }
+
   get currentPhase(): TwoVsTwoPhase {
     return this.phase;
   }
@@ -103,6 +107,7 @@ export class TwoVsTwoRoom {
       plannedPath: [],
       pathSubmitted: false,
       role: getSlotTeam(slot) === 'red' ? 'attacker' : 'escaper',
+      connected: true,
       stats,
     });
     socket.join(this.roomId);
@@ -113,15 +118,49 @@ export class TwoVsTwoRoom {
   removePlayer(socketId: string): void {
     for (const [slot, player] of this.players.entries()) {
       if (player.socketId !== socketId) continue;
-      this.players.delete(slot);
-      this.timer.clear();
-      this.clearPlanningGraceTimeout();
-      this.clearNextRoundTimeout();
-      this.readySockets.clear();
-      this.pendingStart = false;
-      this.phase = 'gameover';
-      this.gameResult = this.getWinningTeamOnDisconnect(slot);
+      if (this.phase === 'waiting' || this.pendingStart) {
+        this.players.delete(slot);
+        this.timer.clear();
+        this.clearPlanningGraceTimeout();
+        this.clearNextRoundTimeout();
+        this.readySockets.clear();
+        this.pendingStart = false;
+        this.touchActivity();
+        return;
+      }
+
+      player.connected = false;
+      player.hp = 0;
+      player.pathSubmitted = true;
+      player.plannedPath = [];
+      this.readySockets.delete(socketId);
       this.touchActivity();
+
+      const result = this.getDisconnectWinner();
+      if (result) {
+        this.timer.clear();
+        this.clearPlanningGraceTimeout();
+        this.clearNextRoundTimeout();
+        this.pendingStart = false;
+        this.phase = 'gameover';
+        this.gameResult = result;
+        this.io.to(this.roomId).emit('twovtwo_game_over', {
+          result,
+          message: 'A team disconnected.',
+        });
+        return;
+      }
+
+      this.io.to(this.roomId).emit('twovtwo_player_disconnected', {
+        slot,
+        state: this.toClientState(),
+      });
+
+      if (this.phase === 'planning' && this.allAlivePlayersSubmitted()) {
+        this.timer.clear();
+        this.clearPlanningGraceTimeout();
+        this.resolveRound();
+      }
       return;
     }
   }
@@ -151,7 +190,9 @@ export class TwoVsTwoRoom {
     this.touchActivity();
     const allReady =
       this.players.size === 4 &&
-      [...this.players.values()].every((entry) => this.readySockets.has(entry.socketId));
+      [...this.players.values()].every(
+        (entry) => entry.connected && this.readySockets.has(entry.socketId),
+      );
     if (!allReady) return false;
     this.startGame();
     return true;
@@ -168,7 +209,11 @@ export class TwoVsTwoRoom {
     this.phase = 'planning';
     this.resetPlayers();
     this.updateRoles();
-    this.obstacles = generateTwoVsTwoObstacles(this.roomId, this.turn, this.getPositions());
+    this.obstacles = generateTwoVsTwoObstacles(
+      this.roomId,
+      this.turn,
+      this.getActivePositions(),
+    );
     this.touchActivity();
     this.io.to(this.roomId).emit('twovtwo_game_start', this.toClientState());
     this.emitRoundStart();
@@ -177,7 +222,7 @@ export class TwoVsTwoRoom {
   updatePlannedPath(socketId: string, path: Position[]): void {
     if (this.phase !== 'planning') return;
     const player = this.getPlayerBySocket(socketId);
-    if (!player || player.pathSubmitted || player.hp <= 0) return;
+    if (!player || !player.connected || player.pathSubmitted || player.hp <= 0) return;
     const maxPoints = calcTwoVsTwoPathPoints(this.turn);
     if (!isValidTwoVsTwoPath(player.position, path, maxPoints, this.obstacles)) return;
     player.plannedPath = path;
@@ -192,7 +237,7 @@ export class TwoVsTwoRoom {
   submitPath(socketId: string, path: Position[]): { ok: boolean; acceptedPath: Position[] } {
     if (this.phase !== 'planning') return { ok: false, acceptedPath: [] };
     const player = this.getPlayerBySocket(socketId);
-    if (!player || player.pathSubmitted || player.hp <= 0) {
+    if (!player || !player.connected || player.pathSubmitted || player.hp <= 0) {
       return { ok: false, acceptedPath: [] };
     }
 
@@ -291,7 +336,9 @@ export class TwoVsTwoRoom {
   }
 
   getSocketIds(): string[] {
-    return [...this.players.values()].map((player) => player.socketId);
+    return [...this.players.values()]
+      .filter((player) => player.connected)
+      .map((player) => player.socketId);
   }
 
   toClientState(): TwoVsTwoClientState {
@@ -315,9 +362,13 @@ export class TwoVsTwoRoom {
     if (this.players.size < 4) return;
     this.phase = 'planning';
     this.updateRoles();
-    this.obstacles = generateTwoVsTwoObstacles(this.roomId, this.turn, this.getPositions());
+    this.obstacles = generateTwoVsTwoObstacles(
+      this.roomId,
+      this.turn,
+      this.getActivePositions(),
+    );
     for (const player of this.players.values()) {
-      player.pathSubmitted = player.hp <= 0;
+      player.pathSubmitted = !player.connected || player.hp <= 0;
       player.plannedPath = [];
     }
     const now = Date.now();
@@ -340,7 +391,7 @@ export class TwoVsTwoRoom {
       if (this.phase !== 'planning') return;
       const maxPoints = calcTwoVsTwoPathPoints(this.turn);
       for (const player of this.players.values()) {
-        if (player.pathSubmitted || player.hp <= 0) continue;
+        if (!player.connected || player.pathSubmitted || player.hp <= 0) continue;
         player.plannedPath = isValidTwoVsTwoPath(
           player.position,
           player.plannedPath,
@@ -390,19 +441,25 @@ export class TwoVsTwoRoom {
     this.nextRoundTimeout = setTimeout(() => {
       this.nextRoundTimeout = null;
       for (const slot of TWO_VS_TWO_SLOTS) {
-        const player = this.players.get(slot)!;
+      const player = this.players.get(slot)!;
+      if (player.connected) {
         player.position = resolution.ends[slot];
-        player.hp = resolution.hps[slot];
-        player.pathSubmitted = false;
-        player.plannedPath = [];
+      }
+      player.hp = resolution.hps[slot];
+      player.pathSubmitted = false;
+      player.plannedPath = [];
       }
 
       const redAlive =
-        (this.players.get('red_top')?.hp ?? 0) > 0 ||
-        (this.players.get('red_bottom')?.hp ?? 0) > 0;
+        ((this.players.get('red_top')?.connected ?? false) &&
+          (this.players.get('red_top')?.hp ?? 0) > 0) ||
+        ((this.players.get('red_bottom')?.connected ?? false) &&
+          (this.players.get('red_bottom')?.hp ?? 0) > 0);
       const blueAlive =
-        (this.players.get('blue_top')?.hp ?? 0) > 0 ||
-        (this.players.get('blue_bottom')?.hp ?? 0) > 0;
+        ((this.players.get('blue_top')?.connected ?? false) &&
+          (this.players.get('blue_top')?.hp ?? 0) > 0) ||
+        ((this.players.get('blue_bottom')?.connected ?? false) &&
+          (this.players.get('blue_bottom')?.hp ?? 0) > 0);
 
       if (!redAlive && !blueAlive) {
         this.phase = 'gameover';
@@ -431,6 +488,15 @@ export class TwoVsTwoRoom {
     ) as Record<TwoVsTwoSlot, Position>;
   }
 
+  private getActivePositions(): Partial<Record<TwoVsTwoSlot, Position>> {
+    return Object.fromEntries(
+      TWO_VS_TWO_SLOTS.filter((slot) => {
+        const player = this.players.get(slot);
+        return player?.connected && (player.hp ?? 0) > 0;
+      }).map((slot) => [slot, { ...this.players.get(slot)!.position }]),
+    ) as Partial<Record<TwoVsTwoSlot, Position>>;
+  }
+
   private getPlayerBySocket(socketId: string): TwoVsTwoPlayerState | undefined {
     return [...this.players.values()].find((player) => player.socketId === socketId);
   }
@@ -442,6 +508,7 @@ export class TwoVsTwoRoom {
       color: player.team,
       slot: player.slot,
       team: player.team,
+      connected: player.connected,
       pieceSkin: player.pieceSkin,
       hp: player.hp,
       position: { ...player.position },
@@ -460,6 +527,7 @@ export class TwoVsTwoRoom {
       player.position = { ...positions[slot] };
       player.pathSubmitted = false;
       player.plannedPath = [];
+      player.connected = true;
     }
   }
 
@@ -471,12 +539,22 @@ export class TwoVsTwoRoom {
 
   private allAlivePlayersSubmitted(): boolean {
     return [...this.players.values()].every(
-      (player) => player.hp <= 0 || player.pathSubmitted,
+      (player) => !player.connected || player.hp <= 0 || player.pathSubmitted,
     );
   }
 
-  private getWinningTeamOnDisconnect(disconnectedSlot: TwoVsTwoSlot): TwoVsTwoResult {
-    return getSlotTeam(disconnectedSlot) === 'red' ? 'blue' : 'red';
+  private getDisconnectWinner(): TwoVsTwoResult | null {
+    const redConnected = [...this.players.values()].some(
+      (player) => player.team === 'red' && player.connected,
+    );
+    const blueConnected = [...this.players.values()].some(
+      (player) => player.team === 'blue' && player.connected,
+    );
+
+    if (!redConnected && !blueConnected) return 'draw';
+    if (!redConnected) return 'blue';
+    if (!blueConnected) return 'red';
+    return null;
   }
 
   private clearPlanningGraceTimeout(): void {

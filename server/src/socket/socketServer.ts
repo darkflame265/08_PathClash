@@ -577,12 +577,6 @@ export function initSocketServer(io: Server): void {
         });
       }
 
-      if (twoVsTwoRoom && twoVsTwoRoom.playerCount > 0) {
-        io.to(twoVsTwoRoom.roomId).emit('twovtwo_game_over', {
-          result: twoVsTwoRoom.currentResult ?? 'draw',
-          message: 'A player disconnected.',
-        });
-      }
     });
   });
 }

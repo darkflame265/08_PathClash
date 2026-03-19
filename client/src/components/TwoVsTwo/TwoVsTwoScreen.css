@@ -50,6 +50,13 @@
   right: 0;
 }
 
+.twovtwo-player-disconnected {
+  color: #94a3b8;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
 .twovtwo-role-box {
   min-width: 120px;
   text-align: center;

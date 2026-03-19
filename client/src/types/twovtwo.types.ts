@@ -16,6 +16,7 @@ export interface TwoVsTwoClientPlayerState {
   color: TwoVsTwoTeam;
   slot: TwoVsTwoSlot;
   team: TwoVsTwoTeam;
+  connected: boolean;
   pieceSkin: PieceSkin;
   hp: number;
   position: Position;
