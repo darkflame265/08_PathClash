@@ -446,26 +446,34 @@ export function GameGrid({
         ))}
 
         {/* Pieces */}
-        <PlayerPiece
-          color="red"
-          position={redDisplayPos}
-          cellSize={responsiveCellSize}
-          isAttacker={gameState?.attackerColor === "red"}
-          isHit={hitEffect.red}
-          isExploding={explosionEffect === "red"}
-          isMe={myColor === "red"}
-          skin={redPieceSkin}
-        />
-        <PlayerPiece
-          color="blue"
-          position={blueDisplayPos}
-          cellSize={responsiveCellSize}
-          isAttacker={gameState?.attackerColor === "blue"}
-          isHit={hitEffect.blue}
-          isExploding={explosionEffect === "blue"}
-          isMe={myColor === "blue"}
-          skin={bluePieceSkin}
-        />
+        {(gameState?.players.red.hp ?? 0) > 0 ||
+        hitEffect.red ||
+        explosionEffect === "red" ? (
+          <PlayerPiece
+            color="red"
+            position={redDisplayPos}
+            cellSize={responsiveCellSize}
+            isAttacker={gameState?.attackerColor === "red"}
+            isHit={hitEffect.red}
+            isExploding={explosionEffect === "red"}
+            isMe={myColor === "red"}
+            skin={redPieceSkin}
+          />
+        ) : null}
+        {(gameState?.players.blue.hp ?? 0) > 0 ||
+        hitEffect.blue ||
+        explosionEffect === "blue" ? (
+          <PlayerPiece
+            color="blue"
+            position={blueDisplayPos}
+            cellSize={responsiveCellSize}
+            isAttacker={gameState?.attackerColor === "blue"}
+            isHit={hitEffect.blue}
+            isExploding={explosionEffect === "blue"}
+            isMe={myColor === "blue"}
+            skin={bluePieceSkin}
+          />
+        ) : null}
 
         {tutorialHint && tutorialAnchorPos && (
           <div
