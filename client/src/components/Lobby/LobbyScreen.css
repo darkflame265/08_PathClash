@@ -83,6 +83,54 @@
   flex-shrink: 0;
 }
 
+.daily-reward-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.daily-reward-badge-btn {
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  cursor: pointer;
+}
+
+.daily-reward-badge-btn:hover {
+  background: rgba(10, 25, 42, 0.88);
+  border-color: rgba(125, 211, 252, 0.34);
+}
+
+.daily-reward-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  left: auto;
+  z-index: 20;
+  width: min(18rem, calc(100vw - 3rem));
+  background: var(--panel, #1e252b);
+  border: 1px solid var(--tile-border, #3a444d);
+  border-radius: 0.9rem;
+  padding: 0.9rem 1rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  text-align: left;
+}
+
+.daily-reward-popover strong {
+  display: block;
+  color: var(--text, #f0f4f8);
+  font-size: 0.92rem;
+  margin-bottom: 0.6rem;
+}
+
+.daily-reward-popover p {
+  margin: 0;
+  color: var(--text-muted, #9aa4ae);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.daily-reward-popover p + p {
+  margin-top: 0.38rem;
+}
+
 .daily-reward-icon {
   font-size: 0.9rem;
   line-height: 1;

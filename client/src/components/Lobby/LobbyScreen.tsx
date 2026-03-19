@@ -218,6 +218,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart }: Props
   const [isTokenShopOpen, setIsTokenShopOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAudioSettingsOpen, setIsAudioSettingsOpen] = useState(false);
+  const [isDailyRewardInfoOpen, setIsDailyRewardInfoOpen] = useState(false);
   const [upgradeResult, setUpgradeResult] = useState<UpgradeResolution>({
     kind: "none",
   });
@@ -272,6 +273,24 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart }: Props
       : "같은 팀끼리 경로를 공유하며 싸우는 2v2 팀 대전 모드입니다.";
   const twoVsTwoStartLabel =
     lang === "en" ? "Start Match" : "매칭 시작";
+  const dailyRewardGuideTitle =
+    lang === "en" ? "📌 Daily Reward Info" : "📌 일일 보상 안내";
+  const dailyRewardGuideMax =
+    lang === "en"
+      ? "You can earn up to 120 tokens per day."
+      : "하루 최대 120 토큰까지 획득할 수 있습니다.";
+  const dailyRewardGuideDuel =
+    lang === "en"
+      ? "Duel / 2v2 Victory: +6 tokens"
+      : "대결전 / 2v2 대전 승리: +6 토큰";
+  const dailyRewardGuideCoop =
+    lang === "en" ? "Co-op Victory: +12 tokens" : "협동전 승리: +12 토큰";
+  const dailyRewardGuideAi =
+    lang === "en" ? "AI Match: no tokens" : "AI 대전: 토큰 없음";
+  const dailyRewardGuideReset =
+    lang === "en"
+      ? "Daily rewards reset every day at UTC 00:00."
+      : "일일 보상은 매일 UTC 00:00에 초기화됩니다.";
   const skinModalTitle =
     lang === "en"
       ? "Choose Piece Skin"
@@ -1333,13 +1352,32 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart }: Props
           <div className={`lobby-card ${isMatchmaking && currentMatchType === "random" ? "is-matchmaking" : ""}`}>
             <div className="lobby-card-title-row">
               <h2 data-step="4">{t.randomTitle}</h2>
-              <div className="daily-reward-badge" aria-label="Daily tokens earned">
-                <span className="daily-reward-icon" aria-hidden="true">
-                  {"💎"}
-                </span>
-                <span>{accountDailyRewardTokens}</span>
-                <span className="daily-reward-separator">/</span>
-                <span>120</span>
+              <div className="daily-reward-wrap">
+                <button
+                  className="daily-reward-badge daily-reward-badge-btn"
+                  aria-label="Daily tokens earned"
+                  type="button"
+                  onClick={() =>
+                    setIsDailyRewardInfoOpen((prev) => !prev)
+                  }
+                >
+                  <span className="daily-reward-icon" aria-hidden="true">
+                    {"💎"}
+                  </span>
+                  <span>{accountDailyRewardTokens}</span>
+                  <span className="daily-reward-separator">/</span>
+                  <span>120</span>
+                </button>
+                {isDailyRewardInfoOpen && (
+                  <div className="daily-reward-popover" role="dialog" aria-label={dailyRewardGuideTitle}>
+                    <strong>{dailyRewardGuideTitle}</strong>
+                    <p>{dailyRewardGuideMax}</p>
+                    <p>{dailyRewardGuideDuel}</p>
+                    <p>{dailyRewardGuideCoop}</p>
+                    <p>{dailyRewardGuideAi}</p>
+                    <p>{dailyRewardGuideReset}</p>
+                  </div>
+                )}
               </div>
             </div>
             {isMatchmaking && currentMatchType === "random" ? (
