@@ -87,18 +87,20 @@ export function PlayerPiece({
         ['--arc-reactor-scale' as string]: `${innerSize / 250}`,
       }}
     >
-      {isAttacker && <div className={`attacker-glow glow-${color}`} />}
-      <div className="piece-inner">
-        {isFlagSkin(skin) && <FlagSkin id={skin} />}
-        {skin === "plasma" && <PlasmaGame />}
-        {skin === "gold_core" && <GoldCoreGame />}
-        {skin === "neon_pulse" && <NeonPulseGame />}
-        {skin === "cosmic" && <CosmicGame />}
-        {skin === "inferno" && <InfernoGame />}
-        {skin === "arc_reactor" && <ArcReactorGame />}
-        {skin === "electric_core" && <ElectricCoreGame />}
-        {skin === "atomic" && <AtomicGame cellSize={cellSize} />}
-        {skin === "quantum" && <QuantumGame />}
+      <div className="piece-visual">
+        {isAttacker && <div className={`attacker-glow glow-${color}`} />}
+        <div className="piece-inner">
+          {isFlagSkin(skin) && <FlagSkin id={skin} />}
+          {skin === "plasma" && <PlasmaGame />}
+          {skin === "gold_core" && <GoldCoreGame />}
+          {skin === "neon_pulse" && <NeonPulseGame />}
+          {skin === "cosmic" && <CosmicGame />}
+          {skin === "inferno" && <InfernoGame />}
+          {skin === "arc_reactor" && <ArcReactorGame />}
+          {skin === "electric_core" && <ElectricCoreGame />}
+          {skin === "atomic" && <AtomicGame cellSize={cellSize} />}
+          {skin === "quantum" && <QuantumGame />}
+        </div>
       </div>
     </div>
   );
