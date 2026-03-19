@@ -45,6 +45,11 @@
   text-align: right;
 }
 
+.twovtwo-player-side-right .profile-box {
+  left: auto;
+  right: 0;
+}
+
 .twovtwo-role-box {
   min-width: 120px;
   text-align: center;
