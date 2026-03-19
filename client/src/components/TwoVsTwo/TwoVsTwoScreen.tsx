@@ -117,6 +117,12 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     currentSlotRef.current = currentSlot;
   }, [currentSlot]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, []);
+
   const clearAnimationTimeout = useCallback(() => {
     if (timeoutRef.current !== null) {
       window.clearTimeout(timeoutRef.current);
