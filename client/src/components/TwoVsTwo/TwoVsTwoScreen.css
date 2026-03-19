@@ -22,10 +22,26 @@
   flex-direction: column;
   gap: 8px;
   min-width: 0;
+  align-items: flex-start;
+  text-align: left;
 }
 
 .twovtwo-player-side-right {
   align-items: flex-end;
+  text-align: right;
+}
+
+.twovtwo-player-side .player-info,
+.twovtwo-player-side .nickname-btn,
+.twovtwo-player-side .twovtwo-hp {
+  align-self: flex-start;
+  text-align: left;
+}
+
+.twovtwo-player-side-right .player-info,
+.twovtwo-player-side-right .nickname-btn,
+.twovtwo-player-side-right .twovtwo-hp {
+  align-self: flex-end;
   text-align: right;
 }
 
