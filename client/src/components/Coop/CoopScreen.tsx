@@ -61,6 +61,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
   const portalHitTimeoutsRef = useRef<number[]>([]);
   const playerHitTimeoutsRef = useRef<number[]>([]);
   const stepEffectTimeoutsRef = useRef<number[]>([]);
+  const portalsRef = useRef<CoopPortal[]>([]);
 
   const currentColor = myColor ?? "red";
   const allyColor: PlayerColor = currentColor === "red" ? "blue" : "red";
@@ -99,6 +100,10 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
     setEnemyDisplayPositions(buildEnemyDisplayMap(state.enemies));
     setPortals(state.portals);
   }, []);
+
+  useEffect(() => {
+    portalsRef.current = portals;
+  }, [portals]);
 
   const applyState = useCallback(
     (state: CoopClientState) => {
@@ -170,6 +175,15 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
         const portalHits = portalHitsByStep.get(step) ?? [];
         if (portalHits.length > 0) {
           const stepPortalEffectTimeoutId = window.setTimeout(() => {
+            const store = useGameStore.getState();
+            const hitPortals = portalsRef.current.filter((portal) =>
+              portalHits.some((entry) => entry.portalId === portal.id),
+            );
+
+            for (const portal of hitPortals) {
+              store.triggerCollisionEffect(portal.position);
+            }
+
             setPortals((prev) =>
               prev.flatMap((portal) => {
                 const hit = portalHits.find((entry) => entry.portalId === portal.id);
