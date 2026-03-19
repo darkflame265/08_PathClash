@@ -3,7 +3,6 @@ import { getSocket } from "../../socket/socketClient";
 import { registerSocketHandlers } from "../../socket/socketHandlers";
 import { useGameStore } from "../../store/gameStore";
 import { useLang } from "../../hooks/useLang";
-import { ChatPanel } from "./ChatPanel";
 import { GameGrid } from "./GameGrid";
 import { GameOverOverlay } from "./GameOverOverlay";
 import { HpDisplay } from "./HpDisplay";
@@ -358,8 +357,6 @@ export function GameScreen({ onLeaveToLobby }: Props) {
           pathPointsLabel={t.pathPoints}
         />
       </div>
-
-      <ChatPanel />
       {tutorialStep === 1 && (
         <div
           className="ai-tutorial-hint no-arrow"

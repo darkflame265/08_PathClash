@@ -11,7 +11,6 @@ import type {
   TwoVsTwoRoundStartPayload,
   TwoVsTwoSlot,
 } from '../../types/twovtwo.types';
-import { ChatPanel } from '../Game/ChatPanel';
 import { TimerBar } from '../Game/TimerBar';
 import { PlayerInfo } from '../Game/PlayerInfo';
 import { TwoVsTwoGrid } from './TwoVsTwoGrid';
@@ -598,8 +597,6 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
           {mySubmitted && state.phase === 'planning' ? ` · ${lang === 'en' ? 'ready' : '준비 완료'}` : ''}
         </div>
       </div>
-
-      <ChatPanel />
     </div>
   );
 }

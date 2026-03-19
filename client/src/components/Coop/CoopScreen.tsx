@@ -12,7 +12,6 @@ import type {
   CoopRoundStartPayload,
 } from "../../types/coop.types";
 import { playHit } from "../../utils/soundUtils";
-import { ChatPanel } from "../Game/ChatPanel";
 import { HpDisplay } from "../Game/HpDisplay";
 import { PlayerInfo } from "../Game/PlayerInfo";
 import { TimerBar } from "../Game/TimerBar";
@@ -535,8 +534,6 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
           {myPath.length} / {coopState.pathPoints}
         </div>
       </div>
-
-      <ChatPanel />
     </div>
   );
 }
