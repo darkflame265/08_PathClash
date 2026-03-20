@@ -498,6 +498,12 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     getSocket().emit('request_rematch');
     setRematchRequestSent(true);
   };
+  const rewardCopy =
+    state.phase === 'gameover' && state.gameResult === myTeam
+      ? lang === 'en'
+        ? '+6 Tokens'
+        : '+6 토큰 획득'
+      : null;
 
   return (
     <div
@@ -558,6 +564,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
                   {resultCopy}
                 </div>
                 {gameOverMessage && <div className="gameover-message">{gameOverMessage}</div>}
+                {rewardCopy && <div className="gameover-reward">{rewardCopy}</div>}
                 {rematchRequested && (
                   <div className="rematch-notice">
                     {lang === 'en' ? 'A player requested rematch.' : '한 플레이어가 재도전을 요청했습니다.'}
@@ -653,3 +660,5 @@ function renderHearts(hp: number) {
     </span>
   ));
 }
+
+

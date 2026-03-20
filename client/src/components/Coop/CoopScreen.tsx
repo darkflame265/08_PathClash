@@ -445,6 +445,12 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
     getSocket().emit("request_rematch");
     setRematchRequestSent(true);
   };
+  const rewardCopy =
+    coopState.phase === "gameover" && coopState.gameResult === "win"
+      ? lang === "en"
+        ? "+12 Tokens"
+        : "+12 토큰 획득"
+      : null;
 
   return (
     <div className="game-screen coop-screen">
@@ -490,6 +496,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
                   {resultCopy}
                 </div>
                 {gameOverMessage && <div className="gameover-message">{gameOverMessage}</div>}
+                {rewardCopy && <div className="gameover-reward">{rewardCopy}</div>}
                 {rematchRequested && (
                   <div className="rematch-notice">
                     {lang === "en" ? "Teammate requested rematch." : "팀원이 재도전을 요청했습니다."}

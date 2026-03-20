@@ -248,6 +248,8 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   const opponentColor = myColor === "red" ? "blue" : "red";
   const me = myColor ? gameState.players[myColor] : null;
   const opponent = gameState.players[opponentColor];
+  const winRewardTokens =
+    winner && myColor && winner === myColor && currentMatchType === "random" ? 6 : null;
 
   return (
     <div
@@ -302,7 +304,11 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       <div className="gs-board-stage">
         {winner && (
           <div className="gs-result-slot">
-            <GameOverOverlay winner={winner} myColor={myColor!} />
+            <GameOverOverlay
+              winner={winner}
+              myColor={myColor!}
+              rewardTokens={winRewardTokens}
+            />
           </div>
         )}
 
