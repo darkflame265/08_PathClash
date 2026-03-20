@@ -8,6 +8,7 @@ import type {
   TwoVsTwoResolutionPayload,
   TwoVsTwoSlot,
 } from '../types/twovtwo.types';
+import type { AbilitySkillId } from '../types/ability.types';
 import { type Lang } from '../i18n/translations';
 
 export interface AnimationState {
@@ -42,8 +43,9 @@ interface GameStore {
   ownedSkins: PieceSkin[];
   accountDailyRewardWins: number;
   accountDailyRewardTokens: number;
-  currentMatchType: "friend" | "random" | "ai" | "coop" | "2v2" | null;
+  currentMatchType: "friend" | "random" | "ai" | "coop" | "2v2" | "ability" | null;
   twoVsTwoSlot: "red_top" | "red_bottom" | "blue_top" | "blue_bottom" | null;
+  abilityLoadout: AbilitySkillId[];
 
   // Game
   gameState: ClientGameState | null;
@@ -105,8 +107,9 @@ interface GameStore {
   }) => void;
   setMyColor: (c: PlayerColor) => void;
   setRoomCode: (c: string) => void;
-  setMatchType: (matchType: "friend" | "random" | "ai" | "coop" | "2v2" | null) => void;
+  setMatchType: (matchType: "friend" | "random" | "ai" | "coop" | "2v2" | "ability" | null) => void;
   setTwoVsTwoSlot: (slot: "red_top" | "red_bottom" | "blue_top" | "blue_bottom" | null) => void;
+  setAbilityLoadout: (skills: AbilitySkillId[]) => void;
   setGameState: (gs: ClientGameState) => void;
   setRoundInfo: (r: RoundStartPayload) => void;
   setMyPath: (p: Position[]) => void;
@@ -142,6 +145,7 @@ const INITIAL_RED: Position = { row: 2, col: 0 };
 const INITIAL_BLUE: Position = { row: 2, col: 4 };
 const AUDIO_PREFS_KEY = 'audioPrefs';
 const PIECE_SKIN_KEY = 'pieceSkin';
+const ABILITY_LOADOUT_KEY = 'abilityLoadout';
 
 function getStoredAudioPrefs() {
   const raw = localStorage.getItem(AUDIO_PREFS_KEY);
@@ -218,6 +222,20 @@ const initialPieceSkin = (() => {
     ? stored
     : 'classic';
 })();
+const initialAbilityLoadout = (() => {
+  const raw = localStorage.getItem(ABILITY_LOADOUT_KEY);
+  if (!raw) return ['classic_guard'] as AbilitySkillId[];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return ['classic_guard'] as AbilitySkillId[];
+    const normalized = parsed.filter((value): value is AbilitySkillId =>
+      value === 'classic_guard' || value === 'ember_blast' || value === 'quantum_shift',
+    );
+    return normalized.length > 0 ? normalized.slice(0, 3) : (['classic_guard'] as AbilitySkillId[]);
+  } catch {
+    return ['classic_guard'] as AbilitySkillId[];
+  }
+})();
 
 export const useGameStore = create<GameStore>((set, get) => ({
   myNickname: '',
@@ -235,6 +253,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   accountDailyRewardTokens: 0,
   currentMatchType: null,
   twoVsTwoSlot: null,
+  abilityLoadout: initialAbilityLoadout,
   gameState: null,
   myPath: [],
   opponentSubmitted: false,
@@ -307,6 +326,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setRoomCode: (c) => set({ roomCode: c }),
   setMatchType: (matchType) => set({ currentMatchType: matchType }),
   setTwoVsTwoSlot: (slot) => set({ twoVsTwoSlot: slot }),
+  setAbilityLoadout: (skills) => {
+    const next = skills.slice(0, 3);
+    localStorage.setItem(ABILITY_LOADOUT_KEY, JSON.stringify(next));
+    set({ abilityLoadout: next });
+  },
 
   setGameState: (gs) =>
     set(() => ({
@@ -536,6 +560,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     roomCode: '',
     currentMatchType: null,
     twoVsTwoSlot: null,
+    abilityLoadout: get().abilityLoadout,
     gameState: null,
     myPath: [],
     opponentSubmitted: false,

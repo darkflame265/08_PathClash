@@ -5,7 +5,10 @@ import { CoopRoom } from '../game/coop/CoopRoom';
 import { CoopRoomStore } from '../store/CoopRoomStore';
 import { TwoVsTwoRoom } from '../game/twovtwo/TwoVsTwoRoom';
 import { TwoVsTwoRoomStore } from '../store/TwoVsTwoRoomStore';
+import { AbilityRoom } from '../game/ability/AbilityRoom';
+import { AbilityRoomStore } from '../store/AbilityRoomStore';
 import { PieceSkin, Position } from '../types/game.types';
+import type { AbilitySkillId, AbilitySkillReservation } from '../game/ability/AbilityTypes';
 import {
   AuthPayload,
   finalizeGoogleUpgrade,
@@ -19,6 +22,7 @@ export function initSocketServer(io: Server): void {
   const store = RoomStore.getInstance();
   const coopStore = CoopRoomStore.getInstance();
   const twoVsTwoStore = TwoVsTwoRoomStore.getInstance();
+  const abilityStore = AbilityRoomStore.getInstance();
   const activeUserSockets = new Map<string, string>();
   const socketUsers = new Map<string, string>();
   const authCacheTtlMs = 10 * 60 * 1000;
@@ -38,6 +42,7 @@ export function initSocketServer(io: Server): void {
     store.sweep(activeSocketIds);
     coopStore.sweep(activeSocketIds);
     twoVsTwoStore.sweep(activeSocketIds);
+    abilityStore.sweep(activeSocketIds);
   }, roomSweepIntervalMs);
 
   const tryStartTwoVsTwoTeamMatch = () => {
@@ -417,12 +422,114 @@ export function initSocketServer(io: Server): void {
       }
     });
 
+    socket.on(
+      'join_ability',
+      async (
+        {
+          nickname,
+          auth,
+          pieceSkin,
+          equippedSkills,
+        }: {
+          nickname: string;
+          auth?: AuthPayload;
+          pieceSkin?: PieceSkin;
+          equippedSkills: AbilitySkillId[];
+        },
+      ) => {
+        await registerSocketSession(socket, auth);
+        const profile = await resolvePlayerProfile(auth, nickname);
+        const queued = abilityStore.dequeue();
+        if (!queued || queued.socketId === socket.id) {
+          if (queued) {
+            abilityStore.enqueue(
+              queued.socketId,
+              queued.nickname,
+              queued.userId,
+              queued.stats,
+              queued.pieceSkin,
+              queued.equippedSkills,
+            );
+          }
+          abilityStore.enqueue(
+            socket.id,
+            profile.nickname,
+            profile.userId,
+            profile.stats,
+            pieceSkin ?? 'classic',
+            equippedSkills,
+          );
+          socket.emit('ability_matchmaking_waiting', {});
+          return;
+        }
+
+        const roomId = abilityStore.generateRoomId();
+        const room = new AbilityRoom(roomId, roomId, io);
+        abilityStore.add(room);
+
+        const queuedSocket = io.sockets.sockets.get(queued.socketId);
+        if (!queuedSocket) {
+          abilityStore.enqueue(
+            socket.id,
+            profile.nickname,
+            profile.userId,
+            profile.stats,
+            pieceSkin ?? 'classic',
+            equippedSkills,
+          );
+          socket.emit('ability_matchmaking_waiting', {});
+          return;
+        }
+
+        room.addPlayer(
+          queuedSocket,
+          queued.nickname,
+          queued.userId,
+          queued.stats,
+          queued.pieceSkin,
+          queued.equippedSkills,
+        );
+        abilityStore.registerSocket(queued.socketId, roomId);
+        queuedSocket.emit('ability_room_joined', {
+          roomId,
+          color: 'red',
+          opponentNickname: profile.nickname,
+        });
+
+        room.addPlayer(
+          socket,
+          profile.nickname,
+          profile.userId,
+          profile.stats,
+          pieceSkin ?? 'classic',
+          equippedSkills,
+        );
+        abilityStore.registerSocket(socket.id, roomId);
+        socket.emit('ability_room_joined', {
+          roomId,
+          color: 'blue',
+          opponentNickname: queued.nickname,
+        });
+
+        room.prepareGameStart();
+      },
+    );
+
     socket.on('cancel_2v2', () => {
       twoVsTwoStore.removeFromQueue(socket.id);
     });
 
+    socket.on('cancel_ability', () => {
+      abilityStore.removeFromQueue(socket.id);
+    });
+
     socket.on('twovtwo_client_ready', () => {
       const room = twoVsTwoStore.getBySocket(socket.id);
+      room?.markClientReady(socket.id);
+    });
+
+    socket.on('ability_client_ready', () => {
+      const room = abilityStore.getBySocket(socket.id);
       room?.markClientReady(socket.id);
     });
 
@@ -432,6 +539,20 @@ export function initSocketServer(io: Server): void {
     });
 
     socket.on(
+      'ability_plan_update',
+      ({
+        path,
+        skills,
+      }: {
+        path: Position[];
+        skills: AbilitySkillReservation[];
+      }) => {
+        const room = abilityStore.getBySocket(socket.id);
+        room?.updatePlan(socket.id, path, skills);
+      },
+    );
+
+    socket.on(
       'twovtwo_submit_path',
       (
         { path }: { path: Position[] },
@@ -439,6 +560,35 @@ export function initSocketServer(io: Server): void {
       ) => {
         const room = twoVsTwoStore.getBySocket(socket.id);
         const result = room?.submitPath(socket.id, path) ?? { ok: false, acceptedPath: [] };
+        ack?.(result);
+      },
+    );
+
+    socket.on(
+      'ability_submit_plan',
+      (
+        {
+          path,
+          skills,
+        }: {
+          path: Position[];
+          skills: AbilitySkillReservation[];
+        },
+        ack?: (
+          response: {
+            ok: boolean;
+            acceptedPath: Position[];
+            acceptedSkills: AbilitySkillReservation[];
+          },
+        ) => void,
+      ) => {
+        const room = abilityStore.getBySocket(socket.id);
+        const result =
+          room?.submitPlan(socket.id, path, skills) ?? {
+            ok: false,
+            acceptedPath: [],
+            acceptedSkills: [],
+          };
         ack?.(result);
       },
     );
@@ -453,6 +603,12 @@ export function initSocketServer(io: Server): void {
     });
 
     socket.on('request_rematch', () => {
+      const abilityRoom = abilityStore.getBySocket(socket.id);
+      if (abilityRoom) {
+        abilityRoom.requestRematch(socket.id);
+        return;
+      }
+
       const twoVsTwoRoom = twoVsTwoStore.getBySocket(socket.id);
       if (twoVsTwoRoom) {
         const result = twoVsTwoRoom.requestRematch(socket.id);
@@ -515,7 +671,12 @@ export function initSocketServer(io: Server): void {
         return;
       }
       const twoVsTwoRoom = twoVsTwoStore.getBySocket(socket.id);
-      twoVsTwoRoom?.sendChat(socket.id, message);
+      if (twoVsTwoRoom) {
+        twoVsTwoRoom.sendChat(socket.id, message);
+        return;
+      }
+      const abilityRoom = abilityStore.getBySocket(socket.id);
+      abilityRoom?.sendChat(socket.id, message);
     });
 
     socket.on('update_piece_skin', ({ pieceSkin }: { pieceSkin: PieceSkin }) => {
@@ -530,7 +691,12 @@ export function initSocketServer(io: Server): void {
         return;
       }
       const twoVsTwoRoom = twoVsTwoStore.getBySocket(socket.id);
-      twoVsTwoRoom?.updatePlayerSkin(socket.id, pieceSkin);
+      if (twoVsTwoRoom) {
+        twoVsTwoRoom.updatePlayerSkin(socket.id, pieceSkin);
+        return;
+      }
+      const abilityRoom = abilityStore.getBySocket(socket.id);
+      abilityRoom?.updatePlayerSkin(socket.id, pieceSkin);
     });
 
     socket.on('coop_path_update', ({ path }: { path: Position[] }) => {
@@ -550,9 +716,11 @@ export function initSocketServer(io: Server): void {
       store.removeFromQueue(socket.id);
       coopStore.removeFromQueue(socket.id);
       twoVsTwoStore.removeFromQueue(socket.id);
+      abilityStore.removeFromQueue(socket.id);
       const { room, disconnectResult } = store.removeSocket(socket.id);
       const coopRoom = coopStore.removeSocket(socket.id);
       const twoVsTwoRoom = twoVsTwoStore.removeSocket(socket.id);
+      const abilityRoom = abilityStore.removeSocket(socket.id);
 
       if (
         room &&
@@ -575,6 +743,22 @@ export function initSocketServer(io: Server): void {
           result: 'lose',
           message: 'Ally disconnected.',
         });
+      }
+
+      if (
+        abilityRoom.room &&
+        abilityRoom.disconnectResult.shouldAwardDisconnectResult &&
+        abilityRoom.disconnectResult.winnerColor
+      ) {
+        const winner = abilityRoom.room.getPlayerByColor(abilityRoom.disconnectResult.winnerColor);
+        void recordMatchmakingResult(
+          winner?.userId ?? null,
+          socket.data.userId ?? null,
+        );
+      }
+
+      if (abilityRoom.room && abilityRoom.room.playerCount > 0) {
+        io.to(abilityRoom.room.roomId).emit('opponent_disconnected', {});
       }
 
     });

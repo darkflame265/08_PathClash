@@ -28,6 +28,7 @@ import { useGameStore } from "../../store/gameStore";
 import { useLang } from "../../hooks/useLang";
 import type { Translations } from "../../i18n/translations";
 import type { PieceSkin } from "../../types/game.types";
+import { ABILITY_SKILLS, type AbilitySkillId } from "../../types/ability.types";
 import "./LobbyScreen.css";
 
 type LobbyView = "main" | "create" | "join";
@@ -36,6 +37,7 @@ interface Props {
   onGameStart: () => void;
   onCoopStart: () => void;
   onTwoVsTwoStart: () => void;
+  onAbilityStart: () => void;
 }
 
 const POLICY_URL_KR =
@@ -176,7 +178,7 @@ function AccountCard({
   );
 }
 
-export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart }: Props) {
+export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbilityStart }: Props) {
   const {
     myNickname,
     setNickname,
@@ -193,6 +195,8 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart }: Props
     setAuthState,
     setMatchType,
     setTwoVsTwoSlot,
+    abilityLoadout,
+    setAbilityLoadout,
     currentMatchType,
     setPlayerPieceSkins,
     isMusicMuted,
@@ -218,6 +222,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart }: Props
   const [isTokenShopOpen, setIsTokenShopOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAudioSettingsOpen, setIsAudioSettingsOpen] = useState(false);
+  const [isAbilityLoadoutOpen, setIsAbilityLoadoutOpen] = useState(false);
   const [isDailyRewardInfoOpen, setIsDailyRewardInfoOpen] = useState(false);
   const [upgradeResult, setUpgradeResult] = useState<UpgradeResolution>({
     kind: "none",
@@ -273,6 +278,18 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart }: Props
       : "같은 팀끼리 경로를 공유하며 싸우는 2v2 팀 대전 모드입니다.";
   const twoVsTwoStartLabel =
     lang === "en" ? "Start Match" : "매칭 시작";
+  const abilityBattleTitle = lang === "en" ? "Ability Battle" : "능력 대전";
+  const abilityBattleDesc =
+    lang === "en"
+      ? "A duel mode where movement and skill timing are planned together."
+      : "이동 경로와 스킬 발동 시점을 함께 설계하는 1대1 스킬 대전 모드입니다.";
+  const abilityBattleStartLabel = lang === "en" ? "Start Match" : "매칭 시작";
+  const abilityLoadoutTitle = lang === "en" ? "Equipped Skills" : "장착 스킬";
+  const abilityLoadoutDesc =
+    lang === "en"
+      ? "Select up to 3 skills you want to bring into Ability Battle."
+      : "능력 대전에 가져갈 스킬을 최대 3개까지 선택하세요.";
+  const abilityLoadoutCount = lang === "en" ? "equipped" : "장착 중";
   const dailyRewardGuideTitle =
     lang === "en" ? "📌 Daily Reward Info" : "📌 일일 보상 안내";
   const dailyRewardGuideMax =
@@ -722,6 +739,14 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart }: Props
   };
   const currentSkinName =
     skinChoices.find((choice) => choice.id === pieceSkin)?.name ?? pieceSkin;
+  const availableAbilitySkills = ([
+    ABILITY_SKILLS.classic_guard,
+    ownedSkins.includes("ember") ? ABILITY_SKILLS.ember_blast : null,
+    ownedSkins.includes("quantum") ? ABILITY_SKILLS.quantum_shift : null,
+  ].filter(Boolean) as typeof ABILITY_SKILLS[keyof typeof ABILITY_SKILLS][]);
+  const equippedAbilitySkillDefs = abilityLoadout
+    .map((skillId) => ABILITY_SKILLS[skillId])
+    .filter(Boolean);
   const syncAccountSummary = useCallback(() => {
     return refreshAccountSummary().then(({
       nickname,
@@ -913,6 +938,8 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart }: Props
     socket.off("coop_matchmaking_waiting");
     socket.off("twovtwo_room_joined");
     socket.off("twovtwo_matchmaking_waiting");
+    socket.off("ability_room_joined");
+    socket.off("ability_matchmaking_waiting");
 
     socket.on(
       "room_created",
@@ -1071,6 +1098,29 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart }: Props
       setIsMatchmaking(true);
     });
 
+    socket.on(
+      "ability_room_joined",
+      ({
+        roomId,
+        color,
+      }: {
+        roomId: string;
+        color: "red" | "blue";
+        opponentNickname: string;
+      }) => {
+        setMyColor(color);
+        setRoomCode(roomId);
+        setError("");
+        setIsMatchmaking(false);
+        onAbilityStart();
+      },
+    );
+
+    socket.on("ability_matchmaking_waiting", () => {
+      setError("");
+      setIsMatchmaking(true);
+    });
+
     return socket;
   };
 
@@ -1157,6 +1207,36 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart }: Props
     setMatchType("2v2");
     const socket = startSocket();
     socket.emit("join_2v2", await buildPlayerPayload());
+  };
+
+  const handleAbilityMatch = async () => {
+    setError("");
+    setMatchType("ability");
+    const socket = startSocket();
+    socket.emit("join_ability", {
+      ...(await buildPlayerPayload()),
+      equippedSkills: abilityLoadout,
+    });
+  };
+
+  const handleCancelAbility = () => {
+    const socket = connectSocket();
+    socket.emit("cancel_ability");
+    setIsMatchmaking(false);
+    setMatchType(null);
+  };
+
+  const handleToggleAbilitySkill = (skillId: AbilitySkillId) => {
+    const isEquipped = abilityLoadout.includes(skillId);
+    if (isEquipped) {
+      setAbilityLoadout(abilityLoadout.filter((value) => value !== skillId));
+      return;
+    }
+    if (abilityLoadout.length >= 3) {
+      window.alert(lang === "en" ? "You can equip up to 3 skills." : "스킬은 최대 3개까지 장착할 수 있습니다.");
+      return;
+    }
+    setAbilityLoadout([...abilityLoadout, skillId]);
   };
 
   const handleLinkGoogle = async () => {
@@ -1449,6 +1529,47 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart }: Props
               </button>
             )}
           </div>
+
+          <div className={`lobby-card ${isMatchmaking && currentMatchType === "ability" ? "is-matchmaking" : ""}`}>
+            <div className="lobby-card-head-row">
+              <h2 data-step="7">{abilityBattleTitle}</h2>
+              <button
+                className="lobby-btn secondary lobby-head-btn"
+                type="button"
+                onClick={() => setIsAbilityLoadoutOpen(true)}
+              >
+                {abilityLoadoutTitle}
+              </button>
+            </div>
+            <p>{abilityBattleDesc}</p>
+            <div className="ability-loadout-chip-row">
+              {equippedAbilitySkillDefs.map((skill) => (
+                <span key={skill.id} className="ability-loadout-chip">
+                  <span aria-hidden="true">{skill.icon}</span>
+                  <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
+                </span>
+              ))}
+            </div>
+            {isMatchmaking && currentMatchType === "ability" ? (
+              <>
+                <div className="matchmaking-status">
+                  <div className="matchmaking-status-head">
+                    <span className="matchmaking-dot" />
+                    <strong>{t.matchmakingHead}</strong>
+                  </div>
+                  <div className="spinner" />
+                  <p>{t.matchmakingDesc}</p>
+                </div>
+                <button className="lobby-btn cancel" onClick={handleCancelAbility}>
+                  {t.cancelBtn}
+                </button>
+              </>
+            ) : (
+              <button className="lobby-btn accent" onClick={() => void handleAbilityMatch()}>
+                {abilityBattleStartLabel}
+              </button>
+            )}
+          </div>
         </>
       )}
 
@@ -1630,6 +1751,66 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart }: Props
               <button
                 className="lobby-btn secondary"
                 onClick={() => setIsTokenShopOpen(false)}
+                type="button"
+              >
+                {skinApplyLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isAbilityLoadoutOpen && (
+        <div
+          className="upgrade-modal-backdrop"
+          onClick={() => setIsAbilityLoadoutOpen(false)}
+        >
+          <div
+            className="upgrade-modal skin-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="skin-modal-head">
+              <h3>{abilityLoadoutTitle}</h3>
+              <div className="skin-token-badge" aria-label="Ability loadout count">
+                <span className="skin-token-badge-main">
+                  <span>{equippedAbilitySkillDefs.length} / 3</span>
+                  <span>{abilityLoadoutCount}</span>
+                </span>
+              </div>
+            </div>
+            <p>{abilityLoadoutDesc}</p>
+            <div className="skin-option-list">
+              {availableAbilitySkills.map((skill) => {
+                const equipped = abilityLoadout.includes(skill.id);
+                return (
+                  <button
+                    key={skill.id}
+                    className={`skin-option-card ${equipped ? "is-selected" : ""}`}
+                    type="button"
+                    onClick={() => handleToggleAbilitySkill(skill.id)}
+                  >
+                    <span className="skin-preview ability-skill-preview" aria-hidden="true">
+                      {skill.icon}
+                    </span>
+                    <span className="skin-option-copy">
+                      <strong>{lang === "en" ? skill.name.en : skill.name.kr}</strong>
+                      <span>{lang === "en" ? skill.description.en : skill.description.kr}</span>
+                    </span>
+                    <span className="skin-lock-meta ability-skill-meta">
+                      <span className="skin-lock-icon" aria-hidden="true">✨</span>
+                      <span>
+                        {lang === "en"
+                          ? `${skill.manaCost} mana · ${skill.category}`
+                          : `마나 ${skill.manaCost} · ${skill.category === "attack" ? "공격" : skill.category === "defense" ? "방어" : "유틸"}`}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="upgrade-modal-actions">
+              <button
+                className="lobby-btn primary"
+                onClick={() => setIsAbilityLoadoutOpen(false)}
                 type="button"
               >
                 {skinApplyLabel}

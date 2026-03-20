@@ -34,8 +34,13 @@ const TwoVsTwoScreen = lazy(() =>
     default: module.TwoVsTwoScreen,
   })),
 );
+const AbilityScreen = lazy(() =>
+  import("./components/Ability/AbilityScreen").then((module) => ({
+    default: module.AbilityScreen,
+  })),
+);
 
-type AppView = "lobby" | "game" | "coop" | "twovtwo";
+type AppView = "lobby" | "game" | "coop" | "twovtwo" | "ability";
 
 function App() {
   const [view, setView] = useState<AppView>("lobby");
@@ -227,7 +232,7 @@ function App() {
       return;
     }
 
-    const isBattleView = view === "game" || view === "coop" || view === "twovtwo";
+    const isBattleView = view === "game" || view === "coop" || view === "twovtwo" || view === "ability";
     const targetBgm = isBattleView ? inGameBgm : lobbyBgm;
     const otherBgm = isBattleView ? lobbyBgm : inGameBgm;
 
@@ -247,7 +252,7 @@ function App() {
       if (showSessionReplaced) {
         return;
       }
-      if (view === "game" || view === "coop" || view === "twovtwo") {
+      if (view === "game" || view === "coop" || view === "twovtwo" || view === "ability") {
         handleReturnToLobby();
         return;
       }
@@ -321,11 +326,13 @@ function App() {
             onGameStart={() => setView("game")}
             onCoopStart={() => setView("coop")}
             onTwoVsTwoStart={() => setView("twovtwo")}
+            onAbilityStart={() => setView("ability")}
           />
         )}
         {view === "game" && <GameScreen onLeaveToLobby={handleReturnToLobby} />}
         {view === "coop" && <CoopScreen onLeaveToLobby={handleReturnToLobby} />}
         {view === "twovtwo" && <TwoVsTwoScreen onLeaveToLobby={handleReturnToLobby} />}
+        {view === "ability" && <AbilityScreen onLeaveToLobby={handleReturnToLobby} />}
       </Suspense>
       {showExitConfirm && view === "lobby" && (
         <div
