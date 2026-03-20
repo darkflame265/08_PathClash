@@ -47,6 +47,7 @@ export class AbilityRoomStore {
     pieceSkin: PieceSkin,
     equippedSkills: AbilitySkillId[],
   ): void {
+    this.removeFromQueue(socketId);
     this.queue.push({ socketId, nickname, userId, stats, pieceSkin, equippedSkills });
   }
 

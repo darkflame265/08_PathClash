@@ -1212,6 +1212,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   const handleAbilityMatch = async () => {
     setError("");
     setMatchType("ability");
+    setIsMatchmaking(true);
     const socket = startSocket();
     socket.emit("join_ability", {
       ...(await buildPlayerPayload()),

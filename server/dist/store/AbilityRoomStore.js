@@ -26,6 +26,7 @@ class AbilityRoomStore {
         return `ability_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     }
     enqueue(socketId, nickname, userId, stats, pieceSkin, equippedSkills) {
+        this.removeFromQueue(socketId);
         this.queue.push({ socketId, nickname, userId, stats, pieceSkin, equippedSkills });
     }
     dequeue() {
