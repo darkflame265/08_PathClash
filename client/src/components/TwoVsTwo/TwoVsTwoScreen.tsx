@@ -80,6 +80,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     startTwoVsTwoAnimation,
     advanceTwoVsTwoStep,
     finishTwoVsTwoAnimation,
+    accountDailyRewardTokens,
   } = useGameStore();
   const [state, setState] = useState<TwoVsTwoClientState | null>(null);
   const [roundInfo, setRoundInfo] = useState<TwoVsTwoRoundStartPayload | null>(null);
@@ -498,11 +499,14 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     getSocket().emit('request_rematch');
     setRematchRequestSent(true);
   };
+  const dailyRewardRemaining = Math.max(0, 120 - accountDailyRewardTokens);
   const rewardCopy =
     state.phase === 'gameover' && state.gameResult === myTeam
-      ? lang === 'en'
-        ? '+6 Tokens'
-        : '+6 토큰 획득'
+      ? Math.min(6, dailyRewardRemaining) > 0
+        ? lang === 'en'
+          ? `+${Math.min(6, dailyRewardRemaining)} Tokens`
+          : `+${Math.min(6, dailyRewardRemaining)} 토큰 획득`
+        : null
       : null;
 
   return (

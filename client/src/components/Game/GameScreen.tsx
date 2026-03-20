@@ -63,6 +63,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     rematchRequestSent,
     setRematchRequestSent,
     currentMatchType,
+    accountDailyRewardTokens,
   } = useGameStore();
   const { t } = useLang();
   const gridAreaRef = useRef<HTMLDivElement>(null);
@@ -248,8 +249,11 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   const opponentColor = myColor === "red" ? "blue" : "red";
   const me = myColor ? gameState.players[myColor] : null;
   const opponent = gameState.players[opponentColor];
+  const dailyRewardRemaining = Math.max(0, 120 - accountDailyRewardTokens);
   const winRewardTokens =
-    winner && myColor && winner === myColor && currentMatchType === "random" ? 6 : null;
+    winner && myColor && winner === myColor && currentMatchType === "random"
+      ? Math.min(6, dailyRewardRemaining)
+      : null;
 
   return (
     <div

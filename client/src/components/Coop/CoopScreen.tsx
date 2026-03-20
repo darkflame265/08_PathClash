@@ -41,7 +41,7 @@ function buildEnemyDisplayMap(enemies: CoopClientState["enemies"]): EnemyDisplay
 
 export function CoopScreen({ onLeaveToLobby }: Props) {
   const { lang } = useLang();
-  const { myColor, isSfxMuted, sfxVolume } = useGameStore();
+  const { myColor, isSfxMuted, sfxVolume, accountDailyRewardTokens } = useGameStore();
   const [coopState, setCoopState] = useState<CoopClientState | null>(null);
   const [roundInfo, setRoundInfo] = useState<CoopRoundStartPayload | null>(null);
   const [myPath, setMyPath] = useState<Position[]>([]);
@@ -445,11 +445,14 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
     getSocket().emit("request_rematch");
     setRematchRequestSent(true);
   };
+  const dailyRewardRemaining = Math.max(0, 120 - accountDailyRewardTokens);
   const rewardCopy =
     coopState.phase === "gameover" && coopState.gameResult === "win"
-      ? lang === "en"
-        ? "+12 Tokens"
-        : "+12 토큰 획득"
+      ? Math.min(12, dailyRewardRemaining) > 0
+        ? lang === "en"
+          ? `+${Math.min(12, dailyRewardRemaining)} Tokens`
+          : `+${Math.min(12, dailyRewardRemaining)} 토큰 획득`
+        : null
       : null;
 
   return (
