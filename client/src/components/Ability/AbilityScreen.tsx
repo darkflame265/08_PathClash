@@ -952,11 +952,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       <div className="ability-skill-panel">
         <div className="ability-skill-panel-head">
           <strong>{lang === "en" ? "Skills" : "스킬"}</strong>
-          <span>
-            {lang === "en"
-              ? `Mana ${getMyMana()} / 10`
-              : `마나 ${getMyMana()} / 10`}
-          </span>
         </div>
         <div className="ability-skill-buttons">
           {getAvailableSkills().map((skillId) => {
@@ -988,6 +983,19 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               </button>
             );
           })}
+        </div>
+        <div className="ability-mana-row">
+          <div className="ability-mana-bar">
+            {Array.from({ length: 10 }, (_, index) => (
+              <span
+                key={index}
+                className={`ability-mana-pip ${index < getMyMana() ? "is-filled" : ""}`}
+              />
+            ))}
+          </div>
+          <span className="ability-mana-text">
+            {lang === "en" ? `Mana ${getMyMana()} / 10` : `마나 ${getMyMana()} / 10`}
+          </span>
         </div>
         {pendingExplosionStep && (
           <div className="ability-step-picker">
@@ -1028,14 +1036,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               </button>
             );
           })}
-        </div>
-        <div className="ability-mana-bar">
-          {Array.from({ length: 10 }, (_, index) => (
-            <span
-              key={index}
-              className={`ability-mana-pip ${index < getMyMana() ? "is-filled" : ""}`}
-            />
-          ))}
         </div>
       </div>
     </div>

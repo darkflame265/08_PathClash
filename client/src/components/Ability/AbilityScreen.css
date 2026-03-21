@@ -79,14 +79,14 @@
   border-radius: calc(0.875rem * var(--gs-scale, 1));
   display: flex;
   flex-direction: column;
-  gap: calc(0.5rem * var(--gs-scale, 1));
+  gap: calc(0.3rem * var(--gs-scale, 1));
   flex-shrink: 0;
-  min-height: calc(10.25rem * var(--gs-scale, 1));
+  min-height: calc(8rem * var(--gs-scale, 1));
 }
 
 .ability-skill-panel-head {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 0.75rem;
   color: var(--text-muted);
   font-size: clamp(0.64rem, calc(0.74rem * var(--gs-scale, 1)), 0.9rem);
@@ -140,10 +140,10 @@
 .ability-step-picker {
   display: flex;
   flex-direction: column;
-  gap: calc(0.4rem * var(--gs-scale, 1));
+  gap: calc(0.2rem * var(--gs-scale, 1));
   color: var(--text-muted);
   font-size: clamp(0.62rem, calc(0.72rem * var(--gs-scale, 1)), 0.88rem);
-  min-height: calc(3.8rem * var(--gs-scale, 1));
+  min-height: calc(3.2rem * var(--gs-scale, 1));
 }
 
 .ability-step-picker-row,
@@ -156,7 +156,7 @@
 
 .ability-step-picker-row,
 .ability-reservation-list {
-  min-height: calc(1.85rem * var(--gs-scale, 1));
+  min-height: calc(1.45rem * var(--gs-scale, 1));
   align-content: flex-start;
 }
 
@@ -173,8 +173,22 @@
   gap: calc(0.28rem * var(--gs-scale, 1));
 }
 
+.ability-mana-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(0.45rem * var(--gs-scale, 1));
+}
+
 .ability-mana-bar {
-  margin-top: calc(0.1rem * var(--gs-scale, 1));
+  margin-top: 0;
+  flex: 1;
+}
+
+.ability-mana-text {
+  color: var(--text-muted);
+  font-size: clamp(0.62rem, calc(0.72rem * var(--gs-scale, 1)), 0.88rem);
+  white-space: nowrap;
 }
 
 .ability-mana-pip {
@@ -193,6 +207,21 @@
 
 .ability-grid .player-piece {
   z-index: 4;
+}
+
+.ability-screen .gs-timer-slot {
+  min-height: calc(2.2rem * var(--gs-scale, 1));
+  display: flex;
+  align-items: center;
+}
+
+.ability-screen .gs-player-card {
+  min-height: calc(5.1rem * var(--gs-scale, 1));
+}
+
+.ability-screen .gs-player-mid {
+  min-height: calc(2.2rem * var(--gs-scale, 1));
+  justify-content: center;
 }
 
 .ability-guard-ring {
