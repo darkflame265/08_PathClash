@@ -81,9 +81,12 @@
   border-radius: calc(0.875rem * var(--gs-scale, 1));
   display: flex;
   flex-direction: column;
-  gap: calc(0.3rem * var(--gs-scale, 1));
+  gap: calc(0.2rem * var(--gs-scale, 1));
+  padding-top: calc(0.45rem * var(--gs-scale, 1));
+  padding-bottom: calc(0.45rem * var(--gs-scale, 1));
   flex-shrink: 0;
-  min-height: calc(6rem * var(--gs-scale, 1));
+  height: auto;
+  min-height: 0;
 }
 
 .ability-skill-panel-head {
@@ -160,6 +163,11 @@
 .ability-reservation-list {
   min-height: calc(1.2rem * var(--gs-scale, 1));
   align-content: flex-start;
+}
+
+.ability-reservation-list:empty {
+  display: none;
+  min-height: 0;
 }
 
 .ability-step-chip,
