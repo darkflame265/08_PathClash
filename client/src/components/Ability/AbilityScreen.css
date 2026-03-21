@@ -44,6 +44,15 @@
   color: #f8fafc;
 }
 
+.ability-skill-tooltip-top {
+  position: absolute;
+  top: calc(8.4rem * var(--gs-scale, 1));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 7;
+  pointer-events: none;
+}
+
 .ability-banner {
   position: absolute;
   top: calc(0.5rem * var(--gs-scale, 1));
