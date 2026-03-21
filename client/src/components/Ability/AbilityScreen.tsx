@@ -1034,9 +1034,13 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             const reserved = skillReservations.some(
               (entry) => entry.skillId === skillId,
             );
+            const roleBlocked =
+              (skillId === "classic_guard" && getMyRole() !== "escaper") ||
+              (skillId === "ember_blast" && getMyRole() !== "attacker");
             const disabled =
               !isPlanning ||
               mySubmitted ||
+              roleBlocked ||
               (getRemainingMana() < skill.manaCost && !reserved);
             return (
               <button
