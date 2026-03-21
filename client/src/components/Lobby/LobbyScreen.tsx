@@ -739,11 +739,16 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   };
   const currentSkinName =
     skinChoices.find((choice) => choice.id === pieceSkin)?.name ?? pieceSkin;
-  const availableAbilitySkills = ([
-    ABILITY_SKILLS.classic_guard,
-    ownedSkins.includes("ember") ? ABILITY_SKILLS.ember_blast : null,
-    ownedSkins.includes("quantum") ? ABILITY_SKILLS.quantum_shift : null,
-  ].filter(Boolean) as typeof ABILITY_SKILLS[keyof typeof ABILITY_SKILLS][]);
+  const hasAbilitySkinUnlocked = (skinId: PieceSkin) => {
+    if (skinId === "classic") return true;
+    if (skinId === "ember") return accountWins >= 10;
+    if (skinId === "quantum") return ownedSkins.includes("quantum");
+    return ownedSkins.includes(skinId);
+  };
+
+  const availableAbilitySkills = Object.values(ABILITY_SKILLS).filter((skill) =>
+    hasAbilitySkinUnlocked(skill.skinId),
+  );
   const equippedAbilitySkillDefs = abilityLoadout
     .map((skillId) => ABILITY_SKILLS[skillId])
     .filter(Boolean);
