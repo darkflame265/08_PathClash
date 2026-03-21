@@ -81,6 +81,7 @@
   flex-direction: column;
   gap: calc(0.5rem * var(--gs-scale, 1));
   flex-shrink: 0;
+  min-height: calc(10.25rem * var(--gs-scale, 1));
 }
 
 .ability-skill-panel-head {
@@ -142,6 +143,7 @@
   gap: calc(0.4rem * var(--gs-scale, 1));
   color: var(--text-muted);
   font-size: clamp(0.62rem, calc(0.72rem * var(--gs-scale, 1)), 0.88rem);
+  min-height: calc(3.8rem * var(--gs-scale, 1));
 }
 
 .ability-step-picker-row,
@@ -150,6 +152,12 @@
   display: flex;
   flex-wrap: wrap;
   gap: calc(0.35rem * var(--gs-scale, 1));
+}
+
+.ability-step-picker-row,
+.ability-reservation-list {
+  min-height: calc(1.85rem * var(--gs-scale, 1));
+  align-content: flex-start;
 }
 
 .ability-step-chip,

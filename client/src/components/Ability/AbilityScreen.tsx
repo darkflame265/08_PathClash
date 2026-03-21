@@ -38,76 +38,24 @@ function computeInitialCellSize(): number {
 }
 
 function useAdaptiveCellSize(
-  screenRef: React.RefObject<HTMLDivElement | null>,
-  utilityBarRef: React.RefObject<HTMLDivElement | null>,
-  opponentCardRef: React.RefObject<HTMLDivElement | null>,
-  selfCardRef: React.RefObject<HTMLDivElement | null>,
-  pathBarRef: React.RefObject<HTMLDivElement | null>,
-  skillPanelRef: React.RefObject<HTMLDivElement | null>,
+  gridAreaRef: React.RefObject<HTMLDivElement | null>,
 ) {
   const [cellSize, setCellSize] = useState(computeInitialCellSize);
 
   useEffect(() => {
-    const screenEl = screenRef.current;
-    if (!screenEl) return;
+    const el = gridAreaRef.current;
+    if (!el) return;
 
-    const measure = () => {
-      const style = window.getComputedStyle(screenEl);
-      const paddingTop = Number.parseFloat(style.paddingTop || "0") || 0;
-      const paddingBottom = Number.parseFloat(style.paddingBottom || "0") || 0;
-      const paddingLeft = Number.parseFloat(style.paddingLeft || "0") || 0;
-      const paddingRight = Number.parseFloat(style.paddingRight || "0") || 0;
-      const gap = Number.parseFloat(style.gap || "0") || 0;
-      const reservedHeight =
-        (utilityBarRef.current?.getBoundingClientRect().height ?? 0) +
-        (opponentCardRef.current?.getBoundingClientRect().height ?? 0) +
-        (selfCardRef.current?.getBoundingClientRect().height ?? 0) +
-        (pathBarRef.current?.getBoundingClientRect().height ?? 0) +
-        (skillPanelRef.current?.getBoundingClientRect().height ?? 0);
-      const availW = Math.max(
-        260,
-        screenEl.clientWidth - paddingLeft - paddingRight,
-      );
-      const availH = Math.max(
-        260,
-        screenEl.clientHeight -
-          paddingTop -
-          paddingBottom -
-          reservedHeight -
-          gap * 5 -
-          80,
-      );
-      const squareSide = Math.min(availW, availH);
-      const next = Math.max(MIN_CELL, Math.min(MAX_CELL, squareSide / 5) - 90);
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      const squareSide = Math.min(width, height > 60 ? height : width);
+      const next = Math.max(MIN_CELL, Math.min(MAX_CELL, squareSide / 5));
       setCellSize(next);
-    };
-
-    const observer = new ResizeObserver(() => {
-      measure();
     });
 
-    observer.observe(screenEl);
-    if (utilityBarRef.current) observer.observe(utilityBarRef.current);
-    if (opponentCardRef.current) observer.observe(opponentCardRef.current);
-    if (selfCardRef.current) observer.observe(selfCardRef.current);
-    if (pathBarRef.current) observer.observe(pathBarRef.current);
-    if (skillPanelRef.current) observer.observe(skillPanelRef.current);
-
-    window.addEventListener("resize", measure);
-    measure();
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, [
-    screenRef,
-    utilityBarRef,
-    opponentCardRef,
-    selfCardRef,
-    pathBarRef,
-    skillPanelRef,
-  ]);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [gridAreaRef]);
 
   return cellSize;
 }
@@ -178,21 +126,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const stateRef = useRef<AbilityBattleState | null>(null);
   const animationTimeoutIdsRef = useRef<number[]>([]);
   const submitTimeoutIdsRef = useRef<number[]>([]);
-  const screenRef = useRef<HTMLDivElement>(null);
-  const utilityBarRef = useRef<HTMLDivElement>(null);
-  const opponentCardRef = useRef<HTMLDivElement>(null);
-  const selfCardRef = useRef<HTMLDivElement>(null);
-  const pathBarRef = useRef<HTMLDivElement>(null);
-  const skillPanelRef = useRef<HTMLDivElement>(null);
   const gridAreaRef = useRef<HTMLDivElement>(null);
-  const cellSize = useAdaptiveCellSize(
-    screenRef,
-    utilityBarRef,
-    opponentCardRef,
-    selfCardRef,
-    pathBarRef,
-    skillPanelRef,
-  );
+  const cellSize = useAdaptiveCellSize(gridAreaRef);
   const scale = cellSize / DEFAULT_CELL;
   const currentColor = myColor ?? "red";
   const opponentColor: PlayerColor = currentColor === "red" ? "blue" : "red";
@@ -791,10 +726,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   return (
     <div
       className="game-screen ability-screen"
-      ref={screenRef}
       style={{ "--gs-scale": scale } as CSSProperties}
     >
-      <div className="gs-utility-bar" ref={utilityBarRef}>
+      <div className="gs-utility-bar">
         <div className="gs-timer-slot">
           {state.phase === "planning" && roundInfo && (
             <TimerBar
@@ -816,10 +750,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         </div>
       </div>
 
-      <div
-        className={`gs-player-card gs-opponent gs-color-${opponentColor}`}
-        ref={opponentCardRef}
-      >
+      <div className={`gs-player-card gs-opponent gs-color-${opponentColor}`}>
         <div className="gs-role-badge ability-role-badge">
           <span className="gs-role-icon">
             {opponent.role === "attacker" ? "ATK" : "RUN"}
@@ -964,7 +895,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
       <div
         className={`gs-player-card gs-self gs-color-${currentColor} gs-role-${me.role === "attacker" ? "atk" : "run"}`}
-        ref={selfCardRef}
       >
         <div
           className={`gs-role-badge gs-role-badge-self gs-role-badge-${me.role === "attacker" ? "atk" : "run"}`}
@@ -998,7 +928,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         </div>
       </div>
 
-      <div className="gs-path-bar" ref={pathBarRef}>
+      <div className="gs-path-bar">
         <div className="gs-path-header">
           <span className="gs-path-label">
             {lang === "en" ? "Path Points" : "경로 포인트"}
@@ -1019,7 +949,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         </div>
       </div>
 
-      <div className="ability-skill-panel" ref={skillPanelRef}>
+      <div className="ability-skill-panel">
         <div className="ability-skill-panel-head">
           <strong>{lang === "en" ? "Skills" : "스킬"}</strong>
           <span>
