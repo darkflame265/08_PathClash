@@ -131,7 +131,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     null,
   );
   const [myPath, setMyPath] = useState<Position[]>([]);
-  const [opponentPath, setOpponentPath] = useState<Position[]>([]);
   const [mySubmitted, setMySubmitted] = useState(false);
   const [opponentSubmitted, setOpponentSubmitted] = useState(false);
   const [skillReservations, setSkillReservations] = useState<
@@ -247,7 +246,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const resetPlanningState = () => {
     setMyPath([]);
-    setOpponentPath([]);
     setSkillReservations([]);
     setSelectedSkillId(null);
     setPendingExplosionStep(false);
@@ -603,10 +601,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     const socket = getSocket();
 
     const onGameStart = (nextState: AbilityBattleState) => {
-      setRoundInfo(null);
-      resetPlanningState();
-      applyState(nextState);
-    };
+    setRoundInfo(null);
+    resetPlanningState();
+    applyState(nextState);
+  };
 
     const onRoundStart = (payload: AbilityRoundStartPayload) => {
       void syncServerTime(socket);
@@ -629,14 +627,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
     const onPlanUpdated = ({
       color,
-      path,
     }: {
       color: PlayerColor;
       path: Position[];
       skills: AbilitySkillReservation[];
     }) => {
       if (color === currentColor) return;
-      setOpponentPath(path);
     };
 
     const onOpponentSubmitted = () => {
@@ -658,7 +654,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         setMySubmitted(true);
         return;
       }
-      setOpponentPath(path);
       setOpponentSubmitted(true);
     };
 
@@ -838,6 +833,19 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 ? "Escape"
                 : "도망"}
           </span>
+        </div>
+        <div className="gs-player-mid">
+          <PlayerInfo player={opponent} isMe={false} />
+          <span className="gs-color-tag">
+            {opponentColor === "red" ? "RED" : "BLUE"}
+          </span>
+          {opponentSubmitted && (
+            <span className="gs-color-tag">
+              {lang === "en" ? "READY" : "준비 완료"}
+            </span>
+          )}
+        </div>
+        <div className="gs-hp-slot">
           <div className="ability-opponent-skills">
             {opponent.equippedSkills.map((skillId) => (
               <button
@@ -854,19 +862,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               </button>
             ))}
           </div>
-        </div>
-        <div className="gs-player-mid">
-          <PlayerInfo player={opponent} isMe={false} />
-          <span className="gs-color-tag">
-            {opponentColor === "red" ? "RED" : "BLUE"}
-          </span>
-          {opponentSubmitted && (
-            <span className="gs-color-tag">
-              {lang === "en" ? "READY" : "준비 완료"}
-            </span>
-          )}
-        </div>
-        <div className="gs-hp-slot">
           <HpDisplay
             color={opponentColor}
             hp={opponent.hp}
@@ -951,7 +946,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             state={state}
             currentColor={currentColor}
             myPath={myPath}
-            opponentPath={opponentPath}
             setMyPath={updateMyPath}
             displayPositions={{ red: redDisplayPos, blue: blueDisplayPos }}
             hitFlags={hitFlags}

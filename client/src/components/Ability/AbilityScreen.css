@@ -10,7 +10,8 @@
   display: flex;
   align-items: center;
   gap: calc(0.28rem * var(--gs-scale, 1));
-  margin-top: calc(0.2rem * var(--gs-scale, 1));
+  margin-right: calc(0.45rem * var(--gs-scale, 1));
+  flex-shrink: 0;
 }
 
 .ability-opponent-skill {
@@ -24,6 +25,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .ability-skill-tooltip {

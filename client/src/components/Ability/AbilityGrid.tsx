@@ -10,7 +10,6 @@ interface Props {
   state: AbilityBattleState;
   currentColor: PlayerColor;
   myPath: Position[];
-  opponentPath: Position[];
   setMyPath: (path: Position[]) => void;
   displayPositions: { red: Position; blue: Position };
   hitFlags: { red: boolean; blue: boolean };
@@ -32,7 +31,6 @@ export function AbilityGrid({
   state,
   currentColor,
   myPath,
-  opponentPath,
   setMyPath,
   displayPositions,
   hitFlags,
@@ -156,8 +154,18 @@ export function AbilityGrid({
     col: index % GRID_SIZE,
   }));
 
-  const redPath = state.phase === 'moving' ? movingPaths.red : currentColor === 'red' ? myPath : opponentPath;
-  const bluePath = state.phase === 'moving' ? movingPaths.blue : currentColor === 'blue' ? myPath : opponentPath;
+  const redPath =
+    state.phase === 'moving'
+      ? movingPaths.red
+      : currentColor === 'red'
+        ? myPath
+        : [];
+  const bluePath =
+    state.phase === 'moving'
+      ? movingPaths.blue
+      : currentColor === 'blue'
+        ? myPath
+        : [];
 
   const teleportTargets = teleportTargetsVisible
     ? Array.from({ length: 9 }, (_, index) => ({
