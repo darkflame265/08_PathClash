@@ -1,4 +1,4 @@
-﻿import { useRef, useCallback } from 'react';
+﻿import { useRef, useCallback, useEffect, useState } from 'react';
 import type { PlayerColor, Position } from '../../types/game.types';
 import type { AbilityBattleState } from '../../types/ability.types';
 import { pixelToCell, isBlockedCell, isValidMove, posEqual } from '../../utils/pathUtils';
@@ -26,6 +26,7 @@ interface Props {
 }
 
 const GRID_SIZE = 5;
+const DEFAULT_CELL_SIZE = 96;
 
 export function AbilityGrid({
   state,
@@ -45,12 +46,40 @@ export function AbilityGrid({
   teleportTargetsVisible,
   onTeleportTargetSelect,
 }: Props) {
+  const shellRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const [boardSize, setBoardSize] = useState(cellSize * GRID_SIZE || DEFAULT_CELL_SIZE * GRID_SIZE);
   const dragState = useRef<{ active: boolean; fromStart: boolean; fromEnd: boolean }>({
     active: false,
     fromStart: false,
     fromEnd: false,
   });
+
+
+  useEffect(() => {
+    const element = shellRef.current;
+    if (!element) return;
+
+    const updateSize = (width: number, height: number) => {
+      const side = Math.min(width, height > 60 ? height : width);
+      if (!side) return;
+      setBoardSize(side * 0.92);
+    };
+
+    const rect = element.getBoundingClientRect();
+    updateSize(rect.width, rect.height);
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      updateSize(entry.contentRect.width, entry.contentRect.height);
+    });
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  const responsiveCellSize = boardSize / GRID_SIZE;
 
   const getGridOffset = () => {
     const rect = gridRef.current?.getBoundingClientRect();
@@ -73,7 +102,7 @@ export function AbilityGrid({
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (!isPlanning || teleportTargetsVisible || !gridRef.current) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
-      const cell = pixelToCell(e.clientX, e.clientY, cellSize, getGridOffset());
+      const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
       if (!cell) return;
       const isOnStart = posEqual(cell, myStart);
       const isOnEnd = myPath.length > 0 && posEqual(cell, myPath[myPath.length - 1]);
@@ -86,13 +115,13 @@ export function AbilityGrid({
       e.preventDefault();
       e.currentTarget.setPointerCapture(e.pointerId);
     },
-    [isPlanning, teleportTargetsVisible, cellSize, myPath, myStart],
+    [isPlanning, teleportTargetsVisible, responsiveCellSize, myPath, myStart],
   );
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (!dragState.current.active || !isPlanning || teleportTargetsVisible) return;
-      const cell = pixelToCell(e.clientX, e.clientY, cellSize, getGridOffset());
+      const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
       if (!cell) return;
       const current = myPath;
 
@@ -112,7 +141,7 @@ export function AbilityGrid({
         }
       }
     },
-    [isPlanning, teleportTargetsVisible, cellSize, myPath, myStart, obstacles, pathPoints, removeFromPath, setMyPath],
+    [isPlanning, teleportTargetsVisible, responsiveCellSize, myPath, myStart, obstacles, pathPoints, removeFromPath, setMyPath],
   );
 
   const handlePointerEnd = useCallback((e?: React.PointerEvent<HTMLDivElement>) => {
@@ -146,7 +175,7 @@ export function AbilityGrid({
     : [];
 
   return (
-    <div className="game-grid-shell">
+    <div ref={shellRef} className="game-grid-shell">
       <div
         ref={gridRef}
         className="game-grid ability-grid"
@@ -154,18 +183,18 @@ export function AbilityGrid({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
         onPointerCancel={handlePointerEnd}
-        style={{ width: cellSize * GRID_SIZE, height: cellSize * GRID_SIZE }}
+        style={{ width: boardSize, height: boardSize }}
       >
         {cells.map(({ row, col }) => (
           <div
             key={`${row}-${col}`}
             className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? 'obstacle' : ''}`}
             style={{
-              left: col * cellSize,
-              top: row * cellSize,
-              width: cellSize,
-              height: cellSize,
-              ['--cell-size' as string]: `${cellSize}px`,
+              left: col * responsiveCellSize,
+              top: row * responsiveCellSize,
+              width: responsiveCellSize,
+              height: responsiveCellSize,
+              ['--cell-size' as string]: `${responsiveCellSize}px`,
             }}
           >
             {isBlockedCell({ row, col }, obstacles) && <div className="obstacle-mark" />}
@@ -178,31 +207,31 @@ export function AbilityGrid({
             type="button"
             className="ability-teleport-target"
             style={{
-              left: target.col * cellSize + cellSize / 2,
-              top: target.row * cellSize + cellSize / 2,
-              width: Math.max(20, cellSize * 0.34),
-              height: Math.max(20, cellSize * 0.34),
+              left: target.col * responsiveCellSize + responsiveCellSize / 2,
+              top: target.row * responsiveCellSize + responsiveCellSize / 2,
+              width: Math.max(20, responsiveCellSize * 0.34),
+              height: Math.max(20, responsiveCellSize * 0.34),
               transform: 'translate(-50%, -50%)',
             }}
             onClick={() => onTeleportTargetSelect(target)}
           />
         ))}
 
-        <PathLine color="red" path={redPath} startPos={state.players.red.position} cellSize={cellSize} isPlanning={state.phase !== 'moving'} />
-        <PathLine color="blue" path={bluePath} startPos={state.players.blue.position} cellSize={cellSize} isPlanning={state.phase !== 'moving'} />
+        <PathLine color="red" path={redPath} startPos={state.players.red.position} cellSize={responsiveCellSize} isPlanning={state.phase !== 'moving'} />
+        <PathLine color="blue" path={bluePath} startPos={state.players.blue.position} cellSize={responsiveCellSize} isPlanning={state.phase !== 'moving'} />
 
         {collisionEffects.map(({ id, position }) => (
-          <CollisionEffect key={id} position={position} cellSize={cellSize} />
+          <CollisionEffect key={id} position={position} cellSize={responsiveCellSize} />
         ))}
 
         {activeGuards.red && (
           <div
             className="ability-guard-ring"
             style={{
-              left: displayPositions.red.col * cellSize + cellSize / 2,
-              top: displayPositions.red.row * cellSize + cellSize / 2,
-              width: Math.max(42, cellSize * 0.82),
-              height: Math.max(42, cellSize * 0.82),
+              left: displayPositions.red.col * responsiveCellSize + responsiveCellSize / 2,
+              top: displayPositions.red.row * responsiveCellSize + responsiveCellSize / 2,
+              width: Math.max(42, responsiveCellSize * 0.82),
+              height: Math.max(42, responsiveCellSize * 0.82),
               transform: 'translate(-50%, -50%)',
             }}
           />
@@ -211,10 +240,10 @@ export function AbilityGrid({
           <div
             className="ability-guard-ring"
             style={{
-              left: displayPositions.blue.col * cellSize + cellSize / 2,
-              top: displayPositions.blue.row * cellSize + cellSize / 2,
-              width: Math.max(42, cellSize * 0.82),
-              height: Math.max(42, cellSize * 0.82),
+              left: displayPositions.blue.col * responsiveCellSize + responsiveCellSize / 2,
+              top: displayPositions.blue.row * responsiveCellSize + responsiveCellSize / 2,
+              width: Math.max(42, responsiveCellSize * 0.82),
+              height: Math.max(42, responsiveCellSize * 0.82),
               transform: 'translate(-50%, -50%)',
             }}
           />
@@ -224,7 +253,7 @@ export function AbilityGrid({
           <PlayerPiece
             color="red"
             position={displayPositions.red}
-            cellSize={cellSize}
+            cellSize={responsiveCellSize}
             isAttacker={state.attackerColor === 'red'}
             isHit={hitFlags.red}
             isExploding={explodingFlags.red}
@@ -236,7 +265,7 @@ export function AbilityGrid({
           <PlayerPiece
             color="blue"
             position={displayPositions.blue}
-            cellSize={cellSize}
+            cellSize={responsiveCellSize}
             isAttacker={state.attackerColor === 'blue'}
             isHit={hitFlags.blue}
             isExploding={explodingFlags.blue}
