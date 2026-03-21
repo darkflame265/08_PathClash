@@ -73,7 +73,9 @@
 
 .ability-skill-panel {
   width: 100%;
-  padding: calc(0.55rem * var(--gs-scale, 1)) calc(0.875rem * var(--gs-scale, 1));
+
+  padding: calc(0.55rem * var(--gs-scale, 1))
+    calc(0.875rem * var(--gs-scale, 1));
   background: var(--panel);
   border: 1px solid var(--tile-border);
   border-radius: calc(0.875rem * var(--gs-scale, 1));

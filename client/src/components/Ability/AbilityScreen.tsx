@@ -750,8 +750,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         </div>
       </div>
 
-      <div className={`gs-player-card gs-opponent gs-color-${opponentColor}`}>
-        <div className="gs-role-badge ability-role-badge">
+      <div
+        className={`gs-player-card gs-opponent gs-color-${opponentColor} gs-role-${opponent.role === "attacker" ? "atk" : "run"}`}
+      >
+        <div
+          className={`gs-role-badge gs-role-badge-self gs-role-badge-${opponent.role === "attacker" ? "atk" : "run"} ability-role-badge`}
+        >
           <span className="gs-role-icon">
             {opponent.role === "attacker" ? "ATK" : "RUN"}
           </span>
