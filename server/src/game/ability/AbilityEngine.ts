@@ -12,7 +12,7 @@ import type {
   AbilitySkillReservation,
 } from './AbilityTypes';
 
-const GUARD_STEPS = 2;
+const GUARD_STEPS = 3;
 
 function samePosition(a: Position, b: Position): boolean {
   return a.row === b.row && a.col === b.col;

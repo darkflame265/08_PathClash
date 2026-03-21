@@ -104,6 +104,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: calc(0.3rem * var(--gs-scale, 1));
+  min-height: calc(1.45rem * var(--gs-scale, 1));
   overflow-x: auto;
   white-space: nowrap;
   scrollbar-width: none;

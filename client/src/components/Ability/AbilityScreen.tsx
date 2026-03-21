@@ -957,29 +957,27 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       <div className="ability-skill-panel">
         <div className="ability-skill-panel-head">
           <strong>{lang === "en" ? "Skills" : "스킬"}</strong>
-          {skillReservations.length > 0 && (
-            <div className="ability-reservation-strip">
-              {skillReservations.map((reservation) => {
-                const skill = ABILITY_SKILLS[reservation.skillId];
-                return (
-                  <button
-                    key={`${reservation.skillId}-${reservation.order}`}
-                    type="button"
-                    className="ability-reservation-chip"
-                    onClick={() => removeReservation(reservation.skillId)}
-                  >
-                    <span>{skill.icon}</span>
-                    <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
-                    <span>
-                      {lang === "en"
-                        ? `step ${reservation.step}`
-                        : `${reservation.step}칸`}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          <div className="ability-reservation-strip">
+            {skillReservations.map((reservation) => {
+              const skill = ABILITY_SKILLS[reservation.skillId];
+              return (
+                <button
+                  key={`${reservation.skillId}-${reservation.order}`}
+                  type="button"
+                  className="ability-reservation-chip"
+                  onClick={() => removeReservation(reservation.skillId)}
+                >
+                  <span>{skill.icon}</span>
+                  <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
+                  <span>
+                    {lang === "en"
+                      ? `step ${reservation.step}`
+                      : `${reservation.step}칸`}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
         <div className="ability-skill-buttons">
           {getAvailableSkills().map((skillId) => {

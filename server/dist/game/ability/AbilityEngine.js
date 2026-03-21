@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolveAbilityRound = resolveAbilityRound;
-const GUARD_STEPS = 2;
+const GUARD_STEPS = 3;
 function samePosition(a, b) {
     return a.row === b.row && a.col === b.col;
 }
