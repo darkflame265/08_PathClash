@@ -81,7 +81,7 @@
   flex-direction: column;
   gap: calc(0.3rem * var(--gs-scale, 1));
   flex-shrink: 0;
-  min-height: calc(8rem * var(--gs-scale, 1));
+  min-height: calc(6rem * var(--gs-scale, 1));
 }
 
 .ability-skill-panel-head {
@@ -143,7 +143,7 @@
   gap: calc(0.2rem * var(--gs-scale, 1));
   color: var(--text-muted);
   font-size: clamp(0.62rem, calc(0.72rem * var(--gs-scale, 1)), 0.88rem);
-  min-height: calc(3.2rem * var(--gs-scale, 1));
+  min-height: calc(2.4rem * var(--gs-scale, 1));
 }
 
 .ability-step-picker-row,
@@ -156,7 +156,7 @@
 
 .ability-step-picker-row,
 .ability-reservation-list {
-  min-height: calc(1.45rem * var(--gs-scale, 1));
+  min-height: calc(1.2rem * var(--gs-scale, 1));
   align-content: flex-start;
 }
 
@@ -216,12 +216,12 @@
 }
 
 .ability-screen .gs-player-card {
-  min-height: calc(5.1rem * var(--gs-scale, 1));
+  min-height: 0;
 }
 
 .ability-screen .gs-player-mid {
-  min-height: calc(2.2rem * var(--gs-scale, 1));
-  justify-content: center;
+  min-height: 0;
+  justify-content: flex-start;
 }
 
 .ability-guard-ring {

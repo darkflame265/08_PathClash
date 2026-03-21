@@ -80,7 +80,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   );
   const [myPath, setMyPath] = useState<Position[]>([]);
   const [mySubmitted, setMySubmitted] = useState(false);
-  const [opponentSubmitted, setOpponentSubmitted] = useState(false);
+  const [, setOpponentSubmitted] = useState(false);
   const [skillReservations, setSkillReservations] = useState<
     AbilitySkillReservation[]
   >([]);
@@ -770,11 +770,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           <span className="gs-color-tag">
             {opponentColor === "red" ? "RED" : "BLUE"}
           </span>
-          {opponentSubmitted && (
-            <span className="gs-color-tag">
-              {lang === "en" ? "READY" : "준비 완료"}
-            </span>
-          )}
         </div>
         <div className="gs-hp-slot">
           <div className="ability-opponent-skills">
@@ -917,11 +912,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           <span className="gs-color-tag">
             {currentColor === "red" ? "RED" : "BLUE"}
           </span>
-          {mySubmitted && (
-            <span className="gs-color-tag">
-              {lang === "en" ? "READY" : "준비 완료"}
-            </span>
-          )}
         </div>
         <div className="gs-hp-slot">
           <HpDisplay color={currentColor} hp={me.hp} myColor={currentColor} />
