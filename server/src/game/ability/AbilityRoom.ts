@@ -397,6 +397,9 @@ export class AbilityRoom {
       return;
     }
 
+    for (const player of this.players.values()) {
+      player.invulnerableSteps = 0;
+    }
     this.turn += 1;
     this.attackerColor = this.attackerColor === 'red' ? 'blue' : 'red';
     this.updateRoles();

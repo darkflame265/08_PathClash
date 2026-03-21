@@ -449,6 +449,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     for (const event of payload.skillEvents) {
       const list = skillMap.get(event.step) ?? [];
       list.push(event);
+      if (event.skillId === "classic_guard" && event.invulnerableSteps) {
+        guardCounters[event.color] = Math.max(
+          guardCounters[event.color],
+          event.invulnerableSteps,
+        );
+      }
       skillMap.set(
         event.step,
         list.sort((left, right) => left.order - right.order),
@@ -547,10 +553,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     const socket = getSocket();
 
     const onGameStart = (nextState: AbilityBattleState) => {
-    setRoundInfo(null);
-    resetPlanningState();
-    applyState(nextState);
-  };
+      setRoundInfo(null);
+      resetPlanningState();
+      applyState(nextState);
+    };
 
     const onRoundStart = (payload: AbilityRoundStartPayload) => {
       void syncServerTime(socket);
@@ -1020,7 +1026,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             ))}
           </div>
           <span className="ability-mana-text">
-            {lang === "en" ? `Mana ${getMyMana()} / 10` : `마나 ${getMyMana()} / 10`}
+            {lang === "en"
+              ? `Mana ${getMyMana()} / 10`
+              : `마나 ${getMyMana()} / 10`}
           </span>
         </div>
         {pendingExplosionStep && (
