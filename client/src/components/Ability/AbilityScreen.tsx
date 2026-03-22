@@ -32,6 +32,25 @@ const MAX_CELL = 160;
 const STEP_DURATION_MS = 200;
 const SKILL_PAUSE_MS = 320;
 
+function buildBlitzPath(start: Position, target: Position): Position[] {
+  const rowDelta = target.row - start.row;
+  const colDelta = target.col - start.col;
+  const rowStep = rowDelta === 0 ? 0 : rowDelta > 0 ? 1 : -1;
+  const colStep = colDelta === 0 ? 0 : colDelta > 0 ? 1 : -1;
+
+  if (Math.abs(rowDelta) + Math.abs(colDelta) !== 1) return [];
+
+  const path: Position[] = [];
+  let row = start.row + rowStep;
+  let col = start.col + colStep;
+  while (row >= 0 && row <= 4 && col >= 0 && col <= 4) {
+    path.push({ row, col });
+    row += rowStep;
+    col += colStep;
+  }
+  return path;
+}
+
 function computeInitialCellSize(): number {
   const availW = Math.max(260, window.innerWidth - 24);
   return Math.max(MIN_CELL, Math.min(MAX_CELL, availW / 5));
@@ -88,6 +107,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     null,
   );
   const [pendingTeleport, setPendingTeleport] = useState(false);
+  const [pendingBlitz, setPendingBlitz] = useState(false);
   const [redDisplayPos, setRedDisplayPos] = useState<Position>({
     row: 2,
     col: 0,
@@ -123,6 +143,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     red: Position | null;
     blue: Position | null;
   }>({ red: null, blue: null });
+  const [movingBlitzColors, setMovingBlitzColors] = useState<{
+    red: boolean;
+    blue: boolean;
+  }>({ red: false, blue: false });
   const [winner, setWinner] = useState<PlayerColor | "draw" | null>(null);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const [rematchRequested, setRematchRequested] = useState(false);
@@ -139,6 +163,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const currentColor = myColor ?? "red";
   const opponentColor: PlayerColor = currentColor === "red" ? "blue" : "red";
   const previousGuardPathRef = useRef<Position[]>([]);
+  const previousChargePathRef = useRef<Position[]>([]);
+  const previousBlitzPathRef = useRef<Position[]>([]);
   const previousTeleportPathRef = useRef<Position[]>([]);
   const reservationOrderRef = useRef(1);
 
@@ -191,9 +217,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setSkillReservations([]);
     setSelectedSkillId(null);
     setPendingTeleport(false);
+    setPendingBlitz(false);
     setMySubmitted(false);
     setOpponentSubmitted(false);
     previousGuardPathRef.current = [];
+    previousChargePathRef.current = [];
+    previousBlitzPathRef.current = [];
     previousTeleportPathRef.current = [];
     reservationOrderRef.current = 1;
   };
@@ -213,6 +242,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setMovingPaths({ red: [], blue: [] });
     setMovingStarts(null);
     setMovingTeleportMarkers({ red: null, blue: null });
+    setMovingBlitzColors({ red: false, blue: false });
     if (nextState.phase !== "gameover") {
       setWinner(null);
       setGameOverMessage(null);
@@ -281,11 +311,27 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     );
     setSelectedSkillId(null);
     setPendingTeleport(false);
+    setPendingBlitz(false);
 
     if (skillId === "classic_guard") {
-      setMyPath(previousGuardPathRef.current);
+      const chargeReserved = nextReservations.some(
+        (entry) => entry.skillId === "plasma_charge",
+      );
+      const restorePath = chargeReserved ? [] : previousGuardPathRef.current;
+      setMyPath(restorePath);
       setSkillReservations(nextReservations);
-      syncMyPlan(previousGuardPathRef.current, nextReservations);
+      syncMyPlan(restorePath, nextReservations);
+      return;
+    }
+
+    if (skillId === "plasma_charge") {
+      const guardReserved = nextReservations.some(
+        (entry) => entry.skillId === "classic_guard",
+      );
+      const restorePath = guardReserved ? [] : previousChargePathRef.current;
+      setMyPath(restorePath);
+      setSkillReservations(nextReservations);
+      syncMyPlan(restorePath, nextReservations);
       return;
     }
 
@@ -293,6 +339,13 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       setMyPath(previousTeleportPathRef.current);
       setSkillReservations(nextReservations);
       syncMyPlan(previousTeleportPathRef.current, nextReservations);
+      return;
+    }
+
+    if (skillId === "electric_blitz") {
+      setMyPath(previousBlitzPathRef.current);
+      setSkillReservations(nextReservations);
+      syncMyPlan(previousBlitzPathRef.current, nextReservations);
       return;
     }
 
@@ -333,6 +386,11 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       return;
     }
     if (getMyRole() !== "attacker") return;
+    if (
+      skillReservations.some((entry) => entry.skillId === "plasma_charge")
+    ) {
+      return;
+    }
     if (getRemainingMana() < getSkillCost("ember_blast")) return;
     const nextReservations: AbilitySkillReservation[] = [
       ...skillReservations.filter((entry) => entry.skillId !== "ember_blast"),
@@ -360,10 +418,16 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       setPendingTeleport(false);
       return;
     }
+    if (
+      skillReservations.some((entry) => entry.skillId === "plasma_charge")
+    ) {
+      return;
+    }
     if (getRemainingMana() < getSkillCost("quantum_shift")) return;
     previousTeleportPathRef.current = myPath;
     setSelectedSkillId("quantum_shift");
     setPendingTeleport(true);
+    setPendingBlitz(false);
   };
 
   const handleTeleportTargetSelect = (target: Position) => {
@@ -383,6 +447,78 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     syncMyPlan([], nextReservations);
   };
 
+  const handleTeleportCancel = () => {
+    setSelectedSkillId(null);
+    setPendingTeleport(false);
+  };
+
+  const beginBlitzPick = () => {
+    const alreadyReserved = skillReservations.some(
+      (entry) => entry.skillId === "electric_blitz",
+    );
+    if (alreadyReserved) {
+      removeReservation("electric_blitz");
+      return;
+    }
+    if (pendingBlitz && selectedSkillId === "electric_blitz") {
+      setSelectedSkillId(null);
+      setPendingBlitz(false);
+      return;
+    }
+    if (getMyRole() !== "attacker") return;
+    if (getRemainingMana() < getSkillCost("electric_blitz")) return;
+    previousBlitzPathRef.current = myPath;
+    setSelectedSkillId("electric_blitz");
+    setPendingBlitz(true);
+    setPendingTeleport(false);
+  };
+
+  const handleBlitzTargetSelect = (target: Position) => {
+    const start = state?.players[currentColor].position ?? { row: 2, col: 0 };
+    const nextPath = buildBlitzPath(start, target);
+    if (nextPath.length === 0) return;
+    const nextReservations: AbilitySkillReservation[] = [
+      {
+        skillId: "electric_blitz",
+        step: 0,
+        order: reservationOrderRef.current++,
+        target,
+      },
+    ];
+    setMyPath(nextPath);
+    setSkillReservations(nextReservations);
+    setSelectedSkillId(null);
+    setPendingTeleport(false);
+    setPendingBlitz(false);
+    syncMyPlan(nextPath, nextReservations);
+  };
+
+  const togglePlasmaCharge = () => {
+    const alreadyReserved = skillReservations.some(
+      (entry) => entry.skillId === "plasma_charge",
+    );
+    if (alreadyReserved) {
+      removeReservation("plasma_charge");
+      return;
+    }
+    if (getRemainingMana() < getSkillCost("plasma_charge")) return;
+    previousChargePathRef.current = myPath;
+    const nextReservations: AbilitySkillReservation[] = [
+      ...skillReservations.filter((entry) => entry.skillId !== "plasma_charge"),
+      {
+        skillId: "plasma_charge",
+        step: 0,
+        order: reservationOrderRef.current++,
+      },
+    ];
+    setMyPath([]);
+    setSkillReservations(nextReservations);
+    setSelectedSkillId(null);
+    setPendingTeleport(false);
+    setPendingBlitz(false);
+    syncMyPlan([], nextReservations);
+  };
+
   const handleSkillClick = (skillId: AbilitySkillId) => {
     if (state?.phase !== "planning" || mySubmitted) return;
     if (skillId === "classic_guard") {
@@ -395,6 +531,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }
     if (skillId === "quantum_shift") {
       beginTeleportPick();
+      return;
+    }
+    if (skillId === "plasma_charge") {
+      togglePlasmaCharge();
+      return;
+    }
+    if (skillId === "electric_blitz") {
+      beginBlitzPick();
     }
   };
 
@@ -451,6 +595,18 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
     }
 
+    if (event.skillId === "electric_blitz") {
+      for (const position of event.affectedPositions ?? []) {
+        const effectId = Date.now() + Math.random();
+        setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
+        queueAnimationTimeout(() => {
+          setCollisionEffects((prev) =>
+            prev.filter((entry) => entry.id !== effectId),
+          );
+        }, 220);
+      }
+    }
+
     if (event.skillId === "quantum_shift" && event.to) {
       if (event.color === "red") setRedDisplayPos(event.to);
       else setBlueDisplayPos(event.to);
@@ -478,7 +634,15 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const runAnimation = (payload: AbilityResolutionPayload) => {
     clearAnimationTimeouts();
+    const hasBlitz = payload.skillEvents.some(
+      (event) => event.skillId === "electric_blitz",
+    );
+    const stepDuration = hasBlitz ? 70 : STEP_DURATION_MS;
     setMovingPaths({ red: payload.redPath, blue: payload.bluePath });
+    setMovingBlitzColors({
+      red: payload.skillEvents.some((event) => event.skillId === "electric_blitz" && event.color === "red"),
+      blue: payload.skillEvents.some((event) => event.skillId === "electric_blitz" && event.color === "blue"),
+    });
     const teleportMarkers = {
       red:
         payload.skillEvents.find(
@@ -564,6 +728,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         setMovingPaths({ red: [], blue: [] });
         setMovingStarts(null);
         setMovingTeleportMarkers({ red: null, blue: null });
+        setMovingBlitzColors({ red: false, blue: false });
         return;
       }
 
@@ -607,7 +772,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         }
 
         advance(step + 1);
-      }, STEP_DURATION_MS);
+      }, stepDuration);
     };
 
     advance(0);
@@ -689,6 +854,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       setMovingPaths({ red: [], blue: [] });
       setMovingStarts(null);
       setMovingTeleportMarkers({ red: null, blue: null });
+      setMovingBlitzColors({ red: false, blue: false });
     };
 
     const onOpponentDisconnected = () => {
@@ -798,7 +964,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     isPlanning &&
     !mySubmitted &&
     !skillReservations.some(
-      (reservation) => reservation.skillId === "classic_guard",
+      (reservation) =>
+        reservation.skillId === "classic_guard" ||
+        reservation.skillId === "plasma_charge" ||
+        reservation.skillId === "electric_blitz",
     );
 
   const handleRematch = () => {
@@ -972,12 +1141,16 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               : (teleportReservation?.target ?? null)
           }
           movingTeleportMarkers={movingTeleportMarkers}
+          movingBlitzColors={movingBlitzColors}
           movingPaths={movingPaths}
           movingStarts={movingStarts}
           cellSize={cellSize}
           isPlanning={canDrawPath}
-            teleportTargetsVisible={pendingTeleport}
-            onTeleportTargetSelect={handleTeleportTargetSelect}
+          teleportTargetsVisible={pendingTeleport}
+          blitzTargetsVisible={pendingBlitz}
+          onTeleportTargetSelect={handleTeleportTargetSelect}
+          onBlitzTargetSelect={handleBlitzTargetSelect}
+          onTeleportCancel={handleTeleportCancel}
           />
         </div>
       </div>
@@ -1064,13 +1237,29 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             const reserved = skillReservations.some(
               (entry) => entry.skillId === skillId,
             );
+            const chargeReserved = skillReservations.some(
+              (entry) => entry.skillId === "plasma_charge",
+            );
+            const blitzReserved = skillReservations.some(
+              (entry) => entry.skillId === "electric_blitz",
+            );
             const roleBlocked =
               (skillId === "classic_guard" && getMyRole() !== "escaper") ||
-              (skillId === "ember_blast" && getMyRole() !== "attacker");
+              ((skillId === "ember_blast" ||
+                skillId === "electric_blitz") &&
+                getMyRole() !== "attacker");
+            const chargeBlocked =
+              chargeReserved &&
+              !reserved &&
+              skillId !== "classic_guard" &&
+              skillId !== "plasma_charge";
+            const blitzBlocked = blitzReserved && !reserved;
             const disabled =
               !isPlanning ||
               mySubmitted ||
               roleBlocked ||
+              chargeBlocked ||
+              blitzBlocked ||
               (getRemainingMana() < skill.manaCost && !reserved);
             return (
               <button

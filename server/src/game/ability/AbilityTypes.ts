@@ -8,7 +8,12 @@ import type {
   RoundStartPayload,
 } from '../../types/game.types';
 
-export type AbilitySkillId = 'classic_guard' | 'ember_blast' | 'quantum_shift';
+export type AbilitySkillId =
+  | 'classic_guard'
+  | 'ember_blast'
+  | 'quantum_shift'
+  | 'plasma_charge'
+  | 'electric_blitz';
 export type AbilitySkillCategory = 'attack' | 'defense' | 'utility';
 
 export interface AbilitySkillReservation {
@@ -34,6 +39,7 @@ export interface AbilityPlayerState {
   stats: { wins: number; losses: number };
   mana: number;
   invulnerableSteps: number;
+  pendingManaBonus: number;
   equippedSkills: AbilitySkillId[];
 }
 

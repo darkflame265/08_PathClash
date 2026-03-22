@@ -19,12 +19,16 @@ interface Props {
   previewStart: Position;
   teleportMarker: Position | null;
   movingTeleportMarkers: { red: Position | null; blue: Position | null };
+  movingBlitzColors: { red: boolean; blue: boolean };
   movingPaths: { red: Position[]; blue: Position[] };
   movingStarts: { red: Position; blue: Position } | null;
   cellSize: number;
   isPlanning: boolean;
   teleportTargetsVisible: boolean;
+  blitzTargetsVisible: boolean;
   onTeleportTargetSelect: (target: Position) => void;
+  onBlitzTargetSelect: (target: Position) => void;
+  onTeleportCancel: () => void;
 }
 
 const GRID_SIZE = 5;
@@ -43,12 +47,16 @@ export function AbilityGrid({
   previewStart,
   teleportMarker,
   movingTeleportMarkers,
+  movingBlitzColors,
   movingPaths,
   movingStarts,
   cellSize,
   isPlanning,
   teleportTargetsVisible,
+  blitzTargetsVisible,
   onTeleportTargetSelect,
+  onBlitzTargetSelect,
+  onTeleportCancel,
 }: Props) {
   const shellRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -104,10 +112,24 @@ export function AbilityGrid({
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!isPlanning || teleportTargetsVisible || !gridRef.current) return;
+      if (!isPlanning || !gridRef.current) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
       if (!cell) return;
+      if (teleportTargetsVisible || blitzTargetsVisible) {
+        const currentPos = state.players[currentColor].position;
+        if (!posEqual(cell, currentPos)) return;
+        if (teleportTargetsVisible) onTeleportCancel();
+        if (blitzTargetsVisible) return;
+        dragState.current = {
+          active: true,
+          fromStart: true,
+          fromEnd: false,
+        };
+        e.preventDefault();
+        e.currentTarget.setPointerCapture(e.pointerId);
+        return;
+      }
       const isOnStart = posEqual(cell, myStart);
       const isOnEnd = myPath.length > 0 && posEqual(cell, myPath[myPath.length - 1]);
       if (!isOnStart && !isOnEnd) return;
@@ -119,12 +141,12 @@ export function AbilityGrid({
       e.preventDefault();
       e.currentTarget.setPointerCapture(e.pointerId);
     },
-    [isPlanning, teleportTargetsVisible, responsiveCellSize, myPath, myStart],
+    [currentColor, isPlanning, teleportTargetsVisible, blitzTargetsVisible, responsiveCellSize, myPath, myStart, onTeleportCancel, state.players],
   );
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!dragState.current.active || !isPlanning || teleportTargetsVisible) return;
+      if (!dragState.current.active || !isPlanning) return;
       const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
       if (!cell) return;
       const current = myPath;
@@ -145,7 +167,7 @@ export function AbilityGrid({
         }
       }
     },
-    [isPlanning, teleportTargetsVisible, responsiveCellSize, myPath, myStart, obstacles, pathPoints, removeFromPath, setMyPath],
+    [isPlanning, responsiveCellSize, myPath, myStart, obstacles, pathPoints, removeFromPath, setMyPath],
   );
 
   const handlePointerEnd = useCallback((e?: React.PointerEvent<HTMLDivElement>) => {
@@ -185,6 +207,21 @@ export function AbilityGrid({
           position.col >= 0 &&
           position.col < GRID_SIZE &&
           !isBlockedCell(position, obstacles),
+      )
+    : [];
+
+  const blitzTargets = blitzTargetsVisible
+    ? [
+        { row: state.players[currentColor].position.row - 1, col: state.players[currentColor].position.col, icon: '↑' },
+        { row: state.players[currentColor].position.row + 1, col: state.players[currentColor].position.col, icon: '↓' },
+        { row: state.players[currentColor].position.row, col: state.players[currentColor].position.col - 1, icon: '←' },
+        { row: state.players[currentColor].position.row, col: state.players[currentColor].position.col + 1, icon: '→' },
+      ].filter(
+        (position) =>
+          position.row >= 0 &&
+          position.row < GRID_SIZE &&
+          position.col >= 0 &&
+          position.col < GRID_SIZE,
       )
     : [];
 
@@ -231,6 +268,24 @@ export function AbilityGrid({
           />
         ))}
 
+        {blitzTargets.map((target) => (
+          <button
+            key={`blitz-${target.row}-${target.col}`}
+            type="button"
+            className="ability-blitz-target"
+            style={{
+              left: target.col * responsiveCellSize + responsiveCellSize / 2,
+              top: target.row * responsiveCellSize + responsiveCellSize / 2,
+              width: Math.max(24, responsiveCellSize * 0.38),
+              height: Math.max(24, responsiveCellSize * 0.38),
+              transform: 'translate(-50%, -50%)',
+            }}
+            onClick={() => onBlitzTargetSelect(target)}
+          >
+            {target.icon}
+          </button>
+        ))}
+
         <PathLine
           color="red"
           path={redPath}
@@ -244,6 +299,23 @@ export function AbilityGrid({
           cellSize={responsiveCellSize}
           isPlanning={state.phase !== 'moving'}
         />
+        {movingBlitzColors.red && movingPaths.red.length > 0 && (
+          <svg className="ability-blitz-line" width="100%" height="100%">
+            <polyline
+              points={[movingStarts?.red ?? state.players.red.position, ...movingPaths.red]
+                .map((p) => `${p.col * responsiveCellSize + responsiveCellSize / 2},${p.row * responsiveCellSize + responsiveCellSize / 2}`)
+                .join(' ')}
+              fill="none"
+              stroke="#d946ef"
+              strokeWidth={Math.max(4, responsiveCellSize * 0.09)}
+              strokeOpacity={0.88}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray={`${Math.max(6, responsiveCellSize * 0.22)} ${Math.max(4, responsiveCellSize * 0.14)}`}
+              style={{ filter: 'drop-shadow(0 0 8px rgba(217, 70, 239, 0.55))' }}
+            />
+          </svg>
+        )}
         <PathLine
           color="blue"
           path={bluePath}
@@ -257,6 +329,23 @@ export function AbilityGrid({
           cellSize={responsiveCellSize}
           isPlanning={state.phase !== 'moving'}
         />
+        {movingBlitzColors.blue && movingPaths.blue.length > 0 && (
+          <svg className="ability-blitz-line" width="100%" height="100%">
+            <polyline
+              points={[movingStarts?.blue ?? state.players.blue.position, ...movingPaths.blue]
+                .map((p) => `${p.col * responsiveCellSize + responsiveCellSize / 2},${p.row * responsiveCellSize + responsiveCellSize / 2}`)
+                .join(' ')}
+              fill="none"
+              stroke="#d946ef"
+              strokeWidth={Math.max(4, responsiveCellSize * 0.09)}
+              strokeOpacity={0.88}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray={`${Math.max(6, responsiveCellSize * 0.22)} ${Math.max(4, responsiveCellSize * 0.14)}`}
+              style={{ filter: 'drop-shadow(0 0 8px rgba(217, 70, 239, 0.55))' }}
+            />
+          </svg>
+        )}
 
         {teleportMarker && state.phase !== 'moving' && (
           <div

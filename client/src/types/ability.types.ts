@@ -6,7 +6,12 @@
   Position,
 } from './game.types';
 
-export type AbilitySkillId = 'classic_guard' | 'ember_blast' | 'quantum_shift';
+export type AbilitySkillId =
+  | 'classic_guard'
+  | 'ember_blast'
+  | 'quantum_shift'
+  | 'plasma_charge'
+  | 'electric_blitz';
 export type AbilitySkillCategory = 'attack' | 'defense' | 'utility';
 
 export interface AbilitySkillDefinition {
@@ -136,5 +141,29 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     category: 'utility',
     skinId: 'quantum',
     icon: '✦',
+  },
+  plasma_charge: {
+    id: 'plasma_charge',
+    name: { en: 'Charge', kr: '충전' },
+    description: {
+      en: 'Become unable to move this turn. Gain +4 mana at the start of your next turn. Defense skills can still be used.',
+      kr: '이번 턴에는 이동할 수 없습니다. 대신 다음 턴 시작 시 마나를 +4 얻습니다. 방어 스킬은 함께 사용할 수 있습니다.',
+    },
+    manaCost: 2,
+    category: 'utility',
+    skinId: 'plasma',
+    icon: '⚡',
+  },
+  electric_blitz: {
+    id: 'electric_blitz',
+    name: { en: 'Lightning Flash', kr: '벽력일섬' },
+    description: {
+      en: 'Choose a direction, then dash straight to the edge through obstacles. Damages enemies on the path.',
+      kr: '방향을 고르면 장애물을 무시하고 보드 끝까지 직선 돌진합니다. 이동 경로 위 적에게 피해를 줍니다.',
+    },
+    manaCost: 6,
+    category: 'attack',
+    skinId: 'electric_core',
+    icon: '⚡',
   },
 };

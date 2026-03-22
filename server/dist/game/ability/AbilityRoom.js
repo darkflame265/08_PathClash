@@ -10,10 +10,32 @@ const SUBMIT_GRACE_MS = 350;
 const INITIAL_MANA = 4;
 const MAX_MANA = 10;
 const MANA_PER_TURN = 2;
+function posEqual(a, b) {
+    return a.row === b.row && a.col === b.col;
+}
+function buildBlitzPath(start, target) {
+    const rowDelta = target.row - start.row;
+    const colDelta = target.col - start.col;
+    const rowStep = rowDelta === 0 ? 0 : rowDelta > 0 ? 1 : -1;
+    const colStep = colDelta === 0 ? 0 : colDelta > 0 ? 1 : -1;
+    if (Math.abs(rowDelta) + Math.abs(colDelta) !== 1)
+        return [];
+    const path = [];
+    let row = start.row + rowStep;
+    let col = start.col + colStep;
+    while (row >= 0 && row <= 4 && col >= 0 && col <= 4) {
+        path.push({ row, col });
+        row += rowStep;
+        col += colStep;
+    }
+    return path;
+}
 const SKILL_COSTS = {
     classic_guard: 4,
     ember_blast: 4,
     quantum_shift: 3,
+    plasma_charge: 2,
+    electric_blitz: 6,
 };
 class AbilityRoom {
     constructor(roomId, code, io) {
@@ -76,6 +98,7 @@ class AbilityRoom {
             stats,
             mana: INITIAL_MANA,
             invulnerableSteps: 0,
+            pendingManaBonus: 0,
             equippedSkills,
         });
         socket.join(this.roomId);
@@ -265,6 +288,10 @@ class AbilityRoom {
         blue.plannedSkills = [];
         red.mana = Math.min(MAX_MANA, red.mana + MANA_PER_TURN);
         blue.mana = Math.min(MAX_MANA, blue.mana + MANA_PER_TURN);
+        red.mana = Math.min(MAX_MANA, red.mana + red.pendingManaBonus);
+        blue.mana = Math.min(MAX_MANA, blue.mana + blue.pendingManaBonus);
+        red.pendingManaBonus = 0;
+        blue.pendingManaBonus = 0;
         this.obstacles = (0, GameEngine_1.generateObstacles)(this.roomId, this.turn, red.position, blue.position);
         const now = Date.now();
         this.touchActivity(now);
@@ -317,10 +344,12 @@ class AbilityRoom {
         red.hp = resolution.redState.hp;
         red.mana = resolution.redState.mana;
         red.invulnerableSteps = resolution.redState.invulnerableSteps;
+        red.pendingManaBonus = resolution.redState.pendingManaBonus;
         blue.position = resolution.blueState.position;
         blue.hp = resolution.blueState.hp;
         blue.mana = resolution.blueState.mana;
         blue.invulnerableSteps = resolution.blueState.invulnerableSteps;
+        blue.pendingManaBonus = resolution.blueState.pendingManaBonus;
         this.touchActivity();
         this.io.to(this.roomId).emit('ability_resolution', resolution.payload);
         const animTime = (0, GameEngine_1.calcAnimationDuration)(Math.max(red.plannedPath.length, blue.plannedPath.length) + resolution.payload.skillEvents.length) + resolution.payload.skillEvents.length * 280;
@@ -374,7 +403,10 @@ class AbilityRoom {
             return null;
         const hasGuard = uniqueSkills.some((skill) => skill.skillId === 'classic_guard');
         const teleport = uniqueSkills.find((skill) => skill.skillId === 'quantum_shift') ?? null;
-        const hasAttackSkill = uniqueSkills.some((skill) => skill.skillId === 'ember_blast');
+        const hasBlitz = uniqueSkills.some((skill) => skill.skillId === 'electric_blitz');
+        const blitz = uniqueSkills.find((skill) => skill.skillId === 'electric_blitz') ?? null;
+        const hasAttackSkill = uniqueSkills.some((skill) => skill.skillId === 'ember_blast' || skill.skillId === 'electric_blitz');
+        const hasCharge = uniqueSkills.some((skill) => skill.skillId === 'plasma_charge');
         if (hasGuard && player.role !== 'escaper')
             return null;
         if (hasAttackSkill && player.role !== 'attacker')
@@ -383,6 +415,33 @@ class AbilityRoom {
             const guardSkill = uniqueSkills.find((skill) => skill.skillId === 'classic_guard');
             if (!guardSkill || guardSkill.step !== 0 || path.length > 0)
                 return null;
+        }
+        if (hasCharge) {
+            const chargeSkill = uniqueSkills.find((skill) => skill.skillId === 'plasma_charge');
+            if (!chargeSkill || chargeSkill.step !== 0 || path.length > 0)
+                return null;
+            const invalidCombo = uniqueSkills.some((skill) => skill.skillId !== 'plasma_charge' && skill.skillId !== 'classic_guard');
+            if (invalidCombo)
+                return null;
+        }
+        if (hasBlitz) {
+            if (!blitz || blitz.step !== 0 || !blitz.target)
+                return null;
+            if (uniqueSkills.length !== 1)
+                return null;
+            const blitzPath = buildBlitzPath(player.position, blitz.target);
+            if (blitzPath.length === 0)
+                return null;
+            if (path.length !== blitzPath.length)
+                return null;
+            for (let index = 0; index < blitzPath.length; index++) {
+                if (!posEqual(path[index], blitzPath[index]))
+                    return null;
+            }
+            return {
+                path: blitzPath,
+                skills: uniqueSkills,
+            };
         }
         let startPosition = player.position;
         if (teleport) {
@@ -443,6 +502,7 @@ class AbilityRoom {
             player.pathSubmitted = false;
             player.mana = INITIAL_MANA;
             player.invulnerableSteps = 0;
+            player.pendingManaBonus = 0;
         }
     }
     updateRoles() {

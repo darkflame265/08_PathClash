@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolveAbilityRound = resolveAbilityRound;
 const GUARD_STEPS = 2;
+const CHARGE_MANA_BONUS = 4;
 function samePosition(a, b) {
     return a.row === b.row && a.col === b.col;
 }
@@ -28,6 +29,9 @@ function sortReservations(reservations) {
             return leftPriority - rightPriority;
         return left.order - right.order;
     });
+}
+function getLinePositions(start, path) {
+    return [start, ...path];
 }
 function sortStepReservations(reservations) {
     return [...reservations].sort((left, right) => {
@@ -57,6 +61,8 @@ function resolveAbilityRound(params) {
     let blueMana = blue.mana;
     let redInv = red.invulnerableSteps;
     let blueInv = blue.invulnerableSteps;
+    let redPendingManaBonus = red.pendingManaBonus;
+    let bluePendingManaBonus = blue.pendingManaBonus;
     const redReservations = sortReservations(red.plannedSkills);
     const blueReservations = sortReservations(blue.plannedSkills);
     const maxStep = Math.max(redPath.length, bluePath.length);
@@ -112,6 +118,43 @@ function resolveAbilityRound(params) {
                 skillId: reservation.skillId,
                 from,
                 to: reservation.target,
+            });
+            return;
+        }
+        if (reservation.skillId === 'plasma_charge') {
+            if (color === 'red') {
+                redMana = Math.max(0, casterMana - 2);
+                redPendingManaBonus = CHARGE_MANA_BONUS;
+            }
+            else {
+                blueMana = Math.max(0, casterMana - 2);
+                bluePendingManaBonus = CHARGE_MANA_BONUS;
+            }
+            skillEvents.push({
+                step: reservation.step,
+                order: reservation.order,
+                color,
+                skillId: reservation.skillId,
+            });
+            return;
+        }
+        if (reservation.skillId === 'electric_blitz') {
+            if (color === 'red') {
+                redMana = Math.max(0, casterMana - 6);
+            }
+            else {
+                blueMana = Math.max(0, casterMana - 6);
+            }
+            skillEvents.push({
+                step: reservation.step,
+                order: reservation.order,
+                color,
+                skillId: reservation.skillId,
+                from: { ...currentPos },
+                to: color === 'red'
+                    ? { ...redPath[redPath.length - 1] }
+                    : { ...bluePath[bluePath.length - 1] },
+                affectedPositions: getLinePositions(currentPos, color === 'red' ? redPath : bluePath),
             });
             return;
         }
@@ -198,12 +241,14 @@ function resolveAbilityRound(params) {
             hp: redHp,
             mana: redMana,
             invulnerableSteps: redInv,
+            pendingManaBonus: redPendingManaBonus,
         },
         blueState: {
             position: bluePos,
             hp: blueHp,
             mana: blueMana,
             invulnerableSteps: blueInv,
+            pendingManaBonus: bluePendingManaBonus,
         },
         winner,
     };

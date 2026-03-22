@@ -229,7 +229,11 @@ const initialAbilityLoadout = (() => {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return ['classic_guard'] as AbilitySkillId[];
     const normalized = parsed.filter((value): value is AbilitySkillId =>
-      value === 'classic_guard' || value === 'ember_blast' || value === 'quantum_shift',
+      value === 'classic_guard' ||
+      value === 'ember_blast' ||
+      value === 'quantum_shift' ||
+      value === 'plasma_charge' ||
+      value === 'electric_blitz',
     );
     return normalized.length > 0 ? normalized.slice(0, 3) : (['classic_guard'] as AbilitySkillId[]);
   } catch {
