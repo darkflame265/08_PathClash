@@ -18,7 +18,9 @@ interface Props {
   activeGuards: { red: boolean; blue: boolean };
   previewStart: Position;
   teleportMarker: Position | null;
+  movingTeleportMarkers: { red: Position | null; blue: Position | null };
   movingPaths: { red: Position[]; blue: Position[] };
+  movingStarts: { red: Position; blue: Position } | null;
   cellSize: number;
   isPlanning: boolean;
   teleportTargetsVisible: boolean;
@@ -40,7 +42,9 @@ export function AbilityGrid({
   activeGuards,
   previewStart,
   teleportMarker,
+  movingTeleportMarkers,
   movingPaths,
+  movingStarts,
   cellSize,
   isPlanning,
   teleportTargetsVisible,
@@ -230,14 +234,26 @@ export function AbilityGrid({
         <PathLine
           color="red"
           path={redPath}
-          startPos={currentColor === 'red' && state.phase !== 'moving' ? myStart : state.players.red.position}
+          startPos={
+            state.phase === 'moving'
+              ? (movingStarts?.red ?? state.players.red.position)
+              : currentColor === 'red'
+                ? myStart
+                : state.players.red.position
+          }
           cellSize={responsiveCellSize}
           isPlanning={state.phase !== 'moving'}
         />
         <PathLine
           color="blue"
           path={bluePath}
-          startPos={currentColor === 'blue' && state.phase !== 'moving' ? myStart : state.players.blue.position}
+          startPos={
+            state.phase === 'moving'
+              ? (movingStarts?.blue ?? state.players.blue.position)
+              : currentColor === 'blue'
+                ? myStart
+                : state.players.blue.position
+          }
           cellSize={responsiveCellSize}
           isPlanning={state.phase !== 'moving'}
         />
@@ -256,6 +272,27 @@ export function AbilityGrid({
             ✦
           </div>
         )}
+
+        {state.phase === 'moving' &&
+          (['red', 'blue'] as const).map((color) => {
+            const marker = movingTeleportMarkers[color];
+            if (!marker) return null;
+            return (
+              <div
+                key={`moving-teleport-${color}`}
+                className="ability-teleport-marker"
+                style={{
+                  left: marker.col * responsiveCellSize + responsiveCellSize / 2,
+                  top: marker.row * responsiveCellSize + responsiveCellSize / 2,
+                  width: Math.max(24, responsiveCellSize * 0.34),
+                  height: Math.max(24, responsiveCellSize * 0.34),
+                  transform: 'translate(-50%, -50%)',
+                }}
+              >
+                ✦
+              </div>
+            );
+          })}
 
         {collisionEffects.map(({ id, position }) => (
           <CollisionEffect key={id} position={position} cellSize={responsiveCellSize} />

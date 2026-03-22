@@ -115,6 +115,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     red: Position[];
     blue: Position[];
   }>({ red: [], blue: [] });
+  const [movingStarts, setMovingStarts] = useState<{
+    red: Position;
+    blue: Position;
+  } | null>(null);
+  const [movingTeleportMarkers, setMovingTeleportMarkers] = useState<{
+    red: Position | null;
+    blue: Position | null;
+  }>({ red: null, blue: null });
   const [winner, setWinner] = useState<PlayerColor | "draw" | null>(null);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const [rematchRequested, setRematchRequested] = useState(false);
@@ -203,6 +211,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setExplodingFlags({ red: false, blue: false });
     setCollisionEffects([]);
     setMovingPaths({ red: [], blue: [] });
+    setMovingStarts(null);
+    setMovingTeleportMarkers({ red: null, blue: null });
     if (nextState.phase !== "gameover") {
       setWinner(null);
       setGameOverMessage(null);
@@ -464,6 +474,27 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const runAnimation = (payload: AbilityResolutionPayload) => {
     clearAnimationTimeouts();
     setMovingPaths({ red: payload.redPath, blue: payload.bluePath });
+    const teleportMarkers = {
+      red:
+        payload.skillEvents.find(
+          (event) =>
+            event.color === "red" &&
+            event.skillId === "quantum_shift" &&
+            event.to,
+        )?.to ?? null,
+      blue:
+        payload.skillEvents.find(
+          (event) =>
+            event.color === "blue" &&
+            event.skillId === "quantum_shift" &&
+            event.to,
+        )?.to ?? null,
+    };
+    setMovingTeleportMarkers(teleportMarkers);
+    setMovingStarts({
+      red: teleportMarkers.red ?? payload.redStart,
+      blue: teleportMarkers.blue ?? payload.blueStart,
+    });
     const guardCounters = {
       red: stateRef.current?.players.red.invulnerableSteps ?? 0,
       blue: stateRef.current?.players.blue.invulnerableSteps ?? 0,
@@ -524,6 +555,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
       if (step > maxSteps) {
         setMovingPaths({ red: [], blue: [] });
+        setMovingStarts(null);
+        setMovingTeleportMarkers({ red: null, blue: null });
         return;
       }
 
@@ -647,6 +680,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       setWinner(nextWinner);
       setState((prev) => (prev ? { ...prev, phase: "gameover" } : prev));
       setMovingPaths({ red: [], blue: [] });
+      setMovingStarts(null);
+      setMovingTeleportMarkers({ red: null, blue: null });
     };
 
     const onOpponentDisconnected = () => {
@@ -924,10 +959,16 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           collisionEffects={collisionEffects}
           activeGuards={activeGuards}
           previewStart={previewStart}
-          teleportMarker={teleportReservation?.target ?? null}
+          teleportMarker={
+            state.phase === "moving"
+              ? movingTeleportMarkers[currentColor]
+              : (teleportReservation?.target ?? null)
+          }
+          movingTeleportMarkers={movingTeleportMarkers}
           movingPaths={movingPaths}
+          movingStarts={movingStarts}
           cellSize={cellSize}
-            isPlanning={canDrawPath}
+          isPlanning={canDrawPath}
             teleportTargetsVisible={pendingTeleport}
             onTeleportTargetSelect={handleTeleportTargetSelect}
           />
