@@ -87,7 +87,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [selectedSkillId, setSelectedSkillId] = useState<AbilitySkillId | null>(
     null,
   );
-  const [pendingExplosionStep, setPendingExplosionStep] = useState(false);
   const [pendingTeleport, setPendingTeleport] = useState(false);
   const [redDisplayPos, setRedDisplayPos] = useState<Position>({
     row: 2,
@@ -183,7 +182,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setMyPath([]);
     setSkillReservations([]);
     setSelectedSkillId(null);
-    setPendingExplosionStep(false);
     setPendingTeleport(false);
     setMySubmitted(false);
     setOpponentSubmitted(false);
@@ -245,8 +243,15 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   };
 
   const updateMyPath = (nextPath: Position[]) => {
+    const nextReservations = skillReservations.filter((reservation) => {
+      if (reservation.skillId !== "ember_blast") return true;
+      return reservation.step <= nextPath.length;
+    });
     setMyPath(nextPath);
-    syncMyPlan(nextPath, skillReservations);
+    if (nextReservations !== skillReservations) {
+      setSkillReservations(nextReservations);
+    }
+    syncMyPlan(nextPath, nextReservations);
   };
 
   const updateSkillReservations = (
@@ -261,7 +266,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       (entry) => entry.skillId !== skillId,
     );
     setSelectedSkillId(null);
-    setPendingExplosionStep(false);
     setPendingTeleport(false);
 
     if (skillId === "classic_guard") {
@@ -307,10 +311,25 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   };
 
   const beginExplosionStepPick = () => {
+    const alreadyReserved = skillReservations.some(
+      (entry) => entry.skillId === "ember_blast",
+    );
+    if (alreadyReserved) {
+      removeReservation("ember_blast");
+      return;
+    }
     if (getMyRole() !== "attacker") return;
     if (getRemainingMana() < getSkillCost("ember_blast")) return;
-    setSelectedSkillId("ember_blast");
-    setPendingExplosionStep(true);
+    const nextReservations: AbilitySkillReservation[] = [
+      ...skillReservations.filter((entry) => entry.skillId !== "ember_blast"),
+      {
+        skillId: "ember_blast",
+        step: myPath.length,
+        order: reservationOrderRef.current++,
+      },
+    ];
+    updateSkillReservations(nextReservations);
+    setSelectedSkillId(null);
     setPendingTeleport(false);
   };
 
@@ -326,17 +345,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     previousTeleportPathRef.current = myPath;
     setSelectedSkillId("quantum_shift");
     setPendingTeleport(true);
-    setPendingExplosionStep(false);
-  };
-
-  const handleExplosionStepSelect = (step: number) => {
-    const nextReservations: AbilitySkillReservation[] = [
-      ...skillReservations.filter((entry) => entry.skillId !== "ember_blast"),
-      { skillId: "ember_blast", step, order: reservationOrderRef.current++ },
-    ];
-    updateSkillReservations(nextReservations);
-    setPendingExplosionStep(false);
-    setSelectedSkillId(null);
   };
 
   const handleTeleportTargetSelect = (target: Position) => {
@@ -410,6 +418,18 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
     if (event.skillId === "classic_guard") {
       setActiveGuards((prev) => ({ ...prev, [event.color]: true }));
+    }
+
+    if (event.skillId === "ember_blast") {
+      for (const position of event.affectedPositions ?? []) {
+        const effectId = Date.now() + Math.random();
+        setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
+        queueAnimationTimeout(() => {
+          setCollisionEffects((prev) =>
+            prev.filter((entry) => entry.id !== effectId),
+          );
+        }, 420);
+      }
     }
 
     if (event.skillId === "quantum_shift" && event.to) {
@@ -1031,25 +1051,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               : `마나 ${getMyMana()} / 10`}
           </span>
         </div>
-        {pendingExplosionStep && (
-          <div className="ability-step-picker">
-            <span>
-              {lang === "en" ? "Select trigger step" : "발동 시점 선택"}
-            </span>
-            <div className="ability-step-picker-row">
-              {Array.from({ length: myPath.length + 1 }, (_, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  className="ability-step-chip"
-                  onClick={() => handleExplosionStepSelect(index)}
-                >
-                  {index}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
