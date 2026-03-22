@@ -266,6 +266,22 @@
   box-shadow: 0 0 12px rgba(59, 130, 246, 0.35);
 }
 
+.ability-teleport-marker {
+  position: absolute;
+  z-index: 3;
+  border-radius: 50%;
+  border: 1px solid rgba(147, 197, 253, 0.65);
+  background: rgba(37, 99, 235, 0.22);
+  color: #dbeafe;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(0.72rem, calc(0.9rem * var(--gs-scale, 1)), 1rem);
+  font-weight: 900;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.28);
+  pointer-events: none;
+}
+
 .ability-loadout-card-actions {
   display: flex;
   align-items: center;

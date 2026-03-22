@@ -17,6 +17,7 @@ interface Props {
   collisionEffects: Array<{ id: number; position: Position }>;
   activeGuards: { red: boolean; blue: boolean };
   previewStart: Position;
+  teleportMarker: Position | null;
   movingPaths: { red: Position[]; blue: Position[] };
   cellSize: number;
   isPlanning: boolean;
@@ -38,6 +39,7 @@ export function AbilityGrid({
   collisionEffects,
   activeGuards,
   previewStart,
+  teleportMarker,
   movingPaths,
   cellSize,
   isPlanning,
@@ -225,8 +227,35 @@ export function AbilityGrid({
           />
         ))}
 
-        <PathLine color="red" path={redPath} startPos={state.players.red.position} cellSize={responsiveCellSize} isPlanning={state.phase !== 'moving'} />
-        <PathLine color="blue" path={bluePath} startPos={state.players.blue.position} cellSize={responsiveCellSize} isPlanning={state.phase !== 'moving'} />
+        <PathLine
+          color="red"
+          path={redPath}
+          startPos={currentColor === 'red' && state.phase !== 'moving' ? myStart : state.players.red.position}
+          cellSize={responsiveCellSize}
+          isPlanning={state.phase !== 'moving'}
+        />
+        <PathLine
+          color="blue"
+          path={bluePath}
+          startPos={currentColor === 'blue' && state.phase !== 'moving' ? myStart : state.players.blue.position}
+          cellSize={responsiveCellSize}
+          isPlanning={state.phase !== 'moving'}
+        />
+
+        {teleportMarker && state.phase !== 'moving' && (
+          <div
+            className="ability-teleport-marker"
+            style={{
+              left: teleportMarker.col * responsiveCellSize + responsiveCellSize / 2,
+              top: teleportMarker.row * responsiveCellSize + responsiveCellSize / 2,
+              width: Math.max(24, responsiveCellSize * 0.34),
+              height: Math.max(24, responsiveCellSize * 0.34),
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            ✦
+          </div>
+        )}
 
         {collisionEffects.map(({ id, position }) => (
           <CollisionEffect key={id} position={position} cellSize={responsiveCellSize} />

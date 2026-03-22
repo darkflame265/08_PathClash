@@ -225,6 +225,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const getAvailableSkills = () =>
     state?.players[currentColor].equippedSkills ?? [];
+  const teleportReservation =
+    skillReservations.find(
+      (entry) => entry.skillId === "quantum_shift" && entry.target,
+    ) ?? null;
   const getSkillCost = (skillId: AbilitySkillId) =>
     ABILITY_SKILLS[skillId].manaCost;
   const getReservedMana = () =>
@@ -917,11 +921,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             displayPositions={{ red: redDisplayPos, blue: blueDisplayPos }}
             hitFlags={hitFlags}
             explodingFlags={explodingFlags}
-            collisionEffects={collisionEffects}
-            activeGuards={activeGuards}
-            previewStart={previewStart}
-            movingPaths={movingPaths}
-            cellSize={cellSize}
+          collisionEffects={collisionEffects}
+          activeGuards={activeGuards}
+          previewStart={previewStart}
+          teleportMarker={teleportReservation?.target ?? null}
+          movingPaths={movingPaths}
+          cellSize={cellSize}
             isPlanning={canDrawPath}
             teleportTargetsVisible={pendingTeleport}
             onTeleportTargetSelect={handleTeleportTargetSelect}
