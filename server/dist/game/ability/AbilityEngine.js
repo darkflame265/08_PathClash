@@ -29,6 +29,18 @@ function sortReservations(reservations) {
         return left.order - right.order;
     });
 }
+function sortStepReservations(reservations) {
+    return [...reservations].sort((left, right) => {
+        const leftPriority = left.reservation.skillId === 'classic_guard' ? -1 : 0;
+        const rightPriority = right.reservation.skillId === 'classic_guard' ? -1 : 0;
+        if (left.reservation.step !== right.reservation.step) {
+            return left.reservation.step - right.reservation.step;
+        }
+        if (leftPriority !== rightPriority)
+            return leftPriority - rightPriority;
+        return left.reservation.order - right.reservation.order;
+    });
+}
 function resolveAbilityRound(params) {
     const { red, blue, attackerColor, obstacles } = params;
     const redStart = { ...red.position };
@@ -153,11 +165,16 @@ function resolveAbilityRound(params) {
             if (blueInv > 0)
                 blueInv -= 1;
         }
-        for (const reservation of redReservations.filter((item) => item.step === step)) {
-            processSkill('red', reservation);
-        }
-        for (const reservation of blueReservations.filter((item) => item.step === step)) {
-            processSkill('blue', reservation);
+        const stepReservations = sortStepReservations([
+            ...redReservations
+                .filter((item) => item.step === step)
+                .map((reservation) => ({ color: 'red', reservation })),
+            ...blueReservations
+                .filter((item) => item.step === step)
+                .map((reservation) => ({ color: 'blue', reservation })),
+        ]);
+        for (const { color, reservation } of stepReservations) {
+            processSkill(color, reservation);
         }
     }
     let winner = null;

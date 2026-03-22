@@ -45,6 +45,20 @@ function sortReservations(reservations: AbilitySkillReservation[]): AbilitySkill
   });
 }
 
+function sortStepReservations(
+  reservations: Array<{ color: PlayerColor; reservation: AbilitySkillReservation }>,
+) {
+  return [...reservations].sort((left, right) => {
+    const leftPriority = left.reservation.skillId === 'classic_guard' ? -1 : 0;
+    const rightPriority = right.reservation.skillId === 'classic_guard' ? -1 : 0;
+    if (left.reservation.step !== right.reservation.step) {
+      return left.reservation.step - right.reservation.step;
+    }
+    if (leftPriority !== rightPriority) return leftPriority - rightPriority;
+    return left.reservation.order - right.reservation.order;
+  });
+}
+
 export function resolveAbilityRound(params: {
   red: AbilityPlayerState;
   blue: AbilityPlayerState;
@@ -190,11 +204,17 @@ export function resolveAbilityRound(params: {
       if (blueInv > 0) blueInv -= 1;
     }
 
-    for (const reservation of redReservations.filter((item) => item.step === step)) {
-      processSkill('red', reservation);
-    }
-    for (const reservation of blueReservations.filter((item) => item.step === step)) {
-      processSkill('blue', reservation);
+    const stepReservations = sortStepReservations([
+      ...redReservations
+        .filter((item) => item.step === step)
+        .map((reservation) => ({ color: 'red' as const, reservation })),
+      ...blueReservations
+        .filter((item) => item.step === step)
+        .map((reservation) => ({ color: 'blue' as const, reservation })),
+    ]);
+
+    for (const { color, reservation } of stepReservations) {
+      processSkill(color, reservation);
     }
   }
 
