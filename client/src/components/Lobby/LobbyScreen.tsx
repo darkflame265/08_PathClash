@@ -746,9 +746,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
     return ownedSkins.includes(skinId);
   };
 
-  const availableAbilitySkills = Object.values(ABILITY_SKILLS).filter((skill) =>
-    hasAbilitySkinUnlocked(skill.skinId),
-  );
+  const availableAbilitySkills = Object.values(ABILITY_SKILLS);
   const equippedAbilitySkillDefs = abilityLoadout
     .map((skillId) => ABILITY_SKILLS[skillId])
     .filter(Boolean);
@@ -1787,26 +1785,46 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
             <div className="skin-option-list">
               {availableAbilitySkills.map((skill) => {
                 const equipped = abilityLoadout.includes(skill.id);
+                const unlocked = hasAbilitySkinUnlocked(skill.skinId);
+                const requiredSkinName =
+                  skinChoices.find((choice) => choice.id === skill.skinId)
+                    ?.name ?? skill.skinId;
                 return (
                   <button
                     key={skill.id}
-                    className={`skin-option-card ${equipped ? "is-selected" : ""}`}
+                    className={`skin-option-card ${equipped ? "is-selected" : ""} ${!unlocked ? "is-locked" : ""}`}
                     type="button"
-                    onClick={() => handleToggleAbilitySkill(skill.id)}
+                    onClick={() => {
+                      if (!unlocked) return;
+                      handleToggleAbilitySkill(skill.id);
+                    }}
+                    disabled={!unlocked}
                   >
                     <span className="skin-preview ability-skill-preview" aria-hidden="true">
                       {skill.icon}
                     </span>
                     <span className="skin-option-copy">
                       <strong>{lang === "en" ? skill.name.en : skill.name.kr}</strong>
-                      <span>{lang === "en" ? skill.description.en : skill.description.kr}</span>
+                      <span>
+                        {lang === "en" ? skill.description.en : skill.description.kr}
+                        <br />
+                        {lang === "en"
+                          ? `Required skin: ${requiredSkinName}`
+                          : `필요 스킨: ${requiredSkinName}`}
+                      </span>
                     </span>
                     <span className="skin-lock-meta ability-skill-meta">
-                      <span className="skin-lock-icon" aria-hidden="true">✨</span>
+                      <span className="skin-lock-icon" aria-hidden="true">
+                        {unlocked ? "✨" : "🔒"}
+                      </span>
                       <span>
-                        {lang === "en"
-                          ? `${skill.manaCost} mana · ${skill.category}`
-                          : `마나 ${skill.manaCost} · ${skill.category === "attack" ? "공격" : skill.category === "defense" ? "방어" : "유틸"}`}
+                        {unlocked
+                          ? lang === "en"
+                            ? `${skill.manaCost} mana · ${skill.category}`
+                            : `마나 ${skill.manaCost} · ${skill.category === "attack" ? "공격" : skill.category === "defense" ? "방어" : "유틸"}`
+                          : lang === "en"
+                            ? "Locked"
+                            : "잠김"}
                       </span>
                     </span>
                   </button>

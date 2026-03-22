@@ -495,6 +495,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       red: teleportMarkers.red ?? payload.redStart,
       blue: teleportMarkers.blue ?? payload.blueStart,
     });
+    const redVisualStart = teleportMarkers.red ?? payload.redStart;
+    const blueVisualStart = teleportMarkers.blue ?? payload.blueStart;
     const guardCounters = {
       red: stateRef.current?.players.red.invulnerableSteps ?? 0,
       blue: stateRef.current?.players.blue.invulnerableSteps ?? 0,
@@ -524,8 +526,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       collisionMap.set(collision.step, collision);
     }
 
-    const redSeq = [payload.redStart, ...payload.redPath];
-    const blueSeq = [payload.blueStart, ...payload.bluePath];
+    const redSeq = [redVisualStart, ...payload.redPath];
+    const blueSeq = [blueVisualStart, ...payload.bluePath];
     const maxSteps = Math.max(redSeq.length - 1, blueSeq.length - 1);
 
     const runSkillQueue = (
