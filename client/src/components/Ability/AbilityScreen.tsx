@@ -355,6 +355,11 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       removeReservation("quantum_shift");
       return;
     }
+    if (pendingTeleport && selectedSkillId === "quantum_shift") {
+      setSelectedSkillId(null);
+      setPendingTeleport(false);
+      return;
+    }
     if (getRemainingMana() < getSkillCost("quantum_shift")) return;
     previousTeleportPathRef.current = myPath;
     setSelectedSkillId("quantum_shift");
