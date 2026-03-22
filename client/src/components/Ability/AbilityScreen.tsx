@@ -605,6 +605,25 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           );
         }, 220);
       }
+
+      const dashPositions = (event.affectedPositions ?? []).slice(1);
+      const dashStepMs = 35;
+      dashPositions.forEach((position, index) => {
+        queueAnimationTimeout(() => {
+          if (event.color === "red") setRedDisplayPos(position);
+          else setBlueDisplayPos(position);
+        }, (index + 1) * dashStepMs);
+      });
+
+      const eventDuration = Math.max(
+        SKILL_PAUSE_MS,
+        dashPositions.length * dashStepMs + 40,
+      );
+      queueAnimationTimeout(() => {
+        setAbilityBanner(null);
+        done();
+      }, eventDuration);
+      return;
     }
 
     if (event.skillId === "quantum_shift" && event.to) {
@@ -634,14 +653,20 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const runAnimation = (payload: AbilityResolutionPayload) => {
     clearAnimationTimeouts();
-    const hasBlitz = payload.skillEvents.some(
-      (event) => event.skillId === "electric_blitz",
-    );
-    const stepDuration = hasBlitz ? 70 : STEP_DURATION_MS;
+    const blitzColors = {
+      red: payload.skillEvents.some(
+        (event) =>
+          event.skillId === "electric_blitz" && event.color === "red",
+      ),
+      blue: payload.skillEvents.some(
+        (event) =>
+          event.skillId === "electric_blitz" && event.color === "blue",
+      ),
+    };
     setMovingPaths({ red: payload.redPath, blue: payload.bluePath });
     setMovingBlitzColors({
-      red: payload.skillEvents.some((event) => event.skillId === "electric_blitz" && event.color === "red"),
-      blue: payload.skillEvents.some((event) => event.skillId === "electric_blitz" && event.color === "blue"),
+      red: blitzColors.red,
+      blue: blitzColors.blue,
     });
     const teleportMarkers = {
       red:
@@ -732,8 +757,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         return;
       }
 
-      setRedDisplayPos(redSeq[Math.min(step, redSeq.length - 1)]);
-      setBlueDisplayPos(blueSeq[Math.min(step, blueSeq.length - 1)]);
+      if (!blitzColors.red) {
+        setRedDisplayPos(redSeq[Math.min(step, redSeq.length - 1)]);
+      }
+      if (!blitzColors.blue) {
+        setBlueDisplayPos(blueSeq[Math.min(step, blueSeq.length - 1)]);
+      }
 
       queueAnimationTimeout(() => {
         if (guardCounters.red > 0) guardCounters.red -= 1;
@@ -772,7 +801,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         }
 
         advance(step + 1);
-      }, stepDuration);
+      }, STEP_DURATION_MS);
     };
 
     advance(0);
