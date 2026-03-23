@@ -617,6 +617,19 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         120,
         dashPositions.length * BLITZ_DASH_STEP_MS + 24,
       );
+      for (const damage of event.damages ?? []) {
+        setState((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            players: {
+              ...prev.players,
+              [damage.color]: { ...prev.players[damage.color], hp: damage.newHp },
+            },
+          };
+        });
+        triggerLocalHit(damage.color, damage.newHp, damage.position);
+      }
       queueAnimationTimeout(() => {
         setAbilityBanner(null);
         done();

@@ -93,6 +93,8 @@ export function resolveAbilityRound(params: {
   let blueInv = blue.invulnerableSteps;
   let redPendingManaBonus = red.pendingManaBonus;
   let bluePendingManaBonus = blue.pendingManaBonus;
+  let redBlitz = false;
+  let blueBlitz = false;
 
   const redReservations = sortReservations(red.plannedSkills);
   const blueReservations = sortReservations(blue.plannedSkills);
@@ -180,26 +182,41 @@ export function resolveAbilityRound(params: {
     }
 
     if (reservation.skillId === 'electric_blitz') {
+      const path = color === 'red' ? redPath : bluePath;
+      const affectedPositions = getLinePositions(currentPos, path);
+      const damages: AbilityDamageEvent[] = [];
+      const opponentProtected = opponentColor === 'red' ? redInv > 0 : blueInv > 0;
+      if (affectedPositions.some((position) => samePosition(position, opponentPos)) && !opponentProtected) {
+        if (opponentColor === 'red') {
+          redHp = Math.max(0, redHp - 1);
+          damages.push({ color: 'red', newHp: redHp, position: { ...opponentPos } });
+        } else {
+          blueHp = Math.max(0, blueHp - 1);
+          damages.push({ color: 'blue', newHp: blueHp, position: { ...opponentPos } });
+        }
+      }
       if (color === 'red') {
         redMana = Math.max(0, casterMana - 6);
+        redPos = { ...(path[path.length - 1] ?? currentPos) };
+        redBlitz = true;
       } else {
         blueMana = Math.max(0, casterMana - 6);
+        bluePos = { ...(path[path.length - 1] ?? currentPos) };
+        blueBlitz = true;
       }
-      skillEvents.push({
-        step: reservation.step,
-        order: reservation.order,
+      applyDamages(
         color,
-        skillId: reservation.skillId,
-        from: { ...currentPos },
-        to:
-          color === 'red'
-            ? { ...(redPath[redPath.length - 1] ?? currentPos) }
-            : { ...(bluePath[bluePath.length - 1] ?? currentPos) },
-        affectedPositions: getLinePositions(
-          currentPos,
-          color === 'red' ? redPath : bluePath,
-        ),
-      });
+        damages,
+        reservation.skillId,
+        reservation.step,
+        reservation.order,
+        affectedPositions,
+      );
+      const lastEvent = skillEvents[skillEvents.length - 1];
+      if (lastEvent && lastEvent.skillId === reservation.skillId && lastEvent.step === reservation.step && lastEvent.order === reservation.order && lastEvent.color === color) {
+        lastEvent.from = { ...currentPos };
+        lastEvent.to = { ...(path[path.length - 1] ?? currentPos) };
+      }
       return;
     }
 
@@ -231,8 +248,8 @@ export function resolveAbilityRound(params: {
     if (step > 0) {
       const redPrev = { ...redPos };
       const bluePrev = { ...bluePos };
-      if (step <= redPath.length) redPos = { ...redPath[step - 1] };
-      if (step <= bluePath.length) bluePos = { ...bluePath[step - 1] };
+      if (!redBlitz && step <= redPath.length) redPos = { ...redPath[step - 1] };
+      if (!blueBlitz && step <= bluePath.length) bluePos = { ...bluePath[step - 1] };
 
       if (positionsTouch(redPos, redPrev, bluePos, bluePrev)) {
         const escapeeColor: PlayerColor = attackerColor === 'red' ? 'blue' : 'red';
