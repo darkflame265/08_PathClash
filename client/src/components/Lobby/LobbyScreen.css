@@ -241,6 +241,25 @@
   right: 0;
 }
 
+.ability-skill-icon-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ability-skill-icon-glyph.is-electric-blitz {
+  font-family:
+    "Segoe UI Symbol",
+    "Noto Sans Symbols 2",
+    "Apple Symbols",
+    sans-serif;
+  color: #c026d3;
+  font-weight: 900;
+  text-shadow:
+    0 0 8px rgba(192, 38, 211, 0.35),
+    0 0 16px rgba(192, 38, 211, 0.18);
+}
+
 .google-link-btn {
   display: flex;
   align-items: center;

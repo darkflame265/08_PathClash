@@ -57,6 +57,19 @@ function computeInitialCellSize(): number {
   return Math.max(MIN_CELL, Math.min(MAX_CELL, availW / 5));
 }
 
+function renderSkillIcon(skillId: AbilitySkillId) {
+  const skill = ABILITY_SKILLS[skillId];
+  const icon = skillId === "electric_blitz" ? "⚡︎" : skill.icon;
+  return (
+    <span
+      className={`ability-skill-icon-glyph${skillId === "electric_blitz" ? " is-electric-blitz" : ""}`}
+      aria-hidden="true"
+    >
+      {icon}
+    </span>
+  );
+}
+
 function useAdaptiveCellSize(
   gridAreaRef: React.RefObject<HTMLDivElement | null>,
 ) {
@@ -1150,7 +1163,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                   )
                 }
               >
-                {ABILITY_SKILLS[skillId].icon}
+                {renderSkillIcon(skillId)}
               </button>
             ))}
           </div>
@@ -1329,7 +1342,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                   className="ability-reservation-chip"
                   onClick={() => removeReservation(reservation.skillId)}
                 >
-                  <span>{skill.icon}</span>
+                  {renderSkillIcon(reservation.skillId)}
                   <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
                   <span>
                     {lang === "en"
@@ -1385,7 +1398,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 disabled={disabled}
                 onClick={() => handleSkillClick(skillId)}
               >
-                <span className="ability-skill-icon">{skill.icon}</span>
+                <span className="ability-skill-icon">
+                  {renderSkillIcon(skillId)}
+                </span>
                 <span className="ability-skill-name">
                   {lang === "en" ? skill.name.en : skill.name.kr}
                 </span>

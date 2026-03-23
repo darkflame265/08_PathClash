@@ -178,6 +178,19 @@ function AccountCard({
   );
 }
 
+function renderAbilitySkillIcon(skillId: AbilitySkillId) {
+  const skill = ABILITY_SKILLS[skillId];
+  const icon = skillId === "electric_blitz" ? "⚡︎" : skill.icon;
+  return (
+    <span
+      className={`ability-skill-icon-glyph${skillId === "electric_blitz" ? " is-electric-blitz" : ""}`}
+      aria-hidden="true"
+    >
+      {icon}
+    </span>
+  );
+}
+
 export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbilityStart }: Props) {
   const {
     myNickname,
@@ -1549,7 +1562,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
             <div className="ability-loadout-chip-row">
               {equippedAbilitySkillDefs.map((skill) => (
                 <span key={skill.id} className="ability-loadout-chip">
-                  <span aria-hidden="true">{skill.icon}</span>
+                  {renderAbilitySkillIcon(skill.id)}
                   <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
                 </span>
               ))}
@@ -1800,8 +1813,8 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
                     }}
                     disabled={!unlocked}
                   >
-                    <span className="skin-preview ability-skill-preview" aria-hidden="true">
-                      {skill.icon}
+                    <span className="skin-preview ability-skill-preview">
+                      {renderAbilitySkillIcon(skill.id)}
                     </span>
                     <span className="skin-option-copy">
                       <strong>{lang === "en" ? skill.name.en : skill.name.kr}</strong>
