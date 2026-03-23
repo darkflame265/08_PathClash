@@ -677,6 +677,15 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }
 
     if (event.skillId === "cosmic_bigbang") {
+      for (const position of event.affectedPositions ?? []) {
+        const effectId = Date.now() + Math.random();
+        setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
+        queueAnimationTimeout(() => {
+          setCollisionEffects((prev) =>
+            prev.filter((entry) => entry.id !== effectId),
+          );
+        }, 420);
+      }
       for (const damage of event.damages ?? []) {
         setState((prev) => {
           if (!prev) return prev;
