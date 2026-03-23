@@ -193,8 +193,8 @@ export function resolveAbilityRound(params: {
         from: { ...currentPos },
         to:
           color === 'red'
-            ? { ...redPath[redPath.length - 1] }
-            : { ...bluePath[bluePath.length - 1] },
+            ? { ...(redPath[redPath.length - 1] ?? currentPos) }
+            : { ...(bluePath[bluePath.length - 1] ?? currentPos) },
         affectedPositions: getLinePositions(
           currentPos,
           color === 'red' ? redPath : bluePath,

@@ -31,6 +31,7 @@ const MIN_CELL = 52;
 const MAX_CELL = 160;
 const STEP_DURATION_MS = 200;
 const SKILL_PAUSE_MS = 320;
+const BLITZ_DASH_STEP_MS = 12;
 
 function buildBlitzPath(start: Position, target: Position): Position[] {
   const rowDelta = target.row - start.row;
@@ -605,19 +606,16 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           );
         }, 220);
       }
-
       const dashPositions = (event.affectedPositions ?? []).slice(1);
-      const dashStepMs = 35;
       dashPositions.forEach((position, index) => {
         queueAnimationTimeout(() => {
           if (event.color === "red") setRedDisplayPos(position);
           else setBlueDisplayPos(position);
-        }, (index + 1) * dashStepMs);
+        }, (index + 1) * BLITZ_DASH_STEP_MS);
       });
-
       const eventDuration = Math.max(
-        SKILL_PAUSE_MS,
-        dashPositions.length * dashStepMs + 40,
+        120,
+        dashPositions.length * BLITZ_DASH_STEP_MS + 24,
       );
       queueAnimationTimeout(() => {
         setAbilityBanner(null);

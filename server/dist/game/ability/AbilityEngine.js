@@ -152,8 +152,8 @@ function resolveAbilityRound(params) {
                 skillId: reservation.skillId,
                 from: { ...currentPos },
                 to: color === 'red'
-                    ? { ...redPath[redPath.length - 1] }
-                    : { ...bluePath[bluePath.length - 1] },
+                    ? { ...(redPath[redPath.length - 1] ?? currentPos) }
+                    : { ...(bluePath[bluePath.length - 1] ?? currentPos) },
                 affectedPositions: getLinePositions(currentPos, color === 'red' ? redPath : bluePath),
             });
             return;
