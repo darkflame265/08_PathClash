@@ -166,6 +166,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const previousGuardPathRef = useRef<Position[]>([]);
   const previousChargePathRef = useRef<Position[]>([]);
   const previousBlitzPathRef = useRef<Position[]>([]);
+  const previousBigBangPathRef = useRef<Position[]>([]);
   const previousTeleportPathRef = useRef<Position[]>([]);
   const reservationOrderRef = useRef(1);
 
@@ -224,6 +225,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     previousGuardPathRef.current = [];
     previousChargePathRef.current = [];
     previousBlitzPathRef.current = [];
+    previousBigBangPathRef.current = [];
     previousTeleportPathRef.current = [];
     reservationOrderRef.current = 1;
   };
@@ -347,6 +349,13 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       setMyPath(previousBlitzPathRef.current);
       setSkillReservations(nextReservations);
       syncMyPlan(previousBlitzPathRef.current, nextReservations);
+      return;
+    }
+
+    if (skillId === "cosmic_bigbang") {
+      setMyPath(previousBigBangPathRef.current);
+      setSkillReservations(nextReservations);
+      syncMyPlan(previousBigBangPathRef.current, nextReservations);
       return;
     }
 
@@ -520,6 +529,32 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     syncMyPlan([], nextReservations);
   };
 
+  const toggleCosmicBigBang = () => {
+    const alreadyReserved = skillReservations.some(
+      (entry) => entry.skillId === "cosmic_bigbang",
+    );
+    if (alreadyReserved) {
+      removeReservation("cosmic_bigbang");
+      return;
+    }
+    if (getMyRole() !== "attacker") return;
+    if (getRemainingMana() < getSkillCost("cosmic_bigbang")) return;
+    previousBigBangPathRef.current = myPath;
+    const nextReservations: AbilitySkillReservation[] = [
+      {
+        skillId: "cosmic_bigbang",
+        step: 0,
+        order: reservationOrderRef.current++,
+      },
+    ];
+    setMyPath([]);
+    setSkillReservations(nextReservations);
+    setSelectedSkillId(null);
+    setPendingTeleport(false);
+    setPendingBlitz(false);
+    syncMyPlan([], nextReservations);
+  };
+
   const handleSkillClick = (skillId: AbilitySkillId) => {
     if (state?.phase !== "planning" || mySubmitted) return;
     if (skillId === "classic_guard") {
@@ -540,6 +575,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }
     if (skillId === "electric_blitz") {
       beginBlitzPick();
+      return;
+    }
+    if (skillId === "cosmic_bigbang") {
+      toggleCosmicBigBang();
     }
   };
 
@@ -634,6 +673,27 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         setAbilityBanner(null);
         done();
       }, eventDuration);
+      return;
+    }
+
+    if (event.skillId === "cosmic_bigbang") {
+      for (const damage of event.damages ?? []) {
+        setState((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            players: {
+              ...prev.players,
+              [damage.color]: { ...prev.players[damage.color], hp: damage.newHp },
+            },
+          };
+        });
+        triggerLocalHit(damage.color, damage.newHp, damage.position);
+      }
+      queueAnimationTimeout(() => {
+        setAbilityBanner(null);
+        done();
+      }, SKILL_PAUSE_MS);
       return;
     }
 
@@ -1007,7 +1067,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       (reservation) =>
         reservation.skillId === "classic_guard" ||
         reservation.skillId === "plasma_charge" ||
-        reservation.skillId === "electric_blitz",
+        reservation.skillId === "electric_blitz" ||
+        reservation.skillId === "cosmic_bigbang",
     );
 
   const handleRematch = () => {
@@ -1283,10 +1344,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             const blitzReserved = skillReservations.some(
               (entry) => entry.skillId === "electric_blitz",
             );
+            const bigBangReserved = skillReservations.some(
+              (entry) => entry.skillId === "cosmic_bigbang",
+            );
             const roleBlocked =
               (skillId === "classic_guard" && getMyRole() !== "escaper") ||
               ((skillId === "ember_blast" ||
-                skillId === "electric_blitz") &&
+                skillId === "electric_blitz" ||
+                skillId === "cosmic_bigbang") &&
                 getMyRole() !== "attacker");
             const chargeBlocked =
               chargeReserved &&
@@ -1294,12 +1359,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               skillId !== "classic_guard" &&
               skillId !== "plasma_charge";
             const blitzBlocked = blitzReserved && !reserved;
+            const bigBangBlocked = bigBangReserved && !reserved;
             const disabled =
               !isPlanning ||
               mySubmitted ||
               roleBlocked ||
               chargeBlocked ||
               blitzBlocked ||
+              bigBangBlocked ||
               (getRemainingMana() < skill.manaCost && !reserved);
             return (
               <button

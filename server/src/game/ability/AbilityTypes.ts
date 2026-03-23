@@ -13,7 +13,8 @@ export type AbilitySkillId =
   | 'ember_blast'
   | 'quantum_shift'
   | 'plasma_charge'
-  | 'electric_blitz';
+  | 'electric_blitz'
+  | 'cosmic_bigbang';
 export type AbilitySkillCategory = 'attack' | 'defense' | 'utility';
 
 export interface AbilitySkillReservation {

@@ -54,6 +54,7 @@ const SKILL_COSTS: Record<AbilitySkillId, number> = {
   quantum_shift: 3,
   plasma_charge: 2,
   electric_blitz: 6,
+  cosmic_bigbang: 10,
 };
 
 export class AbilityRoom {
@@ -457,8 +458,13 @@ export class AbilityRoom {
     const hasBlitz = uniqueSkills.some((skill) => skill.skillId === 'electric_blitz');
     const blitz = uniqueSkills.find((skill) => skill.skillId === 'electric_blitz') ?? null;
     const hasAttackSkill = uniqueSkills.some(
-      (skill) => skill.skillId === 'ember_blast' || skill.skillId === 'electric_blitz',
+      (skill) =>
+        skill.skillId === 'ember_blast' ||
+        skill.skillId === 'electric_blitz' ||
+        skill.skillId === 'cosmic_bigbang',
     );
+    const hasBigBang = uniqueSkills.some((skill) => skill.skillId === 'cosmic_bigbang');
+    const bigBang = uniqueSkills.find((skill) => skill.skillId === 'cosmic_bigbang') ?? null;
     const hasCharge = uniqueSkills.some((skill) => skill.skillId === 'plasma_charge');
 
     if (hasGuard && player.role !== 'escaper') return null;
@@ -476,6 +482,15 @@ export class AbilityRoom {
         (skill) => skill.skillId !== 'plasma_charge' && skill.skillId !== 'classic_guard',
       );
       if (invalidCombo) return null;
+    }
+
+    if (hasBigBang) {
+      if (!bigBang || bigBang.step !== 0 || path.length > 0) return null;
+      if (uniqueSkills.length !== 1) return null;
+      return {
+        path: [],
+        skills: uniqueSkills,
+      };
     }
 
     if (hasBlitz) {
@@ -510,6 +525,7 @@ export class AbilityRoom {
       if (skill.skillId === 'ember_blast' && skill.step > path.length) return null;
       if (skill.skillId === 'classic_guard' && skill.step !== 0) return null;
       if (skill.skillId === 'quantum_shift' && skill.step !== 0) return null;
+      if (skill.skillId === 'cosmic_bigbang' && skill.step !== 0) return null;
     }
 
     return {

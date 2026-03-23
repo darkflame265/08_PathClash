@@ -11,7 +11,8 @@ export type AbilitySkillId =
   | 'ember_blast'
   | 'quantum_shift'
   | 'plasma_charge'
-  | 'electric_blitz';
+  | 'electric_blitz'
+  | 'cosmic_bigbang';
 export type AbilitySkillCategory = 'attack' | 'defense' | 'utility';
 
 export interface AbilitySkillDefinition {
@@ -165,5 +166,17 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     category: 'attack',
     skinId: 'electric_core',
     icon: '⚡',
+  },
+  cosmic_bigbang: {
+    id: 'cosmic_bigbang',
+    name: { en: 'Big Bang Burst', kr: '빅뱅폭발' },
+    description: {
+      en: 'Deal 2 damage to the whole board. Blocked by guard. You cannot move this turn.',
+      kr: '보드 전체에 2 피해를 줍니다. 가드에 막히며, 이번 턴에는 이동할 수 없습니다.',
+    },
+    manaCost: 10,
+    category: 'attack',
+    skinId: 'cosmic',
+    icon: '☄',
   },
 };

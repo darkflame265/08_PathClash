@@ -241,6 +241,33 @@ export function resolveAbilityRound(params: {
         blueMana = Math.max(0, casterMana - 4);
       }
       applyDamages(color, damages, reservation.skillId, reservation.step, reservation.order, affectedPositions);
+      return;
+    }
+
+    if (reservation.skillId === 'cosmic_bigbang') {
+      const affectedPositions: Position[] = [];
+      for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 5; col++) {
+          affectedPositions.push({ row, col });
+        }
+      }
+      const damages: AbilityDamageEvent[] = [];
+      const opponentProtected = opponentColor === 'red' ? redInv > 0 : blueInv > 0;
+      if (!opponentProtected) {
+        if (opponentColor === 'red') {
+          redHp = Math.max(0, redHp - 2);
+          damages.push({ color: 'red', newHp: redHp, position: { ...opponentPos } });
+        } else {
+          blueHp = Math.max(0, blueHp - 2);
+          damages.push({ color: 'blue', newHp: blueHp, position: { ...opponentPos } });
+        }
+      }
+      if (color === 'red') {
+        redMana = Math.max(0, casterMana - 10);
+      } else {
+        blueMana = Math.max(0, casterMana - 10);
+      }
+      applyDamages(color, damages, reservation.skillId, reservation.step, reservation.order, affectedPositions);
     }
   };
 

@@ -36,6 +36,7 @@ const SKILL_COSTS = {
     quantum_shift: 3,
     plasma_charge: 2,
     electric_blitz: 6,
+    cosmic_bigbang: 10,
 };
 class AbilityRoom {
     constructor(roomId, code, io) {
@@ -405,7 +406,11 @@ class AbilityRoom {
         const teleport = uniqueSkills.find((skill) => skill.skillId === 'quantum_shift') ?? null;
         const hasBlitz = uniqueSkills.some((skill) => skill.skillId === 'electric_blitz');
         const blitz = uniqueSkills.find((skill) => skill.skillId === 'electric_blitz') ?? null;
-        const hasAttackSkill = uniqueSkills.some((skill) => skill.skillId === 'ember_blast' || skill.skillId === 'electric_blitz');
+        const hasAttackSkill = uniqueSkills.some((skill) => skill.skillId === 'ember_blast' ||
+            skill.skillId === 'electric_blitz' ||
+            skill.skillId === 'cosmic_bigbang');
+        const hasBigBang = uniqueSkills.some((skill) => skill.skillId === 'cosmic_bigbang');
+        const bigBang = uniqueSkills.find((skill) => skill.skillId === 'cosmic_bigbang') ?? null;
         const hasCharge = uniqueSkills.some((skill) => skill.skillId === 'plasma_charge');
         if (hasGuard && player.role !== 'escaper')
             return null;
@@ -423,6 +428,16 @@ class AbilityRoom {
             const invalidCombo = uniqueSkills.some((skill) => skill.skillId !== 'plasma_charge' && skill.skillId !== 'classic_guard');
             if (invalidCombo)
                 return null;
+        }
+        if (hasBigBang) {
+            if (!bigBang || bigBang.step !== 0 || path.length > 0)
+                return null;
+            if (uniqueSkills.length !== 1)
+                return null;
+            return {
+                path: [],
+                skills: uniqueSkills,
+            };
         }
         if (hasBlitz) {
             if (!blitz || blitz.step !== 0 || !blitz.target)
@@ -465,6 +480,8 @@ class AbilityRoom {
             if (skill.skillId === 'classic_guard' && skill.step !== 0)
                 return null;
             if (skill.skillId === 'quantum_shift' && skill.step !== 0)
+                return null;
+            if (skill.skillId === 'cosmic_bigbang' && skill.step !== 0)
                 return null;
         }
         return {
