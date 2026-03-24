@@ -720,14 +720,48 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }
 
     if (event.skillId === "cosmic_bigbang") {
-      for (const position of event.affectedPositions ?? []) {
-        const effectId = Date.now() + Math.random();
-        setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
+      const origin = stateRef.current?.players[event.color].position;
+      const wavePositions = [...(event.affectedPositions ?? [])].sort((left, right) => {
+        const leftDistance = origin
+          ? Math.max(
+              Math.abs(left.row - origin.row),
+              Math.abs(left.col - origin.col),
+            )
+          : 0;
+        const rightDistance = origin
+          ? Math.max(
+              Math.abs(right.row - origin.row),
+              Math.abs(right.col - origin.col),
+            )
+          : 0;
+        return leftDistance - rightDistance;
+      });
+
+      const waves = new Map<number, Position[]>();
+      for (const position of wavePositions) {
+        const distance = origin
+          ? Math.max(
+              Math.abs(position.row - origin.row),
+              Math.abs(position.col - origin.col),
+            )
+          : 0;
+        const list = waves.get(distance) ?? [];
+        list.push(position);
+        waves.set(distance, list);
+      }
+
+      for (const [distance, positions] of waves.entries()) {
         queueAnimationTimeout(() => {
-          setCollisionEffects((prev) =>
-            prev.filter((entry) => entry.id !== effectId),
-          );
-        }, 420);
+          for (const position of positions) {
+            const effectId = Date.now() + Math.random();
+            setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
+            queueAnimationTimeout(() => {
+              setCollisionEffects((prev) =>
+                prev.filter((entry) => entry.id !== effectId),
+              );
+            }, 420);
+          }
+        }, distance * 80);
       }
       for (const damage of event.damages ?? []) {
         setState((prev) => {
