@@ -440,21 +440,31 @@ class AbilityRoom {
             };
         }
         if (hasBlitz) {
-            if (!blitz || blitz.step !== 0 || !blitz.target)
+            if (!blitz || !blitz.target)
                 return null;
             if (uniqueSkills.length !== 1)
                 return null;
-            const blitzPath = buildBlitzPath(player.position, blitz.target);
+            if (blitz.step < 0 || blitz.step > path.length)
+                return null;
+            const prefixPath = path.slice(0, blitz.step);
+            if (!(0, GameEngine_1.isValidPath)(player.position, prefixPath, pathPoints, this.obstacles)) {
+                return null;
+            }
+            const blitzOrigin = blitz.step === 0 ? player.position : prefixPath[prefixPath.length - 1];
+            if (!blitzOrigin)
+                return null;
+            const blitzPath = buildBlitzPath(blitzOrigin, blitz.target);
             if (blitzPath.length === 0)
                 return null;
-            if (path.length !== blitzPath.length)
+            const expectedPath = [...prefixPath, ...blitzPath];
+            if (path.length !== expectedPath.length)
                 return null;
-            for (let index = 0; index < blitzPath.length; index++) {
-                if (!posEqual(path[index], blitzPath[index]))
+            for (let index = 0; index < expectedPath.length; index++) {
+                if (!posEqual(path[index], expectedPath[index]))
                     return null;
             }
             return {
-                path: blitzPath,
+                path: expectedPath,
                 skills: uniqueSkills,
             };
         }

@@ -29,6 +29,7 @@ interface Props {
   movingTeleportSteps: { red: number | null; blue: number | null };
   movingBlitzColors: { red: boolean; blue: boolean };
   movingBlitzProgress: { red: number; blue: number };
+  movingBlitzSteps: { red: number | null; blue: number | null };
   movingPaths: { red: Position[]; blue: Position[] };
   movingStarts: { red: Position; blue: Position } | null;
   cellSize: number;
@@ -93,6 +94,7 @@ export function AbilityGrid({
   movingTeleportSteps,
   movingBlitzColors,
   movingBlitzProgress,
+  movingBlitzSteps,
   movingPaths,
   movingStarts,
   cellSize,
@@ -274,6 +276,9 @@ export function AbilityGrid({
   const teleportOrigin =
     myPath.length > 0 ? myPath[myPath.length - 1] : state.players[currentColor].position;
 
+  const blitzOrigin =
+    myPath.length > 0 ? myPath[myPath.length - 1] : state.players[currentColor].position;
+
   const teleportTargets = teleportTargetsVisible
     ? Array.from({ length: 9 }, (_, index) => ({
         row: teleportOrigin.row + Math.floor(index / 3) - 1,
@@ -291,10 +296,10 @@ export function AbilityGrid({
 
   const blitzTargets = blitzTargetsVisible
     ? [
-        { row: state.players[currentColor].position.row - 1, col: state.players[currentColor].position.col, icon: '↑' },
-        { row: state.players[currentColor].position.row + 1, col: state.players[currentColor].position.col, icon: '↓' },
-        { row: state.players[currentColor].position.row, col: state.players[currentColor].position.col - 1, icon: '←' },
-        { row: state.players[currentColor].position.row, col: state.players[currentColor].position.col + 1, icon: '→' },
+        { row: blitzOrigin.row - 1, col: blitzOrigin.col, icon: '↑' },
+        { row: blitzOrigin.row + 1, col: blitzOrigin.col, icon: '↓' },
+        { row: blitzOrigin.row, col: blitzOrigin.col - 1, icon: '←' },
+        { row: blitzOrigin.row, col: blitzOrigin.col + 1, icon: '→' },
       ].filter(
         (position) =>
           position.row >= 0 &&
@@ -308,11 +313,16 @@ export function AbilityGrid({
     color: PlayerColor,
     start: Position,
     path: Position[],
+    startStep: number | null,
     progress: number,
   ) => {
-    const visiblePath = path.slice(0, Math.max(0, progress));
+    const effectiveStartStep = Math.max(0, startStep ?? 0);
+    const pathStart =
+      effectiveStartStep > 0 ? path[effectiveStartStep - 1] ?? start : start;
+    const visiblePath = path
+      .slice(effectiveStartStep, effectiveStartStep + Math.max(0, progress));
     if (visiblePath.length === 0) return null;
-    const allPositions = [start, ...visiblePath];
+    const allPositions = [pathStart, ...visiblePath];
     const mainPoints = allPositions
       .map((position) => {
         const { x, y } = toGridPixel(position, responsiveCellSize);
@@ -478,6 +488,7 @@ export function AbilityGrid({
             'red',
             movingStarts?.red ?? state.players.red.position,
             movingPaths.red,
+            movingBlitzSteps.red,
             movingBlitzProgress.red,
           )}
         {state.phase === 'moving' ? (
@@ -538,6 +549,7 @@ export function AbilityGrid({
             'blue',
             movingStarts?.blue ?? state.players.blue.position,
             movingPaths.blue,
+            movingBlitzSteps.blue,
             movingBlitzProgress.blue,
           )}
 

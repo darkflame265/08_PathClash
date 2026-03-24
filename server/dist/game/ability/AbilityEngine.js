@@ -160,7 +160,8 @@ function resolveAbilityRound(params) {
             return;
         }
         if (reservation.skillId === 'electric_blitz') {
-            const path = color === 'red' ? redPath : bluePath;
+            const fullPath = color === 'red' ? redPath : bluePath;
+            const path = fullPath.slice(reservation.step);
             const affectedPositions = getLinePositions(currentPos, path);
             const opponentProtected = opponentColor === 'red' ? redInv > 0 : blueInv > 0;
             if (affectedPositions.some((position) => samePosition(position, opponentPos)) && !opponentProtected) {

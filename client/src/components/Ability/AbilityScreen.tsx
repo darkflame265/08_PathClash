@@ -181,6 +181,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     red: number;
     blue: number;
   }>({ red: 0, blue: 0 });
+  const [movingBlitzSteps, setMovingBlitzSteps] = useState<{
+    red: number | null;
+    blue: number | null;
+  }>({ red: null, blue: null });
   const [winner, setWinner] = useState<PlayerColor | "draw" | null>(null);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const [rematchRequested, setRematchRequested] = useState(false);
@@ -312,6 +316,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setMovingTeleportSteps({ red: null, blue: null });
     setMovingBlitzColors({ red: false, blue: false });
     setMovingBlitzProgress({ red: 0, blue: 0 });
+    setMovingBlitzSteps({ red: null, blue: null });
     if (nextState.phase !== "gameover") {
       setWinner(null);
       setGameOverMessage(null);
@@ -550,13 +555,15 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   };
 
   const handleBlitzTargetSelect = (target: Position) => {
-    const start = state?.players[currentColor].position ?? { row: 2, col: 0 };
-    const nextPath = buildBlitzPath(start, target);
+    const start = myPath.length > 0 ? myPath[myPath.length - 1] : state?.players[currentColor].position ?? { row: 2, col: 0 };
+    const prefixPath = [...myPath];
+    const blitzPath = buildBlitzPath(start, target);
+    const nextPath = [...prefixPath, ...blitzPath];
     if (nextPath.length === 0) return;
     const nextReservations: AbilitySkillReservation[] = [
       {
         skillId: "electric_blitz",
-        step: 0,
+        step: prefixPath.length,
         order: reservationOrderRef.current++,
         target,
       },
@@ -885,6 +892,16 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       blue: blitzColors.blue,
     });
     setMovingBlitzProgress({ red: 0, blue: 0 });
+    setMovingBlitzSteps({
+      red:
+        payload.skillEvents.find(
+          (event) => event.skillId === "electric_blitz" && event.color === "red",
+        )?.step ?? null,
+      blue:
+        payload.skillEvents.find(
+          (event) => event.skillId === "electric_blitz" && event.color === "blue",
+        )?.step ?? null,
+    });
     const teleportMarkers = {
       red:
         payload.skillEvents.find(
@@ -1023,6 +1040,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         setMovingTeleportSteps({ red: null, blue: null });
         setMovingBlitzColors({ red: false, blue: false });
         setMovingBlitzProgress({ red: 0, blue: 0 });
+        setMovingBlitzSteps({ red: null, blue: null });
         return;
       }
 
@@ -1137,6 +1155,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       setMovingTeleportMarkers({ red: null, blue: null });
       setMovingBlitzColors({ red: false, blue: false });
       setMovingBlitzProgress({ red: 0, blue: 0 });
+      setMovingBlitzSteps({ red: null, blue: null });
     };
 
     const onOpponentDisconnected = () => {
@@ -1444,6 +1463,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           movingTeleportSteps={movingTeleportSteps}
           movingBlitzColors={movingBlitzColors}
           movingBlitzProgress={movingBlitzProgress}
+          movingBlitzSteps={movingBlitzSteps}
           movingPaths={movingPaths}
           movingStarts={movingStarts}
           cellSize={cellSize}
