@@ -1799,9 +1799,14 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
               {availableAbilitySkills.map((skill) => {
                 const equipped = abilityLoadout.includes(skill.id);
                 const unlocked = hasAbilitySkinUnlocked(skill.skinId);
+                const requiredSkinChoice = skinChoices.find(
+                  (choice) => choice.id === skill.skinId,
+                );
                 const requiredSkinName =
-                  skinChoices.find((choice) => choice.id === skill.skinId)
-                    ?.name ?? skill.skinId;
+                  requiredSkinChoice?.name ?? skill.skinId;
+                const requiredSkinTierClass = requiredSkinChoice?.tier
+                  ? `skin-name-tier-${requiredSkinChoice.tier}`
+                  : undefined;
                 return (
                   <button
                     key={skill.id}
@@ -1821,9 +1826,12 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
                       <span>
                         {lang === "en" ? skill.description.en : skill.description.kr}
                         <br />
-                        {lang === "en"
-                          ? `Required skin: ${requiredSkinName}`
-                          : `필요 스킨: ${requiredSkinName}`}
+                        {lang === "en" ? "Required skin: " : "필요 스킨: "}
+                        <span
+                          className={`ability-required-skin-name${requiredSkinTierClass ? ` ${requiredSkinTierClass}` : ""}`}
+                        >
+                          {requiredSkinName}
+                        </span>
                       </span>
                     </span>
                     <span className="skin-lock-meta ability-skill-meta">

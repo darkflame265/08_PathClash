@@ -1471,3 +1471,22 @@
 .ability-skill-meta {
   color: #93c5fd;
 }
+
+.ability-required-skin-name {
+  font-weight: 700;
+}
+
+.skin-option-copy .ability-required-skin-name.skin-name-tier-common {
+  color: #7dd3fc;
+}
+
+.skin-option-copy .ability-required-skin-name.skin-name-tier-rare {
+  color: #c084fc;
+}
+
+.skin-option-copy .ability-required-skin-name.skin-name-tier-legendary {
+  background: linear-gradient(90deg, #ffd700, #fff3b0, #ffd700);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
