@@ -3,6 +3,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolveAbilityRound = resolveAbilityRound;
 const GUARD_STEPS = 2;
 const CHARGE_MANA_BONUS = 4;
+function getSkillPriority(skillId) {
+    switch (skillId) {
+        case 'quantum_shift':
+        case 'plasma_charge':
+            return 0;
+        case 'classic_guard':
+            return 1;
+        case 'ember_blast':
+        case 'electric_blitz':
+        case 'cosmic_bigbang':
+            return 2;
+        default:
+            return 99;
+    }
+}
 function samePosition(a, b) {
     return a.row === b.row && a.col === b.col;
 }
@@ -21,10 +36,10 @@ function getCrossPositions(origin) {
 }
 function sortReservations(reservations) {
     return [...reservations].sort((left, right) => {
-        const leftPriority = left.skillId === 'classic_guard' ? -1 : 0;
-        const rightPriority = right.skillId === 'classic_guard' ? -1 : 0;
         if (left.step !== right.step)
             return left.step - right.step;
+        const leftPriority = getSkillPriority(left.skillId);
+        const rightPriority = getSkillPriority(right.skillId);
         if (leftPriority !== rightPriority)
             return leftPriority - rightPriority;
         return left.order - right.order;
@@ -35,11 +50,11 @@ function getLinePositions(start, path) {
 }
 function sortStepReservations(reservations) {
     return [...reservations].sort((left, right) => {
-        const leftPriority = left.reservation.skillId === 'classic_guard' ? -1 : 0;
-        const rightPriority = right.reservation.skillId === 'classic_guard' ? -1 : 0;
         if (left.reservation.step !== right.reservation.step) {
             return left.reservation.step - right.reservation.step;
         }
+        const leftPriority = getSkillPriority(left.reservation.skillId);
+        const rightPriority = getSkillPriority(right.reservation.skillId);
         if (leftPriority !== rightPriority)
             return leftPriority - rightPriority;
         return left.reservation.order - right.reservation.order;
@@ -143,16 +158,25 @@ function resolveAbilityRound(params) {
         if (reservation.skillId === 'electric_blitz') {
             const path = color === 'red' ? redPath : bluePath;
             const affectedPositions = getLinePositions(currentPos, path);
-            const damages = [];
             const opponentProtected = opponentColor === 'red' ? redInv > 0 : blueInv > 0;
             if (affectedPositions.some((position) => samePosition(position, opponentPos)) && !opponentProtected) {
                 if (opponentColor === 'red') {
                     redHp = Math.max(0, redHp - 1);
-                    damages.push({ color: 'red', newHp: redHp, position: { ...opponentPos } });
+                    collisions.push({
+                        step: reservation.step,
+                        position: { ...opponentPos },
+                        escapeeColor: 'red',
+                        newHp: redHp,
+                    });
                 }
                 else {
                     blueHp = Math.max(0, blueHp - 1);
-                    damages.push({ color: 'blue', newHp: blueHp, position: { ...opponentPos } });
+                    collisions.push({
+                        step: reservation.step,
+                        position: { ...opponentPos },
+                        escapeeColor: 'blue',
+                        newHp: blueHp,
+                    });
                 }
             }
             if (color === 'red') {
@@ -165,7 +189,7 @@ function resolveAbilityRound(params) {
                 bluePos = { ...(path[path.length - 1] ?? currentPos) };
                 blueBlitz = true;
             }
-            applyDamages(color, damages, reservation.skillId, reservation.step, reservation.order, affectedPositions);
+            applyDamages(color, [], reservation.skillId, reservation.step, reservation.order, affectedPositions);
             const lastEvent = skillEvents[skillEvents.length - 1];
             if (lastEvent && lastEvent.skillId === reservation.skillId && lastEvent.step === reservation.step && lastEvent.order === reservation.order && lastEvent.color === color) {
                 lastEvent.from = { ...currentPos };

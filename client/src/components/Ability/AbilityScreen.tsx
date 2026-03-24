@@ -31,6 +31,7 @@ const MIN_CELL = 52;
 const MAX_CELL = 160;
 const STEP_DURATION_MS = 200;
 const SKILL_PAUSE_MS = 320;
+const SKILL_CAST_DELAY_MS = 500;
 const BLITZ_DASH_STEP_MS = 12;
 
 function buildBlitzPath(start: Position, target: Position): Position[] {
@@ -68,6 +69,14 @@ function renderSkillIcon(skillId: AbilitySkillId) {
       {icon}
     </span>
   );
+}
+
+function getSkillPriority(skillId: AbilitySkillId): number {
+  return ABILITY_SKILLS[skillId].category === "utility"
+    ? 0
+    : ABILITY_SKILLS[skillId].category === "defense"
+      ? 1
+      : 2;
 }
 
 function useAdaptiveCellSize(
@@ -661,44 +670,141 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setAbilityBanner(
       `${event.color === currentColor ? (lang === "en" ? "You" : "내 말") : lang === "en" ? "Enemy" : "상대"} · ${lang === "en" ? skill.name.en : skill.name.kr}`,
     );
-
-    if (event.skillId === "classic_guard") {
-      setActiveGuards((prev) => ({ ...prev, [event.color]: true }));
-    }
-
-    if (event.skillId === "ember_blast") {
-      for (const position of event.affectedPositions ?? []) {
-        const effectId = Date.now() + Math.random();
-        setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
-        queueAnimationTimeout(() => {
-          setCollisionEffects((prev) =>
-            prev.filter((entry) => entry.id !== effectId),
-          );
-        }, 420);
+    queueAnimationTimeout(() => {
+      if (event.skillId === "classic_guard") {
+        setActiveGuards((prev) => ({ ...prev, [event.color]: true }));
       }
-    }
 
-    if (event.skillId === "electric_blitz") {
-      for (const position of event.affectedPositions ?? []) {
-        const effectId = Date.now() + Math.random();
-        setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
-        queueAnimationTimeout(() => {
-          setCollisionEffects((prev) =>
-            prev.filter((entry) => entry.id !== effectId),
-          );
-        }, 220);
+      if (event.skillId === "ember_blast") {
+        for (const position of event.affectedPositions ?? []) {
+          const effectId = Date.now() + Math.random();
+          setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
+          queueAnimationTimeout(() => {
+            setCollisionEffects((prev) =>
+              prev.filter((entry) => entry.id !== effectId),
+            );
+          }, 420);
+        }
       }
-      const dashPositions = (event.affectedPositions ?? []).slice(1);
-      dashPositions.forEach((position, index) => {
+
+      if (event.skillId === "electric_blitz") {
+        for (const position of event.affectedPositions ?? []) {
+          const effectId = Date.now() + Math.random();
+          setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
+          queueAnimationTimeout(() => {
+            setCollisionEffects((prev) =>
+              prev.filter((entry) => entry.id !== effectId),
+            );
+          }, 220);
+        }
+        const dashPositions = (event.affectedPositions ?? []).slice(1);
+        dashPositions.forEach((position, index) => {
+          queueAnimationTimeout(() => {
+            if (event.color === "red") setRedDisplayPos(position);
+            else setBlueDisplayPos(position);
+          }, (index + 1) * BLITZ_DASH_STEP_MS);
+        });
+        const eventDuration = Math.max(
+          120,
+          dashPositions.length * BLITZ_DASH_STEP_MS + 24,
+        );
+        for (const damage of event.damages ?? []) {
+          setState((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              players: {
+                ...prev.players,
+                [damage.color]: {
+                  ...prev.players[damage.color],
+                  hp: damage.newHp,
+                },
+              },
+            };
+          });
+          triggerLocalHit(damage.color, damage.newHp, damage.position);
+        }
         queueAnimationTimeout(() => {
-          if (event.color === "red") setRedDisplayPos(position);
-          else setBlueDisplayPos(position);
-        }, (index + 1) * BLITZ_DASH_STEP_MS);
-      });
-      const eventDuration = Math.max(
-        120,
-        dashPositions.length * BLITZ_DASH_STEP_MS + 24,
-      );
+          setAbilityBanner(null);
+          done();
+        }, eventDuration);
+        return;
+      }
+
+      if (event.skillId === "cosmic_bigbang") {
+        const origin = stateRef.current?.players[event.color].position;
+        const wavePositions = [...(event.affectedPositions ?? [])].sort(
+          (left, right) => {
+            const leftDistance = origin
+              ? Math.max(
+                  Math.abs(left.row - origin.row),
+                  Math.abs(left.col - origin.col),
+                )
+              : 0;
+            const rightDistance = origin
+              ? Math.max(
+                  Math.abs(right.row - origin.row),
+                  Math.abs(right.col - origin.col),
+                )
+              : 0;
+            return leftDistance - rightDistance;
+          },
+        );
+
+        const waves = new Map<number, Position[]>();
+        for (const position of wavePositions) {
+          const distance = origin
+            ? Math.max(
+                Math.abs(position.row - origin.row),
+                Math.abs(position.col - origin.col),
+              )
+            : 0;
+          const list = waves.get(distance) ?? [];
+          list.push(position);
+          waves.set(distance, list);
+        }
+
+        for (const [distance, positions] of waves.entries()) {
+          queueAnimationTimeout(() => {
+            for (const position of positions) {
+              const effectId = Date.now() + Math.random();
+              setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
+              queueAnimationTimeout(() => {
+                setCollisionEffects((prev) =>
+                  prev.filter((entry) => entry.id !== effectId),
+                );
+              }, 420);
+            }
+          }, distance * 80);
+        }
+        for (const damage of event.damages ?? []) {
+          setState((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              players: {
+                ...prev.players,
+                [damage.color]: {
+                  ...prev.players[damage.color],
+                  hp: damage.newHp,
+                },
+              },
+            };
+          });
+          triggerLocalHit(damage.color, damage.newHp, damage.position);
+        }
+        queueAnimationTimeout(() => {
+          setAbilityBanner(null);
+          done();
+        }, SKILL_PAUSE_MS);
+        return;
+      }
+
+      if (event.skillId === "quantum_shift" && event.to) {
+        if (event.color === "red") setRedDisplayPos(event.to);
+        else setBlueDisplayPos(event.to);
+      }
+
       for (const damage of event.damages ?? []) {
         setState((prev) => {
           if (!prev) return prev;
@@ -712,100 +818,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         });
         triggerLocalHit(damage.color, damage.newHp, damage.position);
       }
-      queueAnimationTimeout(() => {
-        setAbilityBanner(null);
-        done();
-      }, eventDuration);
-      return;
-    }
 
-    if (event.skillId === "cosmic_bigbang") {
-      const origin = stateRef.current?.players[event.color].position;
-      const wavePositions = [...(event.affectedPositions ?? [])].sort((left, right) => {
-        const leftDistance = origin
-          ? Math.max(
-              Math.abs(left.row - origin.row),
-              Math.abs(left.col - origin.col),
-            )
-          : 0;
-        const rightDistance = origin
-          ? Math.max(
-              Math.abs(right.row - origin.row),
-              Math.abs(right.col - origin.col),
-            )
-          : 0;
-        return leftDistance - rightDistance;
-      });
-
-      const waves = new Map<number, Position[]>();
-      for (const position of wavePositions) {
-        const distance = origin
-          ? Math.max(
-              Math.abs(position.row - origin.row),
-              Math.abs(position.col - origin.col),
-            )
-          : 0;
-        const list = waves.get(distance) ?? [];
-        list.push(position);
-        waves.set(distance, list);
-      }
-
-      for (const [distance, positions] of waves.entries()) {
-        queueAnimationTimeout(() => {
-          for (const position of positions) {
-            const effectId = Date.now() + Math.random();
-            setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
-            queueAnimationTimeout(() => {
-              setCollisionEffects((prev) =>
-                prev.filter((entry) => entry.id !== effectId),
-              );
-            }, 420);
-          }
-        }, distance * 80);
-      }
-      for (const damage of event.damages ?? []) {
-        setState((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            players: {
-              ...prev.players,
-              [damage.color]: { ...prev.players[damage.color], hp: damage.newHp },
-            },
-          };
-        });
-        triggerLocalHit(damage.color, damage.newHp, damage.position);
-      }
       queueAnimationTimeout(() => {
         setAbilityBanner(null);
         done();
       }, SKILL_PAUSE_MS);
-      return;
-    }
-
-    if (event.skillId === "quantum_shift" && event.to) {
-      if (event.color === "red") setRedDisplayPos(event.to);
-      else setBlueDisplayPos(event.to);
-    }
-
-    for (const damage of event.damages ?? []) {
-      setState((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          players: {
-            ...prev.players,
-            [damage.color]: { ...prev.players[damage.color], hp: damage.newHp },
-          },
-        };
-      });
-      triggerLocalHit(damage.color, damage.newHp, damage.position);
-    }
-
-    queueAnimationTimeout(() => {
-      setAbilityBanner(null);
-      done();
-    }, SKILL_PAUSE_MS);
+    }, SKILL_CAST_DELAY_MS);
   };
 
   const runAnimation = (payload: AbilityResolutionPayload) => {
@@ -865,7 +883,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
       skillMap.set(
         event.step,
-        list.sort((left, right) => left.order - right.order),
+        list.sort((left, right) => {
+          const leftPriority = getSkillPriority(left.skillId);
+          const rightPriority = getSkillPriority(right.skillId);
+          if (leftPriority !== rightPriority) return leftPriority - rightPriority;
+          return left.order - right.order;
+        }),
       );
     }
 
@@ -895,12 +918,45 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       );
     };
 
+    const applyCollision = (
+      collision: AbilityResolutionPayload["collisions"][number],
+    ) => {
+      setState((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          players: {
+            ...prev.players,
+            [collision.escapeeColor]: {
+              ...prev.players[collision.escapeeColor],
+              hp: collision.newHp,
+            },
+          },
+        };
+      });
+      triggerLocalHit(
+        collision.escapeeColor,
+        collision.newHp,
+        collision.position,
+      );
+    };
+
     const advance = (step: number) => {
       if (step === 0) {
         const events = skillMap.get(0) ?? [];
         if (events.length > 0) {
-          runSkillQueue(events, 0, () => advance(1));
+          runSkillQueue(events, 0, () => {
+            const collision = collisionMap.get(0);
+            if (collision) {
+              applyCollision(collision);
+            }
+            advance(1);
+          });
           return;
+        }
+        const collision = collisionMap.get(0);
+        if (collision) {
+          applyCollision(collision);
         }
         advance(1);
         return;
@@ -931,24 +987,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
         const collision = collisionMap.get(step);
         if (collision) {
-          setState((prev) => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              players: {
-                ...prev.players,
-                [collision.escapeeColor]: {
-                  ...prev.players[collision.escapeeColor],
-                  hp: collision.newHp,
-                },
-              },
-            };
-          });
-          triggerLocalHit(
-            collision.escapeeColor,
-            collision.newHp,
-            collision.position,
-          );
+          applyCollision(collision);
         }
 
         const events = skillMap.get(step) ?? [];
