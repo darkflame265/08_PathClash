@@ -208,8 +208,8 @@ function getAbilitySkillSummary(skillId: AbilitySkillId, lang: "ko" | "en") {
       return {
         tags:
           lang === "en"
-            ? "Move OK · Combo Locked"
-            : "이동 가능 · 조합 불가능",
+            ? "Move OK · Combo OK"
+            : "이동 가능 · 조합 가능",
         desc:
           lang === "en"
             ? "Deal explosion damage in a 1-tile cross at the chosen timing."
@@ -219,8 +219,8 @@ function getAbilitySkillSummary(skillId: AbilitySkillId, lang: "ko" | "en") {
       return {
         tags:
           lang === "en"
-            ? "Move OK · Combo Locked"
-            : "이동 가능 · 조합 불가능",
+            ? "Move OK · Combo OK"
+            : "이동 가능 · 조합 가능",
         desc:
           lang === "en"
             ? "Teleport first, then begin your path from that position."
