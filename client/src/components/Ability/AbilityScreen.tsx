@@ -166,6 +166,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     red: Position | null;
     blue: Position | null;
   }>({ red: null, blue: null });
+  const [movingTeleportSteps, setMovingTeleportSteps] = useState<{
+    red: number | null;
+    blue: number | null;
+  }>({ red: null, blue: null });
   const [movingBlitzColors, setMovingBlitzColors] = useState<{
     red: boolean;
     blue: boolean;
@@ -297,6 +301,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setMovingPaths({ red: [], blue: [] });
     setMovingStarts(null);
     setMovingTeleportMarkers({ red: null, blue: null });
+    setMovingTeleportSteps({ red: null, blue: null });
     setMovingBlitzColors({ red: false, blue: false });
     if (nextState.phase !== "gameover") {
       setWinner(null);
@@ -312,10 +317,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     const teleport = skillReservations.find(
       (entry) => entry.skillId === "quantum_shift" && entry.target,
     );
-    return (
-      teleport?.target ??
-      state?.players[currentColor].position ?? { row: 2, col: 0 }
-    );
+    if (teleport?.target && teleport.step === 0) {
+      return teleport.target;
+    }
+    return state?.players[currentColor].position ?? { row: 2, col: 0 };
   };
 
   const getAvailableSkills = () =>
@@ -493,20 +498,20 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   };
 
   const handleTeleportTargetSelect = (target: Position) => {
+    const teleportStep = myPath.length;
     const nextReservations: AbilitySkillReservation[] = [
       ...skillReservations.filter((entry) => entry.skillId !== "quantum_shift"),
       {
         skillId: "quantum_shift",
-        step: 0,
+        step: teleportStep,
         order: reservationOrderRef.current++,
         target,
       },
     ];
-    setMyPath([]);
     setSkillReservations(nextReservations);
     setSelectedSkillId(null);
     setPendingTeleport(false);
-    syncMyPlan([], nextReservations);
+    syncMyPlan(myPath, nextReservations);
   };
 
   const handleTeleportCancel = () => {
@@ -860,12 +865,24 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         )?.to ?? null,
     };
     setMovingTeleportMarkers(teleportMarkers);
-    setMovingStarts({
-      red: teleportMarkers.red ?? payload.redStart,
-      blue: teleportMarkers.blue ?? payload.blueStart,
+    setMovingTeleportSteps({
+      red:
+        payload.skillEvents.find(
+          (event) =>
+            event.color === "red" && event.skillId === "quantum_shift" && event.to,
+        )?.step ?? null,
+      blue:
+        payload.skillEvents.find(
+          (event) =>
+            event.color === "blue" && event.skillId === "quantum_shift" && event.to,
+        )?.step ?? null,
     });
-    const redVisualStart = teleportMarkers.red ?? payload.redStart;
-    const blueVisualStart = teleportMarkers.blue ?? payload.blueStart;
+    setMovingStarts({
+      red: payload.redStart,
+      blue: payload.blueStart,
+    });
+    const redVisualStart = payload.redStart;
+    const blueVisualStart = payload.blueStart;
     const guardCounters = {
       red: stateRef.current?.players.red.invulnerableSteps ?? 0,
       blue: stateRef.current?.players.blue.invulnerableSteps ?? 0,
@@ -966,6 +983,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         setMovingPaths({ red: [], blue: [] });
         setMovingStarts(null);
         setMovingTeleportMarkers({ red: null, blue: null });
+        setMovingTeleportSteps({ red: null, blue: null });
         setMovingBlitzColors({ red: false, blue: false });
         return;
       }
@@ -1376,12 +1394,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           collisionEffects={collisionEffects}
           activeGuards={activeGuards}
           previewStart={previewStart}
+          teleportReservation={teleportReservation}
           teleportMarker={
             state.phase === "moving"
               ? movingTeleportMarkers[currentColor]
               : (teleportReservation?.target ?? null)
           }
           movingTeleportMarkers={movingTeleportMarkers}
+          movingTeleportSteps={movingTeleportSteps}
           movingBlitzColors={movingBlitzColors}
           movingPaths={movingPaths}
           movingStarts={movingStarts}

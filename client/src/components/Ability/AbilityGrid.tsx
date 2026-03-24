@@ -1,6 +1,6 @@
 ﻿import { useRef, useCallback, useEffect, useState } from 'react';
 import type { PlayerColor, Position } from '../../types/game.types';
-import type { AbilityBattleState } from '../../types/ability.types';
+import type { AbilityBattleState, AbilitySkillReservation } from '../../types/ability.types';
 import { pixelToCell, isBlockedCell, isValidMove, posEqual } from '../../utils/pathUtils';
 import { PlayerPiece } from '../Game/PlayerPiece';
 import { PathLine } from '../Game/PathLine';
@@ -17,8 +17,10 @@ interface Props {
   collisionEffects: Array<{ id: number; position: Position }>;
   activeGuards: { red: boolean; blue: boolean };
   previewStart: Position;
+  teleportReservation: AbilitySkillReservation | null;
   teleportMarker: Position | null;
   movingTeleportMarkers: { red: Position | null; blue: Position | null };
+  movingTeleportSteps: { red: number | null; blue: number | null };
   movingBlitzColors: { red: boolean; blue: boolean };
   movingPaths: { red: Position[]; blue: Position[] };
   movingStarts: { red: Position; blue: Position } | null;
@@ -45,8 +47,10 @@ export function AbilityGrid({
   collisionEffects,
   activeGuards,
   previewStart,
+  teleportReservation,
   teleportMarker,
   movingTeleportMarkers,
+  movingTeleportSteps,
   movingBlitzColors,
   movingPaths,
   movingStarts,
@@ -98,11 +102,41 @@ export function AbilityGrid({
     return rect ? { x: rect.left, y: rect.top } : { x: 0, y: 0 };
   };
 
+  const teleportStep =
+    teleportReservation?.skillId === 'quantum_shift' ? teleportReservation.step : null;
+  const teleportTarget =
+    teleportReservation?.skillId === 'quantum_shift' ? teleportReservation.target ?? null : null;
+  const baseStart = state.players[currentColor].position;
   const myStart = previewStart;
   const obstacles = state.obstacles;
   const pathPoints = state.pathPoints;
   const redSkin = state.players.red.pieceSkin;
   const blueSkin = state.players.blue.pieceSkin;
+
+  const getPlanningTailPosition = useCallback(
+    (path: Position[]) => {
+      if (
+        teleportTarget &&
+        teleportStep !== null &&
+        path.length === teleportStep
+      ) {
+        return teleportTarget;
+      }
+      return path.length > 0 ? path[path.length - 1] : myStart;
+    },
+    [myStart, teleportStep, teleportTarget],
+  );
+
+  const getPlanningSecondLastPosition = useCallback(
+    (path: Position[]) => {
+      if (path.length < 2) return myStart;
+      if (teleportTarget && teleportStep !== null && path.length - 1 === teleportStep) {
+        return teleportTarget;
+      }
+      return path[path.length - 2];
+    },
+    [myStart, teleportStep, teleportTarget],
+  );
 
   const removeFromPath = useCallback(() => {
     if (myPath.length > 0) {
@@ -130,8 +164,9 @@ export function AbilityGrid({
         e.currentTarget.setPointerCapture(e.pointerId);
         return;
       }
+      const logicalEnd = getPlanningTailPosition(myPath);
       const isOnStart = posEqual(cell, myStart);
-      const isOnEnd = myPath.length > 0 && posEqual(cell, myPath[myPath.length - 1]);
+      const isOnEnd = posEqual(cell, logicalEnd);
       if (!isOnStart && !isOnEnd) return;
       dragState.current = {
         active: true,
@@ -141,7 +176,7 @@ export function AbilityGrid({
       e.preventDefault();
       e.currentTarget.setPointerCapture(e.pointerId);
     },
-    [currentColor, isPlanning, teleportTargetsVisible, blitzTargetsVisible, responsiveCellSize, myPath, myStart, onTeleportCancel, state.players],
+    [blitzTargetsVisible, currentColor, getPlanningTailPosition, isPlanning, myPath, myStart, onTeleportCancel, responsiveCellSize, state.players, teleportTargetsVisible],
   );
 
   const handlePointerMove = useCallback(
@@ -152,7 +187,7 @@ export function AbilityGrid({
       const current = myPath;
 
       if (current.length > 0) {
-        const secondLast = current.length >= 2 ? current[current.length - 2] : myStart;
+        const secondLast = getPlanningSecondLastPosition(current);
         if (posEqual(cell, secondLast)) {
           dragState.current = { active: true, fromStart: false, fromEnd: true };
           removeFromPath();
@@ -161,13 +196,13 @@ export function AbilityGrid({
       }
 
       if (dragState.current.fromStart || dragState.current.fromEnd) {
-        const lastPos = current.length > 0 ? current[current.length - 1] : myStart;
+        const lastPos = getPlanningTailPosition(current);
         if (!posEqual(cell, lastPos) && !isBlockedCell(cell, obstacles) && isValidMove(lastPos, cell) && current.length < pathPoints) {
           setMyPath([...current, cell]);
         }
       }
     },
-    [isPlanning, responsiveCellSize, myPath, myStart, obstacles, pathPoints, removeFromPath, setMyPath],
+    [getPlanningSecondLastPosition, getPlanningTailPosition, isPlanning, myPath, obstacles, pathPoints, removeFromPath, responsiveCellSize, setMyPath],
   );
 
   const handlePointerEnd = useCallback((e?: React.PointerEvent<HTMLDivElement>) => {
@@ -195,13 +230,16 @@ export function AbilityGrid({
         ? myPath
         : [];
 
+  const teleportOrigin =
+    myPath.length > 0 ? myPath[myPath.length - 1] : state.players[currentColor].position;
+
   const teleportTargets = teleportTargetsVisible
     ? Array.from({ length: 9 }, (_, index) => ({
-        row: state.players[currentColor].position.row + Math.floor(index / 3) - 1,
-        col: state.players[currentColor].position.col + (index % 3) - 1,
+        row: teleportOrigin.row + Math.floor(index / 3) - 1,
+        col: teleportOrigin.col + (index % 3) - 1,
       })).filter(
         (position) =>
-          !(position.row === state.players[currentColor].position.row && position.col === state.players[currentColor].position.col) &&
+          !(position.row === teleportOrigin.row && position.col === teleportOrigin.col) &&
           position.row >= 0 &&
           position.row < GRID_SIZE &&
           position.col >= 0 &&
@@ -286,19 +324,59 @@ export function AbilityGrid({
           </button>
         ))}
 
-        <PathLine
-          color="red"
-          path={redPath}
-          startPos={
-            state.phase === 'moving'
-              ? (movingStarts?.red ?? state.players.red.position)
-              : currentColor === 'red'
-                ? myStart
-                : state.players.red.position
-          }
-          cellSize={responsiveCellSize}
-          isPlanning={state.phase !== 'moving'}
-        />
+        {state.phase === 'moving' ? (
+          movingTeleportMarkers.red && movingTeleportSteps.red !== null ? (
+            <>
+              <PathLine
+                color="red"
+                path={redPath.slice(0, movingTeleportSteps.red)}
+                startPos={state.players.red.position}
+                cellSize={responsiveCellSize}
+                isPlanning={false}
+              />
+              <PathLine
+                color="red"
+                path={redPath.slice(movingTeleportSteps.red)}
+                startPos={movingTeleportMarkers.red}
+                cellSize={responsiveCellSize}
+                isPlanning={false}
+              />
+            </>
+          ) : (
+            <PathLine
+              color="red"
+              path={redPath}
+              startPos={movingStarts?.red ?? state.players.red.position}
+              cellSize={responsiveCellSize}
+              isPlanning={false}
+            />
+          )
+        ) : currentColor !== 'red' || !teleportTarget || teleportStep === null ? (
+          <PathLine
+            color="red"
+            path={redPath}
+            startPos={currentColor === 'red' ? myStart : state.players.red.position}
+            cellSize={responsiveCellSize}
+            isPlanning
+          />
+        ) : (
+          <>
+            <PathLine
+              color="red"
+              path={redPath.slice(0, teleportStep)}
+              startPos={baseStart}
+              cellSize={responsiveCellSize}
+              isPlanning
+            />
+            <PathLine
+              color="red"
+              path={redPath.slice(teleportStep)}
+              startPos={teleportTarget}
+              cellSize={responsiveCellSize}
+              isPlanning
+            />
+          </>
+        )}
         {movingBlitzColors.red && movingPaths.red.length > 0 && (
           <svg className="ability-blitz-line" width="100%" height="100%">
             <polyline
@@ -316,19 +394,59 @@ export function AbilityGrid({
             />
           </svg>
         )}
-        <PathLine
-          color="blue"
-          path={bluePath}
-          startPos={
-            state.phase === 'moving'
-              ? (movingStarts?.blue ?? state.players.blue.position)
-              : currentColor === 'blue'
-                ? myStart
-                : state.players.blue.position
-          }
-          cellSize={responsiveCellSize}
-          isPlanning={state.phase !== 'moving'}
-        />
+        {state.phase === 'moving' ? (
+          movingTeleportMarkers.blue && movingTeleportSteps.blue !== null ? (
+            <>
+              <PathLine
+                color="blue"
+                path={bluePath.slice(0, movingTeleportSteps.blue)}
+                startPos={state.players.blue.position}
+                cellSize={responsiveCellSize}
+                isPlanning={false}
+              />
+              <PathLine
+                color="blue"
+                path={bluePath.slice(movingTeleportSteps.blue)}
+                startPos={movingTeleportMarkers.blue}
+                cellSize={responsiveCellSize}
+                isPlanning={false}
+              />
+            </>
+          ) : (
+            <PathLine
+              color="blue"
+              path={bluePath}
+              startPos={movingStarts?.blue ?? state.players.blue.position}
+              cellSize={responsiveCellSize}
+              isPlanning={false}
+            />
+          )
+        ) : currentColor !== 'blue' || !teleportTarget || teleportStep === null ? (
+          <PathLine
+            color="blue"
+            path={bluePath}
+            startPos={currentColor === 'blue' ? myStart : state.players.blue.position}
+            cellSize={responsiveCellSize}
+            isPlanning
+          />
+        ) : (
+          <>
+            <PathLine
+              color="blue"
+              path={bluePath.slice(0, teleportStep)}
+              startPos={baseStart}
+              cellSize={responsiveCellSize}
+              isPlanning
+            />
+            <PathLine
+              color="blue"
+              path={bluePath.slice(teleportStep)}
+              startPos={teleportTarget}
+              cellSize={responsiveCellSize}
+              isPlanning
+            />
+          </>
+        )}
         {movingBlitzColors.blue && movingPaths.blue.length > 0 && (
           <svg className="ability-blitz-line" width="100%" height="100%">
             <polyline

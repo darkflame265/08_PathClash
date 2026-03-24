@@ -508,23 +508,31 @@ export class AbilityRoom {
       };
     }
 
-    let startPosition = player.position;
     if (teleport) {
-      if (teleport.step !== 0 || !teleport.target) return null;
-      const rowDelta = Math.abs(teleport.target.row - player.position.row);
-      const colDelta = Math.abs(teleport.target.col - player.position.col);
+      if (!teleport.target) return null;
+      if (teleport.step < 0 || teleport.step > path.length) return null;
+      const teleportOrigin =
+        teleport.step === 0 ? player.position : path[teleport.step - 1];
+      if (!teleportOrigin) return null;
+      const rowDelta = Math.abs(teleport.target.row - teleportOrigin.row);
+      const colDelta = Math.abs(teleport.target.col - teleportOrigin.col);
       if (rowDelta > 1 || colDelta > 1 || (rowDelta === 0 && colDelta === 0)) return null;
       if (this.obstacles.some((obstacle) => obstacle.row === teleport.target!.row && obstacle.col === teleport.target!.col)) return null;
       if (teleport.target.row < 0 || teleport.target.row > 4 || teleport.target.col < 0 || teleport.target.col > 4) return null;
-      startPosition = teleport.target;
     }
 
-    if (!isValidPath(startPosition, path, hasGuard ? 0 : pathPoints, this.obstacles)) return null;
+    if (teleport) {
+      const prefixPath = path.slice(0, teleport.step);
+      const suffixPath = path.slice(teleport.step);
+      if (!isValidPath(player.position, prefixPath, hasGuard ? 0 : pathPoints, this.obstacles)) return null;
+      if (!isValidPath(teleport.target!, suffixPath, hasGuard ? 0 : pathPoints, this.obstacles)) return null;
+    } else if (!isValidPath(player.position, path, hasGuard ? 0 : pathPoints, this.obstacles)) {
+      return null;
+    }
 
     for (const skill of uniqueSkills) {
       if (skill.skillId === 'ember_blast' && skill.step > path.length) return null;
       if (skill.skillId === 'classic_guard' && skill.step !== 0) return null;
-      if (skill.skillId === 'quantum_shift' && skill.step !== 0) return null;
       if (skill.skillId === 'cosmic_bigbang' && skill.step !== 0) return null;
     }
 
