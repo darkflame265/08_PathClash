@@ -42,6 +42,38 @@ interface Props {
 const GRID_SIZE = 5;
 const DEFAULT_CELL_SIZE = 96;
 
+function toGridPixel(position: Position, cellSize: number) {
+  return {
+    x: position.col * cellSize + cellSize / 2,
+    y: position.row * cellSize + cellSize / 2,
+  };
+}
+
+function buildBlitzBoltPoints(
+  positions: Position[],
+  cellSize: number,
+  amplitude: number,
+  phase = 0,
+) {
+  return positions
+    .map((position, index, array) => {
+      const { x, y } = toGridPixel(position, cellSize);
+      if (index === 0 || index === array.length - 1) {
+        return `${x},${y}`;
+      }
+      const prev = array[index - 1];
+      const next = array[index + 1];
+      const dx = next.col - prev.col;
+      const dy = next.row - prev.row;
+      const length = Math.hypot(dx, dy) || 1;
+      const nx = -dy / length;
+      const ny = dx / length;
+      const direction = (index + phase) % 2 === 0 ? 1 : -1;
+      return `${x + nx * amplitude * direction},${y + ny * amplitude * direction}`;
+    })
+    .join(' ');
+}
+
 export function AbilityGrid({
   state,
   currentColor,
@@ -270,6 +302,55 @@ export function AbilityGrid({
       )
     : [];
 
+  const renderBlitzEffect = (color: PlayerColor, start: Position, path: Position[]) => {
+    if (path.length === 0) return null;
+    const allPositions = [start, ...path];
+    const mainPoints = allPositions
+      .map((position) => {
+        const { x, y } = toGridPixel(position, responsiveCellSize);
+        return `${x},${y}`;
+      })
+      .join(' ');
+    const branchA = buildBlitzBoltPoints(
+      allPositions,
+      responsiveCellSize,
+      Math.max(4, responsiveCellSize * 0.08),
+      0,
+    );
+    const branchB = buildBlitzBoltPoints(
+      allPositions,
+      responsiveCellSize,
+      Math.max(3, responsiveCellSize * 0.055),
+      1,
+    );
+    const end = path[path.length - 1];
+    const endPixel = toGridPixel(end, responsiveCellSize);
+
+    return (
+      <svg
+        className={`ability-blitz-line ability-blitz-line-${color}`}
+        width="100%"
+        height="100%"
+        viewBox={`0 0 ${boardSize} ${boardSize}`}
+      >
+        <g className="ability-blitz-beam">
+          <polyline className="ability-blitz-glow" points={mainPoints} fill="none" />
+          <polyline className="ability-blitz-branch ability-blitz-branch-a" points={branchA} fill="none" />
+          <polyline className="ability-blitz-branch ability-blitz-branch-b" points={branchB} fill="none" />
+          <polyline className="ability-blitz-core" points={branchA} fill="none" />
+        </g>
+        <g
+          className="ability-blitz-impact"
+          transform={`translate(${endPixel.x} ${endPixel.y})`}
+        >
+          <circle className="ability-blitz-impact-ring ability-blitz-impact-ring-outer" r={Math.max(10, responsiveCellSize * 0.3)} />
+          <circle className="ability-blitz-impact-ring ability-blitz-impact-ring-inner" r={Math.max(5, responsiveCellSize * 0.14)} />
+          <circle className="ability-blitz-impact-core" r={Math.max(5, responsiveCellSize * 0.1)} />
+        </g>
+      </svg>
+    );
+  };
+
   return (
     <div ref={shellRef} className="game-grid-shell">
       <div
@@ -384,23 +465,8 @@ export function AbilityGrid({
             />
           </>
         )}
-        {movingBlitzColors.red && movingPaths.red.length > 0 && (
-          <svg className="ability-blitz-line" width="100%" height="100%">
-            <polyline
-              points={[movingStarts?.red ?? state.players.red.position, ...movingPaths.red]
-                .map((p) => `${p.col * responsiveCellSize + responsiveCellSize / 2},${p.row * responsiveCellSize + responsiveCellSize / 2}`)
-                .join(' ')}
-              fill="none"
-              stroke="#d946ef"
-              strokeWidth={Math.max(4, responsiveCellSize * 0.09)}
-              strokeOpacity={0.88}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeDasharray={`${Math.max(6, responsiveCellSize * 0.22)} ${Math.max(4, responsiveCellSize * 0.14)}`}
-              style={{ filter: 'drop-shadow(0 0 8px rgba(217, 70, 239, 0.55))' }}
-            />
-          </svg>
-        )}
+        {movingBlitzColors.red &&
+          renderBlitzEffect('red', movingStarts?.red ?? state.players.red.position, movingPaths.red)}
         {state.phase === 'moving' ? (
           movingTeleportMarkers.blue && movingTeleportSteps.blue !== null ? (
             <>
@@ -454,23 +520,8 @@ export function AbilityGrid({
             />
           </>
         )}
-        {movingBlitzColors.blue && movingPaths.blue.length > 0 && (
-          <svg className="ability-blitz-line" width="100%" height="100%">
-            <polyline
-              points={[movingStarts?.blue ?? state.players.blue.position, ...movingPaths.blue]
-                .map((p) => `${p.col * responsiveCellSize + responsiveCellSize / 2},${p.row * responsiveCellSize + responsiveCellSize / 2}`)
-                .join(' ')}
-              fill="none"
-              stroke="#d946ef"
-              strokeWidth={Math.max(4, responsiveCellSize * 0.09)}
-              strokeOpacity={0.88}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeDasharray={`${Math.max(6, responsiveCellSize * 0.22)} ${Math.max(4, responsiveCellSize * 0.14)}`}
-              style={{ filter: 'drop-shadow(0 0 8px rgba(217, 70, 239, 0.55))' }}
-            />
-          </svg>
-        )}
+        {movingBlitzColors.blue &&
+          renderBlitzEffect('blue', movingStarts?.blue ?? state.players.blue.position, movingPaths.blue)}
 
         {teleportMarker && state.phase !== 'moving' && (
           <div

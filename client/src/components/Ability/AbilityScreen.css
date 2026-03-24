@@ -293,8 +293,71 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 2;
+  z-index: 3;
   overflow: visible;
+}
+
+.ability-grid .ability-blitz-beam {
+  filter:
+    drop-shadow(0 0 10px rgba(168, 85, 247, 0.55))
+    drop-shadow(0 0 24px rgba(217, 70, 239, 0.32));
+}
+
+.ability-grid .ability-blitz-glow {
+  stroke: rgba(192, 132, 252, 0.46);
+  stroke-width: clamp(10px, 1.55vw, 18px);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: ability-blitz-glow-pulse 240ms ease-in-out infinite alternate;
+}
+
+.ability-grid .ability-blitz-branch {
+  stroke: rgba(216, 180, 254, 0.9);
+  stroke-width: clamp(4px, 0.72vw, 8px);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 14 9;
+}
+
+.ability-grid .ability-blitz-branch-a {
+  animation: ability-blitz-branch-flow-a 150ms linear infinite;
+}
+
+.ability-grid .ability-blitz-branch-b {
+  animation: ability-blitz-branch-flow-b 110ms linear infinite;
+}
+
+.ability-grid .ability-blitz-core {
+  stroke: #f5d0fe;
+  stroke-width: clamp(2px, 0.32vw, 4px);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 8 7;
+  animation: ability-blitz-core-flow 80ms linear infinite;
+}
+
+.ability-grid .ability-blitz-impact-ring {
+  fill: none;
+  stroke: rgba(233, 213, 255, 0.86);
+  transform-origin: center;
+}
+
+.ability-grid .ability-blitz-impact-ring-outer {
+  stroke-width: 2;
+  animation: ability-blitz-impact-outer 300ms ease-out forwards;
+}
+
+.ability-grid .ability-blitz-impact-ring-inner {
+  stroke-width: 1.5;
+  animation: ability-blitz-impact-inner 220ms ease-out forwards;
+}
+
+.ability-grid .ability-blitz-impact-core {
+  fill: rgba(255, 255, 255, 0.96);
+  filter:
+    drop-shadow(0 0 6px rgba(253, 224, 71, 0.8))
+    drop-shadow(0 0 14px rgba(217, 70, 239, 0.45));
+  animation: ability-blitz-impact-core 180ms ease-out forwards;
 }
 
 .ability-teleport-marker {
@@ -477,6 +540,75 @@
   0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
   25% { opacity: 1; }
   100% { opacity: 0; transform: translate(135%, 130%) scale(0.9); }
+}
+
+@keyframes ability-blitz-glow-pulse {
+  0% {
+    stroke-opacity: 0.48;
+  }
+  100% {
+    stroke-opacity: 0.8;
+  }
+}
+
+@keyframes ability-blitz-branch-flow-a {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -23;
+  }
+}
+
+@keyframes ability-blitz-branch-flow-b {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -18;
+  }
+}
+
+@keyframes ability-blitz-core-flow {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -15;
+  }
+}
+
+@keyframes ability-blitz-impact-outer {
+  0% {
+    opacity: 0.95;
+    transform: scale(0.7);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+
+@keyframes ability-blitz-impact-inner {
+  0% {
+    opacity: 0.95;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+@keyframes ability-blitz-impact-core {
+  0% {
+    opacity: 1;
+    transform: scale(0.55);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.45);
+  }
 }
 
 .ability-loadout-card-actions {
