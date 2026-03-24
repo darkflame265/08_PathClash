@@ -33,6 +33,7 @@ const STEP_DURATION_MS = 200;
 const SKILL_PAUSE_MS = 640;
 const SKILL_CAST_DELAY_MS = 500;
 const BLITZ_DASH_STEP_MS = 12;
+const BLITZ_POST_HIT_PAUSE_MS = 600;
 
 function buildBlitzPath(start: Position, target: Position): Position[] {
   const rowDelta = target.row - start.row;
@@ -1024,7 +1025,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       seq: Position[],
       path: Position[],
     ) => {
-      const teleportStep = color === "red" ? teleportSteps.red : teleportSteps.blue;
+      const teleportStep =
+        color === "red" ? teleportSteps.red : teleportSteps.blue;
       const teleportTarget =
         color === "red" ? teleportMarkers.red : teleportMarkers.blue;
 
@@ -1141,9 +1143,19 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         const events = skillMap.get(step) ?? [];
         if (events.length > 0) {
           const collision = collisionMap.get(step);
+          const hasBlitzEvent = events.some(
+            (event) => event.skillId === "electric_blitz",
+          );
           runSkillQueue(events, 0, () => {
             if (collision) {
               applyCollision(collision);
+            }
+            if (collision && hasBlitzEvent) {
+              queueAnimationTimeout(
+                () => advance(step + 1),
+                BLITZ_POST_HIT_PAUSE_MS,
+              );
+              return;
             }
             advance(step + 1);
           });
