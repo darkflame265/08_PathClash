@@ -21,6 +21,11 @@ interface Props {
     from: Position;
     to: Position;
   }>;
+  chargeEffects: Array<{
+    id: number;
+    color: PlayerColor;
+    position: Position;
+  }>;
   activeGuards: { red: boolean; blue: boolean };
   previewStart: Position;
   teleportReservation: AbilitySkillReservation | null;
@@ -86,6 +91,7 @@ export function AbilityGrid({
   explodingFlags,
   collisionEffects,
   teleportEffects,
+  chargeEffects,
   activeGuards,
   previewStart,
   teleportReservation,
@@ -629,6 +635,25 @@ export function AbilityGrid({
               <span className="ability-teleport-particle ability-teleport-particle-c" />
               <span className="ability-teleport-particle ability-teleport-particle-d" />
             </div>
+          </div>
+        ))}
+
+        {chargeEffects.map((effect) => (
+          <div
+            key={`charge-${effect.id}`}
+            className={`ability-charge-effect ability-charge-effect-${effect.color}`}
+            style={{
+              left: effect.position.col * responsiveCellSize + responsiveCellSize / 2,
+              top: effect.position.row * responsiveCellSize + responsiveCellSize / 2,
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            <span className="ability-charge-wave ability-charge-wave-a" />
+            <span className="ability-charge-wave ability-charge-wave-b" />
+            <span className="ability-charge-float">
+              <span className="ability-charge-icon">⚡</span>
+              <span className="ability-charge-text">+4</span>
+            </span>
           </div>
         ))}
 

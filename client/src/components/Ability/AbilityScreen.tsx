@@ -154,6 +154,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [teleportEffects, setTeleportEffects] = useState<
     Array<{ id: number; color: PlayerColor; from: Position; to: Position }>
   >([]);
+  const [chargeEffects, setChargeEffects] = useState<
+    Array<{ id: number; color: PlayerColor; position: Position }>
+  >([]);
   const [activeGuards, setActiveGuards] = useState<{
     red: boolean;
     blue: boolean;
@@ -311,6 +314,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setExplodingFlags({ red: false, blue: false });
     setCollisionEffects([]);
     setTeleportEffects([]);
+    setChargeEffects([]);
     setMovingPaths({ red: [], blue: [] });
     setMovingStarts(null);
     setMovingTeleportMarkers({ red: null, blue: null });
@@ -697,6 +701,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }, 520);
   };
 
+  const triggerChargeEffect = (color: PlayerColor, position: Position) => {
+    const effectId = Date.now() + Math.random();
+    setChargeEffects((prev) => [...prev, { id: effectId, color, position }]);
+    queueAnimationTimeout(() => {
+      setChargeEffects((prev) => prev.filter((entry) => entry.id !== effectId));
+    }, 1800);
+  };
+
   const runSkillEvent = (
     event: AbilityResolutionPayload["skillEvents"][number],
     done: () => void,
@@ -708,6 +720,16 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     queueAnimationTimeout(() => {
       if (event.skillId === "classic_guard") {
         setActiveGuards((prev) => ({ ...prev, [event.color]: true }));
+      }
+
+      if (event.skillId === "plasma_charge") {
+        const position =
+          event.color === "red"
+            ? stateRef.current?.players.red.position
+            : stateRef.current?.players.blue.position;
+        if (position) {
+          triggerChargeEffect(event.color, position);
+        }
       }
 
       if (event.skillId === "ember_blast") {
@@ -1546,9 +1568,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             displayPositions={{ red: redDisplayPos, blue: blueDisplayPos }}
             hitFlags={hitFlags}
             explodingFlags={explodingFlags}
-            collisionEffects={collisionEffects}
-            teleportEffects={teleportEffects}
-            activeGuards={activeGuards}
+          collisionEffects={collisionEffects}
+          teleportEffects={teleportEffects}
+          chargeEffects={chargeEffects}
+          activeGuards={activeGuards}
             previewStart={previewStart}
             teleportReservation={teleportReservation}
             teleportMarker={

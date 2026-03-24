@@ -383,6 +383,73 @@
   pointer-events: none;
 }
 
+.ability-charge-effect {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+  display: block;
+  color: #fde68a;
+  font-weight: 800;
+  text-shadow:
+    0 0 8px rgba(251, 191, 36, 0.45),
+    0 0 16px rgba(59, 130, 246, 0.2);
+}
+
+.ability-charge-wave {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  border: 2px solid rgba(96, 165, 250, 0.62);
+  box-shadow:
+    0 0 14px rgba(59, 130, 246, 0.22),
+    0 0 22px rgba(251, 191, 36, 0.16);
+  transform: translate(-50%, -50%) scale(0.25);
+  opacity: 0;
+}
+
+.ability-charge-wave-a {
+  width: calc(2.5rem * var(--gs-scale, 1));
+  height: calc(2.5rem * var(--gs-scale, 1));
+  animation: ability-charge-wave-a 900ms ease-out forwards;
+}
+
+.ability-charge-wave-b {
+  width: calc(3.45rem * var(--gs-scale, 1));
+  height: calc(3.45rem * var(--gs-scale, 1));
+  animation: ability-charge-wave-b 1050ms ease-out forwards;
+}
+
+.ability-charge-float {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(0.18rem * var(--gs-scale, 1));
+  animation: ability-charge-rise 1650ms ease-out forwards;
+}
+
+.ability-charge-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(1.12rem * var(--gs-scale, 1));
+  height: calc(1.12rem * var(--gs-scale, 1));
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.28) 0%, rgba(59, 130, 246, 0.1) 65%, rgba(0, 0, 0, 0) 100%);
+  color: #f59e0b;
+  font-size: calc(0.96rem * var(--gs-scale, 1));
+  box-shadow:
+    0 0 0 1px rgba(96, 165, 250, 0.22),
+    0 0 14px rgba(59, 130, 246, 0.28);
+}
+
+.ability-charge-text {
+  font-size: clamp(0.72rem, calc(0.82rem * var(--gs-scale, 1)), 0.95rem);
+  letter-spacing: 0.02em;
+}
+
 .ability-teleport-burst::before {
   content: "";
   position: absolute;
@@ -540,6 +607,52 @@
   0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
   25% { opacity: 1; }
   100% { opacity: 0; transform: translate(135%, 130%) scale(0.9); }
+}
+
+@keyframes ability-charge-rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(4px) scale(0.82);
+    filter: blur(1px);
+  }
+  16% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(0) scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(calc(-1.45rem * var(--gs-scale, 1))) scale(1.05);
+    filter: blur(0.5px);
+  }
+}
+
+@keyframes ability-charge-wave-a {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.22);
+  }
+  18% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.45);
+  }
+}
+
+@keyframes ability-charge-wave-b {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.18);
+  }
+  28% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.28);
+  }
 }
 
 @keyframes ability-blitz-glow-pulse {
