@@ -6,7 +6,7 @@ import { useGameStore } from "../../store/gameStore";
 import { TimerBar } from "../Game/TimerBar";
 import { PlayerInfo } from "../Game/PlayerInfo";
 import { HpDisplay } from "../Game/HpDisplay";
-import { playCharge, playHit } from "../../utils/soundUtils";
+import { playCharge, playHit, playQuantum } from "../../utils/soundUtils";
 import type { PlayerColor, Position } from "../../types/game.types";
 import {
   ABILITY_SKILLS,
@@ -30,10 +30,10 @@ const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
 const STEP_DURATION_MS = 200;
-const SKILL_PAUSE_MS = 320;
+const SKILL_PAUSE_MS = 640;
 const SKILL_CAST_DELAY_MS = 500;
 const BLITZ_DASH_STEP_MS = 12;
-const BLITZ_POST_HIT_PAUSE_MS = 600;
+const BLITZ_POST_HIT_PAUSE_MS = SKILL_PAUSE_MS;
 
 function buildBlitzPath(start: Position, target: Position): Position[] {
   const rowDelta = target.row - start.row;
@@ -876,6 +876,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           event.color === "red"
             ? stateRef.current?.players.red.position
             : stateRef.current?.players.blue.position;
+        if (!isSfxMuted) {
+          playQuantum(sfxVolume);
+        }
         triggerTeleportEffect(
           event.color,
           event.from ?? fallbackFrom ?? target,

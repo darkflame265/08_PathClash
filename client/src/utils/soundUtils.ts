@@ -1,7 +1,9 @@
 // Simple Web Audio API sound generator (no asset file needed)
 let audioCtx: AudioContext | null = null;
 let chargeAudio: HTMLAudioElement | null = null;
+let quantumAudio: HTMLAudioElement | null = null;
 const CHARGE_SFX_GAIN = 0.35;
+const QUANTUM_SFX_GAIN = 0.65;
 
 function getCtx(): AudioContext {
   if (!audioCtx) audioCtx = new AudioContext();
@@ -36,6 +38,22 @@ export function playCharge(volume = 0.55): void {
     }
     const audio = chargeAudio.cloneNode(true) as HTMLAudioElement;
     audio.volume = Math.max(0, Math.min(1, volume * CHARGE_SFX_GAIN));
+    void audio.play().catch(() => {
+      // Playback can fail if browser blocks audio; ignore.
+    });
+  } catch {
+    // Audio element not available
+  }
+}
+
+export function playQuantum(volume = 0.55): void {
+  try {
+    if (!quantumAudio) {
+      quantumAudio = new Audio("/sfx/ability/quantum.mp3");
+      quantumAudio.preload = "auto";
+    }
+    const audio = quantumAudio.cloneNode(true) as HTMLAudioElement;
+    audio.volume = Math.max(0, Math.min(1, volume * QUANTUM_SFX_GAIN));
     void audio.play().catch(() => {
       // Playback can fail if browser blocks audio; ignore.
     });
