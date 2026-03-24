@@ -3,9 +3,11 @@ let audioCtx: AudioContext | null = null;
 let chargeAudio: HTMLAudioElement | null = null;
 let quantumAudio: HTMLAudioElement | null = null;
 let emberAudio: HTMLAudioElement | null = null;
+let blitzAudio: HTMLAudioElement | null = null;
 const CHARGE_SFX_GAIN = 0.35;
 const QUANTUM_SFX_GAIN = 0.65;
 const EMBER_SFX_GAIN = 0.6;
+const BLITZ_SFX_GAIN = 0.6;
 
 function getCtx(): AudioContext {
   if (!audioCtx) audioCtx = new AudioContext();
@@ -72,6 +74,22 @@ export function playEmber(volume = 0.55): void {
     }
     const audio = emberAudio.cloneNode(true) as HTMLAudioElement;
     audio.volume = Math.max(0, Math.min(1, volume * EMBER_SFX_GAIN));
+    void audio.play().catch(() => {
+      // Playback can fail if browser blocks audio; ignore.
+    });
+  } catch {
+    // Audio element not available
+  }
+}
+
+export function playBlitz(volume = 0.55): void {
+  try {
+    if (!blitzAudio) {
+      blitzAudio = new Audio("/sfx/ability/electric_blitz.mp3");
+      blitzAudio.preload = "auto";
+    }
+    const audio = blitzAudio.cloneNode(true) as HTMLAudioElement;
+    audio.volume = Math.max(0, Math.min(1, volume * BLITZ_SFX_GAIN));
     void audio.play().catch(() => {
       // Playback can fail if browser blocks audio; ignore.
     });
