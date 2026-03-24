@@ -313,6 +313,172 @@
   pointer-events: none;
 }
 
+.ability-teleport-burst {
+  position: absolute;
+  z-index: 5;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.ability-teleport-burst::before {
+  content: "";
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(219, 234, 254, 0.8) 28%, rgba(99, 102, 241, 0.3) 62%, rgba(0, 0, 0, 0) 100%);
+  filter: blur(2px);
+}
+
+.ability-teleport-burst-red::before {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.98) 0%, rgba(253, 186, 116, 0.78) 26%, rgba(217, 70, 239, 0.32) 58%, rgba(0, 0, 0, 0) 100%);
+}
+
+.ability-teleport-burst-blue::before {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.98) 0%, rgba(125, 211, 252, 0.82) 26%, rgba(99, 102, 241, 0.34) 58%, rgba(0, 0, 0, 0) 100%);
+}
+
+.ability-teleport-burst-depart {
+  animation: ability-teleport-depart 420ms ease-out forwards;
+}
+
+.ability-teleport-burst-arrive {
+  animation: ability-teleport-arrive 480ms ease-out forwards;
+}
+
+.ability-teleport-ring {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  border: 2px solid rgba(191, 219, 254, 0.8);
+  opacity: 0;
+}
+
+.ability-teleport-ring-outer {
+  animation: ability-teleport-ring-outer 460ms ease-out forwards;
+}
+
+.ability-teleport-ring-inner {
+  inset: 22%;
+  border-width: 1px;
+  animation: ability-teleport-ring-inner 380ms ease-out forwards;
+}
+
+.ability-teleport-particle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 18%;
+  height: 18%;
+  margin-left: -9%;
+  margin-top: -9%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(125, 211, 252, 0.92) 42%, rgba(96, 165, 250, 0.1) 100%);
+  box-shadow: 0 0 10px rgba(125, 211, 252, 0.55);
+  opacity: 0;
+}
+
+.ability-teleport-particle-a {
+  animation: ability-teleport-particle-a 420ms ease-out forwards;
+}
+
+.ability-teleport-particle-b {
+  animation: ability-teleport-particle-b 420ms ease-out forwards;
+}
+
+.ability-teleport-particle-c {
+  animation: ability-teleport-particle-c 420ms ease-out forwards;
+}
+
+.ability-teleport-particle-d {
+  animation: ability-teleport-particle-d 420ms ease-out forwards;
+}
+
+@keyframes ability-teleport-depart {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.72);
+    filter: blur(0);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.36);
+    filter: blur(5px);
+  }
+}
+
+@keyframes ability-teleport-arrive {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.62);
+    filter: blur(6px);
+  }
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.22);
+    filter: blur(1px);
+  }
+}
+
+@keyframes ability-teleport-ring-outer {
+  0% {
+    opacity: 0;
+    transform: scale(0.45);
+  }
+  20% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+@keyframes ability-teleport-ring-inner {
+  0% {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  24% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes ability-teleport-particle-a {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-140%, -105%) scale(0.92); }
+}
+
+@keyframes ability-teleport-particle-b {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translate(145%, -110%) scale(0.88); }
+}
+
+@keyframes ability-teleport-particle-c {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-125%, 120%) scale(0.84); }
+}
+
+@keyframes ability-teleport-particle-d {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translate(135%, 130%) scale(0.9); }
+}
+
 .ability-loadout-card-actions {
   display: flex;
   align-items: center;

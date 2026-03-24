@@ -15,6 +15,12 @@ interface Props {
   hitFlags: { red: boolean; blue: boolean };
   explodingFlags: { red: boolean; blue: boolean };
   collisionEffects: Array<{ id: number; position: Position }>;
+  teleportEffects: Array<{
+    id: number;
+    color: PlayerColor;
+    from: Position;
+    to: Position;
+  }>;
   activeGuards: { red: boolean; blue: boolean };
   previewStart: Position;
   teleportReservation: AbilitySkillReservation | null;
@@ -45,6 +51,7 @@ export function AbilityGrid({
   hitFlags,
   explodingFlags,
   collisionEffects,
+  teleportEffects,
   activeGuards,
   previewStart,
   teleportReservation,
@@ -503,6 +510,45 @@ export function AbilityGrid({
 
         {collisionEffects.map(({ id, position }) => (
           <CollisionEffect key={id} position={position} cellSize={responsiveCellSize} />
+        ))}
+
+        {teleportEffects.map((effect) => (
+          <div key={`teleport-${effect.id}`}>
+            <div
+              className={`ability-teleport-burst ability-teleport-burst-depart ability-teleport-burst-${effect.color}`}
+              style={{
+                left: effect.from.col * responsiveCellSize + responsiveCellSize / 2,
+                top: effect.from.row * responsiveCellSize + responsiveCellSize / 2,
+                width: Math.max(34, responsiveCellSize * 0.72),
+                height: Math.max(34, responsiveCellSize * 0.72),
+                transform: 'translate(-50%, -50%)',
+              }}
+            >
+              <span className="ability-teleport-ring ability-teleport-ring-outer" />
+              <span className="ability-teleport-ring ability-teleport-ring-inner" />
+              <span className="ability-teleport-particle ability-teleport-particle-a" />
+              <span className="ability-teleport-particle ability-teleport-particle-b" />
+              <span className="ability-teleport-particle ability-teleport-particle-c" />
+              <span className="ability-teleport-particle ability-teleport-particle-d" />
+            </div>
+            <div
+              className={`ability-teleport-burst ability-teleport-burst-arrive ability-teleport-burst-${effect.color}`}
+              style={{
+                left: effect.to.col * responsiveCellSize + responsiveCellSize / 2,
+                top: effect.to.row * responsiveCellSize + responsiveCellSize / 2,
+                width: Math.max(38, responsiveCellSize * 0.8),
+                height: Math.max(38, responsiveCellSize * 0.8),
+                transform: 'translate(-50%, -50%)',
+              }}
+            >
+              <span className="ability-teleport-ring ability-teleport-ring-outer" />
+              <span className="ability-teleport-ring ability-teleport-ring-inner" />
+              <span className="ability-teleport-particle ability-teleport-particle-a" />
+              <span className="ability-teleport-particle ability-teleport-particle-b" />
+              <span className="ability-teleport-particle ability-teleport-particle-c" />
+              <span className="ability-teleport-particle ability-teleport-particle-d" />
+            </div>
+          </div>
         ))}
 
         {activeGuards.red && (

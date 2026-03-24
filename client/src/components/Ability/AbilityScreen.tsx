@@ -150,6 +150,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [collisionEffects, setCollisionEffects] = useState<
     Array<{ id: number; position: Position }>
   >([]);
+  const [teleportEffects, setTeleportEffects] = useState<
+    Array<{ id: number; color: PlayerColor; from: Position; to: Position }>
+  >([]);
   const [activeGuards, setActiveGuards] = useState<{
     red: boolean;
     blue: boolean;
@@ -298,6 +301,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setHitFlags({ red: false, blue: false });
     setExplodingFlags({ red: false, blue: false });
     setCollisionEffects([]);
+    setTeleportEffects([]);
     setMovingPaths({ red: [], blue: [] });
     setMovingStarts(null);
     setMovingTeleportMarkers({ red: null, blue: null });
@@ -667,6 +671,20 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }
   };
 
+  const triggerTeleportEffect = (
+    color: PlayerColor,
+    from: Position,
+    to: Position,
+  ) => {
+    const effectId = Date.now() + Math.random();
+    setTeleportEffects((prev) => [...prev, { id: effectId, color, from, to }]);
+    queueAnimationTimeout(() => {
+      setTeleportEffects((prev) =>
+        prev.filter((entry) => entry.id !== effectId),
+      );
+    }, 520);
+  };
+
   const runSkillEvent = (
     event: AbilityResolutionPayload["skillEvents"][number],
     done: () => void,
@@ -806,8 +824,16 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
 
       if (event.skillId === "quantum_shift" && event.to) {
-        if (event.color === "red") setRedDisplayPos(event.to);
-        else setBlueDisplayPos(event.to);
+        const target = event.to;
+        const fallbackFrom =
+          event.color === "red"
+            ? stateRef.current?.players.red.position
+            : stateRef.current?.players.blue.position;
+        triggerTeleportEffect(event.color, event.from ?? fallbackFrom ?? target, target);
+        queueAnimationTimeout(() => {
+          if (event.color === "red") setRedDisplayPos(target);
+          else setBlueDisplayPos(target);
+        }, 120);
       }
 
       for (const damage of event.damages ?? []) {
@@ -1390,8 +1416,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             setMyPath={updateMyPath}
             displayPositions={{ red: redDisplayPos, blue: blueDisplayPos }}
             hitFlags={hitFlags}
-            explodingFlags={explodingFlags}
+          explodingFlags={explodingFlags}
           collisionEffects={collisionEffects}
+          teleportEffects={teleportEffects}
           activeGuards={activeGuards}
           previewStart={previewStart}
           teleportReservation={teleportReservation}
