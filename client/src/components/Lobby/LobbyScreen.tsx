@@ -191,6 +191,82 @@ function renderAbilitySkillIcon(skillId: AbilitySkillId) {
   );
 }
 
+function getAbilitySkillSummary(skillId: AbilitySkillId, lang: "ko" | "en") {
+  switch (skillId) {
+    case "classic_guard":
+      return {
+        tags:
+          lang === "en"
+            ? "Move Locked · Combo OK"
+            : "이동 불가 · 조합 가능",
+        desc:
+          lang === "en"
+            ? "Become invulnerable for 2 turns and block attack skills."
+            : "2턴 동안 무적이 되며, 공격 스킬을 막습니다.",
+      };
+    case "ember_blast":
+      return {
+        tags:
+          lang === "en"
+            ? "Move OK · Combo Locked"
+            : "이동 가능 · 조합 불가능",
+        desc:
+          lang === "en"
+            ? "Deal explosion damage in a 1-tile cross at the chosen timing."
+            : "지정 시점에 주변 1칸 십자 범위에 폭발 피해를 줍니다.",
+      };
+    case "quantum_shift":
+      return {
+        tags:
+          lang === "en"
+            ? "Move OK · Combo Locked"
+            : "이동 가능 · 조합 불가능",
+        desc:
+          lang === "en"
+            ? "Teleport first, then begin your path from that position."
+            : "지정 위치로 순간이동한 뒤, 그 위치에서 경로를 시작합니다.",
+      };
+    case "plasma_charge":
+      return {
+        tags:
+          lang === "en"
+            ? "Move Locked · Combo OK"
+            : "이동 불가 · 조합 가능",
+        desc:
+          lang === "en"
+            ? "Skip movement this turn and gain a large mana bonus next turn."
+            : "이번 턴 이동하지 않고, 다음 턴 마나를 크게 회복합니다.",
+      };
+    case "electric_blitz":
+      return {
+        tags:
+          lang === "en"
+            ? "Skill Move · Combo Locked"
+            : "스킬 이동 · 조합 불가능",
+        desc:
+          lang === "en"
+            ? "Dash in a straight line, ignore obstacles, and strike enemies on the path."
+            : "직선으로 돌진하며, 장애물을 무시하고 경로 위 적을 타격합니다.",
+      };
+    case "cosmic_bigbang":
+      return {
+        tags:
+          lang === "en"
+            ? "Move Locked · Combo Locked"
+            : "이동 불가 · 조합 불가능",
+        desc:
+          lang === "en"
+            ? "Deal 2 damage to the whole board. Blocked by invulnerability."
+            : "보드 전체에 2 피해를 줍니다. 무적에 막힙니다.",
+      };
+    default:
+      return {
+        tags: lang === "en" ? "Unknown" : "미정",
+        desc: lang === "en" ? "No summary." : "설명 없음",
+      };
+  }
+}
+
 export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbilityStart }: Props) {
   const {
     myNickname,
@@ -1799,6 +1875,10 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
               {availableAbilitySkills.map((skill) => {
                 const equipped = abilityLoadout.includes(skill.id);
                 const unlocked = hasAbilitySkinUnlocked(skill.skinId);
+                const skillSummary = getAbilitySkillSummary(
+                  skill.id,
+                  lang === "en" ? "en" : "ko",
+                );
                 const requiredSkinChoice = skinChoices.find(
                   (choice) => choice.id === skill.skinId,
                 );
@@ -1824,7 +1904,9 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
                     <span className="skin-option-copy">
                       <strong>{lang === "en" ? skill.name.en : skill.name.kr}</strong>
                       <span>
-                        {lang === "en" ? skill.description.en : skill.description.kr}
+                        {skillSummary.tags}
+                        <br />
+                        {skillSummary.desc}
                         <br />
                         {lang === "en" ? "Required skin: " : "필요 스킨: "}
                         <span
