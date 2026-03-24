@@ -886,13 +886,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           event.skillId === "electric_blitz" && event.color === "blue",
       ),
     };
-    setMovingPaths({ red: payload.redPath, blue: payload.bluePath });
-    setMovingBlitzColors({
-      red: blitzColors.red,
-      blue: blitzColors.blue,
-    });
-    setMovingBlitzProgress({ red: 0, blue: 0 });
-    setMovingBlitzSteps({
+    const blitzSteps = {
       red:
         payload.skillEvents.find(
           (event) => event.skillId === "electric_blitz" && event.color === "red",
@@ -901,6 +895,16 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         payload.skillEvents.find(
           (event) => event.skillId === "electric_blitz" && event.color === "blue",
         )?.step ?? null,
+    };
+    setMovingPaths({ red: payload.redPath, blue: payload.bluePath });
+    setMovingBlitzColors({
+      red: blitzColors.red,
+      blue: blitzColors.blue,
+    });
+    setMovingBlitzProgress({ red: 0, blue: 0 });
+    setMovingBlitzSteps({
+      red: blitzSteps.red,
+      blue: blitzSteps.blue,
     });
     const teleportMarkers = {
       red:
@@ -1044,10 +1048,15 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         return;
       }
 
-      if (!blitzColors.red) {
+      const redShouldMoveNormally =
+        !blitzColors.red || step <= (blitzSteps.red ?? -1);
+      const blueShouldMoveNormally =
+        !blitzColors.blue || step <= (blitzSteps.blue ?? -1);
+
+      if (redShouldMoveNormally) {
         setRedDisplayPos(redSeq[Math.min(step, redSeq.length - 1)]);
       }
-      if (!blitzColors.blue) {
+      if (blueShouldMoveNormally) {
         setBlueDisplayPos(blueSeq[Math.min(step, blueSeq.length - 1)]);
       }
 
