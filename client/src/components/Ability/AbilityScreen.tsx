@@ -6,7 +6,7 @@ import { useGameStore } from "../../store/gameStore";
 import { TimerBar } from "../Game/TimerBar";
 import { PlayerInfo } from "../Game/PlayerInfo";
 import { HpDisplay } from "../Game/HpDisplay";
-import { playBlitz, playCharge, playEmber, playHit, playQuantum } from "../../utils/soundUtils";
+import { playBigBang, playBlitz, playCharge, playEmber, playHit, playQuantum } from "../../utils/soundUtils";
 import type { PlayerColor, Position } from "../../types/game.types";
 import {
   ABILITY_SKILLS,
@@ -805,6 +805,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
 
       if (event.skillId === "cosmic_bigbang") {
+        if (!isSfxMuted) {
+          playBigBang(sfxVolume);
+        }
         const origin = stateRef.current?.players[event.color].position;
         const wavePositions = [...(event.affectedPositions ?? [])].sort(
           (left, right) => {
