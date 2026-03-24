@@ -6,7 +6,7 @@ import { useGameStore } from "../../store/gameStore";
 import { TimerBar } from "../Game/TimerBar";
 import { PlayerInfo } from "../Game/PlayerInfo";
 import { HpDisplay } from "../Game/HpDisplay";
-import { playCharge, playHit, playQuantum } from "../../utils/soundUtils";
+import { playCharge, playEmber, playHit, playQuantum } from "../../utils/soundUtils";
 import type { PlayerColor, Position } from "../../types/game.types";
 import {
   ABILITY_SKILLS,
@@ -735,6 +735,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
 
       if (event.skillId === "ember_blast") {
+        if (!isSfxMuted) {
+          playEmber(sfxVolume);
+        }
         for (const position of event.affectedPositions ?? []) {
           const effectId = Date.now() + Math.random();
           setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
