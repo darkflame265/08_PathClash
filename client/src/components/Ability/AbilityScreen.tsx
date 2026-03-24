@@ -314,7 +314,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setExplodingFlags({ red: false, blue: false });
     setCollisionEffects([]);
     setTeleportEffects([]);
-    setChargeEffects([]);
     setMovingPaths({ red: [], blue: [] });
     setMovingStarts(null);
     setMovingTeleportMarkers({ red: null, blue: null });

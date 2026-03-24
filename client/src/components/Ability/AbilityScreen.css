@@ -620,6 +620,11 @@
     transform: translate(-50%, -50%) translateY(0) scale(1);
     filter: blur(0);
   }
+  72% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(calc(-0.75rem * var(--gs-scale, 1))) scale(1.02);
+    filter: blur(0);
+  }
   100% {
     opacity: 0;
     transform: translate(-50%, -50%) translateY(calc(-1.45rem * var(--gs-scale, 1))) scale(1.05);
