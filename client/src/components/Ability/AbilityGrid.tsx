@@ -28,6 +28,7 @@ interface Props {
   movingTeleportMarkers: { red: Position | null; blue: Position | null };
   movingTeleportSteps: { red: number | null; blue: number | null };
   movingBlitzColors: { red: boolean; blue: boolean };
+  movingBlitzProgress: { red: number; blue: number };
   movingPaths: { red: Position[]; blue: Position[] };
   movingStarts: { red: Position; blue: Position } | null;
   cellSize: number;
@@ -91,6 +92,7 @@ export function AbilityGrid({
   movingTeleportMarkers,
   movingTeleportSteps,
   movingBlitzColors,
+  movingBlitzProgress,
   movingPaths,
   movingStarts,
   cellSize,
@@ -302,9 +304,15 @@ export function AbilityGrid({
       )
     : [];
 
-  const renderBlitzEffect = (color: PlayerColor, start: Position, path: Position[]) => {
-    if (path.length === 0) return null;
-    const allPositions = [start, ...path];
+  const renderBlitzEffect = (
+    color: PlayerColor,
+    start: Position,
+    path: Position[],
+    progress: number,
+  ) => {
+    const visiblePath = path.slice(0, Math.max(0, progress));
+    if (visiblePath.length === 0) return null;
+    const allPositions = [start, ...visiblePath];
     const mainPoints = allPositions
       .map((position) => {
         const { x, y } = toGridPixel(position, responsiveCellSize);
@@ -323,7 +331,7 @@ export function AbilityGrid({
       Math.max(3, responsiveCellSize * 0.055),
       1,
     );
-    const end = path[path.length - 1];
+    const end = visiblePath[visiblePath.length - 1];
     const endPixel = toGridPixel(end, responsiveCellSize);
 
     return (
@@ -466,7 +474,12 @@ export function AbilityGrid({
           </>
         )}
         {movingBlitzColors.red &&
-          renderBlitzEffect('red', movingStarts?.red ?? state.players.red.position, movingPaths.red)}
+          renderBlitzEffect(
+            'red',
+            movingStarts?.red ?? state.players.red.position,
+            movingPaths.red,
+            movingBlitzProgress.red,
+          )}
         {state.phase === 'moving' ? (
           movingTeleportMarkers.blue && movingTeleportSteps.blue !== null ? (
             <>
@@ -521,7 +534,12 @@ export function AbilityGrid({
           </>
         )}
         {movingBlitzColors.blue &&
-          renderBlitzEffect('blue', movingStarts?.blue ?? state.players.blue.position, movingPaths.blue)}
+          renderBlitzEffect(
+            'blue',
+            movingStarts?.blue ?? state.players.blue.position,
+            movingPaths.blue,
+            movingBlitzProgress.blue,
+          )}
 
         {teleportMarker && state.phase !== 'moving' && (
           <div

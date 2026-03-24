@@ -177,6 +177,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     red: boolean;
     blue: boolean;
   }>({ red: false, blue: false });
+  const [movingBlitzProgress, setMovingBlitzProgress] = useState<{
+    red: number;
+    blue: number;
+  }>({ red: 0, blue: 0 });
   const [winner, setWinner] = useState<PlayerColor | "draw" | null>(null);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const [rematchRequested, setRematchRequested] = useState(false);
@@ -307,6 +311,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setMovingTeleportMarkers({ red: null, blue: null });
     setMovingTeleportSteps({ red: null, blue: null });
     setMovingBlitzColors({ red: false, blue: false });
+    setMovingBlitzProgress({ red: 0, blue: 0 });
     if (nextState.phase !== "gameover") {
       setWinner(null);
       setGameOverMessage(null);
@@ -711,6 +716,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
 
       if (event.skillId === "electric_blitz") {
+        setMovingBlitzProgress((prev) => ({ ...prev, [event.color]: 0 }));
         for (const position of event.affectedPositions ?? []) {
           const effectId = Date.now() + Math.random();
           setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
@@ -725,6 +731,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           queueAnimationTimeout(() => {
             if (event.color === "red") setRedDisplayPos(position);
             else setBlueDisplayPos(position);
+            setMovingBlitzProgress((prev) => ({
+              ...prev,
+              [event.color]: index + 1,
+            }));
           }, (index + 1) * BLITZ_DASH_STEP_MS);
         });
         const eventDuration = Math.max(
@@ -874,6 +884,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       red: blitzColors.red,
       blue: blitzColors.blue,
     });
+    setMovingBlitzProgress({ red: 0, blue: 0 });
     const teleportMarkers = {
       red:
         payload.skillEvents.find(
@@ -1011,6 +1022,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         setMovingTeleportMarkers({ red: null, blue: null });
         setMovingTeleportSteps({ red: null, blue: null });
         setMovingBlitzColors({ red: false, blue: false });
+        setMovingBlitzProgress({ red: 0, blue: 0 });
         return;
       }
 
@@ -1124,6 +1136,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       setMovingStarts(null);
       setMovingTeleportMarkers({ red: null, blue: null });
       setMovingBlitzColors({ red: false, blue: false });
+      setMovingBlitzProgress({ red: 0, blue: 0 });
     };
 
     const onOpponentDisconnected = () => {
@@ -1430,6 +1443,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           movingTeleportMarkers={movingTeleportMarkers}
           movingTeleportSteps={movingTeleportSteps}
           movingBlitzColors={movingBlitzColors}
+          movingBlitzProgress={movingBlitzProgress}
           movingPaths={movingPaths}
           movingStarts={movingStarts}
           cellSize={cellSize}
