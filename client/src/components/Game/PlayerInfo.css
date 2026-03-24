@@ -47,6 +47,7 @@
 .profile-box {
   position: absolute;
   top: calc(100% + 6px);
+  bottom: auto;
   left: 0;
   right: auto;
   z-index: 200;
@@ -62,6 +63,8 @@
 }
 
 .profile-box.profile-box-self {
+  top: auto;
+  bottom: calc(100% + 6px);
   left: 0;
   right: auto;
 }
