@@ -1068,15 +1068,21 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           blue: guardCounters.blue > 0,
         });
 
+        const events = skillMap.get(step) ?? [];
+        if (events.length > 0) {
+          const collision = collisionMap.get(step);
+          runSkillQueue(events, 0, () => {
+            if (collision) {
+              applyCollision(collision);
+            }
+            advance(step + 1);
+          });
+          return;
+        }
+
         const collision = collisionMap.get(step);
         if (collision) {
           applyCollision(collision);
-        }
-
-        const events = skillMap.get(step) ?? [];
-        if (events.length > 0) {
-          runSkillQueue(events, 0, () => advance(step + 1));
-          return;
         }
 
         advance(step + 1);
