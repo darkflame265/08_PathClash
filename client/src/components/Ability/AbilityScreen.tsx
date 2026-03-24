@@ -951,12 +951,34 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             event.to,
         )?.step ?? null,
     });
+    const teleportSteps = {
+      red:
+        payload.skillEvents.find(
+          (event) =>
+            event.color === "red" &&
+            event.skillId === "quantum_shift" &&
+            event.to,
+        )?.step ?? null,
+      blue:
+        payload.skillEvents.find(
+          (event) =>
+            event.color === "blue" &&
+            event.skillId === "quantum_shift" &&
+            event.to,
+        )?.step ?? null,
+    };
+    const redVisualStart =
+      teleportSteps.red === 0 && teleportMarkers.red
+        ? teleportMarkers.red
+        : payload.redStart;
+    const blueVisualStart =
+      teleportSteps.blue === 0 && teleportMarkers.blue
+        ? teleportMarkers.blue
+        : payload.blueStart;
     setMovingStarts({
-      red: payload.redStart,
-      blue: payload.blueStart,
+      red: redVisualStart,
+      blue: blueVisualStart,
     });
-    const redVisualStart = payload.redStart;
-    const blueVisualStart = payload.blueStart;
     const guardCounters = {
       red: stateRef.current?.players.red.invulnerableSteps ?? 0,
       blue: stateRef.current?.players.blue.invulnerableSteps ?? 0,
@@ -995,6 +1017,33 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     const redSeq = [redVisualStart, ...payload.redPath];
     const blueSeq = [blueVisualStart, ...payload.bluePath];
     const maxSteps = Math.max(redSeq.length - 1, blueSeq.length - 1);
+
+    const getVisualPositionForStep = (
+      color: PlayerColor,
+      step: number,
+      seq: Position[],
+      path: Position[],
+    ) => {
+      const teleportStep = color === "red" ? teleportSteps.red : teleportSteps.blue;
+      const teleportTarget =
+        color === "red" ? teleportMarkers.red : teleportMarkers.blue;
+
+      if (teleportStep === null || !teleportTarget) {
+        return seq[Math.min(step, seq.length - 1)];
+      }
+
+      if (step <= teleportStep) {
+        return seq[Math.min(step, seq.length - 1)];
+      }
+
+      if (step < seq.length) {
+        return seq[step];
+      }
+
+      const finalPosition =
+        path.length === teleportStep ? teleportTarget : seq[seq.length - 1];
+      return finalPosition;
+    };
 
     const runSkillQueue = (
       events: AbilityResolutionPayload["skillEvents"],
@@ -1071,10 +1120,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         !blitzColors.blue || step <= (blitzSteps.blue ?? -1);
 
       if (redShouldMoveNormally) {
-        setRedDisplayPos(redSeq[Math.min(step, redSeq.length - 1)]);
+        setRedDisplayPos(
+          getVisualPositionForStep("red", step, redSeq, payload.redPath),
+        );
       }
       if (blueShouldMoveNormally) {
-        setBlueDisplayPos(blueSeq[Math.min(step, blueSeq.length - 1)]);
+        setBlueDisplayPos(
+          getVisualPositionForStep("blue", step, blueSeq, payload.bluePath),
+        );
       }
 
       queueAnimationTimeout(() => {
