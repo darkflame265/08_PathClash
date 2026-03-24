@@ -115,6 +115,10 @@ export function resolveAbilityRound(params: {
   const redReservations = sortReservations(red.plannedSkills);
   const blueReservations = sortReservations(blue.plannedSkills);
   const maxStep = Math.max(redPath.length, bluePath.length);
+  const escapeeColor: PlayerColor = attackerColor === 'red' ? 'blue' : 'red';
+  const escaperPath = escapeeColor === 'red' ? redPath : bluePath;
+  const startsOverlapped = samePosition(redStart, blueStart);
+  const ignoreStartTileCollision = startsOverlapped && escaperPath.length > 0;
 
   const applyDamages = (
     sourceColor: PlayerColor,
@@ -297,6 +301,29 @@ export function resolveAbilityRound(params: {
   };
 
   for (let step = 0; step <= maxStep; step++) {
+    if (step === 0 && startsOverlapped && !ignoreStartTileCollision) {
+      const protectedByGuard = escapeeColor === 'red' ? redInv > 0 : blueInv > 0;
+      if (!protectedByGuard) {
+        if (escapeeColor === 'red') {
+          redHp = Math.max(0, redHp - 1);
+          collisions.push({
+            step: 0,
+            position: { ...redStart },
+            escapeeColor,
+            newHp: redHp,
+          });
+        } else {
+          blueHp = Math.max(0, blueHp - 1);
+          collisions.push({
+            step: 0,
+            position: { ...blueStart },
+            escapeeColor,
+            newHp: blueHp,
+          });
+        }
+      }
+    }
+
     if (step > 0) {
       const redPrev = { ...redPos };
       const bluePrev = { ...bluePos };
@@ -307,7 +334,6 @@ export function resolveAbilityRound(params: {
         (redBlitz || blueBlitz) && samePosition(redPos, bluePos);
 
       if (!overlappingAfterBlitz && positionsTouch(redPos, redPrev, bluePos, bluePrev)) {
-        const escapeeColor: PlayerColor = attackerColor === 'red' ? 'blue' : 'red';
         const protectedByGuard = escapeeColor === 'red' ? redInv > 0 : blueInv > 0;
         if (!protectedByGuard) {
           if (escapeeColor === 'red') {
