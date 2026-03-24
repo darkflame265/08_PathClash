@@ -30,7 +30,7 @@ const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
 const STEP_DURATION_MS = 200;
-const SKILL_PAUSE_MS = 320;
+const SKILL_PAUSE_MS = 640;
 const SKILL_CAST_DELAY_MS = 500;
 const BLITZ_DASH_STEP_MS = 12;
 
@@ -467,9 +467,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       return;
     }
     if (getMyRole() !== "attacker") return;
-    if (
-      skillReservations.some((entry) => entry.skillId === "plasma_charge")
-    ) {
+    if (skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
       return;
     }
     if (getRemainingMana() < getSkillCost("ember_blast")) return;
@@ -499,9 +497,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       setPendingTeleport(false);
       return;
     }
-    if (
-      skillReservations.some((entry) => entry.skillId === "plasma_charge")
-    ) {
+    if (skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
       return;
     }
     if (getRemainingMana() < getSkillCost("quantum_shift")) return;
@@ -555,7 +551,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   };
 
   const handleBlitzTargetSelect = (target: Position) => {
-    const start = myPath.length > 0 ? myPath[myPath.length - 1] : state?.players[currentColor].position ?? { row: 2, col: 0 };
+    const start =
+      myPath.length > 0
+        ? myPath[myPath.length - 1]
+        : (state?.players[currentColor].position ?? { row: 2, col: 0 });
     const prefixPath = [...myPath];
     const blitzPath = buildBlitzPath(start, target);
     const nextPath = [...prefixPath, ...blitzPath];
@@ -735,14 +734,17 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         }
         const dashPositions = (event.affectedPositions ?? []).slice(1);
         dashPositions.forEach((position, index) => {
-          queueAnimationTimeout(() => {
-            if (event.color === "red") setRedDisplayPos(position);
-            else setBlueDisplayPos(position);
-            setMovingBlitzProgress((prev) => ({
-              ...prev,
-              [event.color]: index + 1,
-            }));
-          }, (index + 1) * BLITZ_DASH_STEP_MS);
+          queueAnimationTimeout(
+            () => {
+              if (event.color === "red") setRedDisplayPos(position);
+              else setBlueDisplayPos(position);
+              setMovingBlitzProgress((prev) => ({
+                ...prev,
+                [event.color]: index + 1,
+              }));
+            },
+            (index + 1) * BLITZ_DASH_STEP_MS,
+          );
         });
         const eventDuration = Math.max(
           120,
@@ -808,7 +810,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           queueAnimationTimeout(() => {
             for (const position of positions) {
               const effectId = Date.now() + Math.random();
-              setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
+              setCollisionEffects((prev) => [
+                ...prev,
+                { id: effectId, position },
+              ]);
               queueAnimationTimeout(() => {
                 setCollisionEffects((prev) =>
                   prev.filter((entry) => entry.id !== effectId),
@@ -846,7 +851,11 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           event.color === "red"
             ? stateRef.current?.players.red.position
             : stateRef.current?.players.blue.position;
-        triggerTeleportEffect(event.color, event.from ?? fallbackFrom ?? target, target);
+        triggerTeleportEffect(
+          event.color,
+          event.from ?? fallbackFrom ?? target,
+          target,
+        );
         queueAnimationTimeout(() => {
           if (event.color === "red") setRedDisplayPos(target);
           else setBlueDisplayPos(target);
@@ -860,7 +869,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             ...prev,
             players: {
               ...prev.players,
-              [damage.color]: { ...prev.players[damage.color], hp: damage.newHp },
+              [damage.color]: {
+                ...prev.players[damage.color],
+                hp: damage.newHp,
+              },
             },
           };
         });
@@ -878,22 +890,22 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     clearAnimationTimeouts();
     const blitzColors = {
       red: payload.skillEvents.some(
-        (event) =>
-          event.skillId === "electric_blitz" && event.color === "red",
+        (event) => event.skillId === "electric_blitz" && event.color === "red",
       ),
       blue: payload.skillEvents.some(
-        (event) =>
-          event.skillId === "electric_blitz" && event.color === "blue",
+        (event) => event.skillId === "electric_blitz" && event.color === "blue",
       ),
     };
     const blitzSteps = {
       red:
         payload.skillEvents.find(
-          (event) => event.skillId === "electric_blitz" && event.color === "red",
+          (event) =>
+            event.skillId === "electric_blitz" && event.color === "red",
         )?.step ?? null,
       blue:
         payload.skillEvents.find(
-          (event) => event.skillId === "electric_blitz" && event.color === "blue",
+          (event) =>
+            event.skillId === "electric_blitz" && event.color === "blue",
         )?.step ?? null,
     };
     setMovingPaths({ red: payload.redPath, blue: payload.bluePath });
@@ -927,12 +939,16 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       red:
         payload.skillEvents.find(
           (event) =>
-            event.color === "red" && event.skillId === "quantum_shift" && event.to,
+            event.color === "red" &&
+            event.skillId === "quantum_shift" &&
+            event.to,
         )?.step ?? null,
       blue:
         payload.skillEvents.find(
           (event) =>
-            event.color === "blue" && event.skillId === "quantum_shift" && event.to,
+            event.color === "blue" &&
+            event.skillId === "quantum_shift" &&
+            event.to,
         )?.step ?? null,
     });
     setMovingStarts({
@@ -961,7 +977,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         list.sort((left, right) => {
           const leftPriority = getSkillPriority(left.skillId);
           const rightPriority = getSkillPriority(right.skillId);
-          if (leftPriority !== rightPriority) return leftPriority - rightPriority;
+          if (leftPriority !== rightPriority)
+            return leftPriority - rightPriority;
           return left.order - right.order;
         }),
       );
@@ -1463,31 +1480,31 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             setMyPath={updateMyPath}
             displayPositions={{ red: redDisplayPos, blue: blueDisplayPos }}
             hitFlags={hitFlags}
-          explodingFlags={explodingFlags}
-          collisionEffects={collisionEffects}
-          teleportEffects={teleportEffects}
-          activeGuards={activeGuards}
-          previewStart={previewStart}
-          teleportReservation={teleportReservation}
-          teleportMarker={
-            state.phase === "moving"
-              ? movingTeleportMarkers[currentColor]
-              : (teleportReservation?.target ?? null)
-          }
-          movingTeleportMarkers={movingTeleportMarkers}
-          movingTeleportSteps={movingTeleportSteps}
-          movingBlitzColors={movingBlitzColors}
-          movingBlitzProgress={movingBlitzProgress}
-          movingBlitzSteps={movingBlitzSteps}
-          movingPaths={movingPaths}
-          movingStarts={movingStarts}
-          cellSize={cellSize}
-          isPlanning={canDrawPath}
-          teleportTargetsVisible={pendingTeleport}
-          blitzTargetsVisible={pendingBlitz}
-          onTeleportTargetSelect={handleTeleportTargetSelect}
-          onBlitzTargetSelect={handleBlitzTargetSelect}
-          onTeleportCancel={handleTeleportCancel}
+            explodingFlags={explodingFlags}
+            collisionEffects={collisionEffects}
+            teleportEffects={teleportEffects}
+            activeGuards={activeGuards}
+            previewStart={previewStart}
+            teleportReservation={teleportReservation}
+            teleportMarker={
+              state.phase === "moving"
+                ? movingTeleportMarkers[currentColor]
+                : (teleportReservation?.target ?? null)
+            }
+            movingTeleportMarkers={movingTeleportMarkers}
+            movingTeleportSteps={movingTeleportSteps}
+            movingBlitzColors={movingBlitzColors}
+            movingBlitzProgress={movingBlitzProgress}
+            movingBlitzSteps={movingBlitzSteps}
+            movingPaths={movingPaths}
+            movingStarts={movingStarts}
+            cellSize={cellSize}
+            isPlanning={canDrawPath}
+            teleportTargetsVisible={pendingTeleport}
+            blitzTargetsVisible={pendingBlitz}
+            onTeleportTargetSelect={handleTeleportTargetSelect}
+            onBlitzTargetSelect={handleBlitzTargetSelect}
+            onTeleportCancel={handleTeleportCancel}
           />
         </div>
       </div>
