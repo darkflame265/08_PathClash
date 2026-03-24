@@ -1513,20 +1513,25 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             );
           })}
         </div>
-        <div className="ability-mana-row">
-          <div className="ability-mana-bar">
+        <div className="gs-path-bar ability-mana-panel">
+          <div className="gs-path-header">
+            <span className="gs-path-label">
+              {lang === "en" ? "Mana" : "마나"}
+            </span>
+            <span className="gs-path-count">
+              <span className="gs-path-current">{getMyMana()}</span>
+              <span className="gs-path-sep"> / </span>
+              <span className="gs-path-max">10</span>
+            </span>
+          </div>
+          <div className="gs-path-gauge">
             {Array.from({ length: 10 }, (_, index) => (
-              <span
+              <div
                 key={index}
-                className={`ability-mana-pip ${index < getMyMana() ? "is-filled" : ""}`}
+                className={`gs-path-seg ability-mana-seg${index < getMyMana() ? " filled" : ""}`}
               />
             ))}
           </div>
-          <span className="ability-mana-text">
-            {lang === "en"
-              ? `Mana ${getMyMana()} / 10`
-              : `마나 ${getMyMana()} / 10`}
-          </span>
         </div>
       </div>
     </div>
