@@ -74,6 +74,15 @@
   pointer-events: none;
 }
 
+.ability-skill-tooltip-self {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 0.35rem * var(--gs-scale, 1));
+  z-index: 8;
+  pointer-events: none;
+}
+
 .ability-banner {
   position: absolute;
   top: calc(0.5rem * var(--gs-scale, 1));
@@ -92,7 +101,8 @@
 
 .ability-skill-panel {
   width: 100%;
-
+  position: relative;
+  overflow: visible;
   padding: calc(0.55rem * var(--gs-scale, 1))
     calc(0.875rem * var(--gs-scale, 1));
   background: var(--panel);

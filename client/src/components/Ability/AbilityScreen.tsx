@@ -167,6 +167,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [abilityBanner, setAbilityBanner] = useState<string | null>(null);
   const [opponentSkillInfo, setOpponentSkillInfo] =
     useState<AbilitySkillId | null>(null);
+  const [mySkillInfo, setMySkillInfo] = useState<AbilitySkillId | null>(null);
 
   const stateRef = useRef<AbilityBattleState | null>(null);
   const animationTimeoutIdsRef = useRef<number[]>([]);
@@ -182,6 +183,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const previousBigBangPathRef = useRef<Position[]>([]);
   const previousTeleportPathRef = useRef<Position[]>([]);
   const reservationOrderRef = useRef(1);
+  const skillPressTimeoutRef = useRef<number | null>(null);
+  const longPressTriggeredRef = useRef(false);
 
   useEffect(() => {
     stateRef.current = state;
@@ -191,6 +194,26 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+  }, []);
+
+  useEffect(() => {
+    const handleGlobalPointerDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.closest(
+          ".ability-skill-btn, .ability-skill-tooltip, .ability-opponent-skill",
+        )
+      ) {
+        return;
+      }
+      setMySkillInfo(null);
+      setOpponentSkillInfo(null);
+    };
+
+    document.addEventListener("pointerdown", handleGlobalPointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handleGlobalPointerDown);
+    };
   }, []);
 
   const clearAnimationTimeouts = () => {
@@ -225,6 +248,13 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       callback();
     }, delay);
     submitTimeoutIdsRef.current.push(timeoutId);
+  };
+
+  const clearSkillPressTimeout = () => {
+    if (skillPressTimeoutRef.current !== null) {
+      window.clearTimeout(skillPressTimeoutRef.current);
+      skillPressTimeoutRef.current = null;
+    }
   };
 
   const resetPlanningState = () => {
@@ -1098,6 +1128,21 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setRematchRequestSent(true);
   };
 
+  const handleSkillPressStart = (skillId: AbilitySkillId) => {
+    clearSkillPressTimeout();
+    longPressTriggeredRef.current = false;
+    skillPressTimeoutRef.current = window.setTimeout(() => {
+      longPressTriggeredRef.current = true;
+      setOpponentSkillInfo(null);
+      setMySkillInfo(skillId);
+      skillPressTimeoutRef.current = null;
+    }, 380);
+  };
+
+  const handleSkillPressEnd = () => {
+    clearSkillPressTimeout();
+  };
+
   return (
     <div
       className="game-screen ability-screen"
@@ -1354,6 +1399,20 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             })}
           </div>
         </div>
+        {mySkillInfo && (
+          <div className="ability-skill-tooltip ability-skill-tooltip-self">
+            <strong>
+              {lang === "en"
+                ? ABILITY_SKILLS[mySkillInfo].name.en
+                : ABILITY_SKILLS[mySkillInfo].name.kr}
+            </strong>
+            <span>
+              {lang === "en"
+                ? ABILITY_SKILLS[mySkillInfo].description.en
+                : ABILITY_SKILLS[mySkillInfo].description.kr}
+            </span>
+          </div>
+        )}
         <div className="ability-skill-buttons">
           {getAvailableSkills().map((skillId) => {
             const skill = ABILITY_SKILLS[skillId];
@@ -1396,7 +1455,18 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 type="button"
                 className={`ability-skill-btn ${reserved ? "is-selected" : ""} ${selectedSkillId === skillId ? "is-active" : ""}`}
                 disabled={disabled}
-                onClick={() => handleSkillClick(skillId)}
+                onPointerDown={() => handleSkillPressStart(skillId)}
+                onPointerUp={handleSkillPressEnd}
+                onPointerLeave={handleSkillPressEnd}
+                onPointerCancel={handleSkillPressEnd}
+                onClick={() => {
+                  if (longPressTriggeredRef.current) {
+                    longPressTriggeredRef.current = false;
+                    return;
+                  }
+                  setMySkillInfo(null);
+                  handleSkillClick(skillId);
+                }}
               >
                 <span className="ability-skill-icon">
                   {renderSkillIcon(skillId)}
