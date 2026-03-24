@@ -303,7 +303,10 @@ export function resolveAbilityRound(params: {
       if (!redBlitz && step <= redPath.length) redPos = { ...redPath[step - 1] };
       if (!blueBlitz && step <= bluePath.length) bluePos = { ...bluePath[step - 1] };
 
-      if (positionsTouch(redPos, redPrev, bluePos, bluePrev)) {
+      const overlappingAfterBlitz =
+        (redBlitz || blueBlitz) && samePosition(redPos, bluePos);
+
+      if (!overlappingAfterBlitz && positionsTouch(redPos, redPrev, bluePos, bluePrev)) {
         const escapeeColor: PlayerColor = attackerColor === 'red' ? 'blue' : 'red';
         const protectedByGuard = escapeeColor === 'red' ? redInv > 0 : blueInv > 0;
         if (!protectedByGuard) {
