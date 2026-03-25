@@ -36,6 +36,7 @@ interface Props {
   previewStart: Position;
   teleportReservation: AbilitySkillReservation | null;
   teleportMarker: Position | null;
+  infernoMarker: Position | null;
   movingTeleportMarkers: { red: Position | null; blue: Position | null };
   movingTeleportSteps: { red: number | null; blue: number | null };
   movingBlitzColors: { red: boolean; blue: boolean };
@@ -106,6 +107,7 @@ export function AbilityGrid({
   previewStart,
   teleportReservation,
   teleportMarker,
+  infernoMarker,
   movingTeleportMarkers,
   movingTeleportSteps,
   movingBlitzColors,
@@ -436,6 +438,21 @@ export function AbilityGrid({
             }}
           />
         ))}
+
+        {isPlanning && infernoMarker ? (
+          <div
+            className="ability-inferno-marker"
+            style={{
+              left: infernoMarker.col * responsiveCellSize + responsiveCellSize / 2,
+              top: infernoMarker.row * responsiveCellSize + responsiveCellSize / 2,
+              width: Math.max(28, responsiveCellSize * 0.42),
+              height: Math.max(28, responsiveCellSize * 0.42),
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            ✦
+          </div>
+        ) : null}
 
         {teleportTargets.map((target) => (
           <button

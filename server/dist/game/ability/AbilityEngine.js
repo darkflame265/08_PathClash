@@ -118,6 +118,8 @@ function resolveAbilityRound(params) {
     let blueOverdriveActive = blue.overdriveActive;
     let redReboundLocked = red.reboundLocked;
     let blueReboundLocked = blue.reboundLocked;
+    const redLavaDamageKeys = new Set();
+    const blueLavaDamageKeys = new Set();
     let redBlitz = false;
     let blueBlitz = false;
     let attackerQuantumOverlapPending = false;
@@ -488,7 +490,11 @@ function resolveAbilityRound(params) {
             for (const lavaTile of activeLavaTiles) {
                 if (!isAffectedByLava(prevPos, nextPos, lavaTile.position))
                     continue;
+                const lavaKey = `${lavaTile.position.row}:${lavaTile.position.col}`;
                 if (color === 'red') {
+                    if (redLavaDamageKeys.has(lavaKey))
+                        continue;
+                    redLavaDamageKeys.add(lavaKey);
                     redHp = Math.max(0, redHp - 1);
                     collisions.push({
                         step,
@@ -498,6 +504,9 @@ function resolveAbilityRound(params) {
                     });
                 }
                 else {
+                    if (blueLavaDamageKeys.has(lavaKey))
+                        continue;
+                    blueLavaDamageKeys.add(lavaKey);
                     blueHp = Math.max(0, blueHp - 1);
                     collisions.push({
                         step,

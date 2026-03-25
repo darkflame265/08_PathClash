@@ -386,6 +386,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     skillReservations.find(
       (entry) => entry.skillId === "quantum_shift" && entry.target,
     ) ?? null;
+  const infernoReservation =
+    skillReservations.find(
+      (entry) => entry.skillId === "inferno_field" && entry.target,
+    ) ?? null;
   const getSkillCost = (skillId: AbilitySkillId) =>
     ABILITY_SKILLS[skillId].manaCost;
   const getReservedMana = () =>
@@ -1977,6 +1981,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 ? movingTeleportMarkers[currentColor]
                 : (teleportReservation?.target ?? null)
             }
+            infernoMarker={infernoReservation?.target ?? null}
             movingTeleportMarkers={movingTeleportMarkers}
             movingTeleportSteps={movingTeleportSteps}
             movingBlitzColors={movingBlitzColors}
