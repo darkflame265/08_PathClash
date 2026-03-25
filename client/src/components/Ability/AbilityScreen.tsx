@@ -364,6 +364,20 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       0,
     );
   const getRemainingMana = () => Math.max(0, getMyMana() - getReservedMana());
+  const getCurrentSkillStep = () => {
+    const blitzReservation = skillReservations.find(
+      (entry) => entry.skillId === "electric_blitz" && entry.target,
+    );
+    if (!blitzReservation?.target) return myPath.length;
+    const blitzOrigin =
+      blitzReservation.step > 0
+        ? myPath[blitzReservation.step - 1]
+        : (state?.players[currentColor].position ?? { row: 2, col: 0 });
+    if (!blitzOrigin) return myPath.length;
+    const blitzPath = buildBlitzPath(blitzOrigin, blitzReservation.target);
+    if (blitzPath.length === 0) return myPath.length;
+    return Math.max(0, myPath.length - blitzPath.length);
+  };
 
   const syncMyPlan = (
     path: Position[],
@@ -473,7 +487,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         ...skillReservations.filter((entry) => entry.skillId !== "classic_guard"),
         {
           skillId: "classic_guard",
-          step: myPath.length,
+          step: getCurrentSkillStep(),
           order: reservationOrderRef.current++,
         },
       ];
@@ -514,7 +528,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       ...skillReservations.filter((entry) => entry.skillId !== "ember_blast"),
       {
         skillId: "ember_blast",
-        step: myPath.length,
+        step: getCurrentSkillStep(),
         order: reservationOrderRef.current++,
       },
     ];
@@ -540,7 +554,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       ...skillReservations.filter((entry) => entry.skillId !== "nova_blast"),
       {
         skillId: "nova_blast",
-        step: myPath.length,
+        step: getCurrentSkillStep(),
         order: reservationOrderRef.current++,
       },
     ];
@@ -565,7 +579,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       ...skillReservations.filter((entry) => entry.skillId !== "aurora_heal"),
       {
         skillId: "aurora_heal",
-        step: myPath.length,
+        step: getCurrentSkillStep(),
         order: reservationOrderRef.current++,
       },
     ];
@@ -590,7 +604,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       ...skillReservations.filter((entry) => entry.skillId !== "gold_overdrive"),
       {
         skillId: "gold_overdrive",
-        step: myPath.length,
+        step: getCurrentSkillStep(),
         order: reservationOrderRef.current++,
       },
     ];
@@ -707,7 +721,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         ...skillReservations.filter((entry) => entry.skillId !== "plasma_charge"),
         {
           skillId: "plasma_charge",
-          step: myPath.length,
+          step: getCurrentSkillStep(),
           order: reservationOrderRef.current++,
         },
       ];
@@ -750,7 +764,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         ...skillReservations.filter((entry) => entry.skillId !== "cosmic_bigbang"),
         {
           skillId: "cosmic_bigbang",
-          step: myPath.length,
+          step: getCurrentSkillStep(),
           order: reservationOrderRef.current++,
         },
       ];
@@ -1400,7 +1414,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             if (collision) {
               applyCollision(collision);
             }
-            if (collision && hasBlitzEvent) {
+            if (hasBlitzEvent) {
               queueAnimationTimeout(
                 () => advance(step + 1),
                 BLITZ_POST_HIT_PAUSE_MS,
