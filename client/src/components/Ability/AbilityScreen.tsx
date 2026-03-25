@@ -1271,12 +1271,11 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       );
     }
 
-    const collisionMap = new Map<
-      number,
-      AbilityResolutionPayload["collisions"][number]
-    >();
+    const collisionMap = new Map<number, AbilityResolutionPayload["collisions"]>();
     for (const collision of payload.collisions) {
-      collisionMap.set(collision.step, collision);
+      const list = collisionMap.get(collision.step) ?? [];
+      list.push(collision);
+      collisionMap.set(collision.step, list);
     }
 
     const redSeq = [redVisualStart, ...payload.redPath];
@@ -1330,13 +1329,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     ) => {
       setState((prev) => {
         if (!prev) return prev;
+        const currentHp = prev.players[collision.escapeeColor].hp;
         return {
           ...prev,
           players: {
             ...prev.players,
             [collision.escapeeColor]: {
               ...prev.players[collision.escapeeColor],
-              hp: collision.newHp,
+              hp: Math.min(currentHp, collision.newHp),
             },
           },
         };
@@ -1348,22 +1348,30 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       );
     };
 
+    const applyCollisions = (
+      collisions: AbilityResolutionPayload["collisions"],
+    ) => {
+      for (const collision of collisions) {
+        applyCollision(collision);
+      }
+    };
+
     const advance = (step: number) => {
       if (step === 0) {
         const events = skillMap.get(0) ?? [];
         if (events.length > 0) {
           runSkillQueue(events, 0, () => {
-            const collision = collisionMap.get(0);
-            if (collision) {
-              applyCollision(collision);
+            const collisions = collisionMap.get(0) ?? [];
+            if (collisions.length > 0) {
+              applyCollisions(collisions);
             }
             advance(1);
           });
           return;
         }
-        const collision = collisionMap.get(0);
-        if (collision) {
-          applyCollision(collision);
+        const collisions = collisionMap.get(0) ?? [];
+        if (collisions.length > 0) {
+          applyCollisions(collisions);
         }
         advance(1);
         return;
@@ -1406,13 +1414,13 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
         const events = skillMap.get(step) ?? [];
         if (events.length > 0) {
-          const collision = collisionMap.get(step);
+          const collisions = collisionMap.get(step) ?? [];
           const hasBlitzEvent = events.some(
             (event) => event.skillId === "electric_blitz",
           );
           runSkillQueue(events, 0, () => {
-            if (collision) {
-              applyCollision(collision);
+            if (collisions.length > 0) {
+              applyCollisions(collisions);
             }
             if (hasBlitzEvent) {
               queueAnimationTimeout(
@@ -1426,9 +1434,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           return;
         }
 
-        const collision = collisionMap.get(step);
-        if (collision) {
-          applyCollision(collision);
+        const collisions = collisionMap.get(step) ?? [];
+        if (collisions.length > 0) {
+          applyCollisions(collisions);
         }
 
         advance(step + 1);
