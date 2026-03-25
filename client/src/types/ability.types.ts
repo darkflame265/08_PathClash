@@ -11,6 +11,7 @@ export type AbilitySkillId =
   | 'ember_blast'
   | 'nova_blast'
   | 'aurora_heal'
+  | 'gold_overdrive'
   | 'quantum_shift'
   | 'plasma_charge'
   | 'electric_blitz'
@@ -46,6 +47,7 @@ export interface AbilityPlayerState {
   stats: { wins: number; losses: number };
   mana: number;
   invulnerableSteps: number;
+  overdriveActive: boolean;
   equippedSkills: AbilitySkillId[];
 }
 
@@ -99,6 +101,7 @@ export interface AbilitySkillEvent {
   damages?: AbilityDamageEvent[];
   heals?: AbilityHealEvent[];
   invulnerableSteps?: number;
+  overdriveStage?: 0 | 1 | 2;
 }
 
 export interface AbilityResolutionPayload {
@@ -163,6 +166,18 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     category: 'utility',
     skinId: 'aurora',
     icon: '✚',
+  },
+  gold_overdrive: {
+    id: 'gold_overdrive',
+    name: { en: 'Overdrive', kr: '오버드라이브' },
+    description: {
+      en: 'On your next turn, enter Overdrive with 20 mana. On the following turn, mana becomes 0 and you cannot move.',
+      kr: '다음 턴에 마나 20의 과부화 모드에 진입합니다. 그 다음 턴에는 마나가 0이 되고 이동할 수 없습니다.',
+    },
+    manaCost: 8,
+    category: 'utility',
+    skinId: 'gold_core',
+    icon: '⬢',
   },
   quantum_shift: {
     id: 'quantum_shift',

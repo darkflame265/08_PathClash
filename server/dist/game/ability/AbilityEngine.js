@@ -8,6 +8,7 @@ function getSkillPriority(skillId) {
         case 'quantum_shift':
         case 'plasma_charge':
         case 'aurora_heal':
+        case 'gold_overdrive':
             return 0;
         case 'classic_guard':
             return 1;
@@ -90,6 +91,12 @@ function resolveAbilityRound(params) {
     let blueInv = blue.invulnerableSteps;
     let redPendingManaBonus = red.pendingManaBonus;
     let bluePendingManaBonus = blue.pendingManaBonus;
+    let redPendingOverdriveStage = red.pendingOverdriveStage;
+    let bluePendingOverdriveStage = blue.pendingOverdriveStage;
+    let redOverdriveActive = red.overdriveActive;
+    let blueOverdriveActive = blue.overdriveActive;
+    let redReboundLocked = red.reboundLocked;
+    let blueReboundLocked = blue.reboundLocked;
     let redBlitz = false;
     let blueBlitz = false;
     let attackerQuantumOverlapPending = false;
@@ -191,6 +198,24 @@ function resolveAbilityRound(params) {
                 heals.push({ color: 'blue', newHp: blueHp, position: { ...currentPos } });
             }
             applyDamages(color, [], heals, reservation.skillId, reservation.step, reservation.order, [{ ...currentPos }]);
+            return;
+        }
+        if (reservation.skillId === 'gold_overdrive') {
+            if (color === 'red') {
+                redMana = Math.max(0, casterMana - 8);
+                redPendingOverdriveStage = 1;
+            }
+            else {
+                blueMana = Math.max(0, casterMana - 8);
+                bluePendingOverdriveStage = 1;
+            }
+            skillEvents.push({
+                step: reservation.step,
+                order: reservation.order,
+                color,
+                skillId: reservation.skillId,
+                overdriveStage: 1,
+            });
             return;
         }
         if (reservation.skillId === 'electric_blitz') {
@@ -419,6 +444,9 @@ function resolveAbilityRound(params) {
             mana: redMana,
             invulnerableSteps: redInv,
             pendingManaBonus: redPendingManaBonus,
+            pendingOverdriveStage: redPendingOverdriveStage,
+            overdriveActive: redOverdriveActive,
+            reboundLocked: redReboundLocked,
         },
         blueState: {
             position: bluePos,
@@ -426,6 +454,9 @@ function resolveAbilityRound(params) {
             mana: blueMana,
             invulnerableSteps: blueInv,
             pendingManaBonus: bluePendingManaBonus,
+            pendingOverdriveStage: bluePendingOverdriveStage,
+            overdriveActive: blueOverdriveActive,
+            reboundLocked: blueReboundLocked,
         },
         winner,
     };

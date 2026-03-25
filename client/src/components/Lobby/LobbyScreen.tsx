@@ -237,6 +237,17 @@ function getAbilitySkillSummary(skillId: AbilitySkillId, lang: "ko" | "en") {
             ? "Restore 1 HP at the chosen timing."
             : "지정 시점에 HP를 1 회복합니다.",
       };
+    case "gold_overdrive":
+      return {
+        tags:
+          lang === "en"
+            ? "Move OK · Combo OK"
+            : "이동 가능 · 조합 가능",
+        desc:
+          lang === "en"
+            ? "Next turn, gain 20 mana. On the turn after that, mana becomes 0 and movement is locked."
+            : "다음 턴 마나가 20이 됩니다. 그 다음 턴에는 마나가 0이 되고 이동이 불가합니다.",
+      };
     case "quantum_shift":
       return {
         tags:

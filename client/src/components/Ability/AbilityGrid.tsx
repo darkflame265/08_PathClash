@@ -683,6 +683,36 @@ export function AbilityGrid({
           </div>
         ))}
 
+        {state.players.red.overdriveActive && (
+          <div
+            className="ability-overdrive-effect ability-overdrive-effect-red"
+            style={{
+              left: displayPositions.red.col * responsiveCellSize + responsiveCellSize / 2,
+              top: displayPositions.red.row * responsiveCellSize + responsiveCellSize / 2,
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            <span className="ability-overdrive-wave ability-overdrive-wave-a" />
+            <span className="ability-overdrive-wave ability-overdrive-wave-b" />
+            <span className="ability-overdrive-wave ability-overdrive-wave-c" />
+          </div>
+        )}
+
+        {state.players.blue.overdriveActive && (
+          <div
+            className="ability-overdrive-effect ability-overdrive-effect-blue"
+            style={{
+              left: displayPositions.blue.col * responsiveCellSize + responsiveCellSize / 2,
+              top: displayPositions.blue.row * responsiveCellSize + responsiveCellSize / 2,
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            <span className="ability-overdrive-wave ability-overdrive-wave-a" />
+            <span className="ability-overdrive-wave ability-overdrive-wave-b" />
+            <span className="ability-overdrive-wave ability-overdrive-wave-c" />
+          </div>
+        )}
+
         {activeGuards.red && (
           <div
             className="ability-guard-ring"

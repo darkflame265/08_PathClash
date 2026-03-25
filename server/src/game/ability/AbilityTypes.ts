@@ -13,6 +13,7 @@ export type AbilitySkillId =
   | 'ember_blast'
   | 'nova_blast'
   | 'aurora_heal'
+  | 'gold_overdrive'
   | 'quantum_shift'
   | 'plasma_charge'
   | 'electric_blitz'
@@ -43,12 +44,16 @@ export interface AbilityPlayerState {
   mana: number;
   invulnerableSteps: number;
   pendingManaBonus: number;
+  pendingOverdriveStage: 0 | 1 | 2;
+  overdriveActive: boolean;
+  reboundLocked: boolean;
   equippedSkills: AbilitySkillId[];
 }
 
 export interface ClientAbilityPlayerState extends ClientPlayerState {
   mana: number;
   invulnerableSteps: number;
+  overdriveActive: boolean;
   equippedSkills: AbilitySkillId[];
 }
 
@@ -93,6 +98,7 @@ export interface AbilitySkillEvent {
   damages?: AbilityDamageEvent[];
   heals?: AbilityHealEvent[];
   invulnerableSteps?: number;
+  overdriveStage?: 0 | 1 | 2;
 }
 
 export interface AbilityResolutionPayload {

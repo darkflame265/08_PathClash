@@ -11,6 +11,7 @@ const INITIAL_MANA = 4;
 const MAX_MANA = 10;
 const MANA_PER_TURN = 2;
 const SKILL_EVENT_BUFFER_MS = 1100;
+const OVERDRIVE_MANA = 20;
 function posEqual(a, b) {
     return a.row === b.row && a.col === b.col;
 }
@@ -36,6 +37,7 @@ const SKILL_COSTS = {
     ember_blast: 4,
     nova_blast: 4,
     aurora_heal: 10,
+    gold_overdrive: 8,
     quantum_shift: 3,
     plasma_charge: 2,
     electric_blitz: 6,
@@ -103,6 +105,9 @@ class AbilityRoom {
             mana: INITIAL_MANA,
             invulnerableSteps: 0,
             pendingManaBonus: 0,
+            pendingOverdriveStage: 0,
+            overdriveActive: false,
+            reboundLocked: false,
             equippedSkills,
         });
         socket.join(this.roomId);
@@ -290,12 +295,36 @@ class AbilityRoom {
         blue.plannedPath = [];
         red.plannedSkills = [];
         blue.plannedSkills = [];
+        red.overdriveActive = false;
+        blue.overdriveActive = false;
+        red.reboundLocked = false;
+        blue.reboundLocked = false;
         red.mana = Math.min(MAX_MANA, red.mana + MANA_PER_TURN);
         blue.mana = Math.min(MAX_MANA, blue.mana + MANA_PER_TURN);
         red.mana = Math.min(MAX_MANA, red.mana + red.pendingManaBonus);
         blue.mana = Math.min(MAX_MANA, blue.mana + blue.pendingManaBonus);
         red.pendingManaBonus = 0;
         blue.pendingManaBonus = 0;
+        if (red.pendingOverdriveStage === 1) {
+            red.mana = OVERDRIVE_MANA;
+            red.overdriveActive = true;
+            red.pendingOverdriveStage = 2;
+        }
+        else if (red.pendingOverdriveStage === 2) {
+            red.mana = 0;
+            red.reboundLocked = true;
+            red.pendingOverdriveStage = 0;
+        }
+        if (blue.pendingOverdriveStage === 1) {
+            blue.mana = OVERDRIVE_MANA;
+            blue.overdriveActive = true;
+            blue.pendingOverdriveStage = 2;
+        }
+        else if (blue.pendingOverdriveStage === 2) {
+            blue.mana = 0;
+            blue.reboundLocked = true;
+            blue.pendingOverdriveStage = 0;
+        }
         this.obstacles = (0, GameEngine_1.generateObstacles)(this.roomId, this.turn, red.position, blue.position);
         const now = Date.now();
         this.touchActivity(now);
@@ -349,11 +378,17 @@ class AbilityRoom {
         red.mana = resolution.redState.mana;
         red.invulnerableSteps = resolution.redState.invulnerableSteps;
         red.pendingManaBonus = resolution.redState.pendingManaBonus;
+        red.pendingOverdriveStage = resolution.redState.pendingOverdriveStage;
+        red.overdriveActive = resolution.redState.overdriveActive;
+        red.reboundLocked = resolution.redState.reboundLocked;
         blue.position = resolution.blueState.position;
         blue.hp = resolution.blueState.hp;
         blue.mana = resolution.blueState.mana;
         blue.invulnerableSteps = resolution.blueState.invulnerableSteps;
         blue.pendingManaBonus = resolution.blueState.pendingManaBonus;
+        blue.pendingOverdriveStage = resolution.blueState.pendingOverdriveStage;
+        blue.overdriveActive = resolution.blueState.overdriveActive;
+        blue.reboundLocked = resolution.blueState.reboundLocked;
         this.touchActivity();
         this.io.to(this.roomId).emit('ability_resolution', resolution.payload);
         const animTime = (0, GameEngine_1.calcAnimationDuration)(Math.max(red.plannedPath.length, blue.plannedPath.length) + resolution.payload.skillEvents.length) + resolution.payload.skillEvents.length * SKILL_EVENT_BUFFER_MS;
@@ -406,6 +441,7 @@ class AbilityRoom {
         if (manaCost > player.mana)
             return null;
         const hasGuard = uniqueSkills.some((skill) => skill.skillId === 'classic_guard');
+        const hasOverdrive = uniqueSkills.some((skill) => skill.skillId === 'gold_overdrive');
         const teleport = uniqueSkills.find((skill) => skill.skillId === 'quantum_shift') ?? null;
         const hasBlitz = uniqueSkills.some((skill) => skill.skillId === 'electric_blitz');
         const blitz = uniqueSkills.find((skill) => skill.skillId === 'electric_blitz') ?? null;
@@ -419,6 +455,8 @@ class AbilityRoom {
         if (hasGuard && player.role !== 'escaper')
             return null;
         if (hasAttackSkill && player.role !== 'attacker')
+            return null;
+        if (player.reboundLocked && path.length > 0)
             return null;
         if (hasGuard) {
             const guardSkill = uniqueSkills.find((skill) => skill.skillId === 'classic_guard');
@@ -511,6 +549,11 @@ class AbilityRoom {
             if (skill.skillId === 'cosmic_bigbang' && skill.step !== 0)
                 return null;
         }
+        if (hasOverdrive) {
+            const overdriveSkill = uniqueSkills.find((skill) => skill.skillId === 'gold_overdrive');
+            if (!overdriveSkill || overdriveSkill.step > path.length)
+                return null;
+        }
         return {
             path: [...path],
             skills: uniqueSkills,
@@ -533,6 +576,7 @@ class AbilityRoom {
             ...base,
             mana: player.mana,
             invulnerableSteps: player.invulnerableSteps,
+            overdriveActive: player.overdriveActive,
             equippedSkills: player.equippedSkills,
         };
     }
@@ -547,6 +591,9 @@ class AbilityRoom {
             player.mana = INITIAL_MANA;
             player.invulnerableSteps = 0;
             player.pendingManaBonus = 0;
+            player.pendingOverdriveStage = 0;
+            player.overdriveActive = false;
+            player.reboundLocked = false;
         }
     }
     updateRoles() {

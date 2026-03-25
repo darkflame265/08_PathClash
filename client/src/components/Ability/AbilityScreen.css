@@ -534,6 +534,43 @@
   color: #dcfce7;
 }
 
+.ability-overdrive-effect {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.ability-overdrive-wave {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  border: 2px solid rgba(250, 204, 21, 0.8);
+  box-shadow:
+    0 0 16px rgba(251, 191, 36, 0.28),
+    0 0 28px rgba(234, 179, 8, 0.18);
+  transform: translate(-50%, -50%) scale(0.28);
+  opacity: 0;
+}
+
+.ability-overdrive-wave-a {
+  width: calc(2.45rem * var(--gs-scale, 1));
+  height: calc(2.45rem * var(--gs-scale, 1));
+  animation: ability-overdrive-pulse 1400ms ease-out infinite;
+}
+
+.ability-overdrive-wave-b {
+  width: calc(3.2rem * var(--gs-scale, 1));
+  height: calc(3.2rem * var(--gs-scale, 1));
+  animation: ability-overdrive-pulse 1400ms ease-out infinite 220ms;
+}
+
+.ability-overdrive-wave-c {
+  width: calc(3.95rem * var(--gs-scale, 1));
+  height: calc(3.95rem * var(--gs-scale, 1));
+  animation: ability-overdrive-pulse 1400ms ease-out infinite 440ms;
+}
+
 .ability-teleport-burst::before {
   content: "";
   position: absolute;
@@ -806,6 +843,20 @@
   100% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(1.24);
+  }
+}
+
+@keyframes ability-overdrive-pulse {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.22);
+  }
+  18% {
+    opacity: 0.88;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.42);
   }
 }
 
