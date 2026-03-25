@@ -51,6 +51,7 @@ function buildBlitzPath(start: Position, target: Position): Position[] {
 const SKILL_COSTS: Record<AbilitySkillId, number> = {
   classic_guard: 4,
   ember_blast: 4,
+  nova_blast: 4,
   quantum_shift: 3,
   plasma_charge: 2,
   electric_blitz: 6,
@@ -460,6 +461,7 @@ export class AbilityRoom {
     const hasAttackSkill = uniqueSkills.some(
       (skill) =>
         skill.skillId === 'ember_blast' ||
+        skill.skillId === 'nova_blast' ||
         skill.skillId === 'electric_blitz' ||
         skill.skillId === 'cosmic_bigbang',
     );
@@ -545,7 +547,7 @@ export class AbilityRoom {
     }
 
     for (const skill of uniqueSkills) {
-      if (skill.skillId === 'ember_blast' && skill.step > path.length) return null;
+      if ((skill.skillId === 'ember_blast' || skill.skillId === 'nova_blast') && skill.step > path.length) return null;
       if (skill.skillId === 'classic_guard' && skill.step !== 0) return null;
       if (skill.skillId === 'cosmic_bigbang' && skill.step !== 0) return null;
     }

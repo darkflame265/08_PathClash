@@ -11,6 +11,7 @@ import type {
 export type AbilitySkillId =
   | 'classic_guard'
   | 'ember_blast'
+  | 'nova_blast'
   | 'quantum_shift'
   | 'plasma_charge'
   | 'electric_blitz'

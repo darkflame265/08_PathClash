@@ -33,6 +33,7 @@ function buildBlitzPath(start, target) {
 const SKILL_COSTS = {
     classic_guard: 4,
     ember_blast: 4,
+    nova_blast: 4,
     quantum_shift: 3,
     plasma_charge: 2,
     electric_blitz: 6,
@@ -407,6 +408,7 @@ class AbilityRoom {
         const hasBlitz = uniqueSkills.some((skill) => skill.skillId === 'electric_blitz');
         const blitz = uniqueSkills.find((skill) => skill.skillId === 'electric_blitz') ?? null;
         const hasAttackSkill = uniqueSkills.some((skill) => skill.skillId === 'ember_blast' ||
+            skill.skillId === 'nova_blast' ||
             skill.skillId === 'electric_blitz' ||
             skill.skillId === 'cosmic_bigbang');
         const hasBigBang = uniqueSkills.some((skill) => skill.skillId === 'cosmic_bigbang');
@@ -497,7 +499,7 @@ class AbilityRoom {
             return null;
         }
         for (const skill of uniqueSkills) {
-            if (skill.skillId === 'ember_blast' && skill.step > path.length)
+            if ((skill.skillId === 'ember_blast' || skill.skillId === 'nova_blast') && skill.step > path.length)
                 return null;
             if (skill.skillId === 'classic_guard' && skill.step !== 0)
                 return null;

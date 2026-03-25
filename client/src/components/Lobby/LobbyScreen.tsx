@@ -215,6 +215,17 @@ function getAbilitySkillSummary(skillId: AbilitySkillId, lang: "ko" | "en") {
             ? "Deal explosion damage in a 1-tile cross at the chosen timing."
             : "지정 시점에 주변 1칸 십자 범위에 폭발 피해를 줍니다.",
       };
+    case "nova_blast":
+      return {
+        tags:
+          lang === "en"
+            ? "Move OK · Combo OK"
+            : "이동 가능 · 조합 가능",
+        desc:
+          lang === "en"
+            ? "Deal explosion damage in an X-shaped area up to 2 tiles away at the chosen timing."
+            : "지정 시점에 대각선 2칸 범위의 X자 영역에 폭발 피해를 줍니다.",
+      };
     case "quantum_shift":
       return {
         tags:
@@ -831,6 +842,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   const hasAbilitySkinUnlocked = (skinId: PieceSkin) => {
     if (skinId === "classic") return true;
     if (skinId === "ember") return accountWins >= 10;
+    if (skinId === "nova") return accountWins >= 500;
     if (skinId === "quantum") return ownedSkins.includes("quantum");
     return ownedSkins.includes(skinId);
   };

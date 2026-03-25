@@ -9,6 +9,7 @@
 export type AbilitySkillId =
   | 'classic_guard'
   | 'ember_blast'
+  | 'nova_blast'
   | 'quantum_shift'
   | 'plasma_charge'
   | 'electric_blitz'
@@ -130,6 +131,18 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     category: 'attack',
     skinId: 'ember',
     icon: '💥',
+  },
+  nova_blast: {
+    id: 'nova_blast',
+    name: { en: 'Nova Burst', kr: '노바 폭발' },
+    description: {
+      en: 'Deal 1 damage in an X-shaped area up to 2 tiles away at the chosen timing.',
+      kr: '지정 시점에 자신 중심 대각선 2칸 범위의 X자 영역에 1 피해를 줍니다.',
+    },
+    manaCost: 4,
+    category: 'attack',
+    skinId: 'nova',
+    icon: '✸',
   },
   quantum_shift: {
     id: 'quantum_shift',

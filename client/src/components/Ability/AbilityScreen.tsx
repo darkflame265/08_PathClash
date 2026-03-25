@@ -366,7 +366,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const updateMyPath = (nextPath: Position[]) => {
     const nextReservations = skillReservations.filter((reservation) => {
-      if (reservation.skillId !== "ember_blast") return true;
+      if (
+        reservation.skillId !== "ember_blast" &&
+        reservation.skillId !== "nova_blast"
+      ) {
+        return true;
+      }
       return reservation.step <= nextPath.length;
     });
     setMyPath(nextPath);
@@ -479,6 +484,32 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       ...skillReservations.filter((entry) => entry.skillId !== "ember_blast"),
       {
         skillId: "ember_blast",
+        step: myPath.length,
+        order: reservationOrderRef.current++,
+      },
+    ];
+    updateSkillReservations(nextReservations);
+    setSelectedSkillId(null);
+    setPendingTeleport(false);
+  };
+
+  const beginNovaStepPick = () => {
+    const alreadyReserved = skillReservations.some(
+      (entry) => entry.skillId === "nova_blast",
+    );
+    if (alreadyReserved) {
+      removeReservation("nova_blast");
+      return;
+    }
+    if (getMyRole() !== "attacker") return;
+    if (skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
+      return;
+    }
+    if (getRemainingMana() < getSkillCost("nova_blast")) return;
+    const nextReservations: AbilitySkillReservation[] = [
+      ...skillReservations.filter((entry) => entry.skillId !== "nova_blast"),
+      {
+        skillId: "nova_blast",
         step: myPath.length,
         order: reservationOrderRef.current++,
       },
@@ -641,6 +672,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       beginExplosionStepPick();
       return;
     }
+    if (skillId === "nova_blast") {
+      beginNovaStepPick();
+      return;
+    }
     if (skillId === "quantum_shift") {
       beginTeleportPick();
       return;
@@ -738,6 +773,18 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         if (!isSfxMuted) {
           playEmber(sfxVolume);
         }
+        for (const position of event.affectedPositions ?? []) {
+          const effectId = Date.now() + Math.random();
+          setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
+          queueAnimationTimeout(() => {
+            setCollisionEffects((prev) =>
+              prev.filter((entry) => entry.id !== effectId),
+            );
+          }, 420);
+        }
+      }
+
+      if (event.skillId === "nova_blast") {
         for (const position of event.affectedPositions ?? []) {
           const effectId = Date.now() + Math.random();
           setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
@@ -1719,6 +1766,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             const roleBlocked =
               (skillId === "classic_guard" && getMyRole() !== "escaper") ||
               ((skillId === "ember_blast" ||
+                skillId === "nova_blast" ||
                 skillId === "electric_blitz" ||
                 skillId === "cosmic_bigbang") &&
                 getMyRole() !== "attacker");

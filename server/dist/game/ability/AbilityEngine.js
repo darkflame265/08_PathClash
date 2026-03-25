@@ -11,6 +11,7 @@ function getSkillPriority(skillId) {
         case 'classic_guard':
             return 1;
         case 'ember_blast':
+        case 'nova_blast':
         case 'electric_blitz':
         case 'cosmic_bigbang':
             return 2;
@@ -44,6 +45,16 @@ function sortReservations(reservations) {
             return leftPriority - rightPriority;
         return left.order - right.order;
     });
+}
+function getNovaPositions(origin) {
+    const positions = [origin];
+    for (const distance of [1, 2]) {
+        positions.push({ row: origin.row - distance, col: origin.col - distance }, { row: origin.row - distance, col: origin.col + distance }, { row: origin.row + distance, col: origin.col - distance }, { row: origin.row + distance, col: origin.col + distance });
+    }
+    return positions.filter((position) => position.row >= 0 &&
+        position.row <= 4 &&
+        position.col >= 0 &&
+        position.col <= 4);
 }
 function getLinePositions(start, path) {
     return [start, ...path];
@@ -204,6 +215,29 @@ function resolveAbilityRound(params) {
         }
         if (reservation.skillId === 'ember_blast') {
             const affectedPositions = getCrossPositions(currentPos).filter((position) => !obstacles.some((obstacle) => samePosition(obstacle, position)));
+            const damages = [];
+            const opponentProtected = opponentColor === 'red' ? redInv > 0 : blueInv > 0;
+            if (affectedPositions.some((position) => samePosition(position, opponentPos)) && !opponentProtected) {
+                if (opponentColor === 'red') {
+                    redHp = Math.max(0, redHp - 1);
+                    damages.push({ color: 'red', newHp: redHp, position: { ...opponentPos } });
+                }
+                else {
+                    blueHp = Math.max(0, blueHp - 1);
+                    damages.push({ color: 'blue', newHp: blueHp, position: { ...opponentPos } });
+                }
+            }
+            if (color === 'red') {
+                redMana = Math.max(0, casterMana - 4);
+            }
+            else {
+                blueMana = Math.max(0, casterMana - 4);
+            }
+            applyDamages(color, damages, reservation.skillId, reservation.step, reservation.order, affectedPositions);
+            return;
+        }
+        if (reservation.skillId === 'nova_blast') {
+            const affectedPositions = getNovaPositions(currentPos).filter((position) => !obstacles.some((obstacle) => samePosition(obstacle, position)));
             const damages = [];
             const opponentProtected = opponentColor === 'red' ? redInv > 0 : blueInv > 0;
             if (affectedPositions.some((position) => samePosition(position, opponentPos)) && !opponentProtected) {
