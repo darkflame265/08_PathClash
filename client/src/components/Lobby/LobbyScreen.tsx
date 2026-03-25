@@ -888,6 +888,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
     if (skinId === "ember") return accountWins >= 10;
     if (skinId === "nova") return accountWins >= 50;
     if (skinId === "aurora") return accountWins >= 100;
+    if (skinId === "void") return accountWins >= 500;
     if (skinId === "quantum") return ownedSkins.includes("quantum");
     return ownedSkins.includes(skinId);
   };
