@@ -410,8 +410,8 @@ export function AbilityGrid({
             style={{
               left: target.col * responsiveCellSize + responsiveCellSize / 2,
               top: target.row * responsiveCellSize + responsiveCellSize / 2,
-              width: Math.max(20, responsiveCellSize * 0.34),
-              height: Math.max(20, responsiveCellSize * 0.34),
+              width: Math.max(32, responsiveCellSize * 0.5),
+              height: Math.max(32, responsiveCellSize * 0.5),
               transform: 'translate(-50%, -50%)',
             }}
             onClick={() => onTeleportTargetSelect(target)}
