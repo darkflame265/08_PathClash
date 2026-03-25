@@ -44,6 +44,7 @@ const SKILL_PAUSE_MS = 640;
 const SKILL_CAST_DELAY_MS = 500;
 const BLITZ_DASH_STEP_MS = 12;
 const BLITZ_POST_HIT_PAUSE_MS = SKILL_PAUSE_MS;
+const VOID_REVEAL_PAUSE_MS = 450;
 
 function buildBlitzPath(start: Position, target: Position): Position[] {
   const rowDelta = target.row - start.row;
@@ -1275,7 +1276,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }, SKILL_CAST_DELAY_MS);
   };
 
-  const runAnimation = (payload: AbilityResolutionPayload) => {
+  const runAnimation = (
+    payload: AbilityResolutionPayload,
+    initialRevealPauseMs = 0,
+  ) => {
     clearAnimationTimeouts();
     const blitzColors = {
       red: payload.skillEvents.some(
@@ -1560,6 +1564,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }, STEP_DURATION_MS);
     };
 
+    if (initialRevealPauseMs > 0) {
+      queueAnimationTimeout(() => advance(0), initialRevealPauseMs);
+      return;
+    }
     advance(0);
   };
 
@@ -1625,21 +1633,30 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
     const onResolution = (payload: AbilityResolutionPayload) => {
       setRoundInfo(null);
-      setState((prev) =>
-        prev
-          ? {
-              ...prev,
-              phase: "moving",
-              lavaTiles: payload.lavaTiles,
-              players: {
-                ...prev.players,
-                red: { ...prev.players.red, hidden: false },
-                blue: { ...prev.players.blue, hidden: false },
-              },
-            }
-          : prev,
+      const hadHiddenPlayer =
+        !!stateRef.current &&
+        (stateRef.current.players.red.hidden ||
+          stateRef.current.players.blue.hidden);
+      const nextState = stateRef.current
+        ? {
+            ...stateRef.current,
+            phase: "moving" as const,
+            lavaTiles: payload.lavaTiles,
+            players: {
+              ...stateRef.current.players,
+              red: { ...stateRef.current.players.red, hidden: false },
+              blue: { ...stateRef.current.players.blue, hidden: false },
+            },
+          }
+        : null;
+      if (nextState) {
+        stateRef.current = nextState;
+        setState(nextState);
+      }
+      runAnimation(
+        payload,
+        hadHiddenPlayer ? VOID_REVEAL_PAUSE_MS : 0,
       );
-      runAnimation(payload);
     };
 
     const onGameOver = ({
