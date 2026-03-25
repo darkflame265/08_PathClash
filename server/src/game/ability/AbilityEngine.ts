@@ -5,6 +5,7 @@
 } from '../../types/game.types';
 import type {
   AbilityDamageEvent,
+  AbilityHealEvent,
   AbilityPlayerState,
   AbilityResolutionPayload,
   AbilitySkillEvent,
@@ -19,6 +20,7 @@ function getSkillPriority(skillId: AbilitySkillId): number {
   switch (skillId) {
     case 'quantum_shift':
     case 'plasma_charge':
+    case 'aurora_heal':
       return 0;
     case 'classic_guard':
       return 1;
@@ -148,6 +150,7 @@ export function resolveAbilityRound(params: {
   const applyDamages = (
     sourceColor: PlayerColor,
     damages: AbilityDamageEvent[],
+    heals: AbilityHealEvent[],
     skillId: AbilitySkillId,
     step: number,
     order: number,
@@ -160,6 +163,7 @@ export function resolveAbilityRound(params: {
       skillId,
       affectedPositions,
       damages,
+      heals,
     });
   };
 
@@ -226,6 +230,29 @@ export function resolveAbilityRound(params: {
       return;
     }
 
+    if (reservation.skillId === 'aurora_heal') {
+      const heals: AbilityHealEvent[] = [];
+      if (color === 'red') {
+        redMana = Math.max(0, casterMana - 10);
+        redHp = Math.min(3, redHp + 1);
+        heals.push({ color: 'red', newHp: redHp, position: { ...currentPos } });
+      } else {
+        blueMana = Math.max(0, casterMana - 10);
+        blueHp = Math.min(3, blueHp + 1);
+        heals.push({ color: 'blue', newHp: blueHp, position: { ...currentPos } });
+      }
+      applyDamages(
+        color,
+        [],
+        heals,
+        reservation.skillId,
+        reservation.step,
+        reservation.order,
+        [{ ...currentPos }],
+      );
+      return;
+    }
+
     if (reservation.skillId === 'electric_blitz') {
       const fullPath = color === 'red' ? redPath : bluePath;
       const path = fullPath.slice(reservation.step);
@@ -262,6 +289,7 @@ export function resolveAbilityRound(params: {
       applyDamages(
         color,
         [],
+        [],
         reservation.skillId,
         reservation.step,
         reservation.order,
@@ -295,7 +323,7 @@ export function resolveAbilityRound(params: {
       } else {
         blueMana = Math.max(0, casterMana - 4);
       }
-      applyDamages(color, damages, reservation.skillId, reservation.step, reservation.order, affectedPositions);
+      applyDamages(color, damages, [], reservation.skillId, reservation.step, reservation.order, affectedPositions);
       return;
     }
 
@@ -319,7 +347,7 @@ export function resolveAbilityRound(params: {
       } else {
         blueMana = Math.max(0, casterMana - 4);
       }
-      applyDamages(color, damages, reservation.skillId, reservation.step, reservation.order, affectedPositions);
+      applyDamages(color, damages, [], reservation.skillId, reservation.step, reservation.order, affectedPositions);
       return;
     }
 
@@ -346,7 +374,7 @@ export function resolveAbilityRound(params: {
       } else {
         blueMana = Math.max(0, casterMana - 10);
       }
-      applyDamages(color, damages, reservation.skillId, reservation.step, reservation.order, affectedPositions);
+      applyDamages(color, damages, [], reservation.skillId, reservation.step, reservation.order, affectedPositions);
     }
   };
 

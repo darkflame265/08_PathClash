@@ -12,6 +12,7 @@ export type AbilitySkillId =
   | 'classic_guard'
   | 'ember_blast'
   | 'nova_blast'
+  | 'aurora_heal'
   | 'quantum_shift'
   | 'plasma_charge'
   | 'electric_blitz'
@@ -75,6 +76,12 @@ export interface AbilityDamageEvent {
   position: Position;
 }
 
+export interface AbilityHealEvent {
+  color: PlayerColor;
+  newHp: number;
+  position: Position;
+}
+
 export interface AbilitySkillEvent {
   step: number;
   order: number;
@@ -84,6 +91,7 @@ export interface AbilitySkillEvent {
   to?: Position;
   affectedPositions?: Position[];
   damages?: AbilityDamageEvent[];
+  heals?: AbilityHealEvent[];
   invulnerableSteps?: number;
 }
 

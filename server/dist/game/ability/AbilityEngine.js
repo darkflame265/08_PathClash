@@ -7,6 +7,7 @@ function getSkillPriority(skillId) {
     switch (skillId) {
         case 'quantum_shift':
         case 'plasma_charge':
+        case 'aurora_heal':
             return 0;
         case 'classic_guard':
             return 1;
@@ -99,7 +100,7 @@ function resolveAbilityRound(params) {
     const startsOverlapped = samePosition(redStart, blueStart);
     const ignoreStartTileCollision = startsOverlapped && escaperPath.length > 0;
     const escaperHasStepZeroGuard = (escapeeColor === 'red' ? redReservations : blueReservations).some((reservation) => reservation.skillId === 'classic_guard' && reservation.step === 0);
-    const applyDamages = (sourceColor, damages, skillId, step, order, affectedPositions) => {
+    const applyDamages = (sourceColor, damages, heals, skillId, step, order, affectedPositions) => {
         skillEvents.push({
             step,
             order,
@@ -107,6 +108,7 @@ function resolveAbilityRound(params) {
             skillId,
             affectedPositions,
             damages,
+            heals,
         });
     };
     const processSkill = (color, reservation) => {
@@ -171,6 +173,21 @@ function resolveAbilityRound(params) {
             });
             return;
         }
+        if (reservation.skillId === 'aurora_heal') {
+            const heals = [];
+            if (color === 'red') {
+                redMana = Math.max(0, casterMana - 10);
+                redHp = Math.min(3, redHp + 1);
+                heals.push({ color: 'red', newHp: redHp, position: { ...currentPos } });
+            }
+            else {
+                blueMana = Math.max(0, casterMana - 10);
+                blueHp = Math.min(3, blueHp + 1);
+                heals.push({ color: 'blue', newHp: blueHp, position: { ...currentPos } });
+            }
+            applyDamages(color, [], heals, reservation.skillId, reservation.step, reservation.order, [{ ...currentPos }]);
+            return;
+        }
         if (reservation.skillId === 'electric_blitz') {
             const fullPath = color === 'red' ? redPath : bluePath;
             const path = fullPath.slice(reservation.step);
@@ -206,7 +223,7 @@ function resolveAbilityRound(params) {
                 bluePos = { ...(path[path.length - 1] ?? currentPos) };
                 blueBlitz = true;
             }
-            applyDamages(color, [], reservation.skillId, reservation.step, reservation.order, affectedPositions);
+            applyDamages(color, [], [], reservation.skillId, reservation.step, reservation.order, affectedPositions);
             const lastEvent = skillEvents[skillEvents.length - 1];
             if (lastEvent && lastEvent.skillId === reservation.skillId && lastEvent.step === reservation.step && lastEvent.order === reservation.order && lastEvent.color === color) {
                 lastEvent.from = { ...currentPos };
@@ -234,7 +251,7 @@ function resolveAbilityRound(params) {
             else {
                 blueMana = Math.max(0, casterMana - 4);
             }
-            applyDamages(color, damages, reservation.skillId, reservation.step, reservation.order, affectedPositions);
+            applyDamages(color, damages, [], reservation.skillId, reservation.step, reservation.order, affectedPositions);
             return;
         }
         if (reservation.skillId === 'nova_blast') {
@@ -257,7 +274,7 @@ function resolveAbilityRound(params) {
             else {
                 blueMana = Math.max(0, casterMana - 4);
             }
-            applyDamages(color, damages, reservation.skillId, reservation.step, reservation.order, affectedPositions);
+            applyDamages(color, damages, [], reservation.skillId, reservation.step, reservation.order, affectedPositions);
             return;
         }
         if (reservation.skillId === 'cosmic_bigbang') {
@@ -285,7 +302,7 @@ function resolveAbilityRound(params) {
             else {
                 blueMana = Math.max(0, casterMana - 10);
             }
-            applyDamages(color, damages, reservation.skillId, reservation.step, reservation.order, affectedPositions);
+            applyDamages(color, damages, [], reservation.skillId, reservation.step, reservation.order, affectedPositions);
         }
     };
     for (let step = 0; step <= maxStep; step++) {

@@ -368,7 +368,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     const nextReservations = skillReservations.filter((reservation) => {
       if (
         reservation.skillId !== "ember_blast" &&
-        reservation.skillId !== "nova_blast"
+        reservation.skillId !== "nova_blast" &&
+        reservation.skillId !== "aurora_heal"
       ) {
         return true;
       }
@@ -510,6 +511,31 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       ...skillReservations.filter((entry) => entry.skillId !== "nova_blast"),
       {
         skillId: "nova_blast",
+        step: myPath.length,
+        order: reservationOrderRef.current++,
+      },
+    ];
+    updateSkillReservations(nextReservations);
+    setSelectedSkillId(null);
+    setPendingTeleport(false);
+  };
+
+  const beginHealStepPick = () => {
+    const alreadyReserved = skillReservations.some(
+      (entry) => entry.skillId === "aurora_heal",
+    );
+    if (alreadyReserved) {
+      removeReservation("aurora_heal");
+      return;
+    }
+    if (skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
+      return;
+    }
+    if (getRemainingMana() < getSkillCost("aurora_heal")) return;
+    const nextReservations: AbilitySkillReservation[] = [
+      ...skillReservations.filter((entry) => entry.skillId !== "aurora_heal"),
+      {
+        skillId: "aurora_heal",
         step: myPath.length,
         order: reservationOrderRef.current++,
       },
@@ -676,6 +702,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       beginNovaStepPick();
       return;
     }
+    if (skillId === "aurora_heal") {
+      beginHealStepPick();
+      return;
+    }
     if (skillId === "quantum_shift") {
       beginTeleportPick();
       return;
@@ -796,6 +826,24 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               prev.filter((entry) => entry.id !== effectId),
             );
           }, 420);
+        }
+      }
+
+      if (event.skillId === "aurora_heal") {
+        for (const heal of event.heals ?? []) {
+          setState((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              players: {
+                ...prev.players,
+                [heal.color]: {
+                  ...prev.players[heal.color],
+                  hp: heal.newHp,
+                },
+              },
+            };
+          });
         }
       }
 

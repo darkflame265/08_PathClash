@@ -232,6 +232,7 @@ const initialAbilityLoadout = (() => {
       value === 'classic_guard' ||
       value === 'ember_blast' ||
       value === 'nova_blast' ||
+      value === 'aurora_heal' ||
       value === 'quantum_shift' ||
       value === 'plasma_charge' ||
       value === 'electric_blitz' ||

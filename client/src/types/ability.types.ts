@@ -10,6 +10,7 @@ export type AbilitySkillId =
   | 'classic_guard'
   | 'ember_blast'
   | 'nova_blast'
+  | 'aurora_heal'
   | 'quantum_shift'
   | 'plasma_charge'
   | 'electric_blitz'
@@ -81,6 +82,12 @@ export interface AbilityDamageEvent {
   position: Position;
 }
 
+export interface AbilityHealEvent {
+  color: PlayerColor;
+  newHp: number;
+  position: Position;
+}
+
 export interface AbilitySkillEvent {
   step: number;
   order: number;
@@ -90,6 +97,7 @@ export interface AbilitySkillEvent {
   to?: Position;
   affectedPositions?: Position[];
   damages?: AbilityDamageEvent[];
+  heals?: AbilityHealEvent[];
   invulnerableSteps?: number;
 }
 
@@ -143,6 +151,18 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     category: 'attack',
     skinId: 'nova',
     icon: '✸',
+  },
+  aurora_heal: {
+    id: 'aurora_heal',
+    name: { en: 'Healing', kr: '힐링' },
+    description: {
+      en: 'Restore 1 HP at the chosen timing. Can be combined with movement and other compatible skills.',
+      kr: '원하는 시점에 HP를 1 회복합니다. 이동과 함께, 조합 가능한 다른 스킬과 함께 사용할 수 있습니다.',
+    },
+    manaCost: 10,
+    category: 'utility',
+    skinId: 'aurora',
+    icon: '✚',
   },
   quantum_shift: {
     id: 'quantum_shift',

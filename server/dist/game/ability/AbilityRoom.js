@@ -35,6 +35,7 @@ const SKILL_COSTS = {
     classic_guard: 4,
     ember_blast: 4,
     nova_blast: 4,
+    aurora_heal: 10,
     quantum_shift: 3,
     plasma_charge: 2,
     electric_blitz: 6,
@@ -500,7 +501,10 @@ class AbilityRoom {
             return null;
         }
         for (const skill of uniqueSkills) {
-            if ((skill.skillId === 'ember_blast' || skill.skillId === 'nova_blast') && skill.step > path.length)
+            if ((skill.skillId === 'ember_blast' ||
+                skill.skillId === 'nova_blast' ||
+                skill.skillId === 'aurora_heal') &&
+                skill.step > path.length)
                 return null;
             if (skill.skillId === 'classic_guard' && skill.step !== 0)
                 return null;
