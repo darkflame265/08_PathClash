@@ -379,9 +379,36 @@ export function resolveAbilityRound(params: {
     if (step > 0) {
       const redPrev = { ...redPos };
       const bluePrev = { ...bluePos };
-      if (!redBlitz && step <= redPath.length) redPos = { ...redPath[step - 1] };
-      if (!blueBlitz && step <= bluePath.length) bluePos = { ...bluePath[step - 1] };
+      const redNext =
+        !redBlitz && step <= redPath.length ? { ...redPath[step - 1] } : redPos;
+      const blueNext =
+        !blueBlitz && step <= bluePath.length ? { ...bluePath[step - 1] } : bluePos;
 
+      const startsStepOverlapped = samePosition(redPrev, bluePrev);
+      const escaperStayedStill =
+        escapeeColor === 'red'
+          ? samePosition(redNext, redPrev)
+          : samePosition(blueNext, bluePrev);
+      const attackerMoved =
+        attackerColor === 'red'
+          ? !samePosition(redNext, redPrev)
+          : !samePosition(blueNext, bluePrev);
+
+      redPos = redNext;
+      bluePos = blueNext;
+
+      if (startsStepOverlapped && escaperStayedStill && attackerMoved) {
+        const protectedByGuard = escapeeColor === 'red' ? redInv > 0 : blueInv > 0;
+        if (!protectedByGuard) {
+          if (escapeeColor === 'red') {
+            redHp = Math.max(0, redHp - 1);
+            collisions.push({ step, position: { ...redPrev }, escapeeColor, newHp: redHp });
+          } else {
+            blueHp = Math.max(0, blueHp - 1);
+            collisions.push({ step, position: { ...bluePrev }, escapeeColor, newHp: blueHp });
+          }
+        }
+      }
       const overlappingAfterBlitz =
         (redBlitz || blueBlitz) && samePosition(redPos, bluePos);
 
