@@ -375,15 +375,17 @@ export function GameGrid({
 
   const opponentColor = myColor === "red" ? "blue" : "red";
   const opponentPath: Position[] = []; // opponent path hidden during planning
+  const animation = useGameStore.getState().animation;
+  const isPlaybackPhase = gameState?.phase === "moving" || gameState?.phase === "gameover";
   const revealedRedPath =
-    gameState?.phase === "moving"
-      ? (useGameStore.getState().animation?.redPath ?? [])
+    isPlaybackPhase
+      ? (animation?.redPath ?? [])
       : myColor === "red"
         ? myPath
         : [];
   const revealedBluePath =
-    gameState?.phase === "moving"
-      ? (useGameStore.getState().animation?.bluePath ?? [])
+    isPlaybackPhase
+      ? (animation?.bluePath ?? [])
       : myColor === "blue"
         ? myPath
         : [];
@@ -424,14 +426,14 @@ export function GameGrid({
         <PathLine
           color="red"
           path={revealedRedPath}
-          startPos={gameState?.players.red.position ?? redDisplayPos}
+          startPos={isPlaybackPhase ? (animation?.redStart ?? gameState?.players.red.position ?? redDisplayPos) : (gameState?.players.red.position ?? redDisplayPos)}
           cellSize={responsiveCellSize}
           isPlanning={isPlanning}
         />
         <PathLine
           color="blue"
           path={revealedBluePath}
-          startPos={gameState?.players.blue.position ?? blueDisplayPos}
+          startPos={isPlaybackPhase ? (animation?.blueStart ?? gameState?.players.blue.position ?? blueDisplayPos) : (gameState?.players.blue.position ?? blueDisplayPos)}
           cellSize={responsiveCellSize}
           isPlanning={isPlanning}
         />

@@ -409,7 +409,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
 
-  finishAnimation: () => set({ animation: null }),
+  finishAnimation: () =>
+    set((state) => ({
+      animation: state.animation
+        ? { ...state.animation, isAnimating: false }
+        : null,
+    })),
 
   startTwoVsTwoAnimation: (payload) => set({
     twoVsTwoAnimation: {
