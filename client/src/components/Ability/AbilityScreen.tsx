@@ -2112,6 +2112,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             const roleBlocked =
               (skillId === "classic_guard" && getMyRole() !== "escaper") ||
               ((skillId === "ember_blast" ||
+                skillId === "inferno_field" ||
                 skillId === "nova_blast" ||
                 skillId === "electric_blitz" ||
                 skillId === "cosmic_bigbang") &&
