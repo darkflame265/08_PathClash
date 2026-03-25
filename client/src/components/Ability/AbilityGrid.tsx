@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useState } from 'react';
+﻿import { useRef, useCallback, useEffect, useState } from 'react';
 import type { PlayerColor, Position } from '../../types/game.types';
 import type { AbilityBattleState, AbilitySkillReservation } from '../../types/ability.types';
 import { pixelToCell, isBlockedCell, isValidMove, posEqual } from '../../utils/pathUtils';
@@ -334,9 +334,12 @@ export function AbilityGrid({
       )
     : [];
 
-  const infernoOrigin = getPlanningTailPosition(myPath);
   const infernoTargets = infernoTargetsVisible
-    ? cells.filter((position) => !posEqual(position, infernoOrigin))
+    ? cells.filter(
+        (position) =>
+          !posEqual(position, state.players.red.position) &&
+          !posEqual(position, state.players.blue.position),
+      )
     : [];
 
   const renderBlitzEffect = (
@@ -445,12 +448,12 @@ export function AbilityGrid({
             style={{
               left: infernoMarker.col * responsiveCellSize + responsiveCellSize / 2,
               top: infernoMarker.row * responsiveCellSize + responsiveCellSize / 2,
-              width: Math.max(28, responsiveCellSize * 0.42),
-              height: Math.max(28, responsiveCellSize * 0.42),
+              width: Math.max(32, responsiveCellSize * 0.5),
+              height: Math.max(32, responsiveCellSize * 0.5),
               transform: 'translate(-50%, -50%)',
             }}
           >
-            ✦
+            🔥
           </div>
         ) : null}
 
@@ -496,8 +499,8 @@ export function AbilityGrid({
             style={{
               left: target.col * responsiveCellSize + responsiveCellSize / 2,
               top: target.row * responsiveCellSize + responsiveCellSize / 2,
-              width: Math.max(30, responsiveCellSize * 0.46),
-              height: Math.max(30, responsiveCellSize * 0.46),
+              width: Math.max(32, responsiveCellSize * 0.5),
+              height: Math.max(32, responsiveCellSize * 0.5),
               transform: 'translate(-50%, -50%)',
             }}
             onClick={() => onInfernoTargetSelect(target)}
@@ -832,3 +835,5 @@ export function AbilityGrid({
     </div>
   );
 }
+
+
