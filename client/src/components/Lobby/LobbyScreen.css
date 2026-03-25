@@ -268,6 +268,14 @@
     0 0 16px rgba(134, 239, 172, 0.18);
 }
 
+.ability-skill-icon-glyph.is-gold-overdrive {
+  color: #fbbf24;
+  font-weight: 900;
+  text-shadow:
+    0 0 8px rgba(251, 191, 36, 0.32),
+    0 0 16px rgba(250, 204, 21, 0.18);
+}
+
 .google-link-btn {
   display: flex;
   align-items: center;

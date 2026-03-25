@@ -64,7 +64,7 @@ function renderSkillIcon(skillId: AbilitySkillId) {
   const icon = skillId === "electric_blitz" ? "⚡︎" : skill.icon;
   return (
     <span
-      className={`ability-skill-icon-glyph${skillId === "electric_blitz" ? " is-electric-blitz" : ""}${skillId === "aurora_heal" ? " is-aurora-heal" : ""}`}
+      className={`ability-skill-icon-glyph${skillId === "electric_blitz" ? " is-electric-blitz" : ""}${skillId === "aurora_heal" ? " is-aurora-heal" : ""}${skillId === "gold_overdrive" ? " is-gold-overdrive" : ""}`}
       aria-hidden="true"
     >
       {icon}
@@ -552,6 +552,31 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setPendingTeleport(false);
   };
 
+  const beginOverdriveStepPick = () => {
+    const alreadyReserved = skillReservations.some(
+      (entry) => entry.skillId === "gold_overdrive",
+    );
+    if (alreadyReserved) {
+      removeReservation("gold_overdrive");
+      return;
+    }
+    if (skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
+      return;
+    }
+    if (getRemainingMana() < getSkillCost("gold_overdrive")) return;
+    const nextReservations: AbilitySkillReservation[] = [
+      ...skillReservations.filter((entry) => entry.skillId !== "gold_overdrive"),
+      {
+        skillId: "gold_overdrive",
+        step: myPath.length,
+        order: reservationOrderRef.current++,
+      },
+    ];
+    updateSkillReservations(nextReservations);
+    setSelectedSkillId(null);
+    setPendingTeleport(false);
+  };
+
   const beginTeleportPick = () => {
     const alreadyReserved = skillReservations.some(
       (entry) => entry.skillId === "quantum_shift",
@@ -711,6 +736,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }
     if (skillId === "aurora_heal") {
       beginHealStepPick();
+      return;
+    }
+    if (skillId === "gold_overdrive") {
+      beginOverdriveStepPick();
       return;
     }
     if (skillId === "quantum_shift") {
