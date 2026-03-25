@@ -24,7 +24,7 @@ const SUBMIT_GRACE_MS = 350;
 const INITIAL_MANA = 4;
 const MAX_MANA = 10;
 const MANA_PER_TURN = 2;
-const SKILL_EVENT_BUFFER_MS = 1300;
+const SKILL_EVENT_BUFFER_MS = 1100;
 
 function posEqual(a: Position, b: Position): boolean {
   return a.row === b.row && a.col === b.col;
