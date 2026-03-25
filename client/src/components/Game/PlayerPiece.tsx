@@ -19,6 +19,7 @@ interface Props {
   isHit: boolean;
   isExploding: boolean;
   isMe: boolean;
+  isHidden?: boolean;
   outlineColor?: 'green' | PlayerColor | null;
   skin?:
     | "classic"
@@ -50,6 +51,7 @@ export function PlayerPiece({
   isHit,
   isExploding,
   isMe,
+  isHidden = false,
   outlineColor = null,
   skin = "classic",
 }: Props) {
@@ -66,6 +68,7 @@ export function PlayerPiece({
     `piece-${color}`,
     `piece-skin-${skin}`,
     isMe ? 'piece-me' : '',
+    isHidden ? 'piece-hidden' : '',
     outlineColor ? `piece-outline-${outlineColor}` : '',
     isHit ? 'hit' : '',
     isExploding ? 'exploding' : '',

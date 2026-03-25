@@ -1,4 +1,4 @@
-﻿import { useRef, useCallback, useEffect, useState } from 'react';
+import { useRef, useCallback, useEffect, useState } from 'react';
 import type { PlayerColor, Position } from '../../types/game.types';
 import type { AbilityBattleState, AbilitySkillReservation } from '../../types/ability.types';
 import { pixelToCell, isBlockedCell, isValidMove, posEqual } from '../../utils/pathUtils';
@@ -794,6 +794,7 @@ export function AbilityGrid({
             isHit={hitFlags.red}
             isExploding={explodingFlags.red}
             isMe={currentColor === 'red'}
+            isHidden={state.players.red.hidden && currentColor === 'red' && state.phase === 'planning'}
             skin={redSkin}
           />
         ) : null}
@@ -806,6 +807,7 @@ export function AbilityGrid({
             isHit={hitFlags.blue}
             isExploding={explodingFlags.blue}
             isMe={currentColor === 'blue'}
+            isHidden={state.players.blue.hidden && currentColor === 'blue' && state.phase === 'planning'}
             skin={blueSkin}
           />
         ) : null}

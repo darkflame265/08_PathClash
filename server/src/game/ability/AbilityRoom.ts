@@ -459,6 +459,7 @@ export class AbilityRoom {
     red.invulnerableSteps = resolution.redState.invulnerableSteps;
     red.pendingManaBonus = resolution.redState.pendingManaBonus;
     red.pendingOverdriveStage = resolution.redState.pendingOverdriveStage;
+    red.pendingVoidCloak = resolution.redState.pendingVoidCloak;
     red.overdriveActive = resolution.redState.overdriveActive;
     red.reboundLocked = resolution.redState.reboundLocked;
     blue.position = resolution.blueState.position;
@@ -467,6 +468,7 @@ export class AbilityRoom {
     blue.invulnerableSteps = resolution.blueState.invulnerableSteps;
     blue.pendingManaBonus = resolution.blueState.pendingManaBonus;
     blue.pendingOverdriveStage = resolution.blueState.pendingOverdriveStage;
+    blue.pendingVoidCloak = resolution.blueState.pendingVoidCloak;
     blue.overdriveActive = resolution.blueState.overdriveActive;
     blue.reboundLocked = resolution.blueState.reboundLocked;
     this.lavaTiles = resolution.lavaTiles;
