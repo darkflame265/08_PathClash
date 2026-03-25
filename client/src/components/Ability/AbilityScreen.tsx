@@ -338,6 +338,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const getMyRole = () => state?.players[currentColor].role ?? "escaper";
   const getMyMana = () => state?.players[currentColor].mana ?? 0;
+  const isOverdriveTurn = () =>
+    state?.players[currentColor].overdriveActive ?? false;
   const getPreviewStart = () => {
     const teleport = skillReservations.find(
       (entry) => entry.skillId === "quantum_shift" && entry.target,
@@ -372,16 +374,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   };
 
   const updateMyPath = (nextPath: Position[]) => {
-    const nextReservations = skillReservations.filter((reservation) => {
-      if (
-        reservation.skillId !== "ember_blast" &&
-        reservation.skillId !== "nova_blast" &&
-        reservation.skillId !== "aurora_heal"
-      ) {
-        return true;
-      }
-      return reservation.step <= nextPath.length;
-    });
+    const nextReservations = skillReservations.filter(
+      (reservation) => reservation.step <= nextPath.length,
+    );
     setMyPath(nextPath);
     if (nextReservations !== skillReservations) {
       setSkillReservations(nextReservations);
@@ -400,11 +395,16 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     const nextReservations = skillReservations.filter(
       (entry) => entry.skillId !== skillId,
     );
+    const overdriveTurn = isOverdriveTurn();
     setSelectedSkillId(null);
     setPendingTeleport(false);
     setPendingBlitz(false);
 
     if (skillId === "classic_guard") {
+      if (overdriveTurn) {
+        updateSkillReservations(nextReservations);
+        return;
+      }
       const chargeReserved = nextReservations.some(
         (entry) => entry.skillId === "plasma_charge",
       );
@@ -416,6 +416,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }
 
     if (skillId === "plasma_charge") {
+      if (overdriveTurn) {
+        updateSkillReservations(nextReservations);
+        return;
+      }
       const guardReserved = nextReservations.some(
         (entry) => entry.skillId === "classic_guard",
       );
@@ -441,6 +445,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }
 
     if (skillId === "cosmic_bigbang") {
+      if (overdriveTurn) {
+        updateSkillReservations(nextReservations);
+        return;
+      }
       setMyPath(previousBigBangPathRef.current);
       setSkillReservations(nextReservations);
       syncMyPlan(previousBigBangPathRef.current, nextReservations);
@@ -460,6 +468,20 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }
     if (getMyRole() !== "escaper") return;
     if (getRemainingMana() < getSkillCost("classic_guard")) return;
+    if (isOverdriveTurn()) {
+      const nextReservations: AbilitySkillReservation[] = [
+        ...skillReservations.filter((entry) => entry.skillId !== "classic_guard"),
+        {
+          skillId: "classic_guard",
+          step: myPath.length,
+          order: reservationOrderRef.current++,
+        },
+      ];
+      setSkillReservations(nextReservations);
+      setSelectedSkillId(null);
+      syncMyPlan(myPath, nextReservations);
+      return;
+    }
     previousGuardPathRef.current = myPath;
     const nextReservations: AbilitySkillReservation[] = [
       ...skillReservations.filter((entry) => entry.skillId !== "classic_guard"),
@@ -484,7 +506,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       return;
     }
     if (getMyRole() !== "attacker") return;
-    if (skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
+    if (!isOverdriveTurn() && skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
       return;
     }
     if (getRemainingMana() < getSkillCost("ember_blast")) return;
@@ -510,7 +532,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       return;
     }
     if (getMyRole() !== "attacker") return;
-    if (skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
+    if (!isOverdriveTurn() && skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
       return;
     }
     if (getRemainingMana() < getSkillCost("nova_blast")) return;
@@ -535,7 +557,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       removeReservation("aurora_heal");
       return;
     }
-    if (skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
+    if (!isOverdriveTurn() && skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
       return;
     }
     if (getRemainingMana() < getSkillCost("aurora_heal")) return;
@@ -560,7 +582,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       removeReservation("gold_overdrive");
       return;
     }
-    if (skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
+    if (!isOverdriveTurn() && skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
       return;
     }
     if (getRemainingMana() < getSkillCost("gold_overdrive")) return;
@@ -590,7 +612,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       setPendingTeleport(false);
       return;
     }
-    if (skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
+    if (!isOverdriveTurn() && skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
       return;
     }
     if (getRemainingMana() < getSkillCost("quantum_shift")) return;
@@ -653,6 +675,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     const nextPath = [...prefixPath, ...blitzPath];
     if (nextPath.length === 0) return;
     const nextReservations: AbilitySkillReservation[] = [
+      ...(isOverdriveTurn()
+        ? skillReservations.filter((entry) => entry.skillId !== "electric_blitz")
+        : []),
       {
         skillId: "electric_blitz",
         step: prefixPath.length,
@@ -677,6 +702,22 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       return;
     }
     if (getRemainingMana() < getSkillCost("plasma_charge")) return;
+    if (isOverdriveTurn()) {
+      const nextReservations: AbilitySkillReservation[] = [
+        ...skillReservations.filter((entry) => entry.skillId !== "plasma_charge"),
+        {
+          skillId: "plasma_charge",
+          step: myPath.length,
+          order: reservationOrderRef.current++,
+        },
+      ];
+      setSkillReservations(nextReservations);
+      setSelectedSkillId(null);
+      setPendingTeleport(false);
+      setPendingBlitz(false);
+      syncMyPlan(myPath, nextReservations);
+      return;
+    }
     previousChargePathRef.current = myPath;
     const nextReservations: AbilitySkillReservation[] = [
       ...skillReservations.filter((entry) => entry.skillId !== "plasma_charge"),
@@ -704,6 +745,22 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }
     if (getMyRole() !== "attacker") return;
     if (getRemainingMana() < getSkillCost("cosmic_bigbang")) return;
+    if (isOverdriveTurn()) {
+      const nextReservations: AbilitySkillReservation[] = [
+        ...skillReservations.filter((entry) => entry.skillId !== "cosmic_bigbang"),
+        {
+          skillId: "cosmic_bigbang",
+          step: myPath.length,
+          order: reservationOrderRef.current++,
+        },
+      ];
+      setSkillReservations(nextReservations);
+      setSelectedSkillId(null);
+      setPendingTeleport(false);
+      setPendingBlitz(false);
+      syncMyPlan(myPath, nextReservations);
+      return;
+    }
     previousBigBangPathRef.current = myPath;
     const nextReservations: AbilitySkillReservation[] = [
       {
@@ -1545,6 +1602,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const me = state.players[currentColor];
   const opponent = state.players[opponentColor];
+  const overdriveTurn = me.overdriveActive;
   const effectivePathPoints = me.reboundLocked ? 0 : state.pathPoints;
   const rewardTokens =
     winner && winner === currentColor
@@ -1556,13 +1614,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     isPlanning &&
     effectivePathPoints > 0 &&
     !mySubmitted &&
-    !skillReservations.some(
-      (reservation) =>
-        reservation.skillId === "classic_guard" ||
-        reservation.skillId === "plasma_charge" ||
-        reservation.skillId === "electric_blitz" ||
-        reservation.skillId === "cosmic_bigbang",
-    );
+    (overdriveTurn ||
+      !skillReservations.some(
+        (reservation) =>
+          reservation.skillId === "classic_guard" ||
+          reservation.skillId === "plasma_charge" ||
+          reservation.skillId === "electric_blitz" ||
+          reservation.skillId === "cosmic_bigbang",
+      ));
 
   const handleRematch = () => {
     getSocket().emit("request_rematch");
@@ -1891,12 +1950,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 skillId === "cosmic_bigbang") &&
                 getMyRole() !== "attacker");
             const chargeBlocked =
+              !overdriveTurn &&
               chargeReserved &&
               !reserved &&
               skillId !== "classic_guard" &&
               skillId !== "plasma_charge";
-            const blitzBlocked = blitzReserved && !reserved;
-            const bigBangBlocked = bigBangReserved && !reserved;
+            const blitzBlocked = !overdriveTurn && blitzReserved && !reserved;
+            const bigBangBlocked =
+              !overdriveTurn && bigBangReserved && !reserved;
             const disabled =
               !isPlanning ||
               mySubmitted ||
@@ -1959,3 +2020,4 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     </div>
   );
 }
+

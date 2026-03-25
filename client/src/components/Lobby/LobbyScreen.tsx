@@ -245,8 +245,8 @@ function getAbilitySkillSummary(skillId: AbilitySkillId, lang: "ko" | "en") {
             : "이동 가능 · 조합 가능",
         desc:
           lang === "en"
-            ? "Next turn, gain 20 mana. On the turn after that, mana becomes 0 and movement is locked."
-            : "다음 턴 마나가 20이 됩니다. 그 다음 턴에는 마나가 0이 되고 이동이 불가합니다.",
+            ? "Next turn, gain 20 mana and freely combine skills while moving. On the turn after that, mana becomes 0 and path points become 0."
+            : "다음 턴 마나가 20이 되고, 이동 중에도 스킬을 자유롭게 조합할 수 있습니다. 그 다음 턴에는 마나가 0이 되고 경로 포인트가 0이 됩니다.",
       };
     case "quantum_shift":
       return {

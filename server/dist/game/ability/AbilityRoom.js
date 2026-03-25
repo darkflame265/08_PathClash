@@ -437,6 +437,7 @@ class AbilityRoom {
         const uniqueSkills = Array.from(new Map(skills.map((skill) => [skill.skillId, skill])).values())
             .map((skill) => ({ ...skill, target: skill.target ?? null }))
             .sort((left, right) => left.order - right.order);
+        const isOverdriveTurn = player.overdriveActive;
         const manaCost = uniqueSkills.reduce((sum, skill) => sum + SKILL_COSTS[skill.skillId], 0);
         if (manaCost > player.mana)
             return null;
@@ -458,101 +459,167 @@ class AbilityRoom {
             return null;
         if (player.reboundLocked && path.length > 0)
             return null;
-        if (hasGuard) {
-            const guardSkill = uniqueSkills.find((skill) => skill.skillId === 'classic_guard');
-            if (!guardSkill || guardSkill.step !== 0 || path.length > 0)
-                return null;
-        }
-        if (hasCharge) {
-            const chargeSkill = uniqueSkills.find((skill) => skill.skillId === 'plasma_charge');
-            if (!chargeSkill || chargeSkill.step !== 0 || path.length > 0)
-                return null;
-            const invalidCombo = uniqueSkills.some((skill) => skill.skillId !== 'plasma_charge' && skill.skillId !== 'classic_guard');
-            if (invalidCombo)
-                return null;
-        }
-        if (hasBigBang) {
-            if (!bigBang || bigBang.step !== 0 || path.length > 0)
-                return null;
-            if (uniqueSkills.length !== 1)
-                return null;
-            return {
-                path: [],
-                skills: uniqueSkills,
-            };
-        }
-        if (hasBlitz) {
-            if (!blitz || !blitz.target)
-                return null;
-            if (uniqueSkills.length !== 1)
-                return null;
-            if (blitz.step < 0 || blitz.step > path.length)
-                return null;
-            const prefixPath = path.slice(0, blitz.step);
-            if (!(0, GameEngine_1.isValidPath)(player.position, prefixPath, pathPoints, this.obstacles)) {
+        if (!isOverdriveTurn) {
+            if (hasGuard) {
+                const guardSkill = uniqueSkills.find((skill) => skill.skillId === 'classic_guard');
+                if (!guardSkill || guardSkill.step !== 0 || path.length > 0)
+                    return null;
+            }
+            if (hasCharge) {
+                const chargeSkill = uniqueSkills.find((skill) => skill.skillId === 'plasma_charge');
+                if (!chargeSkill || chargeSkill.step !== 0 || path.length > 0)
+                    return null;
+                const invalidCombo = uniqueSkills.some((skill) => skill.skillId !== 'plasma_charge' && skill.skillId !== 'classic_guard');
+                if (invalidCombo)
+                    return null;
+            }
+            if (hasBigBang) {
+                if (!bigBang || bigBang.step !== 0 || path.length > 0)
+                    return null;
+                if (uniqueSkills.length !== 1)
+                    return null;
+                return {
+                    path: [],
+                    skills: uniqueSkills,
+                };
+            }
+            if (hasBlitz) {
+                if (!blitz || !blitz.target)
+                    return null;
+                if (uniqueSkills.length !== 1)
+                    return null;
+                if (blitz.step < 0 || blitz.step > path.length)
+                    return null;
+                const prefixPath = path.slice(0, blitz.step);
+                if (!(0, GameEngine_1.isValidPath)(player.position, prefixPath, pathPoints, this.obstacles)) {
+                    return null;
+                }
+                const blitzOrigin = blitz.step === 0 ? player.position : prefixPath[prefixPath.length - 1];
+                if (!blitzOrigin)
+                    return null;
+                const blitzPath = buildBlitzPath(blitzOrigin, blitz.target);
+                if (blitzPath.length === 0)
+                    return null;
+                const expectedPath = [...prefixPath, ...blitzPath];
+                if (path.length !== expectedPath.length)
+                    return null;
+                for (let index = 0; index < expectedPath.length; index++) {
+                    if (!posEqual(path[index], expectedPath[index]))
+                        return null;
+                }
+                return {
+                    path: expectedPath,
+                    skills: uniqueSkills,
+                };
+            }
+            if (teleport) {
+                if (!teleport.target)
+                    return null;
+                if (teleport.step < 0 || teleport.step > path.length)
+                    return null;
+                const teleportOrigin = teleport.step === 0 ? player.position : path[teleport.step - 1];
+                if (!teleportOrigin)
+                    return null;
+                const rowDelta = Math.abs(teleport.target.row - teleportOrigin.row);
+                const colDelta = Math.abs(teleport.target.col - teleportOrigin.col);
+                if (rowDelta > 1 || colDelta > 1 || (rowDelta === 0 && colDelta === 0))
+                    return null;
+                if (this.obstacles.some((obstacle) => obstacle.row === teleport.target.row && obstacle.col === teleport.target.col))
+                    return null;
+                if (teleport.target.row < 0 || teleport.target.row > 4 || teleport.target.col < 0 || teleport.target.col > 4)
+                    return null;
+            }
+            if (teleport) {
+                const prefixPath = path.slice(0, teleport.step);
+                const suffixPath = path.slice(teleport.step);
+                if (!(0, GameEngine_1.isValidPath)(player.position, prefixPath, hasGuard ? 0 : pathPoints, this.obstacles))
+                    return null;
+                if (!(0, GameEngine_1.isValidPath)(teleport.target, suffixPath, hasGuard ? 0 : pathPoints, this.obstacles))
+                    return null;
+            }
+            else if (!(0, GameEngine_1.isValidPath)(player.position, path, hasGuard ? 0 : pathPoints, this.obstacles)) {
                 return null;
             }
-            const blitzOrigin = blitz.step === 0 ? player.position : prefixPath[prefixPath.length - 1];
-            if (!blitzOrigin)
-                return null;
-            const blitzPath = buildBlitzPath(blitzOrigin, blitz.target);
-            if (blitzPath.length === 0)
-                return null;
-            const expectedPath = [...prefixPath, ...blitzPath];
-            if (path.length !== expectedPath.length)
-                return null;
-            for (let index = 0; index < expectedPath.length; index++) {
-                if (!posEqual(path[index], expectedPath[index]))
+            for (const skill of uniqueSkills) {
+                if ((skill.skillId === 'ember_blast' ||
+                    skill.skillId === 'nova_blast' ||
+                    skill.skillId === 'aurora_heal') &&
+                    skill.step > path.length)
+                    return null;
+                if (skill.skillId === 'classic_guard' && skill.step !== 0)
+                    return null;
+                if (skill.skillId === 'cosmic_bigbang' && skill.step !== 0)
+                    return null;
+            }
+            if (hasOverdrive) {
+                const overdriveSkill = uniqueSkills.find((skill) => skill.skillId === 'gold_overdrive');
+                if (!overdriveSkill || overdriveSkill.step > path.length)
                     return null;
             }
             return {
-                path: expectedPath,
+                path: [...path],
                 skills: uniqueSkills,
             };
         }
-        if (teleport) {
-            if (!teleport.target)
-                return null;
-            if (teleport.step < 0 || teleport.step > path.length)
-                return null;
-            const teleportOrigin = teleport.step === 0 ? player.position : path[teleport.step - 1];
-            if (!teleportOrigin)
-                return null;
-            const rowDelta = Math.abs(teleport.target.row - teleportOrigin.row);
-            const colDelta = Math.abs(teleport.target.col - teleportOrigin.col);
-            if (rowDelta > 1 || colDelta > 1 || (rowDelta === 0 && colDelta === 0))
-                return null;
-            if (this.obstacles.some((obstacle) => obstacle.row === teleport.target.row && obstacle.col === teleport.target.col))
-                return null;
-            if (teleport.target.row < 0 || teleport.target.row > 4 || teleport.target.col < 0 || teleport.target.col > 4)
-                return null;
-        }
-        if (teleport) {
-            const prefixPath = path.slice(0, teleport.step);
-            const suffixPath = path.slice(teleport.step);
-            if (!(0, GameEngine_1.isValidPath)(player.position, prefixPath, hasGuard ? 0 : pathPoints, this.obstacles))
-                return null;
-            if (!(0, GameEngine_1.isValidPath)(teleport.target, suffixPath, hasGuard ? 0 : pathPoints, this.obstacles))
-                return null;
-        }
-        else if (!(0, GameEngine_1.isValidPath)(player.position, path, hasGuard ? 0 : pathPoints, this.obstacles)) {
-            return null;
-        }
+        const movementSkills = uniqueSkills
+            .filter((skill) => skill.skillId === 'quantum_shift' || skill.skillId === 'electric_blitz')
+            .sort((left, right) => {
+            if (left.step !== right.step)
+                return left.step - right.step;
+            return left.order - right.order;
+        });
+        let cursor = 0;
+        let segmentStart = player.position;
         for (const skill of uniqueSkills) {
-            if ((skill.skillId === 'ember_blast' ||
-                skill.skillId === 'nova_blast' ||
-                skill.skillId === 'aurora_heal') &&
-                skill.step > path.length)
+            if (skill.step < 0 || skill.step > path.length)
                 return null;
-            if (skill.skillId === 'classic_guard' && skill.step !== 0)
+            if (skill.skillId === 'quantum_shift' && !skill.target)
                 return null;
-            if (skill.skillId === 'cosmic_bigbang' && skill.step !== 0)
+            if (skill.skillId === 'electric_blitz' && !skill.target)
                 return null;
         }
-        if (hasOverdrive) {
-            const overdriveSkill = uniqueSkills.find((skill) => skill.skillId === 'gold_overdrive');
-            if (!overdriveSkill || overdriveSkill.step > path.length)
+        for (const movementSkill of movementSkills) {
+            if (movementSkill.step < cursor)
                 return null;
+            const prefixSegment = path.slice(cursor, movementSkill.step);
+            if (!(0, GameEngine_1.isValidPath)(segmentStart, prefixSegment, pathPoints, this.obstacles)) {
+                return null;
+            }
+            const movementOrigin = prefixSegment.length > 0
+                ? prefixSegment[prefixSegment.length - 1]
+                : segmentStart;
+            if (movementSkill.skillId === 'quantum_shift') {
+                const target = movementSkill.target;
+                const rowDelta = Math.abs(target.row - movementOrigin.row);
+                const colDelta = Math.abs(target.col - movementOrigin.col);
+                if (rowDelta > 1 || colDelta > 1 || (rowDelta === 0 && colDelta === 0))
+                    return null;
+                if (target.row < 0 || target.row > 4 || target.col < 0 || target.col > 4)
+                    return null;
+                if (this.obstacles.some((obstacle) => obstacle.row === target.row && obstacle.col === target.col)) {
+                    return null;
+                }
+                segmentStart = target;
+                cursor = movementSkill.step;
+                continue;
+            }
+            const target = movementSkill.target;
+            const blitzPath = buildBlitzPath(movementOrigin, target);
+            if (blitzPath.length === 0)
+                return null;
+            const authoredBlitzPath = path.slice(movementSkill.step, movementSkill.step + blitzPath.length);
+            if (authoredBlitzPath.length !== blitzPath.length)
+                return null;
+            for (let index = 0; index < blitzPath.length; index++) {
+                if (!posEqual(blitzPath[index], authoredBlitzPath[index]))
+                    return null;
+            }
+            segmentStart = blitzPath[blitzPath.length - 1];
+            cursor = movementSkill.step + blitzPath.length;
+        }
+        const suffix = path.slice(cursor);
+        if (!(0, GameEngine_1.isValidPath)(segmentStart, suffix, pathPoints, this.obstacles)) {
+            return null;
         }
         return {
             path: [...path],

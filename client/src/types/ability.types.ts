@@ -172,8 +172,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: 'gold_overdrive',
     name: { en: 'Overdrive', kr: '오버드라이브' },
     description: {
-      en: 'On your next turn, enter Overdrive with 20 mana. On the following turn, mana becomes 0 and you cannot move.',
-      kr: '다음 턴에 마나 20의 과부화 모드에 진입합니다. 그 다음 턴에는 마나가 0이 되고 이동할 수 없습니다.',
+      en: 'On your next turn, enter Overdrive with 20 mana and freely combine skills while moving. On the following turn, mana becomes 0 and movement points become 0.',
+      kr: '다음 턴에 마나 20의 과부화 모드에 진입하고, 이동 중에도 스킬을 자유롭게 조합할 수 있습니다. 그 다음 턴에는 마나가 0이 되고 경로 포인트가 0이 됩니다.',
     },
     manaCost: 8,
     category: 'utility',
