@@ -6,6 +6,7 @@
 import type {
   AbilityDamageEvent,
   AbilityHealEvent,
+  AbilityLavaTile,
   AbilityPlayerState,
   AbilityResolutionPayload,
   AbilitySkillEvent,
@@ -22,6 +23,7 @@ function getSkillPriority(skillId: AbilitySkillId): number {
     case 'plasma_charge':
     case 'aurora_heal':
     case 'gold_overdrive':
+    case 'void_cloak':
       return 0;
     case 'classic_guard':
       return 1;
@@ -103,15 +105,41 @@ function sortStepReservations(
   });
 }
 
+function updateLavaTile(
+  lavaTiles: AbilityLavaTile[],
+  position: Position,
+  remainingTurns: number,
+) {
+  const existing = lavaTiles.find((tile) => samePosition(tile.position, position));
+  if (existing) {
+    existing.remainingTurns = Math.max(existing.remainingTurns, remainingTurns);
+    return;
+  }
+  lavaTiles.push({
+    position: { ...position },
+    remainingTurns,
+  });
+}
+
+function isAffectedByLava(
+  prev: Position,
+  next: Position,
+  lavaPosition: Position,
+) {
+  return samePosition(prev, lavaPosition) || samePosition(next, lavaPosition);
+}
+
 export function resolveAbilityRound(params: {
   red: AbilityPlayerState;
   blue: AbilityPlayerState;
   attackerColor: PlayerColor;
   obstacles: Position[];
+  lavaTiles: AbilityLavaTile[];
 }): {
   payload: AbilityResolutionPayload;
-  redState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'overdriveActive' | 'reboundLocked'>;
-  blueState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'overdriveActive' | 'reboundLocked'>;
+  redState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'pendingVoidCloak' | 'overdriveActive' | 'reboundLocked'>;
+  blueState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'pendingVoidCloak' | 'overdriveActive' | 'reboundLocked'>;
+  lavaTiles: AbilityLavaTile[];
   winner: PlayerColor | 'draw' | null;
 } {
   const { red, blue, attackerColor, obstacles } = params;
@@ -121,6 +149,10 @@ export function resolveAbilityRound(params: {
   const bluePath = [...blue.plannedPath];
   const collisions: CollisionEvent[] = [];
   const skillEvents: AbilitySkillEvent[] = [];
+  const activeLavaTiles: AbilityLavaTile[] = params.lavaTiles.map((tile) => ({
+    position: { ...tile.position },
+    remainingTurns: tile.remainingTurns,
+  }));
 
   let redPos = { ...red.position };
   let bluePos = { ...blue.position };
@@ -134,6 +166,8 @@ export function resolveAbilityRound(params: {
   let bluePendingManaBonus = blue.pendingManaBonus;
   let redPendingOverdriveStage = red.pendingOverdriveStage;
   let bluePendingOverdriveStage = blue.pendingOverdriveStage;
+  let redPendingVoidCloak = red.pendingVoidCloak;
+  let bluePendingVoidCloak = blue.pendingVoidCloak;
   let redOverdriveActive = red.overdriveActive;
   let blueOverdriveActive = blue.overdriveActive;
   let redReboundLocked = red.reboundLocked;
@@ -284,6 +318,23 @@ export function resolveAbilityRound(params: {
       return;
     }
 
+    if (reservation.skillId === 'void_cloak') {
+      if (color === 'red') {
+        redMana = Math.max(0, casterMana - 8);
+        redPendingVoidCloak = true;
+      } else {
+        blueMana = Math.max(0, casterMana - 8);
+        bluePendingVoidCloak = true;
+      }
+      skillEvents.push({
+        step: reservation.step,
+        order: reservation.order,
+        color,
+        skillId: reservation.skillId,
+      });
+      return;
+    }
+
     if (reservation.skillId === 'electric_blitz') {
       const fullPath = color === 'red' ? redPath : bluePath;
       const path = fullPath.slice(reservation.step);
@@ -358,6 +409,25 @@ export function resolveAbilityRound(params: {
       return;
     }
 
+    if (reservation.skillId === 'inferno_field' && reservation.target) {
+      if (color === 'red') {
+        redMana = Math.max(0, casterMana - 4);
+      } else {
+        blueMana = Math.max(0, casterMana - 4);
+      }
+      updateLavaTile(activeLavaTiles, reservation.target, 2);
+      skillEvents.push({
+        step: reservation.step,
+        order: reservation.order,
+        color,
+        skillId: reservation.skillId,
+        affectedPositions: [{ ...reservation.target }],
+        to: { ...reservation.target },
+        lavaRemainingTurns: 2,
+      });
+      return;
+    }
+
     if (reservation.skillId === 'nova_blast') {
       const affectedPositions = getNovaPositions(currentPos).filter(
         (position) => !obstacles.some((obstacle) => samePosition(obstacle, position)),
@@ -410,6 +480,9 @@ export function resolveAbilityRound(params: {
   };
 
   for (let step = 0; step <= maxStep; step++) {
+    let redPrevForStep = { ...redPos };
+    let bluePrevForStep = { ...bluePos };
+
     if (step === 0 && startsOverlapped && !ignoreStartTileCollision) {
       const protectedByGuard =
         (escapeeColor === 'red' ? redInv > 0 : blueInv > 0) ||
@@ -438,6 +511,8 @@ export function resolveAbilityRound(params: {
     if (step > 0) {
       const redPrev = { ...redPos };
       const bluePrev = { ...bluePos };
+      redPrevForStep = redPrev;
+      bluePrevForStep = bluePrev;
       const redNext =
         !redBlitz && step <= redPath.length ? { ...redPath[step - 1] } : redPos;
       const blueNext =
@@ -506,6 +581,38 @@ export function resolveAbilityRound(params: {
     for (const { color, reservation } of stepReservations) {
       processSkill(color, reservation);
     }
+
+    const applyLavaDamage = (
+      color: PlayerColor,
+      prevPos: Position,
+      nextPos: Position,
+      protectedByGuard: boolean,
+    ) => {
+      if (protectedByGuard) return;
+      for (const lavaTile of activeLavaTiles) {
+        if (!isAffectedByLava(prevPos, nextPos, lavaTile.position)) continue;
+        if (color === 'red') {
+          redHp = Math.max(0, redHp - 1);
+          collisions.push({
+            step,
+            position: { ...lavaTile.position },
+            escapeeColor: 'red',
+            newHp: redHp,
+          });
+        } else {
+          blueHp = Math.max(0, blueHp - 1);
+          collisions.push({
+            step,
+            position: { ...lavaTile.position },
+            escapeeColor: 'blue',
+            newHp: blueHp,
+          });
+        }
+      }
+    };
+
+    applyLavaDamage('red', redPrevForStep, redPos, redInv > 0);
+    applyLavaDamage('blue', bluePrevForStep, bluePos, blueInv > 0);
   }
 
   let winner: PlayerColor | 'draw' | null = null;
@@ -513,12 +620,23 @@ export function resolveAbilityRound(params: {
   else if (redHp <= 0) winner = 'blue';
   else if (blueHp <= 0) winner = 'red';
 
+  const nextLavaTiles = activeLavaTiles
+    .map((tile) => ({
+      position: { ...tile.position },
+      remainingTurns: tile.remainingTurns - 1,
+    }))
+    .filter((tile) => tile.remainingTurns > 0);
+
   return {
     payload: {
       redPath,
       bluePath,
       redStart,
       blueStart,
+      lavaTiles: activeLavaTiles.map((tile) => ({
+        position: { ...tile.position },
+        remainingTurns: tile.remainingTurns,
+      })),
       collisions,
       skillEvents,
     },
@@ -529,6 +647,7 @@ export function resolveAbilityRound(params: {
       invulnerableSteps: redInv,
       pendingManaBonus: redPendingManaBonus,
       pendingOverdriveStage: redPendingOverdriveStage,
+      pendingVoidCloak: redPendingVoidCloak,
       overdriveActive: redOverdriveActive,
       reboundLocked: redReboundLocked,
     },
@@ -539,9 +658,11 @@ export function resolveAbilityRound(params: {
       invulnerableSteps: blueInv,
       pendingManaBonus: bluePendingManaBonus,
       pendingOverdriveStage: bluePendingOverdriveStage,
+      pendingVoidCloak: bluePendingVoidCloak,
       overdriveActive: blueOverdriveActive,
       reboundLocked: blueReboundLocked,
     },
+    lavaTiles: nextLavaTiles,
     winner,
   };
 }

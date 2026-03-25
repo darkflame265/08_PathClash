@@ -231,11 +231,13 @@ const initialAbilityLoadout = (() => {
     const normalized = parsed.filter((value): value is AbilitySkillId =>
       value === 'classic_guard' ||
       value === 'ember_blast' ||
+      value === 'inferno_field' ||
       value === 'nova_blast' ||
       value === 'aurora_heal' ||
       value === 'gold_overdrive' ||
       value === 'quantum_shift' ||
       value === 'plasma_charge' ||
+      value === 'void_cloak' ||
       value === 'electric_blitz' ||
       value === 'cosmic_bigbang',
     );

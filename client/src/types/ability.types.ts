@@ -9,11 +9,13 @@
 export type AbilitySkillId =
   | 'classic_guard'
   | 'ember_blast'
+  | 'inferno_field'
   | 'nova_blast'
   | 'aurora_heal'
   | 'gold_overdrive'
   | 'quantum_shift'
   | 'plasma_charge'
+  | 'void_cloak'
   | 'electric_blitz'
   | 'cosmic_bigbang';
 export type AbilitySkillCategory = 'attack' | 'defense' | 'utility';
@@ -35,6 +37,11 @@ export interface AbilitySkillReservation {
   target?: Position | null;
 }
 
+export interface AbilityLavaTile {
+  position: Position;
+  remainingTurns: number;
+}
+
 export interface AbilityPlayerState {
   id: string;
   nickname: string;
@@ -49,6 +56,7 @@ export interface AbilityPlayerState {
   invulnerableSteps: number;
   overdriveActive: boolean;
   reboundLocked: boolean;
+  hidden: boolean;
   equippedSkills: AbilitySkillId[];
 }
 
@@ -59,6 +67,7 @@ export interface AbilityBattleState {
   phase: GamePhase;
   pathPoints: number;
   obstacles: Position[];
+  lavaTiles: AbilityLavaTile[];
   players: {
     red: AbilityPlayerState;
     blue: AbilityPlayerState;
@@ -103,6 +112,7 @@ export interface AbilitySkillEvent {
   heals?: AbilityHealEvent[];
   invulnerableSteps?: number;
   overdriveStage?: 0 | 1 | 2;
+  lavaRemainingTurns?: number;
 }
 
 export interface AbilityResolutionPayload {
@@ -110,6 +120,7 @@ export interface AbilityResolutionPayload {
   bluePath: Position[];
   redStart: Position;
   blueStart: Position;
+  lavaTiles: AbilityLavaTile[];
   collisions: Array<{
     step: number;
     position: Position;
@@ -143,6 +154,18 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     category: 'attack',
     skinId: 'ember',
     icon: '💥',
+  },
+  inferno_field: {
+    id: 'inferno_field',
+    name: { en: 'Lava Zone', kr: '용암지대' },
+    description: {
+      en: 'Ignite a chosen tile for 2 turns. Any player entering, crossing, or standing on it takes 1 damage.',
+      kr: '선택한 1칸을 2턴 동안 불타는 지역으로 만듭니다. 해당 칸에 들어오거나 지나가거나 서 있으면 1 피해를 입습니다.',
+    },
+    manaCost: 4,
+    category: 'attack',
+    skinId: 'inferno',
+    icon: '🔥',
   },
   nova_blast: {
     id: 'nova_blast',
@@ -203,6 +226,18 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     category: 'utility',
     skinId: 'plasma',
     icon: '⚡',
+  },
+  void_cloak: {
+    id: 'void_cloak',
+    name: { en: 'Invisibility', kr: '투명화' },
+    description: {
+      en: 'On the next turn, move to a random position and stay hidden until movement begins.',
+      kr: '다음 턴에 랜덤 위치로 이동한 뒤, 이동 시간이 시작될 때까지 모습을 감춥니다.',
+    },
+    manaCost: 8,
+    category: 'utility',
+    skinId: 'void',
+    icon: '◌',
   },
   electric_blitz: {
     id: 'electric_blitz',

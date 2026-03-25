@@ -12,6 +12,7 @@ import { ServerTimer } from '../ServerTimer';
 import { grantDailyRewardTokens, recordMatchmakingResult } from '../../services/playerAuth';
 import {
   type AbilityBattleState,
+  type AbilityLavaTile,
   type AbilityPlayerState,
   type AbilityRoundStartPayload,
   type AbilitySkillId,
@@ -53,14 +54,32 @@ function buildBlitzPath(start: Position, target: Position): Position[] {
 const SKILL_COSTS: Record<AbilitySkillId, number> = {
   classic_guard: 4,
   ember_blast: 4,
+  inferno_field: 4,
   nova_blast: 4,
   aurora_heal: 10,
   gold_overdrive: 8,
   quantum_shift: 3,
   plasma_charge: 2,
+  void_cloak: 8,
   electric_blitz: 6,
   cosmic_bigbang: 10,
 };
+
+function getRandomTeleportPosition(
+  current: Position,
+  opponent: Position,
+): Position {
+  const candidates: Position[] = [];
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 5; col++) {
+      if (row === opponent.row && col === opponent.col) continue;
+      candidates.push({ row, col });
+    }
+  }
+  const filtered = candidates.filter((position) => !posEqual(position, current));
+  const pool = filtered.length > 0 ? filtered : candidates;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
 
 export class AbilityRoom {
   readonly roomId: string;
@@ -74,6 +93,7 @@ export class AbilityRoom {
   private turn = 1;
   private attackerColor: PlayerColor = 'red';
   private obstacles: Position[] = [];
+  private lavaTiles: AbilityLavaTile[] = [];
   private readySockets = new Set<string>();
   private pendingStart = false;
   private pendingStartPaused = false;
@@ -142,8 +162,10 @@ export class AbilityRoom {
       invulnerableSteps: 0,
       pendingManaBonus: 0,
       pendingOverdriveStage: 0,
+      pendingVoidCloak: false,
       overdriveActive: false,
       reboundLocked: false,
+      hidden: false,
       equippedSkills,
     });
     socket.join(this.roomId);
@@ -312,6 +334,7 @@ export class AbilityRoom {
       phase: this.phase,
       pathPoints: calcPathPoints(this.turn),
       obstacles: this.obstacles,
+      lavaTiles: this.lavaTiles,
       players: {
         red: this.toClientPlayer(red),
         blue: this.toClientPlayer(blue),
@@ -337,6 +360,8 @@ export class AbilityRoom {
     blue.plannedPath = [];
     red.plannedSkills = [];
     blue.plannedSkills = [];
+    red.hidden = false;
+    blue.hidden = false;
     red.overdriveActive = false;
     blue.overdriveActive = false;
     red.reboundLocked = false;
@@ -365,6 +390,16 @@ export class AbilityRoom {
       blue.reboundLocked = true;
       blue.pendingOverdriveStage = 0;
     }
+    if (red.pendingVoidCloak) {
+      red.position = getRandomTeleportPosition(red.position, blue.position);
+      red.hidden = true;
+      red.pendingVoidCloak = false;
+    }
+    if (blue.pendingVoidCloak) {
+      blue.position = getRandomTeleportPosition(blue.position, red.position);
+      blue.hidden = true;
+      blue.pendingVoidCloak = false;
+    }
     this.obstacles = generateObstacles(this.roomId, this.turn, red.position, blue.position);
 
     const now = Date.now();
@@ -376,6 +411,7 @@ export class AbilityRoom {
       redPosition: red.position,
       bluePosition: blue.position,
       obstacles: this.obstacles,
+      lavaTiles: this.lavaTiles,
       timeLimit: 7,
       serverTime: now,
       roundEndsAt: now + PLANNING_TIME_MS,
@@ -406,12 +442,15 @@ export class AbilityRoom {
     const red = this.players.get('red');
     const blue = this.players.get('blue');
     if (!red || !blue) return;
+    red.hidden = false;
+    blue.hidden = false;
 
     const resolution = resolveAbilityRound({
       red,
       blue,
       attackerColor: this.attackerColor,
       obstacles: this.obstacles,
+      lavaTiles: this.lavaTiles,
     });
 
     red.position = resolution.redState.position;
@@ -430,6 +469,7 @@ export class AbilityRoom {
     blue.pendingOverdriveStage = resolution.blueState.pendingOverdriveStage;
     blue.overdriveActive = resolution.blueState.overdriveActive;
     blue.reboundLocked = resolution.blueState.reboundLocked;
+    this.lavaTiles = resolution.lavaTiles;
 
     this.touchActivity();
     this.io.to(this.roomId).emit('ability_resolution', resolution.payload);
@@ -498,6 +538,7 @@ export class AbilityRoom {
     const hasAttackSkill = uniqueSkills.some(
       (skill) =>
         skill.skillId === 'ember_blast' ||
+        skill.skillId === 'inferno_field' ||
         skill.skillId === 'nova_blast' ||
         skill.skillId === 'electric_blitz' ||
         skill.skillId === 'cosmic_bigbang',
@@ -586,12 +627,26 @@ export class AbilityRoom {
       }
 
       for (const skill of uniqueSkills) {
-        if (
-          (skill.skillId === 'ember_blast' ||
-            skill.skillId === 'nova_blast' ||
-            skill.skillId === 'aurora_heal') &&
-          skill.step > path.length
-        ) return null;
+      if (
+        (skill.skillId === 'ember_blast' ||
+          skill.skillId === 'inferno_field' ||
+          skill.skillId === 'nova_blast' ||
+          skill.skillId === 'aurora_heal' ||
+          skill.skillId === 'void_cloak') &&
+        skill.step > path.length
+      ) return null;
+        if (skill.skillId === 'inferno_field') {
+          if (!skill.target) return null;
+          if (
+            skill.target.row < 0 ||
+            skill.target.row > 4 ||
+            skill.target.col < 0 ||
+            skill.target.col > 4
+          ) return null;
+          const infernoOrigin =
+            skill.step === 0 ? player.position : path[skill.step - 1];
+          if (infernoOrigin && posEqual(infernoOrigin, skill.target)) return null;
+        }
         if (skill.skillId === 'classic_guard' && skill.step !== 0) return null;
         if (skill.skillId === 'cosmic_bigbang' && skill.step !== 0) return null;
       }
@@ -620,6 +675,18 @@ export class AbilityRoom {
       if (skill.step < 0 || skill.step > path.length) return null;
       if (skill.skillId === 'quantum_shift' && !skill.target) return null;
       if (skill.skillId === 'electric_blitz' && !skill.target) return null;
+      if (skill.skillId === 'inferno_field') {
+        if (!skill.target) return null;
+        if (
+          skill.target.row < 0 ||
+          skill.target.row > 4 ||
+          skill.target.col < 0 ||
+          skill.target.col > 4
+        ) return null;
+        const infernoOrigin =
+          skill.step === 0 ? player.position : path[skill.step - 1];
+        if (infernoOrigin && posEqual(infernoOrigin, skill.target)) return null;
+      }
     }
 
     for (const movementSkill of movementSkills) {
@@ -691,6 +758,7 @@ export class AbilityRoom {
       invulnerableSteps: player.invulnerableSteps,
       overdriveActive: player.overdriveActive,
       reboundLocked: player.reboundLocked,
+      hidden: player.hidden,
       equippedSkills: player.equippedSkills,
     };
   }
@@ -707,8 +775,10 @@ export class AbilityRoom {
       player.invulnerableSteps = 0;
       player.pendingManaBonus = 0;
       player.pendingOverdriveStage = 0;
+      player.pendingVoidCloak = false;
       player.overdriveActive = false;
       player.reboundLocked = false;
+      player.hidden = false;
     }
   }
 
@@ -725,6 +795,7 @@ export class AbilityRoom {
     this.attackerColor = 'red';
     this.phase = 'waiting';
     this.obstacles = [];
+    this.lavaTiles = [];
     this.resetPlayers();
     this.updateRoles();
     this.readySockets.clear();

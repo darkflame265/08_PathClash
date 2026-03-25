@@ -47,8 +47,10 @@ interface Props {
   isPlanning: boolean;
   teleportTargetsVisible: boolean;
   blitzTargetsVisible: boolean;
+  infernoTargetsVisible: boolean;
   onTeleportTargetSelect: (target: Position) => void;
   onBlitzTargetSelect: (target: Position) => void;
+  onInfernoTargetSelect: (target: Position) => void;
   onTeleportCancel: () => void;
 }
 
@@ -115,8 +117,10 @@ export function AbilityGrid({
   isPlanning,
   teleportTargetsVisible,
   blitzTargetsVisible,
+  infernoTargetsVisible,
   onTeleportTargetSelect,
   onBlitzTargetSelect,
+  onInfernoTargetSelect,
   onTeleportCancel,
 }: Props) {
   const shellRef = useRef<HTMLDivElement>(null);
@@ -168,6 +172,10 @@ export function AbilityGrid({
   const obstacles = state.obstacles;
   const redSkin = state.players.red.pieceSkin;
   const blueSkin = state.players.blue.pieceSkin;
+  const redVisible =
+    !state.players.red.hidden || currentColor === 'red' || state.phase !== 'planning';
+  const blueVisible =
+    !state.players.blue.hidden || currentColor === 'blue' || state.phase !== 'planning';
 
   const getPlanningTailPosition = useCallback(
     (path: Position[]) => {
@@ -206,11 +214,12 @@ export function AbilityGrid({
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
       if (!cell) return;
-      if (teleportTargetsVisible || blitzTargetsVisible) {
+      if (teleportTargetsVisible || blitzTargetsVisible || infernoTargetsVisible) {
         const currentPos = state.players[currentColor].position;
         if (!posEqual(cell, currentPos)) return;
         if (teleportTargetsVisible) onTeleportCancel();
         if (blitzTargetsVisible) return;
+        if (infernoTargetsVisible) return;
         dragState.current = {
           active: true,
           fromStart: true,
@@ -232,7 +241,7 @@ export function AbilityGrid({
       e.preventDefault();
       e.currentTarget.setPointerCapture(e.pointerId);
     },
-    [blitzTargetsVisible, currentColor, getPlanningTailPosition, isPlanning, myPath, myStart, onTeleportCancel, responsiveCellSize, state.players, teleportTargetsVisible],
+    [blitzTargetsVisible, currentColor, getPlanningTailPosition, infernoTargetsVisible, isPlanning, myPath, myStart, onTeleportCancel, responsiveCellSize, state.players, teleportTargetsVisible],
   );
 
   const handlePointerMove = useCallback(
@@ -323,6 +332,11 @@ export function AbilityGrid({
       )
     : [];
 
+  const infernoOrigin = getPlanningTailPosition(myPath);
+  const infernoTargets = infernoTargetsVisible
+    ? cells.filter((position) => !posEqual(position, infernoOrigin))
+    : [];
+
   const renderBlitzEffect = (
     color: PlayerColor,
     start: Position,
@@ -410,6 +424,19 @@ export function AbilityGrid({
           </div>
         ))}
 
+        {state.lavaTiles.map((tile) => (
+          <div
+            key={`lava-${tile.position.row}-${tile.position.col}`}
+            className="ability-lava-tile"
+            style={{
+              left: tile.position.col * responsiveCellSize,
+              top: tile.position.row * responsiveCellSize,
+              width: responsiveCellSize,
+              height: responsiveCellSize,
+            }}
+          />
+        ))}
+
         {teleportTargets.map((target) => (
           <button
             key={`tele-${target.row}-${target.col}`}
@@ -441,6 +468,24 @@ export function AbilityGrid({
             onClick={() => onBlitzTargetSelect(target)}
           >
             {target.icon}
+          </button>
+        ))}
+
+        {infernoTargets.map((target) => (
+          <button
+            key={`inferno-${target.row}-${target.col}`}
+            type="button"
+            className="ability-inferno-target"
+            style={{
+              left: target.col * responsiveCellSize + responsiveCellSize / 2,
+              top: target.row * responsiveCellSize + responsiveCellSize / 2,
+              width: Math.max(30, responsiveCellSize * 0.46),
+              height: Math.max(30, responsiveCellSize * 0.46),
+              transform: 'translate(-50%, -50%)',
+            }}
+            onClick={() => onInfernoTargetSelect(target)}
+          >
+            🔥
           </button>
         ))}
 
@@ -685,7 +730,7 @@ export function AbilityGrid({
           </div>
         ))}
 
-        {state.players.red.overdriveActive && (
+        {redVisible && state.players.red.overdriveActive && (
           <div
             className="ability-overdrive-effect ability-overdrive-effect-red"
             style={{
@@ -700,7 +745,7 @@ export function AbilityGrid({
           </div>
         )}
 
-        {state.players.blue.overdriveActive && (
+        {blueVisible && state.players.blue.overdriveActive && (
           <div
             className="ability-overdrive-effect ability-overdrive-effect-blue"
             style={{
@@ -740,7 +785,7 @@ export function AbilityGrid({
           />
         )}
 
-        {state.players.red.hp > 0 || hitFlags.red || explodingFlags.red ? (
+        {redVisible && (state.players.red.hp > 0 || hitFlags.red || explodingFlags.red) ? (
           <PlayerPiece
             color="red"
             position={displayPositions.red}
@@ -752,7 +797,7 @@ export function AbilityGrid({
             skin={redSkin}
           />
         ) : null}
-        {state.players.blue.hp > 0 || hitFlags.blue || explodingFlags.blue ? (
+        {blueVisible && (state.players.blue.hp > 0 || hitFlags.blue || explodingFlags.blue) ? (
           <PlayerPiece
             color="blue"
             position={displayPositions.blue}

@@ -11,11 +11,13 @@ import type {
 export type AbilitySkillId =
   | 'classic_guard'
   | 'ember_blast'
+  | 'inferno_field'
   | 'nova_blast'
   | 'aurora_heal'
   | 'gold_overdrive'
   | 'quantum_shift'
   | 'plasma_charge'
+  | 'void_cloak'
   | 'electric_blitz'
   | 'cosmic_bigbang';
 export type AbilitySkillCategory = 'attack' | 'defense' | 'utility';
@@ -25,6 +27,11 @@ export interface AbilitySkillReservation {
   step: number;
   order: number;
   target?: Position | null;
+}
+
+export interface AbilityLavaTile {
+  position: Position;
+  remainingTurns: number;
 }
 
 export interface AbilityPlayerState {
@@ -45,8 +52,10 @@ export interface AbilityPlayerState {
   invulnerableSteps: number;
   pendingManaBonus: number;
   pendingOverdriveStage: 0 | 1 | 2;
+  pendingVoidCloak: boolean;
   overdriveActive: boolean;
   reboundLocked: boolean;
+  hidden: boolean;
   equippedSkills: AbilitySkillId[];
 }
 
@@ -55,6 +64,7 @@ export interface ClientAbilityPlayerState extends ClientPlayerState {
   invulnerableSteps: number;
   overdriveActive: boolean;
   reboundLocked: boolean;
+  hidden: boolean;
   equippedSkills: AbilitySkillId[];
 }
 
@@ -65,6 +75,7 @@ export interface AbilityBattleState {
   phase: GamePhase;
   pathPoints: number;
   obstacles: Position[];
+  lavaTiles: AbilityLavaTile[];
   players: {
     red: ClientAbilityPlayerState;
     blue: ClientAbilityPlayerState;
@@ -73,6 +84,7 @@ export interface AbilityBattleState {
 }
 
 export interface AbilityRoundStartPayload extends RoundStartPayload {
+  lavaTiles: AbilityLavaTile[];
   state: AbilityBattleState;
 }
 
@@ -100,6 +112,7 @@ export interface AbilitySkillEvent {
   heals?: AbilityHealEvent[];
   invulnerableSteps?: number;
   overdriveStage?: 0 | 1 | 2;
+  lavaRemainingTurns?: number;
 }
 
 export interface AbilityResolutionPayload {
@@ -107,6 +120,7 @@ export interface AbilityResolutionPayload {
   bluePath: Position[];
   redStart: Position;
   blueStart: Position;
+  lavaTiles: AbilityLavaTile[];
   collisions: Array<{
     step: number;
     position: Position;

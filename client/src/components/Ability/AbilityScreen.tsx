@@ -142,6 +142,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   );
   const [pendingTeleport, setPendingTeleport] = useState(false);
   const [pendingBlitz, setPendingBlitz] = useState(false);
+  const [pendingInferno, setPendingInferno] = useState(false);
   const [redDisplayPos, setRedDisplayPos] = useState<Position>({
     row: 2,
     col: 0,
@@ -325,6 +326,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setSelectedSkillId(null);
     setPendingTeleport(false);
     setPendingBlitz(false);
+    setPendingInferno(false);
     setMySubmitted(false);
     setOpponentSubmitted(false);
     previousGuardPathRef.current = [];
@@ -440,6 +442,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setSelectedSkillId(null);
     setPendingTeleport(false);
     setPendingBlitz(false);
+    setPendingInferno(false);
 
     if (skillId === "classic_guard") {
       if (overdriveTurn) {
@@ -640,6 +643,77 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setPendingTeleport(false);
   };
 
+  const beginVoidCloakStepPick = () => {
+    const alreadyReserved = skillReservations.some(
+      (entry) => entry.skillId === "void_cloak",
+    );
+    if (alreadyReserved) {
+      removeReservation("void_cloak");
+      return;
+    }
+    if (
+      !isOverdriveTurn() &&
+      skillReservations.some((entry) => entry.skillId === "plasma_charge")
+    ) {
+      return;
+    }
+    if (getRemainingMana() < getSkillCost("void_cloak")) return;
+    const nextReservations: AbilitySkillReservation[] = [
+      ...skillReservations.filter((entry) => entry.skillId !== "void_cloak"),
+      {
+        skillId: "void_cloak",
+        step: getCurrentSkillStep(),
+        order: reservationOrderRef.current++,
+      },
+    ];
+    updateSkillReservations(nextReservations);
+    setSelectedSkillId(null);
+    setPendingTeleport(false);
+  };
+
+  const beginInfernoPick = () => {
+    const alreadyReserved = skillReservations.some(
+      (entry) => entry.skillId === "inferno_field",
+    );
+    if (alreadyReserved) {
+      removeReservation("inferno_field");
+      return;
+    }
+    if (pendingInferno && selectedSkillId === "inferno_field") {
+      setSelectedSkillId(null);
+      setPendingInferno(false);
+      return;
+    }
+    if (getMyRole() !== "attacker") return;
+    if (
+      !isOverdriveTurn() &&
+      skillReservations.some((entry) => entry.skillId === "plasma_charge")
+    ) {
+      return;
+    }
+    if (getRemainingMana() < getSkillCost("inferno_field")) return;
+    setSelectedSkillId("inferno_field");
+    setPendingInferno(true);
+    setPendingTeleport(false);
+    setPendingBlitz(false);
+  };
+
+  const handleInfernoTargetSelect = (target: Position) => {
+    const nextReservations: AbilitySkillReservation[] = [
+      ...skillReservations.filter((entry) => entry.skillId !== "inferno_field"),
+      {
+        skillId: "inferno_field",
+        step: getCurrentSkillStep(),
+        order: reservationOrderRef.current++,
+        target,
+      },
+    ];
+    setSkillReservations(nextReservations);
+    setSelectedSkillId(null);
+    setPendingInferno(false);
+    syncMyPlan(myPath, nextReservations);
+  };
+
   const beginTeleportPick = () => {
     const alreadyReserved = skillReservations.some(
       (entry) => entry.skillId === "quantum_shift",
@@ -820,6 +894,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const handleSkillClick = (skillId: AbilitySkillId) => {
     if (state?.phase !== "planning" || mySubmitted) return;
+    if (skillId !== "inferno_field") {
+      setPendingInferno(false);
+    }
     if (skillId === "classic_guard") {
       toggleGuardSkill();
       return;
@@ -838,6 +915,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }
     if (skillId === "gold_overdrive") {
       beginOverdriveStepPick();
+      return;
+    }
+    if (skillId === "void_cloak") {
+      beginVoidCloakStepPick();
+      return;
+    }
+    if (skillId === "inferno_field") {
+      beginInfernoPick();
       return;
     }
     if (skillId === "quantum_shift") {
@@ -978,6 +1063,18 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               prev.filter((entry) => entry.id !== effectId),
             );
           }, 420);
+        }
+      }
+
+      if (event.skillId === "inferno_field") {
+        for (const position of event.affectedPositions ?? []) {
+          const effectId = Date.now() + Math.random();
+          setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
+          queueAnimationTimeout(() => {
+            setCollisionEffects((prev) =>
+              prev.filter((entry) => entry.id !== effectId),
+            );
+          }, 520);
         }
       }
 
@@ -1528,7 +1625,20 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
     const onResolution = (payload: AbilityResolutionPayload) => {
       setRoundInfo(null);
-      setState((prev) => (prev ? { ...prev, phase: "moving" } : prev));
+      setState((prev) =>
+        prev
+          ? {
+              ...prev,
+              phase: "moving",
+              lavaTiles: payload.lavaTiles,
+              players: {
+                ...prev.players,
+                red: { ...prev.players.red, hidden: false },
+                blue: { ...prev.players.blue, hidden: false },
+              },
+            }
+          : prev,
+      );
       runAnimation(payload);
     };
 
@@ -1861,8 +1971,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             isPlanning={canDrawPath}
             teleportTargetsVisible={pendingTeleport}
             blitzTargetsVisible={pendingBlitz}
+            infernoTargetsVisible={
+              pendingInferno && selectedSkillId === "inferno_field"
+            }
             onTeleportTargetSelect={handleTeleportTargetSelect}
             onBlitzTargetSelect={handleBlitzTargetSelect}
+            onInfernoTargetSelect={handleInfernoTargetSelect}
             onTeleportCancel={handleTeleportCancel}
           />
         </div>

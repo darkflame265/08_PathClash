@@ -215,6 +215,17 @@ function getAbilitySkillSummary(skillId: AbilitySkillId, lang: "ko" | "en") {
             ? "Deal explosion damage in a 1-tile cross at the chosen timing."
             : "지정 시점에 주변 1칸 십자 범위에 폭발 피해를 줍니다.",
       };
+    case "inferno_field":
+      return {
+        tags:
+          lang === "en"
+            ? "Move OK · Combo OK"
+            : "이동 가능 · 조합 가능",
+        desc:
+          lang === "en"
+            ? "Turn a chosen tile into lava for 2 turns. Anyone touching it takes damage."
+            : "선택한 1칸을 2턴 동안 용암지대로 만들고, 밟거나 지나가면 피해를 줍니다.",
+      };
     case "nova_blast":
       return {
         tags:
@@ -247,6 +258,17 @@ function getAbilitySkillSummary(skillId: AbilitySkillId, lang: "ko" | "en") {
           lang === "en"
             ? "Next turn, gain 20 mana and freely combine skills while moving. On the turn after that, mana becomes 0 and path points become 0."
             : "다음 턴 마나가 20이 되고, 이동 중에도 스킬을 자유롭게 조합할 수 있습니다. 그 다음 턴에는 마나가 0이 되고 경로 포인트가 0이 됩니다.",
+      };
+    case "void_cloak":
+      return {
+        tags:
+          lang === "en"
+            ? "Move OK · Combo OK"
+            : "이동 가능 · 조합 가능",
+        desc:
+          lang === "en"
+            ? "Next turn, move to a random position and stay hidden until movement begins."
+            : "다음 턴에 랜덤 위치로 이동한 뒤, 이동 시간이 시작될 때까지 모습을 감춥니다.",
       };
     case "quantum_shift":
       return {
