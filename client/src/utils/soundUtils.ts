@@ -6,12 +6,14 @@ let emberAudio: HTMLAudioElement | null = null;
 let blitzAudio: HTMLAudioElement | null = null;
 let bigBangAudio: HTMLAudioElement | null = null;
 let healingAudio: HTMLAudioElement | null = null;
+let overdriveLoopAudio: HTMLAudioElement | null = null;
 const CHARGE_SFX_GAIN = 0.4;
 const QUANTUM_SFX_GAIN = 0.65;
 const EMBER_SFX_GAIN = 0.3;
 const BLITZ_SFX_GAIN = 0.6;
 const BIGBANG_SFX_GAIN = 0.9;
 const HEALING_SFX_GAIN = 0.65;
+const OVERDRIVE_LOOP_GAIN = 0.4;
 
 function getCtx(): AudioContext {
   if (!audioCtx) audioCtx = new AudioContext();
@@ -129,6 +131,38 @@ export function playHealing(volume = 0.55): void {
     void audio.play().catch(() => {
       // Playback can fail if browser blocks audio; ignore.
     });
+  } catch {
+    // Audio element not available
+  }
+}
+
+export function startOverdriveLoop(volume = 0.55): void {
+  try {
+    if (!overdriveLoopAudio) {
+      overdriveLoopAudio = new Audio("/sfx/ability/gold_overdrive_loop.mp3");
+      overdriveLoopAudio.preload = "auto";
+      overdriveLoopAudio.loop = true;
+    }
+    overdriveLoopAudio.volume = Math.max(
+      0,
+      Math.min(1, volume * OVERDRIVE_LOOP_GAIN),
+    );
+    if (overdriveLoopAudio.paused) {
+      overdriveLoopAudio.currentTime = 0;
+      void overdriveLoopAudio.play().catch(() => {
+        // Playback can fail if browser blocks audio; ignore.
+      });
+    }
+  } catch {
+    // Audio element not available
+  }
+}
+
+export function stopOverdriveLoop(): void {
+  try {
+    if (!overdriveLoopAudio) return;
+    overdriveLoopAudio.pause();
+    overdriveLoopAudio.currentTime = 0;
   } catch {
     // Audio element not available
   }

@@ -6,7 +6,17 @@ import { useGameStore } from "../../store/gameStore";
 import { TimerBar } from "../Game/TimerBar";
 import { PlayerInfo } from "../Game/PlayerInfo";
 import { HpDisplay } from "../Game/HpDisplay";
-import { playBigBang, playBlitz, playCharge, playEmber, playHealing, playHit, playQuantum } from "../../utils/soundUtils";
+import {
+  playBigBang,
+  playBlitz,
+  playCharge,
+  playEmber,
+  playHealing,
+  playHit,
+  playQuantum,
+  startOverdriveLoop,
+  stopOverdriveLoop,
+} from "../../utils/soundUtils";
 import type { PlayerColor, Position } from "../../types/game.types";
 import {
   ABILITY_SKILLS,
@@ -230,6 +240,23 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
   }, []);
+
+  useEffect(() => {
+    const hasOverdriveActive =
+      !!state &&
+      (state.players.red.overdriveActive || state.players.blue.overdriveActive);
+    const isGameOver = state?.phase === "gameover" || winner !== null;
+
+    if (!isGameOver && hasOverdriveActive && !isSfxMuted) {
+      startOverdriveLoop(sfxVolume);
+    } else {
+      stopOverdriveLoop();
+    }
+
+    return () => {
+      stopOverdriveLoop();
+    };
+  }, [isSfxMuted, sfxVolume, state, winner]);
 
   useEffect(() => {
     const handleGlobalPointerDown = (event: PointerEvent) => {
