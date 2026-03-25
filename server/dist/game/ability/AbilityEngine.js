@@ -98,6 +98,7 @@ function resolveAbilityRound(params) {
     const escaperPath = escapeeColor === 'red' ? redPath : bluePath;
     const startsOverlapped = samePosition(redStart, blueStart);
     const ignoreStartTileCollision = startsOverlapped && escaperPath.length > 0;
+    const escaperHasStepZeroGuard = (escapeeColor === 'red' ? redReservations : blueReservations).some((reservation) => reservation.skillId === 'classic_guard' && reservation.step === 0);
     const applyDamages = (sourceColor, damages, skillId, step, order, affectedPositions) => {
         skillEvents.push({
             step,
@@ -289,7 +290,8 @@ function resolveAbilityRound(params) {
     };
     for (let step = 0; step <= maxStep; step++) {
         if (step === 0 && startsOverlapped && !ignoreStartTileCollision) {
-            const protectedByGuard = escapeeColor === 'red' ? redInv > 0 : blueInv > 0;
+            const protectedByGuard = (escapeeColor === 'red' ? redInv > 0 : blueInv > 0) ||
+                escaperHasStepZeroGuard;
             if (!protectedByGuard) {
                 if (escapeeColor === 'red') {
                     redHp = Math.max(0, redHp - 1);
