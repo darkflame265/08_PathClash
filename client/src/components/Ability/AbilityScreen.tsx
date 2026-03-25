@@ -1378,13 +1378,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
 
       if (step > maxSteps) {
-        setMovingPaths({ red: [], blue: [] });
-        setMovingStarts(null);
-        setMovingTeleportMarkers({ red: null, blue: null });
-        setMovingTeleportSteps({ red: null, blue: null });
-        setMovingBlitzColors({ red: false, blue: false });
-        setMovingBlitzProgress({ red: 0, blue: 0 });
-        setMovingBlitzSteps({ red: null, blue: null });
         return;
       }
 
@@ -1519,12 +1512,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }) => {
       setWinner(nextWinner);
       setState((prev) => (prev ? { ...prev, phase: "gameover" } : prev));
-      setMovingPaths({ red: [], blue: [] });
-      setMovingStarts(null);
-      setMovingTeleportMarkers({ red: null, blue: null });
-      setMovingBlitzColors({ red: false, blue: false });
-      setMovingBlitzProgress({ red: 0, blue: 0 });
-      setMovingBlitzSteps({ red: null, blue: null });
     };
 
     const onOpponentDisconnected = () => {

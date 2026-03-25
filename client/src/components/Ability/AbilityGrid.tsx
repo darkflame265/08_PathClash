@@ -274,17 +274,18 @@ export function AbilityGrid({
   }));
 
   const redPath =
-    state.phase === 'moving'
+    state.phase === 'moving' || state.phase === 'gameover'
       ? movingPaths.red
       : currentColor === 'red'
         ? myPath
         : [];
   const bluePath =
-    state.phase === 'moving'
+    state.phase === 'moving' || state.phase === 'gameover'
       ? movingPaths.blue
       : currentColor === 'blue'
         ? myPath
         : [];
+  const isPlaybackPhase = state.phase === 'moving' || state.phase === 'gameover';
 
   const teleportOrigin =
     myPath.length > 0 ? myPath[myPath.length - 1] : state.players[currentColor].position;
@@ -443,7 +444,7 @@ export function AbilityGrid({
           </button>
         ))}
 
-        {state.phase === 'moving' ? (
+        {isPlaybackPhase ? (
           movingTeleportMarkers.red && movingTeleportSteps.red !== null ? (
             <>
               <PathLine
@@ -504,7 +505,7 @@ export function AbilityGrid({
             movingBlitzSteps.red,
             movingBlitzProgress.red,
           )}
-        {state.phase === 'moving' ? (
+        {isPlaybackPhase ? (
           movingTeleportMarkers.blue && movingTeleportSteps.blue !== null ? (
             <>
               <PathLine
@@ -566,7 +567,7 @@ export function AbilityGrid({
             movingBlitzProgress.blue,
           )}
 
-        {teleportMarker && state.phase !== 'moving' && (
+        {teleportMarker && !isPlaybackPhase && (
           <div
             className="ability-teleport-marker"
             style={{
@@ -581,7 +582,7 @@ export function AbilityGrid({
           </div>
         )}
 
-        {state.phase === 'moving' &&
+        {isPlaybackPhase &&
           (['red', 'blue'] as const).map((color) => {
             const marker = movingTeleportMarkers[color];
             if (!marker) return null;
