@@ -157,6 +157,13 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [chargeEffects, setChargeEffects] = useState<
     Array<{ id: number; color: PlayerColor; position: Position }>
   >([]);
+  const [healEffects, setHealEffects] = useState<
+    Array<{ id: number; color: PlayerColor; position: Position }>
+  >([]);
+  const [healHeartEffects, setHealHeartEffects] = useState<{
+    red: number | null;
+    blue: number | null;
+  }>({ red: null, blue: null });
   const [activeGuards, setActiveGuards] = useState<{
     red: boolean;
     blue: boolean;
@@ -773,6 +780,24 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }, 1800);
   };
 
+  const triggerHealEffect = (
+    color: PlayerColor,
+    position: Position,
+    healedHeartIndex: number,
+  ) => {
+    const effectId = Date.now() + Math.random();
+    setHealEffects((prev) => [...prev, { id: effectId, color, position }]);
+    setHealHeartEffects((prev) => ({ ...prev, [color]: healedHeartIndex }));
+    queueAnimationTimeout(() => {
+      setHealEffects((prev) => prev.filter((entry) => entry.id !== effectId));
+    }, 1300);
+    queueAnimationTimeout(() => {
+      setHealHeartEffects((prev) =>
+        prev[color] === healedHeartIndex ? { ...prev, [color]: null } : prev,
+      );
+    }, 950);
+  };
+
   const runSkillEvent = (
     event: AbilityResolutionPayload["skillEvents"][number],
     done: () => void,
@@ -831,6 +856,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
       if (event.skillId === "aurora_heal") {
         for (const heal of event.heals ?? []) {
+          const healedHeartIndex = Math.max(0, heal.newHp - 1);
           setState((prev) => {
             if (!prev) return prev;
             return {
@@ -844,6 +870,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               },
             };
           });
+          triggerHealEffect(heal.color, heal.position, healedHeartIndex);
         }
       }
 
@@ -1596,6 +1623,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             color={opponentColor}
             hp={opponent.hp}
             myColor={currentColor}
+            healedHeartIndex={healHeartEffects[opponentColor]}
           />
         </div>
       </div>
@@ -1683,6 +1711,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             collisionEffects={collisionEffects}
             teleportEffects={teleportEffects}
             chargeEffects={chargeEffects}
+            healEffects={healEffects}
             activeGuards={activeGuards}
             previewStart={previewStart}
             teleportReservation={teleportReservation}
@@ -1735,7 +1764,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           </span>
         </div>
         <div className="gs-hp-slot">
-          <HpDisplay color={currentColor} hp={me.hp} myColor={currentColor} />
+          <HpDisplay
+            color={currentColor}
+            hp={me.hp}
+            myColor={currentColor}
+            healedHeartIndex={healHeartEffects[currentColor]}
+          />
         </div>
       </div>
 

@@ -26,6 +26,11 @@ interface Props {
     color: PlayerColor;
     position: Position;
   }>;
+  healEffects: Array<{
+    id: number;
+    color: PlayerColor;
+    position: Position;
+  }>;
   activeGuards: { red: boolean; blue: boolean };
   previewStart: Position;
   teleportReservation: AbilitySkillReservation | null;
@@ -92,6 +97,7 @@ export function AbilityGrid({
   collisionEffects,
   teleportEffects,
   chargeEffects,
+  healEffects,
   activeGuards,
   previewStart,
   teleportReservation,
@@ -653,6 +659,26 @@ export function AbilityGrid({
             <span className="ability-charge-float">
               <span className="ability-charge-icon">⚡</span>
               <span className="ability-charge-text">+4</span>
+            </span>
+          </div>
+        ))}
+
+        {healEffects.map((effect) => (
+          <div
+            key={`heal-${effect.id}`}
+            className={`ability-heal-effect ability-heal-effect-${effect.color}`}
+            style={{
+              left: effect.position.col * responsiveCellSize + responsiveCellSize / 2,
+              top: effect.position.row * responsiveCellSize + responsiveCellSize / 2,
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            <span className="ability-heal-wave ability-heal-wave-a" />
+            <span className="ability-heal-wave ability-heal-wave-b" />
+            <span className="ability-heal-wave ability-heal-wave-c" />
+            <span className="ability-heal-float">
+              <span className="ability-heal-icon">✚</span>
+              <span className="ability-heal-text">+1</span>
             </span>
           </div>
         ))}
