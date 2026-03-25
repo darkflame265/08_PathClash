@@ -48,6 +48,7 @@ export interface AbilityPlayerState {
   mana: number;
   invulnerableSteps: number;
   overdriveActive: boolean;
+  reboundLocked: boolean;
   equippedSkills: AbilitySkillId[];
 }
 

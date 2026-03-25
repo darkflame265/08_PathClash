@@ -9,6 +9,7 @@ import { CollisionEffect } from '../Effects/CollisionEffect';
 interface Props {
   state: AbilityBattleState;
   currentColor: PlayerColor;
+  pathPoints: number;
   myPath: Position[];
   setMyPath: (path: Position[]) => void;
   displayPositions: { red: Position; blue: Position };
@@ -89,6 +90,7 @@ function buildBlitzBoltPoints(
 export function AbilityGrid({
   state,
   currentColor,
+  pathPoints,
   myPath,
   setMyPath,
   displayPositions,
@@ -164,7 +166,6 @@ export function AbilityGrid({
   const baseStart = state.players[currentColor].position;
   const myStart = previewStart;
   const obstacles = state.obstacles;
-  const pathPoints = state.pathPoints;
   const redSkin = state.players.red.pieceSkin;
   const blueSkin = state.players.blue.pieceSkin;
 

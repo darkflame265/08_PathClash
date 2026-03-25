@@ -54,6 +54,7 @@ export interface ClientAbilityPlayerState extends ClientPlayerState {
   mana: number;
   invulnerableSteps: number;
   overdriveActive: boolean;
+  reboundLocked: boolean;
   equippedSkills: AbilitySkillId[];
 }
 

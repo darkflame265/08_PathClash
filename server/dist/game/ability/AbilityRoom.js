@@ -577,6 +577,7 @@ class AbilityRoom {
             mana: player.mana,
             invulnerableSteps: player.invulnerableSteps,
             overdriveActive: player.overdriveActive,
+            reboundLocked: player.reboundLocked,
             equippedSkills: player.equippedSkills,
         };
     }

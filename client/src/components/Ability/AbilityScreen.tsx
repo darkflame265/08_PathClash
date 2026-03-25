@@ -1545,6 +1545,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const me = state.players[currentColor];
   const opponent = state.players[opponentColor];
+  const effectivePathPoints = me.reboundLocked ? 0 : state.pathPoints;
   const rewardTokens =
     winner && winner === currentColor
       ? Math.min(6, Math.max(0, 120 - accountDailyRewardTokens))
@@ -1553,6 +1554,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const previewStart = getPreviewStart();
   const canDrawPath =
     isPlanning &&
+    effectivePathPoints > 0 &&
     !mySubmitted &&
     !skillReservations.some(
       (reservation) =>
@@ -1735,6 +1737,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           <AbilityGrid
             state={state}
             currentColor={currentColor}
+            pathPoints={effectivePathPoints}
             myPath={myPath}
             setMyPath={updateMyPath}
             displayPositions={{ red: redDisplayPos, blue: blueDisplayPos }}
@@ -1813,11 +1816,11 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           <span className="gs-path-count">
             <span className="gs-path-current">{myPath.length}</span>
             <span className="gs-path-sep"> / </span>
-            <span className="gs-path-max">{state.pathPoints}</span>
+            <span className="gs-path-max">{effectivePathPoints}</span>
           </span>
         </div>
         <div className="gs-path-gauge">
-          {Array.from({ length: state.pathPoints }, (_, index) => (
+          {Array.from({ length: effectivePathPoints }, (_, index) => (
             <div
               key={index}
               className={`gs-path-seg${index < myPath.length ? " filled" : ""}`}
