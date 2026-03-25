@@ -92,6 +92,7 @@ function resolveAbilityRound(params) {
     let bluePendingManaBonus = blue.pendingManaBonus;
     let redBlitz = false;
     let blueBlitz = false;
+    let attackerQuantumOverlapPending = false;
     const redReservations = sortReservations(red.plannedSkills);
     const blueReservations = sortReservations(blue.plannedSkills);
     const maxStep = Math.max(redPath.length, bluePath.length);
@@ -138,6 +139,7 @@ function resolveAbilityRound(params) {
         }
         if (reservation.skillId === 'quantum_shift' && reservation.target) {
             const from = { ...currentPos };
+            const createsOverlap = color === attackerColor && samePosition(reservation.target, opponentPos);
             if (color === 'red') {
                 redPos = { ...reservation.target };
                 redMana = Math.max(0, casterMana - 3);
@@ -145,6 +147,9 @@ function resolveAbilityRound(params) {
             else {
                 bluePos = { ...reservation.target };
                 blueMana = Math.max(0, casterMana - 3);
+            }
+            if (createsOverlap) {
+                attackerQuantumOverlapPending = true;
             }
             skillEvents.push({
                 step: reservation.step,
@@ -344,7 +349,10 @@ function resolveAbilityRound(params) {
                 : !samePosition(blueNext, bluePrev);
             redPos = redNext;
             bluePos = blueNext;
-            if (startsStepOverlapped && escaperStayedStill && attackerMoved) {
+            if (attackerQuantumOverlapPending &&
+                startsStepOverlapped &&
+                escaperStayedStill &&
+                attackerMoved) {
                 const protectedByGuard = escapeeColor === 'red' ? redInv > 0 : blueInv > 0;
                 if (!protectedByGuard) {
                     if (escapeeColor === 'red') {
@@ -357,6 +365,7 @@ function resolveAbilityRound(params) {
                     }
                 }
             }
+            attackerQuantumOverlapPending = false;
             const overlappingAfterBlitz = (redBlitz || blueBlitz) && samePosition(redPos, bluePos);
             if (!overlappingAfterBlitz && positionsTouch(redPos, redPrev, bluePos, bluePrev)) {
                 const protectedByGuard = escapeeColor === 'red' ? redInv > 0 : blueInv > 0;

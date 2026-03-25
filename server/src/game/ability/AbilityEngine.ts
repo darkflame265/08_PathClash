@@ -133,6 +133,7 @@ export function resolveAbilityRound(params: {
   let bluePendingManaBonus = blue.pendingManaBonus;
   let redBlitz = false;
   let blueBlitz = false;
+  let attackerQuantumOverlapPending = false;
 
   const redReservations = sortReservations(red.plannedSkills);
   const blueReservations = sortReservations(blue.plannedSkills);
@@ -195,12 +196,17 @@ export function resolveAbilityRound(params: {
 
     if (reservation.skillId === 'quantum_shift' && reservation.target) {
       const from = { ...currentPos };
+      const createsOverlap =
+        color === attackerColor && samePosition(reservation.target, opponentPos);
       if (color === 'red') {
         redPos = { ...reservation.target };
         redMana = Math.max(0, casterMana - 3);
       } else {
         bluePos = { ...reservation.target };
         blueMana = Math.max(0, casterMana - 3);
+      }
+      if (createsOverlap) {
+        attackerQuantumOverlapPending = true;
       }
       skillEvents.push({
         step: reservation.step,
@@ -425,7 +431,12 @@ export function resolveAbilityRound(params: {
       redPos = redNext;
       bluePos = blueNext;
 
-      if (startsStepOverlapped && escaperStayedStill && attackerMoved) {
+      if (
+        attackerQuantumOverlapPending &&
+        startsStepOverlapped &&
+        escaperStayedStill &&
+        attackerMoved
+      ) {
         const protectedByGuard = escapeeColor === 'red' ? redInv > 0 : blueInv > 0;
         if (!protectedByGuard) {
           if (escapeeColor === 'red') {
@@ -437,6 +448,7 @@ export function resolveAbilityRound(params: {
           }
         }
       }
+      attackerQuantumOverlapPending = false;
       const overlappingAfterBlitz =
         (redBlitz || blueBlitz) && samePosition(redPos, bluePos);
 
