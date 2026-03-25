@@ -5,11 +5,13 @@ let quantumAudio: HTMLAudioElement | null = null;
 let emberAudio: HTMLAudioElement | null = null;
 let blitzAudio: HTMLAudioElement | null = null;
 let bigBangAudio: HTMLAudioElement | null = null;
+let healingAudio: HTMLAudioElement | null = null;
 const CHARGE_SFX_GAIN = 0.4;
 const QUANTUM_SFX_GAIN = 0.65;
 const EMBER_SFX_GAIN = 0.3;
 const BLITZ_SFX_GAIN = 0.6;
 const BIGBANG_SFX_GAIN = 0.9;
+const HEALING_SFX_GAIN = 0.65;
 
 function getCtx(): AudioContext {
   if (!audioCtx) audioCtx = new AudioContext();
@@ -108,6 +110,22 @@ export function playBigBang(volume = 0.55): void {
     }
     const audio = bigBangAudio.cloneNode(true) as HTMLAudioElement;
     audio.volume = Math.max(0, Math.min(1, volume * BIGBANG_SFX_GAIN));
+    void audio.play().catch(() => {
+      // Playback can fail if browser blocks audio; ignore.
+    });
+  } catch {
+    // Audio element not available
+  }
+}
+
+export function playHealing(volume = 0.55): void {
+  try {
+    if (!healingAudio) {
+      healingAudio = new Audio("/sfx/ability/healing_skill.mp3");
+      healingAudio.preload = "auto";
+    }
+    const audio = healingAudio.cloneNode(true) as HTMLAudioElement;
+    audio.volume = Math.max(0, Math.min(1, volume * HEALING_SFX_GAIN));
     void audio.play().catch(() => {
       // Playback can fail if browser blocks audio; ignore.
     });

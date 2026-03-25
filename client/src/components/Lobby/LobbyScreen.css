@@ -260,6 +260,14 @@
     0 0 16px rgba(192, 38, 211, 0.18);
 }
 
+.ability-skill-icon-glyph.is-aurora-heal {
+  color: #22c55e;
+  font-weight: 900;
+  text-shadow:
+    0 0 8px rgba(34, 197, 94, 0.32),
+    0 0 16px rgba(134, 239, 172, 0.18);
+}
+
 .google-link-btn {
   display: flex;
   align-items: center;

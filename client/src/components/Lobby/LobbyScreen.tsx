@@ -183,7 +183,7 @@ function renderAbilitySkillIcon(skillId: AbilitySkillId) {
   const icon = skillId === "electric_blitz" ? "⚡︎" : skill.icon;
   return (
     <span
-      className={`ability-skill-icon-glyph${skillId === "electric_blitz" ? " is-electric-blitz" : ""}`}
+      className={`ability-skill-icon-glyph${skillId === "electric_blitz" ? " is-electric-blitz" : ""}${skillId === "aurora_heal" ? " is-aurora-heal" : ""}`}
       aria-hidden="true"
     >
       {icon}

@@ -6,7 +6,7 @@ import { useGameStore } from "../../store/gameStore";
 import { TimerBar } from "../Game/TimerBar";
 import { PlayerInfo } from "../Game/PlayerInfo";
 import { HpDisplay } from "../Game/HpDisplay";
-import { playBigBang, playBlitz, playCharge, playEmber, playHit, playQuantum } from "../../utils/soundUtils";
+import { playBigBang, playBlitz, playCharge, playEmber, playHealing, playHit, playQuantum } from "../../utils/soundUtils";
 import type { PlayerColor, Position } from "../../types/game.types";
 import {
   ABILITY_SKILLS,
@@ -64,7 +64,7 @@ function renderSkillIcon(skillId: AbilitySkillId) {
   const icon = skillId === "electric_blitz" ? "⚡︎" : skill.icon;
   return (
     <span
-      className={`ability-skill-icon-glyph${skillId === "electric_blitz" ? " is-electric-blitz" : ""}`}
+      className={`ability-skill-icon-glyph${skillId === "electric_blitz" ? " is-electric-blitz" : ""}${skillId === "aurora_heal" ? " is-aurora-heal" : ""}`}
       aria-hidden="true"
     >
       {icon}
@@ -855,6 +855,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
 
       if (event.skillId === "aurora_heal") {
+        if (!isSfxMuted) {
+          playHealing(sfxVolume);
+        }
         for (const heal of event.heals ?? []) {
           const healedHeartIndex = Math.max(0, heal.newHp - 1);
           setState((prev) => {
