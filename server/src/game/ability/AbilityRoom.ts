@@ -24,6 +24,7 @@ const SUBMIT_GRACE_MS = 350;
 const INITIAL_MANA = 4;
 const MAX_MANA = 10;
 const MANA_PER_TURN = 2;
+const SKILL_EVENT_BUFFER_MS = 1300;
 
 function posEqual(a: Position, b: Position): boolean {
   return a.row === b.row && a.col === b.col;
@@ -401,7 +402,7 @@ export class AbilityRoom {
 
     const animTime = calcAnimationDuration(
       Math.max(red.plannedPath.length, blue.plannedPath.length) + resolution.payload.skillEvents.length,
-    ) + resolution.payload.skillEvents.length * 280;
+    ) + resolution.payload.skillEvents.length * SKILL_EVENT_BUFFER_MS;
 
     this.clearMovingCompleteTimeout();
     this.movingCompleteTimeout = setTimeout(() => {

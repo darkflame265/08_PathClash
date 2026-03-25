@@ -9,7 +9,7 @@ const CHARGE_SFX_GAIN = 0.5;
 const QUANTUM_SFX_GAIN = 0.65;
 const EMBER_SFX_GAIN = 0.3;
 const BLITZ_SFX_GAIN = 0.6;
-const BIGBANG_SFX_GAIN = 0.7;
+const BIGBANG_SFX_GAIN = 0.9;
 
 function getCtx(): AudioContext {
   if (!audioCtx) audioCtx = new AudioContext();
