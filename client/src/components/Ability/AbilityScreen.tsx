@@ -785,6 +785,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
 
       if (event.skillId === "nova_blast") {
+        if (!isSfxMuted) {
+          playEmber(sfxVolume);
+        }
         for (const position of event.affectedPositions ?? []) {
           const effectId = Date.now() + Math.random();
           setCollisionEffects((prev) => [...prev, { id: effectId, position }]);

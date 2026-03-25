@@ -5,9 +5,9 @@ let quantumAudio: HTMLAudioElement | null = null;
 let emberAudio: HTMLAudioElement | null = null;
 let blitzAudio: HTMLAudioElement | null = null;
 let bigBangAudio: HTMLAudioElement | null = null;
-const CHARGE_SFX_GAIN = 0.35;
+const CHARGE_SFX_GAIN = 0.5;
 const QUANTUM_SFX_GAIN = 0.65;
-const EMBER_SFX_GAIN = 0.6;
+const EMBER_SFX_GAIN = 0.3;
 const BLITZ_SFX_GAIN = 0.6;
 const BIGBANG_SFX_GAIN = 0.7;
 
