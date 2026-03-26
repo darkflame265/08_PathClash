@@ -25,7 +25,7 @@ const ARC_REACTOR_SFX_GAIN = 0.6;
 const VOID_CLOAK_SFX_GAIN = 0.6;
 const OVERDRIVE_LOOP_GAIN = 0.4;
 const GUARD_SFX_GAIN = 0.55;
-const ATOMIC_FISSION_SFX_GAIN = 0.55;
+const ATOMIC_FISSION_SFX_GAIN = 0.6;
 
 function getCtx(): AudioContext {
   if (!audioCtx) audioCtx = new AudioContext();
@@ -55,7 +55,7 @@ export function playHit(volume = 0.55): void {
 export function playGuard(volume = 0.55): void {
   try {
     if (!guardAudio) {
-      guardAudio = new Audio("/sfx/ability/guard.wav");
+      guardAudio = new Audio("/sfx/ability/guard.mp3");
       guardAudio.preload = "auto";
     }
     const audio = guardAudio.cloneNode(true) as HTMLAudioElement;
@@ -275,5 +275,3 @@ export function stopOverdriveLoop(): void {
     // Audio element not available
   }
 }
-
-
