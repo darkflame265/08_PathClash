@@ -180,6 +180,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     red: boolean;
     blue: boolean;
   }>({ red: false, blue: false });
+  const [activePhaseShifts, setActivePhaseShifts] = useState<{
+    red: boolean;
+    blue: boolean;
+  }>({ red: false, blue: false });
   const [movingPaths, setMovingPaths] = useState<{
     red: Position[];
     blue: Position[];
@@ -347,6 +351,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       red: nextState.players.red.invulnerableSteps > 0,
       blue: nextState.players.blue.invulnerableSteps > 0,
     });
+    setActivePhaseShifts({ red: false, blue: false });
     setHitFlags({ red: false, blue: false });
     setExplodingFlags({ red: false, blue: false });
     setCollisionEffects([]);
@@ -544,6 +549,29 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setSkillReservations(nextReservations);
     setSelectedSkillId(null);
     syncMyPlan([], nextReservations);
+  };
+
+  const togglePhaseShiftSkill = () => {
+    const alreadyReserved = skillReservations.some(
+      (entry) => entry.skillId === "phase_shift",
+    );
+    if (alreadyReserved) {
+      removeReservation("phase_shift");
+      return;
+    }
+    if (getMyRole() !== "escaper") return;
+    if (getRemainingMana() < getSkillCost("phase_shift")) return;
+    const nextReservations: AbilitySkillReservation[] = [
+      ...skillReservations.filter((entry) => entry.skillId !== "phase_shift"),
+      {
+        skillId: "phase_shift",
+        step: 0,
+        order: reservationOrderRef.current++,
+      },
+    ];
+    setSkillReservations(nextReservations);
+    setSelectedSkillId(null);
+    syncMyPlan(myPath, nextReservations);
   };
 
   const beginExplosionStepPick = () => {
@@ -879,6 +907,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       toggleGuardSkill();
       return;
     }
+    if (skillId === "phase_shift") {
+      togglePhaseShiftSkill();
+      return;
+    }
     if (skillId === "ember_blast") {
       beginExplosionStepPick();
       return;
@@ -999,6 +1031,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     queueAnimationTimeout(() => {
       if (event.skillId === "classic_guard") {
         setActiveGuards((prev) => ({ ...prev, [event.color]: true }));
+      }
+
+      if (event.skillId === "phase_shift") {
+        setActivePhaseShifts((prev) => ({ ...prev, [event.color]: true }));
       }
 
       if (event.skillId === "plasma_charge") {
@@ -1353,6 +1389,15 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       red: stateRef.current?.players.red.invulnerableSteps ?? 0,
       blue: stateRef.current?.players.blue.invulnerableSteps ?? 0,
     };
+    const phaseShiftFlags = {
+      red: payload.skillEvents.some(
+        (event) => event.skillId === "phase_shift" && event.color === "red",
+      ),
+      blue: payload.skillEvents.some(
+        (event) => event.skillId === "phase_shift" && event.color === "blue",
+      ),
+    };
+    setActivePhaseShifts(phaseShiftFlags);
 
     const skillMap = new Map<number, AbilityResolutionPayload["skillEvents"]>();
     for (const event of payload.skillEvents) {
@@ -1947,6 +1992,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             chargeEffects={chargeEffects}
             healEffects={healEffects}
             activeGuards={activeGuards}
+            activePhaseShifts={activePhaseShifts}
             previewStart={previewStart}
             teleportReservation={teleportReservation}
             teleportMarker={
@@ -2085,7 +2131,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               (entry) => entry.skillId === "cosmic_bigbang",
             );
             const roleBlocked =
-              (skillId === "classic_guard" && getMyRole() !== "escaper") ||
+              ((skillId === "classic_guard" || skillId === "phase_shift") &&
+                getMyRole() !== "escaper") ||
               ((skillId === "ember_blast" ||
                 skillId === "inferno_field" ||
                 skillId === "nova_blast" ||

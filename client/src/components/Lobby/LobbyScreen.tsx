@@ -204,6 +204,17 @@ function getAbilitySkillSummary(skillId: AbilitySkillId, lang: "ko" | "en") {
             ? "Become invulnerable for 2 turns and block attack skills."
             : "2턴 동안 무적이 되며, 공격 스킬을 막습니다.",
       };
+    case "phase_shift":
+      return {
+        tags:
+          lang === "en"
+            ? "Move OK · Combo OK"
+            : "이동 가능 · 조합 가능",
+        desc:
+          lang === "en"
+            ? "Become completely invulnerable for this turn and ignore collisions, obstacles, lava, and attack skills."
+            : "해당 턴 완전 무적이 되며, 충돌과 장애물, 용암지대, 공격 스킬을 무시합니다.",
+      };
     case "ember_blast":
       return {
         tags:

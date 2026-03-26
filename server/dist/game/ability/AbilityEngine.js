@@ -11,6 +11,7 @@ function getSkillPriority(skillId) {
         case 'gold_overdrive':
         case 'void_cloak':
             return 0;
+        case 'phase_shift':
         case 'classic_guard':
             return 1;
         case 'ember_blast':
@@ -109,6 +110,8 @@ function resolveAbilityRound(params) {
     let blueMana = blue.mana;
     let redInv = red.invulnerableSteps;
     let blueInv = blue.invulnerableSteps;
+    let redPhaseShift = false;
+    let bluePhaseShift = false;
     let redPendingManaBonus = red.pendingManaBonus;
     let bluePendingManaBonus = blue.pendingManaBonus;
     let redPendingOverdriveStage = red.pendingOverdriveStage;
@@ -130,6 +133,7 @@ function resolveAbilityRound(params) {
     const startsOverlapped = samePosition(redStart, blueStart);
     const ignoreStartTileCollision = startsOverlapped && escaperPath.length > 0;
     const escaperHasStepZeroGuard = (escapeeColor === 'red' ? redReservations : blueReservations).some((reservation) => reservation.skillId === 'classic_guard' && reservation.step === 0);
+    const escaperHasStepZeroPhaseShift = (escapeeColor === 'red' ? redReservations : blueReservations).some((reservation) => reservation.skillId === 'phase_shift' && reservation.step === 0);
     const applyDamages = (sourceColor, damages, heals, skillId, step, order, affectedPositions) => {
         skillEvents.push({
             step,
@@ -163,6 +167,24 @@ function resolveAbilityRound(params) {
                 color,
                 skillId: reservation.skillId,
                 invulnerableSteps: GUARD_STEPS,
+            });
+            return;
+        }
+        if (reservation.skillId === 'phase_shift') {
+            if (color === 'red') {
+                redPhaseShift = true;
+                redMana = Math.max(0, casterMana - 8);
+            }
+            else {
+                bluePhaseShift = true;
+                blueMana = Math.max(0, casterMana - 8);
+            }
+            skillEvents.push({
+                step: reservation.step,
+                order: reservation.order,
+                color,
+                skillId: reservation.skillId,
+                phaseShiftActive: true,
             });
             return;
         }
@@ -261,7 +283,9 @@ function resolveAbilityRound(params) {
             const fullPath = color === 'red' ? redPath : bluePath;
             const path = fullPath.slice(reservation.step);
             const affectedPositions = getLinePositions(currentPos, path);
-            const opponentProtected = opponentColor === 'red' ? redInv > 0 : blueInv > 0;
+            const opponentProtected = opponentColor === 'red'
+                ? redInv > 0 || redPhaseShift
+                : blueInv > 0 || bluePhaseShift;
             if (affectedPositions.some((position) => samePosition(position, opponentPos)) && !opponentProtected) {
                 if (opponentColor === 'red') {
                     redHp = Math.max(0, redHp - 1);
@@ -303,7 +327,9 @@ function resolveAbilityRound(params) {
         if (reservation.skillId === 'ember_blast') {
             const affectedPositions = getCrossPositions(currentPos).filter((position) => !obstacles.some((obstacle) => samePosition(obstacle, position)));
             const damages = [];
-            const opponentProtected = opponentColor === 'red' ? redInv > 0 : blueInv > 0;
+            const opponentProtected = opponentColor === 'red'
+                ? redInv > 0 || redPhaseShift
+                : blueInv > 0 || bluePhaseShift;
             if (affectedPositions.some((position) => samePosition(position, opponentPos)) && !opponentProtected) {
                 if (opponentColor === 'red') {
                     redHp = Math.max(0, redHp - 1);
@@ -345,7 +371,9 @@ function resolveAbilityRound(params) {
         if (reservation.skillId === 'nova_blast') {
             const affectedPositions = getNovaPositions(currentPos).filter((position) => !obstacles.some((obstacle) => samePosition(obstacle, position)));
             const damages = [];
-            const opponentProtected = opponentColor === 'red' ? redInv > 0 : blueInv > 0;
+            const opponentProtected = opponentColor === 'red'
+                ? redInv > 0 || redPhaseShift
+                : blueInv > 0 || bluePhaseShift;
             if (affectedPositions.some((position) => samePosition(position, opponentPos)) && !opponentProtected) {
                 if (opponentColor === 'red') {
                     redHp = Math.max(0, redHp - 1);
@@ -373,7 +401,9 @@ function resolveAbilityRound(params) {
                 }
             }
             const damages = [];
-            const opponentProtected = opponentColor === 'red' ? redInv > 0 : blueInv > 0;
+            const opponentProtected = opponentColor === 'red'
+                ? redInv > 0 || redPhaseShift
+                : blueInv > 0 || bluePhaseShift;
             if (!opponentProtected) {
                 if (opponentColor === 'red') {
                     redHp = Math.max(0, redHp - 2);
@@ -397,8 +427,11 @@ function resolveAbilityRound(params) {
         let redPrevForStep = { ...redPos };
         let bluePrevForStep = { ...bluePos };
         if (step === 0 && startsOverlapped && !ignoreStartTileCollision) {
-            const protectedByGuard = (escapeeColor === 'red' ? redInv > 0 : blueInv > 0) ||
-                escaperHasStepZeroGuard;
+            const protectedByGuard = (escapeeColor === 'red'
+                ? redInv > 0 || redPhaseShift
+                : blueInv > 0 || bluePhaseShift) ||
+                escaperHasStepZeroGuard ||
+                escaperHasStepZeroPhaseShift;
             if (!protectedByGuard) {
                 if (escapeeColor === 'red') {
                     redHp = Math.max(0, redHp - 1);
@@ -440,7 +473,9 @@ function resolveAbilityRound(params) {
                 startsStepOverlapped &&
                 escaperStayedStill &&
                 attackerMoved) {
-                const protectedByGuard = escapeeColor === 'red' ? redInv > 0 : blueInv > 0;
+                const protectedByGuard = escapeeColor === 'red'
+                    ? redInv > 0 || redPhaseShift
+                    : blueInv > 0 || bluePhaseShift;
                 if (!protectedByGuard) {
                     if (escapeeColor === 'red') {
                         redHp = Math.max(0, redHp - 1);
@@ -454,8 +489,13 @@ function resolveAbilityRound(params) {
             }
             attackerQuantumOverlapPending = false;
             const overlappingAfterBlitz = (redBlitz || blueBlitz) && samePosition(redPos, bluePos);
-            if (!overlappingAfterBlitz && positionsTouch(redPos, redPrev, bluePos, bluePrev)) {
-                const protectedByGuard = escapeeColor === 'red' ? redInv > 0 : blueInv > 0;
+            if (!overlappingAfterBlitz &&
+                !redPhaseShift &&
+                !bluePhaseShift &&
+                positionsTouch(redPos, redPrev, bluePos, bluePrev)) {
+                const protectedByGuard = escapeeColor === 'red'
+                    ? redInv > 0 || redPhaseShift
+                    : blueInv > 0 || bluePhaseShift;
                 if (!protectedByGuard) {
                     if (escapeeColor === 'red') {
                         redHp = Math.max(0, redHp - 1);
@@ -509,8 +549,8 @@ function resolveAbilityRound(params) {
                 }
             }
         };
-        applyLavaDamage('red', redPrevForStep, redPos, redInv > 0);
-        applyLavaDamage('blue', bluePrevForStep, bluePos, blueInv > 0);
+        applyLavaDamage('red', redPrevForStep, redPos, redInv > 0 || redPhaseShift);
+        applyLavaDamage('blue', bluePrevForStep, bluePos, blueInv > 0 || bluePhaseShift);
     }
     let winner = null;
     if (redHp <= 0 && blueHp <= 0)

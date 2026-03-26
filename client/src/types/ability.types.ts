@@ -8,6 +8,7 @@
 
 export type AbilitySkillId =
   | 'classic_guard'
+  | 'phase_shift'
   | 'ember_blast'
   | 'inferno_field'
   | 'nova_blast'
@@ -111,6 +112,7 @@ export interface AbilitySkillEvent {
   damages?: AbilityDamageEvent[];
   heals?: AbilityHealEvent[];
   invulnerableSteps?: number;
+  phaseShiftActive?: boolean;
   overdriveStage?: 0 | 1 | 2;
   lavaRemainingTurns?: number;
 }
@@ -142,6 +144,18 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     category: 'defense',
     skinId: 'classic',
     icon: '🛡',
+  },
+  phase_shift: {
+    id: 'phase_shift',
+    name: { en: 'Phase Shift', kr: '페이즈 시프트' },
+    description: {
+      en: 'Become completely invulnerable for this turn. Ignore collisions, obstacles, lava, and attack skills while moving.',
+      kr: '해당 턴 완전 무적 상태가 됩니다. 이동 중 충돌, 장애물, 용암지대, 공격 스킬을 무시합니다.',
+    },
+    manaCost: 8,
+    category: 'defense',
+    skinId: 'neon_pulse',
+    icon: '⬢',
   },
   ember_blast: {
     id: 'ember_blast',

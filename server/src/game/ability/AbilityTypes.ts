@@ -10,6 +10,7 @@ import type {
 
 export type AbilitySkillId =
   | 'classic_guard'
+  | 'phase_shift'
   | 'ember_blast'
   | 'inferno_field'
   | 'nova_blast'
@@ -111,6 +112,7 @@ export interface AbilitySkillEvent {
   damages?: AbilityDamageEvent[];
   heals?: AbilityHealEvent[];
   invulnerableSteps?: number;
+  phaseShiftActive?: boolean;
   overdriveStage?: 0 | 1 | 2;
   lavaRemainingTurns?: number;
 }

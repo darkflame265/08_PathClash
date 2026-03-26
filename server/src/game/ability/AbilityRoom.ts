@@ -53,6 +53,7 @@ function buildBlitzPath(start: Position, target: Position): Position[] {
 
 const SKILL_COSTS: Record<AbilitySkillId, number> = {
   classic_guard: 4,
+  phase_shift: 8,
   ember_blast: 4,
   inferno_field: 4,
   nova_blast: 4,
@@ -533,6 +534,7 @@ export class AbilityRoom {
     if (manaCost > player.mana) return null;
 
     const hasGuard = uniqueSkills.some((skill) => skill.skillId === 'classic_guard');
+    const hasPhaseShift = uniqueSkills.some((skill) => skill.skillId === 'phase_shift');
     const hasOverdrive = uniqueSkills.some((skill) => skill.skillId === 'gold_overdrive');
     const teleport = uniqueSkills.find((skill) => skill.skillId === 'quantum_shift') ?? null;
     const hasBlitz = uniqueSkills.some((skill) => skill.skillId === 'electric_blitz');
@@ -549,7 +551,7 @@ export class AbilityRoom {
     const bigBang = uniqueSkills.find((skill) => skill.skillId === 'cosmic_bigbang') ?? null;
     const hasCharge = uniqueSkills.some((skill) => skill.skillId === 'plasma_charge');
 
-    if (hasGuard && player.role !== 'escaper') return null;
+    if ((hasGuard || hasPhaseShift) && player.role !== 'escaper') return null;
     if (hasAttackSkill && player.role !== 'attacker') return null;
     if (player.reboundLocked && path.length > 0) return null;
 
@@ -557,6 +559,11 @@ export class AbilityRoom {
       if (hasGuard) {
         const guardSkill = uniqueSkills.find((skill) => skill.skillId === 'classic_guard');
         if (!guardSkill || guardSkill.step !== 0 || path.length > 0) return null;
+      }
+
+      if (hasPhaseShift) {
+        const phaseShiftSkill = uniqueSkills.find((skill) => skill.skillId === 'phase_shift');
+        if (!phaseShiftSkill || phaseShiftSkill.step !== 0) return null;
       }
 
         if (hasCharge) {
@@ -602,6 +609,8 @@ export class AbilityRoom {
         };
       }
 
+      const validationObstacles = hasPhaseShift ? [] : this.obstacles;
+
       if (teleport) {
         if (!teleport.target) return null;
         if (teleport.step < 0 || teleport.step > path.length) return null;
@@ -611,16 +620,16 @@ export class AbilityRoom {
         const rowDelta = Math.abs(teleport.target.row - teleportOrigin.row);
         const colDelta = Math.abs(teleport.target.col - teleportOrigin.col);
         if (rowDelta > 1 || colDelta > 1 || (rowDelta === 0 && colDelta === 0)) return null;
-        if (this.obstacles.some((obstacle) => obstacle.row === teleport.target!.row && obstacle.col === teleport.target!.col)) return null;
+        if (validationObstacles.some((obstacle) => obstacle.row === teleport.target!.row && obstacle.col === teleport.target!.col)) return null;
         if (teleport.target.row < 0 || teleport.target.row > 4 || teleport.target.col < 0 || teleport.target.col > 4) return null;
       }
 
       if (teleport) {
         const prefixPath = path.slice(0, teleport.step);
         const suffixPath = path.slice(teleport.step);
-        if (!isValidPath(player.position, prefixPath, hasGuard ? 0 : pathPoints, this.obstacles)) return null;
-        if (!isValidPath(teleport.target!, suffixPath, hasGuard ? 0 : pathPoints, this.obstacles)) return null;
-      } else if (!isValidPath(player.position, path, hasGuard ? 0 : pathPoints, this.obstacles)) {
+        if (!isValidPath(player.position, prefixPath, hasGuard ? 0 : pathPoints, validationObstacles)) return null;
+        if (!isValidPath(teleport.target!, suffixPath, hasGuard ? 0 : pathPoints, validationObstacles)) return null;
+      } else if (!isValidPath(player.position, path, hasGuard ? 0 : pathPoints, validationObstacles)) {
         return null;
       }
 
@@ -646,6 +655,7 @@ export class AbilityRoom {
           if (infernoOrigin && posEqual(infernoOrigin, skill.target)) return null;
         }
         if (skill.skillId === 'classic_guard' && skill.step !== 0) return null;
+        if (skill.skillId === 'phase_shift' && skill.step !== 0) return null;
         if (skill.skillId === 'cosmic_bigbang' && skill.step !== 0) return null;
       }
 
@@ -690,7 +700,8 @@ export class AbilityRoom {
     for (const movementSkill of movementSkills) {
       if (movementSkill.step < cursor) return null;
       const prefixSegment = path.slice(cursor, movementSkill.step);
-      if (!isValidPath(segmentStart, prefixSegment, pathPoints, this.obstacles)) {
+      const validationObstacles = hasPhaseShift ? [] : this.obstacles;
+      if (!isValidPath(segmentStart, prefixSegment, pathPoints, validationObstacles)) {
         return null;
       }
       const movementOrigin =
@@ -704,7 +715,7 @@ export class AbilityRoom {
         const colDelta = Math.abs(target.col - movementOrigin.col);
         if (rowDelta > 1 || colDelta > 1 || (rowDelta === 0 && colDelta === 0)) return null;
         if (target.row < 0 || target.row > 4 || target.col < 0 || target.col > 4) return null;
-        if (this.obstacles.some((obstacle) => obstacle.row === target.row && obstacle.col === target.col)) {
+        if (validationObstacles.some((obstacle) => obstacle.row === target.row && obstacle.col === target.col)) {
           return null;
         }
         segmentStart = target;
@@ -725,7 +736,8 @@ export class AbilityRoom {
     }
 
     const suffix = path.slice(cursor);
-    if (!isValidPath(segmentStart, suffix, pathPoints, this.obstacles)) {
+    const validationObstacles = hasPhaseShift ? [] : this.obstacles;
+    if (!isValidPath(segmentStart, suffix, pathPoints, validationObstacles)) {
       return null;
     }
 
