@@ -499,8 +499,8 @@ export function AbilityGrid({
             style={{
               left: target.col * responsiveCellSize + responsiveCellSize / 2,
               top: target.row * responsiveCellSize + responsiveCellSize / 2,
-              width: Math.max(24, responsiveCellSize * 0.38),
-              height: Math.max(24, responsiveCellSize * 0.38),
+              width: Math.max(32, responsiveCellSize * 0.5),
+              height: Math.max(32, responsiveCellSize * 0.5),
               transform: 'translate(-50%, -50%)',
             }}
             onClick={() => onBlitzTargetSelect(target)}
