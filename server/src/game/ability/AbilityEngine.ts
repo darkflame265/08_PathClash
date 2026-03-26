@@ -292,6 +292,61 @@ export function resolveAbilityRound(params: {
     }
   };
 
+  const resolveCollisionHit = (
+    sourceColor: PlayerColor,
+    targetColor: PlayerColor,
+    position: Position,
+    step: number,
+  ) => {
+    if (isProtectedByInv(targetColor)) return;
+
+    const targetAtField =
+      targetColor === 'red' ? redAtFieldSteps > 0 : blueAtFieldSteps > 0;
+    if (targetAtField) {
+      if (targetColor === 'red') redAtFieldSteps = 0;
+      else blueAtFieldSteps = 0;
+
+      if (isProtectedByInv(sourceColor)) return;
+
+      if (sourceColor === 'red') {
+        redHp = Math.max(0, redHp - 1);
+        collisions.push({
+          step,
+          position: { ...position },
+          escapeeColor: 'red',
+          newHp: redHp,
+        });
+      } else {
+        blueHp = Math.max(0, blueHp - 1);
+        collisions.push({
+          step,
+          position: { ...position },
+          escapeeColor: 'blue',
+          newHp: blueHp,
+        });
+      }
+      return;
+    }
+
+    if (targetColor === 'red') {
+      redHp = Math.max(0, redHp - 1);
+      collisions.push({
+        step,
+        position: { ...position },
+        escapeeColor: 'red',
+        newHp: redHp,
+      });
+    } else {
+      blueHp = Math.max(0, blueHp - 1);
+      collisions.push({
+        step,
+        position: { ...position },
+        escapeeColor: 'blue',
+        newHp: blueHp,
+      });
+    }
+  };
+
   const processSkill = (color: PlayerColor, reservation: AbilitySkillReservation) => {
     const currentPos = color === 'red' ? redPos : bluePos;
     const opponentPos = color === 'red' ? bluePos : redPos;
@@ -597,28 +652,13 @@ export function resolveAbilityRound(params: {
 
     if (step === 0 && startsOverlapped && !ignoreStartTileCollision) {
       const protectedByGuard =
-        isProtectedByCollision(escapeeColor) ||
-        escaperHasStepZeroGuard ||
-        escaperHasStepZeroPhaseShift ||
-        escaperHasStepZeroAtField;
-      if (!protectedByGuard) {
-        if (escapeeColor === 'red') {
-          redHp = Math.max(0, redHp - 1);
-          collisions.push({
-            step: 0,
-            position: { ...redStart },
-            escapeeColor,
-            newHp: redHp,
-          });
-        } else {
-          blueHp = Math.max(0, blueHp - 1);
-          collisions.push({
-            step: 0,
-            position: { ...blueStart },
-            escapeeColor,
-            newHp: blueHp,
-          });
+        escaperHasStepZeroGuard || escaperHasStepZeroPhaseShift || escaperHasStepZeroAtField;
+      if (protectedByGuard) {
+        if (escaperHasStepZeroAtField) {
+          resolveCollisionHit(attackerColor, escapeeColor, redStart, 0);
         }
+      } else {
+        resolveCollisionHit(attackerColor, escapeeColor, redStart, 0);
       }
     }
 
@@ -651,18 +691,7 @@ export function resolveAbilityRound(params: {
         escaperStayedStill &&
         attackerMoved
       ) {
-        const protectedByGuard = escapeeColor === 'red'
-          ? isProtectedByCollision('red')
-          : isProtectedByCollision('blue');
-        if (!protectedByGuard) {
-          if (escapeeColor === 'red') {
-            redHp = Math.max(0, redHp - 1);
-            collisions.push({ step, position: { ...redPrev }, escapeeColor, newHp: redHp });
-          } else {
-            blueHp = Math.max(0, blueHp - 1);
-            collisions.push({ step, position: { ...bluePrev }, escapeeColor, newHp: blueHp });
-          }
-        }
+        resolveCollisionHit(attackerColor, escapeeColor, redPrev, step);
       }
       attackerQuantumOverlapPending = false;
       const overlappingAfterBlitz =
@@ -674,18 +703,7 @@ export function resolveAbilityRound(params: {
         !bluePhaseShift &&
         positionsTouch(redPos, redPrev, bluePos, bluePrev)
       ) {
-        const protectedByGuard = escapeeColor === 'red'
-          ? isProtectedByCollision('red')
-          : isProtectedByCollision('blue');
-        if (!protectedByGuard) {
-          if (escapeeColor === 'red') {
-            redHp = Math.max(0, redHp - 1);
-            collisions.push({ step, position: { ...redPos }, escapeeColor, newHp: redHp });
-          } else {
-            blueHp = Math.max(0, blueHp - 1);
-            collisions.push({ step, position: { ...bluePos }, escapeeColor, newHp: blueHp });
-          }
-        }
+        resolveCollisionHit(attackerColor, escapeeColor, redPos, step);
       }
 
       if (redInv > 0) redInv -= 1;
