@@ -180,11 +180,35 @@ function AccountCard({
 
 function renderAbilitySkillIcon(skillId: AbilitySkillId) {
   const skill = ABILITY_SKILLS[skillId];
+  if (skillId === "phase_shift") {
+    return (
+      <span
+        className="ability-skill-icon-custom ability-skill-icon-phase-shift"
+        aria-hidden="true"
+      >
+        <span className="ability-skill-icon-phase-back" />
+        <span className="ability-skill-icon-phase-front" />
+      </span>
+    );
+  }
+  if (skillId === "arc_reactor_field") {
+    return (
+      <span
+        className="ability-skill-icon-custom ability-skill-icon-arc-field"
+        aria-hidden="true"
+      >
+        <span className="ability-skill-icon-arc-core" />
+        <span className="ability-skill-icon-arc-ring ability-skill-icon-arc-ring-a" />
+        <span className="ability-skill-icon-arc-ring ability-skill-icon-arc-ring-b" />
+      </span>
+    );
+  }
   if (skillId === "void_cloak") {
     return (
       <span className="ability-skill-icon-custom ability-skill-icon-void" aria-hidden="true">
-        <span className="ability-skill-icon-void-back" />
-        <span className="ability-skill-icon-void-front" />
+        <span className="ability-skill-icon-void-eye" />
+        <span className="ability-skill-icon-void-pupil" />
+        <span className="ability-skill-icon-void-slash" />
       </span>
     );
   }

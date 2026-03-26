@@ -44,34 +44,105 @@
   flex-shrink: 0;
 }
 
-.ability-skill-icon-void-back,
-.ability-skill-icon-void-front {
+.ability-skill-icon-phase-back,
+.ability-skill-icon-phase-front {
+  position: absolute;
+  width: 0.74em;
+  height: 0.84em;
+  clip-path: polygon(25% 4%, 75% 4%, 96% 50%, 75% 96%, 25% 96%, 4% 50%);
+}
+
+.ability-skill-icon-phase-back {
+  left: 0.1em;
+  top: 0.18em;
+  border: 2px dashed rgba(103, 232, 249, 0.72);
+  opacity: 0.48;
+  filter: blur(0.1px);
+}
+
+.ability-skill-icon-phase-front {
+  left: 0.26em;
+  top: 0.06em;
+  border: 2px solid rgba(34, 211, 238, 0.92);
+  background:
+    radial-gradient(circle at 38% 34%, rgba(255, 255, 255, 0.16), transparent 54%),
+    rgba(8, 145, 178, 0.08);
+  box-shadow:
+    0 0 8px rgba(34, 211, 238, 0.24),
+    inset 0 0 6px rgba(255, 255, 255, 0.08);
+}
+
+.ability-skill-icon-arc-core,
+.ability-skill-icon-arc-ring {
   position: absolute;
   border-radius: 999px;
 }
 
-.ability-skill-icon-void-back {
-  width: 0.72em;
-  height: 0.72em;
-  left: 0.08em;
-  top: 0.2em;
-  border: 2px dashed rgba(125, 211, 252, 0.8);
-  opacity: 0.55;
-  filter: blur(0.1px);
+.ability-skill-icon-arc-core {
+  width: 0.34em;
+  height: 0.34em;
+  background: radial-gradient(circle, #dbeafe 0%, #60a5fa 58%, #2563eb 100%);
+  box-shadow:
+    0 0 8px rgba(96, 165, 250, 0.44),
+    0 0 14px rgba(59, 130, 246, 0.22);
 }
 
-.ability-skill-icon-void-front {
-  width: 0.76em;
-  height: 0.76em;
-  left: 0.24em;
-  top: 0.04em;
+.ability-skill-icon-arc-ring {
+  border: 2px solid rgba(96, 165, 250, 0.9);
+}
+
+.ability-skill-icon-arc-ring-a {
+  width: 0.72em;
+  height: 0.72em;
+  opacity: 0.94;
+}
+
+.ability-skill-icon-arc-ring-b {
+  width: 1em;
+  height: 1em;
+  opacity: 0.52;
+}
+
+.ability-skill-icon-void-eye,
+.ability-skill-icon-void-pupil,
+.ability-skill-icon-void-slash {
+  position: absolute;
+}
+
+.ability-skill-icon-void-eye {
+  width: 0.98em;
+  height: 0.64em;
+  left: 0.06em;
+  top: 0.23em;
   border: 2px solid rgba(226, 232, 240, 0.92);
+  border-radius: 100% / 78%;
   background:
-    radial-gradient(circle at 38% 34%, rgba(255, 255, 255, 0.18), transparent 52%),
-    rgba(148, 163, 184, 0.08);
+    radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.18), transparent 56%),
+    rgba(15, 23, 42, 0.1);
   box-shadow:
     0 0 8px rgba(125, 211, 252, 0.18),
-    inset 0 0 6px rgba(255, 255, 255, 0.1);
+    inset 0 0 6px rgba(255, 255, 255, 0.06);
+}
+
+.ability-skill-icon-void-pupil {
+  width: 0.22em;
+  height: 0.22em;
+  left: 0.44em;
+  top: 0.42em;
+  border-radius: 999px;
+  background: radial-gradient(circle, #e2e8f0 0%, #7dd3fc 68%, #22d3ee 100%);
+  box-shadow: 0 0 8px rgba(125, 211, 252, 0.42);
+}
+
+.ability-skill-icon-void-slash {
+  width: 1.02em;
+  height: 2px;
+  left: 0.04em;
+  top: 0.52em;
+  background: linear-gradient(90deg, rgba(45, 212, 191, 0.1), rgba(125, 211, 252, 0.95), rgba(45, 212, 191, 0.1));
+  box-shadow: 0 0 8px rgba(125, 211, 252, 0.32);
+  transform: rotate(-32deg);
+  transform-origin: center;
 }
 
 .ability-skill-icon-bigbang {
