@@ -48,6 +48,7 @@ const BLITZ_DASH_STEP_MS = 12;
 const BLITZ_POST_HIT_PAUSE_MS = SKILL_PAUSE_MS;
 const VOID_REVEAL_PAUSE_MS = 450;
 const AT_FIELD_STEPS = 2;
+const GUARD_END_PAUSE_MS = 360;
 
 function buildBlitzPath(start: Position, target: Position): Position[] {
   const rowDelta = target.row - start.row;
@@ -1563,6 +1564,33 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
     };
 
+    const runGuardEndNotice = (
+      endedColors: PlayerColor[],
+      done: () => void,
+    ) => {
+      if (endedColors.length === 0) {
+        done();
+        return;
+      }
+      const bannerText =
+        endedColors.length > 1
+          ? lang === "en"
+            ? "Both · Guard Ended"
+            : "양측 · 가드 종료"
+          : endedColors[0] === currentColor
+            ? lang === "en"
+              ? "You · Guard Ended"
+              : "내 말 · 가드 종료"
+            : lang === "en"
+              ? "Enemy · Guard Ended"
+              : "상대 · 가드 종료";
+      setAbilityBanner(bannerText);
+      queueAnimationTimeout(() => {
+        setAbilityBanner(null);
+        done();
+      }, GUARD_END_PAUSE_MS);
+    };
+
     const advance = (step: number) => {
       if (step === 0) {
         const events = skillMap.get(0) ?? [];
@@ -1605,6 +1633,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
 
       queueAnimationTimeout(() => {
+        const endedGuards: PlayerColor[] = [];
+        if (guardCounters.red === 1) endedGuards.push("red");
+        if (guardCounters.blue === 1) endedGuards.push("blue");
         if (guardCounters.red > 0) guardCounters.red -= 1;
         if (guardCounters.blue > 0) guardCounters.blue -= 1;
         setActiveGuards({
@@ -1618,34 +1649,38 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           blue: atFieldCounters.blue > 0,
         });
 
-        const events = skillMap.get(step) ?? [];
-        if (events.length > 0) {
+        const continueStep = () => {
+          const events = skillMap.get(step) ?? [];
+          if (events.length > 0) {
+            const collisions = collisionMap.get(step) ?? [];
+            const hasBlitzEvent = events.some(
+              (event) => event.skillId === "electric_blitz",
+            );
+            runSkillQueue(events, 0, () => {
+              if (collisions.length > 0) {
+                applyCollisions(collisions);
+              }
+              if (hasBlitzEvent) {
+                queueAnimationTimeout(
+                  () => advance(step + 1),
+                  BLITZ_POST_HIT_PAUSE_MS,
+                );
+                return;
+              }
+              advance(step + 1);
+            });
+            return;
+          }
+
           const collisions = collisionMap.get(step) ?? [];
-          const hasBlitzEvent = events.some(
-            (event) => event.skillId === "electric_blitz",
-          );
-          runSkillQueue(events, 0, () => {
-            if (collisions.length > 0) {
-              applyCollisions(collisions);
-            }
-            if (hasBlitzEvent) {
-              queueAnimationTimeout(
-                () => advance(step + 1),
-                BLITZ_POST_HIT_PAUSE_MS,
-              );
-              return;
-            }
-            advance(step + 1);
-          });
-          return;
-        }
+          if (collisions.length > 0) {
+            applyCollisions(collisions);
+          }
 
-        const collisions = collisionMap.get(step) ?? [];
-        if (collisions.length > 0) {
-          applyCollisions(collisions);
-        }
+          advance(step + 1);
+        };
 
-        advance(step + 1);
+        runGuardEndNotice(endedGuards, continueStep);
       }, STEP_DURATION_MS);
     };
 
