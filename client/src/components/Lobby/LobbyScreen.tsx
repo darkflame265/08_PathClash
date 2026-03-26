@@ -56,7 +56,6 @@ const DONATE_URL =
   import.meta.env.VITE_DONATE_URL?.trim() || "https://pathclash.com";
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
 const PATCH_NOTES_VERSION = "2026-03-26-v1";
-const PATCH_NOTES_SUMMARY_SEEN_KEY = "pathclash.patchNotes.summarySeen";
 const PATCH_NOTES_READ_KEY = "pathclash.patchNotes.read";
 
 type SetAuthState = ReturnType<typeof useGameStore.getState>["setAuthState"];
@@ -450,7 +449,6 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   const [isAbilityLoadoutOpen, setIsAbilityLoadoutOpen] = useState(false);
   const [isDailyRewardInfoOpen, setIsDailyRewardInfoOpen] = useState(false);
   const [isPatchNotesOpen, setIsPatchNotesOpen] = useState(false);
-  const [showPatchNotesSummary, setShowPatchNotesSummary] = useState(false);
   const [hasUnreadPatchNotes, setHasUnreadPatchNotes] = useState(false);
   const [upgradeResult, setUpgradeResult] = useState<UpgradeResolution>({
     kind: "none",
@@ -520,14 +518,6 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   const abilityLoadoutCount = lang === "en" ? "equipped" : "장착 중";
   const patchNotesLabel = lang === "en" ? "Patch Notes" : "패치노트";
   const patchNotesTitle = lang === "en" ? "Patch Notes" : "패치노트";
-  const patchNotesSummaryTitle =
-    lang === "en" ? "New Patch Applied" : "새 패치가 적용되었습니다";
-  const patchNotesSummaryDesc =
-    lang === "en"
-      ? "Check the latest balance and ability updates before playing."
-      : "플레이 전에 최신 밸런스 및 능력 업데이트 내용을 확인하세요.";
-  const patchNotesOpenLabel = lang === "en" ? "View Details" : "자세히 보기";
-  const patchNotesSummaryCloseLabel = lang === "en" ? "Later" : "나중에";
   const patchNotesVersionLabel =
     lang === "en" ? "Version 2026.03.26" : "버전 2026.03.26";
   const patchNotesBody =
@@ -1151,12 +1141,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   }, [buildExistingAccountSwitchPrompt, setAuthState]);
 
   useEffect(() => {
-    const summarySeenVersion = localStorage.getItem(PATCH_NOTES_SUMMARY_SEEN_KEY);
     const readVersion = localStorage.getItem(PATCH_NOTES_READ_KEY);
-    if (summarySeenVersion !== PATCH_NOTES_VERSION) {
-      setShowPatchNotesSummary(true);
-      localStorage.setItem(PATCH_NOTES_SUMMARY_SEEN_KEY, PATCH_NOTES_VERSION);
-    }
     setHasUnreadPatchNotes(readVersion !== PATCH_NOTES_VERSION);
   }, []);
 
@@ -1167,8 +1152,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
       isSettingsOpen ||
       isAudioSettingsOpen ||
       isAbilityLoadoutOpen ||
-      isPatchNotesOpen ||
-      showPatchNotesSummary;
+      isPatchNotesOpen;
 
     if (!shouldLockScroll) {
       return;
@@ -1198,7 +1182,6 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
     isPatchNotesOpen,
     isSettingsOpen,
     isSkinPickerOpen,
-    showPatchNotesSummary,
     isTokenShopOpen,
   ]);
 
@@ -2416,39 +2399,6 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
                 type="button"
               >
                 {skinApplyLabel}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {showPatchNotesSummary && (
-        <div className="upgrade-modal-backdrop">
-          <div className="upgrade-modal patch-notes-summary-modal">
-            <h3>{patchNotesSummaryTitle}</h3>
-            <p>{patchNotesSummaryDesc}</p>
-            <div className="patch-notes-summary-list">
-              {patchNotesBody.slice(0, 3).map((entry, index) => (
-                <p key={index}>{entry}</p>
-              ))}
-            </div>
-            <div className="upgrade-modal-actions">
-              <button
-                className="lobby-btn secondary"
-                onClick={() => setShowPatchNotesSummary(false)}
-                type="button"
-              >
-                {patchNotesSummaryCloseLabel}
-              </button>
-              <button
-                className="lobby-btn primary"
-                onClick={() => {
-                  setShowPatchNotesSummary(false);
-                  setIsPatchNotesOpen(true);
-                  markPatchNotesRead();
-                }}
-                type="button"
-              >
-                {patchNotesOpenLabel}
               </button>
             </div>
           </div>
