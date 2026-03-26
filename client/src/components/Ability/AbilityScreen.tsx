@@ -47,8 +47,9 @@ const SKILL_CAST_DELAY_MS = 500;
 const BLITZ_DASH_STEP_MS = 12;
 const BLITZ_POST_HIT_PAUSE_MS = SKILL_PAUSE_MS;
 const VOID_REVEAL_PAUSE_MS = 450;
-const AT_FIELD_STEPS = 2;
+const AT_FIELD_VISUAL_STEPS = 1;
 const GUARD_END_PAUSE_MS = 360;
+const AT_FIELD_END_PAUSE_MS = 360;
 
 function buildBlitzPath(start: Position, target: Position): Position[] {
   const rowDelta = target.row - start.row;
@@ -1464,7 +1465,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       if (event.skillId === "arc_reactor_field") {
         atFieldCounters[event.color] = Math.max(
           atFieldCounters[event.color],
-          AT_FIELD_STEPS,
+          AT_FIELD_VISUAL_STEPS,
         );
       }
       skillMap.set(
@@ -1591,6 +1592,33 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }, GUARD_END_PAUSE_MS);
     };
 
+    const runAtFieldEndNotice = (
+      endedColors: PlayerColor[],
+      done: () => void,
+    ) => {
+      if (endedColors.length === 0) {
+        done();
+        return;
+      }
+      const bannerText =
+        endedColors.length > 1
+          ? lang === "en"
+            ? "Both · AT Field Ended"
+            : "양측 · AT 필드 종료"
+          : endedColors[0] === currentColor
+            ? lang === "en"
+              ? "You · AT Field Ended"
+              : "내 말 · AT 필드 종료"
+            : lang === "en"
+              ? "Enemy · AT Field Ended"
+              : "상대 · AT 필드 종료";
+      setAbilityBanner(bannerText);
+      queueAnimationTimeout(() => {
+        setAbilityBanner(null);
+        done();
+      }, AT_FIELD_END_PAUSE_MS);
+    };
+
     const advance = (step: number) => {
       if (step === 0) {
         const events = skillMap.get(0) ?? [];
@@ -1634,8 +1662,11 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
       queueAnimationTimeout(() => {
         const endedGuards: PlayerColor[] = [];
+        const endedAtFields: PlayerColor[] = [];
         if (guardCounters.red === 1) endedGuards.push("red");
         if (guardCounters.blue === 1) endedGuards.push("blue");
+        if (atFieldCounters.red === 1) endedAtFields.push("red");
+        if (atFieldCounters.blue === 1) endedAtFields.push("blue");
         if (guardCounters.red > 0) guardCounters.red -= 1;
         if (guardCounters.blue > 0) guardCounters.blue -= 1;
         setActiveGuards({
@@ -1680,7 +1711,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           advance(step + 1);
         };
 
-        runGuardEndNotice(endedGuards, continueStep);
+        runGuardEndNotice(endedGuards, () =>
+          runAtFieldEndNotice(endedAtFields, continueStep),
+        );
       }, STEP_DURATION_MS);
     };
 
