@@ -1761,11 +1761,67 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }, AT_FIELD_END_PAUSE_MS);
     };
 
+    const finalizeEndNotices = () => {
+      const endedGuards: PlayerColor[] = [];
+      const endedAtFields: PlayerColor[] = [];
+
+      if (guardCounters.red === 1) endedGuards.push("red");
+      if (guardCounters.blue === 1) endedGuards.push("blue");
+      if (atFieldCounters.red === 1) endedAtFields.push("red");
+      if (atFieldCounters.blue === 1) endedAtFields.push("blue");
+
+      if (guardCounters.red > 0) guardCounters.red -= 1;
+      if (guardCounters.blue > 0) guardCounters.blue -= 1;
+      if (atFieldCounters.red > 0) atFieldCounters.red -= 1;
+      if (atFieldCounters.blue > 0) atFieldCounters.blue -= 1;
+
+      setActiveGuards({
+        red: guardCounters.red > 0,
+        blue: guardCounters.blue > 0,
+      });
+      setActiveAtFields({
+        red: atFieldCounters.red > 0,
+        blue: atFieldCounters.blue > 0,
+      });
+
+      runGuardEndNotice(endedGuards, () =>
+        runAtFieldEndNotice(endedAtFields, () => undefined),
+      );
+    };
+
+    const applyPersistentSkillCounters = (
+      events: AbilityResolutionPayload["skillEvents"],
+    ) => {
+      for (const event of events) {
+        if (event.skillId === "classic_guard" && event.invulnerableSteps) {
+          guardCounters[event.color] = Math.max(
+            guardCounters[event.color],
+            event.invulnerableSteps,
+          );
+        }
+        if (event.skillId === "arc_reactor_field") {
+          atFieldCounters[event.color] = Math.max(
+            atFieldCounters[event.color],
+            AT_FIELD_VISUAL_STEPS,
+          );
+        }
+      }
+      setActiveGuards({
+        red: guardCounters.red > 0,
+        blue: guardCounters.blue > 0,
+      });
+      setActiveAtFields({
+        red: atFieldCounters.red > 0,
+        blue: atFieldCounters.blue > 0,
+      });
+    };
+
     const advance = (step: number) => {
       if (step === 0) {
         const events = skillMap.get(0) ?? [];
         if (events.length > 0) {
           runSkillQueue(events, 0, () => {
+            applyPersistentSkillCounters(events);
             const collisions = collisionMap.get(0) ?? [];
             if (collisions.length > 0) {
               applyCollisions(collisions);
@@ -1783,6 +1839,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
 
       if (step > maxSteps) {
+        finalizeEndNotices();
         return;
       }
 
@@ -1851,20 +1908,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               (event) => event.skillId === "electric_blitz",
             );
             runSkillQueue(events, 0, () => {
-              for (const event of events) {
-                if (event.skillId === "classic_guard" && event.invulnerableSteps) {
-                  guardCounters[event.color] = Math.max(
-                    guardCounters[event.color],
-                    event.invulnerableSteps,
-                  );
-                }
-                if (event.skillId === "arc_reactor_field") {
-                  atFieldCounters[event.color] = Math.max(
-                    atFieldCounters[event.color],
-                    AT_FIELD_VISUAL_STEPS,
-                  );
-                }
-              }
+              applyPersistentSkillCounters(events);
               if (collisions.length > 0) {
                 applyCollisions(collisions);
               }
