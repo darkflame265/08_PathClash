@@ -555,9 +555,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       return;
     }
     if (getMyRole() !== "attacker") return;
-    if (!isOverdriveTurn() && skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
-      return;
-    }
     if (getRemainingMana() < getSkillCost("ember_blast")) return;
     const nextReservations: AbilitySkillReservation[] = [
       ...skillReservations.filter((entry) => entry.skillId !== "ember_blast"),
@@ -581,9 +578,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       return;
     }
     if (getMyRole() !== "attacker") return;
-    if (!isOverdriveTurn() && skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
-      return;
-    }
     if (getRemainingMana() < getSkillCost("nova_blast")) return;
     const nextReservations: AbilitySkillReservation[] = [
       ...skillReservations.filter((entry) => entry.skillId !== "nova_blast"),
@@ -604,9 +598,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     );
     if (alreadyReserved) {
       removeReservation("aurora_heal");
-      return;
-    }
-    if (!isOverdriveTurn() && skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
       return;
     }
     if (getRemainingMana() < getSkillCost("aurora_heal")) return;
@@ -631,9 +622,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       removeReservation("gold_overdrive");
       return;
     }
-    if (!isOverdriveTurn() && skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
-      return;
-    }
     if (getRemainingMana() < getSkillCost("gold_overdrive")) return;
     const nextReservations: AbilitySkillReservation[] = [
       ...skillReservations.filter((entry) => entry.skillId !== "gold_overdrive"),
@@ -656,13 +644,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       removeReservation("void_cloak");
       return;
     }
-    if (
-      !isOverdriveTurn() &&
-      skillReservations.some((entry) => entry.skillId === "plasma_charge")
-    ) {
-      return;
-    }
-    if (getRemainingMana() < getSkillCost("void_cloak")) return;
+      if (getRemainingMana() < getSkillCost("void_cloak")) return;
     const nextReservations: AbilitySkillReservation[] = [
       ...skillReservations.filter((entry) => entry.skillId !== "void_cloak"),
       {
@@ -690,13 +672,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       return;
     }
     if (getMyRole() !== "attacker") return;
-    if (
-      !isOverdriveTurn() &&
-      skillReservations.some((entry) => entry.skillId === "plasma_charge")
-    ) {
-      return;
-    }
-    if (getRemainingMana() < getSkillCost("inferno_field")) return;
+      if (getRemainingMana() < getSkillCost("inferno_field")) return;
     setSelectedSkillId("inferno_field");
     setPendingInferno(true);
     setPendingTeleport(false);
@@ -730,9 +706,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     if (pendingTeleport && selectedSkillId === "quantum_shift") {
       setSelectedSkillId(null);
       setPendingTeleport(false);
-      return;
-    }
-    if (!isOverdriveTurn() && skillReservations.some((entry) => entry.skillId === "plasma_charge")) {
       return;
     }
     if (getRemainingMana() < getSkillCost("quantum_shift")) return;
@@ -2105,9 +2078,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             const reserved = skillReservations.some(
               (entry) => entry.skillId === skillId,
             );
-            const chargeReserved = skillReservations.some(
-              (entry) => entry.skillId === "plasma_charge",
-            );
             const blitzReserved = skillReservations.some(
               (entry) => entry.skillId === "electric_blitz",
             );
@@ -2122,23 +2092,16 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 skillId === "electric_blitz" ||
                 skillId === "cosmic_bigbang") &&
                 getMyRole() !== "attacker");
-            const chargeBlocked =
-              !overdriveTurn &&
-              chargeReserved &&
-              !reserved &&
-              skillId !== "classic_guard" &&
-              skillId !== "plasma_charge";
-            const blitzBlocked = !overdriveTurn && blitzReserved && !reserved;
-            const bigBangBlocked =
-              !overdriveTurn && bigBangReserved && !reserved;
-            const disabled =
-              !isPlanning ||
-              mySubmitted ||
-              roleBlocked ||
-              chargeBlocked ||
-              blitzBlocked ||
-              bigBangBlocked ||
-              (getRemainingMana() < skill.manaCost && !reserved);
+              const blitzBlocked = !overdriveTurn && blitzReserved && !reserved;
+              const bigBangBlocked =
+                !overdriveTurn && bigBangReserved && !reserved;
+              const disabled =
+                !isPlanning ||
+                mySubmitted ||
+                roleBlocked ||
+                blitzBlocked ||
+                bigBangBlocked ||
+                (getRemainingMana() < skill.manaCost && !reserved);
             return (
               <button
                 key={skillId}

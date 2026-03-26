@@ -559,14 +559,10 @@ export class AbilityRoom {
         if (!guardSkill || guardSkill.step !== 0 || path.length > 0) return null;
       }
 
-      if (hasCharge) {
-        const chargeSkill = uniqueSkills.find((skill) => skill.skillId === 'plasma_charge');
-        if (!chargeSkill || chargeSkill.step !== 0 || path.length > 0) return null;
-        const invalidCombo = uniqueSkills.some(
-          (skill) => skill.skillId !== 'plasma_charge' && skill.skillId !== 'classic_guard',
-        );
-        if (invalidCombo) return null;
-      }
+        if (hasCharge) {
+          const chargeSkill = uniqueSkills.find((skill) => skill.skillId === 'plasma_charge');
+          if (!chargeSkill || chargeSkill.step !== 0 || path.length > 0) return null;
+        }
 
       if (hasBigBang) {
         if (!bigBang || bigBang.step !== 0 || path.length > 0) return null;
