@@ -4,8 +4,6 @@ import { syncServerTime, getEstimatedServerNow } from "../../socket/timeSync";
 import { useLang } from "../../hooks/useLang";
 import { useGameStore } from "../../store/gameStore";
 import { TimerBar } from "../Game/TimerBar";
-import { PlayerInfo } from "../Game/PlayerInfo";
-import { HpDisplay } from "../Game/HpDisplay";
 import {
   playBigBang,
   playBlitz,
@@ -239,7 +237,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [healEffects, setHealEffects] = useState<
     Array<{ id: number; color: PlayerColor; position: Position }>
   >([]);
-  const [healHeartEffects, setHealHeartEffects] = useState<{
+  const [, setHealHeartEffects] = useState<{
     red: number | null;
     blue: number | null;
   }>({ red: null, blue: null });
@@ -294,8 +292,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const [rematchRequested, setRematchRequested] = useState(false);
   const [abilityBanner, setAbilityBanner] = useState<string | null>(null);
-  const [opponentSkillInfo, setOpponentSkillInfo] =
-    useState<AbilitySkillId | null>(null);
   const [mySkillInfo, setMySkillInfo] = useState<AbilitySkillId | null>(null);
 
   const stateRef = useRef<AbilityBattleState | null>(null);
@@ -305,7 +301,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const cellSize = useAdaptiveCellSize(gridAreaRef);
   const scale = cellSize / DEFAULT_CELL;
   const currentColor = myColor ?? "red";
-  const opponentColor: PlayerColor = currentColor === "red" ? "blue" : "red";
   const previousGuardPathRef = useRef<Position[]>([]);
   const previousChargePathRef = useRef<Position[]>([]);
   const previousBlitzPathRef = useRef<Position[]>([]);
@@ -353,7 +348,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         return;
       }
       setMySkillInfo(null);
-      setOpponentSkillInfo(null);
     };
 
     document.addEventListener("pointerdown", handleGlobalPointerDown);
@@ -2116,7 +2110,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   }
 
   const me = state.players[currentColor];
-  const opponent = state.players[opponentColor];
   const overdriveTurn = me.overdriveActive;
   const effectivePathPoints = me.reboundLocked ? 0 : state.pathPoints;
   const rewardTokens =
@@ -2159,7 +2152,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     longPressTriggeredRef.current = false;
     skillPressTimeoutRef.current = window.setTimeout(() => {
       longPressTriggeredRef.current = true;
-      setOpponentSkillInfo(null);
       setMySkillInfo(skillId);
       skillPressTimeoutRef.current = null;
     }, 380);
@@ -2195,72 +2187,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           </button>
         </div>
       </div>
-
-      <div
-        className={`gs-player-card gs-opponent gs-color-${opponentColor} gs-role-${opponent.role === "attacker" ? "atk" : "run"}`}
-      >
-        <div
-          className={`gs-role-badge gs-role-badge-self gs-role-badge-${opponent.role === "attacker" ? "atk" : "run"} ability-role-badge`}
-        >
-          <span className="gs-role-icon">
-            {opponent.role === "attacker" ? "ATK" : "RUN"}
-          </span>
-          <span className="gs-role-label">
-            {opponent.role === "attacker"
-              ? lang === "en"
-                ? "Attack"
-                : "공격"
-              : lang === "en"
-                ? "Escape"
-                : "도망"}
-          </span>
-        </div>
-        <div className="gs-player-mid">
-          <PlayerInfo player={opponent} isMe={false} />
-          <span className="gs-color-tag">
-            {opponentColor === "red" ? "RED" : "BLUE"}
-          </span>
-        </div>
-        <div className="gs-hp-slot">
-          <div className="ability-opponent-skills">
-            {opponent.equippedSkills.map((skillId) => (
-              <button
-                key={skillId}
-                type="button"
-                className="ability-opponent-skill"
-                onClick={() =>
-                  setOpponentSkillInfo((current) =>
-                    current === skillId ? null : skillId,
-                  )
-                }
-              >
-                {renderSkillIcon(skillId)}
-              </button>
-            ))}
-          </div>
-          <HpDisplay
-            color={opponentColor}
-            hp={opponent.hp}
-            myColor={currentColor}
-            healedHeartIndex={healHeartEffects[opponentColor]}
-          />
-        </div>
-      </div>
-
-      {opponentSkillInfo && (
-        <div className="ability-skill-tooltip ability-skill-tooltip-top">
-          <strong>
-            {lang === "en"
-              ? ABILITY_SKILLS[opponentSkillInfo].name.en
-              : ABILITY_SKILLS[opponentSkillInfo].name.kr}
-          </strong>
-          <span>
-            {lang === "en"
-              ? ABILITY_SKILLS[opponentSkillInfo].description.en
-              : ABILITY_SKILLS[opponentSkillInfo].description.kr}
-          </span>
-        </div>
-      )}
 
       <div className="gs-board-stage">
         {winner && (
@@ -2365,62 +2291,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             onInfernoTargetSelect={handleInfernoTargetSelect}
             onTeleportCancel={handleTeleportCancel}
           />
-        </div>
-      </div>
-
-      <div
-        className={`gs-player-card gs-self gs-color-${currentColor} gs-role-${me.role === "attacker" ? "atk" : "run"}`}
-      >
-        <div
-          className={`gs-role-badge gs-role-badge-self gs-role-badge-${me.role === "attacker" ? "atk" : "run"}`}
-        >
-          <span className="gs-role-icon">
-            {me.role === "attacker" ? "ATK" : "RUN"}
-          </span>
-          <span className="gs-role-label">
-            {me.role === "attacker"
-              ? lang === "en"
-                ? "Attack"
-                : "공격"
-              : lang === "en"
-                ? "Escape"
-                : "도망"}
-          </span>
-        </div>
-        <div className="gs-player-mid">
-          <PlayerInfo player={me} isMe={true} />
-          <span className="gs-color-tag">
-            {currentColor === "red" ? "RED" : "BLUE"}
-          </span>
-        </div>
-        <div className="gs-hp-slot">
-          <HpDisplay
-            color={currentColor}
-            hp={me.hp}
-            myColor={currentColor}
-            healedHeartIndex={healHeartEffects[currentColor]}
-          />
-        </div>
-      </div>
-
-      <div className="gs-path-bar">
-        <div className="gs-path-header">
-          <span className="gs-path-label">
-            {lang === "en" ? "Path Points" : "경로 포인트"}
-          </span>
-          <span className="gs-path-count">
-            <span className="gs-path-current">{myPath.length}</span>
-            <span className="gs-path-sep"> / </span>
-            <span className="gs-path-max">{effectivePathPoints}</span>
-          </span>
-        </div>
-        <div className="gs-path-gauge">
-          {Array.from({ length: effectivePathPoints }, (_, index) => (
-            <div
-              key={index}
-              className={`gs-path-seg${index < myPath.length ? " filled" : ""}`}
-            />
-          ))}
         </div>
       </div>
 
