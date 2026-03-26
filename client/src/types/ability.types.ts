@@ -11,6 +11,7 @@ export type AbilitySkillId =
   | 'arc_reactor_field'
   | 'phase_shift'
   | 'ember_blast'
+  | 'atomic_fission'
   | 'inferno_field'
   | 'nova_blast'
   | 'aurora_heal'
@@ -59,6 +60,8 @@ export interface AbilityPlayerState {
   overdriveActive: boolean;
   reboundLocked: boolean;
   hidden: boolean;
+  previousTurnStart: Position | null;
+  previousTurnPath: Position[];
   equippedSkills: AbilitySkillId[];
 }
 
@@ -116,6 +119,8 @@ export interface AbilitySkillEvent {
   phaseShiftActive?: boolean;
   overdriveStage?: 0 | 1 | 2;
   lavaRemainingTurns?: number;
+  cloneStart?: Position | null;
+  clonePath?: Position[];
 }
 
 export interface AbilityResolutionPayload {
@@ -181,6 +186,18 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     category: 'attack',
     skinId: 'ember',
     icon: '💥',
+  },
+  atomic_fission: {
+    id: 'atomic_fission',
+    name: { en: 'Atomic Fission', kr: '원자분열' },
+    description: {
+      en: 'Create an afterimage that repeats your previous turn path and damages the enemy on collision.',
+      kr: '이전 턴의 경로를 따라 움직이는 잔상을 생성하며, 적과 충돌하면 피해를 줍니다.',
+    },
+    manaCost: 6,
+    category: 'attack',
+    skinId: 'atomic',
+    icon: '☢',
   },
   inferno_field: {
     id: 'inferno_field',

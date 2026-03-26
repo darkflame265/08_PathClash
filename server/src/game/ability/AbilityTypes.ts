@@ -13,6 +13,7 @@ export type AbilitySkillId =
   | 'arc_reactor_field'
   | 'phase_shift'
   | 'ember_blast'
+  | 'atomic_fission'
   | 'inferno_field'
   | 'nova_blast'
   | 'aurora_heal'
@@ -46,6 +47,8 @@ export interface AbilityPlayerState {
   hp: number;
   position: Position;
   plannedPath: Position[];
+  previousTurnStart: Position | null;
+  previousTurnPath: Position[];
   plannedSkills: AbilitySkillReservation[];
   pathSubmitted: boolean;
   role: PlayerRole;
@@ -67,6 +70,8 @@ export interface ClientAbilityPlayerState extends ClientPlayerState {
   overdriveActive: boolean;
   reboundLocked: boolean;
   hidden: boolean;
+  previousTurnStart: Position | null;
+  previousTurnPath: Position[];
   equippedSkills: AbilitySkillId[];
 }
 
@@ -116,6 +121,8 @@ export interface AbilitySkillEvent {
   phaseShiftActive?: boolean;
   overdriveStage?: 0 | 1 | 2;
   lavaRemainingTurns?: number;
+  cloneStart?: Position | null;
+  clonePath?: Position[];
 }
 
 export interface AbilityResolutionPayload {

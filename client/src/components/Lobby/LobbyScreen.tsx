@@ -282,6 +282,17 @@ function getAbilitySkillSummary(skillId: AbilitySkillId, lang: "ko" | "en") {
             ? "Deal explosion damage in a 1-tile cross at the chosen timing."
             : "지정 시점에 주변 1칸 십자 범위에 폭발 피해를 줍니다.",
       };
+    case "atomic_fission":
+      return {
+        tags:
+          lang === "en"
+            ? "Move OK · Combo OK"
+            : "이동 가능 · 조합 가능",
+        desc:
+          lang === "en"
+            ? "Create a clone that follows your previous turn path and collides like a normal attacker."
+            : "이전 턴 경로를 따라 이동하는 분신을 생성하며, 일반 충돌처럼 피해를 줍니다.",
+      };
     case "inferno_field":
       return {
         tags:

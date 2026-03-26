@@ -19,6 +19,17 @@
   opacity: 0.42;
 }
 
+.player-piece.piece-clone {
+  opacity: 0.6;
+  filter: saturate(0.86);
+}
+
+.player-piece.piece-clone .piece-inner {
+  box-shadow:
+    0 0 var(--piece-glow, 12px) rgba(255, 255, 255, 0.22),
+    0 0 calc(var(--piece-glow, 12px) * 1.1) rgba(120, 227, 255, 0.18);
+}
+
 .piece-at-field {
   position: absolute;
   inset: 50%;

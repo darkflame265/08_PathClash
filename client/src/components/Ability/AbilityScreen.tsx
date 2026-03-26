@@ -72,6 +72,19 @@ function buildBlitzPath(start: Position, target: Position): Position[] {
   return path;
 }
 
+function getClonePositionForStep(
+  cloneStart: Position | null,
+  clonePath: Position[],
+  cloneStep: number | null,
+  currentStep: number,
+): Position | null {
+  if (!cloneStart || cloneStep === null) return null;
+  if (currentStep < cloneStep) return null;
+  if (currentStep === cloneStep) return cloneStart;
+  const pathIndex = currentStep - cloneStep - 1;
+  return clonePath[pathIndex] ?? null;
+}
+
 function computeInitialCellSize(): number {
   const availW = Math.max(260, window.innerWidth - 24);
   return Math.max(MIN_CELL, Math.min(MAX_CELL, availW / 5));
@@ -268,6 +281,13 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     red: number | null;
     blue: number | null;
   }>({ red: null, blue: null });
+  const [movingAtomicClones, setMovingAtomicClones] = useState<{
+    red: { start: Position | null; path: Position[]; step: number | null; position: Position | null };
+    blue: { start: Position | null; path: Position[]; step: number | null; position: Position | null };
+  }>({
+    red: { start: null, path: [], step: null, position: null },
+    blue: { start: null, path: [], step: null, position: null },
+  });
   const [winner, setWinner] = useState<PlayerColor | "draw" | null>(null);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const [rematchRequested, setRematchRequested] = useState(false);
@@ -420,6 +440,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setMovingBlitzColors({ red: false, blue: false });
     setMovingBlitzProgress({ red: 0, blue: 0 });
     setMovingBlitzSteps({ red: null, blue: null });
+    setMovingAtomicClones({
+      red: { start: null, path: [], step: null, position: null },
+      blue: { start: null, path: [], step: null, position: null },
+    });
     if (nextState.phase !== "gameover") {
       setWinner(null);
       setGameOverMessage(null);
@@ -452,6 +476,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     skillReservations.find(
       (entry) => entry.skillId === "inferno_field" && entry.target,
     ) ?? null;
+  const atomicReservation =
+    skillReservations.find((entry) => entry.skillId === "atomic_fission") ?? null;
   const getSkillCost = (skillId: AbilitySkillId) =>
     ABILITY_SKILLS[skillId].manaCost;
   const getReservedMana = () =>
@@ -670,6 +696,33 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       ...skillReservations.filter((entry) => entry.skillId !== "ember_blast"),
       {
         skillId: "ember_blast",
+        step: getCurrentSkillStep(),
+        order: reservationOrderRef.current++,
+      },
+    ];
+    updateSkillReservations(nextReservations);
+    setSelectedSkillId(null);
+    setPendingTeleport(false);
+  };
+
+  const beginAtomicFissionStepPick = () => {
+    const alreadyReserved = skillReservations.some(
+      (entry) => entry.skillId === "atomic_fission",
+    );
+    if (alreadyReserved) {
+      removeReservation("atomic_fission");
+      return;
+    }
+    if (getMyRole() !== "attacker") return;
+    if (getRemainingMana() < getSkillCost("atomic_fission")) return;
+    const hasPreviousTurnPath =
+      !!state?.players[currentColor].previousTurnStart &&
+      (state?.players[currentColor].previousTurnPath.length ?? 0) > 0;
+    if (!hasPreviousTurnPath) return;
+    const nextReservations: AbilitySkillReservation[] = [
+      ...skillReservations.filter((entry) => entry.skillId !== "atomic_fission"),
+      {
+        skillId: "atomic_fission",
         step: getCurrentSkillStep(),
         order: reservationOrderRef.current++,
       },
@@ -999,6 +1052,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }
     if (skillId === "ember_blast") {
       beginExplosionStepPick();
+      return;
+    }
+    if (skillId === "atomic_fission") {
+      beginAtomicFissionStepPick();
       return;
     }
     if (skillId === "nova_blast") {
@@ -1364,6 +1421,16 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         }, 120);
       }
 
+      if (event.skillId === "atomic_fission") {
+        setMovingAtomicClones((prev) => ({
+          ...prev,
+          [event.color]: {
+            ...prev[event.color],
+            position: event.cloneStart ?? null,
+          },
+        }));
+      }
+
       for (const damage of event.damages ?? []) {
         setState((prev) => {
           if (!prev) return prev;
@@ -1422,6 +1489,36 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setMovingBlitzSteps({
       red: blitzSteps.red,
       blue: blitzSteps.blue,
+    });
+    const atomicCloneEvents = {
+      red:
+        payload.skillEvents.find(
+          (event) =>
+            event.skillId === "atomic_fission" &&
+            event.color === "red" &&
+            event.cloneStart,
+        ) ?? null,
+      blue:
+        payload.skillEvents.find(
+          (event) =>
+            event.skillId === "atomic_fission" &&
+            event.color === "blue" &&
+            event.cloneStart,
+        ) ?? null,
+    };
+    setMovingAtomicClones({
+      red: {
+        start: atomicCloneEvents.red?.cloneStart ?? null,
+        path: atomicCloneEvents.red?.clonePath ?? [],
+        step: atomicCloneEvents.red?.step ?? null,
+        position: null,
+      },
+      blue: {
+        start: atomicCloneEvents.blue?.cloneStart ?? null,
+        path: atomicCloneEvents.blue?.clonePath ?? [],
+        step: atomicCloneEvents.blue?.step ?? null,
+        position: null,
+      },
     });
     const teleportMarkers = {
       red:
@@ -1686,6 +1783,27 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         !blitzColors.red || step <= (blitzSteps.red ?? -1);
       const blueShouldMoveNormally =
         !blitzColors.blue || step <= (blitzSteps.blue ?? -1);
+
+      setMovingAtomicClones((prev) => ({
+        red: {
+          ...prev.red,
+          position: getClonePositionForStep(
+            prev.red.start,
+            prev.red.path,
+            prev.red.step,
+            step,
+          ),
+        },
+        blue: {
+          ...prev.blue,
+          position: getClonePositionForStep(
+            prev.blue.start,
+            prev.blue.path,
+            prev.blue.step,
+            step,
+          ),
+        },
+      }));
 
       if (redShouldMoveNormally) {
         setRedDisplayPos(
@@ -1996,6 +2114,17 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       : 0;
   const isPlanning = state.phase === "planning";
   const previewStart = getPreviewStart();
+  const previewAtomicClone =
+    atomicReservation &&
+    state.players[currentColor].previousTurnStart &&
+    state.players[currentColor].previousTurnPath.length > 0
+      ? {
+          color: currentColor,
+          start: state.players[currentColor].previousTurnStart,
+          path: state.players[currentColor].previousTurnPath,
+          step: atomicReservation.step,
+        }
+      : null;
   const canDrawPath =
     isPlanning &&
     effectivePathPoints > 0 &&
@@ -2196,6 +2325,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             activeAtFields={activeAtFields}
             activePhaseShifts={activePhaseShifts}
             previewStart={previewStart}
+            previewAtomicClone={previewAtomicClone}
             teleportReservation={teleportReservation}
             teleportMarker={
               state.phase === "moving"
@@ -2208,6 +2338,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             movingBlitzColors={movingBlitzColors}
             movingBlitzProgress={movingBlitzProgress}
             movingBlitzSteps={movingBlitzSteps}
+            movingAtomicClones={movingAtomicClones}
             movingPaths={movingPaths}
             movingStarts={movingStarts}
             cellSize={cellSize}
@@ -2339,11 +2470,15 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 skillId === "arc_reactor_field") &&
                 getMyRole() !== "escaper") ||
               ((skillId === "ember_blast" ||
+                skillId === "atomic_fission" ||
                 skillId === "inferno_field" ||
                 skillId === "nova_blast" ||
                 skillId === "electric_blitz" ||
                 skillId === "cosmic_bigbang") &&
                 getMyRole() !== "attacker");
+              const atomicUnavailable =
+                skillId === "atomic_fission" &&
+                (!me.previousTurnStart || me.previousTurnPath.length === 0);
               const blitzBlocked = !overdriveTurn && blitzReserved && !reserved;
               const bigBangBlocked =
                 !overdriveTurn && bigBangReserved && !reserved;
@@ -2351,6 +2486,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 !isPlanning ||
                 mySubmitted ||
                 roleBlocked ||
+                atomicUnavailable ||
                 blitzBlocked ||
                 bigBangBlocked ||
                 (getRemainingMana() < skill.manaCost && !reserved);

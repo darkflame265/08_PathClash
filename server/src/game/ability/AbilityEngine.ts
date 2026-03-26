@@ -31,6 +31,7 @@ function getSkillPriority(skillId: AbilitySkillId): number {
     case 'classic_guard':
       return 1;
     case 'ember_blast':
+    case 'atomic_fission':
     case 'nova_blast':
     case 'electric_blitz':
     case 'cosmic_bigbang':
@@ -183,6 +184,14 @@ export function resolveAbilityRound(params: {
   let redBlitz = false;
   let blueBlitz = false;
   let attackerQuantumOverlapPending = false;
+  let redCloneStart: Position | null = null;
+  let blueCloneStart: Position | null = null;
+  let redClonePath: Position[] = [];
+  let blueClonePath: Position[] = [];
+  let redCloneStep: number | null = null;
+  let blueCloneStep: number | null = null;
+  let redClonePos: Position | null = null;
+  let blueClonePos: Position | null = null;
 
   const redReservations = sortReservations(red.plannedSkills);
   const blueReservations = sortReservations(blue.plannedSkills);
@@ -575,6 +584,49 @@ export function resolveAbilityRound(params: {
       return;
     }
 
+    if (reservation.skillId === 'atomic_fission') {
+      const cloneStart = color === 'red' ? red.previousTurnStart : blue.previousTurnStart;
+      const clonePath = (color === 'red' ? red.previousTurnPath : blue.previousTurnPath).map((position) => ({ ...position }));
+      if (!cloneStart || clonePath.length === 0) {
+        if (color === 'red') {
+          redMana = Math.max(0, casterMana - 6);
+        } else {
+          blueMana = Math.max(0, casterMana - 6);
+        }
+        skillEvents.push({
+          step: reservation.step,
+          order: reservation.order,
+          color,
+          skillId: reservation.skillId,
+          cloneStart: null,
+          clonePath: [],
+        });
+        return;
+      }
+      if (color === 'red') {
+        redMana = Math.max(0, casterMana - 6);
+        redCloneStart = { ...cloneStart };
+        redClonePath = clonePath;
+        redCloneStep = reservation.step;
+        redClonePos = { ...cloneStart };
+      } else {
+        blueMana = Math.max(0, casterMana - 6);
+        blueCloneStart = { ...cloneStart };
+        blueClonePath = clonePath;
+        blueCloneStep = reservation.step;
+        blueClonePos = { ...cloneStart };
+      }
+      skillEvents.push({
+        step: reservation.step,
+        order: reservation.order,
+        color,
+        skillId: reservation.skillId,
+        cloneStart: { ...cloneStart },
+        clonePath,
+      });
+      return;
+    }
+
     if (reservation.skillId === 'inferno_field' && reservation.target) {
       if (color === 'red') {
         redMana = Math.max(0, casterMana - 4);
@@ -649,6 +701,8 @@ export function resolveAbilityRound(params: {
   for (let step = 0; step <= maxStep; step++) {
     let redPrevForStep = { ...redPos };
     let bluePrevForStep = { ...bluePos };
+    let redClonePrevForStep = redClonePos ? { ...redClonePos } : null;
+    let blueClonePrevForStep = blueClonePos ? { ...blueClonePos } : null;
 
     if (step === 0 && startsOverlapped && !ignoreStartTileCollision) {
       const protectedByGuard =
@@ -721,6 +775,54 @@ export function resolveAbilityRound(params: {
 
     for (const { color, reservation } of stepReservations) {
       processSkill(color, reservation);
+    }
+
+    const getClonePositionForStep = (
+      cloneStart: Position | null,
+      clonePath: Position[],
+      cloneStep: number | null,
+      currentStep: number,
+    ): Position | null => {
+      if (!cloneStart || cloneStep === null) return null;
+      if (currentStep < cloneStep) return null;
+      if (currentStep === cloneStep) return { ...cloneStart };
+      const index = currentStep - cloneStep - 1;
+      if (index < 0 || index >= clonePath.length) return null;
+      return { ...clonePath[index] };
+    };
+
+    const redCloneNext = getClonePositionForStep(
+      redCloneStart,
+      redClonePath,
+      redCloneStep,
+      step,
+    );
+    const blueCloneNext = getClonePositionForStep(
+      blueCloneStart,
+      blueClonePath,
+      blueCloneStep,
+      step,
+    );
+
+    redClonePos = redCloneNext;
+    blueClonePos = blueCloneNext;
+
+    if (
+      redClonePrevForStep &&
+      redCloneNext &&
+      attackerColor === 'red' &&
+      positionsTouch(bluePos, bluePrevForStep, redCloneNext, redClonePrevForStep)
+    ) {
+      resolveCollisionHit('red', 'blue', redCloneNext, step);
+    }
+
+    if (
+      blueClonePrevForStep &&
+      blueCloneNext &&
+      attackerColor === 'blue' &&
+      positionsTouch(redPos, redPrevForStep, blueCloneNext, blueClonePrevForStep)
+    ) {
+      resolveCollisionHit('blue', 'red', blueCloneNext, step);
     }
 
     const applyLavaDamage = (

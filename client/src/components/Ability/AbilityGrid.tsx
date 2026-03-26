@@ -36,6 +36,12 @@ interface Props {
   activeAtFields: { red: boolean; blue: boolean };
   activePhaseShifts: { red: boolean; blue: boolean };
   previewStart: Position;
+  previewAtomicClone: {
+    color: PlayerColor;
+    start: Position;
+    path: Position[];
+    step: number;
+  } | null;
   teleportReservation: AbilitySkillReservation | null;
   teleportMarker: Position | null;
   infernoMarker: Position | null;
@@ -44,6 +50,10 @@ interface Props {
   movingBlitzColors: { red: boolean; blue: boolean };
   movingBlitzProgress: { red: number; blue: number };
   movingBlitzSteps: { red: number | null; blue: number | null };
+  movingAtomicClones: {
+    red: { start: Position | null; path: Position[]; step: number | null; position: Position | null };
+    blue: { start: Position | null; path: Position[]; step: number | null; position: Position | null };
+  };
   movingPaths: { red: Position[]; blue: Position[] };
   movingStarts: { red: Position; blue: Position } | null;
   cellSize: number;
@@ -110,6 +120,7 @@ export function AbilityGrid({
   activeAtFields,
   activePhaseShifts,
   previewStart,
+  previewAtomicClone,
   teleportReservation,
   teleportMarker,
   infernoMarker,
@@ -118,6 +129,7 @@ export function AbilityGrid({
   movingBlitzColors,
   movingBlitzProgress,
   movingBlitzSteps,
+  movingAtomicClones,
   movingPaths,
   movingStarts,
   cellSize,
@@ -635,6 +647,56 @@ export function AbilityGrid({
             movingBlitzSteps.blue,
             movingBlitzProgress.blue,
           )}
+
+        {isPlanning && previewAtomicClone && (
+          <>
+            <PathLine
+              color={previewAtomicClone.color}
+              path={previewAtomicClone.path}
+              startPos={previewAtomicClone.start}
+              cellSize={responsiveCellSize}
+              isPlanning
+            />
+            <PlayerPiece
+              color={previewAtomicClone.color}
+              position={previewAtomicClone.start}
+              cellSize={responsiveCellSize}
+              isAttacker={state.attackerColor === previewAtomicClone.color}
+              isHit={false}
+              isExploding={false}
+              isMe={currentColor === previewAtomicClone.color}
+              isClone
+              skin={previewAtomicClone.color === 'red' ? redSkin : blueSkin}
+            />
+          </>
+        )}
+
+        {(['red', 'blue'] as const).map((color) => {
+          const clone = movingAtomicClones[color];
+          if (!clone.start || clone.path.length === 0 || !clone.position) return null;
+          return (
+            <div key={`atomic-clone-${color}`}>
+              <PathLine
+                color={color}
+                path={clone.path}
+                startPos={clone.start}
+                cellSize={responsiveCellSize}
+                isPlanning={false}
+              />
+              <PlayerPiece
+                color={color}
+                position={clone.position}
+                cellSize={responsiveCellSize}
+                isAttacker={state.attackerColor === color}
+                isHit={false}
+                isExploding={false}
+                isMe={currentColor === color}
+                isClone
+                skin={color === 'red' ? redSkin : blueSkin}
+              />
+            </div>
+          );
+        })}
 
         {teleportMarker && !isPlaybackPhase && (
           <div

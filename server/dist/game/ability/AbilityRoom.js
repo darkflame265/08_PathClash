@@ -37,6 +37,7 @@ const SKILL_COSTS = {
     arc_reactor_field: 6,
     phase_shift: 8,
     ember_blast: 4,
+    atomic_fission: 6,
     inferno_field: 4,
     nova_blast: 4,
     aurora_heal: 10,
@@ -116,6 +117,8 @@ class AbilityRoom {
             hp: 3,
             position: { ...initialPositions[color] },
             plannedPath: [],
+            previousTurnStart: null,
+            previousTurnPath: [],
             plannedSkills: [],
             pathSubmitted: false,
             role: color === 'red' ? 'attacker' : 'escaper',
@@ -410,6 +413,10 @@ class AbilityRoom {
             obstacles: this.obstacles,
             lavaTiles: this.lavaTiles,
         });
+        red.previousTurnStart = { ...resolution.payload.redStart };
+        red.previousTurnPath = resolution.payload.redPath.map((position) => ({ ...position }));
+        blue.previousTurnStart = { ...resolution.payload.blueStart };
+        blue.previousTurnPath = resolution.payload.bluePath.map((position) => ({ ...position }));
         red.position = resolution.redState.position;
         red.hp = resolution.redState.hp;
         red.mana = resolution.redState.mana;
@@ -489,6 +496,7 @@ class AbilityRoom {
         const hasBlitz = uniqueSkills.some((skill) => skill.skillId === 'electric_blitz');
         const blitz = uniqueSkills.find((skill) => skill.skillId === 'electric_blitz') ?? null;
         const hasAttackSkill = uniqueSkills.some((skill) => skill.skillId === 'ember_blast' ||
+            skill.skillId === 'atomic_fission' ||
             skill.skillId === 'inferno_field' ||
             skill.skillId === 'nova_blast' ||
             skill.skillId === 'electric_blitz' ||
@@ -496,12 +504,16 @@ class AbilityRoom {
         const hasBigBang = uniqueSkills.some((skill) => skill.skillId === 'cosmic_bigbang');
         const bigBang = uniqueSkills.find((skill) => skill.skillId === 'cosmic_bigbang') ?? null;
         const hasCharge = uniqueSkills.some((skill) => skill.skillId === 'plasma_charge');
+        const hasAtomic = uniqueSkills.some((skill) => skill.skillId === 'atomic_fission');
         if ((hasGuard || hasAtField || hasPhaseShift) && player.role !== 'escaper')
             return null;
         if (hasAttackSkill && player.role !== 'attacker')
             return null;
         if (player.reboundLocked && path.length > 0)
             return null;
+        if (hasAtomic && (!player.previousTurnStart || player.previousTurnPath.length === 0)) {
+            return null;
+        }
         if (!isOverdriveTurn) {
             if (hasGuard) {
                 const guardSkill = uniqueSkills.find((skill) => skill.skillId === 'classic_guard');
@@ -588,6 +600,7 @@ class AbilityRoom {
             }
             for (const skill of uniqueSkills) {
                 if ((skill.skillId === 'ember_blast' ||
+                    skill.skillId === 'atomic_fission' ||
                     skill.skillId === 'inferno_field' ||
                     skill.skillId === 'nova_blast' ||
                     skill.skillId === 'aurora_heal' ||
@@ -606,6 +619,8 @@ class AbilityRoom {
                     if (infernoOrigin && posEqual(infernoOrigin, skill.target))
                         return null;
                 }
+                if (skill.skillId === 'atomic_fission' && skill.step > path.length)
+                    return null;
                 if (skill.skillId === 'classic_guard' && skill.step !== 0)
                     return null;
                 if (skill.skillId === 'arc_reactor_field' && skill.step > path.length)
@@ -724,6 +739,8 @@ class AbilityRoom {
             overdriveActive: player.overdriveActive,
             reboundLocked: player.reboundLocked,
             hidden: player.hidden,
+            previousTurnStart: player.previousTurnStart,
+            previousTurnPath: player.previousTurnPath,
             equippedSkills: player.equippedSkills,
         };
     }
@@ -733,6 +750,8 @@ class AbilityRoom {
             player.hp = 3;
             player.position = { ...initial[color] };
             player.plannedPath = [];
+            player.previousTurnStart = null;
+            player.previousTurnPath = [];
             player.plannedSkills = [];
             player.pathSubmitted = false;
             player.mana = INITIAL_MANA;
