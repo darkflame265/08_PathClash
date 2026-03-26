@@ -915,7 +915,26 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
     return ownedSkins.includes(skinId);
   };
 
-  const availableAbilitySkills = Object.values(ABILITY_SKILLS);
+  const skinOrderIndex = new Map(
+    skinChoices.map((choice, index) => [choice.id, index] as const),
+  );
+  const abilitySkillOrderIndex = new Map(
+    Object.values(ABILITY_SKILLS).map((skill, index) => [skill.id, index] as const),
+  );
+  const availableAbilitySkills = Object.values(ABILITY_SKILLS).sort(
+    (left, right) => {
+      const leftSkinOrder = skinOrderIndex.get(left.skinId) ?? Number.MAX_SAFE_INTEGER;
+      const rightSkinOrder =
+        skinOrderIndex.get(right.skinId) ?? Number.MAX_SAFE_INTEGER;
+      if (leftSkinOrder !== rightSkinOrder) {
+        return leftSkinOrder - rightSkinOrder;
+      }
+      return (
+        (abilitySkillOrderIndex.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
+        (abilitySkillOrderIndex.get(right.id) ?? Number.MAX_SAFE_INTEGER)
+      );
+    },
+  );
   const equippedAbilitySkillDefs = abilityLoadout
     .map((skillId) => ABILITY_SKILLS[skillId])
     .filter(Boolean);
