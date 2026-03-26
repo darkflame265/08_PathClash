@@ -4,6 +4,7 @@ import { syncServerTime, getEstimatedServerNow } from "../../socket/timeSync";
 import { useLang } from "../../hooks/useLang";
 import { useGameStore } from "../../store/gameStore";
 import { TimerBar } from "../Game/TimerBar";
+import { PlayerInfo } from "../Game/PlayerInfo";
 import {
   playBigBang,
   playBlitz,
@@ -301,6 +302,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const cellSize = useAdaptiveCellSize(gridAreaRef);
   const scale = cellSize / DEFAULT_CELL;
   const currentColor = myColor ?? "red";
+  const opponentColor: PlayerColor = currentColor === "red" ? "blue" : "red";
   const previousGuardPathRef = useRef<Position[]>([]);
   const previousChargePathRef = useRef<Position[]>([]);
   const previousBlitzPathRef = useRef<Position[]>([]);
@@ -2110,6 +2112,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   }
 
   const me = state.players[currentColor];
+  const opponent = state.players[opponentColor];
   const overdriveTurn = me.overdriveActive;
   const effectivePathPoints = me.reboundLocked ? 0 : state.pathPoints;
   const rewardTokens =
@@ -2193,6 +2196,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           <div className="gs-result-slot">
             <div className="gameover-overlay">
               <div className="gameover-box">
+                <div className="ability-gameover-opponent">
+                  <PlayerInfo player={opponent} isMe={false} />
+                </div>
                 <div
                   className={`gameover-result ${winner === currentColor ? "win" : "lose"}`}
                 >
