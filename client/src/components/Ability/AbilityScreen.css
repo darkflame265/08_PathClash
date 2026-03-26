@@ -1183,8 +1183,67 @@
 }
 
 @media (max-width: 480px) {
+  .ability-screen {
+    gap: calc(0.35rem * var(--gs-scale, 1));
+  }
+
+  .ability-screen .gs-player-card {
+    gap: calc(0.45rem * var(--gs-scale, 1));
+    padding: calc(0.42rem * var(--gs-scale, 1))
+      calc(0.62rem * var(--gs-scale, 1));
+  }
+
+  .ability-screen .gs-role-badge {
+    min-width: calc(44px * var(--gs-scale, 1));
+    padding: calc(0.34rem * var(--gs-scale, 1))
+      calc(0.42rem * var(--gs-scale, 1));
+  }
+
+  .ability-screen .gs-path-bar {
+    padding: calc(0.42rem * var(--gs-scale, 1))
+      calc(0.62rem * var(--gs-scale, 1));
+  }
+
+  .ability-skill-panel {
+    padding: calc(0.42rem * var(--gs-scale, 1))
+      calc(0.62rem * var(--gs-scale, 1));
+    gap: calc(0.16rem * var(--gs-scale, 1));
+  }
+
+  .ability-skill-panel-head {
+    gap: calc(0.28rem * var(--gs-scale, 1));
+  }
+
   .ability-skill-buttons {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: calc(0.35rem * var(--gs-scale, 1));
+  }
+
+  .ability-skill-btn {
+    min-height: calc(4.8rem * var(--gs-scale, 1));
+    padding: calc(0.42rem * var(--gs-scale, 1));
     grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    justify-items: start;
+    align-items: start;
+    gap: calc(0.18rem * var(--gs-scale, 1));
+  }
+
+  .ability-skill-icon {
+    font-size: clamp(0.95rem, calc(1.12rem * var(--gs-scale, 1)), 1.22rem);
+  }
+
+  .ability-skill-name {
+    width: 100%;
+    font-size: clamp(0.56rem, calc(0.68rem * var(--gs-scale, 1)), 0.76rem);
+    line-height: 1.15;
+    word-break: keep-all;
+  }
+
+  .ability-skill-cost {
+    width: 100%;
+    text-align: right;
+    font-size: clamp(0.6rem, calc(0.7rem * var(--gs-scale, 1)), 0.78rem);
   }
 }
 
