@@ -247,6 +247,98 @@
   justify-content: center;
 }
 
+.ability-skill-icon-custom {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1em;
+  height: 1.1em;
+  flex-shrink: 0;
+}
+
+.ability-skill-icon-void-back,
+.ability-skill-icon-void-front {
+  position: absolute;
+  border-radius: 999px;
+}
+
+.ability-skill-icon-void-back {
+  width: 0.72em;
+  height: 0.72em;
+  left: 0.08em;
+  top: 0.2em;
+  border: 2px dashed rgba(125, 211, 252, 0.8);
+  opacity: 0.55;
+  filter: blur(0.1px);
+}
+
+.ability-skill-icon-void-front {
+  width: 0.76em;
+  height: 0.76em;
+  left: 0.24em;
+  top: 0.04em;
+  border: 2px solid rgba(226, 232, 240, 0.92);
+  background:
+    radial-gradient(circle at 38% 34%, rgba(255, 255, 255, 0.18), transparent 52%),
+    rgba(148, 163, 184, 0.08);
+  box-shadow:
+    0 0 8px rgba(125, 211, 252, 0.18),
+    inset 0 0 6px rgba(255, 255, 255, 0.1);
+}
+
+.ability-skill-icon-bigbang {
+  color: #f8fafc;
+}
+
+.ability-skill-icon-bigbang-core,
+.ability-skill-icon-bigbang-ring,
+.ability-skill-icon-bigbang-rays {
+  position: absolute;
+}
+
+.ability-skill-icon-bigbang-core {
+  width: 0.2em;
+  height: 0.2em;
+  border-radius: 999px;
+  background: radial-gradient(circle, #fde68a 0%, #fbbf24 65%, #f97316 100%);
+  box-shadow:
+    0 0 8px rgba(251, 191, 36, 0.7),
+    0 0 14px rgba(249, 115, 22, 0.45);
+}
+
+.ability-skill-icon-bigbang-ring {
+  border-radius: 999px;
+  border: 2px solid rgba(251, 191, 36, 0.88);
+}
+
+.ability-skill-icon-bigbang-ring-a {
+  width: 0.58em;
+  height: 0.58em;
+  opacity: 0.92;
+}
+
+.ability-skill-icon-bigbang-ring-b {
+  width: 0.9em;
+  height: 0.9em;
+  opacity: 0.72;
+}
+
+.ability-skill-icon-bigbang-rays {
+  inset: 0.02em;
+  border-radius: 999px;
+  background:
+    repeating-conic-gradient(
+      from 0deg,
+      rgba(251, 191, 36, 0.92) 0deg 10deg,
+      transparent 10deg 45deg
+    );
+  -webkit-mask: radial-gradient(circle, transparent 0 55%, #000 57% 73%, transparent 75%);
+  mask: radial-gradient(circle, transparent 0 55%, #000 57% 73%, transparent 75%);
+  opacity: 0.9;
+  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.28));
+}
+
 .ability-skill-icon-glyph.is-electric-blitz {
   font-family:
     "Segoe UI Symbol",

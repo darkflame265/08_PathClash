@@ -180,6 +180,27 @@ function AccountCard({
 
 function renderAbilitySkillIcon(skillId: AbilitySkillId) {
   const skill = ABILITY_SKILLS[skillId];
+  if (skillId === "void_cloak") {
+    return (
+      <span className="ability-skill-icon-custom ability-skill-icon-void" aria-hidden="true">
+        <span className="ability-skill-icon-void-back" />
+        <span className="ability-skill-icon-void-front" />
+      </span>
+    );
+  }
+  if (skillId === "cosmic_bigbang") {
+    return (
+      <span
+        className="ability-skill-icon-custom ability-skill-icon-bigbang"
+        aria-hidden="true"
+      >
+        <span className="ability-skill-icon-bigbang-core" />
+        <span className="ability-skill-icon-bigbang-ring ability-skill-icon-bigbang-ring-a" />
+        <span className="ability-skill-icon-bigbang-ring ability-skill-icon-bigbang-ring-b" />
+        <span className="ability-skill-icon-bigbang-rays" />
+      </span>
+    );
+  }
   const icon = skillId === "electric_blitz" ? "⚡︎" : skill.icon;
   return (
     <span
