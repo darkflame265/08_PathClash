@@ -1,4 +1,4 @@
-// Simple Web Audio API sound generator (no asset file needed)
+﻿// Simple Web Audio API sound generator (no asset file needed)
 let audioCtx: AudioContext | null = null;
 let chargeAudio: HTMLAudioElement | null = null;
 let quantumAudio: HTMLAudioElement | null = null;
@@ -11,6 +11,8 @@ let phaseShiftAudio: HTMLAudioElement | null = null;
 let arcReactorAudio: HTMLAudioElement | null = null;
 let voidCloakAudio: HTMLAudioElement | null = null;
 let overdriveLoopAudio: HTMLAudioElement | null = null;
+let guardAudio: HTMLAudioElement | null = null;
+let atomicFissionAudio: HTMLAudioElement | null = null;
 const CHARGE_SFX_GAIN = 0.4;
 const QUANTUM_SFX_GAIN = 0.65;
 const EMBER_SFX_GAIN = 0.3;
@@ -22,6 +24,8 @@ const PHASE_SHIFT_SFX_GAIN = 0.6;
 const ARC_REACTOR_SFX_GAIN = 0.6;
 const VOID_CLOAK_SFX_GAIN = 0.6;
 const OVERDRIVE_LOOP_GAIN = 0.4;
+const GUARD_SFX_GAIN = 0.55;
+const ATOMIC_FISSION_SFX_GAIN = 0.55;
 
 function getCtx(): AudioContext {
   if (!audioCtx) audioCtx = new AudioContext();
@@ -45,6 +49,38 @@ export function playHit(volume = 0.55): void {
     osc.stop(ctx.currentTime + 0.15);
   } catch {
     // AudioContext not available
+  }
+}
+
+export function playGuard(volume = 0.55): void {
+  try {
+    if (!guardAudio) {
+      guardAudio = new Audio("/sfx/ability/guard.wav");
+      guardAudio.preload = "auto";
+    }
+    const audio = guardAudio.cloneNode(true) as HTMLAudioElement;
+    audio.volume = Math.max(0, Math.min(1, volume * GUARD_SFX_GAIN));
+    void audio.play().catch(() => {
+      // Playback can fail if browser blocks audio; ignore.
+    });
+  } catch {
+    // Audio element not available
+  }
+}
+
+export function playAtomicFission(volume = 0.55): void {
+  try {
+    if (!atomicFissionAudio) {
+      atomicFissionAudio = new Audio("/sfx/ability/atomic_fission.wav");
+      atomicFissionAudio.preload = "auto";
+    }
+    const audio = atomicFissionAudio.cloneNode(true) as HTMLAudioElement;
+    audio.volume = Math.max(0, Math.min(1, volume * ATOMIC_FISSION_SFX_GAIN));
+    void audio.play().catch(() => {
+      // Playback can fail if browser blocks audio; ignore.
+    });
+  } catch {
+    // Audio element not available
   }
 }
 
@@ -239,3 +275,5 @@ export function stopOverdriveLoop(): void {
     // Audio element not available
   }
 }
+
+

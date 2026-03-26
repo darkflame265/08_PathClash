@@ -14,7 +14,9 @@ import {
   playHealing,
   playHit,
   playInferno,
+  playGuard,
   playArcReactor,
+  playAtomicFission,
   playPhaseShift,
   playQuantum,
   playVoidCloak,
@@ -1174,6 +1176,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     queueAnimationTimeout(() => {
       if (event.skillId === "classic_guard") {
         setActiveGuards((prev) => ({ ...prev, [event.color]: true }));
+        if (!isSfxMuted) {
+          playGuard(sfxVolume);
+        }
       }
 
       if (event.skillId === "phase_shift") {
@@ -1215,6 +1220,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               prev.filter((entry) => entry.id !== effectId),
             );
           }, 420);
+        }
+      }
+
+      if (event.skillId === "atomic_fission") {
+        if (!isSfxMuted) {
+          playAtomicFission(sfxVolume);
         }
       }
 
