@@ -1506,18 +1506,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     for (const event of payload.skillEvents) {
       const list = skillMap.get(event.step) ?? [];
       list.push(event);
-      if (event.skillId === "classic_guard" && event.invulnerableSteps) {
-        guardCounters[event.color] = Math.max(
-          guardCounters[event.color],
-          event.invulnerableSteps,
-        );
-      }
-      if (event.skillId === "arc_reactor_field") {
-        atFieldCounters[event.color] = Math.max(
-          atFieldCounters[event.color],
-          AT_FIELD_VISUAL_STEPS,
-        );
-      }
       skillMap.set(
         event.step,
         list.sort((left, right) => {
@@ -1738,6 +1726,20 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               (event) => event.skillId === "electric_blitz",
             );
             runSkillQueue(events, 0, () => {
+              for (const event of events) {
+                if (event.skillId === "classic_guard" && event.invulnerableSteps) {
+                  guardCounters[event.color] = Math.max(
+                    guardCounters[event.color],
+                    event.invulnerableSteps,
+                  );
+                }
+                if (event.skillId === "arc_reactor_field") {
+                  atFieldCounters[event.color] = Math.max(
+                    atFieldCounters[event.color],
+                    AT_FIELD_VISUAL_STEPS,
+                  );
+                }
+              }
               if (collisions.length > 0) {
                 applyCollisions(collisions);
               }
