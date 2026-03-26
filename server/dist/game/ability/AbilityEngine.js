@@ -11,6 +11,7 @@ function getSkillPriority(skillId) {
         case 'gold_overdrive':
         case 'void_cloak':
             return 0;
+        case 'arc_reactor_field':
         case 'phase_shift':
         case 'classic_guard':
             return 1;
@@ -110,6 +111,8 @@ function resolveAbilityRound(params) {
     let blueMana = blue.mana;
     let redInv = red.invulnerableSteps;
     let blueInv = blue.invulnerableSteps;
+    let redAtField = false;
+    let blueAtField = false;
     let redPhaseShift = false;
     let bluePhaseShift = false;
     let redPendingManaBonus = red.pendingManaBonus;
@@ -145,6 +148,55 @@ function resolveAbilityRound(params) {
             heals,
         });
     };
+    const isProtectedByInv = (color) => color === 'red' ? redInv > 0 || redPhaseShift : blueInv > 0 || bluePhaseShift;
+    const resolveAttackSkill = (sourceColor, targetColor, skillId, damage, sourcePosition, targetPosition, damages, reflectAllowed = true) => {
+        if (isProtectedByInv(targetColor))
+            return;
+        const targetAtField = targetColor === 'red' ? redAtField : blueAtField;
+        if (targetAtField) {
+            if (targetColor === 'red')
+                redAtField = false;
+            else
+                blueAtField = false;
+            if (!reflectAllowed || skillId === 'cosmic_bigbang')
+                return;
+            if (isProtectedByInv(sourceColor))
+                return;
+            if (sourceColor === 'red') {
+                redHp = Math.max(0, redHp - damage);
+                damages.push({
+                    color: 'red',
+                    newHp: redHp,
+                    position: { ...sourcePosition },
+                });
+            }
+            else {
+                blueHp = Math.max(0, blueHp - damage);
+                damages.push({
+                    color: 'blue',
+                    newHp: blueHp,
+                    position: { ...sourcePosition },
+                });
+            }
+            return;
+        }
+        if (targetColor === 'red') {
+            redHp = Math.max(0, redHp - damage);
+            damages.push({
+                color: 'red',
+                newHp: redHp,
+                position: { ...targetPosition },
+            });
+        }
+        else {
+            blueHp = Math.max(0, blueHp - damage);
+            damages.push({
+                color: 'blue',
+                newHp: blueHp,
+                position: { ...targetPosition },
+            });
+        }
+    };
     const processSkill = (color, reservation) => {
         const currentPos = color === 'red' ? redPos : bluePos;
         const opponentPos = color === 'red' ? bluePos : redPos;
@@ -167,6 +219,23 @@ function resolveAbilityRound(params) {
                 color,
                 skillId: reservation.skillId,
                 invulnerableSteps: GUARD_STEPS,
+            });
+            return;
+        }
+        if (reservation.skillId === 'arc_reactor_field') {
+            if (color === 'red') {
+                redAtField = true;
+                redMana = Math.max(0, casterMana - 6);
+            }
+            else {
+                blueAtField = true;
+                blueMana = Math.max(0, casterMana - 6);
+            }
+            skillEvents.push({
+                step: reservation.step,
+                order: reservation.order,
+                color,
+                skillId: reservation.skillId,
             });
             return;
         }
@@ -283,28 +352,9 @@ function resolveAbilityRound(params) {
             const fullPath = color === 'red' ? redPath : bluePath;
             const path = fullPath.slice(reservation.step);
             const affectedPositions = getLinePositions(currentPos, path);
-            const opponentProtected = opponentColor === 'red'
-                ? redInv > 0 || redPhaseShift
-                : blueInv > 0 || bluePhaseShift;
-            if (affectedPositions.some((position) => samePosition(position, opponentPos)) && !opponentProtected) {
-                if (opponentColor === 'red') {
-                    redHp = Math.max(0, redHp - 1);
-                    collisions.push({
-                        step: reservation.step,
-                        position: { ...opponentPos },
-                        escapeeColor: 'red',
-                        newHp: redHp,
-                    });
-                }
-                else {
-                    blueHp = Math.max(0, blueHp - 1);
-                    collisions.push({
-                        step: reservation.step,
-                        position: { ...opponentPos },
-                        escapeeColor: 'blue',
-                        newHp: blueHp,
-                    });
-                }
+            const damages = [];
+            if (affectedPositions.some((position) => samePosition(position, opponentPos))) {
+                resolveAttackSkill(color, opponentColor, reservation.skillId, 1, currentPos, opponentPos, damages);
             }
             if (color === 'red') {
                 redMana = Math.max(0, casterMana - 6);
@@ -316,7 +366,7 @@ function resolveAbilityRound(params) {
                 bluePos = { ...(path[path.length - 1] ?? currentPos) };
                 blueBlitz = true;
             }
-            applyDamages(color, [], [], reservation.skillId, reservation.step, reservation.order, affectedPositions);
+            applyDamages(color, damages, [], reservation.skillId, reservation.step, reservation.order, affectedPositions);
             const lastEvent = skillEvents[skillEvents.length - 1];
             if (lastEvent && lastEvent.skillId === reservation.skillId && lastEvent.step === reservation.step && lastEvent.order === reservation.order && lastEvent.color === color) {
                 lastEvent.from = { ...currentPos };
@@ -327,18 +377,8 @@ function resolveAbilityRound(params) {
         if (reservation.skillId === 'ember_blast') {
             const affectedPositions = getCrossPositions(currentPos).filter((position) => !obstacles.some((obstacle) => samePosition(obstacle, position)));
             const damages = [];
-            const opponentProtected = opponentColor === 'red'
-                ? redInv > 0 || redPhaseShift
-                : blueInv > 0 || bluePhaseShift;
-            if (affectedPositions.some((position) => samePosition(position, opponentPos)) && !opponentProtected) {
-                if (opponentColor === 'red') {
-                    redHp = Math.max(0, redHp - 1);
-                    damages.push({ color: 'red', newHp: redHp, position: { ...opponentPos } });
-                }
-                else {
-                    blueHp = Math.max(0, blueHp - 1);
-                    damages.push({ color: 'blue', newHp: blueHp, position: { ...opponentPos } });
-                }
+            if (affectedPositions.some((position) => samePosition(position, opponentPos))) {
+                resolveAttackSkill(color, opponentColor, reservation.skillId, 1, currentPos, opponentPos, damages);
             }
             if (color === 'red') {
                 redMana = Math.max(0, casterMana - 4);
@@ -371,18 +411,8 @@ function resolveAbilityRound(params) {
         if (reservation.skillId === 'nova_blast') {
             const affectedPositions = getNovaPositions(currentPos).filter((position) => !obstacles.some((obstacle) => samePosition(obstacle, position)));
             const damages = [];
-            const opponentProtected = opponentColor === 'red'
-                ? redInv > 0 || redPhaseShift
-                : blueInv > 0 || bluePhaseShift;
-            if (affectedPositions.some((position) => samePosition(position, opponentPos)) && !opponentProtected) {
-                if (opponentColor === 'red') {
-                    redHp = Math.max(0, redHp - 1);
-                    damages.push({ color: 'red', newHp: redHp, position: { ...opponentPos } });
-                }
-                else {
-                    blueHp = Math.max(0, blueHp - 1);
-                    damages.push({ color: 'blue', newHp: blueHp, position: { ...opponentPos } });
-                }
+            if (affectedPositions.some((position) => samePosition(position, opponentPos))) {
+                resolveAttackSkill(color, opponentColor, reservation.skillId, 1, currentPos, opponentPos, damages);
             }
             if (color === 'red') {
                 redMana = Math.max(0, casterMana - 4);
@@ -401,19 +431,7 @@ function resolveAbilityRound(params) {
                 }
             }
             const damages = [];
-            const opponentProtected = opponentColor === 'red'
-                ? redInv > 0 || redPhaseShift
-                : blueInv > 0 || bluePhaseShift;
-            if (!opponentProtected) {
-                if (opponentColor === 'red') {
-                    redHp = Math.max(0, redHp - 2);
-                    damages.push({ color: 'red', newHp: redHp, position: { ...opponentPos } });
-                }
-                else {
-                    blueHp = Math.max(0, blueHp - 2);
-                    damages.push({ color: 'blue', newHp: blueHp, position: { ...opponentPos } });
-                }
-            }
+            resolveAttackSkill(color, opponentColor, reservation.skillId, 2, currentPos, opponentPos, damages, false);
             if (color === 'red') {
                 redMana = Math.max(0, casterMana - 10);
             }
@@ -551,6 +569,8 @@ function resolveAbilityRound(params) {
         };
         applyLavaDamage('red', redPrevForStep, redPos, redInv > 0 || redPhaseShift);
         applyLavaDamage('blue', bluePrevForStep, bluePos, blueInv > 0 || bluePhaseShift);
+        redAtField = false;
+        blueAtField = false;
     }
     let winner = null;
     if (redHp <= 0 && blueHp <= 0)

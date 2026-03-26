@@ -8,6 +8,7 @@
 
 export type AbilitySkillId =
   | 'classic_guard'
+  | 'arc_reactor_field'
   | 'phase_shift'
   | 'ember_blast'
   | 'inferno_field'
@@ -144,6 +145,18 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     category: 'defense',
     skinId: 'classic',
     icon: '🛡',
+  },
+  arc_reactor_field: {
+    id: 'arc_reactor_field',
+    name: { en: 'AT Field', kr: 'AT 필드' },
+    description: {
+      en: 'For one movement step, nullify one incoming attack skill and reflect it back to the attacker. Big Bang is nullified only.',
+      kr: '1칸 시간 동안 공격 스킬 1회를 무효화하고 공격자에게 반사합니다. 빅뱅폭발은 반사 없이 무효화만 합니다.',
+    },
+    manaCost: 6,
+    category: 'defense',
+    skinId: 'arc_reactor',
+    icon: '⬡',
   },
   phase_shift: {
     id: 'phase_shift',

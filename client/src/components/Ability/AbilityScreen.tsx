@@ -576,6 +576,31 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     syncMyPlan(myPath, nextReservations);
   };
 
+  const toggleAtFieldSkill = () => {
+    const alreadyReserved = skillReservations.some(
+      (entry) => entry.skillId === "arc_reactor_field",
+    );
+    if (alreadyReserved) {
+      removeReservation("arc_reactor_field");
+      return;
+    }
+    if (getMyRole() !== "escaper") return;
+    if (getRemainingMana() < getSkillCost("arc_reactor_field")) return;
+    const nextReservations: AbilitySkillReservation[] = [
+      ...skillReservations.filter(
+        (entry) => entry.skillId !== "arc_reactor_field",
+      ),
+      {
+        skillId: "arc_reactor_field",
+        step: getCurrentSkillStep(),
+        order: reservationOrderRef.current++,
+      },
+    ];
+    setSkillReservations(nextReservations);
+    setSelectedSkillId(null);
+    syncMyPlan(myPath, nextReservations);
+  };
+
   const beginExplosionStepPick = () => {
     const alreadyReserved = skillReservations.some(
       (entry) => entry.skillId === "ember_blast",
@@ -911,6 +936,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }
     if (skillId === "phase_shift") {
       togglePhaseShiftSkill();
+      return;
+    }
+    if (skillId === "arc_reactor_field") {
+      toggleAtFieldSkill();
       return;
     }
     if (skillId === "ember_blast") {
@@ -2140,7 +2169,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               (entry) => entry.skillId === "cosmic_bigbang",
             );
             const roleBlocked =
-              ((skillId === "classic_guard" || skillId === "phase_shift") &&
+              ((skillId === "classic_guard" ||
+                skillId === "phase_shift" ||
+                skillId === "arc_reactor_field") &&
                 getMyRole() !== "escaper") ||
               ((skillId === "ember_blast" ||
                 skillId === "inferno_field" ||

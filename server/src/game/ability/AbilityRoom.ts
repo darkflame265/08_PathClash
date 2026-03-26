@@ -53,6 +53,7 @@ function buildBlitzPath(start: Position, target: Position): Position[] {
 
 const SKILL_COSTS: Record<AbilitySkillId, number> = {
   classic_guard: 4,
+  arc_reactor_field: 6,
   phase_shift: 8,
   ember_blast: 4,
   inferno_field: 4,
@@ -534,6 +535,7 @@ export class AbilityRoom {
     if (manaCost > player.mana) return null;
 
     const hasGuard = uniqueSkills.some((skill) => skill.skillId === 'classic_guard');
+    const hasAtField = uniqueSkills.some((skill) => skill.skillId === 'arc_reactor_field');
     const hasPhaseShift = uniqueSkills.some((skill) => skill.skillId === 'phase_shift');
     const hasOverdrive = uniqueSkills.some((skill) => skill.skillId === 'gold_overdrive');
     const teleport = uniqueSkills.find((skill) => skill.skillId === 'quantum_shift') ?? null;
@@ -551,7 +553,7 @@ export class AbilityRoom {
     const bigBang = uniqueSkills.find((skill) => skill.skillId === 'cosmic_bigbang') ?? null;
     const hasCharge = uniqueSkills.some((skill) => skill.skillId === 'plasma_charge');
 
-    if ((hasGuard || hasPhaseShift) && player.role !== 'escaper') return null;
+    if ((hasGuard || hasAtField || hasPhaseShift) && player.role !== 'escaper') return null;
     if (hasAttackSkill && player.role !== 'attacker') return null;
     if (player.reboundLocked && path.length > 0) return null;
 
@@ -655,6 +657,7 @@ export class AbilityRoom {
           if (infernoOrigin && posEqual(infernoOrigin, skill.target)) return null;
         }
         if (skill.skillId === 'classic_guard' && skill.step !== 0) return null;
+        if (skill.skillId === 'arc_reactor_field' && skill.step > path.length) return null;
         if (skill.skillId === 'phase_shift' && skill.step !== 0) return null;
         if (skill.skillId === 'cosmic_bigbang' && skill.step !== 0) return null;
       }

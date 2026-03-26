@@ -10,6 +10,7 @@ import type {
 
 export type AbilitySkillId =
   | 'classic_guard'
+  | 'arc_reactor_field'
   | 'phase_shift'
   | 'ember_blast'
   | 'inferno_field'

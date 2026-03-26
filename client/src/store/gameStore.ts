@@ -230,6 +230,7 @@ const initialAbilityLoadout = (() => {
     if (!Array.isArray(parsed)) return ['classic_guard'] as AbilitySkillId[];
     const normalized = parsed.filter((value): value is AbilitySkillId =>
       value === 'classic_guard' ||
+      value === 'arc_reactor_field' ||
       value === 'phase_shift' ||
       value === 'ember_blast' ||
       value === 'inferno_field' ||

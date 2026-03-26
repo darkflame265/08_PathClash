@@ -204,6 +204,17 @@ function getAbilitySkillSummary(skillId: AbilitySkillId, lang: "ko" | "en") {
             ? "Become invulnerable for 2 turns and block attack skills."
             : "2턴 동안 무적이 되며, 공격 스킬을 막습니다.",
       };
+    case "arc_reactor_field":
+      return {
+        tags:
+          lang === "en"
+            ? "Move OK · Combo OK"
+            : "이동 가능 · 조합 가능",
+        desc:
+          lang === "en"
+            ? "For one step, nullify one incoming attack skill and reflect it back. Big Bang is nullified only."
+            : "1칸 시간 동안 공격 스킬 1회를 무효화하고 반사합니다. 빅뱅폭발은 반사 없이 무효화만 합니다.",
+      };
     case "phase_shift":
       return {
         tags:
