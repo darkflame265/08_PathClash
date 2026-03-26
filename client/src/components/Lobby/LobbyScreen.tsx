@@ -55,6 +55,9 @@ const TERMS_URL_EN =
 const DONATE_URL =
   import.meta.env.VITE_DONATE_URL?.trim() || "https://pathclash.com";
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
+const PATCH_NOTES_VERSION = "2026-03-26-v1";
+const PATCH_NOTES_SUMMARY_SEEN_KEY = "pathclash.patchNotes.summarySeen";
+const PATCH_NOTES_READ_KEY = "pathclash.patchNotes.read";
 
 type SetAuthState = ReturnType<typeof useGameStore.getState>["setAuthState"];
 
@@ -446,6 +449,9 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   const [isAudioSettingsOpen, setIsAudioSettingsOpen] = useState(false);
   const [isAbilityLoadoutOpen, setIsAbilityLoadoutOpen] = useState(false);
   const [isDailyRewardInfoOpen, setIsDailyRewardInfoOpen] = useState(false);
+  const [isPatchNotesOpen, setIsPatchNotesOpen] = useState(false);
+  const [showPatchNotesSummary, setShowPatchNotesSummary] = useState(false);
+  const [hasUnreadPatchNotes, setHasUnreadPatchNotes] = useState(false);
   const [upgradeResult, setUpgradeResult] = useState<UpgradeResolution>({
     kind: "none",
   });
@@ -512,6 +518,32 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
       ? "Select up to 3 skills you want to bring into Ability Battle."
       : "능력 대전에 가져갈 스킬을 최대 3개까지 선택하세요.";
   const abilityLoadoutCount = lang === "en" ? "equipped" : "장착 중";
+  const patchNotesLabel = lang === "en" ? "Patch Notes" : "패치노트";
+  const patchNotesTitle = lang === "en" ? "Patch Notes" : "패치노트";
+  const patchNotesSummaryTitle =
+    lang === "en" ? "New Patch Applied" : "새 패치가 적용되었습니다";
+  const patchNotesSummaryDesc =
+    lang === "en"
+      ? "Check the latest balance and ability updates before playing."
+      : "플레이 전에 최신 밸런스 및 능력 업데이트 내용을 확인하세요.";
+  const patchNotesOpenLabel = lang === "en" ? "View Details" : "자세히 보기";
+  const patchNotesSummaryCloseLabel = lang === "en" ? "Later" : "나중에";
+  const patchNotesVersionLabel =
+    lang === "en" ? "Version 2026.03.26" : "버전 2026.03.26";
+  const patchNotesBody =
+    lang === "en"
+      ? [
+          "Ability Battle added multiple new skills and visual/SFX upgrades.",
+          "Atomic Fission: create a clone that follows your previous turn path.",
+          "AT Field / Guard end notifications and timing alignment improved.",
+          "Patch Notes panel added. New patch summaries now appear on first login after an update.",
+        ]
+      : [
+          "능력 대전에 신규 스킬과 각종 시각 효과, 효과음이 추가되었습니다.",
+          "원자분열: 이전 턴 경로를 따라 움직이는 분신을 생성합니다.",
+          "AT 필드 / 가드 종료 알림과 지속시간 표시 타이밍을 정리했습니다.",
+          "패치노트 창이 추가되었습니다. 패치 후 첫 접속 시 요약 팝업이 표시됩니다.",
+        ];
   const dailyRewardGuideTitle =
     lang === "en" ? "📌 Daily Reward Info" : "📌 일일 보상 안내";
   const dailyRewardGuideMax =
@@ -961,6 +993,11 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   };
   const currentSkinName =
     skinChoices.find((choice) => choice.id === pieceSkin)?.name ?? pieceSkin;
+
+  const markPatchNotesRead = useCallback(() => {
+    localStorage.setItem(PATCH_NOTES_READ_KEY, PATCH_NOTES_VERSION);
+    setHasUnreadPatchNotes(false);
+  }, []);
   const hasAbilitySkinUnlocked = (skinId: PieceSkin) => {
     if (skinId === "classic") return true;
     if (skinId === "ember") return accountWins >= 10;
@@ -1114,11 +1151,24 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   }, [buildExistingAccountSwitchPrompt, setAuthState]);
 
   useEffect(() => {
+    const summarySeenVersion = localStorage.getItem(PATCH_NOTES_SUMMARY_SEEN_KEY);
+    const readVersion = localStorage.getItem(PATCH_NOTES_READ_KEY);
+    if (summarySeenVersion !== PATCH_NOTES_VERSION) {
+      setShowPatchNotesSummary(true);
+      localStorage.setItem(PATCH_NOTES_SUMMARY_SEEN_KEY, PATCH_NOTES_VERSION);
+    }
+    setHasUnreadPatchNotes(readVersion !== PATCH_NOTES_VERSION);
+  }, []);
+
+  useEffect(() => {
     const shouldLockScroll =
       isSkinPickerOpen ||
       isTokenShopOpen ||
       isSettingsOpen ||
-      isAudioSettingsOpen;
+      isAudioSettingsOpen ||
+      isAbilityLoadoutOpen ||
+      isPatchNotesOpen ||
+      showPatchNotesSummary;
 
     if (!shouldLockScroll) {
       return;
@@ -1144,8 +1194,11 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
     };
   }, [
     isAudioSettingsOpen,
+    isAbilityLoadoutOpen,
+    isPatchNotesOpen,
     isSettingsOpen,
     isSkinPickerOpen,
+    showPatchNotesSummary,
     isTokenShopOpen,
   ]);
 
@@ -2136,6 +2189,17 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
       </div>
       <div className="lobby-utility-links">
         <button
+          className="lobby-utility-link lobby-patch-notes-link"
+          onClick={() => {
+            setIsPatchNotesOpen(true);
+            markPatchNotesRead();
+          }}
+          type="button"
+        >
+          <span>{patchNotesLabel}</span>
+          {hasUnreadPatchNotes && <span className="lobby-new-badge">NEW</span>}
+        </button>
+        <button
           className="lobby-utility-link"
           onClick={() => setIsSettingsOpen(true)}
           type="button"
@@ -2316,6 +2380,75 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
                 type="button"
               >
                 {skinApplyLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isPatchNotesOpen && (
+        <div
+          className="upgrade-modal-backdrop"
+          onClick={() => setIsPatchNotesOpen(false)}
+        >
+          <div
+            className="upgrade-modal skin-modal patch-notes-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="skin-modal-head">
+              <h3>{patchNotesTitle}</h3>
+              <div className="skin-token-badge" aria-label="Patch notes version">
+                <span className="skin-token-badge-main">
+                  <span>{patchNotesVersionLabel}</span>
+                </span>
+              </div>
+            </div>
+            <div className="patch-notes-scroll-body">
+              {patchNotesBody.map((entry, index) => (
+                <p key={index} className="patch-notes-entry">
+                  {entry}
+                </p>
+              ))}
+            </div>
+            <div className="upgrade-modal-actions">
+              <button
+                className="lobby-btn primary"
+                onClick={() => setIsPatchNotesOpen(false)}
+                type="button"
+              >
+                {skinApplyLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showPatchNotesSummary && (
+        <div className="upgrade-modal-backdrop">
+          <div className="upgrade-modal patch-notes-summary-modal">
+            <h3>{patchNotesSummaryTitle}</h3>
+            <p>{patchNotesSummaryDesc}</p>
+            <div className="patch-notes-summary-list">
+              {patchNotesBody.slice(0, 3).map((entry, index) => (
+                <p key={index}>{entry}</p>
+              ))}
+            </div>
+            <div className="upgrade-modal-actions">
+              <button
+                className="lobby-btn secondary"
+                onClick={() => setShowPatchNotesSummary(false)}
+                type="button"
+              >
+                {patchNotesSummaryCloseLabel}
+              </button>
+              <button
+                className="lobby-btn primary"
+                onClick={() => {
+                  setShowPatchNotesSummary(false);
+                  setIsPatchNotesOpen(true);
+                  markPatchNotesRead();
+                }}
+                type="button"
+              >
+                {patchNotesOpenLabel}
               </button>
             </div>
           </div>

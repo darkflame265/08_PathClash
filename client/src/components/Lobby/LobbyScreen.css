@@ -1362,6 +1362,24 @@
   width: min(100%, 220px);
 }
 
+.lobby-patch-notes-link {
+  gap: 0.5rem;
+}
+
+.lobby-new-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  padding: 0.14rem 0.44rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ef4444, #f59e0b);
+  color: #fff7ed;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
 .lobby-utility-link:hover {
   color: var(--text, #f0f4f8);
   border-color: rgba(59, 130, 246, 0.45);
@@ -1462,6 +1480,49 @@
 
 .audio-settings-modal {
   width: min(100%, 24rem);
+}
+
+.patch-notes-modal {
+  width: min(100%, 34rem);
+}
+
+.patch-notes-scroll-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-height: min(60vh, 28rem);
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.patch-notes-entry {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(96, 165, 250, 0.18);
+  background: rgba(15, 23, 42, 0.52);
+  color: var(--text, #f0f4f8);
+  line-height: 1.6;
+}
+
+.patch-notes-summary-modal {
+  width: min(100%, 30rem);
+}
+
+.patch-notes-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.patch-notes-summary-list p {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.9rem;
+  background: rgba(15, 23, 42, 0.52);
+  border: 1px solid rgba(96, 165, 250, 0.14);
+  color: var(--text, #f0f4f8);
+  line-height: 1.5;
 }
 
 .audio-settings-body {
