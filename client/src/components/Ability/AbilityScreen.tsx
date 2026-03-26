@@ -47,6 +47,7 @@ const SKILL_CAST_DELAY_MS = 500;
 const BLITZ_DASH_STEP_MS = 12;
 const BLITZ_POST_HIT_PAUSE_MS = SKILL_PAUSE_MS;
 const VOID_REVEAL_PAUSE_MS = 450;
+const AT_FIELD_STEPS = 2;
 
 function buildBlitzPath(start: Position, target: Position): Position[] {
   const rowDelta = target.row - start.row;
@@ -179,6 +180,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     blue: number | null;
   }>({ red: null, blue: null });
   const [activeGuards, setActiveGuards] = useState<{
+    red: boolean;
+    blue: boolean;
+  }>({ red: false, blue: false });
+  const [activeAtFields, setActiveAtFields] = useState<{
     red: boolean;
     blue: boolean;
   }>({ red: false, blue: false });
@@ -353,6 +358,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       red: nextState.players.red.invulnerableSteps > 0,
       blue: nextState.players.blue.invulnerableSteps > 0,
     });
+    setActiveAtFields({ red: false, blue: false });
     setActivePhaseShifts({ red: false, blue: false });
     setHitFlags({ red: false, blue: false });
     setExplodingFlags({ red: false, blue: false });
@@ -1071,6 +1077,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         }
       }
 
+      if (event.skillId === "arc_reactor_field") {
+        setActiveAtFields((prev) => ({ ...prev, [event.color]: true }));
+      }
+
       if (event.skillId === "plasma_charge") {
         const position =
           event.color === "red"
@@ -1426,6 +1436,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       red: stateRef.current?.players.red.invulnerableSteps ?? 0,
       blue: stateRef.current?.players.blue.invulnerableSteps ?? 0,
     };
+    const atFieldCounters = {
+      red: 0,
+      blue: 0,
+    };
     const phaseShiftFlags = {
       red: payload.skillEvents.some(
         (event) => event.skillId === "phase_shift" && event.color === "red",
@@ -1444,6 +1458,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         guardCounters[event.color] = Math.max(
           guardCounters[event.color],
           event.invulnerableSteps,
+        );
+      }
+      if (event.skillId === "arc_reactor_field") {
+        atFieldCounters[event.color] = Math.max(
+          atFieldCounters[event.color],
+          AT_FIELD_STEPS,
         );
       }
       skillMap.set(
@@ -1590,6 +1610,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         setActiveGuards({
           red: guardCounters.red > 0,
           blue: guardCounters.blue > 0,
+        });
+        if (atFieldCounters.red > 0) atFieldCounters.red -= 1;
+        if (atFieldCounters.blue > 0) atFieldCounters.blue -= 1;
+        setActiveAtFields({
+          red: atFieldCounters.red > 0,
+          blue: atFieldCounters.blue > 0,
         });
 
         const events = skillMap.get(step) ?? [];
@@ -2029,6 +2055,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             chargeEffects={chargeEffects}
             healEffects={healEffects}
             activeGuards={activeGuards}
+            activeAtFields={activeAtFields}
             activePhaseShifts={activePhaseShifts}
             previewStart={previewStart}
             teleportReservation={teleportReservation}

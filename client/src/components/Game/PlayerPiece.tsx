@@ -21,6 +21,7 @@ interface Props {
   isMe: boolean;
   isHidden?: boolean;
   isPhased?: boolean;
+  isAtField?: boolean;
   outlineColor?: 'green' | PlayerColor | null;
   skin?:
     | "classic"
@@ -54,6 +55,7 @@ export function PlayerPiece({
   isMe,
   isHidden = false,
   isPhased = false,
+  isAtField = false,
   outlineColor = null,
   skin = "classic",
 }: Props) {
@@ -93,6 +95,19 @@ export function PlayerPiece({
         ['--arc-reactor-scale' as string]: `${innerSize / 250}`,
       }}
     >
+      {isAtField && (
+        <div className="piece-at-field" aria-hidden="true">
+          <span className="piece-at-field-dome" />
+          <span className="piece-at-field-base" />
+          <span className="piece-at-field-cell piece-at-field-cell-a" />
+          <span className="piece-at-field-cell piece-at-field-cell-b" />
+          <span className="piece-at-field-cell piece-at-field-cell-c" />
+          <span className="piece-at-field-cell piece-at-field-cell-d" />
+          <span className="piece-at-field-cell piece-at-field-cell-e" />
+          <span className="piece-at-field-cell piece-at-field-cell-f" />
+          <span className="piece-at-field-cell piece-at-field-cell-g" />
+        </div>
+      )}
       <div className="piece-visual">
         {isAttacker && <div className={`attacker-glow glow-${color}`} />}
         <div className="piece-inner">

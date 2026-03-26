@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolveAbilityRound = resolveAbilityRound;
 const GUARD_STEPS = 2;
+const AT_FIELD_STEPS = 2;
 const CHARGE_MANA_BONUS = 4;
 function getSkillPriority(skillId) {
     switch (skillId) {
@@ -111,8 +112,8 @@ function resolveAbilityRound(params) {
     let blueMana = blue.mana;
     let redInv = red.invulnerableSteps;
     let blueInv = blue.invulnerableSteps;
-    let redAtField = false;
-    let blueAtField = false;
+    let redAtFieldSteps = 0;
+    let blueAtFieldSteps = 0;
     let redPhaseShift = false;
     let bluePhaseShift = false;
     let redPendingManaBonus = red.pendingManaBonus;
@@ -137,6 +138,7 @@ function resolveAbilityRound(params) {
     const ignoreStartTileCollision = startsOverlapped && escaperPath.length > 0;
     const escaperHasStepZeroGuard = (escapeeColor === 'red' ? redReservations : blueReservations).some((reservation) => reservation.skillId === 'classic_guard' && reservation.step === 0);
     const escaperHasStepZeroPhaseShift = (escapeeColor === 'red' ? redReservations : blueReservations).some((reservation) => reservation.skillId === 'phase_shift' && reservation.step === 0);
+    const escaperHasStepZeroAtField = (escapeeColor === 'red' ? redReservations : blueReservations).some((reservation) => reservation.skillId === 'arc_reactor_field' && reservation.step === 0);
     const applyDamages = (sourceColor, damages, heals, skillId, step, order, affectedPositions) => {
         skillEvents.push({
             step,
@@ -148,16 +150,19 @@ function resolveAbilityRound(params) {
             heals,
         });
     };
+    const isProtectedByCollision = (color) => color === 'red'
+        ? redInv > 0 || redPhaseShift || redAtFieldSteps > 0
+        : blueInv > 0 || bluePhaseShift || blueAtFieldSteps > 0;
     const isProtectedByInv = (color) => color === 'red' ? redInv > 0 || redPhaseShift : blueInv > 0 || bluePhaseShift;
     const resolveAttackSkill = (sourceColor, targetColor, skillId, damage, sourcePosition, targetPosition, damages, reflectAllowed = true) => {
         if (isProtectedByInv(targetColor))
             return;
-        const targetAtField = targetColor === 'red' ? redAtField : blueAtField;
+        const targetAtField = targetColor === 'red' ? redAtFieldSteps > 0 : blueAtFieldSteps > 0;
         if (targetAtField) {
             if (targetColor === 'red')
-                redAtField = false;
+                redAtFieldSteps = 0;
             else
-                blueAtField = false;
+                blueAtFieldSteps = 0;
             if (!reflectAllowed || skillId === 'cosmic_bigbang')
                 return;
             if (isProtectedByInv(sourceColor))
@@ -224,11 +229,11 @@ function resolveAbilityRound(params) {
         }
         if (reservation.skillId === 'arc_reactor_field') {
             if (color === 'red') {
-                redAtField = true;
+                redAtFieldSteps = AT_FIELD_STEPS;
                 redMana = Math.max(0, casterMana - 6);
             }
             else {
-                blueAtField = true;
+                blueAtFieldSteps = AT_FIELD_STEPS;
                 blueMana = Math.max(0, casterMana - 6);
             }
             skillEvents.push({
@@ -445,11 +450,10 @@ function resolveAbilityRound(params) {
         let redPrevForStep = { ...redPos };
         let bluePrevForStep = { ...bluePos };
         if (step === 0 && startsOverlapped && !ignoreStartTileCollision) {
-            const protectedByGuard = (escapeeColor === 'red'
-                ? redInv > 0 || redPhaseShift
-                : blueInv > 0 || bluePhaseShift) ||
+            const protectedByGuard = isProtectedByCollision(escapeeColor) ||
                 escaperHasStepZeroGuard ||
-                escaperHasStepZeroPhaseShift;
+                escaperHasStepZeroPhaseShift ||
+                escaperHasStepZeroAtField;
             if (!protectedByGuard) {
                 if (escapeeColor === 'red') {
                     redHp = Math.max(0, redHp - 1);
@@ -492,8 +496,8 @@ function resolveAbilityRound(params) {
                 escaperStayedStill &&
                 attackerMoved) {
                 const protectedByGuard = escapeeColor === 'red'
-                    ? redInv > 0 || redPhaseShift
-                    : blueInv > 0 || bluePhaseShift;
+                    ? isProtectedByCollision('red')
+                    : isProtectedByCollision('blue');
                 if (!protectedByGuard) {
                     if (escapeeColor === 'red') {
                         redHp = Math.max(0, redHp - 1);
@@ -512,8 +516,8 @@ function resolveAbilityRound(params) {
                 !bluePhaseShift &&
                 positionsTouch(redPos, redPrev, bluePos, bluePrev)) {
                 const protectedByGuard = escapeeColor === 'red'
-                    ? redInv > 0 || redPhaseShift
-                    : blueInv > 0 || bluePhaseShift;
+                    ? isProtectedByCollision('red')
+                    : isProtectedByCollision('blue');
                 if (!protectedByGuard) {
                     if (escapeeColor === 'red') {
                         redHp = Math.max(0, redHp - 1);
@@ -567,10 +571,12 @@ function resolveAbilityRound(params) {
                 }
             }
         };
-        applyLavaDamage('red', redPrevForStep, redPos, redInv > 0 || redPhaseShift);
-        applyLavaDamage('blue', bluePrevForStep, bluePos, blueInv > 0 || bluePhaseShift);
-        redAtField = false;
-        blueAtField = false;
+        applyLavaDamage('red', redPrevForStep, redPos, isProtectedByCollision('red'));
+        applyLavaDamage('blue', bluePrevForStep, bluePos, isProtectedByCollision('blue'));
+        if (redAtFieldSteps > 0)
+            redAtFieldSteps -= 1;
+        if (blueAtFieldSteps > 0)
+            blueAtFieldSteps -= 1;
     }
     let winner = null;
     if (redHp <= 0 && blueHp <= 0)

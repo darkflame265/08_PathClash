@@ -33,6 +33,7 @@ interface Props {
     position: Position;
   }>;
   activeGuards: { red: boolean; blue: boolean };
+  activeAtFields: { red: boolean; blue: boolean };
   activePhaseShifts: { red: boolean; blue: boolean };
   previewStart: Position;
   teleportReservation: AbilitySkillReservation | null;
@@ -106,6 +107,7 @@ export function AbilityGrid({
   chargeEffects,
   healEffects,
   activeGuards,
+  activeAtFields,
   activePhaseShifts,
   previewStart,
   teleportReservation,
@@ -817,6 +819,7 @@ export function AbilityGrid({
             isExploding={explodingFlags.red}
             isMe={currentColor === 'red'}
             isHidden={state.players.red.hidden && currentColor === 'red' && state.phase === 'planning'}
+            isAtField={activeAtFields.red && state.phase === 'moving'}
             isPhased={activePhaseShifts.red && state.phase === 'moving'}
             skin={redSkin}
           />
@@ -831,6 +834,7 @@ export function AbilityGrid({
             isExploding={explodingFlags.blue}
             isMe={currentColor === 'blue'}
             isHidden={state.players.blue.hidden && currentColor === 'blue' && state.phase === 'planning'}
+            isAtField={activeAtFields.blue && state.phase === 'moving'}
             isPhased={activePhaseShifts.blue && state.phase === 'moving'}
             skin={blueSkin}
           />
