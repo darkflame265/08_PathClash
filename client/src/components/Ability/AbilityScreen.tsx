@@ -2017,7 +2017,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             movingPaths={movingPaths}
             movingStarts={movingStarts}
             cellSize={cellSize}
-            isPlanning={canDrawPath}
+            isPlanning={state.phase === "planning"}
+            canEditPath={canDrawPath}
             teleportTargetsVisible={pendingTeleport}
             blitzTargetsVisible={pendingBlitz}
             infernoTargetsVisible={

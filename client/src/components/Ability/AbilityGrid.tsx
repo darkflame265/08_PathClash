@@ -47,6 +47,7 @@ interface Props {
   movingStarts: { red: Position; blue: Position } | null;
   cellSize: number;
   isPlanning: boolean;
+  canEditPath: boolean;
   teleportTargetsVisible: boolean;
   blitzTargetsVisible: boolean;
   infernoTargetsVisible: boolean;
@@ -119,6 +120,7 @@ export function AbilityGrid({
   movingStarts,
   cellSize,
   isPlanning,
+  canEditPath,
   teleportTargetsVisible,
   blitzTargetsVisible,
   infernoTargetsVisible,
@@ -214,7 +216,7 @@ export function AbilityGrid({
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!isPlanning || !gridRef.current) return;
+      if (!canEditPath || !gridRef.current) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
       if (!cell) return;
@@ -245,12 +247,12 @@ export function AbilityGrid({
       e.preventDefault();
       e.currentTarget.setPointerCapture(e.pointerId);
     },
-    [blitzTargetsVisible, currentColor, getPlanningTailPosition, infernoTargetsVisible, isPlanning, myPath, myStart, onTeleportCancel, responsiveCellSize, state.players, teleportTargetsVisible],
+    [blitzTargetsVisible, canEditPath, currentColor, getPlanningTailPosition, infernoTargetsVisible, myPath, myStart, onTeleportCancel, responsiveCellSize, state.players, teleportTargetsVisible],
   );
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!dragState.current.active || !isPlanning) return;
+      if (!dragState.current.active || !canEditPath) return;
       const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
       if (!cell) return;
       const current = myPath;
@@ -271,7 +273,7 @@ export function AbilityGrid({
         }
       }
     },
-    [getPlanningSecondLastPosition, getPlanningTailPosition, isPlanning, myPath, obstacles, pathPoints, removeFromPath, responsiveCellSize, setMyPath],
+    [canEditPath, getPlanningSecondLastPosition, getPlanningTailPosition, myPath, obstacles, pathPoints, removeFromPath, responsiveCellSize, setMyPath],
   );
 
   const handlePointerEnd = useCallback((e?: React.PointerEvent<HTMLDivElement>) => {
