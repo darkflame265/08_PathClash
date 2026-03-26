@@ -8,6 +8,8 @@ let bigBangAudio: HTMLAudioElement | null = null;
 let healingAudio: HTMLAudioElement | null = null;
 let infernoAudio: HTMLAudioElement | null = null;
 let phaseShiftAudio: HTMLAudioElement | null = null;
+let arcReactorAudio: HTMLAudioElement | null = null;
+let voidCloakAudio: HTMLAudioElement | null = null;
 let overdriveLoopAudio: HTMLAudioElement | null = null;
 const CHARGE_SFX_GAIN = 0.4;
 const QUANTUM_SFX_GAIN = 0.65;
@@ -17,6 +19,8 @@ const BIGBANG_SFX_GAIN = 0.9;
 const HEALING_SFX_GAIN = 0.65;
 const INFERNO_SFX_GAIN = 0.6;
 const PHASE_SHIFT_SFX_GAIN = 0.6;
+const ARC_REACTOR_SFX_GAIN = 0.6;
+const VOID_CLOAK_SFX_GAIN = 0.6;
 const OVERDRIVE_LOOP_GAIN = 0.4;
 
 function getCtx(): AudioContext {
@@ -164,6 +168,38 @@ export function playPhaseShift(volume = 0.55): void {
     }
     const audio = phaseShiftAudio.cloneNode(true) as HTMLAudioElement;
     audio.volume = Math.max(0, Math.min(1, volume * PHASE_SHIFT_SFX_GAIN));
+    void audio.play().catch(() => {
+      // Playback can fail if browser blocks audio; ignore.
+    });
+  } catch {
+    // Audio element not available
+  }
+}
+
+export function playArcReactor(volume = 0.55): void {
+  try {
+    if (!arcReactorAudio) {
+      arcReactorAudio = new Audio("/sfx/ability/arc_reactor_field.mp3");
+      arcReactorAudio.preload = "auto";
+    }
+    const audio = arcReactorAudio.cloneNode(true) as HTMLAudioElement;
+    audio.volume = Math.max(0, Math.min(1, volume * ARC_REACTOR_SFX_GAIN));
+    void audio.play().catch(() => {
+      // Playback can fail if browser blocks audio; ignore.
+    });
+  } catch {
+    // Audio element not available
+  }
+}
+
+export function playVoidCloak(volume = 0.55): void {
+  try {
+    if (!voidCloakAudio) {
+      voidCloakAudio = new Audio("/sfx/ability/void_cloak.mp3");
+      voidCloakAudio.preload = "auto";
+    }
+    const audio = voidCloakAudio.cloneNode(true) as HTMLAudioElement;
+    audio.volume = Math.max(0, Math.min(1, volume * VOID_CLOAK_SFX_GAIN));
     void audio.play().catch(() => {
       // Playback can fail if browser blocks audio; ignore.
     });

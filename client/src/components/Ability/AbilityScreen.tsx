@@ -14,8 +14,10 @@ import {
   playHealing,
   playHit,
   playInferno,
+  playArcReactor,
   playPhaseShift,
   playQuantum,
+  playVoidCloak,
   startOverdriveLoop,
   stopOverdriveLoop,
 } from "../../utils/soundUtils";
@@ -1081,6 +1083,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
       if (event.skillId === "arc_reactor_field") {
         setActiveAtFields((prev) => ({ ...prev, [event.color]: true }));
+        if (!isSfxMuted) {
+          playArcReactor(sfxVolume);
+        }
       }
 
       if (event.skillId === "plasma_charge") {
@@ -1735,9 +1740,27 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
     const onRoundStart = (payload: AbilityRoundStartPayload) => {
       void syncServerTime(socket);
+      const previousState = stateRef.current;
+      const nextState = payload.state;
+      const voidCloakTriggered =
+        (!!nextState.players.red.hidden &&
+          (!previousState?.players.red.hidden ||
+            previousState.players.red.position.row !==
+              nextState.players.red.position.row ||
+            previousState.players.red.position.col !==
+              nextState.players.red.position.col)) ||
+        (!!nextState.players.blue.hidden &&
+          (!previousState?.players.blue.hidden ||
+            previousState.players.blue.position.row !==
+              nextState.players.blue.position.row ||
+            previousState.players.blue.position.col !==
+              nextState.players.blue.position.col));
+      if (voidCloakTriggered && !isSfxMuted) {
+        playVoidCloak(sfxVolume);
+      }
       setRoundInfo(payload);
       resetPlanningState();
-      applyState(payload.state);
+      applyState(nextState);
     };
 
     const onRoomJoined = ({
@@ -1861,7 +1884,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       socket.off("opponent_disconnected", onOpponentDisconnected);
       socket.off("rematch_requested", onRematchRequested);
     };
-  }, [currentColor, lang, setMyColor, setRematchRequestSent, setRoomCode]);
+  }, [currentColor, isSfxMuted, lang, setMyColor, setRematchRequestSent, setRoomCode, sfxVolume]);
 
   useEffect(() => {
     if (!state || state.phase !== "planning" || mySubmitted || !roundInfo)
