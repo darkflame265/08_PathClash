@@ -103,32 +103,6 @@ function buildBlitzBoltPoints(
     .join(' ');
 }
 
-function renderHpBar(
-  color: PlayerColor,
-  position: Position,
-  hp: number,
-  cellSize: number,
-) {
-  return (
-    <div
-      className={`ability-piece-hp ability-piece-hp-${color}`}
-      style={{
-        left: position.col * cellSize + cellSize / 2,
-        top: position.row * cellSize + cellSize * 0.88,
-        width: Math.max(34, cellSize * 0.58),
-        transform: 'translateX(-50%)',
-      }}
-    >
-      {Array.from({ length: 3 }, (_, index) => (
-        <span
-          key={index}
-          className={`ability-piece-hp-seg${index < hp ? ' is-filled' : ''}`}
-        />
-      ))}
-    </div>
-  );
-}
-
 export function AbilityGrid({
   state,
   currentColor,
@@ -908,11 +882,11 @@ export function AbilityGrid({
               isExploding={explodingFlags.red}
               isMe={currentColor === 'red'}
               isHidden={state.players.red.hidden && currentColor === 'red' && state.phase === 'planning'}
-              isAtField={activeAtFields.red && state.phase === 'moving'}
-              isPhased={activePhaseShifts.red && state.phase === 'moving'}
-              skin={redSkin}
-            />
-            {renderHpBar('red', displayPositions.red, state.players.red.hp, responsiveCellSize)}
+            isAtField={activeAtFields.red && state.phase === 'moving'}
+            isPhased={activePhaseShifts.red && state.phase === 'moving'}
+            hp={state.players.red.hp}
+            skin={redSkin}
+          />
           </>
         ) : null}
         {blueVisible && (state.players.blue.hp > 0 || hitFlags.blue || explodingFlags.blue) ? (
@@ -926,11 +900,11 @@ export function AbilityGrid({
               isExploding={explodingFlags.blue}
               isMe={currentColor === 'blue'}
               isHidden={state.players.blue.hidden && currentColor === 'blue' && state.phase === 'planning'}
-              isAtField={activeAtFields.blue && state.phase === 'moving'}
-              isPhased={activePhaseShifts.blue && state.phase === 'moving'}
-              skin={blueSkin}
-            />
-            {renderHpBar('blue', displayPositions.blue, state.players.blue.hp, responsiveCellSize)}
+            isAtField={activeAtFields.blue && state.phase === 'moving'}
+            isPhased={activePhaseShifts.blue && state.phase === 'moving'}
+            hp={state.players.blue.hp}
+            skin={blueSkin}
+          />
           </>
         ) : null}
       </div>

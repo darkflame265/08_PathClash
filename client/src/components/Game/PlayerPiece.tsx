@@ -23,6 +23,7 @@ interface Props {
   isPhased?: boolean;
   isAtField?: boolean;
   isClone?: boolean;
+  hp?: number | null;
   outlineColor?: 'green' | PlayerColor | null;
   skin?:
     | "classic"
@@ -58,6 +59,7 @@ export function PlayerPiece({
   isPhased = false,
   isAtField = false,
   isClone = false,
+  hp = null,
   outlineColor = null,
   skin = "classic",
 }: Props) {
@@ -125,6 +127,16 @@ export function PlayerPiece({
           {skin === "atomic" && <AtomicGame cellSize={cellSize} />}
           {skin === "quantum" && <QuantumGame />}
         </div>
+        {hp !== null && !isClone && (
+          <div className={`piece-hp piece-hp-${color}`} aria-hidden="true">
+            {Array.from({ length: 3 }, (_, index) => (
+              <span
+                key={index}
+                className={`piece-hp-seg${index < hp ? " is-filled" : ""}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
