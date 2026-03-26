@@ -2244,6 +2244,45 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
         {abilityBanner && <div className="ability-banner">{abilityBanner}</div>}
 
+        <div className="gs-path-bar ability-path-bar">
+          <div
+            className={`gs-role-badge gs-role-badge-self gs-role-badge-${me.role === "attacker" ? "atk" : "run"} ability-path-role`}
+          >
+            <span className="gs-role-icon">
+              {me.role === "attacker" ? "ATK" : "RUN"}
+            </span>
+            <span className="gs-role-label">
+              {me.role === "attacker"
+                ? lang === "en"
+                  ? "Attack"
+                  : "공격"
+                : lang === "en"
+                  ? "Escape"
+                  : "도망"}
+            </span>
+          </div>
+          <div className="ability-path-points">
+            <div className="gs-path-header">
+              <span className="gs-path-label">
+                {lang === "en" ? "Path Points" : "경로 포인트"}
+              </span>
+              <span className="gs-path-count">
+                <span className="gs-path-current">{myPath.length}</span>
+                <span className="gs-path-sep"> / </span>
+                <span className="gs-path-max">{effectivePathPoints}</span>
+              </span>
+            </div>
+            <div className="gs-path-gauge">
+              {Array.from({ length: effectivePathPoints }, (_, index) => (
+                <div
+                  key={index}
+                  className={`gs-path-seg${index < myPath.length ? " filled" : ""}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="gs-grid-area" ref={gridAreaRef}>
           <AbilityGrid
             state={state}

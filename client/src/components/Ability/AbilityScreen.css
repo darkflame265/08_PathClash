@@ -467,6 +467,25 @@
   justify-content: flex-start;
 }
 
+.ability-path-bar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: calc(0.55rem * var(--gs-scale, 1));
+}
+
+.ability-path-role {
+  align-self: stretch;
+  justify-content: center;
+}
+
+.ability-path-points {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(0.22rem * var(--gs-scale, 1));
+}
+
 .ability-guard-ring {
   position: absolute;
   z-index: 3;
@@ -1237,6 +1256,14 @@
   .ability-screen .gs-path-bar {
     padding: calc(0.42rem * var(--gs-scale, 1))
       calc(0.62rem * var(--gs-scale, 1));
+  }
+
+  .ability-path-bar {
+    gap: calc(0.42rem * var(--gs-scale, 1));
+  }
+
+  .ability-path-role {
+    min-width: calc(44px * var(--gs-scale, 1));
   }
 
   .ability-skill-panel {
