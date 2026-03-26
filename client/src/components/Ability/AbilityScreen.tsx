@@ -13,6 +13,8 @@ import {
   playEmber,
   playHealing,
   playHit,
+  playInferno,
+  playPhaseShift,
   playQuantum,
   startOverdriveLoop,
   stopOverdriveLoop,
@@ -1035,6 +1037,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
       if (event.skillId === "phase_shift") {
         setActivePhaseShifts((prev) => ({ ...prev, [event.color]: true }));
+        if (!isSfxMuted) {
+          playPhaseShift(sfxVolume);
+        }
       }
 
       if (event.skillId === "plasma_charge") {
@@ -1081,6 +1086,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
 
       if (event.skillId === "inferno_field") {
+        if (!isSfxMuted) {
+          playInferno(sfxVolume);
+        }
         for (const position of event.affectedPositions ?? []) {
           const effectId = Date.now() + Math.random();
           setCollisionEffects((prev) => [...prev, { id: effectId, position }]);

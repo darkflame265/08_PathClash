@@ -6,6 +6,8 @@ let emberAudio: HTMLAudioElement | null = null;
 let blitzAudio: HTMLAudioElement | null = null;
 let bigBangAudio: HTMLAudioElement | null = null;
 let healingAudio: HTMLAudioElement | null = null;
+let infernoAudio: HTMLAudioElement | null = null;
+let phaseShiftAudio: HTMLAudioElement | null = null;
 let overdriveLoopAudio: HTMLAudioElement | null = null;
 const CHARGE_SFX_GAIN = 0.4;
 const QUANTUM_SFX_GAIN = 0.65;
@@ -13,6 +15,8 @@ const EMBER_SFX_GAIN = 0.3;
 const BLITZ_SFX_GAIN = 0.6;
 const BIGBANG_SFX_GAIN = 0.9;
 const HEALING_SFX_GAIN = 0.65;
+const INFERNO_SFX_GAIN = 0.6;
+const PHASE_SHIFT_SFX_GAIN = 0.6;
 const OVERDRIVE_LOOP_GAIN = 0.4;
 
 function getCtx(): AudioContext {
@@ -128,6 +132,38 @@ export function playHealing(volume = 0.55): void {
     }
     const audio = healingAudio.cloneNode(true) as HTMLAudioElement;
     audio.volume = Math.max(0, Math.min(1, volume * HEALING_SFX_GAIN));
+    void audio.play().catch(() => {
+      // Playback can fail if browser blocks audio; ignore.
+    });
+  } catch {
+    // Audio element not available
+  }
+}
+
+export function playInferno(volume = 0.55): void {
+  try {
+    if (!infernoAudio) {
+      infernoAudio = new Audio("/sfx/ability/inferno_field.mp3");
+      infernoAudio.preload = "auto";
+    }
+    const audio = infernoAudio.cloneNode(true) as HTMLAudioElement;
+    audio.volume = Math.max(0, Math.min(1, volume * INFERNO_SFX_GAIN));
+    void audio.play().catch(() => {
+      // Playback can fail if browser blocks audio; ignore.
+    });
+  } catch {
+    // Audio element not available
+  }
+}
+
+export function playPhaseShift(volume = 0.55): void {
+  try {
+    if (!phaseShiftAudio) {
+      phaseShiftAudio = new Audio("/sfx/ability/phase_shift.mp3");
+      phaseShiftAudio.preload = "auto";
+    }
+    const audio = phaseShiftAudio.cloneNode(true) as HTMLAudioElement;
+    audio.volume = Math.max(0, Math.min(1, volume * PHASE_SHIFT_SFX_GAIN));
     void audio.play().catch(() => {
       // Playback can fail if browser blocks audio; ignore.
     });
