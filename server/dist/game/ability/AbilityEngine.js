@@ -34,6 +34,9 @@ function positionsTouch(aNow, aPrev, bNow, bPrev) {
     return (samePosition(aNow, bNow) ||
         (samePosition(aNow, bPrev) && samePosition(bNow, aPrev)));
 }
+function isPersistentOverlap(aNow, aPrev, bNow, bPrev) {
+    return samePosition(aPrev, bPrev) && samePosition(aNow, bNow);
+}
 function getCrossPositions(origin) {
     return [
         origin,
@@ -634,13 +637,15 @@ function resolveAbilityRound(params) {
         if (redClonePrevForStep &&
             redCloneNext &&
             attackerColor === 'red' &&
-            positionsTouch(bluePos, bluePrevForStep, redCloneNext, redClonePrevForStep)) {
+            positionsTouch(bluePos, bluePrevForStep, redCloneNext, redClonePrevForStep) &&
+            !isPersistentOverlap(bluePos, bluePrevForStep, redCloneNext, redClonePrevForStep)) {
             resolveCollisionHit('red', 'blue', redCloneNext, step);
         }
         if (blueClonePrevForStep &&
             blueCloneNext &&
             attackerColor === 'blue' &&
-            positionsTouch(redPos, redPrevForStep, blueCloneNext, blueClonePrevForStep)) {
+            positionsTouch(redPos, redPrevForStep, blueCloneNext, blueClonePrevForStep) &&
+            !isPersistentOverlap(redPos, redPrevForStep, blueCloneNext, blueClonePrevForStep)) {
             resolveCollisionHit('blue', 'red', blueCloneNext, step);
         }
         const applyLavaDamage = (color, prevPos, nextPos, protectedByGuard) => {
