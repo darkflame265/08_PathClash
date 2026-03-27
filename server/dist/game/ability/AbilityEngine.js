@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolveAbilityRound = resolveAbilityRound;
+const AbilityTypes_1 = require("./AbilityTypes");
 const GUARD_STEPS = 2;
 const AT_FIELD_STEPS = 2;
 const CHARGE_MANA_BONUS = 4;
@@ -163,6 +164,7 @@ function resolveAbilityRound(params) {
         ? redInv > 0 || redPhaseShift || redAtFieldSteps > 0
         : blueInv > 0 || bluePhaseShift || blueAtFieldSteps > 0;
     const isProtectedByInv = (color) => color === 'red' ? redInv > 0 || redPhaseShift : blueInv > 0 || bluePhaseShift;
+    const spendMana = (casterManaValue, skillId) => Math.max(0, casterManaValue - AbilityTypes_1.ABILITY_SKILL_COSTS[skillId]);
     const resolveAttackSkill = (sourceColor, targetColor, skillId, damage, sourcePosition, targetPosition, damages, reflectAllowed = true) => {
         if (isProtectedByInv(targetColor))
             return;
@@ -271,11 +273,11 @@ function resolveAbilityRound(params) {
         if (reservation.skillId === 'classic_guard') {
             if (color === 'red') {
                 redInv = GUARD_STEPS;
-                redMana = Math.max(0, casterMana - 4);
+                redMana = spendMana(casterMana, reservation.skillId);
             }
             else {
                 blueInv = GUARD_STEPS;
-                blueMana = Math.max(0, casterMana - 4);
+                blueMana = spendMana(casterMana, reservation.skillId);
             }
             skillEvents.push({
                 step: reservation.step,
@@ -289,11 +291,11 @@ function resolveAbilityRound(params) {
         if (reservation.skillId === 'arc_reactor_field') {
             if (color === 'red') {
                 redAtFieldSteps = AT_FIELD_STEPS;
-                redMana = Math.max(0, casterMana - 6);
+                redMana = spendMana(casterMana, reservation.skillId);
             }
             else {
                 blueAtFieldSteps = AT_FIELD_STEPS;
-                blueMana = Math.max(0, casterMana - 6);
+                blueMana = spendMana(casterMana, reservation.skillId);
             }
             skillEvents.push({
                 step: reservation.step,
@@ -306,11 +308,11 @@ function resolveAbilityRound(params) {
         if (reservation.skillId === 'phase_shift') {
             if (color === 'red') {
                 redPhaseShift = true;
-                redMana = Math.max(0, casterMana - 8);
+                redMana = spendMana(casterMana, reservation.skillId);
             }
             else {
                 bluePhaseShift = true;
-                blueMana = Math.max(0, casterMana - 8);
+                blueMana = spendMana(casterMana, reservation.skillId);
             }
             skillEvents.push({
                 step: reservation.step,
@@ -326,11 +328,11 @@ function resolveAbilityRound(params) {
             const createsOverlap = color === attackerColor && samePosition(reservation.target, opponentPos);
             if (color === 'red') {
                 redPos = { ...reservation.target };
-                redMana = Math.max(0, casterMana - 3);
+                redMana = spendMana(casterMana, reservation.skillId);
             }
             else {
                 bluePos = { ...reservation.target };
-                blueMana = Math.max(0, casterMana - 3);
+                blueMana = spendMana(casterMana, reservation.skillId);
             }
             if (createsOverlap) {
                 attackerQuantumOverlapPending = true;
@@ -347,11 +349,11 @@ function resolveAbilityRound(params) {
         }
         if (reservation.skillId === 'plasma_charge') {
             if (color === 'red') {
-                redMana = Math.max(0, casterMana - 2);
+                redMana = spendMana(casterMana, reservation.skillId);
                 redPendingManaBonus = CHARGE_MANA_BONUS;
             }
             else {
-                blueMana = Math.max(0, casterMana - 2);
+                blueMana = spendMana(casterMana, reservation.skillId);
                 bluePendingManaBonus = CHARGE_MANA_BONUS;
             }
             skillEvents.push({
@@ -365,12 +367,12 @@ function resolveAbilityRound(params) {
         if (reservation.skillId === 'aurora_heal') {
             const heals = [];
             if (color === 'red') {
-                redMana = Math.max(0, casterMana - 10);
+                redMana = spendMana(casterMana, reservation.skillId);
                 redHp = Math.min(3, redHp + 1);
                 heals.push({ color: 'red', newHp: redHp, position: { ...currentPos } });
             }
             else {
-                blueMana = Math.max(0, casterMana - 10);
+                blueMana = spendMana(casterMana, reservation.skillId);
                 blueHp = Math.min(3, blueHp + 1);
                 heals.push({ color: 'blue', newHp: blueHp, position: { ...currentPos } });
             }
@@ -379,11 +381,11 @@ function resolveAbilityRound(params) {
         }
         if (reservation.skillId === 'gold_overdrive') {
             if (color === 'red') {
-                redMana = Math.max(0, casterMana - 8);
+                redMana = spendMana(casterMana, reservation.skillId);
                 redPendingOverdriveStage = 1;
             }
             else {
-                blueMana = Math.max(0, casterMana - 8);
+                blueMana = spendMana(casterMana, reservation.skillId);
                 bluePendingOverdriveStage = 1;
             }
             skillEvents.push({
@@ -397,11 +399,11 @@ function resolveAbilityRound(params) {
         }
         if (reservation.skillId === 'void_cloak') {
             if (color === 'red') {
-                redMana = Math.max(0, casterMana - 8);
+                redMana = spendMana(casterMana, reservation.skillId);
                 redPendingVoidCloak = true;
             }
             else {
-                blueMana = Math.max(0, casterMana - 8);
+                blueMana = spendMana(casterMana, reservation.skillId);
                 bluePendingVoidCloak = true;
             }
             skillEvents.push({
@@ -421,12 +423,12 @@ function resolveAbilityRound(params) {
                 resolveAttackSkill(color, opponentColor, reservation.skillId, 1, currentPos, opponentPos, damages);
             }
             if (color === 'red') {
-                redMana = Math.max(0, casterMana - 6);
+                redMana = spendMana(casterMana, reservation.skillId);
                 redPos = { ...(path[path.length - 1] ?? currentPos) };
                 redBlitz = true;
             }
             else {
-                blueMana = Math.max(0, casterMana - 6);
+                blueMana = spendMana(casterMana, reservation.skillId);
                 bluePos = { ...(path[path.length - 1] ?? currentPos) };
                 blueBlitz = true;
             }
@@ -445,10 +447,10 @@ function resolveAbilityRound(params) {
                 resolveAttackSkill(color, opponentColor, reservation.skillId, 1, currentPos, opponentPos, damages);
             }
             if (color === 'red') {
-                redMana = Math.max(0, casterMana - 4);
+                redMana = spendMana(casterMana, reservation.skillId);
             }
             else {
-                blueMana = Math.max(0, casterMana - 4);
+                blueMana = spendMana(casterMana, reservation.skillId);
             }
             applyDamages(color, damages, [], reservation.skillId, reservation.step, reservation.order, affectedPositions);
             return;
@@ -458,10 +460,10 @@ function resolveAbilityRound(params) {
             const clonePath = (color === 'red' ? red.previousTurnPath : blue.previousTurnPath).map((position) => ({ ...position }));
             if (!cloneStart || clonePath.length === 0) {
                 if (color === 'red') {
-                    redMana = Math.max(0, casterMana - 6);
+                    redMana = spendMana(casterMana, reservation.skillId);
                 }
                 else {
-                    blueMana = Math.max(0, casterMana - 6);
+                    blueMana = spendMana(casterMana, reservation.skillId);
                 }
                 skillEvents.push({
                     step: reservation.step,
@@ -474,14 +476,14 @@ function resolveAbilityRound(params) {
                 return;
             }
             if (color === 'red') {
-                redMana = Math.max(0, casterMana - 6);
+                redMana = spendMana(casterMana, reservation.skillId);
                 redCloneStart = { ...cloneStart };
                 redClonePath = clonePath;
                 redCloneStep = reservation.step;
                 redClonePos = { ...cloneStart };
             }
             else {
-                blueMana = Math.max(0, casterMana - 6);
+                blueMana = spendMana(casterMana, reservation.skillId);
                 blueCloneStart = { ...cloneStart };
                 blueClonePath = clonePath;
                 blueCloneStep = reservation.step;
@@ -499,10 +501,10 @@ function resolveAbilityRound(params) {
         }
         if (reservation.skillId === 'inferno_field' && reservation.target) {
             if (color === 'red') {
-                redMana = Math.max(0, casterMana - 4);
+                redMana = spendMana(casterMana, reservation.skillId);
             }
             else {
-                blueMana = Math.max(0, casterMana - 4);
+                blueMana = spendMana(casterMana, reservation.skillId);
             }
             updateLavaTile(activeLavaTiles, reservation.target, 2);
             skillEvents.push({
@@ -523,10 +525,10 @@ function resolveAbilityRound(params) {
                 resolveAttackSkill(color, opponentColor, reservation.skillId, 1, currentPos, opponentPos, damages);
             }
             if (color === 'red') {
-                redMana = Math.max(0, casterMana - 4);
+                redMana = spendMana(casterMana, reservation.skillId);
             }
             else {
-                blueMana = Math.max(0, casterMana - 4);
+                blueMana = spendMana(casterMana, reservation.skillId);
             }
             applyDamages(color, damages, [], reservation.skillId, reservation.step, reservation.order, affectedPositions);
             return;
@@ -541,10 +543,10 @@ function resolveAbilityRound(params) {
             const damages = [];
             resolveAttackSkill(color, opponentColor, reservation.skillId, 2, currentPos, opponentPos, damages, false);
             if (color === 'red') {
-                redMana = Math.max(0, casterMana - 10);
+                redMana = spendMana(casterMana, reservation.skillId);
             }
             else {
-                blueMana = Math.max(0, casterMana - 10);
+                blueMana = spendMana(casterMana, reservation.skillId);
             }
             applyDamages(color, damages, [], reservation.skillId, reservation.step, reservation.order, affectedPositions);
         }

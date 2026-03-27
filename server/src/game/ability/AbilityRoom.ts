@@ -11,6 +11,7 @@ import {
 import { ServerTimer } from '../ServerTimer';
 import { grantDailyRewardTokens, recordMatchmakingResult } from '../../services/playerAuth';
 import {
+  ABILITY_SKILL_COSTS,
   type AbilityBattleState,
   type AbilityLavaTile,
   type AbilityPlayerState,
@@ -50,23 +51,6 @@ function buildBlitzPath(start: Position, target: Position): Position[] {
   }
   return path;
 }
-
-const SKILL_COSTS: Record<AbilitySkillId, number> = {
-  classic_guard: 4,
-  arc_reactor_field: 6,
-  phase_shift: 8,
-  ember_blast: 4,
-  atomic_fission: 4,
-  inferno_field: 4,
-  nova_blast: 4,
-  aurora_heal: 8,
-  gold_overdrive: 8,
-  quantum_shift: 4,
-  plasma_charge: 2,
-  void_cloak: 4,
-  electric_blitz: 6,
-  cosmic_bigbang: 10,
-};
 
 function getRandomTeleportPosition(
   current: Position,
@@ -539,7 +523,10 @@ export class AbilityRoom {
       .sort((left, right) => left.order - right.order);
     const isOverdriveTurn = player.overdriveActive;
 
-    const manaCost = uniqueSkills.reduce((sum, skill) => sum + SKILL_COSTS[skill.skillId], 0);
+    const manaCost = uniqueSkills.reduce(
+      (sum, skill) => sum + ABILITY_SKILL_COSTS[skill.skillId],
+      0,
+    );
     if (manaCost > player.mana) return null;
 
     const hasGuard = uniqueSkills.some((skill) => skill.skillId === 'classic_guard');

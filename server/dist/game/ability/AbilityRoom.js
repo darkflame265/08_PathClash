@@ -4,6 +4,7 @@ exports.AbilityRoom = void 0;
 const GameEngine_1 = require("../GameEngine");
 const ServerTimer_1 = require("../ServerTimer");
 const playerAuth_1 = require("../../services/playerAuth");
+const AbilityTypes_1 = require("./AbilityTypes");
 const AbilityEngine_1 = require("./AbilityEngine");
 const PLANNING_TIME_MS = 7000;
 const SUBMIT_GRACE_MS = 350;
@@ -32,22 +33,6 @@ function buildBlitzPath(start, target) {
     }
     return path;
 }
-const SKILL_COSTS = {
-    classic_guard: 4,
-    arc_reactor_field: 6,
-    phase_shift: 8,
-    ember_blast: 4,
-    atomic_fission: 4,
-    inferno_field: 4,
-    nova_blast: 4,
-    aurora_heal: 8,
-    gold_overdrive: 8,
-    quantum_shift: 4,
-    plasma_charge: 2,
-    void_cloak: 4,
-    electric_blitz: 6,
-    cosmic_bigbang: 10,
-};
 function getRandomTeleportPosition(current, opponent) {
     const candidates = [];
     for (let row = 0; row < 5; row++) {
@@ -485,7 +470,7 @@ class AbilityRoom {
             .map((skill) => ({ ...skill, target: skill.target ?? null }))
             .sort((left, right) => left.order - right.order);
         const isOverdriveTurn = player.overdriveActive;
-        const manaCost = uniqueSkills.reduce((sum, skill) => sum + SKILL_COSTS[skill.skillId], 0);
+        const manaCost = uniqueSkills.reduce((sum, skill) => sum + AbilityTypes_1.ABILITY_SKILL_COSTS[skill.skillId], 0);
         if (manaCost > player.mana)
             return null;
         const hasGuard = uniqueSkills.some((skill) => skill.skillId === 'classic_guard');
