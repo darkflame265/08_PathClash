@@ -187,8 +187,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: 'phase_shift',
     name: { en: 'Phase Shift', kr: '페이즈 시프트' },
     description: {
-      en: 'Become completely invulnerable for this turn. Ignore collisions, obstacles, lava, and attack skills while moving.',
-      kr: '해당 턴 완전 무적 상태가 됩니다. 이동 중 충돌, 장애물, 용암지대, 공격 스킬을 무시합니다.',
+      en: 'Become completely invulnerable for this turn. Ignore collisions, lava, and attack skills while moving.',
+      kr: '해당 턴 완전 무적 상태가 됩니다. 이동 중 충돌, 용암지대, 공격 스킬을 무시합니다.',
     },
     manaCost: ABILITY_SKILL_COSTS.phase_shift,
     category: 'defense',
