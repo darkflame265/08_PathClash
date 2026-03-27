@@ -511,7 +511,7 @@
 
 .ability-blitz-target {
   position: absolute;
-  z-index: 2;
+  z-index: 8;
   border-radius: 50%;
   border: 3px solid rgba(96, 165, 250, 0.82);
   background: rgba(59, 130, 246, 0.24);
