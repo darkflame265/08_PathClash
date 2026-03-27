@@ -1895,25 +1895,38 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       syncPersistentDefenseVisuals();
     };
 
-    const advance = (step: number) => {
-      if (step === 0) {
-        const events = skillMap.get(0) ?? [];
-        if (events.length > 0) {
-          runSkillQueue(events, 0, () => {
-            applyPersistentSkillCounters(events);
-            const collisions = collisionMap.get(0) ?? [];
-            if (collisions.length > 0) {
-              applyCollisions(collisions);
-            }
-            advance(1);
-          });
-          return;
-        }
-        const collisions = collisionMap.get(0) ?? [];
+    const runStepEventsAndCollisions = (step: number, done: () => void) => {
+      const events = skillMap.get(step) ?? [];
+      const collisions = collisionMap.get(step) ?? [];
+
+      if (events.length === 0) {
         if (collisions.length > 0) {
           applyCollisions(collisions);
         }
-        advance(1);
+        done();
+        return;
+      }
+
+      const hasBlitzEvent = events.some(
+        (event) => event.skillId === "electric_blitz",
+      );
+
+      runSkillQueue(events, 0, () => {
+        applyPersistentSkillCounters(events);
+        if (collisions.length > 0) {
+          applyCollisions(collisions);
+        }
+        if (hasBlitzEvent && step < maxSteps) {
+          queueAnimationTimeout(done, BLITZ_POST_HIT_PAUSE_MS);
+          return;
+        }
+        done();
+      });
+    };
+
+    const advance = (step: number) => {
+      if (step === 0) {
+        runStepEventsAndCollisions(0, () => advance(1));
         return;
       }
 
@@ -1963,35 +1976,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         const { endedGuards, endedAtFields } = consumeDefenseVisualStep();
 
         const continueStep = () => {
-          const events = skillMap.get(step) ?? [];
-          if (events.length > 0) {
-            const collisions = collisionMap.get(step) ?? [];
-            const hasBlitzEvent = events.some(
-              (event) => event.skillId === "electric_blitz",
-            );
-            runSkillQueue(events, 0, () => {
-              applyPersistentSkillCounters(events);
-              if (collisions.length > 0) {
-                applyCollisions(collisions);
-              }
-              if (hasBlitzEvent && step < maxSteps) {
-                queueAnimationTimeout(
-                  () => advance(step + 1),
-                  BLITZ_POST_HIT_PAUSE_MS,
-                );
-                return;
-              }
-              advance(step + 1);
-            });
-            return;
-          }
-
-          const collisions = collisionMap.get(step) ?? [];
-          if (collisions.length > 0) {
-            applyCollisions(collisions);
-          }
-
-          advance(step + 1);
+          runStepEventsAndCollisions(step, () => advance(step + 1));
         };
 
         runGuardEndNotice(endedGuards, () =>

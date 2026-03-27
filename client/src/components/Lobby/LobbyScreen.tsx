@@ -238,170 +238,6 @@ function renderAbilitySkillIcon(skillId: AbilitySkillId) {
   );
 }
 
-function getAbilitySkillSummary(skillId: AbilitySkillId, lang: "ko" | "en") {
-  switch (skillId) {
-    case "classic_guard":
-      return {
-        tags:
-          lang === "en"
-            ? "Move Locked · Combo OK"
-            : "이동 불가 · 조합 가능",
-        desc:
-          lang === "en"
-            ? "Become invulnerable for 2 tile intervals and block attack skills."
-            : "2칸 시간 동안 무적이 되며, 공격 스킬을 막습니다.",
-      };
-    case "arc_reactor_field":
-      return {
-        tags:
-          lang === "en"
-            ? "Move OK · Combo OK"
-            : "이동 가능 · 조합 가능",
-        desc:
-          lang === "en"
-            ? "For one step, nullify one incoming attack skill and reflect it back. Big Bang is nullified only."
-            : "1칸 시간 동안 공격 스킬 1회를 무효화하고 반사합니다. 빅뱅폭발은 반사 없이 무효화만 합니다.",
-      };
-    case "phase_shift":
-      return {
-        tags:
-          lang === "en"
-            ? "Move OK · Combo OK"
-            : "이동 가능 · 조합 가능",
-        desc:
-          lang === "en"
-            ? "Become completely invulnerable for this turn and ignore collisions, lava, and attack skills."
-            : "해당 턴 완전 무적이 되며, 충돌과 용암지대, 공격 스킬을 무시합니다.",
-      };
-    case "ember_blast":
-      return {
-        tags:
-          lang === "en"
-            ? "Move OK · Combo OK"
-            : "이동 가능 · 조합 가능",
-        desc:
-          lang === "en"
-            ? "Deal explosion damage in a 1-tile cross at the chosen timing."
-            : "지정 시점에 주변 1칸 십자 범위에 폭발 피해를 줍니다.",
-      };
-    case "atomic_fission":
-      return {
-        tags:
-          lang === "en"
-            ? "Move OK · Combo OK"
-            : "이동 가능 · 조합 가능",
-        desc:
-          lang === "en"
-            ? "At movement start, create a clone that follows your previous turn path and collides like a normal attacker."
-            : "이동 시작 시 이전 턴 경로를 따라 이동하는 분신을 생성하며, 일반 충돌처럼 피해를 줍니다.",
-      };
-    case "inferno_field":
-      return {
-        tags:
-          lang === "en"
-            ? "Move OK · Combo OK"
-            : "이동 가능 · 조합 가능",
-        desc:
-          lang === "en"
-            ? "Turn a chosen tile into lava for 2 turns. Anyone touching it takes damage."
-            : "선택한 1칸을 2턴 동안 용암지대로 만들고, 밟거나 지나가면 피해를 줍니다.",
-      };
-    case "nova_blast":
-      return {
-        tags:
-          lang === "en"
-            ? "Move OK · Combo OK"
-            : "이동 가능 · 조합 가능",
-        desc:
-          lang === "en"
-            ? "Deal explosion damage in an X-shaped area up to 2 tiles away at the chosen timing."
-            : "지정 시점에 대각선 2칸 범위의 X자 영역에 폭발 피해를 줍니다.",
-      };
-    case "aurora_heal":
-      return {
-        tags:
-          lang === "en"
-            ? "Move OK · Combo OK"
-            : "이동 가능 · 조합 가능",
-        desc:
-          lang === "en"
-            ? "Restore 1 HP at the chosen timing."
-            : "지정 시점에 HP를 1 회복합니다.",
-      };
-    case "gold_overdrive":
-      return {
-        tags:
-          lang === "en"
-            ? "Move OK · Combo OK"
-            : "이동 가능 · 조합 가능",
-        desc:
-          lang === "en"
-            ? "Nothing happens this turn. Next turn, mana becomes 20 and you can use and combine skills while moving. On the turn after that, mana becomes 0 and you cannot move."
-            : "이번 턴에는 아무 일도 일어나지 않습니다. 다음 턴에는 마나가 20이 되고, 이동 중에도 스킬을 사용, 조합할 수 있습니다. 다다음 턴에는 마나가 0이 되며, 움직일 수 없습니다.",
-      };
-    case "void_cloak":
-      return {
-        tags:
-          lang === "en"
-            ? "Move OK · Combo OK"
-            : "이동 가능 · 조합 가능",
-        desc:
-          lang === "en"
-            ? "Next turn, move to a random position and stay hidden until movement begins."
-            : "다음 턴에 랜덤 위치로 이동한 뒤, 이동 시간이 시작될 때까지 모습을 감춥니다.",
-      };
-    case "quantum_shift":
-      return {
-        tags:
-          lang === "en"
-            ? "Move OK · Combo OK"
-            : "이동 가능 · 조합 가능",
-        desc:
-          lang === "en"
-            ? "Teleport first, then begin your path from that position."
-            : "지정 위치로 순간이동한 뒤, 그 위치에서 경로를 시작합니다.",
-      };
-    case "plasma_charge":
-      return {
-        tags:
-          lang === "en"
-            ? "Move Locked · Combo OK"
-            : "이동 불가 · 조합 가능",
-        desc:
-          lang === "en"
-            ? "Skip movement this turn and gain a large mana bonus next turn."
-            : "이번 턴 이동하지 않고, 다음 턴 마나를 크게 회복합니다.",
-      };
-    case "electric_blitz":
-      return {
-        tags:
-          lang === "en"
-            ? "Skill Move · Combo Locked"
-            : "스킬 이동 · 조합 불가능",
-        desc:
-          lang === "en"
-            ? "Dash in a straight line, ignore obstacles, and strike enemies on the path."
-            : "직선으로 돌진하며, 장애물을 무시하고 경로 위 적을 타격합니다.",
-      };
-    case "cosmic_bigbang":
-      return {
-        tags:
-          lang === "en"
-            ? "Move Locked · Combo Locked"
-            : "이동 불가 · 조합 불가능",
-        desc:
-          lang === "en"
-            ? "Deal 2 damage to the whole board. Blocked by invulnerability."
-            : "보드 전체에 2 피해를 줍니다. 무적에 막힙니다.",
-      };
-    default:
-      return {
-        tags: lang === "en" ? "Unknown" : "미정",
-        desc: lang === "en" ? "No summary." : "설명 없음",
-      };
-  }
-}
-
 export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbilityStart }: Props) {
   const {
     myNickname,
@@ -2070,10 +1906,16 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
               {availableAbilitySkills.map((skill) => {
                 const equipped = abilityLoadout.includes(skill.id);
                 const unlocked = hasAbilitySkinUnlocked(skill.skinId);
-                const skillSummary = getAbilitySkillSummary(
-                  skill.id,
-                  lang === "en" ? "en" : "ko",
-                );
+                const skillSummary =
+                  lang === "en"
+                    ? {
+                        tags: skill.loadoutTags.en,
+                        desc: skill.loadoutDescription.en,
+                      }
+                    : {
+                        tags: skill.loadoutTags.kr,
+                        desc: skill.loadoutDescription.kr,
+                      };
                 const requiredSkinChoice = skinChoices.find(
                   (choice) => choice.id === skill.skinId,
                 );
