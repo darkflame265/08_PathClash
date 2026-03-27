@@ -1505,6 +1505,18 @@
   line-height: 1.6;
 }
 
+.patch-notes-change {
+  font-weight: 700;
+}
+
+.patch-notes-change-buff {
+  color: #4ade80;
+}
+
+.patch-notes-change-nerf {
+  color: #f87171;
+}
+
 
 .audio-settings-body {
   display: flex;

@@ -55,7 +55,7 @@ const TERMS_URL_EN =
 const DONATE_URL =
   import.meta.env.VITE_DONATE_URL?.trim() || "https://pathclash.com";
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
-const PATCH_NOTES_VERSION = "2026-03-26-v1";
+const PATCH_NOTES_VERSION = "2026-03-27-v3";
 const PATCH_NOTES_READ_KEY = "pathclash.patchNotes.read";
 
 type SetAuthState = ReturnType<typeof useGameStore.getState>["setAuthState"];
@@ -519,20 +519,24 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   const patchNotesLabel = lang === "en" ? "Patch Notes" : "패치노트";
   const patchNotesTitle = lang === "en" ? "Patch Notes" : "패치노트";
   const patchNotesVersionLabel =
-    lang === "en" ? "Version 2026.03.26" : "버전 2026.03.26";
+    lang === "en" ? "Version 2026.03.27" : "버전 2026.03.27";
+  // Patch note convention:
+  // - If a mana cost goes down, append "(Buff)" / "(버프)" and style it green.
+  // - If a mana cost goes up, append "(Nerf)" / "(너프)" and style it red.
+  // - Reuse this structure for future patch note updates.
   const patchNotesBody =
     lang === "en"
       ? [
-          "Ability Battle added multiple new skills and visual/SFX upgrades.",
-          "Atomic Fission: create a clone that follows your previous turn path.",
-          "AT Field / Guard end notifications and timing alignment improved.",
-          "Patch Notes panel added. New patch summaries now appear on first login after an update.",
+          { text: "Void Cloak mana cost: 8 -> 4", change: "buff" as const, label: "(Buff)" },
+          { text: "Quantum Shift mana cost: 3 -> 4", change: "nerf" as const, label: "(Nerf)" },
+          { text: "Healing mana cost: 10 -> 8", change: "buff" as const, label: "(Buff)" },
+          { text: "Atomic Fission mana cost: 6 -> 4", change: "buff" as const, label: "(Buff)" },
         ]
       : [
-          "능력 대전에 신규 스킬과 각종 시각 효과, 효과음이 추가되었습니다.",
-          "원자분열: 이전 턴 경로를 따라 움직이는 분신을 생성합니다.",
-          "AT 필드 / 가드 종료 알림과 지속시간 표시 타이밍을 정리했습니다.",
-          "패치노트 창이 추가되었습니다. 패치 후 첫 접속 시 요약 팝업이 표시됩니다.",
+          { text: "투명화 마나 코스트: 8 -> 4", change: "buff" as const, label: "(버프)" },
+          { text: "양자 도약 마나 코스트: 3 -> 4", change: "nerf" as const, label: "(너프)" },
+          { text: "힐링 마나 코스트: 10 -> 8", change: "buff" as const, label: "(버프)" },
+          { text: "원자분열 마나 코스트: 6 -> 4", change: "buff" as const, label: "(버프)" },
         ];
   const dailyRewardGuideTitle =
     lang === "en" ? "📌 Daily Reward Info" : "📌 일일 보상 안내";
@@ -2388,7 +2392,12 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
             <div className="patch-notes-scroll-body">
               {patchNotesBody.map((entry, index) => (
                 <p key={index} className="patch-notes-entry">
-                  {entry}
+                  <span>{entry.text}</span>{" "}
+                  <span
+                    className={`patch-notes-change patch-notes-change-${entry.change}`}
+                  >
+                    {entry.label}
+                  </span>
                 </p>
               ))}
             </div>
