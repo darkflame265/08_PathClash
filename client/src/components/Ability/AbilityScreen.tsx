@@ -83,7 +83,10 @@ function getClonePositionForStep(
   if (currentStep < cloneStep) return null;
   if (currentStep === cloneStep) return cloneStart;
   const pathIndex = currentStep - cloneStep - 1;
-  return clonePath[pathIndex] ?? null;
+  if (pathIndex < clonePath.length) {
+    return clonePath[pathIndex];
+  }
+  return clonePath[clonePath.length - 1] ?? cloneStart;
 }
 
 function computeInitialCellSize(): number {
