@@ -513,6 +513,7 @@ function initSocketServer(io) {
                 abilityRoom.disconnectResult.winnerColor) {
                 const winner = abilityRoom.room.getPlayerByColor(abilityRoom.disconnectResult.winnerColor);
                 void (0, playerAuth_1.recordMatchmakingResult)(winner?.userId ?? null, socket.data.userId ?? null);
+                void (0, playerAuth_1.grantDailyRewardTokens)([winner?.userId ?? null], 6);
             }
             if (abilityRoom.room && abilityRoom.room.playerCount > 0) {
                 io.to(abilityRoom.room.roomId).emit('opponent_disconnected', {});

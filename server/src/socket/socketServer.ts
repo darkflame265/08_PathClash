@@ -12,6 +12,7 @@ import type { AbilitySkillId, AbilitySkillReservation } from '../game/ability/Ab
 import {
   AuthPayload,
   finalizeGoogleUpgrade,
+  grantDailyRewardTokens,
   getUserFromToken,
   recordMatchmakingResult,
   resolveAccount,
@@ -754,6 +755,10 @@ export function initSocketServer(io: Server): void {
         void recordMatchmakingResult(
           winner?.userId ?? null,
           socket.data.userId ?? null,
+        );
+        void grantDailyRewardTokens(
+          [winner?.userId ?? null],
+          6,
         );
       }
 

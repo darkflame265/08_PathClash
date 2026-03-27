@@ -546,8 +546,8 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
       : "하루 최대 120 토큰까지 획득할 수 있습니다.";
   const dailyRewardGuideDuel =
     lang === "en"
-      ? "Duel / 2v2 Victory: +6 tokens"
-      : "대결전 / 2v2 대전 승리: +6 토큰";
+      ? "Duel / Ability Battle / 2v2 Victory: +6 tokens"
+      : "대결전 / 능력대전 / 2v2 대전 승리: +6 토큰";
   const dailyRewardGuideCoop =
     lang === "en" ? "Co-op Victory: +12 tokens" : "협동전 승리: +12 토큰";
   const dailyRewardGuideAi =
