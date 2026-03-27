@@ -48,7 +48,7 @@ const STEP_DURATION_MS = 200;
 const SKILL_PAUSE_MS = 640;
 const SKILL_CAST_DELAY_MS = 500;
 const BLITZ_DASH_STEP_MS = 12;
-const BLITZ_POST_HIT_PAUSE_MS = SKILL_PAUSE_MS;
+const BLITZ_POST_HIT_PAUSE_MS = 640;
 const VOID_REVEAL_PAUSE_MS = 450;
 const AT_FIELD_VISUAL_STEPS = 1;
 const GUARD_END_PAUSE_MS = 360;
@@ -118,7 +118,10 @@ function renderSkillIcon(skillId: AbilitySkillId) {
   }
   if (skillId === "void_cloak") {
     return (
-      <span className="ability-skill-icon-custom ability-skill-icon-void" aria-hidden="true">
+      <span
+        className="ability-skill-icon-custom ability-skill-icon-void"
+        aria-hidden="true"
+      >
         <span className="ability-skill-icon-void-eye" />
         <span className="ability-skill-icon-void-pupil" />
         <span className="ability-skill-icon-void-slash" />
@@ -283,8 +286,18 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     blue: number | null;
   }>({ red: null, blue: null });
   const [movingAtomicClones, setMovingAtomicClones] = useState<{
-    red: { start: Position | null; path: Position[]; step: number | null; position: Position | null };
-    blue: { start: Position | null; path: Position[]; step: number | null; position: Position | null };
+    red: {
+      start: Position | null;
+      path: Position[];
+      step: number | null;
+      position: Position | null;
+    };
+    blue: {
+      start: Position | null;
+      path: Position[];
+      step: number | null;
+      position: Position | null;
+    };
   }>({
     red: { start: null, path: [], step: null, position: null },
     blue: { start: null, path: [], step: null, position: null },
@@ -475,7 +488,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       (entry) => entry.skillId === "inferno_field" && entry.target,
     ) ?? null;
   const atomicReservation =
-    skillReservations.find((entry) => entry.skillId === "atomic_fission") ?? null;
+    skillReservations.find((entry) => entry.skillId === "atomic_fission") ??
+    null;
   const getSkillCost = (skillId: AbilitySkillId) =>
     ABILITY_SKILLS[skillId].manaCost;
   const getReservedMana = () =>
@@ -605,7 +619,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     if (getRemainingMana() < getSkillCost("classic_guard")) return;
     if (isOverdriveTurn()) {
       const nextReservations: AbilitySkillReservation[] = [
-        ...skillReservations.filter((entry) => entry.skillId !== "classic_guard"),
+        ...skillReservations.filter(
+          (entry) => entry.skillId !== "classic_guard",
+        ),
         {
           skillId: "classic_guard",
           step: getCurrentSkillStep(),
@@ -718,7 +734,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       (state?.players[currentColor].previousTurnPath.length ?? 0) > 0;
     if (!hasPreviousTurnPath) return;
     const nextReservations: AbilitySkillReservation[] = [
-      ...skillReservations.filter((entry) => entry.skillId !== "atomic_fission"),
+      ...skillReservations.filter(
+        (entry) => entry.skillId !== "atomic_fission",
+      ),
       {
         skillId: "atomic_fission",
         step: getCurrentSkillStep(),
@@ -785,7 +803,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }
     if (getRemainingMana() < getSkillCost("gold_overdrive")) return;
     const nextReservations: AbilitySkillReservation[] = [
-      ...skillReservations.filter((entry) => entry.skillId !== "gold_overdrive"),
+      ...skillReservations.filter(
+        (entry) => entry.skillId !== "gold_overdrive",
+      ),
       {
         skillId: "gold_overdrive",
         step: getCurrentSkillStep(),
@@ -805,7 +825,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       removeReservation("void_cloak");
       return;
     }
-      if (getRemainingMana() < getSkillCost("void_cloak")) return;
+    if (getRemainingMana() < getSkillCost("void_cloak")) return;
     const nextReservations: AbilitySkillReservation[] = [
       ...skillReservations.filter((entry) => entry.skillId !== "void_cloak"),
       {
@@ -833,7 +853,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       return;
     }
     if (getMyRole() !== "attacker") return;
-      if (getRemainingMana() < getSkillCost("inferno_field")) return;
+    if (getRemainingMana() < getSkillCost("inferno_field")) return;
     setSelectedSkillId("inferno_field");
     setPendingInferno(true);
     setPendingTeleport(false);
@@ -930,7 +950,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     if (nextPath.length === 0) return;
     const nextReservations: AbilitySkillReservation[] = [
       ...(isOverdriveTurn()
-        ? skillReservations.filter((entry) => entry.skillId !== "electric_blitz")
+        ? skillReservations.filter(
+            (entry) => entry.skillId !== "electric_blitz",
+          )
         : []),
       {
         skillId: "electric_blitz",
@@ -958,7 +980,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     if (getRemainingMana() < getSkillCost("plasma_charge")) return;
     if (isOverdriveTurn()) {
       const nextReservations: AbilitySkillReservation[] = [
-        ...skillReservations.filter((entry) => entry.skillId !== "plasma_charge"),
+        ...skillReservations.filter(
+          (entry) => entry.skillId !== "plasma_charge",
+        ),
         {
           skillId: "plasma_charge",
           step: getCurrentSkillStep(),
@@ -1001,7 +1025,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     if (getRemainingMana() < getSkillCost("cosmic_bigbang")) return;
     if (isOverdriveTurn()) {
       const nextReservations: AbilitySkillReservation[] = [
-        ...skillReservations.filter((entry) => entry.skillId !== "cosmic_bigbang"),
+        ...skillReservations.filter(
+          (entry) => entry.skillId !== "cosmic_bigbang",
+        ),
         {
           skillId: "cosmic_bigbang",
           step: getCurrentSkillStep(),
@@ -1622,7 +1648,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       );
     }
 
-    const collisionMap = new Map<number, AbilityResolutionPayload["collisions"]>();
+    const collisionMap = new Map<
+      number,
+      AbilityResolutionPayload["collisions"]
+    >();
     for (const collision of payload.collisions) {
       const list = collisionMap.get(collision.step) ?? [];
       list.push(collision);
@@ -1912,7 +1941,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               if (collisions.length > 0) {
                 applyCollisions(collisions);
               }
-              if (hasBlitzEvent) {
+              if (hasBlitzEvent && step < maxSteps) {
                 queueAnimationTimeout(
                   () => advance(step + 1),
                   BLITZ_POST_HIT_PAUSE_MS,
@@ -2045,10 +2074,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         stateRef.current = nextState;
         setState(nextState);
       }
-      runAnimation(
-        payload,
-        hadHiddenPlayer ? VOID_REVEAL_PAUSE_MS : 0,
-      );
+      runAnimation(payload, hadHiddenPlayer ? VOID_REVEAL_PAUSE_MS : 0);
     };
 
     const onGameOver = ({
@@ -2100,7 +2126,15 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       socket.off("opponent_disconnected", onOpponentDisconnected);
       socket.off("rematch_requested", onRematchRequested);
     };
-  }, [currentColor, isSfxMuted, lang, setMyColor, setRematchRequestSent, setRoomCode, sfxVolume]);
+  }, [
+    currentColor,
+    isSfxMuted,
+    lang,
+    setMyColor,
+    setRematchRequestSent,
+    setRoomCode,
+    sfxVolume,
+  ]);
 
   useEffect(() => {
     if (!state || state.phase !== "planning" || mySubmitted || !roundInfo)
@@ -2446,20 +2480,20 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 skillId === "electric_blitz" ||
                 skillId === "cosmic_bigbang") &&
                 getMyRole() !== "attacker");
-              const atomicUnavailable =
-                skillId === "atomic_fission" &&
-                (!me.previousTurnStart || me.previousTurnPath.length === 0);
-              const blitzBlocked = !overdriveTurn && blitzReserved && !reserved;
-              const bigBangBlocked =
-                !overdriveTurn && bigBangReserved && !reserved;
-              const disabled =
-                !isPlanning ||
-                mySubmitted ||
-                roleBlocked ||
-                atomicUnavailable ||
-                blitzBlocked ||
-                bigBangBlocked ||
-                (getRemainingMana() < skill.manaCost && !reserved);
+            const atomicUnavailable =
+              skillId === "atomic_fission" &&
+              (!me.previousTurnStart || me.previousTurnPath.length === 0);
+            const blitzBlocked = !overdriveTurn && blitzReserved && !reserved;
+            const bigBangBlocked =
+              !overdriveTurn && bigBangReserved && !reserved;
+            const disabled =
+              !isPlanning ||
+              mySubmitted ||
+              roleBlocked ||
+              atomicUnavailable ||
+              blitzBlocked ||
+              bigBangBlocked ||
+              (getRemainingMana() < skill.manaCost && !reserved);
             return (
               <button
                 key={skillId}
@@ -2514,4 +2548,3 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     </div>
   );
 }
-
