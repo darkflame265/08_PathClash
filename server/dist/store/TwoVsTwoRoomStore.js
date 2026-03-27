@@ -63,6 +63,14 @@ class TwoVsTwoRoomStore {
             return undefined;
         return [first, second];
     }
+    getStats() {
+        return {
+            roomCount: this.rooms.size,
+            queueLength: this.queue.length,
+            teamQueueLength: this.teamQueue.length,
+            socketMappings: this.socketToRoom.size,
+        };
+    }
     sweep(activeSocketIds, now = Date.now()) {
         this.sweepQueue(activeSocketIds);
         this.sweepSocketMappings(activeSocketIds);

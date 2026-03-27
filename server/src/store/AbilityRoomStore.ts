@@ -66,6 +66,18 @@ export class AbilityRoomStore {
     this.queue = this.queue.filter((entry) => entry.socketId !== socketId);
   }
 
+  getStats(): {
+    roomCount: number;
+    queueLength: number;
+    socketMappings: number;
+  } {
+    return {
+      roomCount: this.rooms.size,
+      queueLength: this.queue.length,
+      socketMappings: this.socketToRoom.size,
+    };
+  }
+
   removeSocket(socketId: string): {
     room: AbilityRoom | undefined;
     disconnectResult: {

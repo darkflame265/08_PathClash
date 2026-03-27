@@ -1,4 +1,4 @@
-import { Server, Socket } from 'socket.io';
+﻿import { Server, Socket } from 'socket.io';
 import { GameRoom } from '../game/GameRoom';
 import { RoomStore } from '../store/RoomStore';
 import { CoopRoom } from '../game/coop/CoopRoom';
@@ -16,6 +16,7 @@ import {
   getUserFromToken,
   recordMatchmakingResult,
   resolveAccount,
+  type PersistentPlayerProfile,
   resolvePlayerProfile,
 } from '../services/playerAuth';
 
@@ -27,7 +28,14 @@ export function initSocketServer(io: Server): void {
   const activeUserSockets = new Map<string, string>();
   const socketUsers = new Map<string, string>();
   const authCacheTtlMs = 10 * 60 * 1000;
+  const profileCacheTtlMs = 60 * 1000;
   const roomSweepIntervalMs = 60 * 1000;
+  const metricsLogIntervalMs = 60 * 1000;
+  const slowProfileResolveThresholdMs = 150;
+  const profileCache = new Map<
+    string,
+    { expiresAt: number; profile: PersistentPlayerProfile }
+  >();
 
   const unregisterSocketSession = (socketId: string) => {
     const userId = socketUsers.get(socketId);
@@ -38,6 +46,49 @@ export function initSocketServer(io: Server): void {
     }
   };
 
+  const clearExpiredProfileCache = (now = Date.now()) => {
+    for (const [userId, entry] of profileCache.entries()) {
+      if (entry.expiresAt <= now) {
+        profileCache.delete(userId);
+      }
+    }
+  };
+
+  const resolvePlayerProfileCached = async (
+    socket: Socket,
+    auth: AuthPayload | undefined,
+    fallbackNickname: string,
+  ): Promise<PersistentPlayerProfile> => {
+    const userId =
+      typeof socket.data.userId === 'string' ? socket.data.userId : null;
+
+    if (userId) {
+      const cached = profileCache.get(userId);
+      if (cached && cached.expiresAt > Date.now()) {
+        return cached.profile;
+      }
+    }
+
+    const startedAt = Date.now();
+    const profile = await resolvePlayerProfile(auth, fallbackNickname);
+    const durationMs = Date.now() - startedAt;
+
+    if (durationMs >= slowProfileResolveThresholdMs) {
+      console.log(
+        `[perf] resolvePlayerProfile took ${durationMs}ms userId=${profile.userId ?? 'guest'} socket=${socket.id}`,
+      );
+    }
+
+    if (profile.userId) {
+      profileCache.set(profile.userId, {
+        expiresAt: Date.now() + profileCacheTtlMs,
+        profile,
+      });
+    }
+
+    return profile;
+  };
+
   setInterval(() => {
     const activeSocketIds = new Set(io.sockets.sockets.keys());
     store.sweep(activeSocketIds);
@@ -45,6 +96,20 @@ export function initSocketServer(io: Server): void {
     twoVsTwoStore.sweep(activeSocketIds);
     abilityStore.sweep(activeSocketIds);
   }, roomSweepIntervalMs);
+
+  setInterval(() => {
+    clearExpiredProfileCache();
+    const duelStats = store.getStats();
+    const coopStats = coopStore.getStats();
+    const twoVsTwoStats = twoVsTwoStore.getStats();
+    const abilityStats = abilityStore.getStats();
+    console.log(
+      `[metrics] sockets=${io.sockets.sockets.size} activeUserSessions=${activeUserSockets.size} profileCache=${profileCache.size} ` +
+        `rooms{duel=${duelStats.roomCount},coop=${coopStats.roomCount},2v2=${twoVsTwoStats.roomCount},ability=${abilityStats.roomCount}} ` +
+        `queues{duel=${duelStats.queueLength},coop=${coopStats.queueLength},2v2Solo=${twoVsTwoStats.queueLength},2v2Team=${twoVsTwoStats.teamQueueLength},ability=${abilityStats.queueLength}} ` +
+        `mappings{duel=${duelStats.socketMappings},coop=${coopStats.socketMappings},2v2=${twoVsTwoStats.socketMappings},ability=${abilityStats.socketMappings}}`,
+    );
+  }, metricsLogIntervalMs);
 
   const tryStartTwoVsTwoTeamMatch = () => {
     const match = twoVsTwoStore.dequeueTeamMatch();
@@ -177,7 +242,7 @@ export function initSocketServer(io: Server): void {
 
     socket.on('create_room', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
       await registerSocketSession(socket, auth);
-      const profile = await resolvePlayerProfile(auth, nickname);
+      const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       const roomId = store.generateRoomId();
       const code = store.generateCode();
       const room = new GameRoom(roomId, code, io, 'friend');
@@ -198,7 +263,7 @@ export function initSocketServer(io: Server): void {
         }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin; tutorialPending?: boolean },
       ) => {
       await registerSocketSession(socket, auth);
-      const profile = await resolvePlayerProfile(auth, nickname);
+      const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       const roomId = store.generateRoomId();
       const code = store.generateCode();
       const room = new GameRoom(roomId, code, io, 'ai');
@@ -228,16 +293,16 @@ export function initSocketServer(io: Server): void {
 
     socket.on('join_room', async ({ code, nickname, auth, pieceSkin }: { code: string; nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
       await registerSocketSession(socket, auth);
-      const profile = await resolvePlayerProfile(auth, nickname);
+      const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       const room = store.getByCode(code.toUpperCase());
       if (!room || room.isFull) {
-        socket.emit('join_error', { message: '방을 찾을 수 없거나 이미 가득 찼습니다.' });
+        socket.emit('join_error', { message: '諛⑹쓣 李얠쓣 ???녾굅???대? 媛??李쇱뒿?덈떎.' });
         return;
       }
 
       const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
       if (!color) {
-        socket.emit('join_error', { message: '입장할 수 없습니다.' });
+        socket.emit('join_error', { message: '?낆옣?????놁뒿?덈떎.' });
         return;
       }
 
@@ -261,7 +326,7 @@ export function initSocketServer(io: Server): void {
 
     socket.on('join_random', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
       await registerSocketSession(socket, auth);
-      const profile = await resolvePlayerProfile(auth, nickname);
+      const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       const queued = store.dequeueRandom();
       if (!queued || queued.socketId === socket.id) {
         if (queued) {
@@ -313,7 +378,7 @@ export function initSocketServer(io: Server): void {
 
     socket.on('join_coop', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
       await registerSocketSession(socket, auth);
-      const profile = await resolvePlayerProfile(auth, nickname);
+      const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       const queued = coopStore.dequeue();
       if (!queued || queued.socketId === socket.id) {
         if (queued) {
@@ -414,7 +479,7 @@ export function initSocketServer(io: Server): void {
 
     socket.on('join_2v2', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
       await registerSocketSession(socket, auth);
-      const profile = await resolvePlayerProfile(auth, nickname);
+      const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       twoVsTwoStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
       const existingRoom = twoVsTwoStore.getBySocket(socket.id);
       tryStartTwoVsTwoTeamMatch();
@@ -439,7 +504,7 @@ export function initSocketServer(io: Server): void {
         },
       ) => {
         await registerSocketSession(socket, auth);
-        const profile = await resolvePlayerProfile(auth, nickname);
+        const profile = await resolvePlayerProfileCached(socket, auth, nickname);
         const queued = abilityStore.dequeue();
         if (!queued || queued.socketId === socket.id) {
           if (queued) {
@@ -769,3 +834,4 @@ export function initSocketServer(io: Server): void {
     });
   });
 }
+

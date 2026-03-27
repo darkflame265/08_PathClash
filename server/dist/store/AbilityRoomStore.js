@@ -35,6 +35,13 @@ class AbilityRoomStore {
     removeFromQueue(socketId) {
         this.queue = this.queue.filter((entry) => entry.socketId !== socketId);
     }
+    getStats() {
+        return {
+            roomCount: this.rooms.size,
+            queueLength: this.queue.length,
+            socketMappings: this.socketToRoom.size,
+        };
+    }
     removeSocket(socketId) {
         const roomId = this.socketToRoom.get(socketId);
         this.socketToRoom.delete(socketId);

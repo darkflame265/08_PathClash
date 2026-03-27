@@ -32,6 +32,13 @@ class CoopRoomStore {
     removeFromQueue(socketId) {
         this.queue = this.queue.filter((entry) => entry.socketId !== socketId);
     }
+    getStats() {
+        return {
+            roomCount: this.rooms.size,
+            queueLength: this.queue.length,
+            socketMappings: this.socketToRoom.size,
+        };
+    }
     sweep(activeSocketIds, now = Date.now()) {
         this.sweepQueue(activeSocketIds);
         this.sweepSocketMappings(activeSocketIds);

@@ -18,7 +18,11 @@ function initSocketServer(io) {
     const activeUserSockets = new Map();
     const socketUsers = new Map();
     const authCacheTtlMs = 10 * 60 * 1000;
+    const profileCacheTtlMs = 60 * 1000;
     const roomSweepIntervalMs = 60 * 1000;
+    const metricsLogIntervalMs = 60 * 1000;
+    const slowProfileResolveThresholdMs = 150;
+    const profileCache = new Map();
     const unregisterSocketSession = (socketId) => {
         const userId = socketUsers.get(socketId);
         if (!userId)
@@ -28,6 +32,35 @@ function initSocketServer(io) {
             activeUserSockets.delete(userId);
         }
     };
+    const clearExpiredProfileCache = (now = Date.now()) => {
+        for (const [userId, entry] of profileCache.entries()) {
+            if (entry.expiresAt <= now) {
+                profileCache.delete(userId);
+            }
+        }
+    };
+    const resolvePlayerProfileCached = async (socket, auth, fallbackNickname) => {
+        const userId = typeof socket.data.userId === 'string' ? socket.data.userId : null;
+        if (userId) {
+            const cached = profileCache.get(userId);
+            if (cached && cached.expiresAt > Date.now()) {
+                return cached.profile;
+            }
+        }
+        const startedAt = Date.now();
+        const profile = await (0, playerAuth_1.resolvePlayerProfile)(auth, fallbackNickname);
+        const durationMs = Date.now() - startedAt;
+        if (durationMs >= slowProfileResolveThresholdMs) {
+            console.log(`[perf] resolvePlayerProfile took ${durationMs}ms userId=${profile.userId ?? 'guest'} socket=${socket.id}`);
+        }
+        if (profile.userId) {
+            profileCache.set(profile.userId, {
+                expiresAt: Date.now() + profileCacheTtlMs,
+                profile,
+            });
+        }
+        return profile;
+    };
     setInterval(() => {
         const activeSocketIds = new Set(io.sockets.sockets.keys());
         store.sweep(activeSocketIds);
@@ -35,6 +68,17 @@ function initSocketServer(io) {
         twoVsTwoStore.sweep(activeSocketIds);
         abilityStore.sweep(activeSocketIds);
     }, roomSweepIntervalMs);
+    setInterval(() => {
+        clearExpiredProfileCache();
+        const duelStats = store.getStats();
+        const coopStats = coopStore.getStats();
+        const twoVsTwoStats = twoVsTwoStore.getStats();
+        const abilityStats = abilityStore.getStats();
+        console.log(`[metrics] sockets=${io.sockets.sockets.size} activeUserSessions=${activeUserSockets.size} profileCache=${profileCache.size} ` +
+            `rooms{duel=${duelStats.roomCount},coop=${coopStats.roomCount},2v2=${twoVsTwoStats.roomCount},ability=${abilityStats.roomCount}} ` +
+            `queues{duel=${duelStats.queueLength},coop=${coopStats.queueLength},2v2Solo=${twoVsTwoStats.queueLength},2v2Team=${twoVsTwoStats.teamQueueLength},ability=${abilityStats.queueLength}} ` +
+            `mappings{duel=${duelStats.socketMappings},coop=${coopStats.socketMappings},2v2=${twoVsTwoStats.socketMappings},ability=${abilityStats.socketMappings}}`);
+    }, metricsLogIntervalMs);
     const tryStartTwoVsTwoTeamMatch = () => {
         const match = twoVsTwoStore.dequeueTeamMatch();
         if (!match)
@@ -128,7 +172,7 @@ function initSocketServer(io) {
         });
         socket.on('create_room', async ({ nickname, auth, pieceSkin }) => {
             await registerSocketSession(socket, auth);
-            const profile = await (0, playerAuth_1.resolvePlayerProfile)(auth, nickname);
+            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
             const roomId = store.generateRoomId();
             const code = store.generateCode();
             const room = new GameRoom_1.GameRoom(roomId, code, io, 'friend');
@@ -139,7 +183,7 @@ function initSocketServer(io) {
         });
         socket.on('join_ai', async ({ nickname, auth, pieceSkin, tutorialPending, }) => {
             await registerSocketSession(socket, auth);
-            const profile = await (0, playerAuth_1.resolvePlayerProfile)(auth, nickname);
+            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
             const roomId = store.generateRoomId();
             const code = store.generateCode();
             const room = new GameRoom_1.GameRoom(roomId, code, io, 'ai');
@@ -163,15 +207,15 @@ function initSocketServer(io) {
         });
         socket.on('join_room', async ({ code, nickname, auth, pieceSkin }) => {
             await registerSocketSession(socket, auth);
-            const profile = await (0, playerAuth_1.resolvePlayerProfile)(auth, nickname);
+            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
             const room = store.getByCode(code.toUpperCase());
             if (!room || room.isFull) {
-                socket.emit('join_error', { message: '방을 찾을 수 없거나 이미 가득 찼습니다.' });
+                socket.emit('join_error', { message: '諛⑹쓣 李얠쓣 ???녾굅???대? 媛??李쇱뒿?덈떎.' });
                 return;
             }
             const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
             if (!color) {
-                socket.emit('join_error', { message: '입장할 수 없습니다.' });
+                socket.emit('join_error', { message: '?낆옣?????놁뒿?덈떎.' });
                 return;
             }
             room.prepareGameStart();
@@ -192,7 +236,7 @@ function initSocketServer(io) {
         });
         socket.on('join_random', async ({ nickname, auth, pieceSkin }) => {
             await registerSocketSession(socket, auth);
-            const profile = await (0, playerAuth_1.resolvePlayerProfile)(auth, nickname);
+            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
             const queued = store.dequeueRandom();
             if (!queued || queued.socketId === socket.id) {
                 if (queued) {
@@ -237,7 +281,7 @@ function initSocketServer(io) {
         });
         socket.on('join_coop', async ({ nickname, auth, pieceSkin }) => {
             await registerSocketSession(socket, auth);
-            const profile = await (0, playerAuth_1.resolvePlayerProfile)(auth, nickname);
+            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
             const queued = coopStore.dequeue();
             if (!queued || queued.socketId === socket.id) {
                 if (queued) {
@@ -298,7 +342,7 @@ function initSocketServer(io) {
         });
         socket.on('join_2v2', async ({ nickname, auth, pieceSkin }) => {
             await registerSocketSession(socket, auth);
-            const profile = await (0, playerAuth_1.resolvePlayerProfile)(auth, nickname);
+            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
             twoVsTwoStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
             const existingRoom = twoVsTwoStore.getBySocket(socket.id);
             tryStartTwoVsTwoTeamMatch();
@@ -308,7 +352,7 @@ function initSocketServer(io) {
         });
         socket.on('join_ability', async ({ nickname, auth, pieceSkin, equippedSkills, }) => {
             await registerSocketSession(socket, auth);
-            const profile = await (0, playerAuth_1.resolvePlayerProfile)(auth, nickname);
+            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
             const queued = abilityStore.dequeue();
             if (!queued || queued.socketId === socket.id) {
                 if (queued) {

@@ -82,6 +82,13 @@ class RoomStore {
     removeFromQueue(socketId) {
         this.matchQueue = this.matchQueue.filter((entry) => entry.socketId !== socketId);
     }
+    getStats() {
+        return {
+            roomCount: this.rooms.size,
+            queueLength: this.matchQueue.length,
+            socketMappings: this.socketToRoom.size,
+        };
+    }
     sweep(activeSocketIds, now = Date.now()) {
         this.sweepQueue(activeSocketIds);
         this.sweepSocketMappings(activeSocketIds);
