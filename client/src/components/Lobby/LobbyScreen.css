@@ -1487,9 +1487,6 @@
 }
 
 .patch-notes-scroll-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
   max-height: min(60vh, 28rem);
   overflow-y: auto;
   padding-right: 0.2rem;
@@ -1497,12 +1494,36 @@
 
 .patch-notes-entry {
   margin: 0;
-  padding: 0.9rem 1rem;
+  padding: 1rem 1.05rem;
   border-radius: 1rem;
   border: 1px solid rgba(96, 165, 250, 0.18);
   background: rgba(15, 23, 42, 0.52);
   color: var(--text, #f0f4f8);
-  line-height: 1.6;
+  line-height: 1.7;
+}
+
+.patch-notes-section + .patch-notes-section {
+  margin-top: 1rem;
+  padding-top: 0.95rem;
+  border-top: 1px solid rgba(96, 165, 250, 0.14);
+}
+
+.patch-notes-section-title {
+  margin: 0 0 0.55rem;
+  color: #dbeafe;
+  font-size: 0.96rem;
+  font-weight: 800;
+}
+
+.patch-notes-section-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.patch-notes-line {
+  margin: 0;
+  color: var(--text, #f0f4f8);
 }
 
 .patch-notes-change {

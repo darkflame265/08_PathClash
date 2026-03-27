@@ -55,10 +55,13 @@ const TERMS_URL_EN =
 const DONATE_URL =
   import.meta.env.VITE_DONATE_URL?.trim() || "https://pathclash.com";
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
-const PATCH_NOTES_VERSION = "2026-03-27-v3";
+const PATCH_NOTES_VERSION = "2026-03-27-v4";
 const PATCH_NOTES_READ_KEY = "pathclash.patchNotes.read";
 
 type SetAuthState = ReturnType<typeof useGameStore.getState>["setAuthState"];
+type PatchNoteChange = "buff" | "nerf";
+type PatchNoteLine = { text: string; change?: PatchNoteChange; label?: string };
+type PatchNoteSection = { heading: string; lines: PatchNoteLine[] };
 
 function getUtcDayKey(now = new Date()) {
   return now.toISOString().slice(0, 10);
@@ -360,19 +363,59 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   // - If a mana cost goes down, append "(Buff)" / "(버프)" and style it green.
   // - If a mana cost goes up, append "(Nerf)" / "(너프)" and style it red.
   // - Reuse this structure for future patch note updates.
-  const patchNotesBody =
+  const patchNotesBody: PatchNoteSection[] =
     lang === "en"
       ? [
-          { text: "Void Cloak mana cost: 8 -> 4", change: "buff" as const, label: "(Buff)" },
-          { text: "Quantum Shift mana cost: 3 -> 4", change: "nerf" as const, label: "(Nerf)" },
-          { text: "Healing mana cost: 10 -> 8", change: "buff" as const, label: "(Buff)" },
-          { text: "Atomic Fission mana cost: 6 -> 4", change: "buff" as const, label: "(Buff)" },
+          {
+            heading: "New Ability Battle content",
+            lines: [
+              { text: "Added Inferno Field, Void Cloak, Phase Shift, AT Field, and Atomic Fission." },
+              { text: "Added dedicated skill visuals and sound effects for multiple abilities." },
+              { text: "Added Patch Notes UI and improved in-game readability." },
+            ],
+          },
+          {
+            heading: "Balance changes",
+            lines: [
+              { text: "Guard mana cost: 4 -> 2", change: "buff" as const, label: "(Buff)" },
+              { text: "Inferno Field mana cost: 4 -> 6", change: "nerf" as const, label: "(Nerf)" },
+              { text: "Atomic Fission mana cost: 4 -> 6", change: "nerf" as const, label: "(Nerf)" },
+            ],
+          },
+          {
+            heading: "Fixes and improvements",
+            lines: [
+              { text: "Fixed multiple Ability Battle timing, collision, clone, and lava interaction issues." },
+              { text: "Improved mobile Ability Battle layout and skill button handling." },
+              { text: "Improved token reward guidance and patch note visibility." },
+            ],
+          },
         ]
       : [
-          { text: "투명화 마나 코스트: 8 -> 4", change: "buff" as const, label: "(버프)" },
-          { text: "양자 도약 마나 코스트: 3 -> 4", change: "nerf" as const, label: "(너프)" },
-          { text: "힐링 마나 코스트: 10 -> 8", change: "buff" as const, label: "(버프)" },
-          { text: "원자분열 마나 코스트: 6 -> 4", change: "buff" as const, label: "(버프)" },
+          {
+            heading: "신규 능력 대전 콘텐츠",
+            lines: [
+              { text: "용암지대, 투명화, 페이즈 시프트, AT 필드, 원자분열 스킬을 추가했습니다." },
+              { text: "여러 스킬에 전용 시각 효과와 효과음을 추가했습니다." },
+              { text: "패치노트 UI와 인게임 가독성을 개선했습니다." },
+            ],
+          },
+          {
+            heading: "밸런스 조정",
+            lines: [
+              { text: "가드 마나 코스트: 4 -> 2", change: "buff" as const, label: "(버프)" },
+              { text: "용암지대 마나 코스트: 4 -> 6", change: "nerf" as const, label: "(너프)" },
+              { text: "원자분열 마나 코스트: 4 -> 6", change: "nerf" as const, label: "(너프)" },
+            ],
+          },
+          {
+            heading: "수정 및 개선",
+            lines: [
+              { text: "능력 대전의 타이밍, 충돌, 분신, 용암 판정 관련 문제를 여러 건 수정했습니다." },
+              { text: "모바일 능력 대전 UI와 스킬 버튼 조작성을 개선했습니다." },
+              { text: "토큰 보상 안내와 패치노트 표시 방식을 개선했습니다." },
+            ],
+          },
         ];
   const dailyRewardGuideTitle =
     lang === "en" ? "📌 Daily Reward Info" : "📌 일일 보상 안내";
@@ -2232,16 +2275,30 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
               </div>
             </div>
             <div className="patch-notes-scroll-body">
-              {patchNotesBody.map((entry, index) => (
-                <p key={index} className="patch-notes-entry">
-                  <span>{entry.text}</span>{" "}
-                  <span
-                    className={`patch-notes-change patch-notes-change-${entry.change}`}
-                  >
-                    {entry.label}
-                  </span>
-                </p>
-              ))}
+              <div className="patch-notes-entry">
+                {patchNotesBody.map((section, sectionIndex) => (
+                  <section key={sectionIndex} className="patch-notes-section">
+                    <h4 className="patch-notes-section-title">{section.heading}</h4>
+                    <div className="patch-notes-section-lines">
+                      {section.lines.map((line, lineIndex) => (
+                        <p key={lineIndex} className="patch-notes-line">
+                          <span>{line.text}</span>
+                          {line.change && line.label ? (
+                            <>
+                              {" "}
+                              <span
+                                className={`patch-notes-change patch-notes-change-${line.change}`}
+                              >
+                                {line.label}
+                              </span>
+                            </>
+                          ) : null}
+                        </p>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
             </div>
             <div className="upgrade-modal-actions">
               <button
