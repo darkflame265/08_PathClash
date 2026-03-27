@@ -8,13 +8,13 @@
 - 배포 전 확인:
   - `versionCode` 증가
   - `versionName` 반영
-  - `VITE_SERVER_URL`이 배포 서버를 바라보는지 확인
+  - env 분리 규칙 확인: `npm run dev`는 `client/.env.development`(localhost), production 빌드와 `npm run android:release`는 `client/.env.production`(Render 서버 URL) 사용
 
 ### 배포 전 체크리스트
 
 1. 환경 확인
-   - `client/.env` 또는 빌드 대상 env가 배포 서버 URL을 가리키는지 확인
-   - `localhost` 값이 남아 있지 않은지 확인
+   - development / production env 파일이 올바르게 분리돼 있는지 확인
+   - AAB 제출용은 `client/.env.production`이 Render 서버 URL을 가리키는지 확인
 2. 버전 확인
    - `client/android/app/build.gradle`의 `versionCode` 증가
    - `versionName` 갱신
@@ -44,6 +44,7 @@
 - AAB는 빌드 시점의 `VITE_SERVER_URL`이 앱 안에 고정됩니다.
 - 모바일 앱에서 `localhost`는 개발 PC가 아니라 기기 자신을 가리킵니다.
 - 내부 테스트용 앱을 만들 때는 반드시 배포 서버 URL인지 확인해야 합니다.
+- `VITE_SERVER_URL`은 수동으로 `client/.env`에서 토글하지 않고, Vite 모드별 env 파일(`.env.development`, `.env.production`)로 관리합니다.
 
 ## 패치노트 운영
 
