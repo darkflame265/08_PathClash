@@ -1,13 +1,14 @@
 # Supabase Database Notes
 
-이 문서는 `PathClash` 프로젝트의 Supabase DB 구조를 빠르게 이해하기 위한 정리 문서입니다.
+이 문서는 `PathClash` 프로젝트의 Supabase DB 구조와 운영 메모를 빠르게 이해하기 위한 정리 문서입니다.
 
 기준 파일:
-- [schema.sql](./schema.sql)
+- [schema.sql](c:/08_PathClash/supabase/schema.sql)
+- [guest_cleanup.sql](c:/08_PathClash/supabase/guest_cleanup.sql)
 
 주의:
 - 이 문서는 **repo 기준**입니다.
-- 실제 원격 Supabase DB가 이 문서와 완전히 같으려면, 수동 변경 없이 `schema.sql` 기준으로 관리되어야 합니다.
+- 실제 Supabase 원격 DB가 이 문서와 완전히 같으려면, 수동 변경 없이 `schema.sql`과 SQL 파일 기준으로 관리되어야 합니다.
 
 ## 개요
 
@@ -30,14 +31,14 @@
 - `public.account_merges.target_user_id -> auth.users.id`
 - `public.google_play_token_purchases.user_id -> auth.users.id`
 
-대부분 `on delete cascade`를 사용하므로, `auth.users`에서 계정을 삭제하면 연결된 public 데이터도 함께 정리됩니다.
+대부분 `on delete cascade`를 사용하므로 `auth.users`에서 계정을 삭제하면 연결된 public 데이터도 함께 정리됩니다.
 
 ## 테이블 설명
 
 ### 1. `public.profiles`
 
 역할:
-- 플레이어 기본 프로필 저장
+- 플레이어 기본 프로필 데이터
 
 주요 컬럼:
 - `id uuid primary key`
@@ -49,12 +50,12 @@
 
 메모:
 - 게스트 계정 여부는 `is_guest`로 관리
-- 현재 장착 중인 스킨은 `equipped_skin`
+- 현재 착용 중인 스킨은 `equipped_skin`
 
 ### 2. `public.player_stats`
 
 역할:
-- 플레이어 승패/토큰/일일 보상 진행도 저장
+- 플레이어 승패, 토큰, 일일 보상 진행도 데이터
 
 주요 컬럼:
 - `user_id uuid primary key`
@@ -72,7 +73,7 @@
 ### 3. `public.owned_skins`
 
 역할:
-- 플레이어가 소유한 스킨 목록 저장
+- 플레이어가 소유한 스킨 목록
 
 주요 컬럼:
 - `user_id uuid`
@@ -83,12 +84,12 @@
 - `primary key (user_id, skin_id)`
 
 메모:
-- 토큰 구매 스킨 소유 여부 판정에 사용
+- 토큰 구매 스킨 보유 여부 판정에 사용
 
 ### 4. `public.account_merges`
 
 역할:
-- 게스트 계정 -> 정식 계정 업그레이드/병합 이력 저장
+- 게스트 계정 -> 정식 계정 업그레이드/병합 이력
 
 주요 컬럼:
 - `source_user_id uuid primary key`
@@ -98,12 +99,12 @@
 - `created_at timestamptz`
 
 메모:
-- 계정 전환/병합 관련 안전장치 성격
+- 계정 전환/병합 관련 이전 수치 추적
 
 ### 5. `public.google_play_token_purchases`
 
 역할:
-- Google Play 토큰 구매 이력 저장
+- Google Play 토큰 구매 이력
 
 주요 컬럼:
 - `purchase_token text primary key`
@@ -151,19 +152,23 @@
 ## RLS 정책
 
 현재 `schema.sql` 기준:
-- `profiles`, `player_stats`, `account_merges`, `owned_skins`, `google_play_token_purchases`
-  에 RLS 적용
+- `profiles`
+- `player_stats`
+- `account_merges`
+- `owned_skins`
+- `google_play_token_purchases`
+에 RLS 적용
 
 기본 방향:
 - 자신의 데이터만 읽기 가능
 - `profiles`는 자신의 row만 insert/update 가능
+- 운영 write는 서버의 service role 또는 security definer 함수가 담당
 
-운영상 write는 서버의 service role 또는 security definer 함수가 담당하는 구조입니다.
-
-## 서버 코드에서 주로 참조하는 곳
+## 서버 / 클라이언트에서 주로 참조하는 곳
 
 ### 서버
-- [playerAuth.ts](../server/src/services/playerAuth.ts)
+
+- [playerAuth.ts](c:/08_PathClash/server/src/services/playerAuth.ts)
 
 주요 역할:
 - 계정 조회
@@ -173,18 +178,19 @@
 - guest -> google 업그레이드
 
 ### 클라이언트
-- [guestAuth.ts](../client/src/auth/guestAuth.ts)
+
+- [guestAuth.ts](c:/08_PathClash/client/src/auth/guestAuth.ts)
 
 주요 역할:
 - 익명 로그인
-- 닉네임/장착 스킨 동기화
+- 닉네임, 착용 스킨 읽기
 - 스킨 구매 RPC 호출
 - 계정 전환 흐름
 
 ## 게스트 계정 정리 정책
 
 관련 파일:
-- [guest_cleanup.sql](./guest_cleanup.sql)
+- [guest_cleanup.sql](c:/08_PathClash/supabase/guest_cleanup.sql)
 
 현재 제안된 안전 기준:
 - `is_guest = true`
@@ -196,37 +202,81 @@
 - `account_merges` 이력 없음
 - 마지막 활동이 오래됨
 
+### 자동 정리 설정
+
+`pg_cron`이 활성화되어 있고, 아래 정리 작업이 등록되어 있습니다.
+
+현재 등록된 작업:
+- 이름: `pathclash-guest-cleanup-weekly`
+- 주기: 매주 월요일 `04:00 UTC`
+- 기준: `30일` 이상 방치된 guest 계정 정리
+- 실행 함수: `public.cleanup_stale_guest_accounts(interval '30 days')`
+
+등록 SQL:
+
+```sql
+select cron.schedule(
+  'pathclash-guest-cleanup-weekly',
+  '0 4 * * 1',
+  $$select public.cleanup_stale_guest_accounts(interval '30 days');$$
+);
+```
+
+후보 개수 확인:
+
+```sql
+select count(*) as stale_guest_count
+from public.list_stale_guest_cleanup_candidates(interval '30 days');
+```
+
+등록 확인:
+
+```sql
+select *
+from cron.job
+where jobname = 'pathclash-guest-cleanup-weekly';
+```
+
+삭제:
+
+```sql
+select cron.unschedule('pathclash-guest-cleanup-weekly');
+```
+
+수정 방법:
+1. 기존 job 삭제
+2. 새 cron 식 또는 새 interval로 다시 등록
+
 권장 운영 방식:
 1. 후보 조회
 2. 수동 확인
-3. cron 자동화
+3. cron 자동화 유지
 
 ## 운영 메모
 
-### 1. 원격 DB와 repo 스키마를 맞추는 법
+### 1. 실제 DB와 repo 스키마를 맞추는 법
 
 권장:
-- DB 변경은 가능하면 SQL 파일로 남기기
-- `schema.sql` 또는 별도 migration 파일 갱신하기
+- DB 변경이 가능하면 SQL 파일로 남기기
+- `schema.sql` 또는 별도 migration SQL 갱신하기
 
 비권장:
 - Supabase SQL Editor에서만 수동 변경하고 repo 반영 안 하기
 
-### 2. AI 협업용 규칙
+### 2. AI 작업용 읽기 순서
 
-다른 AI/도구와 같이 작업할 때는 아래를 먼저 보면 됩니다.
+다른 AI나 사람이 DB 구조를 빠르게 파악할 때 추천 순서:
 
-읽기 순서 추천:
-1. [schema.sql](./schema.sql)
-2. [README.md](./README.md)
-3. [guest_cleanup.sql](./guest_cleanup.sql)
-4. [playerAuth.ts](../server/src/services/playerAuth.ts)
+1. [README.md](c:/08_PathClash/supabase/README.md)
+2. [schema.sql](c:/08_PathClash/supabase/schema.sql)
+3. [guest_cleanup.sql](c:/08_PathClash/supabase/guest_cleanup.sql)
+4. [playerAuth.ts](c:/08_PathClash/server/src/services/playerAuth.ts)
 
-### 3. 스키마 변경 시 같이 확인할 것
+### 3. 스키마 변경 시 같이 확인할 곳
 
-- `schema.sql`
-- 서버 `playerAuth.ts`
-- 클라이언트 `guestAuth.ts`
+- [schema.sql](c:/08_PathClash/supabase/schema.sql)
+- [playerAuth.ts](c:/08_PathClash/server/src/services/playerAuth.ts)
+- [guestAuth.ts](c:/08_PathClash/client/src/auth/guestAuth.ts)
 - RLS 정책
 - security definer 함수
 
@@ -234,9 +284,9 @@
 
 이 프로젝트의 Supabase 구조는:
 - `profiles` = 프로필
-- `player_stats` = 승패/토큰
+- `player_stats` = 승패 / 토큰
 - `owned_skins` = 보유 스킨
 - `account_merges` = 계정 병합 이력
 - `google_play_token_purchases` = 결제 이력
 
-을 `auth.users` 기준으로 묶는 구조입니다.
+이며, 전부 `auth.users`를 기준으로 연결되는 구조입니다.
