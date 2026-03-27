@@ -24,6 +24,18 @@ export type AbilitySkillId =
   | 'electric_blitz'
   | 'cosmic_bigbang';
 export type AbilitySkillCategory = 'attack' | 'defense' | 'utility';
+export type AbilitySkillRoleRestriction = 'any' | 'attacker' | 'escaper';
+export type AbilitySkillStepRule = 'any' | 'zero_only';
+export type AbilitySkillTargetRule = 'none' | 'position';
+
+export interface AbilitySkillServerRule {
+  roleRestriction: AbilitySkillRoleRestriction;
+  stepRule: AbilitySkillStepRule;
+  targetRule: AbilitySkillTargetRule;
+  requiresEmptyPathWhenNotOverdrive?: boolean;
+  exclusiveWhenNotOverdrive?: boolean;
+  requiresPreviousTurnPath?: boolean;
+}
 
 // Single source of truth for server-side mana costs.
 // When balance changes happen, update this object and keep engine/validation
@@ -43,6 +55,91 @@ export const ABILITY_SKILL_COSTS: Record<AbilitySkillId, number> = {
   void_cloak: 4,
   electric_blitz: 6,
   cosmic_bigbang: 10,
+};
+
+// Shared validation metadata for server-side planning rules.
+// Keep common restrictions here so role/timing/target/cost rules do not drift
+// between validation branches as new skills are added.
+export const ABILITY_SKILL_SERVER_RULES: Record<
+  AbilitySkillId,
+  AbilitySkillServerRule
+> = {
+  classic_guard: {
+    roleRestriction: 'escaper',
+    stepRule: 'zero_only',
+    targetRule: 'none',
+    requiresEmptyPathWhenNotOverdrive: true,
+  },
+  arc_reactor_field: {
+    roleRestriction: 'escaper',
+    stepRule: 'any',
+    targetRule: 'none',
+  },
+  phase_shift: {
+    roleRestriction: 'escaper',
+    stepRule: 'zero_only',
+    targetRule: 'none',
+  },
+  ember_blast: {
+    roleRestriction: 'attacker',
+    stepRule: 'any',
+    targetRule: 'none',
+  },
+  atomic_fission: {
+    roleRestriction: 'attacker',
+    stepRule: 'zero_only',
+    targetRule: 'none',
+    requiresPreviousTurnPath: true,
+  },
+  inferno_field: {
+    roleRestriction: 'attacker',
+    stepRule: 'any',
+    targetRule: 'position',
+  },
+  nova_blast: {
+    roleRestriction: 'attacker',
+    stepRule: 'any',
+    targetRule: 'none',
+  },
+  aurora_heal: {
+    roleRestriction: 'any',
+    stepRule: 'any',
+    targetRule: 'none',
+  },
+  gold_overdrive: {
+    roleRestriction: 'escaper',
+    stepRule: 'any',
+    targetRule: 'none',
+  },
+  quantum_shift: {
+    roleRestriction: 'any',
+    stepRule: 'any',
+    targetRule: 'position',
+  },
+  plasma_charge: {
+    roleRestriction: 'any',
+    stepRule: 'zero_only',
+    targetRule: 'none',
+    requiresEmptyPathWhenNotOverdrive: true,
+  },
+  void_cloak: {
+    roleRestriction: 'any',
+    stepRule: 'any',
+    targetRule: 'none',
+  },
+  electric_blitz: {
+    roleRestriction: 'attacker',
+    stepRule: 'any',
+    targetRule: 'position',
+    exclusiveWhenNotOverdrive: true,
+  },
+  cosmic_bigbang: {
+    roleRestriction: 'attacker',
+    stepRule: 'zero_only',
+    targetRule: 'none',
+    requiresEmptyPathWhenNotOverdrive: true,
+    exclusiveWhenNotOverdrive: true,
+  },
 };
 
 export interface AbilitySkillReservation {

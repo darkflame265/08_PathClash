@@ -46,6 +46,47 @@ function getRandomTeleportPosition(current, opponent) {
     const pool = filtered.length > 0 ? filtered : candidates;
     return pool[Math.floor(Math.random() * pool.length)];
 }
+function normalizeSkillReservations(skills) {
+    return Array.from(new Map(skills.map((skill) => [skill.skillId, skill])).values())
+        .map((skill) => ({ ...skill, target: skill.target ?? null }))
+        .sort((left, right) => left.order - right.order);
+}
+function validateSkillRoleRestrictions(player, skills) {
+    return skills.every((skill) => {
+        const { roleRestriction } = AbilityTypes_1.ABILITY_SKILL_SERVER_RULES[skill.skillId];
+        if (roleRestriction === 'attacker')
+            return player.role === 'attacker';
+        if (roleRestriction === 'escaper')
+            return player.role === 'escaper';
+        return true;
+    });
+}
+function validateCommonSkillReservations(player, skills, path, isOverdriveTurn) {
+    const pathLength = path.length;
+    const hasExclusiveSkill = skills.some((skill) => AbilityTypes_1.ABILITY_SKILL_SERVER_RULES[skill.skillId].exclusiveWhenNotOverdrive);
+    if (!isOverdriveTurn && hasExclusiveSkill && skills.length !== 1) {
+        return false;
+    }
+    return skills.every((skill) => {
+        const rule = AbilityTypes_1.ABILITY_SKILL_SERVER_RULES[skill.skillId];
+        if (skill.step < 0 || skill.step > pathLength)
+            return false;
+        if (rule.targetRule === 'position' && !skill.target)
+            return false;
+        if (rule.stepRule === 'zero_only' && skill.step !== 0)
+            return false;
+        if (!isOverdriveTurn &&
+            rule.requiresEmptyPathWhenNotOverdrive &&
+            pathLength > 0) {
+            return false;
+        }
+        if (rule.requiresPreviousTurnPath &&
+            (!player.previousTurnStart || player.previousTurnPath.length === 0)) {
+            return false;
+        }
+        return true;
+    });
+}
 class AbilityRoom {
     constructor(roomId, code, io) {
         this.timer = new ServerTimer_1.ServerTimer();
@@ -466,13 +507,16 @@ class AbilityRoom {
     }
     validatePlan(player, path, skills) {
         const pathPoints = (0, GameEngine_1.calcPathPoints)(this.turn);
-        const uniqueSkills = Array.from(new Map(skills.map((skill) => [skill.skillId, skill])).values())
-            .map((skill) => ({ ...skill, target: skill.target ?? null }))
-            .sort((left, right) => left.order - right.order);
+        const uniqueSkills = normalizeSkillReservations(skills);
         const isOverdriveTurn = player.overdriveActive;
         const manaCost = uniqueSkills.reduce((sum, skill) => sum + AbilityTypes_1.ABILITY_SKILL_COSTS[skill.skillId], 0);
         if (manaCost > player.mana)
             return null;
+        if (!validateSkillRoleRestrictions(player, uniqueSkills))
+            return null;
+        if (!validateCommonSkillReservations(player, uniqueSkills, path, isOverdriveTurn)) {
+            return null;
+        }
         const hasGuard = uniqueSkills.some((skill) => skill.skillId === 'classic_guard');
         const hasAtField = uniqueSkills.some((skill) => skill.skillId === 'arc_reactor_field');
         const hasPhaseShift = uniqueSkills.some((skill) => skill.skillId === 'phase_shift');
@@ -490,33 +534,11 @@ class AbilityRoom {
         const bigBang = uniqueSkills.find((skill) => skill.skillId === 'cosmic_bigbang') ?? null;
         const hasCharge = uniqueSkills.some((skill) => skill.skillId === 'plasma_charge');
         const hasAtomic = uniqueSkills.some((skill) => skill.skillId === 'atomic_fission');
-        if ((hasGuard || hasAtField || hasPhaseShift || hasOverdrive) && player.role !== 'escaper')
-            return null;
-        if (hasAttackSkill && player.role !== 'attacker')
-            return null;
         if (player.reboundLocked && path.length > 0)
             return null;
-        if (hasAtomic && (!player.previousTurnStart || player.previousTurnPath.length === 0)) {
-            return null;
-        }
         if (!isOverdriveTurn) {
-            if (hasGuard) {
-                const guardSkill = uniqueSkills.find((skill) => skill.skillId === 'classic_guard');
-                if (!guardSkill || guardSkill.step !== 0 || path.length > 0)
-                    return null;
-            }
-            if (hasPhaseShift) {
-                const phaseShiftSkill = uniqueSkills.find((skill) => skill.skillId === 'phase_shift');
-                if (!phaseShiftSkill || phaseShiftSkill.step !== 0)
-                    return null;
-            }
-            if (hasCharge) {
-                const chargeSkill = uniqueSkills.find((skill) => skill.skillId === 'plasma_charge');
-                if (!chargeSkill || chargeSkill.step !== 0 || path.length > 0)
-                    return null;
-            }
             if (hasBigBang) {
-                if (!bigBang || bigBang.step !== 0 || path.length > 0)
+                if (!bigBang)
                     return null;
                 if (uniqueSkills.length !== 1)
                     return null;
@@ -527,8 +549,6 @@ class AbilityRoom {
             }
             if (hasBlitz) {
                 if (!blitz || !blitz.target)
-                    return null;
-                if (uniqueSkills.length !== 1)
                     return null;
                 if (blitz.step < 0 || blitz.step > path.length)
                     return null;
@@ -584,14 +604,6 @@ class AbilityRoom {
                 return null;
             }
             for (const skill of uniqueSkills) {
-                if ((skill.skillId === 'ember_blast' ||
-                    skill.skillId === 'atomic_fission' ||
-                    skill.skillId === 'inferno_field' ||
-                    skill.skillId === 'nova_blast' ||
-                    skill.skillId === 'aurora_heal' ||
-                    skill.skillId === 'void_cloak') &&
-                    skill.step > path.length)
-                    return null;
                 if (skill.skillId === 'inferno_field') {
                     if (!skill.target)
                         return null;
@@ -604,16 +616,6 @@ class AbilityRoom {
                     if (infernoOrigin && posEqual(infernoOrigin, skill.target))
                         return null;
                 }
-                if (skill.skillId === 'atomic_fission' && skill.step !== 0)
-                    return null;
-                if (skill.skillId === 'classic_guard' && skill.step !== 0)
-                    return null;
-                if (skill.skillId === 'arc_reactor_field' && skill.step > path.length)
-                    return null;
-                if (skill.skillId === 'phase_shift' && skill.step !== 0)
-                    return null;
-                if (skill.skillId === 'cosmic_bigbang' && skill.step !== 0)
-                    return null;
             }
             if (hasOverdrive) {
                 const overdriveSkill = uniqueSkills.find((skill) => skill.skillId === 'gold_overdrive');
@@ -635,14 +637,6 @@ class AbilityRoom {
         let cursor = 0;
         let segmentStart = player.position;
         for (const skill of uniqueSkills) {
-            if (skill.step < 0 || skill.step > path.length)
-                return null;
-            if (skill.skillId === 'quantum_shift' && !skill.target)
-                return null;
-            if (skill.skillId === 'electric_blitz' && !skill.target)
-                return null;
-            if (skill.skillId === 'atomic_fission' && skill.step !== 0)
-                return null;
             if (skill.skillId === 'inferno_field') {
                 if (!skill.target)
                     return null;
