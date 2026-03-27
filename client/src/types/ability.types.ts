@@ -27,12 +27,12 @@ export type AbilitySkillCategory = 'attack' | 'defense' | 'utility';
 // When balance changes happen, update this object first so skill buttons,
 // tooltips, and lobby cards stay in sync.
 export const ABILITY_SKILL_COSTS: Record<AbilitySkillId, number> = {
-  classic_guard: 4,
+  classic_guard: 2,
   arc_reactor_field: 6,
   phase_shift: 8,
   ember_blast: 4,
-  atomic_fission: 4,
-  inferno_field: 4,
+  atomic_fission: 6,
+  inferno_field: 6,
   nova_blast: 4,
   aurora_heal: 8,
   gold_overdrive: 8,
