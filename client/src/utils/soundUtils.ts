@@ -1,35 +1,133 @@
-﻿// Simple Web Audio API sound generator (no asset file needed)
+// Centralized SFX registry for PathClash ability sounds.
+// Keep file paths, gain values, and preload behavior in one place so
+// new skills can be added without scattering audio metadata across the codebase.
+
 let audioCtx: AudioContext | null = null;
-let chargeAudio: HTMLAudioElement | null = null;
-let quantumAudio: HTMLAudioElement | null = null;
-let emberAudio: HTMLAudioElement | null = null;
-let blitzAudio: HTMLAudioElement | null = null;
-let bigBangAudio: HTMLAudioElement | null = null;
-let healingAudio: HTMLAudioElement | null = null;
-let infernoAudio: HTMLAudioElement | null = null;
-let phaseShiftAudio: HTMLAudioElement | null = null;
-let arcReactorAudio: HTMLAudioElement | null = null;
-let voidCloakAudio: HTMLAudioElement | null = null;
-let overdriveLoopAudio: HTMLAudioElement | null = null;
-let guardAudio: HTMLAudioElement | null = null;
-let atomicFissionAudio: HTMLAudioElement | null = null;
-const CHARGE_SFX_GAIN = 0.4;
-const QUANTUM_SFX_GAIN = 0.65;
-const EMBER_SFX_GAIN = 0.3;
-const BLITZ_SFX_GAIN = 0.6;
-const BIGBANG_SFX_GAIN = 0.9;
-const HEALING_SFX_GAIN = 0.65;
-const INFERNO_SFX_GAIN = 0.6;
-const PHASE_SHIFT_SFX_GAIN = 0.6;
-const ARC_REACTOR_SFX_GAIN = 0.6;
-const VOID_CLOAK_SFX_GAIN = 0.6;
-const OVERDRIVE_LOOP_GAIN = 0.4;
-const GUARD_SFX_GAIN = 0.55;
-const ATOMIC_FISSION_SFX_GAIN = 0.6;
 
 function getCtx(): AudioContext {
   if (!audioCtx) audioCtx = new AudioContext();
   return audioCtx;
+}
+
+type AbilitySfxId =
+  | "guard"
+  | "atomic_fission"
+  | "charge"
+  | "quantum"
+  | "ember_blast"
+  | "electric_blitz"
+  | "cosmic_bigbang"
+  | "healing"
+  | "inferno_field"
+  | "phase_shift"
+  | "arc_reactor_field"
+  | "void_cloak"
+  | "gold_overdrive_loop";
+
+type AbilitySfxConfig = {
+  path: string;
+  gain: number;
+  loop?: boolean;
+};
+
+const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
+  guard: {
+    path: "/sfx/ability/guard.mp3",
+    gain: 0.55,
+  },
+  atomic_fission: {
+    path: "/sfx/ability/atomic_fission.wav",
+    gain: 0.6,
+  },
+  charge: {
+    path: "/sfx/ability/charge.mp3",
+    gain: 0.4,
+  },
+  quantum: {
+    path: "/sfx/ability/quantum.mp3",
+    gain: 0.65,
+  },
+  ember_blast: {
+    path: "/sfx/ability/ember_blast.mp3",
+    gain: 0.3,
+  },
+  electric_blitz: {
+    path: "/sfx/ability/electric_blitz.mp3",
+    gain: 0.6,
+  },
+  cosmic_bigbang: {
+    path: "/sfx/ability/cosmic_bigbang.mp3",
+    gain: 0.9,
+  },
+  healing: {
+    path: "/sfx/ability/healing_skill.mp3",
+    gain: 0.65,
+  },
+  inferno_field: {
+    path: "/sfx/ability/inferno_field.mp3",
+    gain: 0.6,
+  },
+  phase_shift: {
+    path: "/sfx/ability/phase_shift.mp3",
+    gain: 0.6,
+  },
+  arc_reactor_field: {
+    path: "/sfx/ability/arc_reactor_field.mp3",
+    gain: 0.6,
+  },
+  void_cloak: {
+    path: "/sfx/ability/void_cloak.mp3",
+    gain: 0.6,
+  },
+  gold_overdrive_loop: {
+    path: "/sfx/ability/gold_overdrive_loop.mp3",
+    gain: 0.4,
+    loop: true,
+  },
+};
+
+const audioCache: Partial<Record<AbilitySfxId, HTMLAudioElement>> = {};
+
+function getAbilityAudio(id: AbilitySfxId): HTMLAudioElement | null {
+  try {
+    if (!audioCache[id]) {
+      const config = ABILITY_SFX[id];
+      const audio = new Audio(config.path);
+      audio.preload = "auto";
+      audio.loop = !!config.loop;
+      audioCache[id] = audio;
+    }
+    return audioCache[id] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function playAbilitySfx(id: AbilitySfxId, volume = 0.55): void {
+  try {
+    const baseAudio = getAbilityAudio(id);
+    if (!baseAudio) return;
+    const audio = baseAudio.cloneNode(true) as HTMLAudioElement;
+    audio.loop = false;
+    audio.volume = Math.max(0, Math.min(1, volume * ABILITY_SFX[id].gain));
+    void audio.play().catch(() => {
+      // Playback can fail if browser blocks audio; ignore.
+    });
+  } catch {
+    // Audio element not available
+  }
+}
+
+export function preloadAbilitySfxAssets(): void {
+  for (const id of Object.keys(ABILITY_SFX) as AbilitySfxId[]) {
+    const audio = getAbilityAudio(id);
+    if (!audio) continue;
+    try {
+      audio.load();
+    } catch {
+      // Ignore browsers that reject manual load hints.
+    }
+  }
 }
 
 export function playHit(volume = 0.55): void {
@@ -53,211 +151,64 @@ export function playHit(volume = 0.55): void {
 }
 
 export function playGuard(volume = 0.55): void {
-  try {
-    if (!guardAudio) {
-      guardAudio = new Audio("/sfx/ability/guard.mp3");
-      guardAudio.preload = "auto";
-    }
-    const audio = guardAudio.cloneNode(true) as HTMLAudioElement;
-    audio.volume = Math.max(0, Math.min(1, volume * GUARD_SFX_GAIN));
-    void audio.play().catch(() => {
-      // Playback can fail if browser blocks audio; ignore.
-    });
-  } catch {
-    // Audio element not available
-  }
+  playAbilitySfx("guard", volume);
 }
 
 export function playAtomicFission(volume = 0.55): void {
-  try {
-    if (!atomicFissionAudio) {
-      atomicFissionAudio = new Audio("/sfx/ability/atomic_fission.wav");
-      atomicFissionAudio.preload = "auto";
-    }
-    const audio = atomicFissionAudio.cloneNode(true) as HTMLAudioElement;
-    audio.volume = Math.max(0, Math.min(1, volume * ATOMIC_FISSION_SFX_GAIN));
-    void audio.play().catch(() => {
-      // Playback can fail if browser blocks audio; ignore.
-    });
-  } catch {
-    // Audio element not available
-  }
+  playAbilitySfx("atomic_fission", volume);
 }
 
 export function playCharge(volume = 0.55): void {
-  try {
-    if (!chargeAudio) {
-      chargeAudio = new Audio("/sfx/ability/charge.mp3");
-      chargeAudio.preload = "auto";
-    }
-    const audio = chargeAudio.cloneNode(true) as HTMLAudioElement;
-    audio.volume = Math.max(0, Math.min(1, volume * CHARGE_SFX_GAIN));
-    void audio.play().catch(() => {
-      // Playback can fail if browser blocks audio; ignore.
-    });
-  } catch {
-    // Audio element not available
-  }
+  playAbilitySfx("charge", volume);
 }
 
 export function playQuantum(volume = 0.55): void {
-  try {
-    if (!quantumAudio) {
-      quantumAudio = new Audio("/sfx/ability/quantum.mp3");
-      quantumAudio.preload = "auto";
-    }
-    const audio = quantumAudio.cloneNode(true) as HTMLAudioElement;
-    audio.volume = Math.max(0, Math.min(1, volume * QUANTUM_SFX_GAIN));
-    void audio.play().catch(() => {
-      // Playback can fail if browser blocks audio; ignore.
-    });
-  } catch {
-    // Audio element not available
-  }
+  playAbilitySfx("quantum", volume);
 }
 
 export function playEmber(volume = 0.55): void {
-  try {
-    if (!emberAudio) {
-      emberAudio = new Audio("/sfx/ability/ember_blast.mp3");
-      emberAudio.preload = "auto";
-    }
-    const audio = emberAudio.cloneNode(true) as HTMLAudioElement;
-    audio.volume = Math.max(0, Math.min(1, volume * EMBER_SFX_GAIN));
-    void audio.play().catch(() => {
-      // Playback can fail if browser blocks audio; ignore.
-    });
-  } catch {
-    // Audio element not available
-  }
+  playAbilitySfx("ember_blast", volume);
 }
 
 export function playBlitz(volume = 0.55): void {
-  try {
-    if (!blitzAudio) {
-      blitzAudio = new Audio("/sfx/ability/electric_blitz.mp3");
-      blitzAudio.preload = "auto";
-    }
-    const audio = blitzAudio.cloneNode(true) as HTMLAudioElement;
-    audio.volume = Math.max(0, Math.min(1, volume * BLITZ_SFX_GAIN));
-    void audio.play().catch(() => {
-      // Playback can fail if browser blocks audio; ignore.
-    });
-  } catch {
-    // Audio element not available
-  }
+  playAbilitySfx("electric_blitz", volume);
 }
 
 export function playBigBang(volume = 0.55): void {
-  try {
-    if (!bigBangAudio) {
-      bigBangAudio = new Audio("/sfx/ability/cosmic_bigbang.mp3");
-      bigBangAudio.preload = "auto";
-    }
-    const audio = bigBangAudio.cloneNode(true) as HTMLAudioElement;
-    audio.volume = Math.max(0, Math.min(1, volume * BIGBANG_SFX_GAIN));
-    void audio.play().catch(() => {
-      // Playback can fail if browser blocks audio; ignore.
-    });
-  } catch {
-    // Audio element not available
-  }
+  playAbilitySfx("cosmic_bigbang", volume);
 }
 
 export function playHealing(volume = 0.55): void {
-  try {
-    if (!healingAudio) {
-      healingAudio = new Audio("/sfx/ability/healing_skill.mp3");
-      healingAudio.preload = "auto";
-    }
-    const audio = healingAudio.cloneNode(true) as HTMLAudioElement;
-    audio.volume = Math.max(0, Math.min(1, volume * HEALING_SFX_GAIN));
-    void audio.play().catch(() => {
-      // Playback can fail if browser blocks audio; ignore.
-    });
-  } catch {
-    // Audio element not available
-  }
+  playAbilitySfx("healing", volume);
 }
 
 export function playInferno(volume = 0.55): void {
-  try {
-    if (!infernoAudio) {
-      infernoAudio = new Audio("/sfx/ability/inferno_field.mp3");
-      infernoAudio.preload = "auto";
-    }
-    const audio = infernoAudio.cloneNode(true) as HTMLAudioElement;
-    audio.volume = Math.max(0, Math.min(1, volume * INFERNO_SFX_GAIN));
-    void audio.play().catch(() => {
-      // Playback can fail if browser blocks audio; ignore.
-    });
-  } catch {
-    // Audio element not available
-  }
+  playAbilitySfx("inferno_field", volume);
 }
 
 export function playPhaseShift(volume = 0.55): void {
-  try {
-    if (!phaseShiftAudio) {
-      phaseShiftAudio = new Audio("/sfx/ability/phase_shift.mp3");
-      phaseShiftAudio.preload = "auto";
-    }
-    const audio = phaseShiftAudio.cloneNode(true) as HTMLAudioElement;
-    audio.volume = Math.max(0, Math.min(1, volume * PHASE_SHIFT_SFX_GAIN));
-    void audio.play().catch(() => {
-      // Playback can fail if browser blocks audio; ignore.
-    });
-  } catch {
-    // Audio element not available
-  }
+  playAbilitySfx("phase_shift", volume);
 }
 
 export function playArcReactor(volume = 0.55): void {
-  try {
-    if (!arcReactorAudio) {
-      arcReactorAudio = new Audio("/sfx/ability/arc_reactor_field.mp3");
-      arcReactorAudio.preload = "auto";
-    }
-    const audio = arcReactorAudio.cloneNode(true) as HTMLAudioElement;
-    audio.volume = Math.max(0, Math.min(1, volume * ARC_REACTOR_SFX_GAIN));
-    void audio.play().catch(() => {
-      // Playback can fail if browser blocks audio; ignore.
-    });
-  } catch {
-    // Audio element not available
-  }
+  playAbilitySfx("arc_reactor_field", volume);
 }
 
 export function playVoidCloak(volume = 0.55): void {
-  try {
-    if (!voidCloakAudio) {
-      voidCloakAudio = new Audio("/sfx/ability/void_cloak.mp3");
-      voidCloakAudio.preload = "auto";
-    }
-    const audio = voidCloakAudio.cloneNode(true) as HTMLAudioElement;
-    audio.volume = Math.max(0, Math.min(1, volume * VOID_CLOAK_SFX_GAIN));
-    void audio.play().catch(() => {
-      // Playback can fail if browser blocks audio; ignore.
-    });
-  } catch {
-    // Audio element not available
-  }
+  playAbilitySfx("void_cloak", volume);
 }
 
 export function startOverdriveLoop(volume = 0.55): void {
   try {
-    if (!overdriveLoopAudio) {
-      overdriveLoopAudio = new Audio("/sfx/ability/gold_overdrive_loop.mp3");
-      overdriveLoopAudio.preload = "auto";
-      overdriveLoopAudio.loop = true;
-    }
-    overdriveLoopAudio.volume = Math.max(
+    const audio = getAbilityAudio("gold_overdrive_loop");
+    if (!audio) return;
+    audio.volume = Math.max(
       0,
-      Math.min(1, volume * OVERDRIVE_LOOP_GAIN),
+      Math.min(1, volume * ABILITY_SFX.gold_overdrive_loop.gain),
     );
-    if (overdriveLoopAudio.paused) {
-      overdriveLoopAudio.currentTime = 0;
-      void overdriveLoopAudio.play().catch(() => {
+    if (audio.paused) {
+      audio.currentTime = 0;
+      void audio.play().catch(() => {
         // Playback can fail if browser blocks audio; ignore.
       });
     }
@@ -268,9 +219,10 @@ export function startOverdriveLoop(volume = 0.55): void {
 
 export function stopOverdriveLoop(): void {
   try {
-    if (!overdriveLoopAudio) return;
-    overdriveLoopAudio.pause();
-    overdriveLoopAudio.currentTime = 0;
+    const audio = audioCache.gold_overdrive_loop;
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
   } catch {
     // Audio element not available
   }

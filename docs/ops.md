@@ -55,6 +55,15 @@
 상세 규칙:
 - [patch-notes-process.md](c:/08_PathClash/docs/patch-notes-process.md)
 
+## SFX / 이펙트 운영
+
+- 스킬 전용 사운드는 중앙 레지스트리에서 관리합니다.
+- 능력대전 진입 시 주요 스킬 SFX를 preload 합니다.
+- 새 스킬 효과음을 추가하거나 파일명을 바꿀 때는 아래 문서를 같이 갱신합니다.
+
+관련 문서:
+- [ability-sfx.md](c:/08_PathClash/docs/ability-sfx.md)
+
 ## 능력대전 운영 체크리스트
 
 패치 후 우선 점검할 것:
