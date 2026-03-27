@@ -193,6 +193,8 @@ export function resolveAbilityRound(params: {
   let blueReboundLocked = blue.reboundLocked;
   let redBlitz = false;
   let blueBlitz = false;
+  let redBlitzDamagedThisStep = false;
+  let blueBlitzDamagedThisStep = false;
   let attackerQuantumOverlapPending = false;
   let redCloneStart: Position | null = null;
   let blueCloneStart: Position | null = null;
@@ -550,10 +552,12 @@ export function resolveAbilityRound(params: {
         redMana = spendMana(casterMana, reservation.skillId);
         redPos = { ...(path[path.length - 1] ?? currentPos) };
         redBlitz = true;
+        redBlitzDamagedThisStep = damages.length > 0;
       } else {
         blueMana = spendMana(casterMana, reservation.skillId);
         bluePos = { ...(path[path.length - 1] ?? currentPos) };
         blueBlitz = true;
+        blueBlitzDamagedThisStep = damages.length > 0;
       }
       applyDamages(
         color,
@@ -712,6 +716,8 @@ export function resolveAbilityRound(params: {
   };
 
   for (let step = 0; step <= maxStep; step++) {
+    redBlitzDamagedThisStep = false;
+    blueBlitzDamagedThisStep = false;
     let redPrevForStep = { ...redPos };
     let bluePrevForStep = { ...bluePos };
     let redClonePrevForStep = redClonePos ? { ...redClonePos } : null;
@@ -788,6 +794,28 @@ export function resolveAbilityRound(params: {
 
     for (const { color, reservation } of stepReservations) {
       processSkill(color, reservation);
+    }
+
+    const overlappingAfterSkillBlitz =
+      (redBlitz || blueBlitz) && samePosition(redPos, bluePos);
+    if (
+      overlappingAfterSkillBlitz &&
+      !samePosition(redPrevForStep, bluePrevForStep)
+    ) {
+      const landingBlitzColor: PlayerColor | null =
+        redBlitz && !redBlitzDamagedThisStep
+          ? 'red'
+          : blueBlitz && !blueBlitzDamagedThisStep
+            ? 'blue'
+            : null;
+      if (landingBlitzColor) {
+        resolveCollisionHit(
+          landingBlitzColor,
+          landingBlitzColor === 'red' ? 'blue' : 'red',
+          redPos,
+          step,
+        );
+      }
     }
 
     const getClonePositionForStep = (
