@@ -621,9 +621,11 @@ function resolveAbilityRound(params) {
             if (currentStep === cloneStep)
                 return { ...cloneStart };
             const index = currentStep - cloneStep - 1;
-            if (index < 0 || index >= clonePath.length)
+            if (index < 0)
                 return null;
-            return { ...clonePath[index] };
+            if (index < clonePath.length)
+                return { ...clonePath[index] };
+            return { ...(clonePath[clonePath.length - 1] ?? cloneStart) };
         };
         const redCloneNext = getClonePositionForStep(redCloneStart, redClonePath, redCloneStep, step);
         const blueCloneNext = getClonePositionForStep(blueCloneStart, blueClonePath, blueCloneStep, step);
