@@ -22,6 +22,7 @@ interface Props {
   isHidden?: boolean;
   isPhased?: boolean;
   isAtField?: boolean;
+  isOverloaded?: boolean;
   isClone?: boolean;
   hp?: number | null;
   outlineColor?: 'green' | PlayerColor | null;
@@ -58,6 +59,7 @@ export function PlayerPiece({
   isHidden = false,
   isPhased = false,
   isAtField = false,
+  isOverloaded = false,
   isClone = false,
   hp = null,
   outlineColor = null,
@@ -78,6 +80,7 @@ export function PlayerPiece({
     isMe ? 'piece-me' : '',
     isHidden ? 'piece-hidden' : '',
     isPhased ? 'piece-phased' : '',
+    isOverloaded ? 'piece-overloaded' : '',
     isClone ? 'piece-clone' : '',
     outlineColor ? `piece-outline-${outlineColor}` : '',
     isHit ? 'hit' : '',

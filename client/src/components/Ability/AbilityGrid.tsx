@@ -884,6 +884,7 @@ export function AbilityGrid({
               isHidden={state.players.red.hidden && currentColor === 'red' && state.phase === 'planning'}
             isAtField={activeAtFields.red && state.phase === 'moving'}
             isPhased={activePhaseShifts.red && state.phase === 'moving'}
+            isOverloaded={state.players.red.reboundLocked}
             hp={state.players.red.hp}
             skin={redSkin}
           />
@@ -902,6 +903,7 @@ export function AbilityGrid({
               isHidden={state.players.blue.hidden && currentColor === 'blue' && state.phase === 'planning'}
             isAtField={activeAtFields.blue && state.phase === 'moving'}
             isPhased={activePhaseShifts.blue && state.phase === 'moving'}
+            isOverloaded={state.players.blue.reboundLocked}
             hp={state.players.blue.hp}
             skin={blueSkin}
           />
