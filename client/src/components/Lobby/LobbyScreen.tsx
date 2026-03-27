@@ -336,8 +336,8 @@ function getAbilitySkillSummary(skillId: AbilitySkillId, lang: "ko" | "en") {
             : "이동 가능 · 조합 가능",
         desc:
           lang === "en"
-            ? "Next turn, gain 20 mana and freely combine skills while moving. On the turn after that, mana becomes 0 and path points become 0."
-            : "다음 턴 마나가 20이 되고, 이동 중에도 스킬을 자유롭게 조합할 수 있습니다. 그 다음 턴에는 마나가 0이 되고 경로 포인트가 0이 됩니다.",
+            ? "Nothing happens this turn. Next turn, mana becomes 20 and you can use and combine skills while moving. On the turn after that, mana becomes 0 and you cannot move."
+            : "이번 턴에는 아무 일도 일어나지 않습니다. 다음 턴에는 마나가 20이 되고, 이동 중에도 스킬을 사용, 조합할 수 있습니다. 다다음 턴에는 마나가 0이 되며, 움직일 수 없습니다.",
       };
     case "void_cloak":
       return {

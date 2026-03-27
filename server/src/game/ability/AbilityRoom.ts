@@ -550,7 +550,7 @@ export class AbilityRoom {
     const hasCharge = uniqueSkills.some((skill) => skill.skillId === 'plasma_charge');
     const hasAtomic = uniqueSkills.some((skill) => skill.skillId === 'atomic_fission');
 
-    if ((hasGuard || hasAtField || hasPhaseShift) && player.role !== 'escaper') return null;
+    if ((hasGuard || hasAtField || hasPhaseShift || hasOverdrive) && player.role !== 'escaper') return null;
     if (hasAttackSkill && player.role !== 'attacker') return null;
     if (player.reboundLocked && path.length > 0) return null;
     if (hasAtomic && (!player.previousTurnStart || player.previousTurnPath.length === 0)) {

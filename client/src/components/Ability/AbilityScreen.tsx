@@ -2470,6 +2470,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             );
             const roleBlocked =
               ((skillId === "classic_guard" ||
+                skillId === "gold_overdrive" ||
                 skillId === "phase_shift" ||
                 skillId === "arc_reactor_field") &&
                 getMyRole() !== "escaper") ||
