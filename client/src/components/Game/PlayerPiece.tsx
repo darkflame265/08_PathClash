@@ -65,6 +65,8 @@ export function PlayerPiece({
   outlineColor = null,
   skin = "classic",
 }: Props) {
+  const effectiveSkin =
+    isOverloaded && skin === "neon_pulse" ? "classic" : skin;
   const x = position.col * cellSize + cellSize / 2;
   const y = position.row * cellSize + cellSize / 2;
   const pieceSize = Math.max(28, Math.round(cellSize * 0.58));
@@ -76,7 +78,7 @@ export function PlayerPiece({
   const classes = [
     'player-piece',
     `piece-${color}`,
-    `piece-skin-${skin}`,
+    `piece-skin-${effectiveSkin}`,
     isMe ? 'piece-me' : '',
     isHidden ? 'piece-hidden' : '',
     isPhased ? 'piece-phased' : '',
@@ -119,16 +121,16 @@ export function PlayerPiece({
       <div className="piece-visual">
         {isAttacker && <div className={`attacker-glow glow-${color}`} />}
         <div className="piece-inner">
-          {isFlagSkin(skin) && <FlagSkin id={skin} />}
-          {skin === "plasma" && <PlasmaGame />}
-          {skin === "gold_core" && <GoldCoreGame />}
-          {skin === "neon_pulse" && <NeonPulseGame />}
-          {skin === "cosmic" && <CosmicGame />}
-          {skin === "inferno" && <InfernoGame />}
-          {skin === "arc_reactor" && <ArcReactorGame />}
-          {skin === "electric_core" && <ElectricCoreGame />}
-          {skin === "atomic" && <AtomicGame cellSize={cellSize} />}
-          {skin === "quantum" && <QuantumGame />}
+          {isFlagSkin(effectiveSkin) && <FlagSkin id={effectiveSkin} />}
+          {effectiveSkin === "plasma" && <PlasmaGame />}
+          {effectiveSkin === "gold_core" && <GoldCoreGame />}
+          {effectiveSkin === "neon_pulse" && <NeonPulseGame />}
+          {effectiveSkin === "cosmic" && <CosmicGame />}
+          {effectiveSkin === "inferno" && <InfernoGame />}
+          {effectiveSkin === "arc_reactor" && <ArcReactorGame />}
+          {effectiveSkin === "electric_core" && <ElectricCoreGame />}
+          {effectiveSkin === "atomic" && <AtomicGame cellSize={cellSize} />}
+          {effectiveSkin === "quantum" && <QuantumGame />}
         </div>
         {hp !== null && !isClone && (
           <div className={`piece-hp piece-hp-${color}`} aria-hidden="true">

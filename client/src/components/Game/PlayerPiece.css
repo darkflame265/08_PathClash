@@ -24,8 +24,15 @@
   filter: saturate(0.86);
 }
 
-.player-piece.piece-overloaded .piece-inner {
+.player-piece.piece-overloaded .piece-inner,
+.player-piece.piece-overloaded .piece-inner::before,
+.player-piece.piece-overloaded .piece-inner::after,
+.player-piece.piece-overloaded .piece-inner > *,
+.player-piece.piece-overloaded .piece-inner canvas {
   filter: grayscale(1) saturate(0.14) brightness(0.9) contrast(1.05);
+}
+
+.player-piece.piece-overloaded .piece-inner {
   box-shadow:
     0 0 calc(var(--piece-glow, 12px) * 0.7) rgba(226, 232, 240, 0.2),
     inset 0 0 calc(var(--piece-glow, 12px) * 0.2) rgba(15, 23, 42, 0.18);
