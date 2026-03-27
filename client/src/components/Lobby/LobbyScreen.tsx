@@ -292,8 +292,8 @@ function getAbilitySkillSummary(skillId: AbilitySkillId, lang: "ko" | "en") {
             : "이동 가능 · 조합 가능",
         desc:
           lang === "en"
-            ? "Create a clone that follows your previous turn path and collides like a normal attacker."
-            : "이전 턴 경로를 따라 이동하는 분신을 생성하며, 일반 충돌처럼 피해를 줍니다.",
+            ? "At movement start, create a clone that follows your previous turn path and collides like a normal attacker."
+            : "이동 시작 시 이전 턴 경로를 따라 이동하는 분신을 생성하며, 일반 충돌처럼 피해를 줍니다.",
       };
     case "inferno_field":
       return {

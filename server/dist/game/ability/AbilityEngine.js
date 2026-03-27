@@ -479,18 +479,18 @@ function resolveAbilityRound(params) {
                 redMana = spendMana(casterMana, reservation.skillId);
                 redCloneStart = { ...cloneStart };
                 redClonePath = clonePath;
-                redCloneStep = reservation.step;
+                redCloneStep = 0;
                 redClonePos = { ...cloneStart };
             }
             else {
                 blueMana = spendMana(casterMana, reservation.skillId);
                 blueCloneStart = { ...cloneStart };
                 blueClonePath = clonePath;
-                blueCloneStep = reservation.step;
+                blueCloneStep = 0;
                 blueClonePos = { ...cloneStart };
             }
             skillEvents.push({
-                step: reservation.step,
+                step: 0,
                 order: reservation.order,
                 color,
                 skillId: reservation.skillId,

@@ -604,7 +604,7 @@ class AbilityRoom {
                     if (infernoOrigin && posEqual(infernoOrigin, skill.target))
                         return null;
                 }
-                if (skill.skillId === 'atomic_fission' && skill.step > path.length)
+                if (skill.skillId === 'atomic_fission' && skill.step !== 0)
                     return null;
                 if (skill.skillId === 'classic_guard' && skill.step !== 0)
                     return null;
@@ -640,6 +640,8 @@ class AbilityRoom {
             if (skill.skillId === 'quantum_shift' && !skill.target)
                 return null;
             if (skill.skillId === 'electric_blitz' && !skill.target)
+                return null;
+            if (skill.skillId === 'atomic_fission' && skill.step !== 0)
                 return null;
             if (skill.skillId === 'inferno_field') {
                 if (!skill.target)

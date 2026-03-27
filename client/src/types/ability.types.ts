@@ -211,8 +211,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: 'atomic_fission',
     name: { en: 'Atomic Fission', kr: '원자분열' },
     description: {
-      en: 'Create an afterimage that repeats your previous turn path and damages the enemy on collision.',
-      kr: '이전 턴의 경로를 따라 움직이는 잔상을 생성하며, 적과 충돌하면 피해를 줍니다.',
+      en: 'At the start of movement, create an afterimage that repeats your previous turn path and damages the enemy on collision.',
+      kr: '이동 시작 시 이전 턴의 경로를 따라 움직이는 잔상을 생성하며, 적과 충돌하면 피해를 줍니다.',
     },
     manaCost: ABILITY_SKILL_COSTS.atomic_fission,
     category: 'attack',

@@ -739,7 +739,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       ),
       {
         skillId: "atomic_fission",
-        step: getCurrentSkillStep(),
+        step: 0,
         order: reservationOrderRef.current++,
       },
     ];

@@ -657,7 +657,7 @@ export class AbilityRoom {
             skill.step === 0 ? player.position : path[skill.step - 1];
           if (infernoOrigin && posEqual(infernoOrigin, skill.target)) return null;
         }
-        if (skill.skillId === 'atomic_fission' && skill.step > path.length) return null;
+        if (skill.skillId === 'atomic_fission' && skill.step !== 0) return null;
         if (skill.skillId === 'classic_guard' && skill.step !== 0) return null;
         if (skill.skillId === 'arc_reactor_field' && skill.step > path.length) return null;
         if (skill.skillId === 'phase_shift' && skill.step !== 0) return null;
@@ -688,6 +688,7 @@ export class AbilityRoom {
       if (skill.step < 0 || skill.step > path.length) return null;
       if (skill.skillId === 'quantum_shift' && !skill.target) return null;
       if (skill.skillId === 'electric_blitz' && !skill.target) return null;
+      if (skill.skillId === 'atomic_fission' && skill.step !== 0) return null;
       if (skill.skillId === 'inferno_field') {
         if (!skill.target) return null;
         if (
