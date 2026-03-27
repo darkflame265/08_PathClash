@@ -54,6 +54,86 @@ const AT_FIELD_VISUAL_STEPS = 1;
 const GUARD_END_PAUSE_MS = 360;
 const AT_FIELD_END_PAUSE_MS = 360;
 
+type BoolByColor = { red: boolean; blue: boolean };
+type NumberByColor = { red: number; blue: number };
+type NullableNumberByColor = { red: number | null; blue: number | null };
+type PositionByColor = { red: Position; blue: Position };
+type NullablePositionByColor = { red: Position | null; blue: Position | null };
+type PathsByColor = { red: Position[]; blue: Position[] };
+type AtomicCloneVisual = {
+  start: Position | null;
+  path: Position[];
+  step: number | null;
+  position: Position | null;
+};
+type AtomicCloneVisualsByColor = {
+  red: AtomicCloneVisual;
+  blue: AtomicCloneVisual;
+};
+
+function createFalseFlags(): BoolByColor {
+  return { red: false, blue: false };
+}
+
+function createZeroCounters(): NumberByColor {
+  return { red: 0, blue: 0 };
+}
+
+function createNullSteps(): NullableNumberByColor {
+  return { red: null, blue: null };
+}
+
+function createNullMarkers(): NullablePositionByColor {
+  return { red: null, blue: null };
+}
+
+function createEmptyPaths(): PathsByColor {
+  return { red: [], blue: [] };
+}
+
+function createEmptyAtomicClone(): AtomicCloneVisual {
+  return { start: null, path: [], step: null, position: null };
+}
+
+function createEmptyAtomicCloneVisuals(): AtomicCloneVisualsByColor {
+  return {
+    red: createEmptyAtomicClone(),
+    blue: createEmptyAtomicClone(),
+  };
+}
+
+function collectSkillEventsByStep(
+  events: AbilityResolutionPayload["skillEvents"],
+) {
+  const skillMap = new Map<number, AbilityResolutionPayload["skillEvents"]>();
+  for (const event of events) {
+    const list = skillMap.get(event.step) ?? [];
+    list.push(event);
+    skillMap.set(
+      event.step,
+      list.sort((left, right) => {
+        const leftPriority = getSkillPriority(left.skillId);
+        const rightPriority = getSkillPriority(right.skillId);
+        if (leftPriority !== rightPriority) return leftPriority - rightPriority;
+        return left.order - right.order;
+      }),
+    );
+  }
+  return skillMap;
+}
+
+function collectCollisionsByStep(
+  collisions: AbilityResolutionPayload["collisions"],
+) {
+  const collisionMap = new Map<number, AbilityResolutionPayload["collisions"]>();
+  for (const collision of collisions) {
+    const list = collisionMap.get(collision.step) ?? [];
+    list.push(collision);
+    collisionMap.set(collision.step, list);
+  }
+  return collisionMap;
+}
+
 function buildBlitzPath(start: Position, target: Position): Position[] {
   const rowDelta = target.row - start.row;
   const colDelta = target.col - start.col;
@@ -248,63 +328,33 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     red: number | null;
     blue: number | null;
   }>({ red: null, blue: null });
-  const [activeGuards, setActiveGuards] = useState<{
-    red: boolean;
-    blue: boolean;
-  }>({ red: false, blue: false });
-  const [activeAtFields, setActiveAtFields] = useState<{
-    red: boolean;
-    blue: boolean;
-  }>({ red: false, blue: false });
-  const [activePhaseShifts, setActivePhaseShifts] = useState<{
-    red: boolean;
-    blue: boolean;
-  }>({ red: false, blue: false });
-  const [movingPaths, setMovingPaths] = useState<{
-    red: Position[];
-    blue: Position[];
-  }>({ red: [], blue: [] });
-  const [movingStarts, setMovingStarts] = useState<{
-    red: Position;
-    blue: Position;
-  } | null>(null);
-  const [movingTeleportMarkers, setMovingTeleportMarkers] = useState<{
-    red: Position | null;
-    blue: Position | null;
-  }>({ red: null, blue: null });
-  const [movingTeleportSteps, setMovingTeleportSteps] = useState<{
-    red: number | null;
-    blue: number | null;
-  }>({ red: null, blue: null });
-  const [movingBlitzColors, setMovingBlitzColors] = useState<{
-    red: boolean;
-    blue: boolean;
-  }>({ red: false, blue: false });
-  const [movingBlitzProgress, setMovingBlitzProgress] = useState<{
-    red: number;
-    blue: number;
-  }>({ red: 0, blue: 0 });
-  const [movingBlitzSteps, setMovingBlitzSteps] = useState<{
-    red: number | null;
-    blue: number | null;
-  }>({ red: null, blue: null });
-  const [movingAtomicClones, setMovingAtomicClones] = useState<{
-    red: {
-      start: Position | null;
-      path: Position[];
-      step: number | null;
-      position: Position | null;
-    };
-    blue: {
-      start: Position | null;
-      path: Position[];
-      step: number | null;
-      position: Position | null;
-    };
-  }>({
-    red: { start: null, path: [], step: null, position: null },
-    blue: { start: null, path: [], step: null, position: null },
-  });
+  const [activeGuards, setActiveGuards] = useState<BoolByColor>(
+    createFalseFlags,
+  );
+  const [activeAtFields, setActiveAtFields] = useState<BoolByColor>(
+    createFalseFlags,
+  );
+  const [activePhaseShifts, setActivePhaseShifts] = useState<BoolByColor>(
+    createFalseFlags,
+  );
+  const [movingPaths, setMovingPaths] = useState<PathsByColor>(createEmptyPaths);
+  const [movingStarts, setMovingStarts] = useState<PositionByColor | null>(
+    null,
+  );
+  const [movingTeleportMarkers, setMovingTeleportMarkers] =
+    useState<NullablePositionByColor>(createNullMarkers);
+  const [movingTeleportSteps, setMovingTeleportSteps] =
+    useState<NullableNumberByColor>(createNullSteps);
+  const [movingBlitzColors, setMovingBlitzColors] = useState<BoolByColor>(
+    createFalseFlags,
+  );
+  const [movingBlitzProgress, setMovingBlitzProgress] = useState<NumberByColor>(
+    createZeroCounters,
+  );
+  const [movingBlitzSteps, setMovingBlitzSteps] =
+    useState<NullableNumberByColor>(createNullSteps);
+  const [movingAtomicClones, setMovingAtomicClones] =
+    useState<AtomicCloneVisualsByColor>(createEmptyAtomicCloneVisuals);
   const [winner, setWinner] = useState<PlayerColor | "draw" | null>(null);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const [rematchRequested, setRematchRequested] = useState(false);
@@ -432,6 +482,57 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     reservationOrderRef.current = 1;
   };
 
+  const resetTransientVisualState = () => {
+    setHitFlags(createFalseFlags());
+    setExplodingFlags(createFalseFlags());
+    setCollisionEffects([]);
+    setTeleportEffects([]);
+  };
+
+  const resetMovingVisualState = () => {
+    setMovingPaths(createEmptyPaths());
+    setMovingStarts(null);
+    setMovingTeleportMarkers(createNullMarkers());
+    setMovingTeleportSteps(createNullSteps());
+    setMovingBlitzColors(createFalseFlags());
+    setMovingBlitzProgress(createZeroCounters());
+    setMovingBlitzSteps(createNullSteps());
+    setMovingAtomicClones(createEmptyAtomicCloneVisuals());
+  };
+
+  const resetPersistentDefenseVisualState = () => {
+    setActiveAtFields(createFalseFlags());
+    setActivePhaseShifts(createFalseFlags());
+  };
+
+  const resetMatchUiState = () => {
+    setWinner(null);
+    setGameOverMessage(null);
+    setRematchRequested(false);
+    setRematchRequestSent(false);
+  };
+
+  const applyMovingPayloadState = (
+    payload: AbilityResolutionPayload,
+    nextPhaseShiftFlags: BoolByColor,
+    nextMovingStarts: PositionByColor,
+    nextTeleportMarkers: NullablePositionByColor,
+    nextTeleportSteps: NullableNumberByColor,
+    nextBlitzColors: BoolByColor,
+    nextBlitzSteps: NullableNumberByColor,
+    nextAtomicClones: AtomicCloneVisualsByColor,
+  ) => {
+    setMovingPaths({ red: payload.redPath, blue: payload.bluePath });
+    setMovingBlitzColors(nextBlitzColors);
+    setMovingBlitzProgress(createZeroCounters());
+    setMovingBlitzSteps(nextBlitzSteps);
+    setMovingAtomicClones(nextAtomicClones);
+    setMovingTeleportMarkers(nextTeleportMarkers);
+    setMovingTeleportSteps(nextTeleportSteps);
+    setMovingStarts(nextMovingStarts);
+    setActivePhaseShifts(nextPhaseShiftFlags);
+  };
+
   const applyState = (nextState: AbilityBattleState) => {
     stateRef.current = nextState;
     setState(nextState);
@@ -441,28 +542,11 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       red: nextState.players.red.invulnerableSteps > 0,
       blue: nextState.players.blue.invulnerableSteps > 0,
     });
-    setActiveAtFields({ red: false, blue: false });
-    setActivePhaseShifts({ red: false, blue: false });
-    setHitFlags({ red: false, blue: false });
-    setExplodingFlags({ red: false, blue: false });
-    setCollisionEffects([]);
-    setTeleportEffects([]);
-    setMovingPaths({ red: [], blue: [] });
-    setMovingStarts(null);
-    setMovingTeleportMarkers({ red: null, blue: null });
-    setMovingTeleportSteps({ red: null, blue: null });
-    setMovingBlitzColors({ red: false, blue: false });
-    setMovingBlitzProgress({ red: 0, blue: 0 });
-    setMovingBlitzSteps({ red: null, blue: null });
-    setMovingAtomicClones({
-      red: { start: null, path: [], step: null, position: null },
-      blue: { start: null, path: [], step: null, position: null },
-    });
+    resetPersistentDefenseVisualState();
+    resetTransientVisualState();
+    resetMovingVisualState();
     if (nextState.phase !== "gameover") {
-      setWinner(null);
-      setGameOverMessage(null);
-      setRematchRequested(false);
-      setRematchRequestSent(false);
+      resetMatchUiState();
     }
   };
 
@@ -1496,7 +1580,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     initialRevealPauseMs = 0,
   ) => {
     clearAnimationTimeouts();
-    const blitzColors = {
+    const blitzColors: BoolByColor = {
       red: payload.skillEvents.some(
         (event) => event.skillId === "electric_blitz" && event.color === "red",
       ),
@@ -1504,7 +1588,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         (event) => event.skillId === "electric_blitz" && event.color === "blue",
       ),
     };
-    const blitzSteps = {
+    const blitzSteps: NullableNumberByColor = {
       red:
         payload.skillEvents.find(
           (event) =>
@@ -1516,16 +1600,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             event.skillId === "electric_blitz" && event.color === "blue",
         )?.step ?? null,
     };
-    setMovingPaths({ red: payload.redPath, blue: payload.bluePath });
-    setMovingBlitzColors({
-      red: blitzColors.red,
-      blue: blitzColors.blue,
-    });
-    setMovingBlitzProgress({ red: 0, blue: 0 });
-    setMovingBlitzSteps({
-      red: blitzSteps.red,
-      blue: blitzSteps.blue,
-    });
     const atomicCloneEvents = {
       red:
         payload.skillEvents.find(
@@ -1542,7 +1616,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             event.cloneStart,
         ) ?? null,
     };
-    setMovingAtomicClones({
+    const atomicCloneVisuals: AtomicCloneVisualsByColor = {
       red: {
         start: atomicCloneEvents.red?.cloneStart ?? null,
         path: atomicCloneEvents.red?.clonePath ?? [],
@@ -1555,8 +1629,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         step: atomicCloneEvents.blue?.step ?? null,
         position: null,
       },
-    });
-    const teleportMarkers = {
+    };
+    const teleportMarkers: NullablePositionByColor = {
       red:
         payload.skillEvents.find(
           (event) =>
@@ -1572,24 +1646,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             event.to,
         )?.to ?? null,
     };
-    setMovingTeleportMarkers(teleportMarkers);
-    setMovingTeleportSteps({
-      red:
-        payload.skillEvents.find(
-          (event) =>
-            event.color === "red" &&
-            event.skillId === "quantum_shift" &&
-            event.to,
-        )?.step ?? null,
-      blue:
-        payload.skillEvents.find(
-          (event) =>
-            event.color === "blue" &&
-            event.skillId === "quantum_shift" &&
-            event.to,
-        )?.step ?? null,
-    });
-    const teleportSteps = {
+    const movingTeleportSteps: NullableNumberByColor = {
       red:
         payload.skillEvents.find(
           (event) =>
@@ -1605,6 +1662,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             event.to,
         )?.step ?? null,
     };
+    const teleportSteps = movingTeleportSteps;
     const redVisualStart =
       teleportSteps.red === 0 && teleportMarkers.red
         ? teleportMarkers.red
@@ -1613,10 +1671,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       teleportSteps.blue === 0 && teleportMarkers.blue
         ? teleportMarkers.blue
         : payload.blueStart;
-    setMovingStarts({
+    const nextMovingStarts: PositionByColor = {
       red: redVisualStart,
       blue: blueVisualStart,
-    });
+    };
     const guardCounters = {
       red: stateRef.current?.players.red.invulnerableSteps ?? 0,
       blue: stateRef.current?.players.blue.invulnerableSteps ?? 0,
@@ -1625,7 +1683,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       red: 0,
       blue: 0,
     };
-    const phaseShiftFlags = {
+    const phaseShiftFlags: BoolByColor = {
       red: payload.skillEvents.some(
         (event) => event.skillId === "phase_shift" && event.color === "red",
       ),
@@ -1633,33 +1691,19 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         (event) => event.skillId === "phase_shift" && event.color === "blue",
       ),
     };
-    setActivePhaseShifts(phaseShiftFlags);
+    applyMovingPayloadState(
+      payload,
+      phaseShiftFlags,
+      nextMovingStarts,
+      teleportMarkers,
+      movingTeleportSteps,
+      blitzColors,
+      blitzSteps,
+      atomicCloneVisuals,
+    );
 
-    const skillMap = new Map<number, AbilityResolutionPayload["skillEvents"]>();
-    for (const event of payload.skillEvents) {
-      const list = skillMap.get(event.step) ?? [];
-      list.push(event);
-      skillMap.set(
-        event.step,
-        list.sort((left, right) => {
-          const leftPriority = getSkillPriority(left.skillId);
-          const rightPriority = getSkillPriority(right.skillId);
-          if (leftPriority !== rightPriority)
-            return leftPriority - rightPriority;
-          return left.order - right.order;
-        }),
-      );
-    }
-
-    const collisionMap = new Map<
-      number,
-      AbilityResolutionPayload["collisions"]
-    >();
-    for (const collision of payload.collisions) {
-      const list = collisionMap.get(collision.step) ?? [];
-      list.push(collision);
-      collisionMap.set(collision.step, list);
-    }
+    const skillMap = collectSkillEventsByStep(payload.skillEvents);
+    const collisionMap = collectCollisionsByStep(payload.collisions);
 
     const redSeq = [redVisualStart, ...payload.redPath];
     const blueSeq = [blueVisualStart, ...payload.bluePath];
@@ -1739,6 +1783,36 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
     };
 
+    const syncPersistentDefenseVisuals = () => {
+      setActiveGuards({
+        red: guardCounters.red > 0,
+        blue: guardCounters.blue > 0,
+      });
+      setActiveAtFields({
+        red: atFieldCounters.red > 0,
+        blue: atFieldCounters.blue > 0,
+      });
+    };
+
+    const consumeDefenseVisualStep = () => {
+      const endedGuards: PlayerColor[] = [];
+      const endedAtFields: PlayerColor[] = [];
+
+      if (guardCounters.red === 1) endedGuards.push("red");
+      if (guardCounters.blue === 1) endedGuards.push("blue");
+      if (atFieldCounters.red === 1) endedAtFields.push("red");
+      if (atFieldCounters.blue === 1) endedAtFields.push("blue");
+
+      if (guardCounters.red > 0) guardCounters.red -= 1;
+      if (guardCounters.blue > 0) guardCounters.blue -= 1;
+      if (atFieldCounters.red > 0) atFieldCounters.red -= 1;
+      if (atFieldCounters.blue > 0) atFieldCounters.blue -= 1;
+
+      syncPersistentDefenseVisuals();
+
+      return { endedGuards, endedAtFields };
+    };
+
     const runGuardEndNotice = (
       endedColors: PlayerColor[],
       done: () => void,
@@ -1794,27 +1868,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     };
 
     const finalizeEndNotices = () => {
-      const endedGuards: PlayerColor[] = [];
-      const endedAtFields: PlayerColor[] = [];
-
-      if (guardCounters.red === 1) endedGuards.push("red");
-      if (guardCounters.blue === 1) endedGuards.push("blue");
-      if (atFieldCounters.red === 1) endedAtFields.push("red");
-      if (atFieldCounters.blue === 1) endedAtFields.push("blue");
-
-      if (guardCounters.red > 0) guardCounters.red -= 1;
-      if (guardCounters.blue > 0) guardCounters.blue -= 1;
-      if (atFieldCounters.red > 0) atFieldCounters.red -= 1;
-      if (atFieldCounters.blue > 0) atFieldCounters.blue -= 1;
-
-      setActiveGuards({
-        red: guardCounters.red > 0,
-        blue: guardCounters.blue > 0,
-      });
-      setActiveAtFields({
-        red: atFieldCounters.red > 0,
-        blue: atFieldCounters.blue > 0,
-      });
+      const { endedGuards, endedAtFields } = consumeDefenseVisualStep();
 
       runGuardEndNotice(endedGuards, () =>
         runAtFieldEndNotice(endedAtFields, () => undefined),
@@ -1838,14 +1892,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           );
         }
       }
-      setActiveGuards({
-        red: guardCounters.red > 0,
-        blue: guardCounters.blue > 0,
-      });
-      setActiveAtFields({
-        red: atFieldCounters.red > 0,
-        blue: atFieldCounters.blue > 0,
-      });
+      syncPersistentDefenseVisuals();
     };
 
     const advance = (step: number) => {
@@ -1913,24 +1960,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
 
       queueAnimationTimeout(() => {
-        const endedGuards: PlayerColor[] = [];
-        const endedAtFields: PlayerColor[] = [];
-        if (guardCounters.red === 1) endedGuards.push("red");
-        if (guardCounters.blue === 1) endedGuards.push("blue");
-        if (atFieldCounters.red === 1) endedAtFields.push("red");
-        if (atFieldCounters.blue === 1) endedAtFields.push("blue");
-        if (guardCounters.red > 0) guardCounters.red -= 1;
-        if (guardCounters.blue > 0) guardCounters.blue -= 1;
-        setActiveGuards({
-          red: guardCounters.red > 0,
-          blue: guardCounters.blue > 0,
-        });
-        if (atFieldCounters.red > 0) atFieldCounters.red -= 1;
-        if (atFieldCounters.blue > 0) atFieldCounters.blue -= 1;
-        setActiveAtFields({
-          red: atFieldCounters.red > 0,
-          blue: atFieldCounters.blue > 0,
-        });
+        const { endedGuards, endedAtFields } = consumeDefenseVisualStep();
 
         const continueStep = () => {
           const events = skillMap.get(step) ?? [];
