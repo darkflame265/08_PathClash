@@ -11,6 +11,10 @@
   justify-content: center;
 }
 
+.player-piece.piece-blitzing {
+  transition: none;
+}
+
 .player-piece.piece-hidden {
   opacity: 0.42;
 }
