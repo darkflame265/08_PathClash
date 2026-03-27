@@ -248,8 +248,8 @@ function getAbilitySkillSummary(skillId: AbilitySkillId, lang: "ko" | "en") {
             : "이동 불가 · 조합 가능",
         desc:
           lang === "en"
-            ? "Become invulnerable for 2 turns and block attack skills."
-            : "2턴 동안 무적이 되며, 공격 스킬을 막습니다.",
+            ? "Become invulnerable for 2 tile intervals and block attack skills."
+            : "2칸 시간 동안 무적이 되며, 공격 스킬을 막습니다.",
       };
     case "arc_reactor_field":
       return {

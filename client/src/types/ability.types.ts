@@ -163,8 +163,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: 'classic_guard',
     name: { en: 'Guard', kr: '가드' },
     description: {
-      en: 'Become invulnerable for two movement steps. Using it consumes all path points for this turn.',
-      kr: '두 칸 이동 시간 동안 무적이 됩니다. 사용 시 이번 턴 이동이 불가능합니다.',
+      en: 'Become invulnerable for 2 tile intervals. Using it consumes all path points for this turn.',
+      kr: '2칸 시간 동안 무적이 됩니다. 사용 시 이번 턴 이동이 불가능합니다.',
     },
     manaCost: ABILITY_SKILL_COSTS.classic_guard,
     category: 'defense',
