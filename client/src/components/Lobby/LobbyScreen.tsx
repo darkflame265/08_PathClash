@@ -55,6 +55,7 @@ const TERMS_URL_EN =
 const DONATE_URL =
   import.meta.env.VITE_DONATE_URL?.trim() || "https://pathclash.com";
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
+const AI_TUTORIAL_PROMPT_ANSWERED_KEY = "pathclash.aiTutorialPromptAnswered.v1";
 const PATCH_NOTES_VERSION = "2026-03-27-v4";
 const PATCH_NOTES_READ_KEY = "pathclash.patchNotes.read";
 
@@ -288,6 +289,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   const [isAbilityLoadoutOpen, setIsAbilityLoadoutOpen] = useState(false);
   const [isDailyRewardInfoOpen, setIsDailyRewardInfoOpen] = useState(false);
   const [isPatchNotesOpen, setIsPatchNotesOpen] = useState(false);
+  const [isAiTutorialPromptOpen, setIsAiTutorialPromptOpen] = useState(false);
   const [hasUnreadPatchNotes, setHasUnreadPatchNotes] = useState(false);
   const [upgradeResult, setUpgradeResult] = useState<UpgradeResolution>({
     kind: "none",
@@ -357,6 +359,14 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   const abilityLoadoutCount = lang === "en" ? "equipped" : "장착 중";
   const patchNotesLabel = lang === "en" ? "Patch Notes" : "패치노트";
   const patchNotesTitle = lang === "en" ? "Patch Notes" : "패치노트";
+  const aiTutorialPromptTitle =
+    lang === "en" ? "Do you want to play the tutorial?" : "튜토리얼을 진행하시겠습니까?";
+  const aiTutorialPromptDesc =
+    lang === "en"
+      ? "If you choose Yes, you will be moved into an AI match and the tutorial will begin right away."
+      : "예를 누르면 AI 대전에 바로 입장하며 튜토리얼이 시작됩니다.";
+  const aiTutorialYesLabel = lang === "en" ? "Yes" : "예";
+  const aiTutorialNoLabel = lang === "en" ? "No" : "아니요";
   const patchNotesVersionLabel =
     lang === "en" ? "Version 2026.03.27" : "버전 2026.03.27";
   // Patch note convention:
@@ -1029,13 +1039,25 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   }, []);
 
   useEffect(() => {
+    if (currentMatchType) return;
+    const hasSeenAiTutorial =
+      window.localStorage.getItem(AI_TUTORIAL_SEEN_KEY) === "1";
+    const hasAnsweredAiTutorialPrompt =
+      window.localStorage.getItem(AI_TUTORIAL_PROMPT_ANSWERED_KEY) === "1";
+    if (!hasSeenAiTutorial && !hasAnsweredAiTutorialPrompt) {
+      setIsAiTutorialPromptOpen(true);
+    }
+  }, [currentMatchType]);
+
+  useEffect(() => {
     const shouldLockScroll =
       isSkinPickerOpen ||
       isTokenShopOpen ||
       isSettingsOpen ||
       isAudioSettingsOpen ||
       isAbilityLoadoutOpen ||
-      isPatchNotesOpen;
+      isPatchNotesOpen ||
+      isAiTutorialPromptOpen;
 
     if (!shouldLockScroll) {
       return;
@@ -1061,6 +1083,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
     };
   }, [
     isAudioSettingsOpen,
+    isAiTutorialPromptOpen,
     isAbilityLoadoutOpen,
     isPatchNotesOpen,
     isSettingsOpen,
@@ -1348,7 +1371,9 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
     setMatchType(null);
   };
 
-  const handleAiMatch = async () => {
+  const handleAiMatchWithTutorial = async (
+    tutorialPendingOverride: boolean | null,
+  ) => {
     setError("");
     setIsMatchmaking(false);
     setMatchType("ai");
@@ -1357,8 +1382,24 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
       window.localStorage.getItem(AI_TUTORIAL_SEEN_KEY) === "1";
     socket.emit("join_ai", {
       ...(await buildPlayerPayload()),
-      tutorialPending: !hasSeenAiTutorial,
+      tutorialPending: tutorialPendingOverride ?? !hasSeenAiTutorial,
     });
+  };
+
+  const handleAiMatch = async () => {
+    await handleAiMatchWithTutorial(null);
+  };
+
+  const handleAcceptAiTutorial = async () => {
+    window.localStorage.setItem(AI_TUTORIAL_PROMPT_ANSWERED_KEY, "1");
+    setIsAiTutorialPromptOpen(false);
+    await handleAiMatchWithTutorial(true);
+  };
+
+  const handleDeclineAiTutorial = () => {
+    window.localStorage.setItem(AI_TUTORIAL_PROMPT_ANSWERED_KEY, "1");
+    window.localStorage.setItem(AI_TUTORIAL_SEEN_KEY, "1");
+    setIsAiTutorialPromptOpen(false);
   };
 
   const handleCoopMatch = async () => {
@@ -2307,6 +2348,30 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
                 type="button"
               >
                 {skinApplyLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isAiTutorialPromptOpen && (
+        <div className="upgrade-modal-backdrop">
+          <div className="upgrade-modal ai-tutorial-prompt-modal">
+            <h3>{aiTutorialPromptTitle}</h3>
+            <p>{aiTutorialPromptDesc}</p>
+            <div className="upgrade-modal-actions ai-tutorial-prompt-actions">
+              <button
+                className="lobby-btn secondary"
+                onClick={handleDeclineAiTutorial}
+                type="button"
+              >
+                {aiTutorialNoLabel}
+              </button>
+              <button
+                className="lobby-btn primary"
+                onClick={() => void handleAcceptAiTutorial()}
+                type="button"
+              >
+                {aiTutorialYesLabel}
               </button>
             </div>
           </div>

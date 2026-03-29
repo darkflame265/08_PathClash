@@ -1538,6 +1538,20 @@
   color: #f87171;
 }
 
+.ai-tutorial-prompt-modal {
+  width: min(100%, 25rem);
+}
+
+.ai-tutorial-prompt-modal p {
+  margin: 0;
+  color: var(--text-muted, #c7d0d9);
+  line-height: 1.65;
+}
+
+.ai-tutorial-prompt-actions {
+  justify-content: flex-end;
+}
+
 
 .audio-settings-body {
   display: flex;
