@@ -224,6 +224,13 @@ export interface AbilityHealEvent {
   position: Position;
 }
 
+export interface AbilityBlockEvent {
+  step: number;
+  color: PlayerColor;
+  skillId: 'classic_guard' | 'arc_reactor_field';
+  position: Position;
+}
+
 export interface AbilitySkillEvent {
   step: number;
   order: number;
@@ -245,6 +252,7 @@ export interface AbilityResolutionPayload {
   redStart: Position;
   blueStart: Position;
   lavaTiles: AbilityLavaTile[];
+  blocks: AbilityBlockEvent[];
   collisions: Array<{
     step: number;
     position: Position;

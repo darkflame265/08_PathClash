@@ -11,6 +11,7 @@ function getCtx(): AudioContext {
 
 type AbilitySfxId =
   | "guard"
+  | "shield_block"
   | "atomic_fission"
   | "charge"
   | "quantum"
@@ -34,6 +35,10 @@ const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
   guard: {
     path: "/sfx/ability/guard.mp3",
     gain: 0.55,
+  },
+  shield_block: {
+    path: "/sfx/ability/shield_block.mp3",
+    gain: 0.6,
   },
   atomic_fission: {
     path: "/sfx/ability/atomic_fission.wav",
@@ -152,6 +157,10 @@ export function playHit(volume = 0.55): void {
 
 export function playGuard(volume = 0.55): void {
   playAbilitySfx("guard", volume);
+}
+
+export function playShieldBlock(volume = 0.55): void {
+  playAbilitySfx("shield_block", volume);
 }
 
 export function playAtomicFission(volume = 0.55): void {

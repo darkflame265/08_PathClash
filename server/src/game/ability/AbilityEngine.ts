@@ -5,6 +5,7 @@ import type {
 } from '../../types/game.types';
 import { ABILITY_SKILL_COSTS } from './AbilityTypes';
 import type {
+  AbilityBlockEvent,
   AbilityDamageEvent,
   AbilityHealEvent,
   AbilityLavaTile,
@@ -163,6 +164,7 @@ export function resolveAbilityRound(params: {
   const redPath = [...red.plannedPath];
   const bluePath = [...blue.plannedPath];
   const collisions: CollisionEvent[] = [];
+  const blocks: AbilityBlockEvent[] = [];
   const skillEvents: AbilitySkillEvent[] = [];
   const activeLavaTiles: AbilityLavaTile[] = params.lavaTiles.map((tile) => ({
     position: { ...tile.position },
@@ -259,7 +261,22 @@ export function resolveAbilityRound(params: {
   const spendMana = (casterManaValue: number, skillId: AbilitySkillId) =>
     Math.max(0, casterManaValue - ABILITY_SKILL_COSTS[skillId]);
 
+  const pushBlockEvent = (
+    step: number,
+    color: PlayerColor,
+    skillId: 'classic_guard' | 'arc_reactor_field',
+    position: Position,
+  ) => {
+    blocks.push({
+      step,
+      color,
+      skillId,
+      position: { ...position },
+    });
+  };
+
   const resolveAttackSkill = (
+    step: number,
     sourceColor: PlayerColor,
     targetColor: PlayerColor,
     skillId: AbilitySkillId,
@@ -269,11 +286,20 @@ export function resolveAbilityRound(params: {
     damages: AbilityDamageEvent[],
     reflectAllowed = true,
   ) => {
-    if (isProtectedByInv(targetColor)) return;
+    const targetGuardActive = targetColor === 'red' ? redInv > 0 : blueInv > 0;
+    if (targetGuardActive) {
+      pushBlockEvent(step, targetColor, 'classic_guard', targetPosition);
+      return;
+    }
+
+    const targetPhaseShift =
+      targetColor === 'red' ? redPhaseShift : bluePhaseShift;
+    if (targetPhaseShift) return;
 
     const targetAtField =
       targetColor === 'red' ? redAtFieldSteps > 0 : blueAtFieldSteps > 0;
     if (targetAtField) {
+      pushBlockEvent(step, targetColor, 'arc_reactor_field', targetPosition);
       if (targetColor === 'red') redAtFieldSteps = 0;
       else blueAtFieldSteps = 0;
 
@@ -322,11 +348,20 @@ export function resolveAbilityRound(params: {
     position: Position,
     step: number,
   ) => {
-    if (isProtectedByInv(targetColor)) return;
+    const targetGuardActive = targetColor === 'red' ? redInv > 0 : blueInv > 0;
+    if (targetGuardActive) {
+      pushBlockEvent(step, targetColor, 'classic_guard', position);
+      return;
+    }
+
+    const targetPhaseShift =
+      targetColor === 'red' ? redPhaseShift : bluePhaseShift;
+    if (targetPhaseShift) return;
 
     const targetAtField =
       targetColor === 'red' ? redAtFieldSteps > 0 : blueAtFieldSteps > 0;
     if (targetAtField) {
+      pushBlockEvent(step, targetColor, 'arc_reactor_field', position);
       if (targetColor === 'red') redAtFieldSteps = 0;
       else blueAtFieldSteps = 0;
 
@@ -537,6 +572,7 @@ export function resolveAbilityRound(params: {
       const damages: AbilityDamageEvent[] = [];
       if (affectedPositions.some((position) => samePosition(position, opponentPos))) {
         resolveAttackSkill(
+          reservation.step,
           color,
           opponentColor,
           reservation.skillId,
@@ -581,6 +617,7 @@ export function resolveAbilityRound(params: {
       const damages: AbilityDamageEvent[] = [];
       if (affectedPositions.some((position) => samePosition(position, opponentPos))) {
         resolveAttackSkill(
+          reservation.step,
           color,
           opponentColor,
           reservation.skillId,
@@ -667,6 +704,7 @@ export function resolveAbilityRound(params: {
       const damages: AbilityDamageEvent[] = [];
       if (affectedPositions.some((position) => samePosition(position, opponentPos))) {
         resolveAttackSkill(
+          reservation.step,
           color,
           opponentColor,
           reservation.skillId,
@@ -694,6 +732,7 @@ export function resolveAbilityRound(params: {
       }
       const damages: AbilityDamageEvent[] = [];
       resolveAttackSkill(
+        reservation.step,
         color,
         opponentColor,
         reservation.skillId,
@@ -924,6 +963,7 @@ export function resolveAbilityRound(params: {
         position: { ...tile.position },
         remainingTurns: tile.remainingTurns,
       })),
+      blocks,
       collisions,
       skillEvents,
     },

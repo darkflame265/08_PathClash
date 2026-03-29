@@ -104,6 +104,7 @@ function resolveAbilityRound(params) {
     const redPath = [...red.plannedPath];
     const bluePath = [...blue.plannedPath];
     const collisions = [];
+    const blocks = [];
     const skillEvents = [];
     const activeLavaTiles = params.lavaTiles.map((tile) => ({
         position: { ...tile.position },
@@ -170,11 +171,26 @@ function resolveAbilityRound(params) {
         : blueInv > 0 || bluePhaseShift || blueAtFieldSteps > 0;
     const isProtectedByInv = (color) => color === 'red' ? redInv > 0 || redPhaseShift : blueInv > 0 || bluePhaseShift;
     const spendMana = (casterManaValue, skillId) => Math.max(0, casterManaValue - AbilityTypes_1.ABILITY_SKILL_COSTS[skillId]);
-    const resolveAttackSkill = (sourceColor, targetColor, skillId, damage, sourcePosition, targetPosition, damages, reflectAllowed = true) => {
-        if (isProtectedByInv(targetColor))
+    const pushBlockEvent = (step, color, skillId, position) => {
+        blocks.push({
+            step,
+            color,
+            skillId,
+            position: { ...position },
+        });
+    };
+    const resolveAttackSkill = (step, sourceColor, targetColor, skillId, damage, sourcePosition, targetPosition, damages, reflectAllowed = true) => {
+        const targetGuardActive = targetColor === 'red' ? redInv > 0 : blueInv > 0;
+        if (targetGuardActive) {
+            pushBlockEvent(step, targetColor, 'classic_guard', targetPosition);
+            return;
+        }
+        const targetPhaseShift = targetColor === 'red' ? redPhaseShift : bluePhaseShift;
+        if (targetPhaseShift)
             return;
         const targetAtField = targetColor === 'red' ? redAtFieldSteps > 0 : blueAtFieldSteps > 0;
         if (targetAtField) {
+            pushBlockEvent(step, targetColor, 'arc_reactor_field', targetPosition);
             if (targetColor === 'red')
                 redAtFieldSteps = 0;
             else
@@ -219,10 +235,17 @@ function resolveAbilityRound(params) {
         }
     };
     const resolveCollisionHit = (sourceColor, targetColor, position, step) => {
-        if (isProtectedByInv(targetColor))
+        const targetGuardActive = targetColor === 'red' ? redInv > 0 : blueInv > 0;
+        if (targetGuardActive) {
+            pushBlockEvent(step, targetColor, 'classic_guard', position);
+            return;
+        }
+        const targetPhaseShift = targetColor === 'red' ? redPhaseShift : bluePhaseShift;
+        if (targetPhaseShift)
             return;
         const targetAtField = targetColor === 'red' ? redAtFieldSteps > 0 : blueAtFieldSteps > 0;
         if (targetAtField) {
+            pushBlockEvent(step, targetColor, 'arc_reactor_field', position);
             if (targetColor === 'red')
                 redAtFieldSteps = 0;
             else
@@ -423,7 +446,7 @@ function resolveAbilityRound(params) {
             const affectedPositions = getLinePositions(currentPos, path);
             const damages = [];
             if (affectedPositions.some((position) => samePosition(position, opponentPos))) {
-                resolveAttackSkill(color, opponentColor, reservation.skillId, 1, currentPos, opponentPos, damages);
+                resolveAttackSkill(reservation.step, color, opponentColor, reservation.skillId, 1, currentPos, opponentPos, damages);
             }
             if (color === 'red') {
                 redMana = spendMana(casterMana, reservation.skillId);
@@ -449,7 +472,7 @@ function resolveAbilityRound(params) {
             const affectedPositions = getCrossPositions(currentPos).filter((position) => !obstacles.some((obstacle) => samePosition(obstacle, position)));
             const damages = [];
             if (affectedPositions.some((position) => samePosition(position, opponentPos))) {
-                resolveAttackSkill(color, opponentColor, reservation.skillId, 1, currentPos, opponentPos, damages);
+                resolveAttackSkill(reservation.step, color, opponentColor, reservation.skillId, 1, currentPos, opponentPos, damages);
             }
             if (color === 'red') {
                 redMana = spendMana(casterMana, reservation.skillId);
@@ -526,7 +549,7 @@ function resolveAbilityRound(params) {
             const affectedPositions = getNovaPositions(currentPos).filter((position) => !obstacles.some((obstacle) => samePosition(obstacle, position)));
             const damages = [];
             if (affectedPositions.some((position) => samePosition(position, opponentPos))) {
-                resolveAttackSkill(color, opponentColor, reservation.skillId, 1, currentPos, opponentPos, damages);
+                resolveAttackSkill(reservation.step, color, opponentColor, reservation.skillId, 1, currentPos, opponentPos, damages);
             }
             if (color === 'red') {
                 redMana = spendMana(casterMana, reservation.skillId);
@@ -545,7 +568,7 @@ function resolveAbilityRound(params) {
                 }
             }
             const damages = [];
-            resolveAttackSkill(color, opponentColor, reservation.skillId, 2, currentPos, opponentPos, damages, false);
+            resolveAttackSkill(reservation.step, color, opponentColor, reservation.skillId, 2, currentPos, opponentPos, damages, false);
             if (color === 'red') {
                 redMana = spendMana(casterMana, reservation.skillId);
             }
@@ -719,6 +742,7 @@ function resolveAbilityRound(params) {
                 position: { ...tile.position },
                 remainingTurns: tile.remainingTurns,
             })),
+            blocks,
             collisions,
             skillEvents,
         },

@@ -15,6 +15,7 @@ import {
   playInferno,
   playGuard,
   playArcReactor,
+  playShieldBlock,
   playAtomicFission,
   playPhaseShift,
   preloadAbilitySfxAssets,
@@ -133,6 +134,16 @@ function collectCollisionsByStep(
     collisionMap.set(collision.step, list);
   }
   return collisionMap;
+}
+
+function collectBlocksByStep(blocks: AbilityResolutionPayload["blocks"]) {
+  const blockMap = new Map<number, AbilityResolutionPayload["blocks"]>();
+  for (const block of blocks) {
+    const list = blockMap.get(block.step) ?? [];
+    list.push(block);
+    blockMap.set(block.step, list);
+  }
+  return blockMap;
 }
 
 function buildBlitzPath(start: Position, target: Position): Position[] {
@@ -1708,6 +1719,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     );
 
     const skillMap = collectSkillEventsByStep(payload.skillEvents);
+    const blockMap = collectBlocksByStep(payload.blocks);
     const collisionMap = collectCollisionsByStep(payload.collisions);
 
     const redSeq = [redVisualStart, ...payload.redPath];
@@ -1902,9 +1914,13 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
     const runStepEventsAndCollisions = (step: number, done: () => void) => {
       const events = skillMap.get(step) ?? [];
+      const blocks = blockMap.get(step) ?? [];
       const collisions = collisionMap.get(step) ?? [];
 
       if (events.length === 0) {
+        if (blocks.length > 0 && !isSfxMuted) {
+          playShieldBlock(sfxVolume);
+        }
         if (collisions.length > 0) {
           applyCollisions(collisions);
         }
@@ -1918,6 +1934,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
       runSkillQueue(events, 0, () => {
         applyPersistentSkillCounters(events);
+        if (blocks.length > 0 && !isSfxMuted) {
+          playShieldBlock(sfxVolume);
+        }
         if (collisions.length > 0) {
           applyCollisions(collisions);
         }
