@@ -301,7 +301,8 @@ export function initSocketServer(io: Server): void {
       room.prepareGameStart(Boolean(tutorialPending));
       store.registerSocket(socket.id, roomId);
 
-      const opponent = room.toClientState().players[humanColor === 'red' ? 'blue' : 'red'];
+      const roomState = room.toClientState();
+      const opponent = roomState.players[humanColor === 'red' ? 'blue' : 'red'];
       socket.emit('room_joined', {
         roomId: room.roomId,
         color: humanColor,
@@ -330,7 +331,8 @@ export function initSocketServer(io: Server): void {
 
       room.prepareGameStart();
       store.registerSocket(socket.id, room.roomId);
-      const opponent = room.toClientState().players[color === 'red' ? 'blue' : 'red'];
+      const roomState = room.toClientState();
+      const opponent = roomState.players[color === 'red' ? 'blue' : 'red'];
       socket.emit('room_joined', {
         roomId: room.roomId,
         color,

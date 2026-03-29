@@ -255,7 +255,8 @@ export class AbilityRoom {
     this.resetPlayers();
     this.updateRoles();
     this.touchActivity();
-    this.io.to(this.roomId).emit('ability_game_start', this.toClientState());
+    const gameStartState = this.toClientState();
+    this.io.to(this.roomId).emit('ability_game_start', gameStartState);
     if (!startPaused) this.startRound();
   }
 
@@ -454,10 +455,12 @@ export class AbilityRoom {
     this.obstacles = generateObstacles(this.roomId, this.turn, red.position, blue.position);
 
     const now = Date.now();
+    const pathPoints = calcPathPoints(this.turn);
     this.touchActivity(now);
+    const state = this.toClientState();
     const payload: AbilityRoundStartPayload = {
       turn: this.turn,
-      pathPoints: calcPathPoints(this.turn),
+      pathPoints,
       attackerColor: this.attackerColor,
       redPosition: red.position,
       bluePosition: blue.position,
@@ -466,7 +469,7 @@ export class AbilityRoom {
       timeLimit: 7,
       serverTime: now,
       roundEndsAt: now + PLANNING_TIME_MS,
-      state: this.toClientState(),
+      state,
     };
     this.io.to(this.roomId).emit('ability_round_start', payload);
     this.timer.start(PLANNING_TIME_MS, () => this.onPlanningTimeout());

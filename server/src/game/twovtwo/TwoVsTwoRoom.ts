@@ -227,7 +227,8 @@ export class TwoVsTwoRoom {
       this.getActivePositions(),
     );
     this.touchActivity();
-    this.io.to(this.roomId).emit('twovtwo_game_start', this.toClientState());
+    const gameStartState = this.toClientState();
+    this.io.to(this.roomId).emit('twovtwo_game_start', gameStartState);
     this.emitRoundStart();
   }
 
@@ -384,13 +385,14 @@ export class TwoVsTwoRoom {
       player.plannedPath = [];
     }
     const now = Date.now();
+    this.touchActivity(now);
+    const state = this.toClientState();
     const payload: TwoVsTwoRoundStartPayload = {
-      state: this.toClientState(),
+      state,
       timeLimit: 7,
       serverTime: now,
       roundEndsAt: now + PLANNING_TIME_MS,
     };
-    this.touchActivity(now);
     this.io.to(this.roomId).emit('twovtwo_round_start', payload);
     this.timer.start(PLANNING_TIME_MS, () => this.onPlanningTimeout());
   }

@@ -183,7 +183,8 @@ export class CoopRoom {
     this.obstacles = [];
     this.spawnPortalsForCurrentWave();
     this.touchActivity();
-    this.io.to(this.roomId).emit("coop_game_start", this.toClientState());
+    const gameStartState = this.toClientState();
+    this.io.to(this.roomId).emit("coop_game_start", gameStartState);
     this.emitRoundStart();
   }
 
@@ -274,10 +275,11 @@ export class CoopRoom {
   private emitRoundStart(): void {
     if (!this.hasBothPlayers()) return;
     this.phase = "planning";
-    this.touchActivity();
     const now = Date.now();
+    this.touchActivity(now);
+    const state = this.toClientState();
     const payload: CoopRoundStartPayload = {
-      state: this.toClientState(),
+      state,
       timeLimit: 7,
       serverTime: now,
       roundEndsAt: now + PLANNING_TIME_MS,

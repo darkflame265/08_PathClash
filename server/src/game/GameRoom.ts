@@ -149,7 +149,8 @@ export class GameRoom {
     this.resetPositions();
     this.updateRoles();
     this.touchActivity();
-    this.io.to(this.roomId).emit('game_start', this.toClientState());
+    const gameStartState = this.toClientState();
+    this.io.to(this.roomId).emit('game_start', gameStartState);
     if (startPaused) return;
     this.startRound();
   }
