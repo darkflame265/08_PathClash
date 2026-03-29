@@ -96,6 +96,26 @@
 - 빈 room 정리
 - stale queue entry 정리
 
+### 관측 로그 / 부하 테스트
+
+- `[metrics]` 로그는 실제 소켓/룸/큐/캐시 활동이 있을 때만 출력됩니다.
+- `[perf]` 로그는 느린 프로필 조회가 발생했을 때만 출력됩니다.
+- Render Logs에서 `[metrics]`, `[perf]`로 검색해 필요한 로그만 필터링할 수 있습니다.
+- 소켓 부하 테스트는 `server` 디렉터리에서 아래 스크립트로 실행합니다:
+
+```bash
+npm run load:test -- --mode idle --clients 200 --duration 60 --server https://zero8-pathclash.onrender.com
+```
+
+- 지원 모드:
+  - `idle`: 연결만 유지
+  - `ai`: AI 대전 입장 후 빈 경로 제출 반복
+  - `random`: 랜덤 대결전 입장 후 빈 경로 제출 반복
+- 예시:
+  - 연결 수만 보기: `npm run load:test -- --mode idle --clients 300 --duration 90`
+  - AI전 부하 보기: `npm run load:test -- --mode ai --clients 100 --duration 90`
+  - 랜덤 매칭 보기: `npm run load:test -- --mode random --clients 100 --duration 90`
+
 ## Supabase 운영
 
 ### 게스트 계정 자동 정리

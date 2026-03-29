@@ -74,6 +74,25 @@ function initSocketServer(io) {
         const coopStats = coopStore.getStats();
         const twoVsTwoStats = twoVsTwoStore.getStats();
         const abilityStats = abilityStore.getStats();
+        const hasActiveTraffic = io.sockets.sockets.size > 0 ||
+            activeUserSockets.size > 0 ||
+            profileCache.size > 0 ||
+            duelStats.roomCount > 0 ||
+            duelStats.queueLength > 0 ||
+            duelStats.socketMappings > 0 ||
+            coopStats.roomCount > 0 ||
+            coopStats.queueLength > 0 ||
+            coopStats.socketMappings > 0 ||
+            twoVsTwoStats.roomCount > 0 ||
+            twoVsTwoStats.queueLength > 0 ||
+            twoVsTwoStats.teamQueueLength > 0 ||
+            twoVsTwoStats.socketMappings > 0 ||
+            abilityStats.roomCount > 0 ||
+            abilityStats.queueLength > 0 ||
+            abilityStats.socketMappings > 0;
+        if (!hasActiveTraffic) {
+            return;
+        }
         console.log(`[metrics] sockets=${io.sockets.sockets.size} activeUserSessions=${activeUserSockets.size} profileCache=${profileCache.size} ` +
             `rooms{duel=${duelStats.roomCount},coop=${coopStats.roomCount},2v2=${twoVsTwoStats.roomCount},ability=${abilityStats.roomCount}} ` +
             `queues{duel=${duelStats.queueLength},coop=${coopStats.queueLength},2v2Solo=${twoVsTwoStats.queueLength},2v2Team=${twoVsTwoStats.teamQueueLength},ability=${abilityStats.queueLength}} ` +
