@@ -103,14 +103,7 @@ export interface AbilityBattleState {
 }
 
 export interface AbilityRoundStartPayload {
-  turn: number;
-  pathPoints: number;
-  attackerColor: PlayerColor;
-  redPosition: Position;
-  bluePosition: Position;
-  obstacles: Position[];
   timeLimit: number;
-  serverTime: number;
   roundEndsAt: number;
   state: AbilityBattleState;
 }
@@ -138,9 +131,6 @@ export interface AbilitySkillEvent {
   damages?: AbilityDamageEvent[];
   heals?: AbilityHealEvent[];
   invulnerableSteps?: number;
-  phaseShiftActive?: boolean;
-  overdriveStage?: 0 | 1 | 2;
-  lavaRemainingTurns?: number;
   cloneStart?: Position | null;
   clonePath?: Position[];
 }

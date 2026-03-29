@@ -5,7 +5,6 @@ import type {
   PlayerColor,
   PlayerRole,
   Position,
-  RoundStartPayload,
 } from '../../types/game.types';
 
 export type AbilitySkillId =
@@ -207,8 +206,9 @@ export interface AbilityBattleState {
   attackerColor: PlayerColor;
 }
 
-export interface AbilityRoundStartPayload extends RoundStartPayload {
-  lavaTiles: AbilityLavaTile[];
+export interface AbilityRoundStartPayload {
+  timeLimit: number;
+  roundEndsAt: number;
   state: AbilityBattleState;
 }
 
@@ -235,9 +235,6 @@ export interface AbilitySkillEvent {
   damages?: AbilityDamageEvent[];
   heals?: AbilityHealEvent[];
   invulnerableSteps?: number;
-  phaseShiftActive?: boolean;
-  overdriveStage?: 0 | 1 | 2;
-  lavaRemainingTurns?: number;
   cloneStart?: Position | null;
   clonePath?: Position[];
 }

@@ -390,19 +390,10 @@ class AbilityRoom {
         }
         this.obstacles = (0, GameEngine_1.generateObstacles)(this.roomId, this.turn, red.position, blue.position);
         const now = Date.now();
-        const pathPoints = (0, GameEngine_1.calcPathPoints)(this.turn);
         this.touchActivity(now);
         const state = this.toClientState();
         const payload = {
-            turn: this.turn,
-            pathPoints,
-            attackerColor: this.attackerColor,
-            redPosition: red.position,
-            bluePosition: blue.position,
-            obstacles: this.obstacles,
-            lavaTiles: this.lavaTiles,
             timeLimit: 7,
-            serverTime: now,
             roundEndsAt: now + PLANNING_TIME_MS,
             state,
         };

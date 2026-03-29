@@ -427,7 +427,6 @@ export function resolveAbilityRound(params: {
         order: reservation.order,
         color,
         skillId: reservation.skillId,
-        phaseShiftActive: true,
       });
       return;
     }
@@ -510,7 +509,6 @@ export function resolveAbilityRound(params: {
         order: reservation.order,
         color,
         skillId: reservation.skillId,
-        overdriveStage: 1,
       });
       return;
     }
@@ -658,7 +656,6 @@ export function resolveAbilityRound(params: {
         skillId: reservation.skillId,
         affectedPositions: [{ ...reservation.target }],
         to: { ...reservation.target },
-        lavaRemainingTurns: 2,
       });
       return;
     }

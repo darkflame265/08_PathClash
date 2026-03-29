@@ -455,19 +455,10 @@ export class AbilityRoom {
     this.obstacles = generateObstacles(this.roomId, this.turn, red.position, blue.position);
 
     const now = Date.now();
-    const pathPoints = calcPathPoints(this.turn);
     this.touchActivity(now);
     const state = this.toClientState();
     const payload: AbilityRoundStartPayload = {
-      turn: this.turn,
-      pathPoints,
-      attackerColor: this.attackerColor,
-      redPosition: red.position,
-      bluePosition: blue.position,
-      obstacles: this.obstacles,
-      lavaTiles: this.lavaTiles,
       timeLimit: 7,
-      serverTime: now,
       roundEndsAt: now + PLANNING_TIME_MS,
       state,
     };
