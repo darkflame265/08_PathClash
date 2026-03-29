@@ -11,6 +11,20 @@ import type {
 import type { AbilitySkillId } from '../types/ability.types';
 import { type Lang } from '../i18n/translations';
 
+function resolveInitialLang(): Lang {
+  const stored = localStorage.getItem('lang');
+  if (stored === 'en' || stored === 'kr') {
+    return stored;
+  }
+
+  const locale =
+    (Array.isArray(navigator.languages) && navigator.languages[0]) ||
+    navigator.language ||
+    'en';
+
+  return locale.toLowerCase().startsWith('ko') ? 'kr' : 'en';
+}
+
 export interface AnimationState {
   isAnimating: boolean;
   redPath: Position[];
@@ -291,10 +305,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   sfxVolume: initialAudioPrefs.sfxVolume,
   pieceSkin: initialPieceSkin,
   playerPieceSkins: null,
-  lang: (() => {
-    const stored = localStorage.getItem('lang');
-    return (stored === 'en' || stored === 'kr') ? stored : 'en';
-  })(),
+  lang: resolveInitialLang(),
   setLang: (lang: Lang) => {
     localStorage.setItem('lang', lang);
     set({ lang });

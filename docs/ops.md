@@ -45,6 +45,10 @@
 - 모바일 앱에서 `localhost`는 개발 PC가 아니라 기기 자신을 가리킵니다.
 - 내부 테스트용 앱을 만들 때는 반드시 배포 서버 URL인지 확인해야 합니다.
 - `VITE_SERVER_URL`은 수동으로 `client/.env`에서 토글하지 않고, Vite 모드별 env 파일(`.env.development`, `.env.production`)로 관리합니다.
+- 게임 초기 언어는 `localStorage('lang')` 값이 있으면 그 값을 우선 사용합니다.
+- 저장된 언어 값이 없으면 `navigator.languages[0]` 또는 `navigator.language`를 읽어 기본 언어를 결정합니다.
+- locale이 `ko*`로 시작하면 `KR`, 그 외는 `EN`으로 시작합니다.
+- 로비 첫 진입 시 표시되는 AI 튜토리얼 선택 팝업도 이 초기 언어 규칙을 그대로 따릅니다.
 
 ## 패치노트 운영
 
