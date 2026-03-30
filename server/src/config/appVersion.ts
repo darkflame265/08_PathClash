@@ -1,3 +1,5 @@
+import appVersionConfig from './app-version.json';
+
 export interface AndroidVersionStatus {
   latestVersionCode: number;
   minSupportedVersionCode: number;
@@ -8,23 +10,27 @@ export interface AndroidVersionStatus {
 }
 
 const DEFAULT_ANDROID_APP_ID = 'com.pathclash.game';
+const androidVersionConfig = appVersionConfig.android;
 const parsedLatestVersionCode = Number(
-  process.env.ANDROID_LATEST_VERSION_CODE?.trim() ?? '14',
+  process.env.ANDROID_LATEST_VERSION_CODE?.trim() ??
+    String(androidVersionConfig.latestVersionCode),
 );
 const latestVersionCode = Number.isFinite(parsedLatestVersionCode)
   ? Math.max(1, Math.trunc(parsedLatestVersionCode))
-  : 14;
+  : androidVersionConfig.latestVersionCode;
 
 const parsedMinSupportedVersionCode = Number(
   process.env.ANDROID_MIN_SUPPORTED_VERSION_CODE?.trim() ??
-    String(latestVersionCode),
+    String(androidVersionConfig.minSupportedVersionCode),
 );
 const minSupportedVersionCode = Number.isFinite(parsedMinSupportedVersionCode)
   ? Math.max(1, Math.trunc(parsedMinSupportedVersionCode))
-  : latestVersionCode;
+  : androidVersionConfig.minSupportedVersionCode;
 
 const androidAppId =
-  process.env.ANDROID_APP_ID?.trim() || DEFAULT_ANDROID_APP_ID;
+  process.env.ANDROID_APP_ID?.trim() ||
+  androidVersionConfig.appId ||
+  DEFAULT_ANDROID_APP_ID;
 
 const configuredStoreUrl = process.env.ANDROID_STORE_URL?.trim();
 const defaultStoreUrl = `https://play.google.com/store/apps/details?id=${androidAppId}`;

@@ -1,20 +1,24 @@
 apply plugin: 'com.android.application'
+import groovy.json.JsonSlurper
 
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file('keystore.properties')
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
+def appVersionConfigFile = rootProject.file('../../server/src/config/app-version.json')
+def appVersionConfig = new JsonSlurper().parseText(appVersionConfigFile.text)
+def androidVersionConfig = appVersionConfig.android
 
 android {
     namespace = "com.pathclash.game"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.pathclash.game"
+        applicationId androidVersionConfig.appId
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 15
-        versionName "1.0.15"
+        versionCode androidVersionConfig.versionCode as Integer
+        versionName androidVersionConfig.versionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
