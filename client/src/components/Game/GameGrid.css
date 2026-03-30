@@ -35,6 +35,10 @@
   background: var(--tile-hover, #333c44);
 }
 
+.grid-cell.is-hovered {
+  background: var(--tile-hover, #333c44);
+}
+
 .grid-cell.obstacle {
   background:
     linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(248, 113, 113, 0.08)),
@@ -43,6 +47,12 @@
 }
 
 .grid-cell.obstacle:hover {
+  background:
+    linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(248, 113, 113, 0.08)),
+    var(--tile, #2a3137);
+}
+
+.grid-cell.obstacle.is-hovered {
   background:
     linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(248, 113, 113, 0.08)),
     var(--tile, #2a3137);

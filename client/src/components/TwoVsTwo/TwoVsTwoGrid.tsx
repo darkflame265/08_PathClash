@@ -57,6 +57,7 @@ export function TwoVsTwoGrid({
   const shellRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState(DEFAULT_CELL_SIZE * GRID_SIZE);
+  const [hoveredCell, setHoveredCell] = useState<Position | null>(null);
   const lastPathUpdateAtRef = useRef(0);
   const pendingPathUpdateRef = useRef<number | null>(null);
   const pendingPathRef = useRef<Position[]>([]);
@@ -152,6 +153,7 @@ export function TwoVsTwoGrid({
         getGridOffset(),
       );
       if (!cell) return;
+      setHoveredCell(cell);
 
       const isOnPiece = posEqual(cell, me.position) && myPath.length === 0;
       const isOnEnd = myPath.length > 0 && posEqual(cell, myPath[myPath.length - 1]);
@@ -172,15 +174,15 @@ export function TwoVsTwoGrid({
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!dragState.current.active || !isPlanning || me.hp <= 0) return;
-      e.preventDefault();
       const cell = pixelToCell(
         e.clientX,
         e.clientY,
         responsiveCellSize,
         getGridOffset(),
       );
-      if (!cell) return;
+      setHoveredCell(cell);
+      if (!dragState.current.active || !isPlanning || me.hp <= 0 || !cell) return;
+      e.preventDefault();
 
       if (myPath.length > 0) {
         const secondLast = myPath.length >= 2 ? myPath[myPath.length - 2] : me.position;
@@ -212,6 +214,7 @@ export function TwoVsTwoGrid({
     if (e?.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
+    setHoveredCell(null);
     dragState.current = { active: false, fromPiece: false, fromEnd: false };
   }, []);
 
@@ -288,12 +291,15 @@ export function TwoVsTwoGrid({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
         onPointerCancel={handlePointerEnd}
+        onPointerLeave={() => setHoveredCell(null)}
         style={{ width: boardSize, height: boardSize }}
       >
         {cells.map(({ row, col }) => (
           <div
             key={`${row}-${col}`}
-            className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? 'obstacle' : ''}`}
+            className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? 'obstacle' : ''} ${
+              hoveredCell?.row === row && hoveredCell?.col === col ? 'is-hovered' : ''
+            }`}
             style={{
               left: col * responsiveCellSize,
               top: row * responsiveCellSize,

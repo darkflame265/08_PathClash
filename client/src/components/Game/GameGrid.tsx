@@ -47,6 +47,7 @@ export function GameGrid({
   const shellRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState(cellSize * GRID_SIZE);
+  const [hoveredCell, setHoveredCell] = useState<Position | null>(null);
   const lastPathUpdateAtRef = useRef(0);
   const pendingPathUpdateRef = useRef<number | null>(null);
   const pendingPathRef = useRef<Position[]>([]);
@@ -155,6 +156,7 @@ export function GameGrid({
         getGridOffset(),
       );
       if (!cell) return;
+      setHoveredCell(cell);
 
       const current = useGameStore.getState().myPath;
       const isOnPiece = posEqual(cell, myPos) && current.length === 0;
@@ -177,15 +179,15 @@ export function GameGrid({
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!dragState.current.active || !isPlanning || !myPos) return;
-      e.preventDefault();
       const cell = pixelToCell(
         e.clientX,
         e.clientY,
         responsiveCellSize,
         getGridOffset(),
       );
-      if (!cell) return;
+      setHoveredCell(cell);
+      if (!dragState.current.active || !isPlanning || !myPos || !cell) return;
+      e.preventDefault();
 
       const current = useGameStore.getState().myPath;
       if (current.length > 0) {
@@ -232,6 +234,7 @@ export function GameGrid({
       if (e?.currentTarget.hasPointerCapture(e.pointerId)) {
         e.currentTarget.releasePointerCapture(e.pointerId);
       }
+      setHoveredCell(null);
       dragState.current = { active: false, fromPiece: false, fromEnd: false };
     },
     [],
@@ -402,12 +405,15 @@ export function GameGrid({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
         onPointerCancel={handlePointerEnd}
+        onPointerLeave={() => setHoveredCell(null)}
         style={{ width: boardSize, height: boardSize }}
       >
         {cells.map(({ row, col }) => (
           <div
             key={`${row}-${col}`}
-            className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? "obstacle" : ""}`}
+            className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? "obstacle" : ""} ${
+              hoveredCell?.row === row && hoveredCell?.col === col ? "is-hovered" : ""
+            }`}
             style={{
               left: col * responsiveCellSize,
               top: row * responsiveCellSize,

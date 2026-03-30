@@ -89,6 +89,7 @@ export function CoopGrid({
   const shellRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState(DEFAULT_CELL_SIZE * GRID_SIZE);
+  const [hoveredCell, setHoveredCell] = useState<Position | null>(null);
   const lastPathUpdateAtRef = useRef(0);
   const pendingPathUpdateRef = useRef<number | null>(null);
   const pendingPathRef = useRef<Position[]>([]);
@@ -169,6 +170,7 @@ export function CoopGrid({
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
       if (!cell) return;
+      setHoveredCell(cell);
       const isOnPiece = posEqual(cell, myPos) && myPath.length === 0;
       const isOnEnd = myPath.length > 0 && posEqual(cell, myPath[myPath.length - 1]);
       const isOnPieceWithPath = posEqual(cell, myPos);
@@ -187,10 +189,10 @@ export function CoopGrid({
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!dragState.current.active || !canPlan) return;
-      e.preventDefault();
       const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
-      if (!cell) return;
+      setHoveredCell(cell);
+      if (!dragState.current.active || !canPlan || !cell) return;
+      e.preventDefault();
       const current = myPath;
       if (current.length > 0) {
         const secondLast = current.length >= 2 ? current[current.length - 2] : myPos;
@@ -221,6 +223,7 @@ export function CoopGrid({
     if (e?.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
+    setHoveredCell(null);
     dragState.current = { active: false, fromPiece: false, fromEnd: false };
   }, []);
 
@@ -330,12 +333,15 @@ export function CoopGrid({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
         onPointerCancel={handlePointerEnd}
+        onPointerLeave={() => setHoveredCell(null)}
         style={{ width: boardSize, height: boardSize }}
       >
         {cells.map(({ row, col }) => (
           <div
             key={`${row}-${col}`}
-            className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? "obstacle" : ""}`}
+            className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? "obstacle" : ""} ${
+              hoveredCell?.row === row && hoveredCell?.col === col ? "is-hovered" : ""
+            }`}
             style={{
               left: col * responsiveCellSize,
               top: row * responsiveCellSize,

@@ -146,6 +146,7 @@ export function AbilityGrid({
   const shellRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState(cellSize * GRID_SIZE || DEFAULT_CELL_SIZE * GRID_SIZE);
+  const [hoveredCell, setHoveredCell] = useState<Position | null>(null);
   const dragState = useRef<{ active: boolean; fromStart: boolean; fromEnd: boolean }>({
     active: false,
     fromStart: false,
@@ -234,6 +235,7 @@ export function AbilityGrid({
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
       if (!cell) return;
+      setHoveredCell(cell);
       if (teleportTargetsVisible || blitzTargetsVisible || infernoTargetsVisible) {
         const currentPos = state.players[currentColor].position;
         if (!posEqual(cell, currentPos)) return;
@@ -266,9 +268,9 @@ export function AbilityGrid({
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!dragState.current.active || !canEditPath) return;
       const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
-      if (!cell) return;
+      setHoveredCell(cell);
+      if (!dragState.current.active || !canEditPath || !cell) return;
       const current = myPath;
 
       if (current.length > 0) {
@@ -294,6 +296,7 @@ export function AbilityGrid({
     if (e?.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
+    setHoveredCell(null);
     dragState.current = { active: false, fromStart: false, fromEnd: false };
   }, []);
 
@@ -429,12 +432,15 @@ export function AbilityGrid({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
         onPointerCancel={handlePointerEnd}
+        onPointerLeave={() => setHoveredCell(null)}
         style={{ width: boardSize, height: boardSize }}
       >
         {cells.map(({ row, col }) => (
           <div
             key={`${row}-${col}`}
-            className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? 'obstacle' : ''}`}
+            className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? 'obstacle' : ''} ${
+              hoveredCell?.row === row && hoveredCell?.col === col ? 'is-hovered' : ''
+            }`}
             style={{
               left: col * responsiveCellSize,
               top: row * responsiveCellSize,
