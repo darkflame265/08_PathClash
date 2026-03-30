@@ -123,6 +123,7 @@ export function PlayerPiece({
       )}
       <div className="piece-visual">
         {isAttacker && <div className={`attacker-glow glow-${color}`} />}
+        <span className="piece-hit-flash" aria-hidden="true" />
         <div className="piece-inner">
           {isFlagSkin(effectiveSkin) && <FlagSkin id={effectiveSkin} />}
           {effectiveSkin === "plasma" && <PlasmaGame />}

@@ -21,6 +21,14 @@ export function CollisionEffect({ position, cellSize }: Props) {
         height: effectSize,
         transform: 'translate(-50%, -50%)',
       }}
-    />
+    >
+      <span className="collision-effect-core" />
+      <span className="collision-effect-spark collision-effect-spark-a" />
+      <span className="collision-effect-spark collision-effect-spark-b" />
+      <span className="collision-effect-spark collision-effect-spark-c" />
+      <span className="collision-effect-spark collision-effect-spark-d" />
+      <span className="collision-effect-spark collision-effect-spark-e" />
+      <span className="collision-effect-spark collision-effect-spark-f" />
+    </div>
   );
 }

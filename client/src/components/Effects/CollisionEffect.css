@@ -3,8 +3,10 @@
   width: 70px;
   height: 70px;
   pointer-events: none;
-  z-index: 20;
-  animation: collision-burst 500ms ease-out forwards;
+  z-index: 80;
+  isolation: isolate;
+  overflow: visible;
+  animation: collision-impact 220ms ease-out forwards;
 }
 
 .collision-effect::before,
@@ -18,11 +20,88 @@
 .collision-effect::before {
   background: radial-gradient(circle, #fbbf24 0%, #ef4444 50%, transparent 70%);
   animation: burst-inner 500ms ease-out forwards;
+  z-index: 1;
 }
 
 .collision-effect::after {
   background: radial-gradient(circle, transparent 40%, #fbbf24 60%, transparent 80%);
   animation: burst-outer 500ms ease-out forwards;
+  z-index: 2;
+}
+
+.collision-effect-core {
+  position: absolute;
+  inset: 32%;
+  border-radius: 50%;
+  z-index: 6;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.98), #fbbf24 38%, #ef4444 72%, transparent 100%);
+  filter:
+    drop-shadow(0 0 10px rgba(251, 191, 36, 0.34))
+    drop-shadow(0 0 16px rgba(255, 255, 255, 0.32));
+  animation: collision-core-pop 180ms ease-out forwards;
+}
+
+.collision-effect-spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 18px;
+  margin-left: -2px;
+  margin-top: -9px;
+  border-radius: 999px;
+  opacity: 0;
+  z-index: 7;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(251, 191, 36, 0.92), rgba(239, 68, 68, 0));
+  transform-origin: 50% 100%;
+  animation: collision-spark 220ms ease-out forwards;
+}
+
+.collision-effect-spark-a { --spark-rotate: 0deg; }
+.collision-effect-spark-b { --spark-rotate: 58deg; animation-delay: 14ms; }
+.collision-effect-spark-c { --spark-rotate: 118deg; animation-delay: 22ms; }
+.collision-effect-spark-d { --spark-rotate: 180deg; animation-delay: 10ms; }
+.collision-effect-spark-e { --spark-rotate: 240deg; animation-delay: 18ms; }
+.collision-effect-spark-f { --spark-rotate: 302deg; animation-delay: 26ms; }
+
+@keyframes collision-impact {
+  0% {
+    transform: translate(-50%, -50%) scale(0.88);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.18);
+    opacity: 0;
+  }
+}
+
+@keyframes collision-core-pop {
+  0% {
+    transform: scale(0.35);
+    opacity: 0;
+  }
+  20% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.82);
+    opacity: 0;
+  }
+}
+
+@keyframes collision-spark {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--spark-rotate, 0deg)) translateY(0) scaleY(0.5);
+  }
+  16% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--spark-rotate, 0deg)) translateY(-22px) scaleY(1.15);
+  }
 }
 
 @keyframes burst-inner {
