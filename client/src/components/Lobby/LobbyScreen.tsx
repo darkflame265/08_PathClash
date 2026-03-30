@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FlagSkin, isFlagSkin } from "../shared/FlagSkin";
 import { AtomicPreview } from "../../skins/legendary/atomic/Preview";
 import { CosmicPreview } from "../../skins/rare/cosmic/Preview";
@@ -2354,7 +2354,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
         </div>
       )}
       {isAiTutorialPromptOpen && (
-        <div className="upgrade-modal-backdrop">
+        <div className="upgrade-modal-backdrop ai-tutorial-prompt-backdrop">
           <div className="upgrade-modal ai-tutorial-prompt-modal">
             <h3>{aiTutorialPromptTitle}</h3>
             <p>{aiTutorialPromptDesc}</p>

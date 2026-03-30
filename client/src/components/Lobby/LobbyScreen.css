@@ -1758,3 +1758,13 @@
   background-clip: text;
   color: transparent;
 }
+
+.ai-tutorial-prompt-backdrop {
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .ai-tutorial-prompt-backdrop {
+    align-items: center;
+  }
+}
