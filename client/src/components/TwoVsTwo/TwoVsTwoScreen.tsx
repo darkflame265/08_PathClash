@@ -24,6 +24,7 @@ interface Props {
 }
 
 const STEP_DURATION_MS = 200;
+const HIT_VISUAL_DELAY_MS = 100;
 const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
@@ -207,38 +208,43 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
           return { ...prev, players };
         });
 
-        setHitSlots(stepHits.map((hit) => hit.slot));
-        setCollisionEffects(
-          stepHits.map((hit) => ({
-            id: Date.now() + Math.random(),
-            position: ([payload.starts[hit.slot], ...payload.paths[hit.slot]])[
-              Math.min(step + 1, payload.paths[hit.slot].length)
-            ],
-          })),
-        );
+        const visualHitId = window.setTimeout(() => {
+          setHitSlots(stepHits.map((hit) => hit.slot));
+          setCollisionEffects(
+            stepHits.map((hit) => ({
+              id: Date.now() + Math.random(),
+              position: ([payload.starts[hit.slot], ...payload.paths[hit.slot]])[
+                Math.min(step + 1, payload.paths[hit.slot].length)
+              ],
+            })),
+          );
 
-        const resetHitsId = window.setTimeout(() => {
-          setHitSlots([]);
-          setCollisionEffects([]);
-          effectTimeoutsRef.current = effectTimeoutsRef.current.filter((id) => id !== resetHitsId);
-        }, 600);
-        effectTimeoutsRef.current.push(resetHitsId);
-
-        const killed = stepHits.filter((hit) => hit.newHp <= 0).map((hit) => hit.slot);
-        if (killed.length > 0) {
-          const explodeId = window.setTimeout(() => {
-            setExplodingSlots((prev) => [...new Set([...prev, ...killed])]);
-            const removeExplodeId = window.setTimeout(() => {
-              setExplodingSlots((prev) => prev.filter((slot) => !killed.includes(slot)));
-              effectTimeoutsRef.current = effectTimeoutsRef.current.filter(
-                (id) => id !== removeExplodeId,
-              );
-            }, 600);
-            effectTimeoutsRef.current.push(removeExplodeId);
-            effectTimeoutsRef.current = effectTimeoutsRef.current.filter((id) => id !== explodeId);
+          const resetHitsId = window.setTimeout(() => {
+            setHitSlots([]);
+            setCollisionEffects([]);
+            effectTimeoutsRef.current = effectTimeoutsRef.current.filter((id) => id !== resetHitsId);
           }, 600);
-          effectTimeoutsRef.current.push(explodeId);
-        }
+          effectTimeoutsRef.current.push(resetHitsId);
+
+          const killed = stepHits.filter((hit) => hit.newHp <= 0).map((hit) => hit.slot);
+          if (killed.length > 0) {
+            const explodeId = window.setTimeout(() => {
+              setExplodingSlots((prev) => [...new Set([...prev, ...killed])]);
+              const removeExplodeId = window.setTimeout(() => {
+                setExplodingSlots((prev) => prev.filter((slot) => !killed.includes(slot)));
+                effectTimeoutsRef.current = effectTimeoutsRef.current.filter(
+                  (id) => id !== removeExplodeId,
+                );
+              }, 600);
+              effectTimeoutsRef.current.push(removeExplodeId);
+              effectTimeoutsRef.current = effectTimeoutsRef.current.filter((id) => id !== explodeId);
+            }, 600);
+            effectTimeoutsRef.current.push(explodeId);
+          }
+
+          effectTimeoutsRef.current = effectTimeoutsRef.current.filter((id) => id !== visualHitId);
+        }, HIT_VISUAL_DELAY_MS);
+        effectTimeoutsRef.current.push(visualHitId);
       }
 
       step += 1;

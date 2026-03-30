@@ -123,6 +123,7 @@ export function registerSocketHandlers(socket: Socket): () => void {
 }
 
 const STEP_DURATION = 200; // ms per step
+const HIT_VISUAL_DELAY_MS = 100;
 
 function runAnimation(payload: PathsRevealPayload): void {
   const { redPath, bluePath, redStart, blueStart, collisions } = payload;
@@ -150,13 +151,6 @@ function runAnimation(payload: PathsRevealPayload): void {
     const collision = collisionMap.get(step);
     if (collision) {
       const escapee = collision.escapeeColor;
-      store().triggerHit(escapee);
-      store().triggerCollisionEffect(collision.position);
-      const prevHp = collision.newHp + 1;
-      store().triggerHeartShake(escapee, prevHp - 1);
-      if (!store().isSfxMuted) playHit(store().sfxVolume);
-
-      // Update HP in game state
       const gs = store().gameState;
       if (gs) {
         useGameStore.setState({
@@ -170,9 +164,16 @@ function runAnimation(payload: PathsRevealPayload): void {
         });
       }
 
-      if (collision.newHp <= 0) {
-        store().triggerExplosion(escapee);
-      }
+      window.setTimeout(() => {
+        store().triggerHit(escapee);
+        store().triggerCollisionEffect(collision.position);
+        const prevHp = collision.newHp + 1;
+        store().triggerHeartShake(escapee, prevHp - 1);
+        if (!store().isSfxMuted) playHit(store().sfxVolume);
+        if (collision.newHp <= 0) {
+          store().triggerExplosion(escapee);
+        }
+      }, HIT_VISUAL_DELAY_MS);
     }
 
     step++;

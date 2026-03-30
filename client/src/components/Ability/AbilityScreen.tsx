@@ -47,6 +47,7 @@ const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
 const STEP_DURATION_MS = 200;
+const HIT_VISUAL_DELAY_MS = 100;
 const SKILL_PAUSE_MS = 640;
 const SKILL_CAST_DELAY_MS = 500;
 const BLITZ_DASH_STEP_MS = 12;
@@ -1227,27 +1228,29 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     hpAfter: number,
     position: Position,
   ) => {
-    setHitFlags((prev) => ({ ...prev, [color]: true }));
     queueAnimationTimeout(() => {
-      setHitFlags((prev) => ({ ...prev, [color]: false }));
-    }, 650);
-    triggerHeartShake(color, Math.max(0, hpAfter));
-    const effectId = Date.now() + Math.random();
-    setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
-    queueAnimationTimeout(() => {
-      setCollisionEffects((prev) =>
-        prev.filter((entry) => entry.id !== effectId),
-      );
-    }, 600);
-    if (!isSfxMuted) playHit(sfxVolume);
-    if (hpAfter <= 0) {
+      setHitFlags((prev) => ({ ...prev, [color]: true }));
       queueAnimationTimeout(() => {
-        setExplodingFlags((prev) => ({ ...prev, [color]: true }));
-        queueAnimationTimeout(() => {
-          setExplodingFlags((prev) => ({ ...prev, [color]: false }));
-        }, 600);
+        setHitFlags((prev) => ({ ...prev, [color]: false }));
+      }, 650);
+      triggerHeartShake(color, Math.max(0, hpAfter));
+      const effectId = Date.now() + Math.random();
+      setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
+      queueAnimationTimeout(() => {
+        setCollisionEffects((prev) =>
+          prev.filter((entry) => entry.id !== effectId),
+        );
       }, 600);
-    }
+      if (!isSfxMuted) playHit(sfxVolume);
+      if (hpAfter <= 0) {
+        queueAnimationTimeout(() => {
+          setExplodingFlags((prev) => ({ ...prev, [color]: true }));
+          queueAnimationTimeout(() => {
+            setExplodingFlags((prev) => ({ ...prev, [color]: false }));
+          }, 600);
+        }, 600);
+      }
+    }, HIT_VISUAL_DELAY_MS);
   };
 
   const triggerTeleportEffect = (
