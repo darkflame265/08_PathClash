@@ -18,6 +18,7 @@
 2. 버전 확인
    - `client/android/app/build.gradle`의 `versionCode` 증가
    - `versionName` 갱신
+   - 서버 최소 지원 버전 확인: `ANDROID_LATEST_VERSION_CODE`, `ANDROID_MIN_SUPPORTED_VERSION_CODE`
 3. 빌드 확인
    - `client npm run build`
    - `client npm run android:sync`
@@ -44,6 +45,10 @@
 - AAB는 빌드 시점의 `VITE_SERVER_URL`이 앱 안에 고정됩니다.
 - 모바일 앱에서 `localhost`는 개발 PC가 아니라 기기 자신을 가리킵니다.
 - 내부 테스트용 앱을 만들 때는 반드시 배포 서버 URL인지 확인해야 합니다.
+- Android 앱은 실행 시 서버에 현재 `versionCode`를 보내 최신/최소 지원 버전과 비교합니다.
+- 서버 환경변수 `ANDROID_LATEST_VERSION_CODE`, `ANDROID_MIN_SUPPORTED_VERSION_CODE`로 강제 업데이트 기준을 관리합니다.
+- 현재 앱 버전이 최소 지원 버전보다 낮으면 업데이트 모달을 띄우고 플레이 스토어 이동을 유도합니다.
+- 오래된 네이티브 앱이 버전 정보를 보내지 못해도, 서버는 native origin을 기준으로 매칭/입장 단계에서 차단합니다.
 - `VITE_SERVER_URL`은 수동으로 `client/.env`에서 토글하지 않고, Vite 모드별 env 파일(`.env.development`, `.env.production`)로 관리합니다.
 - 게임 초기 언어는 `localStorage('lang')` 값이 있으면 그 값을 우선 사용합니다.
 - 저장된 언어 값이 없으면 `navigator.languages[0]` 또는 `navigator.language`를 읽어 기본 언어를 결정합니다.

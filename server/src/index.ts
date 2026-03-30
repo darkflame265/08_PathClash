@@ -6,6 +6,7 @@ import { Server } from "socket.io";
 import { supabaseAdmin } from "./lib/supabase";
 import { verifyGooglePlayProductPurchase } from "./services/googlePlayVerifier";
 import { initSocketServer } from "./socket/socketServer";
+import { getAndroidVersionStatus } from "./config/appVersion";
 
 const app = express();
 const httpServer = createServer(app);
@@ -114,6 +115,18 @@ const io = new Server(httpServer, {
 });
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
+
+app.get("/app-version/android", (req, res) => {
+  const versionCodeParam =
+    typeof req.query.versionCode === 'string' ? req.query.versionCode : null;
+  const parsedVersionCode =
+    versionCodeParam !== null ? Number(versionCodeParam) : Number.NaN;
+  const currentVersionCode = Number.isFinite(parsedVersionCode)
+    ? Math.trunc(parsedVersionCode)
+    : null;
+
+  res.json(getAndroidVersionStatus(currentVersionCode));
+});
 
 app.post("/payments/google-play/token-grant", async (req, res) => {
   if (!supabaseAdmin) {

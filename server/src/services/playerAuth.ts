@@ -4,6 +4,8 @@ import { supabaseAdmin } from '../lib/supabase';
 export interface AuthPayload {
   accessToken?: string;
   userId?: string;
+  clientPlatform?: 'android' | 'web';
+  appVersionCode?: number;
 }
 
 export interface PersistentPlayerProfile {

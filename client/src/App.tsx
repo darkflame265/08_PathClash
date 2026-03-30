@@ -2,6 +2,7 @@ import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react"
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import {
+  getSocketAuthPayload,
   initializeGuestAuth,
   installNativeAuthCallbackHandler,
   logoutToGuestMode,
@@ -42,11 +43,22 @@ const AbilityScreen = lazy(() =>
 
 type AppView = "lobby" | "game" | "coop" | "twovtwo" | "ability";
 
+type UpdateRequiredPayload = {
+  latestVersionCode: number;
+  minSupportedVersionCode: number;
+  currentVersionCode: number | null;
+  forceUpdate: boolean;
+  storeUrl: string;
+  marketUrl: string;
+};
+
 function App() {
   const [view, setView] = useState<AppView>("lobby");
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showSessionReplaced, setShowSessionReplaced] = useState(false);
   const [isSessionResetting, setIsSessionResetting] = useState(false);
+  const [updateRequired, setUpdateRequired] =
+    useState<UpdateRequiredPayload | null>(null);
   const {
     authReady,
     authUserId,
@@ -61,6 +73,19 @@ function App() {
   const nicknameSyncTimeoutRef = useRef<number | null>(null);
   const lobbyBgmRef = useRef<HTMLAudioElement | null>(null);
   const inGameBgmRef = useRef<HTMLAudioElement | null>(null);
+
+  const applyUpdateRequired = useCallback(
+    (payload: UpdateRequiredPayload | null | undefined) => {
+      if (!payload?.forceUpdate) return;
+      disconnectSocket();
+      useGameStore.getState().resetGame();
+      setShowExitConfirm(false);
+      setShowSessionReplaced(false);
+      setView("lobby");
+      setUpdateRequired(payload);
+    },
+    [],
+  );
 
   useEffect(() => {
     const lobbyBgm = new Audio("/music/Lobby_bgm_3.ogg");
@@ -150,24 +175,35 @@ function App() {
     if (!authReady || !authAccessToken) return;
 
     const socket = getSocket();
-    const registerSession = () => {
-      socket.emit("session_register", {
-        auth: {
-          accessToken: authAccessToken,
-          userId: authUserId ?? undefined,
+    const registerSession = async () => {
+      const authPayload = await getSocketAuthPayload();
+      socket.emit(
+        "session_register",
+        {
+          auth: {
+            accessToken: authAccessToken,
+            userId: authUserId ?? undefined,
+            clientPlatform: authPayload?.clientPlatform,
+            appVersionCode: authPayload?.appVersionCode,
+          },
         },
-      });
+        (response: { updateRequired?: boolean } & Partial<UpdateRequiredPayload>) => {
+          if (response?.updateRequired) {
+            applyUpdateRequired(response as UpdateRequiredPayload);
+          }
+        },
+      );
     };
 
     socket.on("connect", registerSession);
     if (socket.connected) {
-      registerSession();
+      void registerSession();
     }
 
     return () => {
       socket.off("connect", registerSession);
     };
-  }, [authAccessToken, authReady, authUserId]);
+  }, [applyUpdateRequired, authAccessToken, authReady, authUserId]);
 
   useEffect(() => {
     const socket = getSocket();
@@ -184,6 +220,51 @@ function App() {
       socket.off("session_replaced", onSessionReplaced);
     };
   }, []);
+
+  useEffect(() => {
+    const socket = getSocket();
+    const onUpdateRequired = (payload: UpdateRequiredPayload) => {
+      applyUpdateRequired(payload);
+    };
+
+    socket.on("update_required", onUpdateRequired);
+    return () => {
+      socket.off("update_required", onUpdateRequired);
+    };
+  }, [applyUpdateRequired]);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== "android") {
+      return;
+    }
+
+    let active = true;
+
+    void (async () => {
+      try {
+        const info = await CapacitorApp.getInfo();
+        const parsedVersionCode = Number(info.build ?? "");
+        const versionCode = Number.isFinite(parsedVersionCode)
+          ? Math.trunc(parsedVersionCode)
+          : null;
+        const query = versionCode !== null ? `?versionCode=${versionCode}` : "";
+        const response = await fetch(
+          `${import.meta.env.VITE_SERVER_URL}/app-version/android${query}`,
+        );
+        if (!response.ok) return;
+        const payload = (await response.json()) as UpdateRequiredPayload;
+        if (active) {
+          applyUpdateRequired(payload);
+        }
+      } catch {
+        // Ignore transient network/version check failures.
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [applyUpdateRequired]);
 
   const handleReturnToLobby = useCallback(() => {
     disconnectSocket();
@@ -220,6 +301,33 @@ function App() {
       : "\uC911\uBCF5 \uB9E4\uCE58 \uBC0F \uC0C1\uD0DC \uCDA9\uB3CC\uC744 \uBC29\uC9C0\uD558\uAE30 \uC704\uD574 \uD604\uC7AC \uC138\uC158\uC774 \uC885\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uD655\uC778\uC744 \uB204\uB974\uBA74 \uC774 \uAE30\uAE30\uC5D0\uC11C \uAC8C\uC2A4\uD2B8 \uBAA8\uB4DC\uB85C \uACC4\uC18D\uD569\uB2C8\uB2E4.";
   const sessionReplacedConfirm =
     lang === "en" ? "OK" : "\uD655\uC778";
+  const updateRequiredTitle =
+    lang === "en"
+      ? "A new version is available."
+      : "새 버전이 나왔습니다.";
+  const updateRequiredBody =
+    lang === "en"
+      ? "Please go to the Play Store and update the app to continue playing."
+      : "게임을 계속하려면 플레이 스토어로 이동하여 앱을 업데이트해 주세요.";
+  const updateRequiredConfirm =
+    lang === "en" ? "Open Play Store" : "플레이 스토어로 이동";
+
+  const handleOpenStoreForUpdate = useCallback(() => {
+    if (!updateRequired) return;
+    const nativeUrl =
+      Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android"
+        ? updateRequired.marketUrl
+        : updateRequired.storeUrl;
+    window.location.href = nativeUrl;
+    if (
+      Capacitor.isNativePlatform() &&
+      Capacitor.getPlatform() === "android"
+    ) {
+      window.setTimeout(() => {
+        window.location.href = updateRequired.storeUrl;
+      }, 800);
+    }
+  }, [updateRequired]);
 
   const tryStartBgm = useCallback(() => {
     const lobbyBgm = lobbyBgmRef.current;
@@ -376,6 +484,23 @@ function App() {
                 disabled={isSessionResetting}
               >
                 {sessionReplacedConfirm}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {updateRequired && (
+        <div className="app-confirm-backdrop">
+          <div className="app-confirm-modal">
+            <h3>{updateRequiredTitle}</h3>
+            <p className="app-confirm-copy">{updateRequiredBody}</p>
+            <div className="app-confirm-actions app-confirm-actions-single">
+              <button
+                className="app-confirm-btn app-confirm-btn-primary"
+                onClick={handleOpenStoreForUpdate}
+                type="button"
+              >
+                {updateRequiredConfirm}
               </button>
             </div>
           </div>

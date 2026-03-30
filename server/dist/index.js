@@ -10,6 +10,7 @@ const socket_io_1 = require("socket.io");
 const supabase_1 = require("./lib/supabase");
 const googlePlayVerifier_1 = require("./services/googlePlayVerifier");
 const socketServer_1 = require("./socket/socketServer");
+const appVersion_1 = require("./config/appVersion");
 const app = (0, express_1.default)();
 const httpServer = (0, http_1.createServer)(app);
 app.use(express_1.default.json());
@@ -99,6 +100,14 @@ const io = new socket_io_1.Server(httpServer, {
     },
 });
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
+app.get("/app-version/android", (req, res) => {
+    const versionCodeParam = typeof req.query.versionCode === 'string' ? req.query.versionCode : null;
+    const parsedVersionCode = versionCodeParam !== null ? Number(versionCodeParam) : Number.NaN;
+    const currentVersionCode = Number.isFinite(parsedVersionCode)
+        ? Math.trunc(parsedVersionCode)
+        : null;
+    res.json((0, appVersion_1.getAndroidVersionStatus)(currentVersionCode));
+});
 app.post("/payments/google-play/token-grant", async (req, res) => {
     if (!supabase_1.supabaseAdmin) {
         res.status(503).json({ error: "supabase_unavailable" });

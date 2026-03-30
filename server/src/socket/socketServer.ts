@@ -7,6 +7,7 @@ import { TwoVsTwoRoom } from '../game/twovtwo/TwoVsTwoRoom';
 import { TwoVsTwoRoomStore } from '../store/TwoVsTwoRoomStore';
 import { AbilityRoom } from '../game/ability/AbilityRoom';
 import { AbilityRoomStore } from '../store/AbilityRoomStore';
+import { getAndroidVersionStatus } from '../config/appVersion';
 import { PieceSkin, Position } from '../types/game.types';
 import type { AbilitySkillId, AbilitySkillReservation } from '../game/ability/AbilityTypes';
 import {
@@ -44,6 +45,47 @@ export function initSocketServer(io: Server): void {
     if (activeUserSockets.get(userId) === socketId) {
       activeUserSockets.delete(userId);
     }
+  };
+
+  const getSocketOrigin = (socket: Socket) => {
+    const origin = socket.handshake.headers.origin;
+    return typeof origin === 'string' ? origin : '';
+  };
+
+  const isNativeLikeOrigin = (origin: string) =>
+    origin === 'capacitor://localhost' ||
+    origin === 'ionic://localhost' ||
+    origin === 'http://localhost' ||
+    origin === 'https://localhost';
+
+  const getCurrentAppVersionCode = (auth?: AuthPayload) => {
+    const parsed =
+      typeof auth?.appVersionCode === 'number'
+        ? auth.appVersionCode
+        : Number(auth?.appVersionCode);
+    return Number.isFinite(parsed) ? Math.trunc(parsed) : null;
+  };
+
+  const getUpdateRequirement = (socket: Socket, auth?: AuthPayload) => {
+    const origin = getSocketOrigin(socket);
+    const isAndroidClient =
+      auth?.clientPlatform === 'android' || isNativeLikeOrigin(origin);
+
+    if (!isAndroidClient) return null;
+
+    return getAndroidVersionStatus(getCurrentAppVersionCode(auth));
+  };
+
+  const emitUpdateRequired = (socket: Socket, auth?: AuthPayload) => {
+    const requirement = getUpdateRequirement(socket, auth);
+    if (!requirement?.forceUpdate) return null;
+
+    socket.emit('update_required', requirement);
+    socket.emit('join_error', {
+      message:
+        'A new version is available. Please update the app from the Play Store.',
+    });
+    return requirement;
   };
 
   const clearExpiredProfileCache = (now = Date.now()) => {
@@ -255,14 +297,32 @@ export function initSocketServer(io: Server): void {
       'session_register',
       async (
         { auth }: { auth?: AuthPayload },
-        ack?: (response: { ok: boolean }) => void,
+        ack?: (
+          response:
+            | { ok: boolean; updateRequired: false }
+            | ({
+                ok: false;
+                updateRequired: true;
+              } & ReturnType<typeof getAndroidVersionStatus>),
+        ) => void,
       ) => {
+        const requirement = getUpdateRequirement(socket, auth);
+        if (requirement?.forceUpdate) {
+          socket.emit('update_required', requirement);
+          ack?.({
+            ok: false,
+            updateRequired: true,
+            ...requirement,
+          });
+          return;
+        }
         const userId = await registerSocketSession(socket, auth);
-        ack?.({ ok: Boolean(userId) });
+        ack?.({ ok: Boolean(userId), updateRequired: false });
       },
     );
 
     socket.on('create_room', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
+      if (emitUpdateRequired(socket, auth)) return;
       await registerSocketSession(socket, auth);
       const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       const roomId = store.generateRoomId();
@@ -284,6 +344,7 @@ export function initSocketServer(io: Server): void {
           tutorialPending,
         }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin; tutorialPending?: boolean },
       ) => {
+      if (emitUpdateRequired(socket, auth)) return;
       await registerSocketSession(socket, auth);
       const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       const roomId = store.generateRoomId();
@@ -315,6 +376,7 @@ export function initSocketServer(io: Server): void {
     );
 
     socket.on('join_room', async ({ code, nickname, auth, pieceSkin }: { code: string; nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
+      if (emitUpdateRequired(socket, auth)) return;
       await registerSocketSession(socket, auth);
       const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       const room = store.getByCode(code.toUpperCase());
@@ -349,6 +411,7 @@ export function initSocketServer(io: Server): void {
     });
 
     socket.on('join_random', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
+      if (emitUpdateRequired(socket, auth)) return;
       await registerSocketSession(socket, auth);
       const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       const queued = store.dequeueRandom();
@@ -401,6 +464,7 @@ export function initSocketServer(io: Server): void {
     });
 
     socket.on('join_coop', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
+      if (emitUpdateRequired(socket, auth)) return;
       await registerSocketSession(socket, auth);
       const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       const queued = coopStore.dequeue();
@@ -452,6 +516,12 @@ export function initSocketServer(io: Server): void {
     });
 
     socket.on('account_sync', async ({ auth }: { auth?: AuthPayload }, ack?: (response: unknown) => void) => {
+      const requirement = getUpdateRequirement(socket, auth);
+      if (requirement?.forceUpdate) {
+        socket.emit('update_required', requirement);
+        ack?.({ status: 'UPDATE_REQUIRED', ...requirement });
+        return;
+      }
       await registerSocketSession(socket, auth, { forceRevalidate: true });
       ack?.(await resolveAccount(auth));
     });
@@ -502,6 +572,7 @@ export function initSocketServer(io: Server): void {
     });
 
     socket.on('join_2v2', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
+      if (emitUpdateRequired(socket, auth)) return;
       await registerSocketSession(socket, auth);
       const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       twoVsTwoStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
@@ -527,6 +598,7 @@ export function initSocketServer(io: Server): void {
           equippedSkills: AbilitySkillId[];
         },
       ) => {
+        if (emitUpdateRequired(socket, auth)) return;
         await registerSocketSession(socket, auth);
         const profile = await resolvePlayerProfileCached(socket, auth, nickname);
         const queued = abilityStore.dequeue();

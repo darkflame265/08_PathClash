@@ -671,13 +671,32 @@ export async function cancelPendingGoogleUpgradeSwitch(): Promise<AuthStatePaylo
   return logoutToGuestMode();
 }
 
+async function getClientAuthMetadata() {
+  if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+    const info = await CapacitorApp.getInfo();
+    const parsedBuild = Number(info.build ?? '');
+    return {
+      clientPlatform: 'android' as const,
+      appVersionCode: Number.isFinite(parsedBuild) ? Math.trunc(parsedBuild) : undefined,
+    };
+  }
+
+  return {
+    clientPlatform: 'web' as const,
+    appVersionCode: undefined,
+  };
+}
+
 export function getSocketAuthPayload() {
   if (!supabase) return undefined;
   const session = supabase.auth.getSession();
-  return session.then(({ data }) => ({
-    accessToken: data.session?.access_token,
-    userId: data.session?.user.id,
-  }));
+  return Promise.all([session, getClientAuthMetadata()]).then(
+    ([{ data }, metadata]) => ({
+      accessToken: data.session?.access_token,
+      userId: data.session?.user.id,
+      ...metadata,
+    }),
+  );
 }
 
 export function onAuthStateChanged(callback: (payload: AuthStatePayload) => void): () => void {
