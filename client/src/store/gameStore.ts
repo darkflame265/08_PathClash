@@ -359,6 +359,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setGameState: (gs) =>
     set(() => ({
       gameState: gs,
+      roundInfo: null,
+      animation: null,
       playerPieceSkins: {
         red: gs.players.red.pieceSkin,
         blue: gs.players.blue.pieceSkin,
