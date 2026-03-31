@@ -373,8 +373,29 @@ class GameRoom {
                 }
                 else {
                     this.attackerColor = humanColor;
-                    this.tutorialScenario = 'freeplay';
+                    this.tutorialScenario = 'predict';
                 }
+                this.updateRoles();
+                this.touchActivity();
+                this.clearNextRoundTimeout();
+                this.nextRoundTimeout = setTimeout(() => {
+                    this.nextRoundTimeout = null;
+                    this.startRound();
+                }, 500);
+                return;
+            }
+            if (this.tutorialScenario === 'predict') {
+                const initial = (0, GameEngine_1.getInitialPositions)();
+                human.position = { ...initial[human.color] };
+                ai.position = { ...initial[ai.color] };
+                human.plannedPath = [];
+                ai.plannedPath = [];
+                human.pathSubmitted = false;
+                ai.pathSubmitted = false;
+                human.hp = 3;
+                this.turn = 1;
+                this.attackerColor = humanColor;
+                this.tutorialScenario = ai.hp < 2 ? 'freeplay' : 'predict';
                 this.updateRoles();
                 this.touchActivity();
                 this.clearNextRoundTimeout();
@@ -581,6 +602,25 @@ class GameRoom {
         if (this.tutorialActive) {
             if (this.tutorialScenario === 'attack' || this.tutorialScenario === 'freeplay') {
                 aiPlayer.plannedPath = [];
+                aiPlayer.pathSubmitted = true;
+                this.touchActivity();
+                return;
+            }
+            if (this.tutorialScenario === 'predict') {
+                aiPlayer.plannedPath =
+                    aiPlayer.color === 'blue'
+                        ? [
+                            { row: Math.min(4, aiPlayer.position.row + 1), col: aiPlayer.position.col },
+                            { row: Math.min(4, aiPlayer.position.row + 2), col: aiPlayer.position.col },
+                            { row: Math.min(4, aiPlayer.position.row + 2), col: Math.max(0, aiPlayer.position.col - 1) },
+                            { row: Math.min(4, aiPlayer.position.row + 2), col: Math.max(0, aiPlayer.position.col - 2) },
+                        ]
+                        : [
+                            { row: Math.min(4, aiPlayer.position.row + 1), col: aiPlayer.position.col },
+                            { row: Math.min(4, aiPlayer.position.row + 2), col: aiPlayer.position.col },
+                            { row: Math.min(4, aiPlayer.position.row + 2), col: Math.min(4, aiPlayer.position.col + 1) },
+                            { row: Math.min(4, aiPlayer.position.row + 2), col: Math.min(4, aiPlayer.position.col + 2) },
+                        ];
                 aiPlayer.pathSubmitted = true;
                 this.touchActivity();
                 return;

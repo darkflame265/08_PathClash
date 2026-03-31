@@ -24,6 +24,7 @@ interface GridProps {
   tutorialHintTarget?: "self" | "opponent";
   tutorialGuidePath?: Position[] | null;
   tutorialAutoSubmit?: boolean;
+  tutorialHintAnchor?: Position | null;
 }
 
 export function GameGrid({
@@ -32,6 +33,7 @@ export function GameGrid({
   tutorialHintTarget = "self",
   tutorialGuidePath = null,
   tutorialAutoSubmit = false,
+  tutorialHintAnchor = null,
 }: GridProps) {
   const {
     gameState,
@@ -103,7 +105,8 @@ export function GameGrid({
 
   const responsiveCellSize = boardSize / GRID_SIZE;
   const tutorialAnchorPos =
-    tutorialHintTarget === "opponent"
+    tutorialHintAnchor ??
+    (tutorialHintTarget === "opponent"
       ? myColor === "red"
         ? blueDisplayPos
         : myColor === "blue"
@@ -113,7 +116,7 @@ export function GameGrid({
         ? redDisplayPos
       : myColor === "blue"
         ? blueDisplayPos
-        : null;
+        : null);
   const tutorialGuideSvgPath = useMemo(() => {
     if (!tutorialGuidePath || tutorialGuidePath.length < 2) return null;
     return tutorialGuidePath

@@ -19,7 +19,7 @@ const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
-type TutorialStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+type TutorialStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 function buildTutorialGuidePath(
   start: Position,
@@ -261,8 +261,12 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       setTutorialStep(8);
       return;
     }
-    if (roundInfo.tutorialScenario === "freeplay" && tutorialStep !== 0 && tutorialStep < 9) {
+    if (roundInfo.tutorialScenario === "predict" && tutorialStep < 9) {
       setTutorialStep(9);
+      return;
+    }
+    if (roundInfo.tutorialScenario === "freeplay" && tutorialStep !== 0 && tutorialStep < 10) {
+      setTutorialStep(10);
     }
   }, [currentMatchType, roundInfo?.tutorialScenario, tutorialStep]);
 
@@ -331,13 +335,15 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   const me = myColor ? gameState.players[myColor] : null;
   const opponent = gameState.players[opponentColor];
   const tutorialInProgress = currentMatchType === "ai" && tutorialStep !== 0;
+  const tutorialHintAnchor = useMemo(() => {
+    if (!myColor || !roundInfo) return null;
+    if (tutorialStep === 7 || tutorialStep === 8 || tutorialStep === 9) {
+      return myColor === "red" ? roundInfo.redPosition : roundInfo.bluePosition;
+    }
+    return null;
+  }, [myColor, roundInfo, tutorialStep]);
   const tutorialGuidePath = useMemo(() => {
-    if (
-      (tutorialStep !== 7 && tutorialStep !== 8) ||
-      !myColor ||
-      !me ||
-      gameState.phase !== "planning"
-    ) {
+    if (!myColor || !me || gameState.phase !== "planning") {
       return null;
     }
     const start = gameState.players[myColor].position;
@@ -348,6 +354,10 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       );
       if (alreadyReached) return null;
       return buildTutorialGuidePath(start, end, gameState.obstacles);
+    }
+
+    if (tutorialStep !== 8) {
+      return null;
     }
 
     const end = {
@@ -440,9 +450,12 @@ export function GameScreen({ onLeaveToLobby }: Props) {
                   ? t.dragPathTutorial
                   : tutorialStep === 8
                   ? t.escapeRoleDragTutorial
+                  : tutorialStep === 9
+                  ? t.predictPathTutorial
                   : null
             }
             tutorialHintTarget={tutorialStep === 4 ? "opponent" : "self"}
+            tutorialHintAnchor={tutorialHintAnchor}
             tutorialGuidePath={tutorialGuidePath}
             tutorialAutoSubmit={tutorialInProgress}
           />

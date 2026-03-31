@@ -78,7 +78,7 @@ export interface RoundStartPayload {
   timeLimit: number;
   serverTime: number;
   roundEndsAt: number;
-  tutorialScenario?: 'attack' | 'escape' | 'freeplay';
+  tutorialScenario?: 'attack' | 'escape' | 'predict' | 'freeplay';
 }
 
 export interface ChatMessage {
