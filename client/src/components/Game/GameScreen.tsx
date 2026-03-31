@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, type CSSProperties } from "react";
+﻿import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { getSocket } from "../../socket/socketClient";
 import { registerSocketHandlers } from "../../socket/socketHandlers";
 import { useGameStore } from "../../store/gameStore";
@@ -8,6 +8,7 @@ import { GameOverOverlay } from "./GameOverOverlay";
 import { HpDisplay } from "./HpDisplay";
 import { PlayerInfo } from "./PlayerInfo";
 import { TimerBar } from "./TimerBar";
+import type { Position } from "../../types/game.types";
 import "./GameScreen.css";
 
 interface Props {
@@ -18,7 +19,56 @@ const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
-type TutorialStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
+type TutorialStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
+function buildTutorialGuidePath(
+  start: Position,
+  end: Position,
+  obstacles: Position[],
+): Position[] {
+  const key = (position: Position) => `${position.row},${position.col}`;
+  const blocked = new Set(obstacles.map(key));
+  const queue: Position[] = [{ ...start }];
+  const visited = new Set([key(start)]);
+  const prev = new Map<string, Position | null>();
+  prev.set(key(start), null);
+  const dirs = [
+    { row: -1, col: 0 },
+    { row: 1, col: 0 },
+    { row: 0, col: -1 },
+    { row: 0, col: 1 },
+  ];
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (current.row === end.row && current.col === end.col) {
+      const path: Position[] = [];
+      let cursor: Position | null = current;
+      while (cursor) {
+        path.push(cursor);
+        cursor = prev.get(key(cursor)) ?? null;
+      }
+      return path.reverse();
+    }
+
+    for (const dir of dirs) {
+      const next = {
+        row: current.row + dir.row,
+        col: current.col + dir.col,
+      };
+      if (next.row < 0 || next.row >= 5 || next.col < 0 || next.col >= 5) {
+        continue;
+      }
+      const nextKey = key(next);
+      if (visited.has(nextKey) || blocked.has(nextKey)) continue;
+      visited.add(nextKey);
+      prev.set(nextKey, current);
+      queue.push(next);
+    }
+  }
+
+  return [start, end];
+}
 
 function computeInitialCellSize(): number {
   const availW = Math.max(260, window.innerWidth - 24);
@@ -81,6 +131,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     left: number;
     top: number;
   } | null>(null);
+  const tutorialStartedRef = useRef(false);
 
   useEffect(() => {
     const socket = getSocket();
@@ -189,15 +240,47 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         setTutorialStep(7);
         return;
       }
-      window.localStorage.setItem(AI_TUTORIAL_SEEN_KEY, "1");
-      getSocket().emit("resume_tutorial");
-      setTutorialStep(0);
     };
 
     window.addEventListener("pointerdown", dismissTutorialHint, true);
     return () =>
       window.removeEventListener("pointerdown", dismissTutorialHint, true);
   }, [tutorialStep]);
+
+  useEffect(() => {
+    if (currentMatchType !== "ai" || tutorialStep !== 7 || tutorialStartedRef.current) {
+      return;
+    }
+    tutorialStartedRef.current = true;
+    getSocket().emit("resume_tutorial");
+  }, [currentMatchType, tutorialStep]);
+
+  useEffect(() => {
+    if (tutorialStep !== 7 || !myColor || !gameState || !gameState.players[myColor]) return;
+    const opponentColor = myColor === "red" ? "blue" : "red";
+    const opponentPos = gameState.players[opponentColor].position;
+    const hasReachedOpponent = myPath.some(
+      (position) =>
+        position.row === opponentPos.row && position.col === opponentPos.col,
+    );
+    if (hasReachedOpponent) {
+      setTutorialStep(8);
+    }
+  }, [gameState, myColor, myPath, tutorialStep]);
+
+  useEffect(() => {
+    if (
+      currentMatchType !== "ai" ||
+      tutorialStep === 0 ||
+      !winner ||
+      !myColor ||
+      winner !== myColor
+    ) {
+      return;
+    }
+    window.localStorage.setItem(AI_TUTORIAL_SEEN_KEY, "1");
+    setTutorialStep(0);
+  }, [currentMatchType, myColor, tutorialStep, winner]);
 
   useEffect(() => {
     const isTypingTarget = () => {
@@ -249,6 +332,20 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   const opponentColor = myColor === "red" ? "blue" : "red";
   const me = myColor ? gameState.players[myColor] : null;
   const opponent = gameState.players[opponentColor];
+  const tutorialInProgress = currentMatchType === "ai" && tutorialStep !== 0;
+  const tutorialGuidePath = useMemo(() => {
+    if (
+      tutorialStep !== 7 ||
+      !myColor ||
+      !me ||
+      gameState.phase !== "planning"
+    ) {
+      return null;
+    }
+    const start = gameState.players[myColor].position;
+    const end = gameState.players[opponentColor].position;
+    return buildTutorialGuidePath(start, end, gameState.obstacles);
+  }, [gameState.obstacles, gameState.phase, gameState.players, me, myColor, opponentColor, tutorialStep]);
   const dailyRewardRemaining = Math.max(0, 120 - accountDailyRewardTokens);
   const winRewardTokens =
     winner && myColor && winner === myColor && currentMatchType === "random"
@@ -263,7 +360,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     >
       <div className="gs-utility-bar">
         <div className="gs-timer-slot">
-          {gameState.phase === "planning" && roundInfo && (
+          {gameState.phase === "planning" && roundInfo && !tutorialInProgress && (
             <TimerBar
               duration={roundInfo.timeLimit}
               roundEndsAt={roundInfo.roundEndsAt}
@@ -329,6 +426,8 @@ export function GameScreen({ onLeaveToLobby }: Props) {
                   : null
             }
             tutorialHintTarget={tutorialStep === 4 ? "opponent" : "self"}
+            tutorialGuidePath={tutorialGuidePath}
+            tutorialAutoSubmit={tutorialInProgress}
           />
         </div>
       </div>

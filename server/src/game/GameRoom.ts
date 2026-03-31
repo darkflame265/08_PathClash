@@ -33,6 +33,7 @@ export class GameRoom {
   private matchType: MatchType;
   private pendingStart = false;
   private pendingStartPaused = false;
+  private tutorialActive = false;
   private planningGraceTimeout: ReturnType<typeof setTimeout> | null = null;
   private movingCompleteTimeout: ReturnType<typeof setTimeout> | null = null;
   private nextRoundTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -142,6 +143,7 @@ export class GameRoom {
   startGame(startPaused = false): void {
     this.pendingStart = false;
     this.pendingStartPaused = false;
+    this.tutorialActive = startPaused && this.matchType === 'ai';
     this.readySockets.clear();
     this.phase = startPaused ? 'waiting' : 'planning';
     this.turn = 1;
@@ -208,6 +210,7 @@ export class GameRoom {
 
     const now = Date.now();
     this.touchActivity(now);
+    const timeLimitSeconds = this.tutorialActive ? 0 : 7;
     const payload: RoundStartPayload = {
       turn: this.turn,
       pathPoints: calcPathPoints(this.turn),
@@ -215,11 +218,16 @@ export class GameRoom {
       redPosition: red.position,
       bluePosition: blue.position,
       obstacles: this.obstacles,
-      timeLimit: 7,
+      timeLimit: timeLimitSeconds,
       serverTime: now,
-      roundEndsAt: now + PLANNING_TIME_MS,
+      roundEndsAt: now + (this.tutorialActive ? 0 : PLANNING_TIME_MS),
     };
     this.io.to(this.roomId).emit('round_start', payload);
+
+    if (this.tutorialActive) {
+      this.submitAiPath();
+      return;
+    }
 
     this.timer.start(PLANNING_TIME_MS, () => this.onPlanningTimeout());
   }
@@ -436,6 +444,7 @@ export class GameRoom {
     this.readySockets.clear();
     this.pendingStart = false;
     this.pendingStartPaused = false;
+    this.tutorialActive = false;
   }
 
   private resetPositions(): void {

@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useState } from "react";
+import { useRef, useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useGameStore } from "../../store/gameStore";
 import type { Position } from "../../types/game.types";
 import {
@@ -22,12 +22,16 @@ interface GridProps {
   cellSize?: number;
   tutorialHint?: string | null;
   tutorialHintTarget?: "self" | "opponent";
+  tutorialGuidePath?: Position[] | null;
+  tutorialAutoSubmit?: boolean;
 }
 
 export function GameGrid({
   cellSize = DEFAULT_CELL_SIZE,
   tutorialHint = null,
   tutorialHintTarget = "self",
+  tutorialGuidePath = null,
+  tutorialAutoSubmit = false,
 }: GridProps) {
   const {
     gameState,
@@ -56,6 +60,7 @@ export function GameGrid({
     fromPiece: boolean;
     fromEnd: boolean;
   }>({ active: false, fromPiece: false, fromEnd: false });
+  const tutorialSubmitTimeoutRef = useRef<number | null>(null);
 
   const isPlanning = gameState?.phase === "planning";
   const myPos = myColor ? gameState?.players[myColor]?.position : null;
@@ -106,9 +111,19 @@ export function GameGrid({
           : null
       : myColor === "red"
         ? redDisplayPos
-        : myColor === "blue"
-          ? blueDisplayPos
-          : null;
+      : myColor === "blue"
+        ? blueDisplayPos
+        : null;
+  const tutorialGuideSvgPath = useMemo(() => {
+    if (!tutorialGuidePath || tutorialGuidePath.length < 2) return null;
+    return tutorialGuidePath
+      .map((position, index) => {
+        const x = position.col * responsiveCellSize + responsiveCellSize / 2;
+        const y = position.row * responsiveCellSize + responsiveCellSize / 2;
+        return `${index === 0 ? "M" : "L"} ${x} ${y}`;
+      })
+      .join(" ");
+  }, [responsiveCellSize, tutorialGuidePath]);
 
   const emitPathUpdate = useCallback((path: Position[]) => {
     getSocket().emit("path_update", { path });
@@ -310,12 +325,16 @@ export function GameGrid({
       if (pendingPathUpdateRef.current !== null) {
         window.clearTimeout(pendingPathUpdateRef.current);
       }
+      if (tutorialSubmitTimeoutRef.current !== null) {
+        window.clearTimeout(tutorialSubmitTimeoutRef.current);
+      }
     };
   }, []);
 
   // Submit once when the planning timer ends, even if the path is partial.
   useEffect(() => {
     if (!isPlanning || !myColor || !roundInfo || !gameState) return;
+    if (roundInfo.timeLimit <= 0) return;
     if (gameState.players[myColor].pathSubmitted) return;
 
     const submitAtMs = roundInfo.serverTime + roundInfo.timeLimit * 1000;
@@ -370,6 +389,83 @@ export function GameGrid({
       window.clearTimeout(finalSubmitTimeoutId);
     };
   }, [flushPendingPathUpdate, isPlanning, myColor, roundInfo, gameState]);
+
+  useEffect(() => {
+    if (
+      !tutorialAutoSubmit ||
+      !isPlanning ||
+      !myColor ||
+      !roundInfo ||
+      !gameState ||
+      roundInfo.timeLimit > 0
+    ) {
+      if (tutorialSubmitTimeoutRef.current !== null) {
+        window.clearTimeout(tutorialSubmitTimeoutRef.current);
+        tutorialSubmitTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    if (gameState.players[myColor].pathSubmitted || myPath.length === 0) {
+      if (tutorialSubmitTimeoutRef.current !== null) {
+        window.clearTimeout(tutorialSubmitTimeoutRef.current);
+        tutorialSubmitTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    if (tutorialSubmitTimeoutRef.current !== null) {
+      window.clearTimeout(tutorialSubmitTimeoutRef.current);
+    }
+
+    tutorialSubmitTimeoutRef.current = window.setTimeout(() => {
+      tutorialSubmitTimeoutRef.current = null;
+      const state = useGameStore.getState();
+      const latestGameState = state.gameState;
+      if (!latestGameState || latestGameState.phase !== "planning") return;
+      if (latestGameState.players[myColor].pathSubmitted) return;
+
+      flushPendingPathUpdate();
+      getSocket().emit(
+        "submit_path",
+        { path: state.myPath },
+        ({ ok }: { ok: boolean }) => {
+          if (!ok) return;
+
+          const freshGameState = useGameStore.getState().gameState;
+          if (!freshGameState) return;
+
+          useGameStore.setState({
+            gameState: {
+              ...freshGameState,
+              players: {
+                ...freshGameState.players,
+                [myColor]: {
+                  ...freshGameState.players[myColor],
+                  pathSubmitted: true,
+                },
+              },
+            },
+          });
+        },
+      );
+    }, 550);
+
+    return () => {
+      if (tutorialSubmitTimeoutRef.current !== null) {
+        window.clearTimeout(tutorialSubmitTimeoutRef.current);
+        tutorialSubmitTimeoutRef.current = null;
+      }
+    };
+  }, [
+    flushPendingPathUpdate,
+    gameState,
+    isPlanning,
+    myColor,
+    myPath,
+    roundInfo,
+    tutorialAutoSubmit,
+  ]);
 
   const cells = Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, i) => ({
     row: Math.floor(i / GRID_SIZE),
@@ -427,6 +523,32 @@ export function GameGrid({
             )}
           </div>
         ))}
+
+        {tutorialGuideSvgPath && (
+          <>
+            <svg
+              className="tutorial-finger-path"
+              width="100%"
+              height="100%"
+              viewBox={`0 0 ${boardSize} ${boardSize}`}
+              aria-hidden="true"
+            >
+              <path d={tutorialGuideSvgPath} />
+            </svg>
+            <span
+              className="tutorial-finger-guide"
+              aria-hidden="true"
+              style={
+                {
+                  offsetPath: `path("${tutorialGuideSvgPath}")`,
+                  WebkitOffsetPath: `path("${tutorialGuideSvgPath}")`,
+                } as CSSProperties
+              }
+            >
+              👆
+            </span>
+          </>
+        )}
 
         {/* Path lines: red behind (lower z-index, thicker), blue on top */}
         <PathLine

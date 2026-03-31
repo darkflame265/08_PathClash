@@ -119,7 +119,7 @@ export const translations: Record<Lang, Translations> = {
     escapePredictionTutorialHint:
       "On the other hand, the escaper must predict the attacker's path and plan an escape route.",
     dragPathTutorial:
-      "Let's start the game.\nDrag your piece to draw a path.",
+      "Let's begin the game.\nYou are the attacker this round.\nDraw a path to attack the opponent.",
     pathPointsTutorialHint:
       "These are Path Points.\nThey show how many cells you can draw your path through.\nThey increase by 1 each round, up to a maximum of 10.",
     winConditionTutorialHint: "Hit your opponent three times to win!",
@@ -199,7 +199,7 @@ export const translations: Record<Lang, Translations> = {
     escapePredictionTutorialHint:
       "반면, 도주 역할인 상대는 공격자의 경로를 예측하여 탈출로를 짜야 합니다.",
     dragPathTutorial:
-      "이제 게임을 시작하겠습니다.\n자신의 말을 드래그하여 경로를 작성하세요.",
+      "?? ??? ???????.\n?? ??? ??? ?????.\n??? ???? ???? ?????.",
     pathPointsTutorialHint:
       "이건 패스 포인트 입니다.\n자신이 경로를 몇 칸이나 그릴 수 있는지를 나타냅니다.\n매 라운드마다 1씩 증가하며, 최대 10까지 증가합니다.",
     winConditionTutorialHint: "상대방을 세 번 맞히면 승리합니다!",

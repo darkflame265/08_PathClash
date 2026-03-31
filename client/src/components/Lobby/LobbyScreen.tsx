@@ -27,7 +27,7 @@ import { connectSocket } from "../../socket/socketClient";
 import { useGameStore } from "../../store/gameStore";
 import { useLang } from "../../hooks/useLang";
 import type { Translations } from "../../i18n/translations";
-import type { PieceSkin } from "../../types/game.types";
+import type { ClientGameState, PieceSkin } from "../../types/game.types";
 import { ABILITY_SKILLS, type AbilitySkillId } from "../../types/ability.types";
 import "./LobbyScreen.css";
 
@@ -262,6 +262,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
     abilityLoadout,
     setAbilityLoadout,
     currentMatchType,
+    setGameState,
     setPlayerPieceSkins,
     isMusicMuted,
     isSfxMuted,
@@ -1129,6 +1130,11 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
     socket.off("twovtwo_matchmaking_waiting");
     socket.off("ability_room_joined");
     socket.off("ability_matchmaking_waiting");
+    socket.off("game_start");
+
+    socket.on("game_start", (gs: ClientGameState) => {
+      setGameState(gs);
+    });
 
     socket.on(
       "room_created",
@@ -1183,6 +1189,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
         });
         setError("");
         setIsMatchmaking(false);
+        socket.emit("game_client_ready");
         onGameStart();
       },
     );
