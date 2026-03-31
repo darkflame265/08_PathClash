@@ -23,6 +23,7 @@ class GameRoom {
         this.pendingStart = false;
         this.pendingStartPaused = false;
         this.tutorialActive = false;
+        this.tutorialScenario = 'attack';
         this.planningGraceTimeout = null;
         this.movingCompleteTimeout = null;
         this.nextRoundTimeout = null;
@@ -112,6 +113,7 @@ class GameRoom {
         this.pendingStart = false;
         this.pendingStartPaused = false;
         this.tutorialActive = startPaused && this.matchType === 'ai';
+        this.tutorialScenario = 'attack';
         this.readySockets.clear();
         this.phase = startPaused ? 'waiting' : 'planning';
         this.turn = 1;
@@ -172,7 +174,9 @@ class GameRoom {
         red.pathSubmitted = false;
         blue.plannedPath = [];
         blue.pathSubmitted = false;
-        this.obstacles = (0, GameEngine_1.generateObstacles)(this.roomId, this.turn, red.position, blue.position);
+        this.obstacles = this.tutorialActive
+            ? []
+            : (0, GameEngine_1.generateObstacles)(this.roomId, this.turn, red.position, blue.position);
         const now = Date.now();
         this.touchActivity(now);
         const timeLimitSeconds = this.tutorialActive ? 0 : 7;
@@ -186,6 +190,7 @@ class GameRoom {
             timeLimit: timeLimitSeconds,
             serverTime: now,
             roundEndsAt: now + (this.tutorialActive ? 0 : PLANNING_TIME_MS),
+            tutorialScenario: this.tutorialActive ? this.tutorialScenario : undefined,
         };
         this.io.to(this.roomId).emit('round_start', payload);
         if (this.tutorialActive) {
@@ -305,6 +310,102 @@ class GameRoom {
         const blue = this.players.get('blue');
         if (!red || !blue)
             return;
+        if (this.tutorialActive && this.aiColor && red.hp > 0 && blue.hp > 0) {
+            const humanColor = this.aiColor === 'red' ? 'blue' : 'red';
+            const human = this.players.get(humanColor);
+            const ai = this.players.get(this.aiColor);
+            if (!human || !ai)
+                return;
+            if (this.tutorialScenario === 'attack' && ai.hp < 3) {
+                const initial = (0, GameEngine_1.getInitialPositions)();
+                human.position = { ...initial[human.color] };
+                ai.position = { ...initial[ai.color] };
+                human.plannedPath = [];
+                ai.plannedPath = [];
+                human.pathSubmitted = false;
+                ai.pathSubmitted = false;
+                human.hp = 3;
+                this.turn = 1;
+                this.attackerColor = this.aiColor;
+                this.tutorialScenario = 'escape';
+                this.updateRoles();
+                this.touchActivity();
+                this.clearNextRoundTimeout();
+                this.nextRoundTimeout = setTimeout(() => {
+                    this.nextRoundTimeout = null;
+                    this.startRound();
+                }, 500);
+                return;
+            }
+            if (this.tutorialScenario === 'attack') {
+                const initial = (0, GameEngine_1.getInitialPositions)();
+                human.position = { ...initial[human.color] };
+                ai.position = { ...initial[ai.color] };
+                human.plannedPath = [];
+                ai.plannedPath = [];
+                human.pathSubmitted = false;
+                ai.pathSubmitted = false;
+                this.turn = 1;
+                this.attackerColor = humanColor;
+                this.tutorialScenario = 'attack';
+                this.updateRoles();
+                this.touchActivity();
+                this.clearNextRoundTimeout();
+                this.nextRoundTimeout = setTimeout(() => {
+                    this.nextRoundTimeout = null;
+                    this.startRound();
+                }, 500);
+                return;
+            }
+            if (this.tutorialScenario === 'escape') {
+                const humanWasHit = human.hp < 3;
+                const initial = (0, GameEngine_1.getInitialPositions)();
+                human.position = { ...initial[human.color] };
+                ai.position = { ...initial[ai.color] };
+                human.plannedPath = [];
+                ai.plannedPath = [];
+                human.pathSubmitted = false;
+                ai.pathSubmitted = false;
+                human.hp = 3;
+                if (humanWasHit) {
+                    this.attackerColor = this.aiColor;
+                    this.tutorialScenario = 'escape';
+                }
+                else {
+                    this.attackerColor = humanColor;
+                    this.tutorialScenario = 'freeplay';
+                }
+                this.updateRoles();
+                this.touchActivity();
+                this.clearNextRoundTimeout();
+                this.nextRoundTimeout = setTimeout(() => {
+                    this.nextRoundTimeout = null;
+                    this.startRound();
+                }, 500);
+                return;
+            }
+            if (this.tutorialScenario === 'freeplay') {
+                const initial = (0, GameEngine_1.getInitialPositions)();
+                human.position = { ...initial[human.color] };
+                ai.position = { ...initial[ai.color] };
+                human.plannedPath = [];
+                ai.plannedPath = [];
+                human.pathSubmitted = false;
+                ai.pathSubmitted = false;
+                human.hp = 3;
+                this.turn = 1;
+                this.attackerColor = humanColor;
+                this.tutorialScenario = 'freeplay';
+                this.updateRoles();
+                this.touchActivity();
+                this.clearNextRoundTimeout();
+                this.nextRoundTimeout = setTimeout(() => {
+                    this.nextRoundTimeout = null;
+                    this.startRound();
+                }, 500);
+                return;
+            }
+        }
         // Check game over
         if (red.hp <= 0 || blue.hp <= 0) {
             this.phase = 'gameover';
@@ -477,6 +578,20 @@ class GameRoom {
         const opponent = this.players.get(opponentColor);
         if (!opponent)
             return;
+        if (this.tutorialActive) {
+            if (this.tutorialScenario === 'attack' || this.tutorialScenario === 'freeplay') {
+                aiPlayer.plannedPath = [];
+                aiPlayer.pathSubmitted = true;
+                this.touchActivity();
+                return;
+            }
+            const initial = (0, GameEngine_1.getInitialPositions)();
+            const escapeTarget = initial[opponentColor];
+            aiPlayer.plannedPath = buildTutorialAiPath(aiPlayer.position, escapeTarget);
+            aiPlayer.pathSubmitted = true;
+            this.touchActivity();
+            return;
+        }
         aiPlayer.plannedPath = (0, AiPlanner_1.createAiPath)({
             color: aiPlayer.color,
             role: aiPlayer.role,
@@ -519,3 +634,17 @@ class GameRoom {
     }
 }
 exports.GameRoom = GameRoom;
+function buildTutorialAiPath(start, end) {
+    const path = [];
+    let row = start.row;
+    let col = start.col;
+    while (row !== end.row) {
+        row += row < end.row ? 1 : -1;
+        path.push({ row, col });
+    }
+    while (col !== end.col) {
+        col += col < end.col ? 1 : -1;
+        path.push({ row, col });
+    }
+    return path;
+}

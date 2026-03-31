@@ -40,6 +40,7 @@ export type Translations = {
   attackCollisionTutorialHint: string;
   escapePredictionTutorialHint: string;
   dragPathTutorial: string;
+  escapeRoleDragTutorial: string;
   pathPointsTutorialHint: string;
   winConditionTutorialHint: string;
   roleAttack: string;
@@ -120,6 +121,8 @@ export const translations: Record<Lang, Translations> = {
       "On the other hand, the escaper must predict the attacker's path and plan an escape route.",
     dragPathTutorial:
       "Let's begin the game.\nYou are the attacker this round.\nDraw a path to attack the opponent.",
+    escapeRoleDragTutorial:
+      "Well done! Here's the next situation.\nYou are the escaper this round.\nPredict the opponent's attack path and move two cells upward to avoid it.",
     pathPointsTutorialHint:
       "These are Path Points.\nThey show how many cells you can draw your path through.\nThey increase by 1 each round, up to a maximum of 10.",
     winConditionTutorialHint: "Hit your opponent three times to win!",
@@ -199,7 +202,9 @@ export const translations: Record<Lang, Translations> = {
     escapePredictionTutorialHint:
       "반면, 도주 역할인 상대는 공격자의 경로를 예측하여 탈출로를 짜야 합니다.",
     dragPathTutorial:
-      "?? ??? ???????.\n?? ??? ??? ?????.\n??? ???? ???? ?????.",
+      "이제 게임을 시작하겠습니다.\n현재 당신의 역할은 공격입니다.\n경로를 작성하여 상대방을 공격하세요.",
+    escapeRoleDragTutorial:
+      "잘했습니다! 이번엔 다음 상황입니다.\n당신의 역할은 도망입니다.\n상대의 공격 경로를 예측하여 공격을 피하세요!",
     pathPointsTutorialHint:
       "이건 패스 포인트 입니다.\n자신이 경로를 몇 칸이나 그릴 수 있는지를 나타냅니다.\n매 라운드마다 1씩 증가하며, 최대 10까지 증가합니다.",
     winConditionTutorialHint: "상대방을 세 번 맞히면 승리합니다!",

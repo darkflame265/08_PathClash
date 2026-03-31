@@ -19,7 +19,7 @@ const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
-type TutorialStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+type TutorialStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 function buildTutorialGuidePath(
   start: Position,
@@ -256,17 +256,15 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   }, [currentMatchType, tutorialStep]);
 
   useEffect(() => {
-    if (tutorialStep !== 7 || !myColor || !gameState || !gameState.players[myColor]) return;
-    const opponentColor = myColor === "red" ? "blue" : "red";
-    const opponentPos = gameState.players[opponentColor].position;
-    const hasReachedOpponent = myPath.some(
-      (position) =>
-        position.row === opponentPos.row && position.col === opponentPos.col,
-    );
-    if (hasReachedOpponent) {
+    if (currentMatchType !== "ai" || !roundInfo?.tutorialScenario) return;
+    if (roundInfo.tutorialScenario === "escape" && tutorialStep < 8) {
       setTutorialStep(8);
+      return;
     }
-  }, [gameState, myColor, myPath, tutorialStep]);
+    if (roundInfo.tutorialScenario === "freeplay" && tutorialStep !== 0 && tutorialStep < 9) {
+      setTutorialStep(9);
+    }
+  }, [currentMatchType, roundInfo?.tutorialScenario, tutorialStep]);
 
   useEffect(() => {
     if (
@@ -335,7 +333,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   const tutorialInProgress = currentMatchType === "ai" && tutorialStep !== 0;
   const tutorialGuidePath = useMemo(() => {
     if (
-      tutorialStep !== 7 ||
+      (tutorialStep !== 7 && tutorialStep !== 8) ||
       !myColor ||
       !me ||
       gameState.phase !== "planning"
@@ -343,9 +341,26 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       return null;
     }
     const start = gameState.players[myColor].position;
-    const end = gameState.players[opponentColor].position;
+    if (tutorialStep === 7) {
+      const end = gameState.players[opponentColor].position;
+      const alreadyReached = myPath.some(
+        (position) => position.row === end.row && position.col === end.col,
+      );
+      if (alreadyReached) return null;
+      return buildTutorialGuidePath(start, end, gameState.obstacles);
+    }
+
+    const end = {
+      row: Math.max(0, start.row - 2),
+      col: start.col,
+    };
+    const alreadyReached =
+      myPath.length >= 2 &&
+      myPath[myPath.length - 1]?.row === end.row &&
+      myPath[myPath.length - 1]?.col === end.col;
+    if (alreadyReached) return null;
     return buildTutorialGuidePath(start, end, gameState.obstacles);
-  }, [gameState.obstacles, gameState.phase, gameState.players, me, myColor, opponentColor, tutorialStep]);
+  }, [gameState.obstacles, gameState.phase, gameState.players, me, myColor, myPath, opponentColor, tutorialStep]);
   const dailyRewardRemaining = Math.max(0, 120 - accountDailyRewardTokens);
   const winRewardTokens =
     winner && myColor && winner === myColor && currentMatchType === "random"
@@ -423,6 +438,8 @@ export function GameScreen({ onLeaveToLobby }: Props) {
                   ? t.escapePredictionTutorialHint
                   : tutorialStep === 7
                   ? t.dragPathTutorial
+                  : tutorialStep === 8
+                  ? t.escapeRoleDragTutorial
                   : null
             }
             tutorialHintTarget={tutorialStep === 4 ? "opponent" : "self"}
