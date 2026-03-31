@@ -888,6 +888,13 @@
   margin: 0;
 }
 
+.skin-modal .skin-collection-summary {
+  margin: 0.85rem 0 0;
+  color: #a855f7 !important;
+  font-weight: 800;
+  font-size: 1rem;
+}
+
 .skin-token-badge {
   display: inline-flex;
   align-items: center;

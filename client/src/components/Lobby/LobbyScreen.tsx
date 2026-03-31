@@ -877,6 +877,34 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   };
   const currentSkinName =
     skinChoices.find((choice) => choice.id === pieceSkin)?.name ?? pieceSkin;
+  const totalPlays = accountWins + accountLosses;
+  const unlockedSkinCount = skinChoices.filter((choice) => {
+    const unlockedByWins =
+      choice.requiredWins !== null && accountWins >= choice.requiredWins;
+    const unlockedByPlays =
+      choice.requiredPlays !== null &&
+      choice.requiredPlays !== undefined &&
+      totalPlays >= choice.requiredPlays;
+    const unlockedByOwnership = ownedSkins.includes(choice.id);
+
+    if (
+      choice.tokenPrice !== null &&
+      choice.tokenPrice !== undefined &&
+      choice.tokenPrice > 0
+    ) {
+      return unlockedByOwnership;
+    }
+
+    return (
+      (!choice.requiredWins && !choice.requiredPlays) ||
+      unlockedByWins ||
+      unlockedByPlays
+    );
+  }).length;
+  const skinCollectionSummary =
+    lang === "en"
+      ? `Found: ${unlockedSkinCount}/${skinChoices.length}`
+      : `찾음: ${unlockedSkinCount}/${skinChoices.length}`;
 
   const markPatchNotesRead = useCallback(() => {
     localStorage.setItem(PATCH_NOTES_READ_KEY, PATCH_NOTES_VERSION);
@@ -1853,9 +1881,9 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
               </div>
             </div>
             <p>{skinModalDesc}</p>
+            <p className="skin-collection-summary">{skinCollectionSummary}</p>
             <div className="skin-option-list">
               {skinChoices.map((choice) => {
-                const totalPlays = accountWins + accountLosses;
                 const isOwned = ownedSkins.includes(choice.id);
                 const lockedByWins =
                   choice.requiredWins !== null &&
