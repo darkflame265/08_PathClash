@@ -1,25 +1,38 @@
-import { Server, Socket } from 'socket.io';
+import { Server, Socket } from "socket.io";
 import {
-  GameState, PlayerState, PlayerColor, Position, PieceSkin,
-  ClientGameState, PathsRevealPayload, RoundStartPayload, MatchType,
-} from '../types/game.types';
+  GameState,
+  PlayerState,
+  PlayerColor,
+  Position,
+  PieceSkin,
+  ClientGameState,
+  PathsRevealPayload,
+  RoundStartPayload,
+  MatchType,
+} from "../types/game.types";
 import {
-  calcPathPoints, detectCollisions, getInitialPositions,
-  isValidPath, calcAnimationDuration, toClientPlayer, generateObstacles,
-} from './GameEngine';
-import { createAiPath } from './AiPlanner';
-import { ServerTimer } from './ServerTimer';
-import { recordMatchmakingResult } from '../services/playerAuth';
+  calcPathPoints,
+  detectCollisions,
+  getInitialPositions,
+  isValidPath,
+  calcAnimationDuration,
+  toClientPlayer,
+  generateObstacles,
+} from "./GameEngine";
+import { createAiPath } from "./AiPlanner";
+import { ServerTimer } from "./ServerTimer";
+import { recordMatchmakingResult } from "../services/playerAuth";
 
 const PLANNING_TIME_MS = 7_000;
 const SUBMIT_GRACE_MS = 350;
 type TutorialScenario =
-  | 'attack'
-  | 'escape'
-  | 'predict'
-  | 'predict_obstacle'
-  | 'predict_wall'
-  | 'freeplay';
+  | "attack"
+  | "escape"
+  | "predict"
+  | "predict_obstacle"
+  | "predict_wall"
+  | "overlap_escape"
+  | "freeplay";
 
 export class GameRoom {
   readonly roomId: string;
@@ -29,9 +42,9 @@ export class GameRoom {
   private lastActivityAt = Date.now();
 
   private players: Map<PlayerColor, PlayerState> = new Map();
-  private phase: GameState['phase'] = 'waiting';
+  private phase: GameState["phase"] = "waiting";
   private turn = 1;
-  private attackerColor: PlayerColor = 'red';
+  private attackerColor: PlayerColor = "red";
   private obstacles: Position[] = [];
   private timer = new ServerTimer();
   private rematchSet: Set<string> = new Set();
@@ -41,7 +54,7 @@ export class GameRoom {
   private pendingStart = false;
   private pendingStartPaused = false;
   private tutorialActive = false;
-  private tutorialScenario: TutorialScenario = 'attack';
+  private tutorialScenario: TutorialScenario = "attack";
   private planningGraceTimeout: ReturnType<typeof setTimeout> | null = null;
   private movingCompleteTimeout: ReturnType<typeof setTimeout> | null = null;
   private nextRoundTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -53,33 +66,57 @@ export class GameRoom {
     this.matchType = matchType;
   }
 
-  get playerCount(): number { return this.players.size; }
-  get isFull(): boolean { return this.players.size === 2; }
-  get currentPhase(): GameState['phase'] { return this.phase; }
-  get createdTimestamp(): number { return this.createdAt; }
-  get lastActivityTimestamp(): number { return this.lastActivityAt; }
+  get playerCount(): number {
+    return this.players.size;
+  }
+  get isFull(): boolean {
+    return this.players.size === 2;
+  }
+  get currentPhase(): GameState["phase"] {
+    return this.phase;
+  }
+  get createdTimestamp(): number {
+    return this.createdAt;
+  }
+  get lastActivityTimestamp(): number {
+    return this.lastActivityAt;
+  }
 
   addPlayer(
     socket: Socket,
     nickname: string,
     userId: string | null = null,
     stats: { wins: number; losses: number } = { wins: 0, losses: 0 },
-    pieceSkin: PieceSkin = 'classic',
+    pieceSkin: PieceSkin = "classic",
   ): PlayerColor | null {
     if (this.isFull) return null;
-    const color: PlayerColor = this.players.size === 0 ? 'red' : 'blue';
-    const player = this.createPlayerState(color, socket.id, nickname, userId, stats, pieceSkin);
+    const color: PlayerColor = this.players.size === 0 ? "red" : "blue";
+    const player = this.createPlayerState(
+      color,
+      socket.id,
+      nickname,
+      userId,
+      stats,
+      pieceSkin,
+    );
     this.players.set(color, player);
     socket.join(this.roomId);
     this.touchActivity();
     return color;
   }
 
-  addAiPlayer(nickname = 'AI Bot'): PlayerColor | null {
+  addAiPlayer(nickname = "AI Bot"): PlayerColor | null {
     if (this.isFull) return null;
-    const color: PlayerColor = this.players.size === 0 ? 'red' : 'blue';
+    const color: PlayerColor = this.players.size === 0 ? "red" : "blue";
     const aiId = `ai_${this.roomId}_${color}`;
-    const player = this.createPlayerState(color, aiId, nickname, null, { wins: 0, losses: 0 }, 'classic');
+    const player = this.createPlayerState(
+      color,
+      aiId,
+      nickname,
+      null,
+      { wins: 0, losses: 0 },
+      "classic",
+    );
     this.players.set(color, player);
     this.aiColor = color;
     this.touchActivity();
@@ -91,7 +128,7 @@ export class GameRoom {
     if (!player) return;
     player.pieceSkin = pieceSkin;
     this.touchActivity();
-    this.io.to(this.roomId).emit('player_skin_updated', {
+    this.io.to(this.roomId).emit("player_skin_updated", {
       color: player.color,
       pieceSkin,
     });
@@ -109,7 +146,7 @@ export class GameRoom {
     for (const [color, p] of this.players) {
       if (p.socketId === socketId) {
         const wasActiveMatch =
-          this.phase === 'planning' || this.phase === 'moving';
+          this.phase === "planning" || this.phase === "moving";
         disconnectedColor = color;
         this.players.delete(color);
         if (this.aiColor === color) this.aiColor = null;
@@ -119,7 +156,7 @@ export class GameRoom {
         this.pendingStart = false;
         this.pendingStartPaused = false;
         if (
-          this.matchType === 'random' &&
+          this.matchType === "random" &&
           !this.aiColor &&
           wasActiveMatch &&
           this.players.size === 1
@@ -127,7 +164,7 @@ export class GameRoom {
           winnerColor = [...this.players.keys()][0] ?? null;
           shouldAwardDisconnectResult = winnerColor !== null;
           if (winnerColor) {
-            this.phase = 'gameover';
+            this.phase = "gameover";
           }
         }
         this.touchActivity();
@@ -143,7 +180,9 @@ export class GameRoom {
   }
 
   hasHumanPlayers(): boolean {
-    return [...this.players.values()].some((player) => player.color !== this.aiColor);
+    return [...this.players.values()].some(
+      (player) => player.color !== this.aiColor,
+    );
   }
 
   // ─── Game flow ─────────────────────────────────────────────────────────────
@@ -151,24 +190,24 @@ export class GameRoom {
   startGame(startPaused = false): void {
     this.pendingStart = false;
     this.pendingStartPaused = false;
-    this.tutorialActive = startPaused && this.matchType === 'ai';
-    this.tutorialScenario = 'attack';
+    this.tutorialActive = startPaused && this.matchType === "ai";
+    this.tutorialScenario = "attack";
     this.readySockets.clear();
-    this.phase = startPaused ? 'waiting' : 'planning';
+    this.phase = startPaused ? "waiting" : "planning";
     this.turn = 1;
-    this.attackerColor = 'red';
+    this.attackerColor = "red";
     this.resetPositions();
     this.updateRoles();
     this.touchActivity();
     const gameStartState = this.toClientState();
-    this.io.to(this.roomId).emit('game_start', gameStartState);
+    this.io.to(this.roomId).emit("game_start", gameStartState);
     if (startPaused) return;
     this.startRound();
   }
 
   resumeTutorial(socketId: string): void {
-    if (this.matchType !== 'ai') return;
-    if (this.phase !== 'waiting') return;
+    if (this.matchType !== "ai") return;
+    if (this.phase !== "waiting") return;
     const player = this.getPlayerBySocket(socketId);
     if (!player || player.color === this.aiColor) return;
     this.touchActivity();
@@ -197,7 +236,9 @@ export class GameRoom {
 
     const allHumansReady =
       humanSocketIds.length > 0 &&
-      humanSocketIds.every((humanSocketId) => this.readySockets.has(humanSocketId));
+      humanSocketIds.every((humanSocketId) =>
+        this.readySockets.has(humanSocketId),
+      );
 
     if (!allHumansReady) return false;
 
@@ -207,12 +248,12 @@ export class GameRoom {
 
   private startRound(): void {
     if (!this.hasBothPlayers()) return;
-    this.phase = 'planning';
-    const red = this.players.get('red');
-    const blue = this.players.get('blue');
+    this.phase = "planning";
+    const red = this.players.get("red");
+    const blue = this.players.get("blue");
     if (!red || !blue) return;
     if (this.tutorialActive && this.aiColor) {
-      const humanColor: PlayerColor = this.aiColor === 'red' ? 'blue' : 'red';
+      const humanColor: PlayerColor = this.aiColor === "red" ? "blue" : "red";
       const human = this.players.get(humanColor);
       const ai = this.players.get(this.aiColor);
       if (human && ai) {
@@ -242,7 +283,7 @@ export class GameRoom {
       roundEndsAt: now + (this.tutorialActive ? 0 : PLANNING_TIME_MS),
       tutorialScenario: this.tutorialActive ? this.tutorialScenario : undefined,
     };
-    this.io.to(this.roomId).emit('round_start', payload);
+    this.io.to(this.roomId).emit("round_start", payload);
 
     if (this.tutorialActive) {
       this.submitAiPath();
@@ -261,13 +302,15 @@ export class GameRoom {
     this.clearPlanningGraceTimeout();
     this.planningGraceTimeout = setTimeout(() => {
       this.planningGraceTimeout = null;
-      if (this.phase !== 'planning') return;
+      if (this.phase !== "planning") return;
       if (!this.hasBothPlayers()) return;
 
       for (const [, p] of this.players) {
         if (!p.pathSubmitted) {
           const maxPoints = calcPathPoints(this.turn);
-          if (!isValidPath(p.position, p.plannedPath, maxPoints, this.obstacles)) {
+          if (
+            !isValidPath(p.position, p.plannedPath, maxPoints, this.obstacles)
+          ) {
             p.plannedPath = [];
           }
           p.pathSubmitted = true;
@@ -278,7 +321,7 @@ export class GameRoom {
   }
 
   updatePlannedPath(socketId: string, path: Position[]): void {
-    if (this.phase !== 'planning') return;
+    if (this.phase !== "planning") return;
     const player = this.getPlayerBySocket(socketId);
     if (!player || player.pathSubmitted) return;
 
@@ -289,7 +332,7 @@ export class GameRoom {
   }
 
   submitPath(socketId: string, path: Position[]): boolean {
-    if (this.phase !== 'planning') return false;
+    if (this.phase !== "planning") return false;
     const player = this.getPlayerBySocket(socketId);
     if (!player || player.pathSubmitted) return false;
 
@@ -297,17 +340,26 @@ export class GameRoom {
     if (isValidPath(player.position, path, maxPoints, this.obstacles)) {
       // Invalid path — treat as empty
       player.plannedPath = path;
-    } else if (!isValidPath(player.position, player.plannedPath, maxPoints, this.obstacles)) {
+    } else if (
+      !isValidPath(
+        player.position,
+        player.plannedPath,
+        maxPoints,
+        this.obstacles,
+      )
+    ) {
       player.plannedPath = [];
     }
     player.pathSubmitted = true;
     this.touchActivity();
 
     // Notify opponent
-    this.emitToOpponent(socketId, 'opponent_submitted', {});
+    this.emitToOpponent(socketId, "opponent_submitted", {});
 
     // Both submitted → reveal
-    const allSubmitted = [...this.players.values()].every(p => p.pathSubmitted);
+    const allSubmitted = [...this.players.values()].every(
+      (p) => p.pathSubmitted,
+    );
     if (allSubmitted) {
       this.timer.clear();
       this.revealPaths();
@@ -316,19 +368,22 @@ export class GameRoom {
   }
 
   private revealPaths(): void {
-    if (this.phase !== 'planning') return;
+    if (this.phase !== "planning") return;
     if (!this.hasBothPlayers()) return;
-    const red = this.players.get('red');
-    const blue = this.players.get('blue');
+    const red = this.players.get("red");
+    const blue = this.players.get("blue");
     if (!red || !blue) return;
-    this.phase = 'moving';
+    this.phase = "moving";
     this.touchActivity();
-    const escaper = this.attackerColor === 'red' ? blue : red;
+    const escaper = this.attackerColor === "red" ? blue : red;
 
     const collisions = detectCollisions(
-      red.plannedPath, blue.plannedPath,
-      red.position, blue.position,
-      this.attackerColor, escaper.hp
+      red.plannedPath,
+      blue.plannedPath,
+      red.position,
+      blue.position,
+      this.attackerColor,
+      escaper.hp,
     );
 
     const payload: PathsRevealPayload = {
@@ -338,7 +393,7 @@ export class GameRoom {
       blueStart: { ...blue.position },
       collisions,
     };
-    this.io.to(this.roomId).emit('paths_reveal', payload);
+    this.io.to(this.roomId).emit("paths_reveal", payload);
 
     // Apply collision HP changes
     if (collisions.length > 0) {
@@ -347,12 +402,14 @@ export class GameRoom {
     }
 
     // Advance positions to end of paths
-    if (red.plannedPath.length > 0) red.position = red.plannedPath[red.plannedPath.length - 1];
-    if (blue.plannedPath.length > 0) blue.position = blue.plannedPath[blue.plannedPath.length - 1];
+    if (red.plannedPath.length > 0)
+      red.position = red.plannedPath[red.plannedPath.length - 1];
+    if (blue.plannedPath.length > 0)
+      blue.position = blue.plannedPath[blue.plannedPath.length - 1];
 
     // Wait for animation to finish
     const animTime = calcAnimationDuration(
-      Math.max(red.plannedPath.length, blue.plannedPath.length)
+      Math.max(red.plannedPath.length, blue.plannedPath.length),
     );
     this.clearMovingCompleteTimeout();
     this.movingCompleteTimeout = setTimeout(() => {
@@ -362,19 +419,19 @@ export class GameRoom {
   }
 
   private onMovingComplete(): void {
-    if (this.phase !== 'moving') return;
+    if (this.phase !== "moving") return;
     if (!this.hasBothPlayers()) return;
-    const red = this.players.get('red');
-    const blue = this.players.get('blue');
+    const red = this.players.get("red");
+    const blue = this.players.get("blue");
     if (!red || !blue) return;
 
     if (this.tutorialActive && this.aiColor && red.hp > 0 && blue.hp > 0) {
-      const humanColor: PlayerColor = this.aiColor === 'red' ? 'blue' : 'red';
+      const humanColor: PlayerColor = this.aiColor === "red" ? "blue" : "red";
       const human = this.players.get(humanColor);
       const ai = this.players.get(this.aiColor);
       if (!human || !ai) return;
 
-      if (this.tutorialScenario === 'attack' && ai.hp < 3) {
+      if (this.tutorialScenario === "attack" && ai.hp < 3) {
         const initial = getInitialPositions();
         human.position = { ...initial[human.color] };
         ai.position = { ...initial[ai.color] };
@@ -383,9 +440,10 @@ export class GameRoom {
         human.pathSubmitted = false;
         ai.pathSubmitted = false;
         human.hp = 3;
+        ai.hp = 3;
         this.turn = 1;
         this.attackerColor = this.aiColor;
-        this.tutorialScenario = 'escape';
+        this.tutorialScenario = "escape";
         this.updateRoles();
         this.touchActivity();
         this.clearNextRoundTimeout();
@@ -396,7 +454,7 @@ export class GameRoom {
         return;
       }
 
-      if (this.tutorialScenario === 'attack') {
+      if (this.tutorialScenario === "attack") {
         const initial = getInitialPositions();
         human.position = { ...initial[human.color] };
         ai.position = { ...initial[ai.color] };
@@ -404,9 +462,11 @@ export class GameRoom {
         ai.plannedPath = [];
         human.pathSubmitted = false;
         ai.pathSubmitted = false;
+        human.hp = 3;
+        ai.hp = 3;
         this.turn = 1;
         this.attackerColor = humanColor;
-        this.tutorialScenario = 'attack';
+        this.tutorialScenario = "attack";
         this.updateRoles();
         this.touchActivity();
         this.clearNextRoundTimeout();
@@ -417,7 +477,7 @@ export class GameRoom {
         return;
       }
 
-      if (this.tutorialScenario === 'escape') {
+      if (this.tutorialScenario === "escape") {
         const humanWasHit = human.hp < 3;
         const initial = getInitialPositions();
         human.position = { ...initial[human.color] };
@@ -427,12 +487,13 @@ export class GameRoom {
         human.pathSubmitted = false;
         ai.pathSubmitted = false;
         human.hp = 3;
+        ai.hp = 3;
         if (humanWasHit) {
           this.attackerColor = this.aiColor;
-          this.tutorialScenario = 'escape';
+          this.tutorialScenario = "escape";
         } else {
           this.attackerColor = humanColor;
-          this.tutorialScenario = 'predict';
+          this.tutorialScenario = "predict";
         }
         this.updateRoles();
         this.touchActivity();
@@ -444,8 +505,8 @@ export class GameRoom {
         return;
       }
 
-      if (this.tutorialScenario === 'predict') {
-        const aiWasHit = ai.hp < 2;
+      if (this.tutorialScenario === "predict") {
+        const aiWasHit = ai.hp < 3;
         const initial = getInitialPositions();
         human.position = { ...initial[human.color] };
         ai.position = { ...initial[ai.color] };
@@ -454,10 +515,10 @@ export class GameRoom {
         human.pathSubmitted = false;
         ai.pathSubmitted = false;
         human.hp = 3;
-        ai.hp = 2;
+        ai.hp = 3;
         this.turn = 1;
         this.attackerColor = humanColor;
-        this.tutorialScenario = aiWasHit ? 'predict_obstacle' : 'predict';
+        this.tutorialScenario = aiWasHit ? "predict_obstacle" : "predict";
         this.updateRoles();
         this.touchActivity();
         this.clearNextRoundTimeout();
@@ -468,18 +529,18 @@ export class GameRoom {
         return;
       }
 
-      if (this.tutorialScenario === 'predict_obstacle') {
-        const aiWasHit = ai.hp < 2;
-        applyTutorialScenarioLayout(human, ai, 'predict_obstacle');
+      if (this.tutorialScenario === "predict_obstacle") {
+        const aiWasHit = ai.hp < 3;
+        applyTutorialScenarioLayout(human, ai, "predict_obstacle");
         human.plannedPath = [];
         ai.plannedPath = [];
         human.pathSubmitted = false;
         ai.pathSubmitted = false;
         human.hp = 3;
-        ai.hp = aiWasHit ? 1 : 2;
+        ai.hp = 3;
         this.turn = 1;
         this.attackerColor = humanColor;
-        this.tutorialScenario = aiWasHit ? 'predict_wall' : 'predict_obstacle';
+        this.tutorialScenario = aiWasHit ? "predict_wall" : "predict_obstacle";
         this.updateRoles();
         this.touchActivity();
         this.clearNextRoundTimeout();
@@ -490,17 +551,18 @@ export class GameRoom {
         return;
       }
 
-      if (this.tutorialScenario === 'predict_wall') {
-        applyTutorialScenarioLayout(human, ai, 'predict_wall');
+      if (this.tutorialScenario === "predict_wall") {
+        const aiWasHit = ai.hp < 3;
+        applyTutorialScenarioLayout(human, ai, "predict_wall");
         human.plannedPath = [];
         ai.plannedPath = [];
         human.pathSubmitted = false;
         ai.pathSubmitted = false;
         human.hp = 3;
-        ai.hp = 1;
+        ai.hp = 3;
         this.turn = 1;
         this.attackerColor = humanColor;
-        this.tutorialScenario = 'predict_wall';
+        this.tutorialScenario = aiWasHit ? "overlap_escape" : "predict_wall";
         this.updateRoles();
         this.touchActivity();
         this.clearNextRoundTimeout();
@@ -511,7 +573,30 @@ export class GameRoom {
         return;
       }
 
-      if (this.tutorialScenario === 'freeplay') {
+      if (this.tutorialScenario === "overlap_escape") {
+        const tookOrDealtDamage = human.hp < 3 || ai.hp < 3;
+        const escapedSuccessfully = !tookOrDealtDamage;
+        applyTutorialScenarioLayout(human, ai, "overlap_escape");
+        human.plannedPath = [];
+        ai.plannedPath = [];
+        human.pathSubmitted = false;
+        ai.pathSubmitted = false;
+        human.hp = 3;
+        ai.hp = 3;
+        this.turn = 1;
+        this.attackerColor = this.aiColor;
+        this.tutorialScenario = escapedSuccessfully ? "freeplay" : "overlap_escape";
+        this.updateRoles();
+        this.touchActivity();
+        this.clearNextRoundTimeout();
+        this.nextRoundTimeout = setTimeout(() => {
+          this.nextRoundTimeout = null;
+          this.startRound();
+        }, 500);
+        return;
+      }
+
+      if (this.tutorialScenario === "freeplay") {
         const initial = getInitialPositions();
         human.position = { ...initial[human.color] };
         ai.position = { ...initial[ai.color] };
@@ -522,7 +607,7 @@ export class GameRoom {
         human.hp = 3;
         this.turn = 1;
         this.attackerColor = humanColor;
-        this.tutorialScenario = 'freeplay';
+        this.tutorialScenario = "freeplay";
         this.updateRoles();
         this.touchActivity();
         this.clearNextRoundTimeout();
@@ -536,10 +621,10 @@ export class GameRoom {
 
     // Check game over
     if (red.hp <= 0 || blue.hp <= 0) {
-      this.phase = 'gameover';
-      const winner: PlayerColor = red.hp > 0 ? 'red' : 'blue';
-      const loser: PlayerColor = winner === 'red' ? 'blue' : 'red';
-      if (this.matchType === 'random' && !this.aiColor) {
+      this.phase = "gameover";
+      const winner: PlayerColor = red.hp > 0 ? "red" : "blue";
+      const loser: PlayerColor = winner === "red" ? "blue" : "red";
+      if (this.matchType === "random" && !this.aiColor) {
         this.players.get(winner)!.stats.wins++;
         this.players.get(loser)!.stats.losses++;
         void recordMatchmakingResult(
@@ -549,17 +634,17 @@ export class GameRoom {
       }
 
       this.touchActivity();
-      this.io.to(this.roomId).emit('game_over', { winner });
+      this.io.to(this.roomId).emit("game_over", { winner });
       return;
     }
 
     // Next round
     this.turn++;
-    this.attackerColor = this.attackerColor === 'red' ? 'blue' : 'red';
+    this.attackerColor = this.attackerColor === "red" ? "blue" : "red";
     this.updateRoles();
     this.touchActivity();
 
-    this.io.to(this.roomId).emit('round_end', {
+    this.io.to(this.roomId).emit("round_end", {
       redPosition: red.position,
       bluePosition: blue.position,
       newTurn: this.turn,
@@ -575,7 +660,7 @@ export class GameRoom {
   // ─── Rematch ────────────────────────────────────────────────────────────────
 
   requestRematch(socketId: string): void {
-    if (this.phase !== 'gameover') return;
+    if (this.phase !== "gameover") return;
     if (this.aiColor) {
       this.rematchSet.clear();
       this.resetGame();
@@ -587,7 +672,7 @@ export class GameRoom {
     this.touchActivity();
 
     if (this.rematchSet.size === 1) {
-      this.emitToOpponent(socketId, 'rematch_requested', {});
+      this.emitToOpponent(socketId, "rematch_requested", {});
     } else {
       // Both agreed
       this.rematchSet.clear();
@@ -603,7 +688,7 @@ export class GameRoom {
     if (!player) return;
     const trimmed = message.slice(0, 200);
     this.touchActivity();
-    this.io.to(this.roomId).emit('chat_receive', {
+    this.io.to(this.roomId).emit("chat_receive", {
       sender: player.nickname,
       color: player.color,
       message: trimmed,
@@ -617,8 +702,8 @@ export class GameRoom {
     this.timer.clear();
     this.clearPendingTimeouts();
     this.turn = 1;
-    this.attackerColor = 'red';
-    this.phase = 'waiting';
+    this.attackerColor = "red";
+    this.phase = "waiting";
     this.obstacles = [];
     this.resetPositions();
     for (const p of this.players.values()) {
@@ -631,20 +716,20 @@ export class GameRoom {
     this.pendingStart = false;
     this.pendingStartPaused = false;
     this.tutorialActive = false;
-    this.tutorialScenario = 'attack';
+    this.tutorialScenario = "attack";
   }
 
   private resetPositions(): void {
     const pos = getInitialPositions();
-    const red = this.players.get('red');
-    const blue = this.players.get('blue');
+    const red = this.players.get("red");
+    const blue = this.players.get("blue");
     if (red) red.position = { ...pos.red };
     if (blue) blue.position = { ...pos.blue };
   }
 
   private updateRoles(): void {
     for (const [color, p] of this.players) {
-      p.role = color === this.attackerColor ? 'attacker' : 'escaper';
+      p.role = color === this.attackerColor ? "attacker" : "escaper";
     }
   }
 
@@ -666,8 +751,8 @@ export class GameRoom {
   }
 
   toClientState(): ClientGameState {
-    const red = this.players.get('red')!;
-    const blue = this.players.get('blue')!;
+    const red = this.players.get("red")!;
+    const blue = this.players.get("blue")!;
     return {
       roomId: this.roomId,
       code: this.code,
@@ -715,78 +800,161 @@ export class GameRoom {
       position: pos[color],
       plannedPath: [],
       pathSubmitted: false,
-      role: color === 'red' ? 'attacker' : 'escaper',
+      role: color === "red" ? "attacker" : "escaper",
       stats,
     };
   }
 
   private submitAiPath(): void {
-    if (!this.aiColor || this.phase !== 'planning') return;
+    if (!this.aiColor || this.phase !== "planning") return;
     const aiPlayer = this.players.get(this.aiColor);
     if (!aiPlayer || aiPlayer.pathSubmitted) return;
 
-    const opponentColor: PlayerColor = this.aiColor === 'red' ? 'blue' : 'red';
+    const opponentColor: PlayerColor = this.aiColor === "red" ? "blue" : "red";
     const opponent = this.players.get(opponentColor);
     if (!opponent) return;
 
     if (this.tutorialActive) {
-      if (this.tutorialScenario === 'attack' || this.tutorialScenario === 'freeplay') {
+      if (
+        this.tutorialScenario === "attack" ||
+        this.tutorialScenario === "freeplay"
+      ) {
         aiPlayer.plannedPath = [];
         aiPlayer.pathSubmitted = true;
         this.touchActivity();
         return;
       }
 
-      if (this.tutorialScenario === 'predict') {
+      if (this.tutorialScenario === "predict") {
         aiPlayer.plannedPath =
-          aiPlayer.color === 'blue'
+          aiPlayer.color === "blue"
             ? [
-                { row: Math.min(4, aiPlayer.position.row + 1), col: aiPlayer.position.col },
-                { row: Math.min(4, aiPlayer.position.row + 2), col: aiPlayer.position.col },
-                { row: Math.min(4, aiPlayer.position.row + 2), col: Math.max(0, aiPlayer.position.col - 1) },
-                { row: Math.min(4, aiPlayer.position.row + 2), col: Math.max(0, aiPlayer.position.col - 2) },
+                {
+                  row: Math.min(4, aiPlayer.position.row + 1),
+                  col: aiPlayer.position.col,
+                },
+                {
+                  row: Math.min(4, aiPlayer.position.row + 2),
+                  col: aiPlayer.position.col,
+                },
+                {
+                  row: Math.min(4, aiPlayer.position.row + 2),
+                  col: Math.max(0, aiPlayer.position.col - 1),
+                },
+                {
+                  row: Math.min(4, aiPlayer.position.row + 2),
+                  col: Math.max(0, aiPlayer.position.col - 2),
+                },
               ]
             : [
-                { row: Math.min(4, aiPlayer.position.row + 1), col: aiPlayer.position.col },
-                { row: Math.min(4, aiPlayer.position.row + 2), col: aiPlayer.position.col },
-                { row: Math.min(4, aiPlayer.position.row + 2), col: Math.min(4, aiPlayer.position.col + 1) },
-                { row: Math.min(4, aiPlayer.position.row + 2), col: Math.min(4, aiPlayer.position.col + 2) },
+                {
+                  row: Math.min(4, aiPlayer.position.row + 1),
+                  col: aiPlayer.position.col,
+                },
+                {
+                  row: Math.min(4, aiPlayer.position.row + 2),
+                  col: aiPlayer.position.col,
+                },
+                {
+                  row: Math.min(4, aiPlayer.position.row + 2),
+                  col: Math.min(4, aiPlayer.position.col + 1),
+                },
+                {
+                  row: Math.min(4, aiPlayer.position.row + 2),
+                  col: Math.min(4, aiPlayer.position.col + 2),
+                },
               ];
         aiPlayer.pathSubmitted = true;
         this.touchActivity();
         return;
       }
 
-      if (this.tutorialScenario === 'predict_obstacle') {
+      if (this.tutorialScenario === "predict_obstacle") {
         aiPlayer.plannedPath =
-          aiPlayer.color === 'blue'
+          aiPlayer.color === "blue"
             ? [
-                { row: aiPlayer.position.row, col: Math.max(0, aiPlayer.position.col - 1) },
-                { row: aiPlayer.position.row, col: Math.max(0, aiPlayer.position.col - 2) },
-                { row: Math.min(4, aiPlayer.position.row + 1), col: Math.max(0, aiPlayer.position.col - 2) },
-                { row: Math.min(4, aiPlayer.position.row + 2), col: Math.max(0, aiPlayer.position.col - 2) },
+                {
+                  row: aiPlayer.position.row,
+                  col: Math.max(0, aiPlayer.position.col - 1),
+                },
+                {
+                  row: aiPlayer.position.row,
+                  col: Math.max(0, aiPlayer.position.col - 2),
+                },
+                {
+                  row: Math.min(4, aiPlayer.position.row + 1),
+                  col: Math.max(0, aiPlayer.position.col - 2),
+                },
+                {
+                  row: Math.min(4, aiPlayer.position.row + 2),
+                  col: Math.max(0, aiPlayer.position.col - 2),
+                },
               ]
             : [
-                { row: aiPlayer.position.row, col: Math.min(4, aiPlayer.position.col + 1) },
-                { row: aiPlayer.position.row, col: Math.min(4, aiPlayer.position.col + 2) },
-                { row: Math.min(4, aiPlayer.position.row + 1), col: Math.min(4, aiPlayer.position.col + 2) },
-                { row: Math.min(4, aiPlayer.position.row + 2), col: Math.min(4, aiPlayer.position.col + 2) },
+                {
+                  row: aiPlayer.position.row,
+                  col: Math.min(4, aiPlayer.position.col + 1),
+                },
+                {
+                  row: aiPlayer.position.row,
+                  col: Math.min(4, aiPlayer.position.col + 2),
+                },
+                {
+                  row: Math.min(4, aiPlayer.position.row + 1),
+                  col: Math.min(4, aiPlayer.position.col + 2),
+                },
+                {
+                  row: Math.min(4, aiPlayer.position.row + 2),
+                  col: Math.min(4, aiPlayer.position.col + 2),
+                },
               ];
         aiPlayer.pathSubmitted = true;
         this.touchActivity();
         return;
       }
 
-      if (this.tutorialScenario === 'predict_wall') {
+      if (this.tutorialScenario === "predict_wall") {
         aiPlayer.plannedPath =
-          aiPlayer.color === 'blue'
+          aiPlayer.color === "blue"
             ? [
-                { row: Math.min(4, aiPlayer.position.row + 1), col: aiPlayer.position.col },
-                { row: Math.min(4, aiPlayer.position.row + 2), col: aiPlayer.position.col },
+                {
+                  row: Math.min(4, aiPlayer.position.row + 1),
+                  col: aiPlayer.position.col,
+                },
+                {
+                  row: Math.min(4, aiPlayer.position.row + 2),
+                  col: aiPlayer.position.col,
+                },
               ]
             : [
-                { row: Math.min(4, aiPlayer.position.row + 1), col: aiPlayer.position.col },
-                { row: Math.min(4, aiPlayer.position.row + 2), col: aiPlayer.position.col },
+                {
+                  row: Math.min(4, aiPlayer.position.row + 1),
+                  col: aiPlayer.position.col,
+                },
+                {
+                  row: Math.min(4, aiPlayer.position.row + 2),
+                  col: aiPlayer.position.col,
+                },
+              ];
+        aiPlayer.pathSubmitted = true;
+        this.touchActivity();
+        return;
+      }
+
+      if (this.tutorialScenario === "overlap_escape") {
+        aiPlayer.plannedPath =
+          aiPlayer.color === "blue"
+            ? [
+                {
+                  row: aiPlayer.position.row,
+                  col: Math.max(0, aiPlayer.position.col - 1),
+                },
+              ]
+            : [
+                {
+                  row: aiPlayer.position.row,
+                  col: Math.min(4, aiPlayer.position.col + 1),
+                },
               ];
         aiPlayer.pathSubmitted = true;
         this.touchActivity();
@@ -795,7 +963,10 @@ export class GameRoom {
 
       const initial = getInitialPositions();
       const escapeTarget = initial[opponentColor];
-      aiPlayer.plannedPath = buildTutorialAiPath(aiPlayer.position, escapeTarget);
+      aiPlayer.plannedPath = buildTutorialAiPath(
+        aiPlayer.position,
+        escapeTarget,
+      );
       aiPlayer.pathSubmitted = true;
       this.touchActivity();
       return;
@@ -818,7 +989,7 @@ export class GameRoom {
   }
 
   private hasBothPlayers(): boolean {
-    return this.players.has('red') && this.players.has('blue');
+    return this.players.has("red") && this.players.has("blue");
   }
 
   private clearPlanningGraceTimeout(): void {
@@ -867,13 +1038,20 @@ function buildTutorialAiPath(start: Position, end: Position): Position[] {
 }
 
 function getTutorialObstacles(scenario: TutorialScenario): Position[] {
-  if (scenario === 'predict_obstacle') {
+  if (scenario === "predict_obstacle") {
     return [{ row: 1, col: 3 }];
   }
-  if (scenario === 'predict_wall') {
+  if (scenario === "predict_wall") {
     return [
-      { row: 2, col: 3 },
       { row: 3, col: 3 },
+      { row: 4, col: 3 },
+    ];
+  }
+  if (scenario === "overlap_escape") {
+    return [
+      { row: 2, col: 4 },
+      { row: 3, col: 3 },
+      { row: 4, col: 2 },
     ];
   }
   return [];
@@ -885,14 +1063,20 @@ function applyTutorialScenarioLayout(
   scenario: TutorialScenario,
 ): void {
   const initial = getInitialPositions();
-  if (scenario === 'predict_obstacle') {
+  if (scenario === "predict_obstacle") {
     human.position = { row: 2, col: 2 };
-    ai.position = ai.color === 'blue' ? { row: 0, col: 4 } : { row: 0, col: 0 };
+    ai.position = ai.color === "blue" ? { row: 0, col: 4 } : { row: 0, col: 0 };
     return;
   }
-  if (scenario === 'predict_wall') {
+  if (scenario === "predict_wall") {
     human.position = { row: 2, col: 2 };
-    ai.position = ai.color === 'blue' ? { row: 2, col: 4 } : { row: 2, col: 0 };
+    ai.position = ai.color === "blue" ? { row: 2, col: 4 } : { row: 2, col: 0 };
+    return;
+  }
+  if (scenario === "overlap_escape") {
+    human.position =
+      ai.color === "blue" ? { row: 4, col: 4 } : { row: 4, col: 0 };
+    ai.position = { ...human.position };
     return;
   }
 

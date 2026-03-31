@@ -19,7 +19,7 @@ const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
-type TutorialStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+type TutorialStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
 
 function buildTutorialGuidePath(
   start: Position,
@@ -276,8 +276,12 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       setTutorialStep(11);
       return;
     }
-    if (roundInfo.tutorialScenario === "freeplay" && tutorialStep !== 0 && tutorialStep < 12) {
+    if (roundInfo.tutorialScenario === "overlap_escape" && tutorialStep < 12) {
       setTutorialStep(12);
+      return;
+    }
+    if (roundInfo.tutorialScenario === "freeplay" && tutorialStep !== 0 && tutorialStep < 13) {
+      setTutorialStep(13);
       return;
     }
     if (
@@ -292,6 +296,13 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       tutorialStep === 12
     ) {
       setTutorialStep(11);
+      return;
+    }
+    if (
+      roundInfo.tutorialScenario === "overlap_escape" &&
+      tutorialStep === 13
+    ) {
+      setTutorialStep(12);
       return;
     }
   }, [currentMatchType, roundInfo?.tutorialScenario, tutorialStep]);
@@ -488,10 +499,13 @@ export function GameScreen({ onLeaveToLobby }: Props) {
                   ? t.predictObstacleTutorial
                   : tutorialStep === 11
                   ? t.predictPathTutorial
+                  : tutorialStep === 12
+                  ? t.overlapEscapeTutorial
                   : null
             }
             tutorialHintTarget={tutorialStep === 4 ? "opponent" : "self"}
             tutorialHintAnchor={tutorialHintAnchor}
+            tutorialHintCentered={tutorialStep === 12}
             tutorialGuidePath={tutorialGuidePath}
             tutorialAutoSubmit={tutorialInProgress}
           />

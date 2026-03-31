@@ -12,9 +12,9 @@ class GameRoom {
         this.createdAt = Date.now();
         this.lastActivityAt = Date.now();
         this.players = new Map();
-        this.phase = 'waiting';
+        this.phase = "waiting";
         this.turn = 1;
-        this.attackerColor = 'red';
+        this.attackerColor = "red";
         this.obstacles = [];
         this.timer = new ServerTimer_1.ServerTimer();
         this.rematchSet = new Set();
@@ -23,7 +23,7 @@ class GameRoom {
         this.pendingStart = false;
         this.pendingStartPaused = false;
         this.tutorialActive = false;
-        this.tutorialScenario = 'attack';
+        this.tutorialScenario = "attack";
         this.planningGraceTimeout = null;
         this.movingCompleteTimeout = null;
         this.nextRoundTimeout = null;
@@ -32,27 +32,37 @@ class GameRoom {
         this.io = io;
         this.matchType = matchType;
     }
-    get playerCount() { return this.players.size; }
-    get isFull() { return this.players.size === 2; }
-    get currentPhase() { return this.phase; }
-    get createdTimestamp() { return this.createdAt; }
-    get lastActivityTimestamp() { return this.lastActivityAt; }
-    addPlayer(socket, nickname, userId = null, stats = { wins: 0, losses: 0 }, pieceSkin = 'classic') {
+    get playerCount() {
+        return this.players.size;
+    }
+    get isFull() {
+        return this.players.size === 2;
+    }
+    get currentPhase() {
+        return this.phase;
+    }
+    get createdTimestamp() {
+        return this.createdAt;
+    }
+    get lastActivityTimestamp() {
+        return this.lastActivityAt;
+    }
+    addPlayer(socket, nickname, userId = null, stats = { wins: 0, losses: 0 }, pieceSkin = "classic") {
         if (this.isFull)
             return null;
-        const color = this.players.size === 0 ? 'red' : 'blue';
+        const color = this.players.size === 0 ? "red" : "blue";
         const player = this.createPlayerState(color, socket.id, nickname, userId, stats, pieceSkin);
         this.players.set(color, player);
         socket.join(this.roomId);
         this.touchActivity();
         return color;
     }
-    addAiPlayer(nickname = 'AI Bot') {
+    addAiPlayer(nickname = "AI Bot") {
         if (this.isFull)
             return null;
-        const color = this.players.size === 0 ? 'red' : 'blue';
+        const color = this.players.size === 0 ? "red" : "blue";
         const aiId = `ai_${this.roomId}_${color}`;
-        const player = this.createPlayerState(color, aiId, nickname, null, { wins: 0, losses: 0 }, 'classic');
+        const player = this.createPlayerState(color, aiId, nickname, null, { wins: 0, losses: 0 }, "classic");
         this.players.set(color, player);
         this.aiColor = color;
         this.touchActivity();
@@ -64,7 +74,7 @@ class GameRoom {
             return;
         player.pieceSkin = pieceSkin;
         this.touchActivity();
-        this.io.to(this.roomId).emit('player_skin_updated', {
+        this.io.to(this.roomId).emit("player_skin_updated", {
             color: player.color,
             pieceSkin,
         });
@@ -75,7 +85,7 @@ class GameRoom {
         let winnerColor = null;
         for (const [color, p] of this.players) {
             if (p.socketId === socketId) {
-                const wasActiveMatch = this.phase === 'planning' || this.phase === 'moving';
+                const wasActiveMatch = this.phase === "planning" || this.phase === "moving";
                 disconnectedColor = color;
                 this.players.delete(color);
                 if (this.aiColor === color)
@@ -85,14 +95,14 @@ class GameRoom {
                 this.readySockets.clear();
                 this.pendingStart = false;
                 this.pendingStartPaused = false;
-                if (this.matchType === 'random' &&
+                if (this.matchType === "random" &&
                     !this.aiColor &&
                     wasActiveMatch &&
                     this.players.size === 1) {
                     winnerColor = [...this.players.keys()][0] ?? null;
                     shouldAwardDisconnectResult = winnerColor !== null;
                     if (winnerColor) {
-                        this.phase = 'gameover';
+                        this.phase = "gameover";
                     }
                 }
                 this.touchActivity();
@@ -112,25 +122,25 @@ class GameRoom {
     startGame(startPaused = false) {
         this.pendingStart = false;
         this.pendingStartPaused = false;
-        this.tutorialActive = startPaused && this.matchType === 'ai';
-        this.tutorialScenario = 'attack';
+        this.tutorialActive = startPaused && this.matchType === "ai";
+        this.tutorialScenario = "attack";
         this.readySockets.clear();
-        this.phase = startPaused ? 'waiting' : 'planning';
+        this.phase = startPaused ? "waiting" : "planning";
         this.turn = 1;
-        this.attackerColor = 'red';
+        this.attackerColor = "red";
         this.resetPositions();
         this.updateRoles();
         this.touchActivity();
         const gameStartState = this.toClientState();
-        this.io.to(this.roomId).emit('game_start', gameStartState);
+        this.io.to(this.roomId).emit("game_start", gameStartState);
         if (startPaused)
             return;
         this.startRound();
     }
     resumeTutorial(socketId) {
-        if (this.matchType !== 'ai')
+        if (this.matchType !== "ai")
             return;
-        if (this.phase !== 'waiting')
+        if (this.phase !== "waiting")
             return;
         const player = this.getPlayerBySocket(socketId);
         if (!player || player.color === this.aiColor)
@@ -165,13 +175,13 @@ class GameRoom {
     startRound() {
         if (!this.hasBothPlayers())
             return;
-        this.phase = 'planning';
-        const red = this.players.get('red');
-        const blue = this.players.get('blue');
+        this.phase = "planning";
+        const red = this.players.get("red");
+        const blue = this.players.get("blue");
         if (!red || !blue)
             return;
         if (this.tutorialActive && this.aiColor) {
-            const humanColor = this.aiColor === 'red' ? 'blue' : 'red';
+            const humanColor = this.aiColor === "red" ? "blue" : "red";
             const human = this.players.get(humanColor);
             const ai = this.players.get(this.aiColor);
             if (human && ai) {
@@ -200,7 +210,7 @@ class GameRoom {
             roundEndsAt: now + (this.tutorialActive ? 0 : PLANNING_TIME_MS),
             tutorialScenario: this.tutorialActive ? this.tutorialScenario : undefined,
         };
-        this.io.to(this.roomId).emit('round_start', payload);
+        this.io.to(this.roomId).emit("round_start", payload);
         if (this.tutorialActive) {
             this.submitAiPath();
             return;
@@ -216,7 +226,7 @@ class GameRoom {
         this.clearPlanningGraceTimeout();
         this.planningGraceTimeout = setTimeout(() => {
             this.planningGraceTimeout = null;
-            if (this.phase !== 'planning')
+            if (this.phase !== "planning")
                 return;
             if (!this.hasBothPlayers())
                 return;
@@ -233,7 +243,7 @@ class GameRoom {
         }, SUBMIT_GRACE_MS);
     }
     updatePlannedPath(socketId, path) {
-        if (this.phase !== 'planning')
+        if (this.phase !== "planning")
             return;
         const player = this.getPlayerBySocket(socketId);
         if (!player || player.pathSubmitted)
@@ -245,7 +255,7 @@ class GameRoom {
         this.touchActivity();
     }
     submitPath(socketId, path) {
-        if (this.phase !== 'planning')
+        if (this.phase !== "planning")
             return false;
         const player = this.getPlayerBySocket(socketId);
         if (!player || player.pathSubmitted)
@@ -261,9 +271,9 @@ class GameRoom {
         player.pathSubmitted = true;
         this.touchActivity();
         // Notify opponent
-        this.emitToOpponent(socketId, 'opponent_submitted', {});
+        this.emitToOpponent(socketId, "opponent_submitted", {});
         // Both submitted → reveal
-        const allSubmitted = [...this.players.values()].every(p => p.pathSubmitted);
+        const allSubmitted = [...this.players.values()].every((p) => p.pathSubmitted);
         if (allSubmitted) {
             this.timer.clear();
             this.revealPaths();
@@ -271,17 +281,17 @@ class GameRoom {
         return true;
     }
     revealPaths() {
-        if (this.phase !== 'planning')
+        if (this.phase !== "planning")
             return;
         if (!this.hasBothPlayers())
             return;
-        const red = this.players.get('red');
-        const blue = this.players.get('blue');
+        const red = this.players.get("red");
+        const blue = this.players.get("blue");
         if (!red || !blue)
             return;
-        this.phase = 'moving';
+        this.phase = "moving";
         this.touchActivity();
-        const escaper = this.attackerColor === 'red' ? blue : red;
+        const escaper = this.attackerColor === "red" ? blue : red;
         const collisions = (0, GameEngine_1.detectCollisions)(red.plannedPath, blue.plannedPath, red.position, blue.position, this.attackerColor, escaper.hp);
         const payload = {
             redPath: red.plannedPath,
@@ -290,7 +300,7 @@ class GameRoom {
             blueStart: { ...blue.position },
             collisions,
         };
-        this.io.to(this.roomId).emit('paths_reveal', payload);
+        this.io.to(this.roomId).emit("paths_reveal", payload);
         // Apply collision HP changes
         if (collisions.length > 0) {
             const lastCollision = collisions[collisions.length - 1];
@@ -310,21 +320,21 @@ class GameRoom {
         }, animTime);
     }
     onMovingComplete() {
-        if (this.phase !== 'moving')
+        if (this.phase !== "moving")
             return;
         if (!this.hasBothPlayers())
             return;
-        const red = this.players.get('red');
-        const blue = this.players.get('blue');
+        const red = this.players.get("red");
+        const blue = this.players.get("blue");
         if (!red || !blue)
             return;
         if (this.tutorialActive && this.aiColor && red.hp > 0 && blue.hp > 0) {
-            const humanColor = this.aiColor === 'red' ? 'blue' : 'red';
+            const humanColor = this.aiColor === "red" ? "blue" : "red";
             const human = this.players.get(humanColor);
             const ai = this.players.get(this.aiColor);
             if (!human || !ai)
                 return;
-            if (this.tutorialScenario === 'attack' && ai.hp < 3) {
+            if (this.tutorialScenario === "attack" && ai.hp < 3) {
                 const initial = (0, GameEngine_1.getInitialPositions)();
                 human.position = { ...initial[human.color] };
                 ai.position = { ...initial[ai.color] };
@@ -333,9 +343,10 @@ class GameRoom {
                 human.pathSubmitted = false;
                 ai.pathSubmitted = false;
                 human.hp = 3;
+                ai.hp = 3;
                 this.turn = 1;
                 this.attackerColor = this.aiColor;
-                this.tutorialScenario = 'escape';
+                this.tutorialScenario = "escape";
                 this.updateRoles();
                 this.touchActivity();
                 this.clearNextRoundTimeout();
@@ -345,7 +356,7 @@ class GameRoom {
                 }, 500);
                 return;
             }
-            if (this.tutorialScenario === 'attack') {
+            if (this.tutorialScenario === "attack") {
                 const initial = (0, GameEngine_1.getInitialPositions)();
                 human.position = { ...initial[human.color] };
                 ai.position = { ...initial[ai.color] };
@@ -353,9 +364,11 @@ class GameRoom {
                 ai.plannedPath = [];
                 human.pathSubmitted = false;
                 ai.pathSubmitted = false;
+                human.hp = 3;
+                ai.hp = 3;
                 this.turn = 1;
                 this.attackerColor = humanColor;
-                this.tutorialScenario = 'attack';
+                this.tutorialScenario = "attack";
                 this.updateRoles();
                 this.touchActivity();
                 this.clearNextRoundTimeout();
@@ -365,7 +378,7 @@ class GameRoom {
                 }, 500);
                 return;
             }
-            if (this.tutorialScenario === 'escape') {
+            if (this.tutorialScenario === "escape") {
                 const humanWasHit = human.hp < 3;
                 const initial = (0, GameEngine_1.getInitialPositions)();
                 human.position = { ...initial[human.color] };
@@ -375,13 +388,14 @@ class GameRoom {
                 human.pathSubmitted = false;
                 ai.pathSubmitted = false;
                 human.hp = 3;
+                ai.hp = 3;
                 if (humanWasHit) {
                     this.attackerColor = this.aiColor;
-                    this.tutorialScenario = 'escape';
+                    this.tutorialScenario = "escape";
                 }
                 else {
                     this.attackerColor = humanColor;
-                    this.tutorialScenario = 'predict';
+                    this.tutorialScenario = "predict";
                 }
                 this.updateRoles();
                 this.touchActivity();
@@ -392,8 +406,8 @@ class GameRoom {
                 }, 500);
                 return;
             }
-            if (this.tutorialScenario === 'predict') {
-                const aiWasHit = ai.hp < 2;
+            if (this.tutorialScenario === "predict") {
+                const aiWasHit = ai.hp < 3;
                 const initial = (0, GameEngine_1.getInitialPositions)();
                 human.position = { ...initial[human.color] };
                 ai.position = { ...initial[ai.color] };
@@ -402,10 +416,10 @@ class GameRoom {
                 human.pathSubmitted = false;
                 ai.pathSubmitted = false;
                 human.hp = 3;
-                ai.hp = 2;
+                ai.hp = 3;
                 this.turn = 1;
                 this.attackerColor = humanColor;
-                this.tutorialScenario = aiWasHit ? 'predict_obstacle' : 'predict';
+                this.tutorialScenario = aiWasHit ? "predict_obstacle" : "predict";
                 this.updateRoles();
                 this.touchActivity();
                 this.clearNextRoundTimeout();
@@ -415,18 +429,18 @@ class GameRoom {
                 }, 500);
                 return;
             }
-            if (this.tutorialScenario === 'predict_obstacle') {
-                const aiWasHit = ai.hp < 2;
-                applyTutorialScenarioLayout(human, ai, 'predict_obstacle');
+            if (this.tutorialScenario === "predict_obstacle") {
+                const aiWasHit = ai.hp < 3;
+                applyTutorialScenarioLayout(human, ai, "predict_obstacle");
                 human.plannedPath = [];
                 ai.plannedPath = [];
                 human.pathSubmitted = false;
                 ai.pathSubmitted = false;
                 human.hp = 3;
-                ai.hp = aiWasHit ? 1 : 2;
+                ai.hp = 3;
                 this.turn = 1;
                 this.attackerColor = humanColor;
-                this.tutorialScenario = aiWasHit ? 'predict_wall' : 'predict_obstacle';
+                this.tutorialScenario = aiWasHit ? "predict_wall" : "predict_obstacle";
                 this.updateRoles();
                 this.touchActivity();
                 this.clearNextRoundTimeout();
@@ -436,17 +450,18 @@ class GameRoom {
                 }, 500);
                 return;
             }
-            if (this.tutorialScenario === 'predict_wall') {
-                applyTutorialScenarioLayout(human, ai, 'predict_wall');
+            if (this.tutorialScenario === "predict_wall") {
+                const aiWasHit = ai.hp < 3;
+                applyTutorialScenarioLayout(human, ai, "predict_wall");
                 human.plannedPath = [];
                 ai.plannedPath = [];
                 human.pathSubmitted = false;
                 ai.pathSubmitted = false;
                 human.hp = 3;
-                ai.hp = 1;
+                ai.hp = 3;
                 this.turn = 1;
                 this.attackerColor = humanColor;
-                this.tutorialScenario = 'predict_wall';
+                this.tutorialScenario = aiWasHit ? "overlap_escape" : "predict_wall";
                 this.updateRoles();
                 this.touchActivity();
                 this.clearNextRoundTimeout();
@@ -456,7 +471,29 @@ class GameRoom {
                 }, 500);
                 return;
             }
-            if (this.tutorialScenario === 'freeplay') {
+            if (this.tutorialScenario === "overlap_escape") {
+                const tookOrDealtDamage = human.hp < 3 || ai.hp < 3;
+                const escapedSuccessfully = !tookOrDealtDamage;
+                applyTutorialScenarioLayout(human, ai, "overlap_escape");
+                human.plannedPath = [];
+                ai.plannedPath = [];
+                human.pathSubmitted = false;
+                ai.pathSubmitted = false;
+                human.hp = 3;
+                ai.hp = 3;
+                this.turn = 1;
+                this.attackerColor = this.aiColor;
+                this.tutorialScenario = escapedSuccessfully ? "freeplay" : "overlap_escape";
+                this.updateRoles();
+                this.touchActivity();
+                this.clearNextRoundTimeout();
+                this.nextRoundTimeout = setTimeout(() => {
+                    this.nextRoundTimeout = null;
+                    this.startRound();
+                }, 500);
+                return;
+            }
+            if (this.tutorialScenario === "freeplay") {
                 const initial = (0, GameEngine_1.getInitialPositions)();
                 human.position = { ...initial[human.color] };
                 ai.position = { ...initial[ai.color] };
@@ -467,7 +504,7 @@ class GameRoom {
                 human.hp = 3;
                 this.turn = 1;
                 this.attackerColor = humanColor;
-                this.tutorialScenario = 'freeplay';
+                this.tutorialScenario = "freeplay";
                 this.updateRoles();
                 this.touchActivity();
                 this.clearNextRoundTimeout();
@@ -480,24 +517,24 @@ class GameRoom {
         }
         // Check game over
         if (red.hp <= 0 || blue.hp <= 0) {
-            this.phase = 'gameover';
-            const winner = red.hp > 0 ? 'red' : 'blue';
-            const loser = winner === 'red' ? 'blue' : 'red';
-            if (this.matchType === 'random' && !this.aiColor) {
+            this.phase = "gameover";
+            const winner = red.hp > 0 ? "red" : "blue";
+            const loser = winner === "red" ? "blue" : "red";
+            if (this.matchType === "random" && !this.aiColor) {
                 this.players.get(winner).stats.wins++;
                 this.players.get(loser).stats.losses++;
                 void (0, playerAuth_1.recordMatchmakingResult)(this.players.get(winner).userId, this.players.get(loser).userId);
             }
             this.touchActivity();
-            this.io.to(this.roomId).emit('game_over', { winner });
+            this.io.to(this.roomId).emit("game_over", { winner });
             return;
         }
         // Next round
         this.turn++;
-        this.attackerColor = this.attackerColor === 'red' ? 'blue' : 'red';
+        this.attackerColor = this.attackerColor === "red" ? "blue" : "red";
         this.updateRoles();
         this.touchActivity();
-        this.io.to(this.roomId).emit('round_end', {
+        this.io.to(this.roomId).emit("round_end", {
             redPosition: red.position,
             bluePosition: blue.position,
             newTurn: this.turn,
@@ -510,7 +547,7 @@ class GameRoom {
     }
     // ─── Rematch ────────────────────────────────────────────────────────────────
     requestRematch(socketId) {
-        if (this.phase !== 'gameover')
+        if (this.phase !== "gameover")
             return;
         if (this.aiColor) {
             this.rematchSet.clear();
@@ -523,7 +560,7 @@ class GameRoom {
         this.rematchSet.add(socketId);
         this.touchActivity();
         if (this.rematchSet.size === 1) {
-            this.emitToOpponent(socketId, 'rematch_requested', {});
+            this.emitToOpponent(socketId, "rematch_requested", {});
         }
         else {
             // Both agreed
@@ -539,7 +576,7 @@ class GameRoom {
             return;
         const trimmed = message.slice(0, 200);
         this.touchActivity();
-        this.io.to(this.roomId).emit('chat_receive', {
+        this.io.to(this.roomId).emit("chat_receive", {
             sender: player.nickname,
             color: player.color,
             message: trimmed,
@@ -551,8 +588,8 @@ class GameRoom {
         this.timer.clear();
         this.clearPendingTimeouts();
         this.turn = 1;
-        this.attackerColor = 'red';
-        this.phase = 'waiting';
+        this.attackerColor = "red";
+        this.phase = "waiting";
         this.obstacles = [];
         this.resetPositions();
         for (const p of this.players.values()) {
@@ -565,12 +602,12 @@ class GameRoom {
         this.pendingStart = false;
         this.pendingStartPaused = false;
         this.tutorialActive = false;
-        this.tutorialScenario = 'attack';
+        this.tutorialScenario = "attack";
     }
     resetPositions() {
         const pos = (0, GameEngine_1.getInitialPositions)();
-        const red = this.players.get('red');
-        const blue = this.players.get('blue');
+        const red = this.players.get("red");
+        const blue = this.players.get("blue");
         if (red)
             red.position = { ...pos.red };
         if (blue)
@@ -578,7 +615,7 @@ class GameRoom {
     }
     updateRoles() {
         for (const [color, p] of this.players) {
-            p.role = color === this.attackerColor ? 'attacker' : 'escaper';
+            p.role = color === this.attackerColor ? "attacker" : "escaper";
         }
     }
     getPlayerBySocket(socketId) {
@@ -599,8 +636,8 @@ class GameRoom {
         }
     }
     toClientState() {
-        const red = this.players.get('red');
-        const blue = this.players.get('blue');
+        const red = this.players.get("red");
+        const blue = this.players.get("blue");
         return {
             roomId: this.roomId,
             code: this.code,
@@ -637,75 +674,155 @@ class GameRoom {
             position: pos[color],
             plannedPath: [],
             pathSubmitted: false,
-            role: color === 'red' ? 'attacker' : 'escaper',
+            role: color === "red" ? "attacker" : "escaper",
             stats,
         };
     }
     submitAiPath() {
-        if (!this.aiColor || this.phase !== 'planning')
+        if (!this.aiColor || this.phase !== "planning")
             return;
         const aiPlayer = this.players.get(this.aiColor);
         if (!aiPlayer || aiPlayer.pathSubmitted)
             return;
-        const opponentColor = this.aiColor === 'red' ? 'blue' : 'red';
+        const opponentColor = this.aiColor === "red" ? "blue" : "red";
         const opponent = this.players.get(opponentColor);
         if (!opponent)
             return;
         if (this.tutorialActive) {
-            if (this.tutorialScenario === 'attack' || this.tutorialScenario === 'freeplay') {
+            if (this.tutorialScenario === "attack" ||
+                this.tutorialScenario === "freeplay") {
                 aiPlayer.plannedPath = [];
                 aiPlayer.pathSubmitted = true;
                 this.touchActivity();
                 return;
             }
-            if (this.tutorialScenario === 'predict') {
+            if (this.tutorialScenario === "predict") {
                 aiPlayer.plannedPath =
-                    aiPlayer.color === 'blue'
+                    aiPlayer.color === "blue"
                         ? [
-                            { row: Math.min(4, aiPlayer.position.row + 1), col: aiPlayer.position.col },
-                            { row: Math.min(4, aiPlayer.position.row + 2), col: aiPlayer.position.col },
-                            { row: Math.min(4, aiPlayer.position.row + 2), col: Math.max(0, aiPlayer.position.col - 1) },
-                            { row: Math.min(4, aiPlayer.position.row + 2), col: Math.max(0, aiPlayer.position.col - 2) },
+                            {
+                                row: Math.min(4, aiPlayer.position.row + 1),
+                                col: aiPlayer.position.col,
+                            },
+                            {
+                                row: Math.min(4, aiPlayer.position.row + 2),
+                                col: aiPlayer.position.col,
+                            },
+                            {
+                                row: Math.min(4, aiPlayer.position.row + 2),
+                                col: Math.max(0, aiPlayer.position.col - 1),
+                            },
+                            {
+                                row: Math.min(4, aiPlayer.position.row + 2),
+                                col: Math.max(0, aiPlayer.position.col - 2),
+                            },
                         ]
                         : [
-                            { row: Math.min(4, aiPlayer.position.row + 1), col: aiPlayer.position.col },
-                            { row: Math.min(4, aiPlayer.position.row + 2), col: aiPlayer.position.col },
-                            { row: Math.min(4, aiPlayer.position.row + 2), col: Math.min(4, aiPlayer.position.col + 1) },
-                            { row: Math.min(4, aiPlayer.position.row + 2), col: Math.min(4, aiPlayer.position.col + 2) },
+                            {
+                                row: Math.min(4, aiPlayer.position.row + 1),
+                                col: aiPlayer.position.col,
+                            },
+                            {
+                                row: Math.min(4, aiPlayer.position.row + 2),
+                                col: aiPlayer.position.col,
+                            },
+                            {
+                                row: Math.min(4, aiPlayer.position.row + 2),
+                                col: Math.min(4, aiPlayer.position.col + 1),
+                            },
+                            {
+                                row: Math.min(4, aiPlayer.position.row + 2),
+                                col: Math.min(4, aiPlayer.position.col + 2),
+                            },
                         ];
                 aiPlayer.pathSubmitted = true;
                 this.touchActivity();
                 return;
             }
-            if (this.tutorialScenario === 'predict_obstacle') {
+            if (this.tutorialScenario === "predict_obstacle") {
                 aiPlayer.plannedPath =
-                    aiPlayer.color === 'blue'
+                    aiPlayer.color === "blue"
                         ? [
-                            { row: aiPlayer.position.row, col: Math.max(0, aiPlayer.position.col - 1) },
-                            { row: aiPlayer.position.row, col: Math.max(0, aiPlayer.position.col - 2) },
-                            { row: Math.min(4, aiPlayer.position.row + 1), col: Math.max(0, aiPlayer.position.col - 2) },
-                            { row: Math.min(4, aiPlayer.position.row + 2), col: Math.max(0, aiPlayer.position.col - 2) },
+                            {
+                                row: aiPlayer.position.row,
+                                col: Math.max(0, aiPlayer.position.col - 1),
+                            },
+                            {
+                                row: aiPlayer.position.row,
+                                col: Math.max(0, aiPlayer.position.col - 2),
+                            },
+                            {
+                                row: Math.min(4, aiPlayer.position.row + 1),
+                                col: Math.max(0, aiPlayer.position.col - 2),
+                            },
+                            {
+                                row: Math.min(4, aiPlayer.position.row + 2),
+                                col: Math.max(0, aiPlayer.position.col - 2),
+                            },
                         ]
                         : [
-                            { row: aiPlayer.position.row, col: Math.min(4, aiPlayer.position.col + 1) },
-                            { row: aiPlayer.position.row, col: Math.min(4, aiPlayer.position.col + 2) },
-                            { row: Math.min(4, aiPlayer.position.row + 1), col: Math.min(4, aiPlayer.position.col + 2) },
-                            { row: Math.min(4, aiPlayer.position.row + 2), col: Math.min(4, aiPlayer.position.col + 2) },
+                            {
+                                row: aiPlayer.position.row,
+                                col: Math.min(4, aiPlayer.position.col + 1),
+                            },
+                            {
+                                row: aiPlayer.position.row,
+                                col: Math.min(4, aiPlayer.position.col + 2),
+                            },
+                            {
+                                row: Math.min(4, aiPlayer.position.row + 1),
+                                col: Math.min(4, aiPlayer.position.col + 2),
+                            },
+                            {
+                                row: Math.min(4, aiPlayer.position.row + 2),
+                                col: Math.min(4, aiPlayer.position.col + 2),
+                            },
                         ];
                 aiPlayer.pathSubmitted = true;
                 this.touchActivity();
                 return;
             }
-            if (this.tutorialScenario === 'predict_wall') {
+            if (this.tutorialScenario === "predict_wall") {
                 aiPlayer.plannedPath =
-                    aiPlayer.color === 'blue'
+                    aiPlayer.color === "blue"
                         ? [
-                            { row: Math.min(4, aiPlayer.position.row + 1), col: aiPlayer.position.col },
-                            { row: Math.min(4, aiPlayer.position.row + 2), col: aiPlayer.position.col },
+                            {
+                                row: Math.min(4, aiPlayer.position.row + 1),
+                                col: aiPlayer.position.col,
+                            },
+                            {
+                                row: Math.min(4, aiPlayer.position.row + 2),
+                                col: aiPlayer.position.col,
+                            },
                         ]
                         : [
-                            { row: Math.min(4, aiPlayer.position.row + 1), col: aiPlayer.position.col },
-                            { row: Math.min(4, aiPlayer.position.row + 2), col: aiPlayer.position.col },
+                            {
+                                row: Math.min(4, aiPlayer.position.row + 1),
+                                col: aiPlayer.position.col,
+                            },
+                            {
+                                row: Math.min(4, aiPlayer.position.row + 2),
+                                col: aiPlayer.position.col,
+                            },
+                        ];
+                aiPlayer.pathSubmitted = true;
+                this.touchActivity();
+                return;
+            }
+            if (this.tutorialScenario === "overlap_escape") {
+                aiPlayer.plannedPath =
+                    aiPlayer.color === "blue"
+                        ? [
+                            {
+                                row: aiPlayer.position.row,
+                                col: Math.max(0, aiPlayer.position.col - 1),
+                            },
+                        ]
+                        : [
+                            {
+                                row: aiPlayer.position.row,
+                                col: Math.min(4, aiPlayer.position.col + 1),
+                            },
                         ];
                 aiPlayer.pathSubmitted = true;
                 this.touchActivity();
@@ -733,7 +850,7 @@ class GameRoom {
         this.lastActivityAt = timestamp;
     }
     hasBothPlayers() {
-        return this.players.has('red') && this.players.has('blue');
+        return this.players.has("red") && this.players.has("blue");
     }
     clearPlanningGraceTimeout() {
         if (this.planningGraceTimeout) {
@@ -775,27 +892,40 @@ function buildTutorialAiPath(start, end) {
     return path;
 }
 function getTutorialObstacles(scenario) {
-    if (scenario === 'predict_obstacle') {
+    if (scenario === "predict_obstacle") {
         return [{ row: 1, col: 3 }];
     }
-    if (scenario === 'predict_wall') {
+    if (scenario === "predict_wall") {
         return [
-            { row: 2, col: 3 },
             { row: 3, col: 3 },
+            { row: 4, col: 3 },
+        ];
+    }
+    if (scenario === "overlap_escape") {
+        return [
+            { row: 2, col: 4 },
+            { row: 3, col: 3 },
+            { row: 4, col: 2 },
         ];
     }
     return [];
 }
 function applyTutorialScenarioLayout(human, ai, scenario) {
     const initial = (0, GameEngine_1.getInitialPositions)();
-    if (scenario === 'predict_obstacle') {
+    if (scenario === "predict_obstacle") {
         human.position = { row: 2, col: 2 };
-        ai.position = ai.color === 'blue' ? { row: 0, col: 4 } : { row: 0, col: 0 };
+        ai.position = ai.color === "blue" ? { row: 0, col: 4 } : { row: 0, col: 0 };
         return;
     }
-    if (scenario === 'predict_wall') {
+    if (scenario === "predict_wall") {
         human.position = { row: 2, col: 2 };
-        ai.position = ai.color === 'blue' ? { row: 2, col: 4 } : { row: 2, col: 0 };
+        ai.position = ai.color === "blue" ? { row: 2, col: 4 } : { row: 2, col: 0 };
+        return;
+    }
+    if (scenario === "overlap_escape") {
+        human.position =
+            ai.color === "blue" ? { row: 4, col: 4 } : { row: 4, col: 0 };
+        ai.position = { ...human.position };
         return;
     }
     human.position = { ...initial[human.color] };
