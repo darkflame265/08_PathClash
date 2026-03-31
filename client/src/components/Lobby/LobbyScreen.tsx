@@ -23,7 +23,7 @@ import {
 } from "../../auth/guestAuth";
 import { startDonation } from "../../payments/donate";
 import { startTokenPackPurchase, type TokenPackId } from "../../payments/tokenShop";
-import { connectSocket } from "../../socket/socketClient";
+import { connectSocket, disconnectSocket } from "../../socket/socketClient";
 import { useGameStore } from "../../store/gameStore";
 import { useLang } from "../../hooks/useLang";
 import type { Translations } from "../../i18n/translations";
@@ -1116,6 +1116,14 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   const getNick = () =>
     myNickname.trim() || `Guest${Math.floor(Math.random() * 9999)}`;
 
+  const resetBeforeTutorialJoin = useCallback(async () => {
+    disconnectSocket();
+    useGameStore.getState().resetGame();
+    await new Promise<void>((resolve) => {
+      window.setTimeout(resolve, 0);
+    });
+  }, []);
+
   const startSocket = () => {
     const socket = connectSocket();
 
@@ -1134,6 +1142,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
 
     socket.on("game_start", (gs: ClientGameState) => {
       setGameState(gs);
+      onGameStart();
     });
 
     socket.on(
@@ -1190,7 +1199,6 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
         setError("");
         setIsMatchmaking(false);
         socket.emit("game_client_ready");
-        onGameStart();
       },
     );
 
@@ -1218,7 +1226,6 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
       }
       setError("");
       setIsMatchmaking(false);
-      onGameStart();
       },
     );
 
@@ -1381,6 +1388,9 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   const handleAiMatchWithTutorial = async (
     tutorialPendingOverride: boolean | null,
   ) => {
+    if (tutorialPendingOverride === true) {
+      await resetBeforeTutorialJoin();
+    }
     setError("");
     setIsMatchmaking(false);
     setMatchType("ai");
@@ -1400,7 +1410,6 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   const handleReplayAiTutorial = async () => {
     setError("");
     setIsMatchmaking(false);
-    setMatchType("ai");
     window.localStorage.removeItem(AI_TUTORIAL_SEEN_KEY);
     window.localStorage.setItem(AI_TUTORIAL_PROMPT_ANSWERED_KEY, "1");
     await handleAiMatchWithTutorial(true);
