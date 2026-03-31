@@ -13,7 +13,13 @@ import { recordMatchmakingResult } from '../services/playerAuth';
 
 const PLANNING_TIME_MS = 7_000;
 const SUBMIT_GRACE_MS = 350;
-type TutorialScenario = 'attack' | 'escape' | 'predict' | 'freeplay';
+type TutorialScenario =
+  | 'attack'
+  | 'escape'
+  | 'predict'
+  | 'predict_obstacle'
+  | 'predict_wall'
+  | 'freeplay';
 
 export class GameRoom {
   readonly roomId: string;
@@ -205,12 +211,20 @@ export class GameRoom {
     const red = this.players.get('red');
     const blue = this.players.get('blue');
     if (!red || !blue) return;
+    if (this.tutorialActive && this.aiColor) {
+      const humanColor: PlayerColor = this.aiColor === 'red' ? 'blue' : 'red';
+      const human = this.players.get(humanColor);
+      const ai = this.players.get(this.aiColor);
+      if (human && ai) {
+        applyTutorialScenarioLayout(human, ai, this.tutorialScenario);
+      }
+    }
     red.plannedPath = [];
     red.pathSubmitted = false;
     blue.plannedPath = [];
     blue.pathSubmitted = false;
     this.obstacles = this.tutorialActive
-      ? []
+      ? getTutorialObstacles(this.tutorialScenario)
       : generateObstacles(this.roomId, this.turn, red.position, blue.position);
 
     const now = Date.now();
@@ -431,6 +445,7 @@ export class GameRoom {
       }
 
       if (this.tutorialScenario === 'predict') {
+        const aiWasHit = ai.hp < 2;
         const initial = getInitialPositions();
         human.position = { ...initial[human.color] };
         ai.position = { ...initial[ai.color] };
@@ -439,9 +454,53 @@ export class GameRoom {
         human.pathSubmitted = false;
         ai.pathSubmitted = false;
         human.hp = 3;
+        ai.hp = 2;
         this.turn = 1;
         this.attackerColor = humanColor;
-        this.tutorialScenario = ai.hp < 2 ? 'freeplay' : 'predict';
+        this.tutorialScenario = aiWasHit ? 'predict_obstacle' : 'predict';
+        this.updateRoles();
+        this.touchActivity();
+        this.clearNextRoundTimeout();
+        this.nextRoundTimeout = setTimeout(() => {
+          this.nextRoundTimeout = null;
+          this.startRound();
+        }, 500);
+        return;
+      }
+
+      if (this.tutorialScenario === 'predict_obstacle') {
+        const aiWasHit = ai.hp < 2;
+        applyTutorialScenarioLayout(human, ai, 'predict_obstacle');
+        human.plannedPath = [];
+        ai.plannedPath = [];
+        human.pathSubmitted = false;
+        ai.pathSubmitted = false;
+        human.hp = 3;
+        ai.hp = aiWasHit ? 1 : 2;
+        this.turn = 1;
+        this.attackerColor = humanColor;
+        this.tutorialScenario = aiWasHit ? 'predict_wall' : 'predict_obstacle';
+        this.updateRoles();
+        this.touchActivity();
+        this.clearNextRoundTimeout();
+        this.nextRoundTimeout = setTimeout(() => {
+          this.nextRoundTimeout = null;
+          this.startRound();
+        }, 500);
+        return;
+      }
+
+      if (this.tutorialScenario === 'predict_wall') {
+        applyTutorialScenarioLayout(human, ai, 'predict_wall');
+        human.plannedPath = [];
+        ai.plannedPath = [];
+        human.pathSubmitted = false;
+        ai.pathSubmitted = false;
+        human.hp = 3;
+        ai.hp = 1;
+        this.turn = 1;
+        this.attackerColor = humanColor;
+        this.tutorialScenario = 'predict_wall';
         this.updateRoles();
         this.touchActivity();
         this.clearNextRoundTimeout();
@@ -572,6 +631,7 @@ export class GameRoom {
     this.pendingStart = false;
     this.pendingStartPaused = false;
     this.tutorialActive = false;
+    this.tutorialScenario = 'attack';
   }
 
   private resetPositions(): void {
@@ -697,6 +757,42 @@ export class GameRoom {
         return;
       }
 
+      if (this.tutorialScenario === 'predict_obstacle') {
+        aiPlayer.plannedPath =
+          aiPlayer.color === 'blue'
+            ? [
+                { row: aiPlayer.position.row, col: Math.max(0, aiPlayer.position.col - 1) },
+                { row: aiPlayer.position.row, col: Math.max(0, aiPlayer.position.col - 2) },
+                { row: Math.min(4, aiPlayer.position.row + 1), col: Math.max(0, aiPlayer.position.col - 2) },
+                { row: Math.min(4, aiPlayer.position.row + 2), col: Math.max(0, aiPlayer.position.col - 2) },
+              ]
+            : [
+                { row: aiPlayer.position.row, col: Math.min(4, aiPlayer.position.col + 1) },
+                { row: aiPlayer.position.row, col: Math.min(4, aiPlayer.position.col + 2) },
+                { row: Math.min(4, aiPlayer.position.row + 1), col: Math.min(4, aiPlayer.position.col + 2) },
+                { row: Math.min(4, aiPlayer.position.row + 2), col: Math.min(4, aiPlayer.position.col + 2) },
+              ];
+        aiPlayer.pathSubmitted = true;
+        this.touchActivity();
+        return;
+      }
+
+      if (this.tutorialScenario === 'predict_wall') {
+        aiPlayer.plannedPath =
+          aiPlayer.color === 'blue'
+            ? [
+                { row: Math.min(4, aiPlayer.position.row + 1), col: aiPlayer.position.col },
+                { row: Math.min(4, aiPlayer.position.row + 2), col: aiPlayer.position.col },
+              ]
+            : [
+                { row: Math.min(4, aiPlayer.position.row + 1), col: aiPlayer.position.col },
+                { row: Math.min(4, aiPlayer.position.row + 2), col: aiPlayer.position.col },
+              ];
+        aiPlayer.pathSubmitted = true;
+        this.touchActivity();
+        return;
+      }
+
       const initial = getInitialPositions();
       const escapeTarget = initial[opponentColor];
       aiPlayer.plannedPath = buildTutorialAiPath(aiPlayer.position, escapeTarget);
@@ -768,4 +864,38 @@ function buildTutorialAiPath(start: Position, end: Position): Position[] {
   }
 
   return path;
+}
+
+function getTutorialObstacles(scenario: TutorialScenario): Position[] {
+  if (scenario === 'predict_obstacle') {
+    return [{ row: 1, col: 3 }];
+  }
+  if (scenario === 'predict_wall') {
+    return [
+      { row: 2, col: 3 },
+      { row: 3, col: 3 },
+    ];
+  }
+  return [];
+}
+
+function applyTutorialScenarioLayout(
+  human: PlayerState,
+  ai: PlayerState,
+  scenario: TutorialScenario,
+): void {
+  const initial = getInitialPositions();
+  if (scenario === 'predict_obstacle') {
+    human.position = { row: 2, col: 2 };
+    ai.position = ai.color === 'blue' ? { row: 0, col: 4 } : { row: 0, col: 0 };
+    return;
+  }
+  if (scenario === 'predict_wall') {
+    human.position = { row: 2, col: 2 };
+    ai.position = ai.color === 'blue' ? { row: 2, col: 4 } : { row: 2, col: 0 };
+    return;
+  }
+
+  human.position = { ...initial[human.color] };
+  ai.position = { ...initial[ai.color] };
 }

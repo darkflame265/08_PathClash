@@ -19,7 +19,7 @@ const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
-type TutorialStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+type TutorialStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 function buildTutorialGuidePath(
   start: Position,
@@ -265,8 +265,34 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       setTutorialStep(9);
       return;
     }
-    if (roundInfo.tutorialScenario === "freeplay" && tutorialStep !== 0 && tutorialStep < 10) {
+    if (
+      roundInfo.tutorialScenario === "predict_obstacle" &&
+      tutorialStep < 10
+    ) {
       setTutorialStep(10);
+      return;
+    }
+    if (roundInfo.tutorialScenario === "predict_wall" && tutorialStep < 11) {
+      setTutorialStep(11);
+      return;
+    }
+    if (roundInfo.tutorialScenario === "freeplay" && tutorialStep !== 0 && tutorialStep < 12) {
+      setTutorialStep(12);
+      return;
+    }
+    if (
+      roundInfo.tutorialScenario === "predict_obstacle" &&
+      tutorialStep === 11
+    ) {
+      setTutorialStep(10);
+      return;
+    }
+    if (
+      roundInfo.tutorialScenario === "predict_wall" &&
+      tutorialStep === 12
+    ) {
+      setTutorialStep(11);
+      return;
     }
   }, [currentMatchType, roundInfo?.tutorialScenario, tutorialStep]);
 
@@ -337,7 +363,13 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   const tutorialInProgress = currentMatchType === "ai" && tutorialStep !== 0;
   const tutorialHintAnchor = useMemo(() => {
     if (!myColor || !roundInfo) return null;
-    if (tutorialStep === 7 || tutorialStep === 8 || tutorialStep === 9) {
+    if (
+      tutorialStep === 7 ||
+      tutorialStep === 8 ||
+      tutorialStep === 9 ||
+      tutorialStep === 10 ||
+      tutorialStep === 11
+    ) {
       return myColor === "red" ? roundInfo.redPosition : roundInfo.bluePosition;
     }
     return null;
@@ -451,6 +483,10 @@ export function GameScreen({ onLeaveToLobby }: Props) {
                   : tutorialStep === 8
                   ? t.escapeRoleDragTutorial
                   : tutorialStep === 9
+                  ? t.predictPathTutorial
+                  : tutorialStep === 10
+                  ? t.predictObstacleTutorial
+                  : tutorialStep === 11
                   ? t.predictPathTutorial
                   : null
             }

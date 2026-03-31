@@ -83,7 +83,13 @@ export interface RoundStartPayload {
   timeLimit: number;
   serverTime: number;
   roundEndsAt: number;
-  tutorialScenario?: 'attack' | 'escape' | 'predict' | 'freeplay';
+  tutorialScenario?:
+    | 'attack'
+    | 'escape'
+    | 'predict'
+    | 'predict_obstacle'
+    | 'predict_wall'
+    | 'freeplay';
 }
 
 // Client-safe version (no socketId)

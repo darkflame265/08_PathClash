@@ -15,7 +15,6 @@ import "./GameGrid.css";
 
 const DEFAULT_CELL_SIZE = 96;
 const GRID_SIZE = 5;
-const PRE_SUBMIT_LEAD_MS = 250;
 const PATH_UPDATE_THROTTLE_MS = 150;
 
 interface GridProps {
@@ -62,7 +61,6 @@ export function GameGrid({
     fromPiece: boolean;
     fromEnd: boolean;
   }>({ active: false, fromPiece: false, fromEnd: false });
-  const tutorialSubmitTimeoutRef = useRef<number | null>(null);
 
   const isPlanning = gameState?.phase === "planning";
   const myPos = myColor ? gameState?.players[myColor]?.position : null;
@@ -141,6 +139,39 @@ export function GameGrid({
     emitPathUpdate(pendingPathRef.current);
   }, [emitPathUpdate]);
 
+  const submitCurrentPath = useCallback(() => {
+    if (!myColor) return;
+    const state = useGameStore.getState();
+    const latestGameState = state.gameState;
+    if (!latestGameState || latestGameState.phase !== "planning") return;
+    if (latestGameState.players[myColor].pathSubmitted) return;
+
+    flushPendingPathUpdate();
+    getSocket().emit(
+      "submit_path",
+      { path: state.myPath },
+      ({ ok }: { ok: boolean }) => {
+        if (!ok) return;
+
+        const freshGameState = useGameStore.getState().gameState;
+        if (!freshGameState) return;
+
+        useGameStore.setState({
+          gameState: {
+            ...freshGameState,
+            players: {
+              ...freshGameState.players,
+              [myColor]: {
+                ...freshGameState.players[myColor],
+                pathSubmitted: true,
+              },
+            },
+          },
+        });
+      },
+    );
+  }, [flushPendingPathUpdate, myColor]);
+
   const addToPath = useCallback(
     (cell: Position) => {
       if (!isPlanning || !myPos) return;
@@ -149,18 +180,35 @@ export function GameGrid({
       if (isBlockedCell(cell, obstacles)) return;
       const lastPos = current.length > 0 ? current[current.length - 1] : myPos;
       if (isValidMove(lastPos, cell)) {
-        setMyPath([...current, cell]);
+        const nextPath = [...current, cell];
+        setMyPath(nextPath);
+        if (tutorialAutoSubmit && roundInfo?.timeLimit === 0) {
+          emitPathUpdate(nextPath);
+        }
       }
     },
-    [isPlanning, myPos, obstacles, pathPoints, setMyPath],
+    [
+      emitPathUpdate,
+      isPlanning,
+      myPos,
+      obstacles,
+      pathPoints,
+      roundInfo?.timeLimit,
+      setMyPath,
+      tutorialAutoSubmit,
+    ],
   );
 
   const removeFromPath = useCallback(() => {
     const current = useGameStore.getState().myPath;
     if (current.length > 0) {
-      setMyPath(current.slice(0, -1));
+      const nextPath = current.slice(0, -1);
+      setMyPath(nextPath);
+      if (tutorialAutoSubmit && roundInfo?.timeLimit === 0) {
+        emitPathUpdate(nextPath);
+      }
     }
-  }, [setMyPath]);
+  }, [emitPathUpdate, roundInfo?.timeLimit, setMyPath, tutorialAutoSubmit]);
 
   // Pointer handlers cover mouse and touch input with one path.
   const handlePointerDown = useCallback(
@@ -228,7 +276,11 @@ export function GameGrid({
           isValidMove(lastPos, cell) &&
           current.length < pathPoints
         ) {
-          setMyPath([...current, cell]);
+          const nextPath = [...current, cell];
+          setMyPath(nextPath);
+          if (tutorialAutoSubmit && roundInfo?.timeLimit === 0) {
+            emitPathUpdate(nextPath);
+          }
         }
       } else if (dragState.current.fromPiece) {
         // Add mode
@@ -236,6 +288,7 @@ export function GameGrid({
       }
     },
     [
+      emitPathUpdate,
       isPlanning,
       myPos,
       responsiveCellSize,
@@ -243,7 +296,9 @@ export function GameGrid({
       removeFromPath,
       obstacles,
       pathPoints,
+      roundInfo?.timeLimit,
       setMyPath,
+      tutorialAutoSubmit,
     ],
   );
 
@@ -252,10 +307,22 @@ export function GameGrid({
       if (e?.currentTarget.hasPointerCapture(e.pointerId)) {
         e.currentTarget.releasePointerCapture(e.pointerId);
       }
+      const shouldSubmitTutorialPath =
+        tutorialAutoSubmit &&
+        isPlanning &&
+        !!roundInfo &&
+        roundInfo.timeLimit <= 0 &&
+        !!myColor &&
+        !!gameState &&
+        !gameState.players[myColor].pathSubmitted &&
+        useGameStore.getState().myPath.length > 0;
       setHoveredCell(null);
       dragState.current = { active: false, fromPiece: false, fromEnd: false };
+      if (shouldSubmitTutorialPath) {
+        window.setTimeout(() => submitCurrentPath(), 0);
+      }
     },
-    [],
+    [gameState, isPlanning, myColor, roundInfo, submitCurrentPath, tutorialAutoSubmit],
   );
 
   // Keyboard handler
@@ -295,17 +362,32 @@ export function GameGrid({
 
       if (current.length >= pathPoints) return;
       if (isValidMove(lastPos, next)) {
-        setMyPath([...current, next]);
+        const nextPath = [...current, next];
+        setMyPath(nextPath);
+        if (tutorialAutoSubmit && roundInfo?.timeLimit === 0) {
+          emitPathUpdate(nextPath);
+        }
       }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [isPlanning, myPos, obstacles, pathPoints, removeFromPath, setMyPath]);
+  }, [
+    emitPathUpdate,
+    isPlanning,
+    myPos,
+    obstacles,
+    pathPoints,
+    removeFromPath,
+    roundInfo?.timeLimit,
+    setMyPath,
+    tutorialAutoSubmit,
+  ]);
 
   useEffect(() => {
     pendingPathRef.current = myPath;
     if (!isPlanning || !myColor || !gameState) return;
     if (gameState.players[myColor].pathSubmitted) return;
+    if (tutorialAutoSubmit && roundInfo?.timeLimit === 0) return;
 
     const elapsed = Date.now() - lastPathUpdateAtRef.current;
     if (elapsed >= PATH_UPDATE_THROTTLE_MS) {
@@ -321,15 +403,20 @@ export function GameGrid({
       pendingPathUpdateRef.current = null;
       emitPathUpdate(pendingPathRef.current);
     }, PATH_UPDATE_THROTTLE_MS - elapsed);
-  }, [emitPathUpdate, gameState, isPlanning, myColor, myPath]);
+  }, [
+    emitPathUpdate,
+    gameState,
+    isPlanning,
+    myColor,
+    myPath,
+    roundInfo?.timeLimit,
+    tutorialAutoSubmit,
+  ]);
 
   useEffect(() => {
     return () => {
       if (pendingPathUpdateRef.current !== null) {
         window.clearTimeout(pendingPathUpdateRef.current);
-      }
-      if (tutorialSubmitTimeoutRef.current !== null) {
-        window.clearTimeout(tutorialSubmitTimeoutRef.current);
       }
     };
   }, []);
@@ -341,134 +428,16 @@ export function GameGrid({
     if (gameState.players[myColor].pathSubmitted) return;
 
     const submitAtMs = roundInfo.serverTime + roundInfo.timeLimit * 1000;
-    const preSubmitDelayMs = Math.max(
-      0,
-      submitAtMs - Date.now() - PRE_SUBMIT_LEAD_MS,
-    );
     const finalSubmitDelayMs = Math.max(0, submitAtMs - Date.now());
-
-    const submitCurrentPath = () => {
-      const state = useGameStore.getState();
-      const latestGameState = state.gameState;
-      if (!latestGameState || latestGameState.phase !== "planning") return;
-      if (latestGameState.players[myColor].pathSubmitted) return;
-
-      flushPendingPathUpdate();
-      getSocket().emit(
-        "submit_path",
-        { path: state.myPath },
-        ({ ok }: { ok: boolean }) => {
-          if (!ok) return;
-
-          const freshGameState = useGameStore.getState().gameState;
-          if (!freshGameState) return;
-
-          useGameStore.setState({
-            gameState: {
-              ...freshGameState,
-              players: {
-                ...freshGameState.players,
-                [myColor]: {
-                  ...freshGameState.players[myColor],
-                  pathSubmitted: true,
-                },
-              },
-            },
-          });
-        },
-      );
-    };
-
-    const preSubmitTimeoutId = window.setTimeout(() => {
-      submitCurrentPath();
-    }, preSubmitDelayMs);
 
     const finalSubmitTimeoutId = window.setTimeout(() => {
       submitCurrentPath();
     }, finalSubmitDelayMs);
 
     return () => {
-      window.clearTimeout(preSubmitTimeoutId);
       window.clearTimeout(finalSubmitTimeoutId);
     };
-  }, [flushPendingPathUpdate, isPlanning, myColor, roundInfo, gameState]);
-
-  useEffect(() => {
-    if (
-      !tutorialAutoSubmit ||
-      !isPlanning ||
-      !myColor ||
-      !roundInfo ||
-      !gameState ||
-      roundInfo.timeLimit > 0
-    ) {
-      if (tutorialSubmitTimeoutRef.current !== null) {
-        window.clearTimeout(tutorialSubmitTimeoutRef.current);
-        tutorialSubmitTimeoutRef.current = null;
-      }
-      return;
-    }
-
-    if (gameState.players[myColor].pathSubmitted || myPath.length === 0) {
-      if (tutorialSubmitTimeoutRef.current !== null) {
-        window.clearTimeout(tutorialSubmitTimeoutRef.current);
-        tutorialSubmitTimeoutRef.current = null;
-      }
-      return;
-    }
-
-    if (tutorialSubmitTimeoutRef.current !== null) {
-      window.clearTimeout(tutorialSubmitTimeoutRef.current);
-    }
-
-    tutorialSubmitTimeoutRef.current = window.setTimeout(() => {
-      tutorialSubmitTimeoutRef.current = null;
-      const state = useGameStore.getState();
-      const latestGameState = state.gameState;
-      if (!latestGameState || latestGameState.phase !== "planning") return;
-      if (latestGameState.players[myColor].pathSubmitted) return;
-
-      flushPendingPathUpdate();
-      getSocket().emit(
-        "submit_path",
-        { path: state.myPath },
-        ({ ok }: { ok: boolean }) => {
-          if (!ok) return;
-
-          const freshGameState = useGameStore.getState().gameState;
-          if (!freshGameState) return;
-
-          useGameStore.setState({
-            gameState: {
-              ...freshGameState,
-              players: {
-                ...freshGameState.players,
-                [myColor]: {
-                  ...freshGameState.players[myColor],
-                  pathSubmitted: true,
-                },
-              },
-            },
-          });
-        },
-      );
-    }, 550);
-
-    return () => {
-      if (tutorialSubmitTimeoutRef.current !== null) {
-        window.clearTimeout(tutorialSubmitTimeoutRef.current);
-        tutorialSubmitTimeoutRef.current = null;
-      }
-    };
-  }, [
-    flushPendingPathUpdate,
-    gameState,
-    isPlanning,
-    myColor,
-    myPath,
-    roundInfo,
-    tutorialAutoSubmit,
-  ]);
+  }, [gameState, isPlanning, myColor, roundInfo, submitCurrentPath]);
 
   const cells = Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, i) => ({
     row: Math.floor(i / GRID_SIZE),
