@@ -35,6 +35,16 @@ type TutorialScenario =
   | "chain_attack"
   | "freeplay";
 
+function getTutorialAttackerColor(
+  scenario: TutorialScenario,
+  humanColor: PlayerColor,
+  aiColor: PlayerColor,
+): PlayerColor {
+  return scenario === "escape" || scenario === "overlap_escape"
+    ? aiColor
+    : humanColor;
+}
+
 export class GameRoom {
   readonly roomId: string;
   readonly code: string;
@@ -259,6 +269,12 @@ export class GameRoom {
       const ai = this.players.get(this.aiColor);
       if (human && ai) {
         applyTutorialScenarioLayout(human, ai, this.tutorialScenario);
+        this.attackerColor = getTutorialAttackerColor(
+          this.tutorialScenario,
+          humanColor,
+          this.aiColor,
+        );
+        this.updateRoles();
       }
     }
     red.plannedPath = [];
@@ -565,8 +581,12 @@ export class GameRoom {
         human.hp = 3;
         ai.hp = 3;
         this.turn = 1;
-        this.attackerColor = humanColor;
         this.tutorialScenario = aiWasHit ? "overlap_escape" : "predict_wall";
+        this.attackerColor = getTutorialAttackerColor(
+          this.tutorialScenario,
+          humanColor,
+          this.aiColor,
+        );
         this.updateRoles();
         this.touchActivity();
         this.clearNextRoundTimeout();
@@ -588,8 +608,12 @@ export class GameRoom {
         human.hp = 3;
         ai.hp = 3;
         this.turn = 1;
-        this.attackerColor = this.aiColor;
         this.tutorialScenario = escapedSuccessfully ? "chain_attack" : "overlap_escape";
+        this.attackerColor = getTutorialAttackerColor(
+          this.tutorialScenario,
+          humanColor,
+          this.aiColor,
+        );
         this.updateRoles();
         this.touchActivity();
         this.clearNextRoundTimeout();
@@ -610,8 +634,12 @@ export class GameRoom {
         human.hp = 3;
         ai.hp = 3;
         this.turn = 1;
-        this.attackerColor = humanColor;
         this.tutorialScenario = aiDiedInOneRound ? "freeplay" : "chain_attack";
+        this.attackerColor = getTutorialAttackerColor(
+          this.tutorialScenario,
+          humanColor,
+          this.aiColor,
+        );
         this.updateRoles();
         this.touchActivity();
         this.clearNextRoundTimeout();

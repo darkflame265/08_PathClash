@@ -7,6 +7,11 @@ const ServerTimer_1 = require("./ServerTimer");
 const playerAuth_1 = require("../services/playerAuth");
 const PLANNING_TIME_MS = 7000;
 const SUBMIT_GRACE_MS = 350;
+function getTutorialAttackerColor(scenario, humanColor, aiColor) {
+    return scenario === "escape" || scenario === "overlap_escape"
+        ? aiColor
+        : humanColor;
+}
 class GameRoom {
     constructor(roomId, code, io, matchType) {
         this.createdAt = Date.now();
@@ -186,6 +191,8 @@ class GameRoom {
             const ai = this.players.get(this.aiColor);
             if (human && ai) {
                 applyTutorialScenarioLayout(human, ai, this.tutorialScenario);
+                this.attackerColor = getTutorialAttackerColor(this.tutorialScenario, humanColor, this.aiColor);
+                this.updateRoles();
             }
         }
         red.plannedPath = [];
@@ -463,8 +470,8 @@ class GameRoom {
                 human.hp = 3;
                 ai.hp = 3;
                 this.turn = 1;
-                this.attackerColor = humanColor;
                 this.tutorialScenario = aiWasHit ? "overlap_escape" : "predict_wall";
+                this.attackerColor = getTutorialAttackerColor(this.tutorialScenario, humanColor, this.aiColor);
                 this.updateRoles();
                 this.touchActivity();
                 this.clearNextRoundTimeout();
@@ -485,8 +492,8 @@ class GameRoom {
                 human.hp = 3;
                 ai.hp = 3;
                 this.turn = 1;
-                this.attackerColor = this.aiColor;
                 this.tutorialScenario = escapedSuccessfully ? "chain_attack" : "overlap_escape";
+                this.attackerColor = getTutorialAttackerColor(this.tutorialScenario, humanColor, this.aiColor);
                 this.updateRoles();
                 this.touchActivity();
                 this.clearNextRoundTimeout();
@@ -506,8 +513,8 @@ class GameRoom {
                 human.hp = 3;
                 ai.hp = 3;
                 this.turn = 1;
-                this.attackerColor = humanColor;
                 this.tutorialScenario = aiDiedInOneRound ? "freeplay" : "chain_attack";
+                this.attackerColor = getTutorialAttackerColor(this.tutorialScenario, humanColor, this.aiColor);
                 this.updateRoles();
                 this.touchActivity();
                 this.clearNextRoundTimeout();
