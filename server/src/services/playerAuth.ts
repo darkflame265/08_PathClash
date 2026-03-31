@@ -1,5 +1,12 @@
 import type { PieceSkin } from '../types/game.types';
 import { supabaseAdmin } from '../lib/supabase';
+import {
+  listPlayerAchievements,
+  mergePlayerAchievements,
+  recordDailyRewardGrant,
+  syncAchievementDerivedProgress,
+  type PlayerAchievementState,
+} from './achievementService';
 
 export interface AuthPayload {
   accessToken?: string;
@@ -25,6 +32,7 @@ export interface AccountProfile {
   dailyRewardWins: number;
   dailyRewardTokens: number;
   isGuestUser: boolean;
+  achievements: PlayerAchievementState[];
 }
 
 export type ResolveAccountResponse =
@@ -102,20 +110,28 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
   ]);
   const nickname = profileResult?.data?.nickname?.trim() || fallbackNickname;
   const dailyRewardWins = getActiveDailyRewardWins(statsResult?.data);
+  const ownedSkins = (ownedSkinsResult?.data ?? [])
+    .map((row) => row.skin_id)
+    .filter((skin): skin is PieceSkin => Boolean(skin));
+
+  await syncAchievementDerivedProgress({
+    userId,
+    ownedSkins,
+  });
+  const achievements = await listPlayerAchievements(userId);
 
   return {
     userId,
     nickname,
     equippedSkin: profileResult?.data?.equipped_skin ?? 'classic',
-    ownedSkins: (ownedSkinsResult?.data ?? [])
-      .map((row) => row.skin_id)
-      .filter((skin): skin is PieceSkin => Boolean(skin)),
+    ownedSkins,
     wins: statsResult?.data?.wins ?? 0,
     losses: statsResult?.data?.losses ?? 0,
     tokens: statsResult?.data?.tokens ?? 0,
     dailyRewardWins,
     dailyRewardTokens: dailyRewardWins * DAILY_REWARD_TOKENS_PER_WIN,
     isGuestUser,
+    achievements,
   };
 }
 
@@ -249,6 +265,11 @@ export async function recordMatchmakingResult(
 
   if (upsertError) {
     console.error('[supabase] failed to upsert player_stats', upsertError);
+    return;
+  }
+
+  if (winnerEarnedReward) {
+    await recordDailyRewardGrant([winnerUserId], 1);
   }
 }
 
@@ -319,7 +340,10 @@ export async function grantDailyRewardTokens(
 
   if (upsertError) {
     console.error('[supabase] failed to grant daily reward tokens', upsertError);
+    return;
   }
+
+  await recordDailyRewardGrant(normalizedUserIds, rewardWins);
 }
 
 export async function finalizeGoogleUpgrade(
@@ -473,6 +497,8 @@ export async function finalizeGoogleUpgrade(
   if (clearGuestOwnedSkinsError) {
     console.error('[supabase] failed to clear guest owned skins after upgrade', clearGuestOwnedSkinsError);
   }
+
+  await mergePlayerAchievements(guestUser.id, targetUser.id);
 
   const profile = await readAccountProfile(targetUser.id, adoptedNickname, false);
   return {

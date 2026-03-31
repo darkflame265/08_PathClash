@@ -11,6 +11,7 @@ const AbilityRoom_1 = require("../game/ability/AbilityRoom");
 const AbilityRoomStore_1 = require("../store/AbilityRoomStore");
 const appVersion_1 = require("../config/appVersion");
 const playerAuth_1 = require("../services/playerAuth");
+const achievementService_1 = require("../services/achievementService");
 function initSocketServer(io) {
     const store = RoomStore_1.RoomStore.getInstance();
     const coopStore = CoopRoomStore_1.CoopRoomStore.getInstance();
@@ -406,6 +407,45 @@ function initSocketServer(io) {
             await registerSocketSession(socket, auth, { forceRevalidate: true });
             ack?.(await (0, playerAuth_1.resolveAccount)(auth));
         });
+        socket.on('achievements_claim', async ({ auth, achievementId }, ack) => {
+            const requirement = getUpdateRequirement(socket, auth);
+            if (requirement?.forceUpdate) {
+                socket.emit('update_required', requirement);
+                ack?.({ status: 'UPDATE_REQUIRED', ...requirement });
+                return;
+            }
+            const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
+            if (userId && achievementId) {
+                await (0, achievementService_1.claimAchievementReward)(userId, achievementId);
+            }
+            ack?.(await (0, playerAuth_1.resolveAccount)(auth));
+        });
+        socket.on('achievements_claim_all', async ({ auth }, ack) => {
+            const requirement = getUpdateRequirement(socket, auth);
+            if (requirement?.forceUpdate) {
+                socket.emit('update_required', requirement);
+                ack?.({ status: 'UPDATE_REQUIRED', ...requirement });
+                return;
+            }
+            const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
+            if (userId) {
+                await (0, achievementService_1.claimAllAchievementRewards)(userId);
+            }
+            ack?.(await (0, playerAuth_1.resolveAccount)(auth));
+        });
+        socket.on('achievements_sync_settings', async ({ auth, isMusicMuted, isSfxMuted, musicVolumePercent, sfxVolumePercent, }, ack) => {
+            const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
+            if (userId) {
+                await (0, achievementService_1.trackSettingsAchievements)({
+                    userId,
+                    isMusicMuted,
+                    isSfxMuted,
+                    musicVolumePercent,
+                    sfxVolumePercent,
+                });
+            }
+            ack?.({ ok: true });
+        });
         socket.on('finalize_google_upgrade', async ({ auth, guestAuth, guestProfile, flowStartedAt, allowExistingSwitch, }, ack) => {
             await registerSocketSession(socket, auth, { forceRevalidate: true });
             ack?.(await (0, playerAuth_1.finalizeGoogleUpgrade)(auth, guestAuth, guestProfile, flowStartedAt, Boolean(allowExistingSwitch)));
@@ -625,6 +665,11 @@ function initSocketServer(io) {
                 disconnectResult.winnerColor) {
                 const winner = room.getPlayerByColor(disconnectResult.winnerColor);
                 void (0, playerAuth_1.recordMatchmakingResult)(winner?.userId ?? null, socket.data.userId ?? null);
+                void (0, achievementService_1.recordMatchPlayed)({
+                    userIds: [winner?.userId ?? null, socket.data.userId ?? null],
+                    matchType: 'duel',
+                });
+                void (0, achievementService_1.recordModeWin)({ userId: winner?.userId ?? null, mode: 'duel' });
             }
             if (room && room.playerCount > 0) {
                 io.to(room.roomId).emit('opponent_disconnected', {});
@@ -641,6 +686,16 @@ function initSocketServer(io) {
                 const winner = abilityRoom.room.getPlayerByColor(abilityRoom.disconnectResult.winnerColor);
                 void (0, playerAuth_1.recordMatchmakingResult)(winner?.userId ?? null, socket.data.userId ?? null);
                 void (0, playerAuth_1.grantDailyRewardTokens)([winner?.userId ?? null], 6);
+                void (0, achievementService_1.recordMatchPlayed)({
+                    userIds: [winner?.userId ?? null, socket.data.userId ?? null],
+                    matchType: 'ability',
+                });
+                void (0, achievementService_1.recordModeWin)({ userId: winner?.userId ?? null, mode: 'ability' });
+                void (0, achievementService_1.recordAbilitySpecialWin)({
+                    winnerUserId: winner?.userId ?? null,
+                    winnerHp: winner?.hp ?? 0,
+                    disconnectWin: true,
+                });
             }
             if (abilityRoom.room && abilityRoom.room.playerCount > 0) {
                 io.to(abilityRoom.room.roomId).emit('opponent_disconnected', {});

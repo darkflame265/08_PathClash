@@ -11,9 +11,18 @@ import {
 import { ServerTimer } from '../ServerTimer';
 import { grantDailyRewardTokens, recordMatchmakingResult } from '../../services/playerAuth';
 import {
+  recordAbilityBlockEvents,
+  recordAbilitySkillFinish,
+  recordAbilitySpecialWin,
+  recordAbilityUtilityUsage,
+  recordMatchPlayed,
+  recordModeWin,
+} from '../../services/achievementService';
+import {
   ABILITY_SKILL_COSTS,
   ABILITY_SKILL_SERVER_RULES,
   type AbilityBattleState,
+  type AbilityResolutionPayload,
   type AbilityLavaTile,
   type AbilityPlayerState,
   type AbilityRoundStartPayload,
@@ -29,6 +38,73 @@ const MAX_MANA = 10;
 const MANA_PER_TURN = 2;
 const SKILL_EVENT_BUFFER_MS = 1100;
 const OVERDRIVE_MANA = 20;
+
+function collectUtilitySkillUsageByUser(
+  players: Map<PlayerColor, AbilityPlayerState>,
+  skillEvents: Array<{ color: PlayerColor; skillId: AbilitySkillId }>,
+): Record<string, string[]> {
+  const usage = new Map<string, string[]>();
+  for (const event of skillEvents) {
+    if (
+      event.skillId !== 'aurora_heal' &&
+      event.skillId !== 'quantum_shift' &&
+      event.skillId !== 'plasma_charge' &&
+      event.skillId !== 'void_cloak' &&
+      event.skillId !== 'phase_shift' &&
+      event.skillId !== 'gold_overdrive'
+    ) {
+      continue;
+    }
+    const userId = players.get(event.color)?.userId;
+    if (!userId) continue;
+    const current = usage.get(userId) ?? [];
+    current.push(event.skillId);
+    usage.set(userId, current);
+  }
+  return Object.fromEntries(usage);
+}
+
+function collectBlockEventsByUser(
+  players: Map<PlayerColor, AbilityPlayerState>,
+  blocks: Array<{ color: PlayerColor; skillId: 'classic_guard' | 'arc_reactor_field' }>,
+): Record<string, Array<'classic_guard' | 'arc_reactor_field'>> {
+  const result = new Map<string, Array<'classic_guard' | 'arc_reactor_field'>>();
+  for (const block of blocks) {
+    const userId = players.get(block.color)?.userId;
+    if (!userId) continue;
+    const current = result.get(userId) ?? [];
+    current.push(block.skillId);
+    result.set(userId, current);
+  }
+  return Object.fromEntries(result);
+}
+
+function findFinisherSkillId(
+  loserColor: PlayerColor,
+  skillEvents: Array<{
+    skillId: AbilitySkillId;
+    damages?: Array<{ color: PlayerColor; newHp: number }>;
+  }>,
+): AbilitySkillId | null {
+  for (let index = skillEvents.length - 1; index >= 0; index -= 1) {
+    const event = skillEvents[index];
+    const killedTarget = event.damages?.some(
+      (damage) => damage.color === loserColor && damage.newHp <= 0,
+    );
+    if (!killedTarget) continue;
+    if (
+      event.skillId === 'ember_blast' ||
+      event.skillId === 'atomic_fission' ||
+      event.skillId === 'inferno_field' ||
+      event.skillId === 'nova_blast' ||
+      event.skillId === 'electric_blitz' ||
+      event.skillId === 'cosmic_bigbang'
+    ) {
+      return event.skillId;
+    }
+  }
+  return null;
+}
 
 function posEqual(a: Position, b: Position): boolean {
   return a.row === b.row && a.col === b.col;
@@ -525,6 +601,15 @@ export class AbilityRoom {
 
     this.touchActivity();
     this.io.to(this.roomId).emit('ability_resolution', resolution.payload);
+    void recordAbilityUtilityUsage({
+      byUserId: collectUtilitySkillUsageByUser(
+        this.players,
+        resolution.payload.skillEvents,
+      ),
+    });
+    void recordAbilityBlockEvents({
+      byUserId: collectBlockEventsByUser(this.players, resolution.payload.blocks),
+    });
 
     const animTime = calcAnimationDuration(
       Math.max(red.plannedPath.length, blue.plannedPath.length) + resolution.payload.skillEvents.length,
@@ -533,24 +618,45 @@ export class AbilityRoom {
     this.clearMovingCompleteTimeout();
     this.movingCompleteTimeout = setTimeout(() => {
       this.movingCompleteTimeout = null;
-      this.onMovingComplete(resolution.winner);
+      this.onMovingComplete(resolution.winner, resolution.payload);
     }, animTime);
   }
 
-  private onMovingComplete(winner: PlayerColor | 'draw' | null): void {
+  private onMovingComplete(
+    winner: PlayerColor | 'draw' | null,
+    resolutionPayload?: AbilityResolutionPayload,
+  ): void {
     if (this.phase !== 'moving') return;
     if (!this.hasBothPlayers()) return;
+
+    void recordMatchPlayed({
+      userIds: [...this.players.values()].map((player) => player.userId),
+      matchType: 'ability',
+    });
 
     if (winner) {
       this.phase = 'gameover';
       if (winner !== 'draw' && !this.rewardsGranted) {
         const loserColor: PlayerColor = winner === 'red' ? 'blue' : 'red';
+        const winnerUserId = this.players.get(winner)?.userId ?? null;
         this.players.get(winner)!.stats.wins += 1;
         this.players.get(loserColor)!.stats.losses += 1;
-        void recordMatchmakingResult(this.players.get(winner)?.userId ?? null, this.players.get(loserColor)?.userId ?? null);
+        void recordMatchmakingResult(winnerUserId, this.players.get(loserColor)?.userId ?? null);
         void Promise.all([
-          grantDailyRewardTokens([this.players.get(winner)?.userId ?? null], 6),
+          grantDailyRewardTokens([winnerUserId], 6),
         ]);
+        void recordModeWin({ userId: winnerUserId, mode: 'ability' });
+        void recordAbilitySpecialWin({
+          winnerUserId,
+          winnerHp: this.players.get(winner)?.hp ?? 0,
+          disconnectWin: false,
+        });
+        void recordAbilitySkillFinish({
+          winnerUserId,
+          finisherSkillId: resolutionPayload
+            ? findFinisherSkillId(loserColor, resolutionPayload.skillEvents)
+            : null,
+        });
         this.rewardsGranted = true;
       }
       this.touchActivity();

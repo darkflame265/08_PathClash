@@ -7,6 +7,7 @@ import {
   installNativeAuthCallbackHandler,
   logoutToGuestMode,
   onAuthStateChanged,
+  syncAchievementSettings,
   syncEquippedSkin,
   syncNickname,
 } from "./auth/guestAuth";
@@ -67,7 +68,9 @@ function App() {
     pieceSkin,
     setAuthState,
     isMusicMuted,
+    isSfxMuted,
     musicVolume,
+    sfxVolume,
   } = useGameStore();
   const { lang } = useLang();
   const nicknameSyncTimeoutRef = useRef<number | null>(null);
@@ -164,6 +167,27 @@ function App() {
     if (!authReady) return;
     void syncEquippedSkin(pieceSkin);
   }, [authReady, pieceSkin]);
+
+  useEffect(() => {
+    if (!authReady || !authAccessToken) return;
+    const timeoutId = window.setTimeout(() => {
+      void syncAchievementSettings({
+        isMusicMuted,
+        isSfxMuted,
+        musicVolume,
+        sfxVolume,
+      });
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    authAccessToken,
+    authReady,
+    isMusicMuted,
+    isSfxMuted,
+    musicVolume,
+    sfxVolume,
+  ]);
 
   useEffect(() => {
     const socket = getSocket();

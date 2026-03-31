@@ -44,6 +44,22 @@ create table if not exists public.owned_skins (
   primary key (user_id, skin_id)
 );
 
+create table if not exists public.player_achievements (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  achievement_id text not null,
+  progress integer not null default 0,
+  completed boolean not null default false,
+  claimed boolean not null default false,
+  completed_at timestamptz null,
+  claimed_at timestamptz null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (user_id, achievement_id)
+);
+
+create index if not exists idx_player_achievements_claimable
+on public.player_achievements (user_id, completed, claimed);
+
 update public.owned_skins
 set skin_id = 'atomic'
 where skin_id = 'crystal';
@@ -196,6 +212,7 @@ alter table public.profiles enable row level security;
 alter table public.player_stats enable row level security;
 alter table public.account_merges enable row level security;
 alter table public.owned_skins enable row level security;
+alter table public.player_achievements enable row level security;
 alter table public.google_play_token_purchases enable row level security;
 
 drop policy if exists "profiles_select_own" on public.profiles;
@@ -232,6 +249,12 @@ using (auth.uid() = source_user_id or auth.uid() = target_user_id);
 drop policy if exists "owned_skins_select_own" on public.owned_skins;
 create policy "owned_skins_select_own"
 on public.owned_skins
+for select
+using (auth.uid() = user_id);
+
+drop policy if exists "player_achievements_select_own" on public.player_achievements;
+create policy "player_achievements_select_own"
+on public.player_achievements
 for select
 using (auth.uid() = user_id);
 

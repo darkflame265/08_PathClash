@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlagSkin, isFlagSkin } from "../shared/FlagSkin";
 import { AtomicPreview } from "../../skins/legendary/atomic/Preview";
 import { CosmicPreview } from "../../skins/rare/cosmic/Preview";
@@ -11,16 +11,24 @@ import { QuantumPreview } from "../../skins/common/quantum/Preview";
 import { ElectricCorePreview } from "../../skins/rare/electric_core/Preview";
 import {
   cancelPendingGoogleUpgradeSwitch,
+  claimAchievementReward,
+  claimAllAchievementRewards,
   confirmPendingGoogleUpgradeSwitch,
   getSocketAuthPayload,
   linkGoogleAccount,
   logoutToGuestMode,
   purchaseSkinWithTokens,
   refreshAccountSummary,
+  type PlayerAchievementState,
   resolveUpgradeFlowAfterRedirect,
   type AccountProfile,
   type UpgradeResolution,
 } from "../../auth/guestAuth";
+import {
+  ACHIEVEMENT_CATALOG,
+  type AchievementCatalogEntry,
+  type AchievementCategory,
+} from "../../achievements/achievementCatalog";
 import { startDonation } from "../../payments/donate";
 import { startTokenPackPurchase, type TokenPackId } from "../../payments/tokenShop";
 import { connectSocket, disconnectSocket } from "../../socket/socketClient";
@@ -63,6 +71,243 @@ type SetAuthState = ReturnType<typeof useGameStore.getState>["setAuthState"];
 type PatchNoteChange = "buff" | "nerf";
 type PatchNoteLine = { text: string; change?: PatchNoteChange; label?: string };
 type PatchNoteSection = { heading: string; lines: PatchNoteLine[] };
+type AchievementView = AchievementCatalogEntry & {
+  progress: number;
+  completed: boolean;
+  claimed: boolean;
+  completedAt: string | null;
+  claimedAt: string | null;
+};
+
+const ACHIEVEMENT_CATEGORY_ORDER: AchievementCategory[] = [
+  "tutorial",
+  "progress",
+  "mode_win",
+  "collection",
+  "settings",
+  "ability_special",
+  "ability_attack",
+  "ability_defense",
+  "ability_utility",
+];
+
+function getAchievementCategoryLabel(
+  category: AchievementCategory,
+  lang: "en" | "kr",
+) {
+  if (lang === "en") {
+    switch (category) {
+      case "tutorial":
+        return "Tutorial";
+      case "progress":
+        return "Progress";
+      case "mode_win":
+        return "Mode Wins";
+      case "collection":
+        return "Collection";
+      case "settings":
+        return "Settings";
+      case "ability_special":
+        return "Ability Special";
+      case "ability_attack":
+        return "Ability Attack";
+      case "ability_defense":
+        return "Ability Defense";
+      case "ability_utility":
+        return "Ability Utility";
+      default:
+        return category;
+    }
+  }
+
+  switch (category) {
+    case "tutorial":
+      return "튜토리얼";
+    case "progress":
+      return "진행";
+    case "mode_win":
+      return "모드 승리";
+    case "collection":
+      return "수집";
+    case "settings":
+      return "설정";
+    case "ability_special":
+      return "능력대전 특수";
+    case "ability_attack":
+      return "능력대전 공격";
+    case "ability_defense":
+      return "능력대전 방어";
+    case "ability_utility":
+      return "능력대전 유틸";
+    default:
+      return category;
+  }
+}
+
+function buildAchievementViews(
+  progressRows: PlayerAchievementState[],
+): AchievementView[] {
+  const progressById = new Map(
+    progressRows.map((row) => [row.achievementId, row] as const),
+  );
+
+  return ACHIEVEMENT_CATALOG.map((entry) => {
+    const progress = progressById.get(entry.id);
+    return {
+      ...entry,
+      progress: progress?.progress ?? 0,
+      completed: progress?.completed ?? false,
+      claimed: progress?.claimed ?? false,
+      completedAt: progress?.completedAt ?? null,
+      claimedAt: progress?.claimedAt ?? null,
+    };
+  }).sort((left, right) => {
+    const categoryDelta =
+      ACHIEVEMENT_CATEGORY_ORDER.indexOf(left.category) -
+      ACHIEVEMENT_CATEGORY_ORDER.indexOf(right.category);
+    if (categoryDelta !== 0) return categoryDelta;
+    if (left.claimed !== right.claimed) return left.claimed ? 1 : -1;
+    if (left.completed !== right.completed) return left.completed ? -1 : 1;
+    if (left.goal !== right.goal) return left.goal - right.goal;
+    return left.id.localeCompare(right.id);
+  });
+}
+
+function AchievementModal({
+  lang,
+  achievements,
+  isClaiming,
+  onClaim,
+  onClaimAll,
+  onClose,
+}: {
+  lang: "en" | "kr";
+  achievements: AchievementView[];
+  isClaiming: boolean;
+  onClaim: (achievementId: string) => void;
+  onClaimAll: () => void;
+  onClose: () => void;
+}) {
+  const claimableCount = achievements.filter(
+    (achievement) => achievement.completed && !achievement.claimed,
+  ).length;
+  const grouped = ACHIEVEMENT_CATEGORY_ORDER.map((category) => ({
+    category,
+    entries: achievements.filter((achievement) => achievement.category === category),
+  })).filter((group) => group.entries.length > 0);
+
+  return (
+    <div className="upgrade-modal-backdrop" onClick={onClose}>
+      <div
+        className="upgrade-modal skin-modal achievements-modal"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="skin-modal-head achievements-head">
+          <div>
+            <h3>{lang === "en" ? "Achievements" : "업적"}</h3>
+            <p className="achievements-desc">
+              {lang === "en"
+                ? "Complete goals, then claim your token rewards here."
+                : "조건을 달성한 뒤 여기서 토큰 보상을 획득하세요."}
+            </p>
+          </div>
+          <button
+            className="lobby-btn primary achievements-claim-all-btn"
+            type="button"
+            onClick={onClaimAll}
+            disabled={isClaiming || claimableCount === 0}
+          >
+            {lang === "en"
+              ? `Claim All${claimableCount > 0 ? ` (${claimableCount})` : ""}`
+              : `모든 보상 획득${claimableCount > 0 ? ` (${claimableCount})` : ""}`}
+          </button>
+        </div>
+
+        <div className="achievements-scroll-body">
+          {grouped.map((group) => (
+            <section key={group.category} className="achievements-section">
+              <h4 className="achievements-section-title">
+                {getAchievementCategoryLabel(group.category, lang)}
+              </h4>
+              <div className="achievements-list">
+                {group.entries.map((achievement) => {
+                  const progressText = `${Math.min(
+                    achievement.progress,
+                    achievement.goal,
+                  )}/${achievement.goal}`;
+                  const rewardLabel =
+                    lang === "en"
+                      ? achievement.claimed
+                        ? "Claimed"
+                        : achievement.completed
+                          ? "Claim"
+                          : "Locked"
+                      : achievement.claimed
+                        ? "획득 완료"
+                        : achievement.completed
+                          ? "획득"
+                          : "잠김";
+
+                  return (
+                    <article
+                      key={achievement.id}
+                      className={`achievement-card${
+                        achievement.completed ? " is-completed" : ""
+                      }${achievement.claimed ? " is-claimed" : ""}`}
+                    >
+                      <div className="achievement-copy">
+                        <strong>
+                          {lang === "en"
+                            ? achievement.name.en
+                            : achievement.name.kr}
+                        </strong>
+                        <span>
+                          {lang === "en"
+                            ? achievement.description.en
+                            : achievement.description.kr}
+                        </span>
+                        <span className="achievement-progress">
+                          {lang === "en" ? "Progress" : "진행도"}: {progressText}
+                        </span>
+                      </div>
+                      <button
+                        className={`achievement-claim-btn${
+                          achievement.claimed ? " is-claimed" : ""
+                        }`}
+                        type="button"
+                        disabled={
+                          isClaiming ||
+                          achievement.claimed ||
+                          !achievement.completed
+                        }
+                        onClick={() => onClaim(achievement.id)}
+                      >
+                        <span className="achievement-reward-value">
+                          <span
+                            className="achievement-reward-icon"
+                            aria-hidden="true"
+                          />
+                          <span>{achievement.rewardTokens}</span>
+                        </span>
+                        <span>{rewardLabel}</span>
+                      </button>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+
+        <div className="upgrade-modal-actions">
+          <button className="lobby-btn primary" onClick={onClose} type="button">
+            {lang === "en" ? "Close" : "닫기"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function getUtcDayKey(now = new Date()) {
   return now.toISOString().slice(0, 10);
@@ -98,6 +343,7 @@ function applyProfileToStore(
     tokens: profile.tokens,
     dailyRewardWins: profile.dailyRewardWins,
     dailyRewardTokens: profile.dailyRewardTokens,
+    achievements: profile.achievements,
   });
 }
 
@@ -256,6 +502,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
     accountTokens,
     ownedSkins,
     accountDailyRewardTokens,
+    accountAchievements,
     setAuthState,
     setMatchType,
     setTwoVsTwoSlot,
@@ -290,7 +537,9 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   const [isAbilityLoadoutOpen, setIsAbilityLoadoutOpen] = useState(false);
   const [isDailyRewardInfoOpen, setIsDailyRewardInfoOpen] = useState(false);
   const [isPatchNotesOpen, setIsPatchNotesOpen] = useState(false);
+  const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [isAiTutorialPromptOpen, setIsAiTutorialPromptOpen] = useState(false);
+  const [isClaimingAchievements, setIsClaimingAchievements] = useState(false);
   const [hasUnreadPatchNotes, setHasUnreadPatchNotes] = useState(false);
   const [upgradeResult, setUpgradeResult] = useState<UpgradeResolution>({
     kind: "none",
@@ -906,6 +1155,11 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
       ? `Found: ${unlockedSkinCount}/${skinChoices.length}`
       : `찾음: ${unlockedSkinCount}/${skinChoices.length}`;
 
+  const achievementViews = useMemo(
+    () => buildAchievementViews(accountAchievements),
+    [accountAchievements],
+  );
+
   const markPatchNotesRead = useCallback(() => {
     localStorage.setItem(PATCH_NOTES_READ_KEY, PATCH_NOTES_VERSION);
     setHasUnreadPatchNotes(false);
@@ -953,6 +1207,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
       tokens,
       dailyRewardWins,
       dailyRewardTokens,
+      achievements,
     }) => {
       setAuthState({
         ready: true,
@@ -967,10 +1222,40 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
         tokens,
         dailyRewardWins,
         dailyRewardTokens,
+        achievements,
       });
       lastRewardSyncDayRef.current = getUtcDayKey();
     });
   }, [authUserId, isGuestUser, setAuthState]);
+
+  const handleClaimAchievement = useCallback(
+    async (achievementId: string) => {
+      if (isClaimingAchievements) return;
+      setIsClaimingAchievements(true);
+      try {
+        const profile = await claimAchievementReward(achievementId);
+        if (profile) {
+          applyProfileToStore(profile, setAuthState);
+        }
+      } finally {
+        setIsClaimingAchievements(false);
+      }
+    },
+    [isClaimingAchievements, setAuthState],
+  );
+
+  const handleClaimAllAchievements = useCallback(async () => {
+    if (isClaimingAchievements) return;
+    setIsClaimingAchievements(true);
+    try {
+      const profile = await claimAllAchievementRewards();
+      if (profile) {
+        applyProfileToStore(profile, setAuthState);
+      }
+    } finally {
+      setIsClaimingAchievements(false);
+    }
+  }, [isClaimingAchievements, setAuthState]);
 
   useEffect(() => {
     void syncAccountSummary();
@@ -2174,12 +2459,29 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
         </button>
         <button
           className="lobby-utility-link"
+          onClick={() => setIsAchievementsOpen(true)}
+          type="button"
+        >
+          {lang === "en" ? "Achievements" : "업적"}
+        </button>
+        <button
+          className="lobby-utility-link"
           onClick={() => setIsSettingsOpen(true)}
           type="button"
         >
           {settingsButtonLabel}
         </button>
       </div>
+      {isAchievementsOpen && (
+        <AchievementModal
+          lang={lang}
+          achievements={achievementViews}
+          isClaiming={isClaimingAchievements}
+          onClaim={handleClaimAchievement}
+          onClaimAll={handleClaimAllAchievements}
+          onClose={() => setIsAchievementsOpen(false)}
+        />
+      )}
       {isSettingsOpen && (
         <div
           className="upgrade-modal-backdrop"

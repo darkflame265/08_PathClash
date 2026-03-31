@@ -11,6 +11,10 @@ import {
   TWO_VS_TWO_SLOTS,
 } from './TwoVsTwoEngine';
 import { grantDailyRewardTokens } from '../../services/playerAuth';
+import {
+  recordMatchPlayed,
+  recordModeWin,
+} from '../../services/achievementService';
 import type {
   TwoVsTwoClientPlayerState,
   TwoVsTwoClientState,
@@ -153,6 +157,15 @@ export class TwoVsTwoRoom {
               .filter((entry) => entry.team === result)
               .map((entry) => entry.userId),
             6,
+          );
+          void recordMatchPlayed({
+            userIds: [...this.players.values()].map((entry) => entry.userId),
+            matchType: 'twovtwo',
+          });
+          void Promise.all(
+            [...this.players.values()]
+              .filter((entry) => entry.team === result)
+              .map((entry) => recordModeWin({ userId: entry.userId, mode: 'twovtwo' })),
           );
         }
         this.io.to(this.roomId).emit('twovtwo_game_over', {
@@ -479,6 +492,10 @@ export class TwoVsTwoRoom {
         this.phase = 'gameover';
         this.gameResult = 'draw';
         this.touchActivity();
+        void recordMatchPlayed({
+          userIds: [...this.players.values()].map((player) => player.userId),
+          matchType: 'twovtwo',
+        });
         this.io.to(this.roomId).emit('twovtwo_game_over', { result: 'draw' });
         return;
       }
@@ -486,6 +503,10 @@ export class TwoVsTwoRoom {
         this.phase = 'gameover';
         this.gameResult = redAlive ? 'red' : 'blue';
         this.touchActivity();
+        void recordMatchPlayed({
+          userIds: [...this.players.values()].map((player) => player.userId),
+          matchType: 'twovtwo',
+        });
         if (!this.rewardsGranted) {
           this.rewardsGranted = true;
           void grantDailyRewardTokens(
@@ -493,6 +514,11 @@ export class TwoVsTwoRoom {
               .filter((entry) => entry.team === this.gameResult)
               .map((entry) => entry.userId),
             6,
+          );
+          void Promise.all(
+            [...this.players.values()]
+              .filter((entry) => entry.team === this.gameResult)
+              .map((entry) => recordModeWin({ userId: entry.userId, mode: 'twovtwo' })),
           );
         }
         this.io.to(this.roomId).emit('twovtwo_game_over', { result: this.gameResult });

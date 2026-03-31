@@ -57,6 +57,14 @@ interface GameStore {
   ownedSkins: PieceSkin[];
   accountDailyRewardWins: number;
   accountDailyRewardTokens: number;
+  accountAchievements: Array<{
+    achievementId: string;
+    progress: number;
+    completed: boolean;
+    claimed: boolean;
+    completedAt: string | null;
+    claimedAt: string | null;
+  }>;
   currentMatchType: "friend" | "random" | "ai" | "coop" | "2v2" | "ability" | null;
   twoVsTwoSlot: "red_top" | "red_bottom" | "blue_top" | "blue_bottom" | null;
   abilityLoadout: AbilitySkillId[];
@@ -118,6 +126,14 @@ interface GameStore {
     tokens?: number;
     dailyRewardWins?: number;
     dailyRewardTokens?: number;
+    achievements?: Array<{
+      achievementId: string;
+      progress: number;
+      completed: boolean;
+      claimed: boolean;
+      completedAt: string | null;
+      claimedAt: string | null;
+    }>;
   }) => void;
   setMyColor: (c: PlayerColor) => void;
   setRoomCode: (c: string) => void;
@@ -278,6 +294,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   ownedSkins: [],
   accountDailyRewardWins: 0,
   accountDailyRewardTokens: 0,
+  accountAchievements: [],
   currentMatchType: null,
   twoVsTwoSlot: null,
   abilityLoadout: initialAbilityLoadout,
@@ -325,6 +342,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     tokens,
     dailyRewardWins,
     dailyRewardTokens,
+    achievements,
   }) => {
     if (equippedSkin) {
       localStorage.setItem(PIECE_SKIN_KEY, equippedSkin);
@@ -344,6 +362,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       accountDailyRewardWins: dailyRewardWins ?? state.accountDailyRewardWins,
       accountDailyRewardTokens:
         dailyRewardTokens ?? state.accountDailyRewardTokens,
+      accountAchievements: achievements ?? state.accountAchievements,
     }));
   },
   setMyColor: (c) => set({ myColor: c }),
@@ -584,6 +603,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     accountWins: get().accountWins,
     accountLosses: get().accountLosses,
     accountTokens: get().accountTokens,
+    accountAchievements: get().accountAchievements,
     myNickname: get().myNickname,
     pieceSkin: get().pieceSkin,
     playerPieceSkins: null,

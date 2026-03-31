@@ -4,6 +4,7 @@ exports.TwoVsTwoRoom = void 0;
 const ServerTimer_1 = require("../ServerTimer");
 const TwoVsTwoEngine_1 = require("./TwoVsTwoEngine");
 const playerAuth_1 = require("../../services/playerAuth");
+const achievementService_1 = require("../../services/achievementService");
 const PLANNING_TIME_MS = 7000;
 const SUBMIT_GRACE_MS = 350;
 const MOVEMENT_STEP_MS = 200;
@@ -112,6 +113,13 @@ class TwoVsTwoRoom {
                     void (0, playerAuth_1.grantDailyRewardTokens)([...this.players.values()]
                         .filter((entry) => entry.team === result)
                         .map((entry) => entry.userId), 6);
+                    void (0, achievementService_1.recordMatchPlayed)({
+                        userIds: [...this.players.values()].map((entry) => entry.userId),
+                        matchType: 'twovtwo',
+                    });
+                    void Promise.all([...this.players.values()]
+                        .filter((entry) => entry.team === result)
+                        .map((entry) => (0, achievementService_1.recordModeWin)({ userId: entry.userId, mode: 'twovtwo' })));
                 }
                 this.io.to(this.roomId).emit('twovtwo_game_over', {
                     result,
@@ -383,6 +391,10 @@ class TwoVsTwoRoom {
                 this.phase = 'gameover';
                 this.gameResult = 'draw';
                 this.touchActivity();
+                void (0, achievementService_1.recordMatchPlayed)({
+                    userIds: [...this.players.values()].map((player) => player.userId),
+                    matchType: 'twovtwo',
+                });
                 this.io.to(this.roomId).emit('twovtwo_game_over', { result: 'draw' });
                 return;
             }
@@ -390,11 +402,18 @@ class TwoVsTwoRoom {
                 this.phase = 'gameover';
                 this.gameResult = redAlive ? 'red' : 'blue';
                 this.touchActivity();
+                void (0, achievementService_1.recordMatchPlayed)({
+                    userIds: [...this.players.values()].map((player) => player.userId),
+                    matchType: 'twovtwo',
+                });
                 if (!this.rewardsGranted) {
                     this.rewardsGranted = true;
                     void (0, playerAuth_1.grantDailyRewardTokens)([...this.players.values()]
                         .filter((entry) => entry.team === this.gameResult)
                         .map((entry) => entry.userId), 6);
+                    void Promise.all([...this.players.values()]
+                        .filter((entry) => entry.team === this.gameResult)
+                        .map((entry) => (0, achievementService_1.recordModeWin)({ userId: entry.userId, mode: 'twovtwo' })));
                 }
                 this.io.to(this.roomId).emit('twovtwo_game_over', { result: this.gameResult });
                 return;

@@ -18,6 +18,7 @@ export interface AuthStatePayload {
   tokens?: number;
   dailyRewardWins?: number;
   dailyRewardTokens?: number;
+  achievements?: PlayerAchievementState[];
 }
 
 interface ProfileRow {
@@ -37,6 +38,24 @@ interface OwnedSkinRow {
   skin_id: PieceSkin | null;
 }
 
+interface PlayerAchievementRow {
+  achievement_id: string;
+  progress: number | null;
+  completed: boolean | null;
+  claimed: boolean | null;
+  completed_at: string | null;
+  claimed_at: string | null;
+}
+
+export interface PlayerAchievementState {
+  achievementId: string;
+  progress: number;
+  completed: boolean;
+  claimed: boolean;
+  completedAt: string | null;
+  claimedAt: string | null;
+}
+
 interface AccountSnapshot {
   nickname: string | null;
   equippedSkin: PieceSkin;
@@ -46,6 +65,7 @@ interface AccountSnapshot {
   tokens: number;
   dailyRewardWins: number;
   dailyRewardTokens: number;
+  achievements: PlayerAchievementState[];
 }
 
 export interface AccountProfile {
@@ -59,6 +79,7 @@ export interface AccountProfile {
   dailyRewardWins: number;
   dailyRewardTokens: number;
   isGuestUser: boolean;
+  achievements: PlayerAchievementState[];
 }
 
 export interface PendingUpgradeContext {
@@ -93,6 +114,11 @@ interface ServerFinalizeUpgradeResponse {
     | "AUTH_REQUIRED"
     | "AUTH_INVALID"
     | "UPGRADE_FAILED";
+  profile?: AccountProfile;
+}
+
+interface ServerAccountResponse {
+  status: "ACCOUNT_OK" | "AUTH_REQUIRED" | "AUTH_INVALID" | "UPDATE_REQUIRED";
   profile?: AccountProfile;
 }
 
@@ -208,6 +234,7 @@ function toAuthState(session: Session | null, snapshot?: AccountSnapshot): AuthS
     tokens: snapshot?.tokens ?? 0,
     dailyRewardWins: snapshot?.dailyRewardWins ?? 0,
     dailyRewardTokens: snapshot?.dailyRewardTokens ?? 0,
+    achievements: snapshot?.achievements ?? [],
   };
 }
 
@@ -268,12 +295,13 @@ async function getAccountSnapshot(userId: string): Promise<AccountSnapshot> {
       tokens: 0,
       dailyRewardWins: 0,
       dailyRewardTokens: 0,
+      achievements: [],
     };
   }
 
   await ensureProfile(userId);
 
-  const [profileResult, statsResult] = await Promise.all([
+  const [profileResult, statsResult, achievementsResult] = await Promise.all([
     supabase
       .from("profiles")
       .select("nickname, equipped_skin")
@@ -284,6 +312,11 @@ async function getAccountSnapshot(userId: string): Promise<AccountSnapshot> {
       .select("wins, losses, tokens, daily_reward_wins, daily_reward_day")
       .eq("user_id", userId)
       .maybeSingle<StatsRow>(),
+    supabase
+      .from("player_achievements")
+      .select("achievement_id, progress, completed, claimed, completed_at, claimed_at")
+      .eq("user_id", userId)
+      .returns<PlayerAchievementRow[]>(),
   ]);
   const { data: ownedSkinRows } = await supabase
     .from("owned_skins")
@@ -303,6 +336,14 @@ async function getAccountSnapshot(userId: string): Promise<AccountSnapshot> {
     tokens: statsResult.data?.tokens ?? 0,
     dailyRewardWins,
     dailyRewardTokens: dailyRewardWins * DAILY_REWARD_TOKENS_PER_WIN,
+    achievements: (achievementsResult.data ?? []).map((row) => ({
+      achievementId: row.achievement_id,
+      progress: Number(row.progress ?? 0),
+      completed: Boolean(row.completed),
+      claimed: Boolean(row.claimed),
+      completedAt: row.completed_at ?? null,
+      claimedAt: row.claimed_at ?? null,
+    })),
   };
 }
 
@@ -439,6 +480,7 @@ export async function refreshAccountSummary(): Promise<
     | "tokens"
     | "dailyRewardWins"
     | "dailyRewardTokens"
+    | "achievements"
   >
 > {
   if (!supabase) {
@@ -451,6 +493,7 @@ export async function refreshAccountSummary(): Promise<
       tokens: 0,
       dailyRewardWins: 0,
       dailyRewardTokens: 0,
+      achievements: [],
     };
   }
 
@@ -465,6 +508,7 @@ export async function refreshAccountSummary(): Promise<
       tokens: 0,
       dailyRewardWins: 0,
       dailyRewardTokens: 0,
+      achievements: [],
     };
   }
 
@@ -478,6 +522,7 @@ export async function refreshAccountSummary(): Promise<
     tokens: snapshot.tokens,
     dailyRewardWins: snapshot.dailyRewardWins,
     dailyRewardTokens: snapshot.dailyRewardTokens,
+    achievements: snapshot.achievements,
   };
 }
 
@@ -535,6 +580,44 @@ export async function purchaseSkinWithTokens(
   if (data === "INSUFFICIENT_TOKENS") return "insufficient_tokens";
   if (data === "AUTH_REQUIRED") return "auth_required";
   return "failed";
+}
+
+export async function claimAchievementReward(
+  achievementId: string,
+): Promise<AccountProfile | null> {
+  const response = await emitSocketAck<ServerAccountResponse>("achievements_claim", {
+    auth: await getSocketAuthPayload(),
+    achievementId,
+  });
+
+  return response.status === "ACCOUNT_OK" && response.profile
+    ? response.profile
+    : null;
+}
+
+export async function claimAllAchievementRewards(): Promise<AccountProfile | null> {
+  const response = await emitSocketAck<ServerAccountResponse>("achievements_claim_all", {
+    auth: await getSocketAuthPayload(),
+  });
+
+  return response.status === "ACCOUNT_OK" && response.profile
+    ? response.profile
+    : null;
+}
+
+export async function syncAchievementSettings(args: {
+  isMusicMuted: boolean;
+  isSfxMuted: boolean;
+  musicVolume: number;
+  sfxVolume: number;
+}): Promise<void> {
+  await emitSocketAck<{ ok: boolean }>("achievements_sync_settings", {
+    auth: await getSocketAuthPayload(),
+    isMusicMuted: args.isMusicMuted,
+    isSfxMuted: args.isSfxMuted,
+    musicVolumePercent: Math.round(args.musicVolume * 100),
+    sfxVolumePercent: Math.round(args.sfxVolume * 100),
+  });
 }
 
 export async function linkGoogleAccount(): Promise<void> {
@@ -595,6 +678,7 @@ export async function logoutToGuestMode(): Promise<AuthStatePayload> {
       tokens: 0,
       dailyRewardWins: 0,
       dailyRewardTokens: 0,
+      achievements: [],
     };
   }
 
@@ -711,6 +795,7 @@ export function onAuthStateChanged(callback: (payload: AuthStatePayload) => void
       tokens: 0,
       dailyRewardWins: 0,
       dailyRewardTokens: 0,
+      achievements: [],
     });
     return () => {};
   }

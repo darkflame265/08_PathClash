@@ -22,6 +22,11 @@ import {
 import { createAiPath } from "./AiPlanner";
 import { ServerTimer } from "./ServerTimer";
 import { recordMatchmakingResult } from "../services/playerAuth";
+import {
+  markTutorialComplete,
+  recordMatchPlayed,
+  recordModeWin,
+} from "../services/achievementService";
 
 const PLANNING_TIME_MS = 7_000;
 const SUBMIT_GRACE_MS = 350;
@@ -678,13 +683,33 @@ export class GameRoom {
       this.phase = "gameover";
       const winner: PlayerColor = red.hp > 0 ? "red" : "blue";
       const loser: PlayerColor = winner === "red" ? "blue" : "red";
+      const winnerUserId = this.players.get(winner)?.userId ?? null;
+      const loserUserId = this.players.get(loser)?.userId ?? null;
       if (this.matchType === "random" && !this.aiColor) {
         this.players.get(winner)!.stats.wins++;
         this.players.get(loser)!.stats.losses++;
         void recordMatchmakingResult(
-          this.players.get(winner)!.userId,
-          this.players.get(loser)!.userId,
+          winnerUserId,
+          loserUserId,
         );
+        void recordMatchPlayed({
+          userIds: [winnerUserId, loserUserId],
+          matchType: "duel",
+        });
+        void recordModeWin({ userId: winnerUserId, mode: "duel" });
+      } else if (this.matchType === "ai" && !this.tutorialActive) {
+        const humanUserIds = [...this.players.values()]
+          .filter((player) => player.color !== this.aiColor)
+          .map((player) => player.userId);
+        void recordMatchPlayed({
+          userIds: humanUserIds,
+          matchType: "ai",
+        });
+        if (winner !== this.aiColor) {
+          void recordModeWin({ userId: winnerUserId, mode: "ai" });
+        }
+      } else if (this.matchType === "ai" && this.tutorialActive && winner !== this.aiColor) {
+        void markTutorialComplete(winnerUserId);
       }
 
       this.touchActivity();

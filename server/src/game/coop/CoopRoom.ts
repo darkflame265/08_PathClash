@@ -20,6 +20,10 @@ import {
   resolveCoopMovement,
 } from "./CoopEngine";
 import { grantDailyRewardTokens } from "../../services/playerAuth";
+import {
+  recordMatchPlayed,
+  recordModeWin,
+} from "../../services/achievementService";
 import type {
   CoopClientState,
   CoopEnemy,
@@ -494,11 +498,20 @@ export class CoopRoom {
       if (nextPhase === "gameover") {
         this.phase = "gameover";
         this.touchActivity();
+        void recordMatchPlayed({
+          userIds: [...this.players.values()].map((player) => player.userId),
+          matchType: "coop",
+        });
         if (nextResult === "win" && !this.rewardsGranted) {
           this.rewardsGranted = true;
           void grantDailyRewardTokens(
             [...this.players.values()].map((player) => player.userId),
             12,
+          );
+          void Promise.all(
+            [...this.players.values()].map((player) =>
+              recordModeWin({ userId: player.userId, mode: "coop" }),
+            ),
           );
         }
         this.io.to(this.roomId).emit("coop_game_over", { result: nextResult });

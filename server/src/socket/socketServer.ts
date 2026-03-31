@@ -20,6 +20,15 @@ import {
   type PersistentPlayerProfile,
   resolvePlayerProfile,
 } from '../services/playerAuth';
+import {
+  claimAchievementReward,
+  claimAllAchievementRewards,
+  recordAbilitySpecialWin,
+  recordDailyRewardGrant,
+  recordMatchPlayed,
+  recordModeWin,
+  trackSettingsAchievements,
+} from '../services/achievementService';
 
 export function initSocketServer(io: Server): void {
   const store = RoomStore.getInstance();
@@ -527,6 +536,78 @@ export function initSocketServer(io: Server): void {
     });
 
     socket.on(
+      'achievements_claim',
+      async (
+        { auth, achievementId }: { auth?: AuthPayload; achievementId?: string },
+        ack?: (response: unknown) => void,
+      ) => {
+        const requirement = getUpdateRequirement(socket, auth);
+        if (requirement?.forceUpdate) {
+          socket.emit('update_required', requirement);
+          ack?.({ status: 'UPDATE_REQUIRED', ...requirement });
+          return;
+        }
+        const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
+        if (userId && achievementId) {
+          await claimAchievementReward(userId, achievementId);
+        }
+        ack?.(await resolveAccount(auth));
+      },
+    );
+
+    socket.on(
+      'achievements_claim_all',
+      async (
+        { auth }: { auth?: AuthPayload },
+        ack?: (response: unknown) => void,
+      ) => {
+        const requirement = getUpdateRequirement(socket, auth);
+        if (requirement?.forceUpdate) {
+          socket.emit('update_required', requirement);
+          ack?.({ status: 'UPDATE_REQUIRED', ...requirement });
+          return;
+        }
+        const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
+        if (userId) {
+          await claimAllAchievementRewards(userId);
+        }
+        ack?.(await resolveAccount(auth));
+      },
+    );
+
+    socket.on(
+      'achievements_sync_settings',
+      async (
+        {
+          auth,
+          isMusicMuted,
+          isSfxMuted,
+          musicVolumePercent,
+          sfxVolumePercent,
+        }: {
+          auth?: AuthPayload;
+          isMusicMuted: boolean;
+          isSfxMuted: boolean;
+          musicVolumePercent: number;
+          sfxVolumePercent: number;
+        },
+        ack?: (response: { ok: boolean }) => void,
+      ) => {
+        const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
+        if (userId) {
+          await trackSettingsAchievements({
+            userId,
+            isMusicMuted,
+            isSfxMuted,
+            musicVolumePercent,
+            sfxVolumePercent,
+          });
+        }
+        ack?.({ ok: true });
+      },
+    );
+
+    socket.on(
       'finalize_google_upgrade',
       async (
         {
@@ -894,6 +975,11 @@ export function initSocketServer(io: Server): void {
           winner?.userId ?? null,
           socket.data.userId ?? null,
         );
+        void recordMatchPlayed({
+          userIds: [winner?.userId ?? null, socket.data.userId ?? null],
+          matchType: 'duel',
+        });
+        void recordModeWin({ userId: winner?.userId ?? null, mode: 'duel' });
       }
 
       if (room && room.playerCount > 0) {
@@ -921,6 +1007,16 @@ export function initSocketServer(io: Server): void {
           [winner?.userId ?? null],
           6,
         );
+        void recordMatchPlayed({
+          userIds: [winner?.userId ?? null, socket.data.userId ?? null],
+          matchType: 'ability',
+        });
+        void recordModeWin({ userId: winner?.userId ?? null, mode: 'ability' });
+        void recordAbilitySpecialWin({
+          winnerUserId: winner?.userId ?? null,
+          winnerHp: winner?.hp ?? 0,
+          disconnectWin: true,
+        });
       }
 
       if (abilityRoom.room && abilityRoom.room.playerCount > 0) {

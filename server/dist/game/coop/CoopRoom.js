@@ -5,6 +5,7 @@ const GameEngine_1 = require("../GameEngine");
 const ServerTimer_1 = require("../ServerTimer");
 const CoopEngine_1 = require("./CoopEngine");
 const playerAuth_1 = require("../../services/playerAuth");
+const achievementService_1 = require("../../services/achievementService");
 const PLANNING_TIME_MS = 7000;
 const SUBMIT_GRACE_MS = 350;
 const FINAL_PORTAL_COUNT = 14;
@@ -414,9 +415,14 @@ class CoopRoom {
             if (nextPhase === "gameover") {
                 this.phase = "gameover";
                 this.touchActivity();
+                void (0, achievementService_1.recordMatchPlayed)({
+                    userIds: [...this.players.values()].map((player) => player.userId),
+                    matchType: "coop",
+                });
                 if (nextResult === "win" && !this.rewardsGranted) {
                     this.rewardsGranted = true;
                     void (0, playerAuth_1.grantDailyRewardTokens)([...this.players.values()].map((player) => player.userId), 12);
+                    void Promise.all([...this.players.values()].map((player) => (0, achievementService_1.recordModeWin)({ userId: player.userId, mode: "coop" })));
                 }
                 this.io.to(this.roomId).emit("coop_game_over", { result: nextResult });
                 return;
