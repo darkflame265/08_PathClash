@@ -46,6 +46,7 @@ export interface ClientGameState {
   phase: GamePhase;
   pathPoints: number;
   obstacles: Position[];
+  tutorialActive?: boolean;
   players: {
     red: ClientPlayerState;
     blue: ClientPlayerState;

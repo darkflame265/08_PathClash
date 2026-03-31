@@ -669,6 +669,7 @@ class GameRoom {
             phase: this.phase,
             pathPoints: (0, GameEngine_1.calcPathPoints)(this.turn),
             obstacles: this.obstacles,
+            tutorialActive: this.tutorialActive,
             players: {
                 red: (0, GameEngine_1.toClientPlayer)(red),
                 blue: (0, GameEngine_1.toClientPlayer)(blue),

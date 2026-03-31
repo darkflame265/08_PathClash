@@ -786,6 +786,7 @@ export class GameRoom {
       phase: this.phase,
       pathPoints: calcPathPoints(this.turn),
       obstacles: this.obstacles,
+      tutorialActive: this.tutorialActive,
       players: {
         red: toClientPlayer(red),
         blue: toClientPlayer(blue),

@@ -1386,25 +1386,23 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
   };
 
   const handleAiMatchWithTutorial = async (
-    tutorialPendingOverride: boolean | null,
+    tutorialPending: boolean,
   ) => {
-    if (tutorialPendingOverride === true) {
+    if (tutorialPending) {
       await resetBeforeTutorialJoin();
     }
     setError("");
     setIsMatchmaking(false);
     setMatchType("ai");
     const socket = startSocket();
-    const hasSeenAiTutorial =
-      window.localStorage.getItem(AI_TUTORIAL_SEEN_KEY) === "1";
     socket.emit("join_ai", {
       ...(await buildPlayerPayload()),
-      tutorialPending: tutorialPendingOverride ?? !hasSeenAiTutorial,
+      tutorialPending,
     });
   };
 
   const handleAiMatch = async () => {
-    await handleAiMatchWithTutorial(null);
+    await handleAiMatchWithTutorial(false);
   };
 
   const handleReplayAiTutorial = async () => {

@@ -147,7 +147,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   }, []);
 
   useEffect(() => {
-    if (currentMatchType !== "ai") {
+    if (currentMatchType !== "ai" || !gameState?.tutorialActive) {
       setTutorialStep(0);
       return;
     }
@@ -155,7 +155,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     const hasSeenTutorial =
       window.localStorage.getItem(AI_TUTORIAL_SEEN_KEY) === "1";
     setTutorialStep(hasSeenTutorial ? 0 : 1);
-  }, [currentMatchType]);
+  }, [currentMatchType, gameState?.tutorialActive]);
 
   useEffect(() => {
     if (tutorialStep !== 2) {
