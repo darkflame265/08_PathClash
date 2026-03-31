@@ -23,6 +23,7 @@ export type Translations = {
   aiTitle: string;
   aiDesc: string;
   aiBtn: string;
+  aiTutorialBtn?: string;
   friendTitle: string;
   createRoomBtn: string;
   enterCodeBtn: string;
@@ -100,6 +101,7 @@ export const translations: Record<Lang, Translations> = {
     aiTitle: "AI Match",
     aiDesc: "Practice against AI. Stats are not recorded.",
     aiBtn: "Start AI Match",
+    aiTutorialBtn: "Tutorial",
 
     friendTitle: "Friend Match",
     createRoomBtn: "Create Room",

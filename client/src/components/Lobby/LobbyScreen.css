@@ -68,6 +68,36 @@
   margin-bottom: 0;
 }
 
+.lobby-mini-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(125, 211, 252, 0.28);
+  background: rgba(8, 20, 35, 0.74);
+  color: #dbeafe;
+  border-radius: 999px;
+  padding: 0.36rem 0.72rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.lobby-mini-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(10, 25, 42, 0.9);
+  border-color: rgba(125, 211, 252, 0.46);
+}
+
+.lobby-mini-btn.tutorial {
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.14) inset;
+}
+
 .daily-reward-badge {
   display: inline-flex;
   align-items: center;

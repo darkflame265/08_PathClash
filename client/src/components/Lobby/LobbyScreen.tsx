@@ -1397,6 +1397,15 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
     await handleAiMatchWithTutorial(null);
   };
 
+  const handleReplayAiTutorial = async () => {
+    setError("");
+    setIsMatchmaking(false);
+    setMatchType("ai");
+    window.localStorage.removeItem(AI_TUTORIAL_SEEN_KEY);
+    window.localStorage.setItem(AI_TUTORIAL_PROMPT_ANSWERED_KEY, "1");
+    await handleAiMatchWithTutorial(true);
+  };
+
   const handleAcceptAiTutorial = async () => {
     window.localStorage.setItem(AI_TUTORIAL_PROMPT_ANSWERED_KEY, "1");
     setIsAiTutorialPromptOpen(false);
@@ -1619,7 +1628,16 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
       ) : (
         <>
           <div className="lobby-card">
-            <h2 data-step="2">{t.aiTitle}</h2>
+            <div className="lobby-card-title-row">
+              <h2 data-step="2">{t.aiTitle}</h2>
+              <button
+                type="button"
+                className="lobby-mini-btn tutorial"
+                onClick={() => void handleReplayAiTutorial()}
+              >
+                {t.aiTutorialBtn ?? (lang === "en" ? "Tutorial" : "튜토리얼")}
+              </button>
+            </div>
             <p>{t.aiDesc}</p>
             <button className="lobby-btn ai" onClick={() => void handleAiMatch()}>
               {t.aiBtn}
