@@ -44,6 +44,7 @@ export type Translations = {
   predictPathTutorial: string;
   predictObstacleTutorial: string;
   overlapEscapeTutorial: string;
+  chainAttackTutorial?: string;
   pathPointsTutorialHint: string;
   winConditionTutorialHint: string;
   roleAttack: string;
@@ -132,6 +133,8 @@ export const translations: Record<Lang, Translations> = {
       "Well done! Obstacles have been added this time.\nYou are the attacker this round.\nPredict the opponent's escape path and draw your path.",
     overlapEscapeTutorial:
       "Well done! This time the two pieces start overlapped.\nYou are the escaper this round.\nIf you stay still while overlapped, you will definitely get hit.\nChoose a direction that does not overlap with the opponent's path and escape.",
+    chainAttackTutorial:
+      "Well done!\nThis is the final situation!\nIn PathClash, repeated collisions occur when paths overlap.\nYou are the attacker this round.\nPredict the opponent's path and deal 3 or more consecutive damage in a single round!",
     pathPointsTutorialHint:
       "These are Path Points.\nThey show how many cells you can draw your path through.\nThey increase by 1 each round, up to a maximum of 10.",
     winConditionTutorialHint: "Hit your opponent three times to win!",

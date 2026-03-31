@@ -32,6 +32,7 @@ type TutorialScenario =
   | "predict_obstacle"
   | "predict_wall"
   | "overlap_escape"
+  | "chain_attack"
   | "freeplay";
 
 export class GameRoom {
@@ -585,7 +586,29 @@ export class GameRoom {
         ai.hp = 3;
         this.turn = 1;
         this.attackerColor = this.aiColor;
-        this.tutorialScenario = escapedSuccessfully ? "freeplay" : "overlap_escape";
+        this.tutorialScenario = escapedSuccessfully ? "chain_attack" : "overlap_escape";
+        this.updateRoles();
+        this.touchActivity();
+        this.clearNextRoundTimeout();
+        this.nextRoundTimeout = setTimeout(() => {
+          this.nextRoundTimeout = null;
+          this.startRound();
+        }, 500);
+        return;
+      }
+
+      if (this.tutorialScenario === "chain_attack") {
+        const aiDiedInOneRound = ai.hp <= 0;
+        applyTutorialScenarioLayout(human, ai, "chain_attack");
+        human.plannedPath = [];
+        ai.plannedPath = [];
+        human.pathSubmitted = false;
+        ai.pathSubmitted = false;
+        human.hp = 3;
+        ai.hp = 3;
+        this.turn = 1;
+        this.attackerColor = humanColor;
+        this.tutorialScenario = aiDiedInOneRound ? "freeplay" : "chain_attack";
         this.updateRoles();
         this.touchActivity();
         this.clearNextRoundTimeout();
@@ -961,6 +984,28 @@ export class GameRoom {
         return;
       }
 
+      if (this.tutorialScenario === "chain_attack") {
+        aiPlayer.plannedPath =
+          aiPlayer.color === "blue"
+            ? [
+                { row: aiPlayer.position.row, col: Math.max(0, aiPlayer.position.col - 1) },
+                { row: aiPlayer.position.row, col: Math.max(0, aiPlayer.position.col - 2) },
+                { row: Math.min(4, aiPlayer.position.row + 1), col: Math.max(0, aiPlayer.position.col - 2) },
+                { row: Math.min(4, aiPlayer.position.row + 1), col: Math.max(0, aiPlayer.position.col - 3) },
+                { row: Math.min(4, aiPlayer.position.row + 2), col: Math.max(0, aiPlayer.position.col - 3) },
+              ]
+            : [
+                { row: aiPlayer.position.row, col: Math.min(4, aiPlayer.position.col + 1) },
+                { row: aiPlayer.position.row, col: Math.min(4, aiPlayer.position.col + 2) },
+                { row: Math.min(4, aiPlayer.position.row + 1), col: Math.min(4, aiPlayer.position.col + 2) },
+                { row: Math.min(4, aiPlayer.position.row + 1), col: Math.min(4, aiPlayer.position.col + 3) },
+                { row: Math.min(4, aiPlayer.position.row + 2), col: Math.min(4, aiPlayer.position.col + 3) },
+              ];
+        aiPlayer.pathSubmitted = true;
+        this.touchActivity();
+        return;
+      }
+
       const initial = getInitialPositions();
       const escapeTarget = initial[opponentColor];
       aiPlayer.plannedPath = buildTutorialAiPath(
@@ -1054,6 +1099,9 @@ function getTutorialObstacles(scenario: TutorialScenario): Position[] {
       { row: 4, col: 2 },
     ];
   }
+  if (scenario === "chain_attack") {
+    return [];
+  }
   return [];
 }
 
@@ -1077,6 +1125,16 @@ function applyTutorialScenarioLayout(
     human.position =
       ai.color === "blue" ? { row: 4, col: 4 } : { row: 4, col: 0 };
     ai.position = { ...human.position };
+    return;
+  }
+  if (scenario === "chain_attack") {
+    if (ai.color === "blue") {
+      human.position = { row: 1, col: 3 };
+      ai.position = { row: 0, col: 4 };
+    } else {
+      human.position = { row: 1, col: 1 };
+      ai.position = { row: 0, col: 0 };
+    }
     return;
   }
 

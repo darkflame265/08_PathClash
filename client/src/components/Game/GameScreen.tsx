@@ -19,7 +19,7 @@ const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
-type TutorialStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
+type TutorialStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14;
 
 function buildTutorialGuidePath(
   start: Position,
@@ -280,8 +280,30 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       setTutorialStep(12);
       return;
     }
-    if (roundInfo.tutorialScenario === "freeplay" && tutorialStep !== 0 && tutorialStep < 13) {
+    if (roundInfo.tutorialScenario === "chain_attack" && tutorialStep < 13) {
       setTutorialStep(13);
+      return;
+    }
+    if (roundInfo.tutorialScenario === "freeplay" && tutorialStep !== 0 && tutorialStep < 14) {
+      setTutorialStep(14);
+      return;
+    }
+    if (
+      roundInfo.tutorialScenario === "chain_attack" &&
+      tutorialStep === 14
+    ) {
+      setTutorialStep(13);
+      return;
+    }
+    if (
+      roundInfo.tutorialScenario === "freeplay" &&
+      tutorialStep === 13
+    ) {
+      setTutorialStep(14);
+      return;
+    }
+    if (roundInfo.tutorialScenario === "freeplay" && tutorialStep !== 0 && tutorialStep < 14) {
+      setTutorialStep(14);
       return;
     }
     if (
@@ -400,7 +422,24 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     }
 
     if (tutorialStep !== 8) {
-      return null;
+      if (tutorialStep !== 13) {
+        return null;
+      }
+
+      const guidePath = [
+        start,
+        { row: Math.max(0, start.row - 1), col: start.col },
+        { row: Math.max(0, start.row - 1), col: Math.max(0, start.col - 1) },
+        { row: start.row, col: Math.max(0, start.col - 1) },
+        { row: start.row, col: Math.max(0, start.col - 2) },
+        { row: Math.min(4, start.row + 1), col: Math.max(0, start.col - 2) },
+      ];
+      const last = guidePath[guidePath.length - 1];
+      const alreadyReached =
+        myPath.length >= guidePath.length - 1 &&
+        myPath[myPath.length - 1]?.row === last.row &&
+        myPath[myPath.length - 1]?.col === last.col;
+      return alreadyReached ? null : guidePath;
     }
 
     const end = {
@@ -501,11 +540,14 @@ export function GameScreen({ onLeaveToLobby }: Props) {
                   ? t.predictPathTutorial
                   : tutorialStep === 12
                   ? t.overlapEscapeTutorial
+                  : tutorialStep === 13
+                  ? t.chainAttackTutorial ??
+                    "잘했습니다!\n이번엔 마지막 상황입니다!\npathclash에서는 경로가 겹칠 경우, 연속 충돌 판정이 일어납니다.\n당신의 역할은 공격입니다.\n상대의 경로를 예측하여, 상대에게 3 이상의 연속피해를 입히세요!"
                   : null
             }
             tutorialHintTarget={tutorialStep === 4 ? "opponent" : "self"}
             tutorialHintAnchor={tutorialHintAnchor}
-            tutorialHintCentered={tutorialStep === 12}
+            tutorialHintCentered={tutorialStep === 12 || tutorialStep === 13}
             tutorialGuidePath={tutorialGuidePath}
             tutorialAutoSubmit={tutorialInProgress}
           />

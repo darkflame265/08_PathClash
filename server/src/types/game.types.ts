@@ -90,6 +90,7 @@ export interface RoundStartPayload {
     | 'predict_obstacle'
     | 'predict_wall'
     | 'overlap_escape'
+    | 'chain_attack'
     | 'freeplay';
 }
 
