@@ -548,6 +548,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
             tutorialHintTarget={tutorialStep === 4 ? "opponent" : "self"}
             tutorialHintAnchor={tutorialHintAnchor}
             tutorialHintCentered={tutorialStep === 12 || tutorialStep === 13}
+            tutorialHintBottom={tutorialStep === 13}
             tutorialGuidePath={tutorialGuidePath}
             tutorialAutoSubmit={tutorialInProgress}
           />

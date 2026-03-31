@@ -284,6 +284,9 @@ export class GameRoom {
       roundEndsAt: now + (this.tutorialActive ? 0 : PLANNING_TIME_MS),
       tutorialScenario: this.tutorialActive ? this.tutorialScenario : undefined,
     };
+    if (this.tutorialActive) {
+      this.io.to(this.roomId).emit("game_start", this.toClientState());
+    }
     this.io.to(this.roomId).emit("round_start", payload);
 
     if (this.tutorialActive) {

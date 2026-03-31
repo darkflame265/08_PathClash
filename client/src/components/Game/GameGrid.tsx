@@ -25,6 +25,7 @@ interface GridProps {
   tutorialAutoSubmit?: boolean;
   tutorialHintAnchor?: Position | null;
   tutorialHintCentered?: boolean;
+  tutorialHintBottom?: boolean;
 }
 
 export function GameGrid({
@@ -35,6 +36,7 @@ export function GameGrid({
   tutorialAutoSubmit = false,
   tutorialHintAnchor = null,
   tutorialHintCentered = false,
+  tutorialHintBottom = false,
 }: GridProps) {
   const {
     gameState,
@@ -584,7 +586,7 @@ export function GameGrid({
             className="ai-tutorial-hint in-grid no-arrow"
             style={{
               left: boardSize / 2,
-              top: boardSize / 2,
+              top: tutorialHintBottom ? boardSize - responsiveCellSize * 0.75 : boardSize / 2,
               transform: "translate(-50%, -50%)",
             }}
           >
