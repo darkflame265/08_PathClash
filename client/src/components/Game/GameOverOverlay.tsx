@@ -9,13 +9,19 @@ interface Props {
   winner: PlayerColor;
   myColor: PlayerColor;
   rewardTokens?: number | null;
+  allowRematch?: boolean;
 }
 
-export function GameOverOverlay({ winner, myColor, rewardTokens = null }: Props) {
+export function GameOverOverlay({
+  winner,
+  myColor,
+  rewardTokens = null,
+  allowRematch = true,
+}: Props) {
   const { t, lang } = useLang();
   const { rematchRequested, rematchRequestSent, gameOverMessage, setRematchRequestSent } = useGameStore();
   const isWinner = winner === myColor;
-  const showRematch = !gameOverMessage;
+  const showRematch = allowRematch && !gameOverMessage;
   const rewardCopy =
     isWinner && rewardTokens && rewardTokens > 0
       ? lang === 'en'

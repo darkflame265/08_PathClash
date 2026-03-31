@@ -458,6 +458,8 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     winner && myColor && winner === myColor && currentMatchType === "random"
       ? Math.min(6, dailyRewardRemaining)
       : null;
+  const tutorialRematchAllowed =
+    currentMatchType !== "ai" || !roundInfo?.tutorialScenario;
 
   return (
     <div
@@ -516,6 +518,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
               winner={winner}
               myColor={myColor!}
               rewardTokens={winRewardTokens}
+              allowRematch={tutorialRematchAllowed}
             />
           </div>
         )}
