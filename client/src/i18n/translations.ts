@@ -117,28 +117,27 @@ export const translations: Record<Lang, Translations> = {
     confirmBtn: "OK",
     loading: "Loading game...",
     moving: "Moving...",
-    introTutorialHint:
-      "Welcome to Path Clash.\nThis is how the game works.",
+    introTutorialHint: "Welcome to Path Clash.\nThis is how the game works.",
     roleTutorialHint:
       "Your current role is Attack.\nYour role swaps every round.",
     attackCollisionTutorialHint:
-      "As the attacker, you can deal damage by colliding with the opponent's piece.",
+      "As the attacker, you can deal damage by colliding with the opponent.",
     escapePredictionTutorialHint:
       "On the other hand, the escaper must predict the attacker's path and plan an escape route.",
     dragPathTutorial:
       "Let's begin the game.\nYou are the attacker this round.\nDraw a path to attack the opponent.",
     escapeRoleDragTutorial:
-      "Well done! Here's the next situation.\nYou are the escaper this round.\nPredict the opponent's attack path and move two cells upward to avoid it.",
+      "Well done! Here's the next situation.\nYou are the escaper this round.\nPredict the opponent's attack path. Move two cells upward to avoid damage.",
     predictPathTutorial:
-      "Well done! Here's the next situation.\nYou are the attacker this round.\nPredict the opponent's escape path and draw your path.",
+      "Well done! Here's the next situation.\nYou are the attacker this round.\nPredict the opponent's escape path and attack them.",
     predictObstacleTutorial:
-      "Well done! Obstacles have been added this time.\nYou are the attacker this round.\nPredict the opponent's escape path and draw your path.",
+      "Well done! We've added barriers, which you can't pass through.\nYou are the attacker this round.\nPredict the opponent's escape path and attack them.",
     overlapEscapeTutorial:
-      "Well done! This time the two pieces start overlapped.\nYou are the escaper this round.\nIf you stay still while overlapped, you will definitely get hit.\nChoose a direction that does not overlap with the opponent's path and escape.",
+      "Well done! This time, you and the opponent are overlapping.\nYou are the escaper this round.\nIf you stay still while overlapping, you will definitely get hit.\nTry to choose a direction that does not overlap with the opponent's path and escape.",
     chainAttackTutorial:
       "Well done!\nThis is the final situation!\nIn PathClash, repeated collisions occur when paths overlap.\nYou are the attacker this round.\nPredict the opponent's path and deal 3 or more consecutive damage in a single round!",
     pathPointsTutorialHint:
-      "These are Path Points.\nThey show how many cells you can draw your path through.\nThey increase by 1 each round, up to a maximum of 10.",
+      "These are Path Points.\nThey show how many cells you can move through.\nThey increase by 1 each round, up to a maximum of 10.",
     winConditionTutorialHint: "Hit your opponent three times to win!",
     roleAttack: "Attack",
     roleEscape: "Escape",
@@ -162,7 +161,8 @@ export const translations: Record<Lang, Translations> = {
     donateCancelled: "Donation was cancelled.",
     donateUnavailable: "In-app donation is not ready yet.",
     donateFailed: "Donation failed. Please try again.",
-    upgradeOk: "Google account linked. Stats will now be saved to your account.",
+    upgradeOk:
+      "Google account linked. Stats will now be saved to your account.",
     switchOk: (w: number, l: number) =>
       `Loaded stats from this Google account. (${w}W ${l}L) Guest stats on this device are preserved.`,
     authError: "Failed to link Google account. Please try again.",
