@@ -257,6 +257,23 @@ function App() {
         isSfxMuted,
         musicVolume,
         sfxVolume,
+      }).then((profile) => {
+        if (!profile) return;
+        setAuthState({
+          ready: true,
+          userId: profile.userId,
+          accessToken: useGameStore.getState().authAccessToken,
+          isGuestUser: profile.isGuestUser,
+          nickname: profile.nickname,
+          equippedSkin: profile.equippedSkin,
+          ownedSkins: profile.ownedSkins,
+          wins: profile.wins,
+          losses: profile.losses,
+          tokens: profile.tokens,
+          dailyRewardWins: profile.dailyRewardWins,
+          dailyRewardTokens: profile.dailyRewardTokens,
+          achievements: profile.achievements,
+        });
       });
     }, 250);
 

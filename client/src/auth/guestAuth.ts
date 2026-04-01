@@ -723,14 +723,19 @@ export async function syncAchievementSettings(args: {
   isSfxMuted: boolean;
   musicVolume: number;
   sfxVolume: number;
-}): Promise<void> {
-  await emitSocketAck<{ ok: boolean }>("achievements_sync_settings", {
+}): Promise<AccountProfile | null> {
+  const response = await emitSocketAck<
+    | { ok: true; status: "ACCOUNT_OK"; profile: AccountProfile }
+    | { ok: true; status: "AUTH_REQUIRED" | "AUTH_INVALID" | "UPDATE_REQUIRED" }
+  >("achievements_sync_settings", {
     auth: await getSocketAuthPayload(),
     isMusicMuted: args.isMusicMuted,
     isSfxMuted: args.isSfxMuted,
     musicVolumePercent: Math.round(args.musicVolume * 100),
     sfxVolumePercent: Math.round(args.sfxVolume * 100),
   });
+
+  return response.status === "ACCOUNT_OK" ? response.profile : null;
 }
 
 export async function fetchLegalConsentRecord(): Promise<LegalConsentRecord | null> {

@@ -12,6 +12,7 @@ import { PieceSkin, Position } from '../types/game.types';
 import type { AbilitySkillId, AbilitySkillReservation } from '../game/ability/AbilityTypes';
 import {
   AuthPayload,
+  type AccountProfile,
   finalizeGoogleUpgrade,
   grantDailyRewardTokens,
   getUserFromToken,
@@ -591,8 +592,18 @@ export function initSocketServer(io: Server): void {
           musicVolumePercent: number;
           sfxVolumePercent: number;
         },
-        ack?: (response: { ok: boolean }) => void,
+        ack?: (
+          response:
+            | { ok: true; status: 'ACCOUNT_OK'; profile: AccountProfile }
+            | { ok: true; status: 'AUTH_REQUIRED' | 'AUTH_INVALID' | 'UPDATE_REQUIRED' },
+        ) => void,
       ) => {
+        const requirement = getUpdateRequirement(socket, auth);
+        if (requirement?.forceUpdate) {
+          socket.emit('update_required', requirement);
+          ack?.({ ok: true, status: 'UPDATE_REQUIRED' });
+          return;
+        }
         const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
         if (userId) {
           await trackSettingsAchievements({
@@ -603,7 +614,12 @@ export function initSocketServer(io: Server): void {
             sfxVolumePercent,
           });
         }
-        ack?.({ ok: true });
+        const account = await resolveAccount(auth);
+        if (account.status === 'ACCOUNT_OK') {
+          ack?.({ ok: true, status: 'ACCOUNT_OK', profile: account.profile });
+          return;
+        }
+        ack?.({ ok: true, status: account.status });
       },
     );
 

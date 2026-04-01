@@ -434,6 +434,12 @@ function initSocketServer(io) {
             ack?.(await (0, playerAuth_1.resolveAccount)(auth));
         });
         socket.on('achievements_sync_settings', async ({ auth, isMusicMuted, isSfxMuted, musicVolumePercent, sfxVolumePercent, }, ack) => {
+            const requirement = getUpdateRequirement(socket, auth);
+            if (requirement?.forceUpdate) {
+                socket.emit('update_required', requirement);
+                ack?.({ ok: true, status: 'UPDATE_REQUIRED' });
+                return;
+            }
             const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
             if (userId) {
                 await (0, achievementService_1.trackSettingsAchievements)({
@@ -444,7 +450,12 @@ function initSocketServer(io) {
                     sfxVolumePercent,
                 });
             }
-            ack?.({ ok: true });
+            const account = await (0, playerAuth_1.resolveAccount)(auth);
+            if (account.status === 'ACCOUNT_OK') {
+                ack?.({ ok: true, status: 'ACCOUNT_OK', profile: account.profile });
+                return;
+            }
+            ack?.({ ok: true, status: account.status });
         });
         socket.on('finalize_google_upgrade', async ({ auth, guestAuth, guestProfile, flowStartedAt, allowExistingSwitch, }, ack) => {
             await registerSocketSession(socket, auth, { forceRevalidate: true });
