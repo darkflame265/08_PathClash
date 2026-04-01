@@ -1169,6 +1169,14 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
     () => buildAchievementViews(accountAchievements),
     [accountAchievements],
   );
+  const hasClaimableAchievements = useMemo(
+    () =>
+      achievementViews.some(
+        (achievement) => achievement.completed && !achievement.claimed,
+      ),
+    [achievementViews],
+  );
+
 
   const markPatchNotesRead = useCallback(() => {
     localStorage.setItem(PATCH_NOTES_READ_KEY, PATCH_NOTES_VERSION);
@@ -2486,6 +2494,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
           type="button"
         >
           {lang === "en" ? "Achievements" : "업적"}
+          {hasClaimableAchievements && <span className="lobby-new-badge">NEW</span>}
         </button>
         <button
           className="lobby-utility-link"
