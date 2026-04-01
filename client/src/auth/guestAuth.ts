@@ -352,7 +352,7 @@ function invalidateAccountSnapshot(userId: string) {
   accountSnapshotCache.delete(userId);
 }
 
-async function getAccountSnapshot(userId: string): Promise<AccountSnapshot> {
+async function getAccountSnapshot(userId: string, options?: { force?: boolean }): Promise<AccountSnapshot> {
   if (!supabase) {
     return {
       nickname: null,
@@ -367,12 +367,16 @@ async function getAccountSnapshot(userId: string): Promise<AccountSnapshot> {
     };
   }
 
-  const cachedSnapshot = readCachedAccountSnapshot(userId);
+  const cachedSnapshot = options?.force ? null : readCachedAccountSnapshot(userId);
   if (cachedSnapshot) {
     return cachedSnapshot;
   }
 
-  const existingInFlight = accountSnapshotInFlight.get(userId);
+  if (options?.force) {
+    invalidateAccountSnapshot(userId);
+  }
+
+  const existingInFlight = options?.force ? undefined : accountSnapshotInFlight.get(userId);
   if (existingInFlight) {
     return existingInFlight;
   }
@@ -560,7 +564,7 @@ export async function initializeGuestAuth(): Promise<AuthStatePayload> {
   return toAuthState(session, snapshot);
 }
 
-export async function refreshAccountSummary(): Promise<
+export async function refreshAccountSummary(options?: { force?: boolean }): Promise<
   Pick<
     AuthStatePayload,
     | "nickname"
@@ -603,7 +607,7 @@ export async function refreshAccountSummary(): Promise<
     };
   }
 
-  const snapshot = await getAccountSnapshot(session.user.id);
+  const snapshot = await getAccountSnapshot(session.user.id, options);
   return {
     nickname: snapshot.nickname,
     equippedSkin: snapshot.equippedSkin,

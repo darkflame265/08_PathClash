@@ -8,6 +8,7 @@ import {
   installNativeAuthCallbackHandler,
   logoutToGuestMode,
   onAuthStateChanged,
+  refreshAccountSummary,
   syncLegalConsent,
   syncAchievementSettings,
   syncEquippedSkin,
@@ -102,6 +103,7 @@ function App() {
     authReady,
     authUserId,
     authAccessToken,
+    isGuestUser,
     myNickname,
     pieceSkin,
     setAuthState,
@@ -114,6 +116,7 @@ function App() {
   const nicknameSyncTimeoutRef = useRef<number | null>(null);
   const lobbyBgmRef = useRef<HTMLAudioElement | null>(null);
   const inGameBgmRef = useRef<HTMLAudioElement | null>(null);
+  const achievementRefreshTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!authReady) return;
@@ -354,6 +357,65 @@ function App() {
       socket.off("update_required", onUpdateRequired);
     };
   }, [applyUpdateRequired]);
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    const refreshAchievementSummary = () => {
+      if (!authReady || !authUserId || !authAccessToken) return;
+      if (achievementRefreshTimeoutRef.current !== null) {
+        window.clearTimeout(achievementRefreshTimeoutRef.current);
+      }
+      achievementRefreshTimeoutRef.current = window.setTimeout(() => {
+        void refreshAccountSummary({ force: true }).then(
+          ({
+            nickname,
+            equippedSkin,
+            ownedSkins,
+            wins,
+            losses,
+            tokens,
+            dailyRewardWins,
+            dailyRewardTokens,
+            achievements,
+          }) => {
+            setAuthState({
+              ready: true,
+              userId: authUserId,
+              accessToken: useGameStore.getState().authAccessToken,
+              isGuestUser,
+              nickname,
+              equippedSkin,
+              ownedSkins,
+              wins,
+              losses,
+              tokens,
+              dailyRewardWins,
+              dailyRewardTokens,
+              achievements,
+            });
+          },
+        );
+        achievementRefreshTimeoutRef.current = null;
+      }, 700);
+    };
+
+    socket.on("game_over", refreshAchievementSummary);
+    socket.on("ability_game_over", refreshAchievementSummary);
+    socket.on("coop_game_over", refreshAchievementSummary);
+    socket.on("twovtwo_game_over", refreshAchievementSummary);
+
+    return () => {
+      socket.off("game_over", refreshAchievementSummary);
+      socket.off("ability_game_over", refreshAchievementSummary);
+      socket.off("coop_game_over", refreshAchievementSummary);
+      socket.off("twovtwo_game_over", refreshAchievementSummary);
+      if (achievementRefreshTimeoutRef.current !== null) {
+        window.clearTimeout(achievementRefreshTimeoutRef.current);
+        achievementRefreshTimeoutRef.current = null;
+      }
+    };
+  }, [authAccessToken, authReady, authUserId, isGuestUser, setAuthState]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== "android") {
