@@ -64,7 +64,7 @@ const DONATE_URL =
   import.meta.env.VITE_DONATE_URL?.trim() || "https://pathclash.com";
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
 const AI_TUTORIAL_PROMPT_ANSWERED_KEY = "pathclash.aiTutorialPromptAnswered.v1";
-const PATCH_NOTES_VERSION = "2026-03-27-v4";
+const PATCH_NOTES_VERSION = "2026-04-01-v5";
 const PATCH_NOTES_READ_KEY = "pathclash.patchNotes.read";
 
 type SetAuthState = ReturnType<typeof useGameStore.getState>["setAuthState"];
@@ -627,8 +627,10 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
       : "예를 누르면 AI 대전에 바로 입장하며 튜토리얼이 시작됩니다.";
   const aiTutorialYesLabel = lang === "en" ? "Yes" : "예";
   const aiTutorialNoLabel = lang === "en" ? "No" : "아니요";
+  // Keep existing Korean literals as plain UTF-8 text. Do not rewrite them
+  // based on terminal mojibake output; verify against the actual UI/editor first.
   const patchNotesVersionLabel =
-    lang === "en" ? "Version 2026.03.27" : "버전 2026.03.27";
+    lang === "en" ? "Version 2026.04.01" : "버전 2026.04.01";
   // Patch note convention:
   // - If a mana cost goes down, append "(Buff)" / "(버프)" and style it green.
   // - If a mana cost goes up, append "(Nerf)" / "(너프)" and style it red.
@@ -637,53 +639,53 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
     lang === "en"
       ? [
           {
-            heading: "New Ability Battle content",
+            heading: "New systems",
             lines: [
-              { text: "Added Inferno Field, Void Cloak, Phase Shift, AT Field, and Atomic Fission." },
-              { text: "Added dedicated skill visuals and sound effects for multiple abilities." },
-              { text: "Added Patch Notes UI and improved in-game readability." },
+              { text: "Added the achievements system with progress tracking, individual claim, and Claim All rewards." },
+              { text: "Added a first-launch legal consent flow for Terms of Service and Privacy Policy." },
+              { text: "Updated the Privacy Policy and Terms of Service to match Google Sign-In, purchases, achievements, and account linking." },
             ],
           },
           {
-            heading: "Balance changes",
+            heading: "Tutorial and lobby improvements",
             lines: [
-              { text: "Guard mana cost: 4 -> 2", change: "buff" as const, label: "(Buff)" },
-              { text: "Inferno Field mana cost: 4 -> 6", change: "nerf" as const, label: "(Nerf)" },
-              { text: "Atomic Fission mana cost: 4 -> 6", change: "nerf" as const, label: "(Nerf)" },
+              { text: "Expanded the AI tutorial into multiple guided scenarios with attack, escape, obstacle, and path prediction lessons." },
+              { text: "Added a dedicated Tutorial button in the lobby so the tutorial can be replayed anytime." },
+              { text: "Improved lobby utility UI, including achievement reward indicators and clearer collection progress display." },
             ],
           },
           {
             heading: "Fixes and improvements",
             lines: [
-              { text: "Fixed multiple Ability Battle timing, collision, clone, and lava interaction issues." },
-              { text: "Improved mobile Ability Battle layout and skill button handling." },
-              { text: "Improved token reward guidance and patch note visibility." },
+              { text: "Fixed the rematch path-loss bug where the first round after a rematch could use stale round state." },
+              { text: "Fixed multiple AI tutorial flow issues, including role assignment, scenario resets, and replay entry problems." },
+              { text: "Adjusted hit effects, hover feedback, and several lobby/tutorial UI behaviors for better readability." },
             ],
           },
         ]
       : [
           {
-            heading: "신규 능력 대전 콘텐츠",
+            heading: "신규 시스템",
             lines: [
-              { text: "용암지대, 투명화, 페이즈 시프트, AT 필드, 원자분열 스킬을 추가했습니다." },
-              { text: "여러 스킬에 전용 시각 효과와 효과음을 추가했습니다." },
-              { text: "패치노트 UI와 인게임 가독성을 개선했습니다." },
+              { text: "진행도 추적, 개별 수령, 일괄 수령을 포함한 업적 시스템을 추가했습니다." },
+              { text: "첫 실행 시 이용약관과 개인정보처리방침에 동의하는 흐름을 추가했습니다." },
+              { text: "구글 로그인, 결제, 업적, 계정 연동 구조에 맞춰 개인정보처리방침과 이용약관을 갱신했습니다." },
             ],
           },
           {
-            heading: "밸런스 조정",
+            heading: "튜토리얼 및 로비 개선",
             lines: [
-              { text: "가드 마나 코스트: 4 -> 2", change: "buff" as const, label: "(버프)" },
-              { text: "용암지대 마나 코스트: 4 -> 6", change: "nerf" as const, label: "(너프)" },
-              { text: "원자분열 마나 코스트: 4 -> 6", change: "nerf" as const, label: "(너프)" },
+              { text: "공격, 도망, 장애물, 경로 예측을 포함한 다단계 AI 튜토리얼을 추가했습니다." },
+              { text: "로비에 전용 튜토리얼 버튼을 추가해 원할 때 다시 체험할 수 있게 했습니다." },
+              { text: "업적 보상 표시와 수집 현황 표시를 포함해 로비 편의성을 개선했습니다." },
             ],
           },
           {
             heading: "수정 및 개선",
             lines: [
-              { text: "능력 대전의 타이밍, 충돌, 분신, 용암 판정 관련 문제를 여러 건 수정했습니다." },
-              { text: "모바일 능력 대전 UI와 스킬 버튼 조작성을 개선했습니다." },
-              { text: "토큰 보상 안내와 패치노트 표시 방식을 개선했습니다." },
+              { text: "리매치 후 첫 라운드에서 이전 상태가 섞여 경로가 사라지던 버그를 수정했습니다." },
+              { text: "AI 튜토리얼의 역할 설정, 재시도, 시나리오 전환, 재진입 관련 문제를 여러 건 수정했습니다." },
+              { text: "피격 연출, 호버 표시, 튜토리얼/로비 UI 읽기 편의성을 개선했습니다." },
             ],
           },
         ];
