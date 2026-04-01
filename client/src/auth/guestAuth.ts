@@ -24,6 +24,8 @@ export interface AuthStatePayload {
 interface ProfileRow {
   nickname: string | null;
   equipped_skin: PieceSkin | null;
+  legal_consent_version?: string | null;
+  legal_consented_at?: string | null;
 }
 
 interface StatsRow {
@@ -54,6 +56,11 @@ export interface PlayerAchievementState {
   claimed: boolean;
   completedAt: string | null;
   claimedAt: string | null;
+}
+
+export interface LegalConsentRecord {
+  version: string | null;
+  consentedAt: string | null;
 }
 
 interface AccountSnapshot {
@@ -618,6 +625,59 @@ export async function syncAchievementSettings(args: {
     musicVolumePercent: Math.round(args.musicVolume * 100),
     sfxVolumePercent: Math.round(args.sfxVolume * 100),
   });
+}
+
+export async function fetchLegalConsentRecord(): Promise<LegalConsentRecord | null> {
+  if (!supabase) return null;
+
+  const session = await getCurrentSession();
+  if (!session?.user) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("legal_consent_version, legal_consented_at")
+      .eq("id", session.user.id)
+      .maybeSingle<ProfileRow>();
+
+    if (error) {
+      console.warn("[supabase] failed to fetch legal consent record", error);
+      return null;
+    }
+
+    return {
+      version: data?.legal_consent_version ?? null,
+      consentedAt: data?.legal_consented_at ?? null,
+    };
+  } catch (error) {
+    console.warn("[supabase] legal consent columns unavailable", error);
+    return null;
+  }
+}
+
+export async function syncLegalConsent(args: {
+  version: string;
+  consentedAt: string;
+}): Promise<void> {
+  if (!supabase) return;
+
+  const session = await getCurrentSession();
+  if (!session?.user) return;
+
+  try {
+    const { error } = await supabase.from("profiles").upsert({
+      id: session.user.id,
+      is_guest: session.user.is_anonymous ?? false,
+      legal_consent_version: args.version,
+      legal_consented_at: args.consentedAt,
+    });
+
+    if (error) {
+      console.warn("[supabase] failed to sync legal consent", error);
+    }
+  } catch (error) {
+    console.warn("[supabase] legal consent columns unavailable", error);
+  }
 }
 
 export async function linkGoogleAccount(): Promise<void> {

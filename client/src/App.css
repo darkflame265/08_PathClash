@@ -122,3 +122,61 @@ body {
 .app-confirm-btn-primary:hover {
   background: rgba(82, 145, 88, 0.98);
 }
+
+.app-confirm-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  filter: saturate(0.7);
+}
+
+.app-legal-consent-modal {
+  width: min(100%, 28rem);
+}
+
+.app-legal-consent-links {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.app-legal-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.9rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(80, 126, 214, 0.35);
+  background: rgba(23, 37, 84, 0.32);
+  color: #bfdbfe;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.app-legal-link:hover {
+  background: rgba(30, 58, 138, 0.38);
+  border-color: rgba(96, 165, 250, 0.45);
+  color: #eff6ff;
+}
+
+.app-legal-consent-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(90, 104, 118, 0.35);
+  background: rgba(15, 23, 42, 0.35);
+  color: rgba(226, 232, 240, 0.92);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.app-legal-consent-checkbox input {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-top: 0.15rem;
+  accent-color: #4ade80;
+  flex: 0 0 auto;
+}

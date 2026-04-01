@@ -10,6 +10,12 @@ create table if not exists public.profiles (
 alter table public.profiles
 add column if not exists equipped_skin text not null default 'classic';
 
+alter table public.profiles
+add column if not exists legal_consent_version text;
+
+alter table public.profiles
+add column if not exists legal_consented_at timestamptz;
+
 create table if not exists public.player_stats (
   user_id uuid primary key references auth.users(id) on delete cascade,
   wins integer not null default 0,

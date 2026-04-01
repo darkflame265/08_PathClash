@@ -2,11 +2,13 @@ import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react"
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import {
+  fetchLegalConsentRecord,
   getSocketAuthPayload,
   initializeGuestAuth,
   installNativeAuthCallbackHandler,
   logoutToGuestMode,
   onAuthStateChanged,
+  syncLegalConsent,
   syncAchievementSettings,
   syncEquippedSkin,
   syncNickname,
@@ -53,6 +55,38 @@ type UpdateRequiredPayload = {
   marketUrl: string;
 };
 
+type StoredLegalConsent = {
+  version: string;
+  consentedAt: string;
+  userId: string | null;
+};
+
+const LEGAL_CONSENT_VERSION = "2026-04-01-v1";
+const LEGAL_CONSENT_STORAGE_KEY = "pathclash.legalConsent.v1";
+const POLICY_URL_KR =
+  import.meta.env.VITE_POLICY_URL_KR?.trim() || "https://pathclash.com/privacy.html";
+const POLICY_URL_EN =
+  import.meta.env.VITE_POLICY_URL_EN?.trim() || "https://pathclash.com/privacy-en.html";
+const TERMS_URL_KR =
+  import.meta.env.VITE_TERMS_URL_KR?.trim() || "https://pathclash.com/terms.html";
+const TERMS_URL_EN =
+  import.meta.env.VITE_TERMS_URL_EN?.trim() || "https://pathclash.com/terms-en.html";
+
+function readStoredLegalConsent(): StoredLegalConsent | null {
+  const raw = window.localStorage.getItem(LEGAL_CONSENT_STORAGE_KEY);
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as StoredLegalConsent;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredLegalConsent(record: StoredLegalConsent) {
+  window.localStorage.setItem(LEGAL_CONSENT_STORAGE_KEY, JSON.stringify(record));
+}
+
 function App() {
   const [view, setView] = useState<AppView>("lobby");
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -60,6 +94,10 @@ function App() {
   const [isSessionResetting, setIsSessionResetting] = useState(false);
   const [updateRequired, setUpdateRequired] =
     useState<UpdateRequiredPayload | null>(null);
+  const [legalConsentResolved, setLegalConsentResolved] = useState(false);
+  const [hasLegalConsent, setHasLegalConsent] = useState(false);
+  const [legalConsentChecked, setLegalConsentChecked] = useState(false);
+  const [isSavingLegalConsent, setIsSavingLegalConsent] = useState(false);
   const {
     authReady,
     authUserId,
@@ -76,6 +114,49 @@ function App() {
   const nicknameSyncTimeoutRef = useRef<number | null>(null);
   const lobbyBgmRef = useRef<HTMLAudioElement | null>(null);
   const inGameBgmRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (!authReady) return;
+
+    let active = true;
+
+    void (async () => {
+      const storedConsent = readStoredLegalConsent();
+      if (storedConsent?.version === LEGAL_CONSENT_VERSION) {
+        if (!active) return;
+        setHasLegalConsent(true);
+        setLegalConsentResolved(true);
+        if (authUserId) {
+          void syncLegalConsent({
+            version: storedConsent.version,
+            consentedAt: storedConsent.consentedAt,
+          });
+        }
+        return;
+      }
+
+      const dbRecord = await fetchLegalConsentRecord();
+      if (!active) return;
+
+      if (dbRecord?.version === LEGAL_CONSENT_VERSION && dbRecord.consentedAt) {
+        writeStoredLegalConsent({
+          version: dbRecord.version,
+          consentedAt: dbRecord.consentedAt,
+          userId: authUserId,
+        });
+        setHasLegalConsent(true);
+        setLegalConsentResolved(true);
+        return;
+      }
+
+      setHasLegalConsent(false);
+      setLegalConsentResolved(true);
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [authReady, authUserId]);
 
   const applyUpdateRequired = useCallback(
     (payload: UpdateRequiredPayload | null | undefined) => {
@@ -353,6 +434,27 @@ function App() {
     }
   }, [updateRequired]);
 
+  const handleAgreeToLegalConsent = useCallback(async () => {
+    const consentedAt = new Date().toISOString();
+    const record: StoredLegalConsent = {
+      version: LEGAL_CONSENT_VERSION,
+      consentedAt,
+      userId: authUserId,
+    };
+
+    setIsSavingLegalConsent(true);
+    try {
+      writeStoredLegalConsent(record);
+      await syncLegalConsent({
+        version: LEGAL_CONSENT_VERSION,
+        consentedAt,
+      });
+      setHasLegalConsent(true);
+    } finally {
+      setIsSavingLegalConsent(false);
+    }
+  }, [authUserId]);
+
   const tryStartBgm = useCallback(() => {
     const lobbyBgm = lobbyBgmRef.current;
     const inGameBgm = inGameBgmRef.current;
@@ -446,9 +548,30 @@ function App() {
     };
   }, [tryStartBgm]);
 
-  if (!authReady) {
+  if (!authReady || !legalConsentResolved) {
     return <div className="app app-loading">Connecting guest session...</div>;
   }
+
+  const legalConsentTitle =
+    lang === "en"
+      ? "Terms of Service and Privacy Policy"
+      : "\uC774\uC6A9\uC57D\uAD00 \uBC0F \uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68";
+  const legalConsentBody =
+    lang === "en"
+      ? "Please review the Terms of Service and Privacy Policy before continuing. You must agree to both to use PathClash."
+      : "PathClash\uB97C \uC774\uC6A9\uD558\uB824\uBA74 \uC774\uC6A9\uC57D\uAD00\uACFC \uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68\uC744 \uD655\uC778\uD55C \uB4A4 \uB3D9\uC758\uD574\uC57C \uD569\uB2C8\uB2E4.";
+  const legalConsentTermsLabel =
+    lang === "en" ? "View Terms of Service" : "\uC774\uC6A9\uC57D\uAD00 \uBCF4\uAE30";
+  const legalConsentPolicyLabel =
+    lang === "en" ? "View Privacy Policy" : "\uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68 \uBCF4\uAE30";
+  const legalConsentCheckboxLabel =
+    lang === "en"
+      ? "I agree to the Terms of Service and Privacy Policy."
+      : "\uC774\uC6A9\uC57D\uAD00\uACFC \uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68\uC5D0 \uB3D9\uC758\uD569\uB2C8\uB2E4.";
+  const legalConsentConfirmLabel =
+    lang === "en" ? "Agree and Start" : "\uB3D9\uC758\uD558\uACE0 \uC2DC\uC791";
+  const legalConsentTermsUrl = lang === "en" ? TERMS_URL_EN : TERMS_URL_KR;
+  const legalConsentPolicyUrl = lang === "en" ? POLICY_URL_EN : POLICY_URL_KR;
 
   return (
     <div className={`app ${view === "lobby" ? "app-lobby" : "app-game"}`}>
@@ -525,6 +648,50 @@ function App() {
                 type="button"
               >
                 {updateRequiredConfirm}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {!updateRequired && !hasLegalConsent && (
+        <div className="app-confirm-backdrop">
+          <div className="app-confirm-modal app-legal-consent-modal">
+            <h3>{legalConsentTitle}</h3>
+            <p className="app-confirm-copy">{legalConsentBody}</p>
+            <div className="app-legal-consent-links">
+              <a
+                className="app-legal-link"
+                href={legalConsentTermsUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {legalConsentTermsLabel}
+              </a>
+              <a
+                className="app-legal-link"
+                href={legalConsentPolicyUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {legalConsentPolicyLabel}
+              </a>
+            </div>
+            <label className="app-legal-consent-checkbox">
+              <input
+                type="checkbox"
+                checked={legalConsentChecked}
+                onChange={(event) => setLegalConsentChecked(event.target.checked)}
+              />
+              <span>{legalConsentCheckboxLabel}</span>
+            </label>
+            <div className="app-confirm-actions app-confirm-actions-single">
+              <button
+                className="app-confirm-btn app-confirm-btn-primary"
+                onClick={() => void handleAgreeToLegalConsent()}
+                type="button"
+                disabled={!legalConsentChecked || isSavingLegalConsent}
+              >
+                {legalConsentConfirmLabel}
               </button>
             </div>
           </div>

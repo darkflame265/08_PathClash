@@ -8,7 +8,7 @@ AI나 사람이 빠르게 전체 구조만 확인할 때 사용합니다.
 - `auth.users`
   - 계정의 기준 테이블
 - `public.profiles`
-  - 닉네임, 장착 스킨, guest 여부
+  - 닉네임, 장착 스킨, guest 여부, 약관/개인정보 동의 버전 기록
 - `public.player_stats`
   - 승, 패, 토큰, 일일 보상 진행도
 - `public.owned_skins`
@@ -43,6 +43,14 @@ AI나 사람이 빠르게 전체 구조만 확인할 때 사용합니다.
 - `claimed`
 - `completed_at`
 - `claimed_at`
+
+## 약관 동의 메모
+
+`public.profiles`에 아래 값이 저장된다.
+- `legal_consent_version`
+- `legal_consented_at`
+
+앱은 최초 1회 동의 팝업을 띄우고, 현재 동의 버전을 로컬과 DB에 함께 기록한다.
 
 ## 자주 보는 파일
 
