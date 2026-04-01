@@ -129,13 +129,13 @@ export const translations: Record<Lang, Translations> = {
     escapeRoleDragTutorial:
       "Well done! Here's the next situation.\nYou are the escaper this round.\nPredict the opponent's attack path. Move two cells upward to avoid damage.",
     predictPathTutorial:
-      "Well done! Here's the next situation.\nYou are the attacker this round.\nPredict the opponent's escape path and attack them.",
+      "Good Job! Here's the next situation.\nYou are the attacker this round.\nPredict the opponent's escape path and attack them.",
     predictObstacleTutorial:
-      "Well done! We've added barriers, which you can't pass through.\nYou are the attacker this round.\nPredict the opponent's escape path and attack them.",
+      "Nice! We've added barriers, which you can't pass through.\nYou are the attacker this round.\nPredict the opponent's escape path and attack them.",
     overlapEscapeTutorial:
       "Well done! This time, you and the opponent are overlapping.\nYou are the escaper this round.\nIf you stay still while overlapping, you will definitely get hit.\nTry to choose a direction that does not overlap with the opponent's path and escape.",
     chainAttackTutorial:
-      "Well done!\nThis is the final situation!\nIn PathClash, repeated collisions occur when paths overlap.\nYou are the attacker this round.\nPredict the opponent's path and deal 3 or more consecutive damage in a single round!",
+      "Good Job!\nThis is the final situation!\nIn PathClash, repeated collisions occur when paths overlap.\nYou are the attacker this round.\nPredict the opponent's path and deal 3 or more consecutive damage in a single round!",
     pathPointsTutorialHint:
       "These are Path Points.\nThey show how many cells you can move through.\nThey increase by 1 each round, up to a maximum of 10.",
     winConditionTutorialHint: "Hit your opponent three times to win!",
