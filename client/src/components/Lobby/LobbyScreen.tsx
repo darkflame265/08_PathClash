@@ -188,6 +188,9 @@ function AchievementModal({
   onClaimAll: () => void;
   onClose: () => void;
 }) {
+  const completedCount = achievements.filter(
+    (achievement) => achievement.completed,
+  ).length;
   const claimableCount = achievements.filter(
     (achievement) => achievement.completed && !achievement.claimed,
   ).length;
@@ -209,6 +212,11 @@ function AchievementModal({
               {lang === "en"
                 ? "Complete goals, then claim your token rewards here."
                 : "조건을 달성한 뒤 여기서 토큰 보상을 획득하세요."}
+            </p>
+            <p className="achievement-collection-summary">
+              {lang === "en"
+                ? `Found: ${completedCount}/${achievements.length}`
+                : `??: ${completedCount}/${achievements.length}`}
             </p>
           </div>
           <button
@@ -284,9 +292,11 @@ function AchievementModal({
                       >
                         <span className="achievement-reward-value">
                           <span
-                            className="achievement-reward-icon"
+                            className="skin-token-icon achievement-reward-icon"
                             aria-hidden="true"
-                          />
+                          >
+                            {"\uD83D\uDC8E"}
+                          </span>
                           <span>{achievement.rewardTokens}</span>
                         </span>
                         <span>{rewardLabel}</span>
@@ -1246,16 +1256,29 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
 
   const handleClaimAllAchievements = useCallback(async () => {
     if (isClaimingAchievements) return;
+    const claimableAchievements = achievementViews.filter(
+      (achievement) => achievement.completed && !achievement.claimed,
+    );
+    if (claimableAchievements.length === 0) return;
+    const rewardSum = claimableAchievements.reduce(
+      (sum, achievement) => sum + achievement.rewardTokens,
+      0,
+    );
     setIsClaimingAchievements(true);
     try {
       const profile = await claimAllAchievementRewards();
       if (profile) {
         applyProfileToStore(profile, setAuthState);
+        window.alert(
+          lang === "en"
+            ? `Claimed ${claimableAchievements.length} achievement rewards and received ${rewardSum} tokens.`
+            : `${claimableAchievements.length}?? ?? ??? ????, ${rewardSum}??? ?????.`,
+        );
       }
     } finally {
       setIsClaimingAchievements(false);
     }
-  }, [isClaimingAchievements, setAuthState]);
+  }, [achievementViews, isClaimingAchievements, lang, setAuthState]);
 
   useEffect(() => {
     void syncAccountSummary();
