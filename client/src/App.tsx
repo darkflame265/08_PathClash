@@ -61,16 +61,14 @@ type StoredLegalConsent = {
   userId: string | null;
 };
 
+type LegalDocumentType = "terms" | "privacy";
+
 const LEGAL_CONSENT_VERSION = "2026-04-01-v1";
 const LEGAL_CONSENT_STORAGE_KEY = "pathclash.legalConsent.v1";
-const POLICY_URL_KR =
-  import.meta.env.VITE_POLICY_URL_KR?.trim() || "https://pathclash.com/privacy.html";
-const POLICY_URL_EN =
-  import.meta.env.VITE_POLICY_URL_EN?.trim() || "https://pathclash.com/privacy-en.html";
-const TERMS_URL_KR =
-  import.meta.env.VITE_TERMS_URL_KR?.trim() || "https://pathclash.com/terms.html";
-const TERMS_URL_EN =
-  import.meta.env.VITE_TERMS_URL_EN?.trim() || "https://pathclash.com/terms-en.html";
+const TERMS_PATH_KR = "/terms.html";
+const TERMS_PATH_EN = "/terms-en.html";
+const POLICY_PATH_KR = "/privacy.html";
+const POLICY_PATH_EN = "/privacy-en.html";
 
 function readStoredLegalConsent(): StoredLegalConsent | null {
   const raw = window.localStorage.getItem(LEGAL_CONSENT_STORAGE_KEY);
@@ -98,6 +96,8 @@ function App() {
   const [hasLegalConsent, setHasLegalConsent] = useState(false);
   const [legalConsentChecked, setLegalConsentChecked] = useState(false);
   const [isSavingLegalConsent, setIsSavingLegalConsent] = useState(false);
+  const [openLegalDocument, setOpenLegalDocument] =
+    useState<LegalDocumentType | null>(null);
   const {
     authReady,
     authUserId,
@@ -570,8 +570,19 @@ function App() {
       : "\uC774\uC6A9\uC57D\uAD00\uACFC \uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68\uC5D0 \uB3D9\uC758\uD569\uB2C8\uB2E4.";
   const legalConsentConfirmLabel =
     lang === "en" ? "Agree and Start" : "\uB3D9\uC758\uD558\uACE0 \uC2DC\uC791";
-  const legalConsentTermsUrl = lang === "en" ? TERMS_URL_EN : TERMS_URL_KR;
-  const legalConsentPolicyUrl = lang === "en" ? POLICY_URL_EN : POLICY_URL_KR;
+  const legalConsentTermsPath = lang === "en" ? TERMS_PATH_EN : TERMS_PATH_KR;
+  const legalConsentPolicyPath = lang === "en" ? POLICY_PATH_EN : POLICY_PATH_KR;
+  const legalDocumentTitle =
+    openLegalDocument === "terms"
+      ? lang === "en"
+        ? "Terms of Service"
+        : "\uC774\uC6A9\uC57D\uAD00"
+      : lang === "en"
+        ? "Privacy Policy"
+        : "\uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68";
+  const legalDocumentCloseLabel = lang === "en" ? "Close" : "\uB2EB\uAE30";
+  const legalDocumentSrc =
+    openLegalDocument === "terms" ? legalConsentTermsPath : legalConsentPolicyPath;
 
   return (
     <div className={`app ${view === "lobby" ? "app-lobby" : "app-game"}`}>
@@ -659,22 +670,20 @@ function App() {
             <h3>{legalConsentTitle}</h3>
             <p className="app-confirm-copy">{legalConsentBody}</p>
             <div className="app-legal-consent-links">
-              <a
+              <button
                 className="app-legal-link"
-                href={legalConsentTermsUrl}
-                target="_blank"
-                rel="noreferrer"
+                onClick={() => setOpenLegalDocument("terms")}
+                type="button"
               >
-                {legalConsentTermsLabel}
-              </a>
-              <a
+                <span>{`${legalConsentTermsLabel} >`}</span>
+              </button>
+              <button
                 className="app-legal-link"
-                href={legalConsentPolicyUrl}
-                target="_blank"
-                rel="noreferrer"
+                onClick={() => setOpenLegalDocument("privacy")}
+                type="button"
               >
-                {legalConsentPolicyLabel}
-              </a>
+                <span>{`${legalConsentPolicyLabel} >`}</span>
+              </button>
             </div>
             <label className="app-legal-consent-checkbox">
               <input
@@ -693,6 +702,30 @@ function App() {
               >
                 {legalConsentConfirmLabel}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {openLegalDocument && (
+        <div className="app-legal-doc-backdrop">
+          <div className="app-legal-doc-modal" role="dialog" aria-modal="true">
+            <div className="app-legal-doc-header">
+              <h3>{legalDocumentTitle}</h3>
+              <button
+                className="app-legal-doc-close"
+                onClick={() => setOpenLegalDocument(null)}
+                type="button"
+                aria-label={legalDocumentCloseLabel}
+              >
+                ×
+              </button>
+            </div>
+            <div className="app-legal-doc-body">
+              <iframe
+                className="app-legal-doc-frame"
+                src={legalDocumentSrc}
+                title={legalDocumentTitle}
+              />
             </div>
           </div>
         </div>
