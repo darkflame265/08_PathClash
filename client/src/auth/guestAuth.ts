@@ -131,6 +131,23 @@ interface ServerAccountResponse {
 
 const DAILY_REWARD_TOKENS_PER_WIN = 6;
 const DAILY_REWARD_MAX_WINS = 20;
+const ACCOUNT_SNAPSHOT_CACHE_TTL_MS = 3000;
+
+const knownProfileUsers = new Set<string>();
+const accountSnapshotCache = new Map<
+  string,
+  { snapshot: AccountSnapshot; fetchedAt: number }
+>();
+const accountSnapshotInFlight = new Map<string, Promise<AccountSnapshot>>();
+const lastSyncedProfileState = new Map<
+  string,
+  {
+    nickname?: string | null;
+    equippedSkin?: PieceSkin;
+    legalConsentVersion?: string | null;
+    legalConsentedAt?: string | null;
+  }
+>();
 
 function getUtcDayKey(now = new Date()): string {
   return now.toISOString().slice(0, 10);
@@ -271,6 +288,7 @@ function getStoredGuestSession(): StoredGuestSession | null {
 
 async function ensureProfile(userId: string): Promise<void> {
   if (!supabase) return;
+  if (knownProfileUsers.has(userId)) return;
 
   const { data: existing } = await supabase
     .from("profiles")
@@ -278,7 +296,16 @@ async function ensureProfile(userId: string): Promise<void> {
     .eq("id", userId)
     .maybeSingle<ProfileRow>();
 
-  if (existing) return;
+  if (existing) {
+    knownProfileUsers.add(userId);
+    const current = lastSyncedProfileState.get(userId) ?? {};
+    lastSyncedProfileState.set(userId, {
+      ...current,
+      nickname: existing.nickname ?? null,
+      equippedSkin: existing.equipped_skin ?? "classic",
+    });
+    return;
+  }
 
   const { error } = await supabase.from("profiles").upsert({
     id: userId,
@@ -288,7 +315,41 @@ async function ensureProfile(userId: string): Promise<void> {
 
   if (error) {
     console.error("[supabase] failed to create profile", error);
+    return;
   }
+
+  knownProfileUsers.add(userId);
+  const current = lastSyncedProfileState.get(userId) ?? {};
+  lastSyncedProfileState.set(userId, {
+    ...current,
+    nickname: null,
+    equippedSkin: "classic",
+  });
+}
+
+function readCachedAccountSnapshot(userId: string): AccountSnapshot | null {
+  const cached = accountSnapshotCache.get(userId);
+  if (!cached) return null;
+  if (Date.now() - cached.fetchedAt > ACCOUNT_SNAPSHOT_CACHE_TTL_MS) {
+    accountSnapshotCache.delete(userId);
+    return null;
+  }
+  return cached.snapshot;
+}
+
+function cacheAccountSnapshot(userId: string, snapshot: AccountSnapshot) {
+  accountSnapshotCache.set(userId, { snapshot, fetchedAt: Date.now() });
+  knownProfileUsers.add(userId);
+  const current = lastSyncedProfileState.get(userId) ?? {};
+  lastSyncedProfileState.set(userId, {
+    ...current,
+    nickname: snapshot.nickname,
+    equippedSkin: snapshot.equippedSkin,
+  });
+}
+
+function invalidateAccountSnapshot(userId: string) {
+  accountSnapshotCache.delete(userId);
 }
 
 async function getAccountSnapshot(userId: string): Promise<AccountSnapshot> {
@@ -306,52 +367,75 @@ async function getAccountSnapshot(userId: string): Promise<AccountSnapshot> {
     };
   }
 
-  await ensureProfile(userId);
+  const cachedSnapshot = readCachedAccountSnapshot(userId);
+  if (cachedSnapshot) {
+    return cachedSnapshot;
+  }
 
-  const [profileResult, statsResult, achievementsResult] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("nickname, equipped_skin")
-      .eq("id", userId)
-      .maybeSingle<ProfileRow>(),
-    supabase
-      .from("player_stats")
-      .select("wins, losses, tokens, daily_reward_wins, daily_reward_day")
-      .eq("user_id", userId)
-      .maybeSingle<StatsRow>(),
-    supabase
-      .from("player_achievements")
-      .select("achievement_id, progress, completed, claimed, completed_at, claimed_at")
-      .eq("user_id", userId)
-      .returns<PlayerAchievementRow[]>(),
-  ]);
-  const { data: ownedSkinRows } = await supabase
-    .from("owned_skins")
-    .select("skin_id")
-    .eq("user_id", userId)
-    .returns<OwnedSkinRow[]>();
-  const dailyRewardWins = getActiveDailyRewardWins(statsResult.data ?? undefined);
+  const existingInFlight = accountSnapshotInFlight.get(userId);
+  if (existingInFlight) {
+    return existingInFlight;
+  }
 
-  return {
-    nickname: profileResult.data?.nickname ?? null,
-    equippedSkin: profileResult.data?.equipped_skin ?? "classic",
-    ownedSkins: (ownedSkinRows ?? [])
-      .map((row) => row.skin_id)
-      .filter((skin): skin is PieceSkin => Boolean(skin)),
-    wins: statsResult.data?.wins ?? 0,
-    losses: statsResult.data?.losses ?? 0,
-    tokens: statsResult.data?.tokens ?? 0,
-    dailyRewardWins,
-    dailyRewardTokens: dailyRewardWins * DAILY_REWARD_TOKENS_PER_WIN,
-    achievements: (achievementsResult.data ?? []).map((row) => ({
-      achievementId: row.achievement_id,
-      progress: Number(row.progress ?? 0),
-      completed: Boolean(row.completed),
-      claimed: Boolean(row.claimed),
-      completedAt: row.completed_at ?? null,
-      claimedAt: row.claimed_at ?? null,
-    })),
-  };
+  const fetchPromise = (async () => {
+    await ensureProfile(userId);
+
+    const [profileResult, statsResult, achievementsResult] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("nickname, equipped_skin")
+        .eq("id", userId)
+        .maybeSingle<ProfileRow>(),
+      supabase
+        .from("player_stats")
+        .select("wins, losses, tokens, daily_reward_wins, daily_reward_day")
+        .eq("user_id", userId)
+        .maybeSingle<StatsRow>(),
+      supabase
+        .from("player_achievements")
+        .select("achievement_id, progress, completed, claimed, completed_at, claimed_at")
+        .eq("user_id", userId)
+        .returns<PlayerAchievementRow[]>(),
+    ]);
+    const { data: ownedSkinRows } = await supabase
+      .from("owned_skins")
+      .select("skin_id")
+      .eq("user_id", userId)
+      .returns<OwnedSkinRow[]>();
+    const dailyRewardWins = getActiveDailyRewardWins(statsResult.data ?? undefined);
+
+    const snapshot = {
+      nickname: profileResult.data?.nickname ?? null,
+      equippedSkin: profileResult.data?.equipped_skin ?? "classic",
+      ownedSkins: (ownedSkinRows ?? [])
+        .map((row) => row.skin_id)
+        .filter((skin): skin is PieceSkin => Boolean(skin)),
+      wins: statsResult.data?.wins ?? 0,
+      losses: statsResult.data?.losses ?? 0,
+      tokens: statsResult.data?.tokens ?? 0,
+      dailyRewardWins,
+      dailyRewardTokens: dailyRewardWins * DAILY_REWARD_TOKENS_PER_WIN,
+      achievements: (achievementsResult.data ?? []).map((row) => ({
+        achievementId: row.achievement_id,
+        progress: Number(row.progress ?? 0),
+        completed: Boolean(row.completed),
+        claimed: Boolean(row.claimed),
+        completedAt: row.completed_at ?? null,
+        claimedAt: row.claimed_at ?? null,
+      })),
+    } satisfies AccountSnapshot;
+
+    cacheAccountSnapshot(userId, snapshot);
+    return snapshot;
+  })();
+
+  accountSnapshotInFlight.set(userId, fetchPromise);
+
+  try {
+    return await fetchPromise;
+  } finally {
+    accountSnapshotInFlight.delete(userId);
+  }
 }
 
 function savePendingUpgradeContext(context: PendingUpgradeContext) {
@@ -539,16 +623,27 @@ export async function syncNickname(nickname: string): Promise<void> {
   const session = await getCurrentSession();
 
   if (!session?.user) return;
+  const userId = session.user.id;
+  const current = lastSyncedProfileState.get(userId);
+  if (current?.nickname === trimmed) return;
 
   const { error } = await supabase.from("profiles").upsert({
-    id: session.user.id,
+    id: userId,
     nickname: trimmed,
     is_guest: session.user.is_anonymous ?? false,
   });
 
   if (error) {
     console.error("[supabase] failed to sync nickname", error);
+    return;
   }
+
+  invalidateAccountSnapshot(userId);
+  lastSyncedProfileState.set(userId, {
+    ...(current ?? {}),
+    nickname: trimmed,
+  });
+  knownProfileUsers.add(userId);
 }
 
 export async function syncEquippedSkin(equippedSkin: PieceSkin): Promise<void> {
@@ -556,16 +651,27 @@ export async function syncEquippedSkin(equippedSkin: PieceSkin): Promise<void> {
   const session = await getCurrentSession();
 
   if (!session?.user) return;
+  const userId = session.user.id;
+  const current = lastSyncedProfileState.get(userId);
+  if (current?.equippedSkin === equippedSkin) return;
 
   const { error } = await supabase.from("profiles").upsert({
-    id: session.user.id,
+    id: userId,
     equipped_skin: equippedSkin,
     is_guest: session.user.is_anonymous ?? false,
   });
 
   if (error) {
     console.error("[supabase] failed to sync equipped skin", error);
+    return;
   }
+
+  invalidateAccountSnapshot(userId);
+  lastSyncedProfileState.set(userId, {
+    ...(current ?? {}),
+    equippedSkin,
+  });
+  knownProfileUsers.add(userId);
 }
 
 export async function purchaseSkinWithTokens(
@@ -663,10 +769,18 @@ export async function syncLegalConsent(args: {
 
   const session = await getCurrentSession();
   if (!session?.user) return;
+  const userId = session.user.id;
+  const current = lastSyncedProfileState.get(userId);
+  if (
+    current?.legalConsentVersion === args.version &&
+    current?.legalConsentedAt === args.consentedAt
+  ) {
+    return;
+  }
 
   try {
     const { error } = await supabase.from("profiles").upsert({
-      id: session.user.id,
+      id: userId,
       is_guest: session.user.is_anonymous ?? false,
       legal_consent_version: args.version,
       legal_consented_at: args.consentedAt,
@@ -674,7 +788,15 @@ export async function syncLegalConsent(args: {
 
     if (error) {
       console.warn("[supabase] failed to sync legal consent", error);
+      return;
     }
+    invalidateAccountSnapshot(userId);
+    lastSyncedProfileState.set(userId, {
+      ...(current ?? {}),
+      legalConsentVersion: args.version,
+      legalConsentedAt: args.consentedAt,
+    });
+    knownProfileUsers.add(userId);
   } catch (error) {
     console.warn("[supabase] legal consent columns unavailable", error);
   }
