@@ -48,7 +48,6 @@ body {
   justify-content: center;
   padding: 1rem;
   background: rgba(7, 12, 18, 0.7);
-  backdrop-filter: blur(10px);
 }
 
 .app-confirm-modal {
@@ -192,7 +191,6 @@ body {
   justify-content: center;
   padding: 1rem;
   background: rgba(3, 8, 15, 0.76);
-  backdrop-filter: blur(10px);
 }
 
 .app-legal-doc-modal {
