@@ -1485,6 +1485,16 @@
   flex-shrink: 0;
 }
 
+.achievements-claim-all-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  color: rgba(226, 232, 240, 0.55);
+  border-color: rgba(100, 116, 139, 0.2);
+  background: rgba(51, 65, 85, 0.35);
+  box-shadow: none;
+  filter: saturate(0.45);
+}
+
 .achievements-scroll-body {
   max-height: min(60vh, 31rem);
   overflow-y: auto;
