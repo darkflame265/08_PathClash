@@ -216,7 +216,7 @@ function AchievementModal({
             <p className="achievement-collection-summary">
               {lang === "en"
                 ? `Found: ${completedCount}/${achievements.length}`
-                : `??: ${completedCount}/${achievements.length}`}
+                : `찾음: ${completedCount}/${achievements.length}`}
             </p>
           </div>
           <button
@@ -1272,7 +1272,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
         window.alert(
           lang === "en"
             ? `Claimed ${claimableAchievements.length} achievement rewards and received ${rewardSum} tokens.`
-            : `${claimableAchievements.length}?? ?? ??? ????, ${rewardSum}??? ?????.`,
+            : `${claimableAchievements.length}개의 업적 보상을 획득했고, ${rewardSum}토큰을 받았습니다.`,
         );
       }
     } finally {
