@@ -1,4 +1,4 @@
-// Centralized SFX registry for PathClash ability sounds.
+﻿// Centralized SFX registry for PathClash ability sounds.
 // Keep file paths, gain values, and preload behavior in one place so
 // new skills can be added without scattering audio metadata across the codebase.
 
@@ -24,6 +24,8 @@ type AbilitySfxId =
   | "arc_reactor_field"
   | "void_cloak"
   | "gold_overdrive_loop";
+
+type UiSfxId = "lobby_click";
 
 type AbilitySfxConfig = {
   path: string;
@@ -91,7 +93,15 @@ const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
   },
 };
 
+const UI_SFX: Record<UiSfxId, AbilitySfxConfig> = {
+  lobby_click: {
+    path: "/sfx/ui/lobby_click.mp3",
+    gain: 0.55,
+  },
+};
+
 const audioCache: Partial<Record<AbilitySfxId, HTMLAudioElement>> = {};
+const uiAudioCache: Partial<Record<UiSfxId, HTMLAudioElement>> = {};
 
 function getAbilityAudio(id: AbilitySfxId): HTMLAudioElement | null {
   try {
@@ -123,6 +133,36 @@ function playAbilitySfx(id: AbilitySfxId, volume = 0.55): void {
   }
 }
 
+function getUiAudio(id: UiSfxId): HTMLAudioElement | null {
+  try {
+    if (!uiAudioCache[id]) {
+      const config = UI_SFX[id];
+      const audio = new Audio(config.path);
+      audio.preload = "auto";
+      audio.loop = !!config.loop;
+      uiAudioCache[id] = audio;
+    }
+    return uiAudioCache[id] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function playUiSfx(id: UiSfxId, volume = 0.55): void {
+  try {
+    const baseAudio = getUiAudio(id);
+    if (!baseAudio) return;
+    const audio = baseAudio.cloneNode(true) as HTMLAudioElement;
+    audio.loop = false;
+    audio.volume = Math.max(0, Math.min(1, volume * UI_SFX[id].gain));
+    void audio.play().catch(() => {
+      // Playback can fail if browser blocks audio; ignore.
+    });
+  } catch {
+    // Audio element not available
+  }
+}
+
 export function preloadAbilitySfxAssets(): void {
   for (const id of Object.keys(ABILITY_SFX) as AbilitySfxId[]) {
     const audio = getAbilityAudio(id);
@@ -133,6 +173,10 @@ export function preloadAbilitySfxAssets(): void {
       // Ignore browsers that reject manual load hints.
     }
   }
+}
+
+export function playLobbyClick(volume = 0.55): void {
+  playUiSfx("lobby_click", volume);
 }
 
 export function playHit(volume = 0.55): void {

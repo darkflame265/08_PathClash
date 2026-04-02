@@ -34,6 +34,7 @@ import { startTokenPackPurchase, type TokenPackId } from "../../payments/tokenSh
 import { connectSocket } from "../../socket/socketClient";
 import { useGameStore } from "../../store/gameStore";
 import { useLang } from "../../hooks/useLang";
+import { playLobbyClick } from "../../utils/soundUtils";
 import type { Translations } from "../../i18n/translations";
 import type { ClientGameState, PieceSkin, RoundStartPayload } from "../../types/game.types";
 import { ABILITY_SKILLS, type AbilitySkillId } from "../../types/ability.types";
@@ -566,6 +567,24 @@ export function LobbyScreen({
   const dailyResetTimeoutRef = useRef<number | null>(null);
   const lastRewardSyncDayRef = useRef<string>(getUtcDayKey());
   const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
+  const handleLobbyUiClickCapture = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+
+      const clickable = target.closest("button, a");
+      if (!(clickable instanceof HTMLElement)) return;
+      if (clickable.hasAttribute("disabled")) return;
+      if (clickable.getAttribute("aria-disabled") === "true") return;
+      if (clickable instanceof HTMLAnchorElement && !clickable.href) return;
+      if (clickable.closest(".audio-slider-block")) return;
+
+      if (!isSfxMuted) {
+        playLobbyClick(sfxVolume);
+      }
+    },
+    [isSfxMuted, sfxVolume],
+  );
   const buildExistingAccountSwitchPrompt = (profile: AccountProfile) => {
     const nickname = profile.nickname?.trim() || "Guest";
     if (lang === "en") {
@@ -1944,7 +1963,7 @@ export function LobbyScreen({
   );
 
   return (
-    <div className="lobby-screen">
+    <div className="lobby-screen" onClickCapture={handleLobbyUiClickCapture}>
       <h1 className="logo">PathClash</h1>
       {accountCard}
 
