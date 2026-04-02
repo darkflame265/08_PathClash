@@ -764,6 +764,7 @@ export function LobbyScreen({
   const [error, setError] = useState("");
 
   const [isMatchmaking, setIsMatchmaking] = useState(false);
+  const [isAiTutorialQueueing, setIsAiTutorialQueueing] = useState(false);
 
   const [isSkinPickerOpen, setIsSkinPickerOpen] = useState(false);
 
@@ -939,6 +940,11 @@ export function LobbyScreen({
     lang === "en"
       ? "Joining an AI match. Please wait a moment."
       : "AI매칭에 진입중입니다. 잠시 기다려주세요.";
+
+  const aiTutorialMatchmakingDesc =
+    lang === "en"
+      ? "Entering the tutorial. Please wait a moment."
+      : "튜토리얼에 입장중입니다. 잠시 기다려주세요.";
 
   const aiTutorialButtonLabel = lang === "en" ? "Tutorial" : "튜토리얼";
 
@@ -2483,6 +2489,7 @@ export function LobbyScreen({
   const handleAiMatchWithTutorial = async (tutorialPending: boolean) => {
     setError("");
 
+    setIsAiTutorialQueueing(tutorialPending);
     setIsMatchmaking(true);
 
     setMatchType("ai");
@@ -2501,6 +2508,7 @@ export function LobbyScreen({
 
     useGameStore.getState().resetGame();
 
+    setIsAiTutorialQueueing(false);
     setIsMatchmaking(false);
 
     setMatchType(null);
@@ -2525,6 +2533,7 @@ export function LobbyScreen({
   };
 
   const handleAiMatch = async () => {
+    setIsAiTutorialQueueing(false);
     await handleAiMatchWithTutorial(false);
   };
 
@@ -2846,7 +2855,7 @@ export function LobbyScreen({
 
                   <div className="spinner" />
 
-                  <p>{aiMatchmakingDesc}</p>
+                  <p>{isAiTutorialQueueing ? aiTutorialMatchmakingDesc : aiMatchmakingDesc}</p>
                 </div>
 
                 <button className="lobby-btn cancel" onClick={handleCancelAi}>
