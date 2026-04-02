@@ -15,6 +15,7 @@ import {
   playInferno,
   playGuard,
   playArcReactor,
+  playLobbyClick,
   playShieldBlock,
   playAtomicFission,
   playPhaseShift,
@@ -2554,6 +2555,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                   if (longPressTriggeredRef.current) {
                     longPressTriggeredRef.current = false;
                     return;
+                  }
+                  if (!isSfxMuted) {
+                    playLobbyClick(sfxVolume);
                   }
                   setMySkillInfo(null);
                   handleSkillClick(skillId);
