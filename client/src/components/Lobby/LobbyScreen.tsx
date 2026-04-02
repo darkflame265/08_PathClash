@@ -2446,8 +2446,46 @@ export function LobbyScreen({
           </div>
         </div>
       )}
-      <div className="lobby-control-row">
-        <div className="lang-toggle" role="group" aria-label="Language toggle">
+      <div className="lobby-bottom-panel">
+        <div className="lobby-bottom-actions">
+          <button
+            className={`lobby-bottom-action ${isSkinPickerOpen ? "is-active" : ""}`}
+            onClick={() => setIsSkinPickerOpen((open) => !open)}
+            aria-pressed={isSkinPickerOpen}
+            type="button"
+          >
+            <span className="lobby-bottom-action-label">{skinButtonLabel}</span>
+          </button>
+          <button
+            className="lobby-bottom-action lobby-patch-notes-link"
+            onClick={() => {
+              setIsPatchNotesOpen(true);
+              markPatchNotesRead();
+            }}
+            type="button"
+          >
+            <span className="lobby-bottom-action-label">{patchNotesLabel}</span>
+            {hasUnreadPatchNotes && <span className="lobby-new-badge">NEW</span>}
+          </button>
+          <button
+            className="lobby-bottom-action"
+            onClick={() => setIsAchievementsOpen(true)}
+            type="button"
+          >
+            <span className="lobby-bottom-action-label">
+              {lang === "en" ? "Achievements" : "업적"}
+            </span>
+            {hasClaimableAchievements && <span className="lobby-new-badge">NEW</span>}
+          </button>
+          <button
+            className="lobby-bottom-action"
+            onClick={() => setIsSettingsOpen(true)}
+            type="button"
+          >
+            <span className="lobby-bottom-action-label">{settingsButtonLabel}</span>
+          </button>
+        </div>
+        <div className="lang-toggle lobby-bottom-lang-toggle" role="group" aria-label="Language toggle">
           <button
             className={`lang-toggle-btn ${lang === "en" ? "is-active" : ""}`}
             onClick={() => setLang("en")}
@@ -2465,21 +2503,8 @@ export function LobbyScreen({
             KR
           </button>
         </div>
-        <div className="audio-toggle" role="group" aria-label="Skin picker">
-          <button
-            className={`audio-toggle-btn skin-toggle-btn ${
-              isSkinPickerOpen ? "is-active" : ""
-            }`}
-            onClick={() => setIsSkinPickerOpen((open) => !open)}
-            aria-pressed={isSkinPickerOpen}
-            title={skinButtonLabel}
-            type="button"
-          >
-            {skinButtonLabel}
-          </button>
-        </div>
       </div>
-      <div className="lobby-utility-links">
+      <div className="lobby-utility-links legacy-hidden">
         <button
           className="lobby-utility-link lobby-patch-notes-link"
           onClick={() => {

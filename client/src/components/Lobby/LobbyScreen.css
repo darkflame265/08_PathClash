@@ -1410,6 +1410,86 @@
   margin-bottom: 1.25rem;
 }
 
+.legacy-hidden {
+  display: none;
+}
+
+.lobby-bottom-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 0.1rem;
+  margin-bottom: 1.25rem;
+}
+
+.lobby-bottom-actions {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.lobby-bottom-action {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.35rem;
+  padding: 0.8rem 0.7rem;
+  border: 1px solid var(--tile-border, #3a444d);
+  border-radius: 0.95rem;
+  background:
+    linear-gradient(180deg, rgba(55, 65, 81, 0.88), rgba(30, 37, 43, 0.96));
+  color: var(--text, #f0f4f8);
+  box-shadow:
+    0 10px 20px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease;
+}
+
+.lobby-bottom-action:hover {
+  border-color: rgba(96, 165, 250, 0.44);
+  background:
+    linear-gradient(180deg, rgba(68, 78, 94, 0.92), rgba(37, 45, 54, 0.98));
+}
+
+.lobby-bottom-action:active {
+  transform: scale(0.98);
+}
+
+.lobby-bottom-action.is-active {
+  border-color: rgba(96, 165, 250, 0.55);
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(96, 165, 250, 0.14);
+}
+
+.lobby-bottom-action-label {
+  display: block;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.lobby-bottom-action .lobby-new-badge {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.2rem;
+}
+
+.lobby-bottom-lang-toggle {
+  margin-top: 0.1rem;
+}
+
 .lobby-utility-link {
   display: inline-flex;
   align-items: center;
@@ -1450,6 +1530,21 @@
   color: var(--text, #f0f4f8);
   border-color: rgba(59, 130, 246, 0.45);
   background: rgba(59, 130, 246, 0.08);
+}
+
+@media (max-width: 480px) {
+  .lobby-bottom-actions {
+    gap: 0.6rem;
+  }
+
+  .lobby-bottom-action {
+    min-height: 3.1rem;
+    padding: 0.72rem 0.45rem;
+  }
+
+  .lobby-bottom-action-label {
+    font-size: 0.74rem;
+  }
 }
 
 .achievements-modal {
