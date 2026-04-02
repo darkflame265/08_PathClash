@@ -31,7 +31,7 @@ import {
 } from "../../achievements/achievementCatalog";
 import { startDonation } from "../../payments/donate";
 import { startTokenPackPurchase, type TokenPackId } from "../../payments/tokenShop";
-import { connectSocket, disconnectSocket } from "../../socket/socketClient";
+import { connectSocket } from "../../socket/socketClient";
 import { useGameStore } from "../../store/gameStore";
 import { useLang } from "../../hooks/useLang";
 import type { Translations } from "../../i18n/translations";
@@ -1469,14 +1469,6 @@ export function LobbyScreen({
   const getNick = () =>
     myNickname.trim() || `Guest${Math.floor(Math.random() * 9999)}`;
 
-  const resetBeforeTutorialJoin = useCallback(async () => {
-    disconnectSocket();
-    useGameStore.getState().resetGame();
-    await new Promise<void>((resolve) => {
-      window.setTimeout(resolve, 0);
-    });
-  }, []);
-
   const startSocket = () => {
     const socket = connectSocket();
 
@@ -1741,9 +1733,6 @@ export function LobbyScreen({
   const handleAiMatchWithTutorial = async (
     tutorialPending: boolean,
   ) => {
-    if (tutorialPending) {
-      await resetBeforeTutorialJoin();
-    }
     setError("");
     setIsMatchmaking(false);
     setMatchType("ai");

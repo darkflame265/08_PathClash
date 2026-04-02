@@ -260,7 +260,6 @@ function initSocketServer(io) {
                 return;
             }
             room.addAiPlayer('PathClash AI');
-            room.prepareGameStart(Boolean(tutorialPending));
             store.registerSocket(socket.id, roomId);
             const roomState = room.toClientState();
             const opponent = roomState.players[humanColor === 'red' ? 'blue' : 'red'];
@@ -271,6 +270,7 @@ function initSocketServer(io) {
                 selfPieceSkin: pieceSkin ?? 'classic',
                 opponentPieceSkin: opponent.pieceSkin,
             });
+            room.startGame(Boolean(tutorialPending));
         });
         socket.on('join_room', async ({ code, nickname, auth, pieceSkin }) => {
             if (emitUpdateRequired(socket, auth))

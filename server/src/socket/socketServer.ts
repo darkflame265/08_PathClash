@@ -369,7 +369,6 @@ export function initSocketServer(io: Server): void {
       }
 
       room.addAiPlayer('PathClash AI');
-      room.prepareGameStart(Boolean(tutorialPending));
       store.registerSocket(socket.id, roomId);
 
       const roomState = room.toClientState();
@@ -381,6 +380,7 @@ export function initSocketServer(io: Server): void {
         selfPieceSkin: pieceSkin ?? 'classic',
         opponentPieceSkin: opponent.pieceSkin,
       });
+      room.startGame(Boolean(tutorialPending));
 
       },
     );
