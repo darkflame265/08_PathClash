@@ -2454,6 +2454,13 @@ export function LobbyScreen({
             aria-pressed={isSkinPickerOpen}
             type="button"
           >
+            <span className="lobby-bottom-action-icon-wrap" aria-hidden="true">
+              <img
+                className="lobby-bottom-action-icon"
+                src="/ui/lobby/lobby-icon-skin.svg"
+                alt=""
+              />
+            </span>
             <span className="lobby-bottom-action-label">{skinButtonLabel}</span>
           </button>
           <button
@@ -2464,6 +2471,13 @@ export function LobbyScreen({
             }}
             type="button"
           >
+            <span className="lobby-bottom-action-icon-wrap" aria-hidden="true">
+              <img
+                className="lobby-bottom-action-icon"
+                src="/ui/lobby/lobby-icon-notes.svg"
+                alt=""
+              />
+            </span>
             <span className="lobby-bottom-action-label">{patchNotesLabel}</span>
             {hasUnreadPatchNotes && <span className="lobby-new-badge">NEW</span>}
           </button>
@@ -2472,6 +2486,13 @@ export function LobbyScreen({
             onClick={() => setIsAchievementsOpen(true)}
             type="button"
           >
+            <span className="lobby-bottom-action-icon-wrap" aria-hidden="true">
+              <img
+                className="lobby-bottom-action-icon"
+                src="/ui/lobby/lobby-icon-achievements.svg"
+                alt=""
+              />
+            </span>
             <span className="lobby-bottom-action-label">
               {lang === "en" ? "Achievements" : "업적"}
             </span>
@@ -2482,6 +2503,13 @@ export function LobbyScreen({
             onClick={() => setIsSettingsOpen(true)}
             type="button"
           >
+            <span className="lobby-bottom-action-icon-wrap" aria-hidden="true">
+              <img
+                className="lobby-bottom-action-icon"
+                src="/ui/lobby/lobby-icon-settings.svg"
+                alt=""
+              />
+            </span>
             <span className="lobby-bottom-action-label">{settingsButtonLabel}</span>
           </button>
         </div>
