@@ -174,8 +174,8 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       const screenRect = screenEl.getBoundingClientRect();
       const badgeRect = badgeEl.getBoundingClientRect();
       setRoleTutorialPos({
-        left: badgeRect.left - screenRect.left + badgeRect.width / 2,
-        top: badgeRect.bottom - screenRect.top + 10,
+        left: badgeRect.left - screenRect.left,
+        top: badgeRect.top - screenRect.top - 8,
       });
     };
 
@@ -606,10 +606,11 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       )}
       {tutorialStep === 2 && roleTutorialPos && (
         <div
-          className="ai-tutorial-hint"
+          className="ai-tutorial-hint no-arrow"
           style={{
             left: roleTutorialPos.left,
             top: roleTutorialPos.top,
+            transform: "translate(0, -100%)",
           }}
         >
           {t.roleTutorialHint}
