@@ -26,6 +26,7 @@ interface GridProps {
   tutorialHintAnchor?: Position | null;
   tutorialHintCentered?: boolean;
   tutorialHintBottom?: boolean;
+  tutorialHintAbove?: boolean;
 }
 
 export function GameGrid({
@@ -37,6 +38,7 @@ export function GameGrid({
   tutorialHintAnchor = null,
   tutorialHintCentered = false,
   tutorialHintBottom = false,
+  tutorialHintAbove = false,
 }: GridProps) {
   const {
     gameState,
@@ -596,15 +598,23 @@ export function GameGrid({
 
         {tutorialHint && !tutorialHintCentered && tutorialAnchorPos && (
           <div
-            className={`ai-tutorial-hint in-grid${tutorialHintTarget === "opponent" ? " is-mirrored" : ""}`}
+            className={`ai-tutorial-hint in-grid${tutorialHintTarget === "opponent" ? " is-mirrored" : ""}${tutorialHintAbove ? " arrow-down" : ""}`}
             style={{
               left:
                 tutorialAnchorPos.col * responsiveCellSize +
                 responsiveCellSize / 2,
               top:
                 tutorialAnchorPos.row * responsiveCellSize +
-                responsiveCellSize +
-                12,
+                (tutorialHintAbove ? -12 : responsiveCellSize + 12),
+              transform: tutorialHintAbove
+                ? `translateX(${tutorialHintTarget === "opponent" ? "-80%" : "-20%"}) translateY(-100%)`
+                : undefined,
+              ["--tutorial-arrow-left" as string]:
+                tutorialHintAbove
+                  ? tutorialHintTarget === "opponent"
+                    ? "80%"
+                    : "20%"
+                  : undefined,
             }}
           >
             {tutorialHint}

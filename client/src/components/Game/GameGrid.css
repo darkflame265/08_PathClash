@@ -210,7 +210,7 @@
 .ai-tutorial-hint.arrow-down::before {
   top: auto;
   bottom: -7px;
-  left: 50%;
+  left: var(--tutorial-arrow-left, 50%);
   border-bottom: none;
   border-top: 7px solid rgba(74, 222, 128, 0.88);
 }
@@ -218,7 +218,7 @@
 .ai-tutorial-hint.arrow-down::after {
   top: auto;
   bottom: -6px;
-  left: 50%;
+  left: var(--tutorial-arrow-left, 50%);
   border-bottom: none;
   border-top: 6px solid rgba(8, 13, 22, 0.96);
 }

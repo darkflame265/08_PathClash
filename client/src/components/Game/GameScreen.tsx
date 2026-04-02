@@ -552,6 +552,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
             tutorialHintAnchor={tutorialHintAnchor}
             tutorialHintCentered={tutorialStep === 12 || tutorialStep === 13}
             tutorialHintBottom={tutorialStep === 13}
+            tutorialHintAbove={tutorialStep === 9 || tutorialStep === 11}
             tutorialGuidePath={tutorialGuidePath}
             tutorialAutoSubmit={tutorialInProgress}
           />
