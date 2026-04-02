@@ -783,6 +783,9 @@ export function LobbyScreen({
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
 
   const [isAiTutorialPromptOpen, setIsAiTutorialPromptOpen] = useState(false);
+  const [lobbySkinIconSrc, setLobbySkinIconSrc] = useState(
+    "/ui/lobby/lobby-icon-skin1.svg",
+  );
 
   const [isClaimingAchievements, setIsClaimingAchievements] = useState(false);
 
@@ -827,6 +830,11 @@ export function LobbyScreen({
 
     [isSfxMuted, sfxVolume],
   );
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * 4) + 1;
+    setLobbySkinIconSrc(`/ui/lobby/lobby-icon-skin${randomIndex}.svg`);
+  }, []);
 
   const buildExistingAccountSwitchPrompt = (profile: AccountProfile) => {
     const nickname = profile.nickname?.trim() || "Guest";
@@ -3490,7 +3498,7 @@ export function LobbyScreen({
             <span className="lobby-bottom-action-icon-wrap" aria-hidden="true">
               <img
                 className="lobby-bottom-action-icon"
-                src="/ui/lobby/lobby-icon-skin.svg"
+                src={lobbySkinIconSrc}
                 alt=""
               />
             </span>
