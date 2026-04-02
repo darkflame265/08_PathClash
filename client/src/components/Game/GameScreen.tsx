@@ -131,6 +131,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     left: number;
     top: number;
   } | null>(null);
+  const [showEntranceAnimation, setShowEntranceAnimation] = useState(true);
   const tutorialStartedRef = useRef(false);
 
   useEffect(() => {
@@ -144,6 +145,14 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+  }, []);
+
+  useEffect(() => {
+    setShowEntranceAnimation(true);
+    const timeout = window.setTimeout(() => {
+      setShowEntranceAnimation(false);
+    }, 620);
+    return () => window.clearTimeout(timeout);
   }, []);
 
   useEffect(() => {
@@ -524,9 +533,10 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         )}
 
         <div className="gs-grid-area" ref={gridAreaRef}>
-          <GameGrid
-            cellSize={cellSize}
-            tutorialHint={
+        <GameGrid
+          entranceAnimation={showEntranceAnimation}
+          cellSize={cellSize}
+          tutorialHint={
               tutorialStep === 3
                 ? t.attackCollisionTutorialHint
                 : tutorialStep === 4

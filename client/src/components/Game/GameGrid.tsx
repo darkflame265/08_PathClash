@@ -19,6 +19,7 @@ const PATH_UPDATE_THROTTLE_MS = 150;
 
 interface GridProps {
   cellSize?: number;
+  entranceAnimation?: boolean;
   tutorialHint?: string | null;
   tutorialHintTarget?: "self" | "opponent";
   tutorialGuidePath?: Position[] | null;
@@ -31,6 +32,7 @@ interface GridProps {
 
 export function GameGrid({
   cellSize = DEFAULT_CELL_SIZE,
+  entranceAnimation = false,
   tutorialHint = null,
   tutorialHintTarget = "self",
   tutorialGuidePath = null,
@@ -565,6 +567,7 @@ export function GameGrid({
             isHit={hitEffect.red}
             isExploding={explosionEffect === "red"}
             isMe={myColor === "red"}
+            entranceAnimation={entranceAnimation ? "left" : null}
             skin={redPieceSkin}
           />
         ) : null}
@@ -579,6 +582,7 @@ export function GameGrid({
             isHit={hitEffect.blue}
             isExploding={explosionEffect === "blue"}
             isMe={myColor === "blue"}
+            entranceAnimation={entranceAnimation ? "right" : null}
             skin={bluePieceSkin}
           />
         ) : null}

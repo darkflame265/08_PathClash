@@ -27,6 +27,7 @@ interface Props {
   isClone?: boolean;
   hp?: number | null;
   outlineColor?: 'green' | PlayerColor | null;
+  entranceAnimation?: "left" | "right" | null;
   skin?:
     | "classic"
     | "ember"
@@ -65,6 +66,7 @@ export function PlayerPiece({
   isClone = false,
   hp = null,
   outlineColor = null,
+  entranceAnimation = null,
   skin = "classic",
 }: Props) {
   const effectiveSkin =
@@ -121,7 +123,7 @@ export function PlayerPiece({
           <span className="piece-at-field-cell piece-at-field-cell-g" />
         </div>
       )}
-      <div className="piece-visual">
+      <div className={`piece-visual${entranceAnimation ? ` roll-in-${entranceAnimation}` : ""}`}>
         {isAttacker && <div className={`attacker-glow glow-${color}`} />}
         <span className="piece-hit-flash" aria-hidden="true" />
         <div className="piece-inner">
