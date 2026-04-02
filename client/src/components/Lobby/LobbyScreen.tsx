@@ -35,7 +35,7 @@ import { connectSocket } from "../../socket/socketClient";
 import { useGameStore } from "../../store/gameStore";
 import { useLang } from "../../hooks/useLang";
 import type { Translations } from "../../i18n/translations";
-import type { ClientGameState, PieceSkin } from "../../types/game.types";
+import type { ClientGameState, PieceSkin, RoundStartPayload } from "../../types/game.types";
 import { ABILITY_SKILLS, type AbilitySkillId } from "../../types/ability.types";
 import "./LobbyScreen.css";
 
@@ -1484,10 +1484,15 @@ export function LobbyScreen({
     socket.off("ability_room_joined");
     socket.off("ability_matchmaking_waiting");
     socket.off("game_start");
+    socket.off("round_start");
 
     socket.on("game_start", (gs: ClientGameState) => {
       setGameState(gs);
       onGameStart();
+    });
+
+    socket.on("round_start", (payload: RoundStartPayload) => {
+      useGameStore.getState().setRoundInfo(payload);
     });
 
     socket.on(
