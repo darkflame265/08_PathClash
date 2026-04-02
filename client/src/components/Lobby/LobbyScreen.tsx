@@ -46,6 +46,7 @@ interface Props {
   onCoopStart: () => void;
   onTwoVsTwoStart: () => void;
   onAbilityStart: () => void;
+  tutorialPromptTrigger?: number;
 }
 
 const POLICY_URL_KR =
@@ -498,7 +499,13 @@ function renderAbilitySkillIcon(skillId: AbilitySkillId) {
   );
 }
 
-export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbilityStart }: Props) {
+export function LobbyScreen({
+  onGameStart,
+  onCoopStart,
+  onTwoVsTwoStart,
+  onAbilityStart,
+  tutorialPromptTrigger = 0,
+}: Props) {
   const {
     myNickname,
     setNickname,
@@ -1394,7 +1401,7 @@ export function LobbyScreen({ onGameStart, onCoopStart, onTwoVsTwoStart, onAbili
     if (!hasSeenAiTutorial && !hasAnsweredAiTutorialPrompt) {
       setIsAiTutorialPromptOpen(true);
     }
-  }, [currentMatchType]);
+  }, [currentMatchType, tutorialPromptTrigger]);
 
   useEffect(() => {
     const shouldLockScroll =

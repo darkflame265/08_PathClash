@@ -99,6 +99,7 @@ function App() {
   const [isSavingLegalConsent, setIsSavingLegalConsent] = useState(false);
   const [openLegalDocument, setOpenLegalDocument] =
     useState<LegalDocumentType | null>(null);
+  const [tutorialPromptTrigger, setTutorialPromptTrigger] = useState(0);
   const {
     authReady,
     authUserId,
@@ -529,6 +530,7 @@ function App() {
         consentedAt,
       });
       setHasLegalConsent(true);
+      setTutorialPromptTrigger((value) => value + 1);
     } finally {
       setIsSavingLegalConsent(false);
     }
@@ -672,6 +674,7 @@ function App() {
             onCoopStart={() => setView("coop")}
             onTwoVsTwoStart={() => setView("twovtwo")}
             onAbilityStart={() => setView("ability")}
+            tutorialPromptTrigger={tutorialPromptTrigger}
           />
         )}
         {view === "game" && <GameScreen onLeaveToLobby={handleReturnToLobby} />}
