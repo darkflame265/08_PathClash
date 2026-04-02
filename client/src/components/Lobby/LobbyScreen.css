@@ -1437,9 +1437,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.32rem;
-  min-height: 5.7rem;
-  padding: 0.62rem 0.48rem 0.55rem;
+  gap: 0.24rem;
+  min-height: 5.95rem;
+  padding: 0.52rem 0.42rem 0.48rem;
   border: 1px solid var(--tile-border, #3a444d);
   border-radius: 0.95rem;
   background:
@@ -1477,7 +1477,7 @@
 .lobby-bottom-action-label {
   display: block;
   text-align: center;
-  font-size: 0.72rem;
+  font-size: 0.69rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   line-height: 1.05;
@@ -1487,8 +1487,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: clamp(2.35rem, 7vw, 3rem);
-  height: clamp(2.35rem, 7vw, 3rem);
+  width: clamp(2.7rem, 8vw, 3.35rem);
+  height: clamp(2.7rem, 8vw, 3.35rem);
 }
 
 .lobby-bottom-action-icon {
@@ -1558,12 +1558,12 @@
   }
 
   .lobby-bottom-action {
-    min-height: 5.25rem;
-    padding: 0.56rem 0.32rem 0.48rem;
+    min-height: 5.45rem;
+    padding: 0.48rem 0.28rem 0.42rem;
   }
 
   .lobby-bottom-action-label {
-    font-size: 0.66rem;
+    font-size: 0.63rem;
   }
 }
 
