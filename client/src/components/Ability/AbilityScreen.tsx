@@ -1936,20 +1936,27 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         (event) => event.skillId === "electric_blitz",
       );
 
-      runSkillQueue(events, 0, () => {
-        applyPersistentSkillCounters(events);
-        if (blocks.length > 0 && !isSfxMuted) {
-          playShieldBlock(sfxVolume);
-        }
-        if (collisions.length > 0) {
-          applyCollisions(collisions);
-        }
-        if (hasBlitzEvent && step < maxSteps) {
-          queueAnimationTimeout(done, BLITZ_POST_HIT_PAUSE_MS);
-          return;
-        }
-        done();
-      });
+      const runStepSkills = () => {
+        runSkillQueue(events, 0, () => {
+          applyPersistentSkillCounters(events);
+          if (blocks.length > 0 && !isSfxMuted) {
+            playShieldBlock(sfxVolume);
+          }
+          if (hasBlitzEvent && step < maxSteps) {
+            queueAnimationTimeout(done, BLITZ_POST_HIT_PAUSE_MS);
+            return;
+          }
+          done();
+        });
+      };
+
+      if (collisions.length > 0) {
+        applyCollisions(collisions);
+        queueAnimationTimeout(runStepSkills, HIT_VISUAL_DELAY_MS + 80);
+        return;
+      }
+
+      runStepSkills();
     };
 
     const advance = (step: number) => {
