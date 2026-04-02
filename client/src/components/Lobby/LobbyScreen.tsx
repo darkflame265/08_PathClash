@@ -1743,22 +1743,27 @@ export function LobbyScreen({
     });
   };
 
+  const startTutorialReplay = async (options?: { closePrompt?: boolean }) => {
+    window.localStorage.setItem(AI_TUTORIAL_PROMPT_ANSWERED_KEY, "1");
+    window.localStorage.removeItem(AI_TUTORIAL_SEEN_KEY);
+    setError("");
+    setIsMatchmaking(false);
+    if (options?.closePrompt) {
+      setIsAiTutorialPromptOpen(false);
+    }
+    await handleAiMatchWithTutorial(true);
+  };
+
   const handleAiMatch = async () => {
     await handleAiMatchWithTutorial(false);
   };
 
   const handleReplayAiTutorial = async () => {
-    setError("");
-    setIsMatchmaking(false);
-    window.localStorage.removeItem(AI_TUTORIAL_SEEN_KEY);
-    window.localStorage.setItem(AI_TUTORIAL_PROMPT_ANSWERED_KEY, "1");
-    await handleAiMatchWithTutorial(true);
+    await startTutorialReplay();
   };
 
   const handleAcceptAiTutorial = async () => {
-    window.localStorage.setItem(AI_TUTORIAL_PROMPT_ANSWERED_KEY, "1");
-    setIsAiTutorialPromptOpen(false);
-    await handleAiMatchWithTutorial(true);
+    await startTutorialReplay({ closePrompt: true });
   };
 
   const handleDeclineAiTutorial = () => {
