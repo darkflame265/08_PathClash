@@ -94,6 +94,10 @@
   border-color: rgba(125, 211, 252, 0.46);
 }
 
+.lobby-mini-btn:active {
+  transform: scale(0.98);
+}
+
 .lobby-mini-btn.tutorial {
   box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.14) inset;
 }
@@ -116,6 +120,10 @@
 .daily-reward-wrap {
   position: relative;
   flex-shrink: 0;
+}
+
+.daily-reward-badge-btn:active {
+  transform: scale(0.98);
 }
 
 .daily-reward-badge-btn {
