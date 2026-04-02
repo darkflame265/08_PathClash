@@ -513,7 +513,7 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
 
     if (!error && data.session?.user?.is_anonymous) {
       saveGuestSession(data.session);
-      const snapshot = await getAccountSnapshot(data.session.user.id);
+      const snapshot = readCachedAccountSnapshot(data.session.user.id) ?? undefined;
       return toAuthState(data.session, snapshot);
     }
   }
@@ -533,7 +533,7 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
   }
 
   saveGuestSession(data.session);
-  const snapshot = await getAccountSnapshot(data.session.user.id);
+  const snapshot = readCachedAccountSnapshot(data.session.user.id) ?? undefined;
   return toAuthState(data.session, snapshot);
 }
 
@@ -560,7 +560,7 @@ export async function initializeGuestAuth(): Promise<AuthStatePayload> {
     saveGuestSession(session);
   }
 
-  const snapshot = await getAccountSnapshot(session.user.id);
+  const snapshot = readCachedAccountSnapshot(session.user.id) ?? undefined;
   return toAuthState(session, snapshot);
 }
 
@@ -999,7 +999,9 @@ export function onAuthStateChanged(callback: (payload: AuthStatePayload) => void
         saveGuestSession(session);
       }
 
-      const snapshot = session?.user ? await getAccountSnapshot(session.user.id) : undefined;
+      const snapshot = session?.user
+        ? (readCachedAccountSnapshot(session.user.id) ?? undefined)
+        : undefined;
       callback(toAuthState(session, snapshot));
     })();
   });

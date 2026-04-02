@@ -208,19 +208,50 @@ function App() {
   useEffect(() => {
     let active = true;
     let cleanupNativeAuth = () => {};
+    const applyAuthPayload = (payload: Awaited<ReturnType<typeof initializeGuestAuth>>) => {
+      if (!active) return;
+      setAuthState(payload);
+      if (!payload.userId || !payload.accessToken) return;
+      void refreshAccountSummary({ force: true }).then(
+        ({
+          nickname,
+          equippedSkin,
+          ownedSkins,
+          wins,
+          losses,
+          tokens,
+          dailyRewardWins,
+          dailyRewardTokens,
+          achievements,
+        }) => {
+          if (!active) return;
+          setAuthState({
+            ready: true,
+            userId: payload.userId,
+            accessToken: useGameStore.getState().authAccessToken ?? payload.accessToken,
+            isGuestUser: useGameStore.getState().isGuestUser,
+            nickname,
+            equippedSkin,
+            ownedSkins,
+            wins,
+            losses,
+            tokens,
+            dailyRewardWins,
+            dailyRewardTokens,
+            achievements,
+          });
+        },
+      );
+    };
 
     void (async () => {
       cleanupNativeAuth = await installNativeAuthCallbackHandler();
       const payload = await initializeGuestAuth();
-      if (active) {
-        setAuthState(payload);
-      }
+      applyAuthPayload(payload);
     })();
 
     const unsubscribe = onAuthStateChanged((payload) => {
-      if (active) {
-        setAuthState(payload);
-      }
+      applyAuthPayload(payload);
     });
 
     return () => {
