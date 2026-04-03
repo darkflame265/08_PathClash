@@ -674,7 +674,9 @@
 }
 
 .player-piece.hit .piece-inner {
-  animation: hit-shake 600ms ease 3;
+  animation:
+    hit-shake 600ms ease 3,
+    hit-translucent 900ms ease-out both;
 }
 
 @keyframes hit-impact {
@@ -707,6 +709,33 @@
   }
   100% {
     opacity: 0;
+  }
+}
+
+@keyframes hit-translucent {
+  0% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  12% {
+    opacity: 0.38;
+    filter: brightness(1.08);
+  }
+  28% {
+    opacity: 0.52;
+    filter: brightness(1.04);
+  }
+  52% {
+    opacity: 0.42;
+    filter: brightness(1.06);
+  }
+  76% {
+    opacity: 0.7;
+    filter: brightness(1.02);
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(1);
   }
 }
 
