@@ -227,16 +227,17 @@ export function AbilityGrid({
     [myStart, teleportStep, teleportTarget],
   );
 
-  const removeFromPath = useCallback(() => {
-    if (myPath.length > 0) {
-      setMyPath(myPath.slice(0, -1));
-    }
-  }, [myPath, setMyPath]);
-
   const playPathStepSfx = useCallback(() => {
     if (isSfxMuted) return;
     playLobbyClick(sfxVolume);
   }, [isSfxMuted, sfxVolume]);
+
+  const removeFromPath = useCallback(() => {
+    if (myPath.length > 0) {
+      playPathStepSfx();
+      setMyPath(myPath.slice(0, -1));
+    }
+  }, [myPath, playPathStepSfx, setMyPath]);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {

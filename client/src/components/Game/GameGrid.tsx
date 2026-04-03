@@ -220,12 +220,13 @@ export function GameGrid({
     const current = useGameStore.getState().myPath;
     if (current.length > 0) {
       const nextPath = current.slice(0, -1);
+      playPathStepSfx();
       setMyPath(nextPath);
       if (tutorialAutoSubmit && roundInfo?.timeLimit === 0) {
         emitPathUpdate(nextPath);
       }
     }
-  }, [emitPathUpdate, roundInfo?.timeLimit, setMyPath, tutorialAutoSubmit]);
+  }, [emitPathUpdate, playPathStepSfx, roundInfo?.timeLimit, setMyPath, tutorialAutoSubmit]);
 
   // Pointer handlers cover mouse and touch input with one path.
   const handlePointerDown = useCallback(

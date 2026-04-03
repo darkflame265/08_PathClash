@@ -167,9 +167,10 @@ export function CoopGrid({
 
   const removeFromPath = useCallback(() => {
     if (myPath.length > 0) {
+      playPathStepSfx();
       setMyPath(myPath.slice(0, -1));
     }
-  }, [myPath, setMyPath]);
+  }, [myPath, playPathStepSfx, setMyPath]);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
