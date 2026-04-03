@@ -11,6 +11,7 @@ import { PlayerPiece } from "./PlayerPiece";
 import { PathLine } from "./PathLine";
 import { CollisionEffect } from "../Effects/CollisionEffect";
 import { getSocket } from "../../socket/socketClient";
+import { playLobbyClick } from "../../utils/soundUtils";
 import "./GameGrid.css";
 
 const DEFAULT_CELL_SIZE = 96;
@@ -55,6 +56,8 @@ export function GameGrid({
     hitEffect,
     explosionEffect,
     collisionEffects,
+    isSfxMuted,
+    sfxVolume,
   } = useGameStore();
 
   const shellRef = useRef<HTMLDivElement>(null);
@@ -147,6 +150,11 @@ export function GameGrid({
     emitPathUpdate(pendingPathRef.current);
   }, [emitPathUpdate]);
 
+  const playPathStepSfx = useCallback(() => {
+    if (isSfxMuted) return;
+    playLobbyClick(sfxVolume);
+  }, [isSfxMuted, sfxVolume]);
+
   const submitCurrentPath = useCallback(() => {
     if (!myColor) return;
     const state = useGameStore.getState();
@@ -189,6 +197,7 @@ export function GameGrid({
       const lastPos = current.length > 0 ? current[current.length - 1] : myPos;
       if (isValidMove(lastPos, cell)) {
         const nextPath = [...current, cell];
+        playPathStepSfx();
         setMyPath(nextPath);
         if (tutorialAutoSubmit && roundInfo?.timeLimit === 0) {
           emitPathUpdate(nextPath);
@@ -285,6 +294,7 @@ export function GameGrid({
           current.length < pathPoints
         ) {
           const nextPath = [...current, cell];
+          playPathStepSfx();
           setMyPath(nextPath);
           if (tutorialAutoSubmit && roundInfo?.timeLimit === 0) {
             emitPathUpdate(nextPath);
@@ -304,6 +314,7 @@ export function GameGrid({
       removeFromPath,
       obstacles,
       pathPoints,
+      playPathStepSfx,
       roundInfo?.timeLimit,
       setMyPath,
       tutorialAutoSubmit,
@@ -371,6 +382,7 @@ export function GameGrid({
       if (current.length >= pathPoints) return;
       if (isValidMove(lastPos, next)) {
         const nextPath = [...current, next];
+        playPathStepSfx();
         setMyPath(nextPath);
         if (tutorialAutoSubmit && roundInfo?.timeLimit === 0) {
           emitPathUpdate(nextPath);
@@ -385,6 +397,7 @@ export function GameGrid({
     myPos,
     obstacles,
     pathPoints,
+    playPathStepSfx,
     removeFromPath,
     roundInfo?.timeLimit,
     setMyPath,

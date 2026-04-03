@@ -8,6 +8,7 @@ import { isBlockedCell, isValidMove, pixelToCell, posEqual } from "../../utils/p
 import { PlayerPiece } from "../Game/PlayerPiece";
 import { PathLine } from "../Game/PathLine";
 import { CollisionEffect } from "../Effects/CollisionEffect";
+import { playLobbyClick } from "../../utils/soundUtils";
 import "../Game/GameGrid.css";
 import "./CoopScreen.css";
 
@@ -85,7 +86,7 @@ export function CoopGrid({
   movingEnemyPaths,
   hitPortalIds,
 }: Props) {
-  const { hitEffect, collisionEffects, explosionEffect } = useGameStore();
+  const { hitEffect, collisionEffects, explosionEffect, isSfxMuted, sfxVolume } = useGameStore();
   const shellRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState(DEFAULT_CELL_SIZE * GRID_SIZE);
@@ -144,6 +145,11 @@ export function CoopGrid({
     emitPathUpdate(pendingPathRef.current);
   }, [emitPathUpdate]);
 
+  const playPathStepSfx = useCallback(() => {
+    if (isSfxMuted) return;
+    playLobbyClick(sfxVolume);
+  }, [isSfxMuted, sfxVolume]);
+
   const addToPath = useCallback(
     (cell: Position) => {
       if (!canPlan) return;
@@ -152,10 +158,11 @@ export function CoopGrid({
       if (isBlockedCell(cell, obstacles)) return;
       const lastPos = current.length > 0 ? current[current.length - 1] : myPos;
       if (isValidMove(lastPos, cell)) {
+        playPathStepSfx();
         setMyPath([...current, cell]);
       }
     },
-    [canPlan, myPath, myPos, setMyPath, state.pathPoints],
+    [canPlan, myPath, myPos, playPathStepSfx, setMyPath, state.pathPoints],
   );
 
   const removeFromPath = useCallback(() => {
@@ -210,13 +217,14 @@ export function CoopGrid({
           isValidMove(lastPos, cell) &&
           current.length < state.pathPoints
         ) {
+          playPathStepSfx();
           setMyPath([...current, cell]);
         }
       } else if (dragState.current.fromPiece) {
         addToPath(cell);
       }
     },
-    [addToPath, canPlan, myPath, myPos, removeFromPath, responsiveCellSize, setMyPath, state.pathPoints],
+    [addToPath, canPlan, myPath, myPos, playPathStepSfx, removeFromPath, responsiveCellSize, setMyPath, state.pathPoints],
   );
 
   const handlePointerEnd = useCallback((e?: React.PointerEvent<HTMLDivElement>) => {
@@ -253,12 +261,13 @@ export function CoopGrid({
       }
       if (myPath.length >= state.pathPoints) return;
       if (isValidMove(lastPos, next)) {
+        playPathStepSfx();
         setMyPath([...myPath, next]);
       }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [canPlan, myPath, myPos, obstacles, removeFromPath, setMyPath, state.pathPoints]);
+  }, [canPlan, myPath, myPos, obstacles, playPathStepSfx, removeFromPath, setMyPath, state.pathPoints]);
 
   useEffect(() => {
     pendingPathRef.current = myPath;

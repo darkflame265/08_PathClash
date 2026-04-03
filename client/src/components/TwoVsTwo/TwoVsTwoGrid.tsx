@@ -18,6 +18,7 @@ import {
   pixelToCell,
   posEqual,
 } from '../../utils/pathUtils';
+import { playLobbyClick } from '../../utils/soundUtils';
 import './TwoVsTwoScreen.css';
 
 const DEFAULT_CELL_SIZE = 96;
@@ -73,6 +74,8 @@ export function TwoVsTwoGrid({
   const obstacles = state.obstacles;
   const twoVsTwoDisplayPositions = useGameStore((store) => store.twoVsTwoDisplayPositions);
   const twoVsTwoAnimation = useGameStore((store) => store.twoVsTwoAnimation);
+  const isSfxMuted = useGameStore((store) => store.isSfxMuted);
+  const sfxVolume = useGameStore((store) => store.sfxVolume);
   const displayPositions: DisplayPositions =
     twoVsTwoDisplayPositions ??
     (Object.fromEntries(
@@ -122,6 +125,11 @@ export function TwoVsTwoGrid({
     emitPathUpdate(pendingPathRef.current);
   }, [emitPathUpdate]);
 
+  const playPathStepSfx = useCallback(() => {
+    if (isSfxMuted) return;
+    playLobbyClick(sfxVolume);
+  }, [isSfxMuted, sfxVolume]);
+
   const addToPath = useCallback(
     (cell: Position) => {
       if (!isPlanning || me.hp <= 0) return;
@@ -130,10 +138,11 @@ export function TwoVsTwoGrid({
       if (isBlockedCell(cell, obstacles)) return;
       const lastPos = current.length > 0 ? current[current.length - 1] : me.position;
       if (isValidMove(lastPos, cell)) {
+        playPathStepSfx();
         setMyPath([...current, cell]);
       }
     },
-    [isPlanning, me.hp, me.position, myPath, obstacles, setMyPath, state.pathPoints],
+    [isPlanning, me.hp, me.position, myPath, obstacles, playPathStepSfx, setMyPath, state.pathPoints],
   );
 
   const removeFromPath = useCallback(() => {
@@ -201,13 +210,14 @@ export function TwoVsTwoGrid({
           isValidMove(lastPos, cell) &&
           myPath.length < state.pathPoints
         ) {
+          playPathStepSfx();
           setMyPath([...myPath, cell]);
         }
       } else if (dragState.current.fromPiece) {
         addToPath(cell);
       }
     },
-    [addToPath, isPlanning, me.hp, me.position, myPath, obstacles, removeFromPath, responsiveCellSize, setMyPath, state.pathPoints],
+    [addToPath, isPlanning, me.hp, me.position, myPath, obstacles, playPathStepSfx, removeFromPath, responsiveCellSize, setMyPath, state.pathPoints],
   );
 
   const handlePointerEnd = useCallback((e?: React.PointerEvent<HTMLDivElement>) => {

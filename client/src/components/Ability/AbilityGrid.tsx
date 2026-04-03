@@ -1,7 +1,9 @@
 ﻿import { useRef, useCallback, useEffect, useState } from 'react';
 import type { PlayerColor, Position } from '../../types/game.types';
 import type { AbilityBattleState, AbilitySkillReservation } from '../../types/ability.types';
+import { useGameStore } from '../../store/gameStore';
 import { pixelToCell, isBlockedCell, isValidMove, posEqual } from '../../utils/pathUtils';
+import { playLobbyClick } from '../../utils/soundUtils';
 import { PlayerPiece } from '../Game/PlayerPiece';
 import { PathLine } from '../Game/PathLine';
 import { CollisionEffect } from '../Effects/CollisionEffect';
@@ -143,6 +145,8 @@ export function AbilityGrid({
   onInfernoTargetSelect,
   onTeleportCancel,
 }: Props) {
+  const isSfxMuted = useGameStore((store) => store.isSfxMuted);
+  const sfxVolume = useGameStore((store) => store.sfxVolume);
   const shellRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState(cellSize * GRID_SIZE || DEFAULT_CELL_SIZE * GRID_SIZE);
@@ -229,6 +233,11 @@ export function AbilityGrid({
     }
   }, [myPath, setMyPath]);
 
+  const playPathStepSfx = useCallback(() => {
+    if (isSfxMuted) return;
+    playLobbyClick(sfxVolume);
+  }, [isSfxMuted, sfxVolume]);
+
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (!canEditPath || !gridRef.current) return;
@@ -285,11 +294,12 @@ export function AbilityGrid({
       if (dragState.current.fromStart || dragState.current.fromEnd) {
         const lastPos = getPlanningTailPosition(current);
         if (!posEqual(cell, lastPos) && !isBlockedCell(cell, obstacles) && isValidMove(lastPos, cell) && current.length < pathPoints) {
+          playPathStepSfx();
           setMyPath([...current, cell]);
         }
       }
     },
-    [canEditPath, getPlanningSecondLastPosition, getPlanningTailPosition, myPath, obstacles, pathPoints, removeFromPath, responsiveCellSize, setMyPath],
+    [canEditPath, getPlanningSecondLastPosition, getPlanningTailPosition, myPath, obstacles, pathPoints, playPathStepSfx, removeFromPath, responsiveCellSize, setMyPath],
   );
 
   const handlePointerEnd = useCallback((e?: React.PointerEvent<HTMLDivElement>) => {
