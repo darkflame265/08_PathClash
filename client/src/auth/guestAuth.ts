@@ -444,9 +444,7 @@ async function getAccountSnapshot(userId: string, options?: { force?: boolean })
       return snapshot;
     }
 
-    await ensureProfile(userId);
-
-    const [profileResult, statsResult, achievementsResult] = await Promise.all([
+    let [profileResult, statsResult, achievementsResult] = await Promise.all([
       supabase
         .from("profiles")
         .select("nickname, equipped_skin")
@@ -468,6 +466,16 @@ async function getAccountSnapshot(userId: string, options?: { force?: boolean })
       .select("skin_id")
       .eq("user_id", userId)
       .returns<OwnedSkinRow[]>();
+
+    if (!profileResult.data) {
+      await ensureProfile(userId);
+      profileResult = await supabase
+        .from("profiles")
+        .select("nickname, equipped_skin")
+        .eq("id", userId)
+        .maybeSingle<ProfileRow>();
+    }
+
     const dailyRewardWins = getActiveDailyRewardWins(statsResult.data ?? undefined);
 
     const snapshot = {
@@ -595,6 +603,7 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
   }
 
   saveGuestSession(data.session);
+  await ensureProfile(data.session.user.id);
   const snapshot = readCachedAccountSnapshot(data.session.user.id) ?? undefined;
   return toAuthState(data.session, snapshot);
 }
