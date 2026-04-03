@@ -26,6 +26,7 @@ interface Props {
   isBlitzing?: boolean;
   isClone?: boolean;
   hp?: number | null;
+  hpOffsetY?: number;
   outlineColor?: 'green' | PlayerColor | null;
   entranceAnimation?: "left" | "right" | null;
   skin?:
@@ -65,6 +66,7 @@ export function PlayerPiece({
   isBlitzing = false,
   isClone = false,
   hp = null,
+  hpOffsetY = 0,
   outlineColor = null,
   entranceAnimation = null,
   skin = "classic",
@@ -139,7 +141,11 @@ export function PlayerPiece({
           {effectiveSkin === "quantum" && <QuantumGame />}
         </div>
         {hp !== null && !isClone && (
-          <div className={`piece-hp piece-hp-${color}`} aria-hidden="true">
+          <div
+            className={`piece-hp piece-hp-${color}${isMe ? ' piece-hp-me' : ''}`}
+            style={{ ['--piece-hp-offset-y' as string]: `${hpOffsetY}px` }}
+            aria-hidden="true"
+          >
             {Array.from({ length: 3 }, (_, index) => (
               <span
                 key={index}

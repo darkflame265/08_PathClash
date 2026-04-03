@@ -201,6 +201,12 @@ export function AbilityGrid({
     !state.players.red.hidden || currentColor === 'red' || state.phase !== 'planning';
   const blueVisible =
     !state.players.blue.hidden || currentColor === 'blue' || state.phase !== 'planning';
+  const piecesOverlapped =
+    redVisible &&
+    blueVisible &&
+    displayPositions.red.row === displayPositions.blue.row &&
+    displayPositions.red.col === displayPositions.blue.col;
+  const redHpOffsetY = piecesOverlapped ? Math.max(18, Math.round(responsiveCellSize * 0.26)) : 0;
 
   const getPlanningTailPosition = useCallback(
     (path: Position[]) => {
@@ -904,6 +910,7 @@ export function AbilityGrid({
               isOverloaded={state.players.red.reboundLocked}
               isBlitzing={movingBlitzProgress.red > 0}
               hp={state.players.red.hp}
+              hpOffsetY={redHpOffsetY}
               skin={redSkin}
           />
           </>

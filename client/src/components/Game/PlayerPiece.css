@@ -242,7 +242,7 @@
 .piece-hp {
   position: absolute;
   left: 50%;
-  top: calc(100% + 4px);
+  top: calc(100% + 4px + var(--piece-hp-offset-y, 0px));
   transform: translateX(-50%);
   z-index: 2;
   display: flex;
@@ -255,6 +255,14 @@
   border: 1px solid rgba(148, 163, 184, 0.2);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
   pointer-events: none;
+}
+
+.piece-hp-me {
+  border-color: rgba(74, 222, 128, 0.88);
+  box-shadow:
+    0 0 0 1px rgba(34, 197, 94, 0.4),
+    0 0 14px rgba(74, 222, 128, 0.28),
+    0 6px 16px rgba(0, 0, 0, 0.28);
 }
 
 .piece-hp-seg {
