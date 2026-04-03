@@ -251,14 +251,14 @@ function toAuthState(session: Session | null, snapshot?: AccountSnapshot): AuthS
     accessToken: session?.access_token ?? null,
     isGuestUser: session?.user.is_anonymous ?? false,
     nickname: snapshot?.nickname ?? undefined,
-    equippedSkin: snapshot?.equippedSkin ?? "classic",
-    ownedSkins: snapshot?.ownedSkins ?? [],
-    wins: snapshot?.wins ?? 0,
-    losses: snapshot?.losses ?? 0,
-    tokens: snapshot?.tokens ?? 0,
-    dailyRewardWins: snapshot?.dailyRewardWins ?? 0,
-    dailyRewardTokens: snapshot?.dailyRewardTokens ?? 0,
-    achievements: snapshot?.achievements ?? [],
+    equippedSkin: snapshot?.equippedSkin,
+    ownedSkins: snapshot?.ownedSkins,
+    wins: snapshot?.wins,
+    losses: snapshot?.losses,
+    tokens: snapshot?.tokens,
+    dailyRewardWins: snapshot?.dailyRewardWins,
+    dailyRewardTokens: snapshot?.dailyRewardTokens,
+    achievements: snapshot?.achievements,
   };
 }
 
