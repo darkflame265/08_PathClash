@@ -75,6 +75,25 @@ interface AccountSnapshot {
   achievements: PlayerAchievementState[];
 }
 
+interface AccountSnapshotRpcRow {
+  nickname?: string | null;
+  equippedSkin?: PieceSkin | null;
+  ownedSkins?: string[] | null;
+  wins?: number | null;
+  losses?: number | null;
+  tokens?: number | null;
+  dailyRewardWins?: number | null;
+  dailyRewardTokens?: number | null;
+  achievements?: Array<{
+    achievementId?: string | null;
+    progress?: number | null;
+    completed?: boolean | null;
+    claimed?: boolean | null;
+    completedAt?: string | null;
+    claimedAt?: string | null;
+  }> | null;
+}
+
 export interface AccountProfile {
   userId: string;
   nickname: string;
@@ -352,6 +371,34 @@ function invalidateAccountSnapshot(userId: string) {
   accountSnapshotCache.delete(userId);
 }
 
+function normalizeAccountSnapshot(
+  source: AccountSnapshotRpcRow | null | undefined,
+): AccountSnapshot {
+  return {
+    nickname: source?.nickname ?? null,
+    equippedSkin: source?.equippedSkin ?? "classic",
+    ownedSkins: (source?.ownedSkins ?? []).filter(
+      (skin): skin is PieceSkin => Boolean(skin),
+    ),
+    wins: Number(source?.wins ?? 0),
+    losses: Number(source?.losses ?? 0),
+    tokens: Number(source?.tokens ?? 0),
+    dailyRewardWins: Number(source?.dailyRewardWins ?? 0),
+    dailyRewardTokens: Number(source?.dailyRewardTokens ?? 0),
+    achievements: (source?.achievements ?? [])
+      .filter((row): row is NonNullable<typeof row> => Boolean(row))
+      .map((row) => ({
+        achievementId: row.achievementId ?? "",
+        progress: Number(row.progress ?? 0),
+        completed: Boolean(row.completed),
+        claimed: Boolean(row.claimed),
+        completedAt: row.completedAt ?? null,
+        claimedAt: row.claimedAt ?? null,
+      }))
+      .filter((row) => row.achievementId.length > 0),
+  };
+}
+
 async function getAccountSnapshot(userId: string, options?: { force?: boolean }): Promise<AccountSnapshot> {
   if (!supabase) {
     return {
@@ -382,6 +429,21 @@ async function getAccountSnapshot(userId: string, options?: { force?: boolean })
   }
 
   const fetchPromise = (async () => {
+    const { data: snapshotRpc, error: snapshotRpcError } = await supabase.rpc(
+      "get_account_snapshot",
+      {
+        target_user_id: userId,
+      },
+    );
+
+    if (!snapshotRpcError && snapshotRpc) {
+      const snapshot = normalizeAccountSnapshot(
+        snapshotRpc as AccountSnapshotRpcRow,
+      );
+      cacheAccountSnapshot(userId, snapshot);
+      return snapshot;
+    }
+
     await ensureProfile(userId);
 
     const [profileResult, statsResult, achievementsResult] = await Promise.all([

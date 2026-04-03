@@ -214,6 +214,79 @@ begin
 end;
 $$;
 
+create or replace function public.get_account_snapshot(
+  target_user_id uuid default auth.uid()
+)
+returns jsonb
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  current_day text := to_char(timezone('utc', now()), 'YYYY-MM-DD');
+  reward_wins integer := 0;
+begin
+  if target_user_id is null or auth.uid() is null or auth.uid() <> target_user_id then
+    return null;
+  end if;
+
+  reward_wins := coalesce((
+    select least(20, greatest(0, ps.daily_reward_wins))
+    from public.player_stats ps
+    where ps.user_id = target_user_id
+      and ps.daily_reward_day::text = current_day
+  ), 0);
+
+  return jsonb_build_object(
+    'nickname',
+      (select p.nickname from public.profiles p where p.id = target_user_id),
+    'equippedSkin',
+      coalesce(
+        (select p.equipped_skin from public.profiles p where p.id = target_user_id),
+        'classic'
+      ),
+    'ownedSkins',
+      coalesce(
+        (
+          select jsonb_agg(os.skin_id order by os.skin_id)
+          from public.owned_skins os
+          where os.user_id = target_user_id
+        ),
+        '[]'::jsonb
+      ),
+    'wins',
+      coalesce((select ps.wins from public.player_stats ps where ps.user_id = target_user_id), 0),
+    'losses',
+      coalesce((select ps.losses from public.player_stats ps where ps.user_id = target_user_id), 0),
+    'tokens',
+      coalesce((select ps.tokens from public.player_stats ps where ps.user_id = target_user_id), 0),
+    'dailyRewardWins',
+      reward_wins,
+    'dailyRewardTokens',
+      reward_wins * 6,
+    'achievements',
+      coalesce(
+        (
+          select jsonb_agg(
+            jsonb_build_object(
+              'achievementId', pa.achievement_id,
+              'progress', pa.progress,
+              'completed', pa.completed,
+              'claimed', pa.claimed,
+              'completedAt', pa.completed_at,
+              'claimedAt', pa.claimed_at
+            )
+            order by pa.achievement_id
+          )
+          from public.player_achievements pa
+          where pa.user_id = target_user_id
+        ),
+        '[]'::jsonb
+      )
+  );
+end;
+$$;
+
 alter table public.profiles enable row level security;
 alter table public.player_stats enable row level security;
 alter table public.account_merges enable row level security;

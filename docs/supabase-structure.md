@@ -44,6 +44,22 @@ AI나 사람이 빠르게 전체 구조만 확인할 때 사용합니다.
 - `completed_at`
 - `claimed_at`
 
+## 계정 요약 RPC
+
+- `public.get_account_snapshot(target_user_id uuid)`
+- 역할:
+  - `profiles`
+  - `player_stats`
+  - `owned_skins`
+  - `player_achievements`
+  를 한 번에 묶어서 현재 계정 요약 JSON으로 반환
+- 목적:
+  - 웹/앱 초기 진입 시 계정 요약 요청 수를 줄여
+    `Connecting guest session...` 체감 지연을 낮추기
+- 클라이언트:
+  - 이 RPC를 우선 사용하고
+  - 아직 SQL이 적용되지 않은 환경에서는 기존 다중 조회 방식으로 fallback
+
 ## 약관 동의 메모
 
 `public.profiles`에 아래 값이 저장된다.
