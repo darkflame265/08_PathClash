@@ -945,6 +945,7 @@ export function AbilityGrid({
               isOverloaded={state.players.red.reboundLocked}
               isBlitzing={movingBlitzProgress.red > 0}
               hp={state.players.red.hp}
+              maxHp={5}
               hpOffsetY={redHpOffsetY}
               skin={redSkin}
           />
@@ -966,6 +967,7 @@ export function AbilityGrid({
               isOverloaded={state.players.blue.reboundLocked}
               isBlitzing={movingBlitzProgress.blue > 0}
               hp={state.players.blue.hp}
+              maxHp={5}
               skin={blueSkin}
           />
           </>

@@ -38,6 +38,7 @@ const MAX_MANA = 10;
 const MANA_PER_TURN = 2;
 const SKILL_EVENT_BUFFER_MS = 1100;
 const OVERDRIVE_MANA = 20;
+const ABILITY_STARTING_HP = 5;
 
 function collectUtilitySkillUsageByUser(
   players: Map<PlayerColor, AbilityPlayerState>,
@@ -278,7 +279,7 @@ export class AbilityRoom {
       color,
       pieceSkin,
       boardSkin,
-      hp: 3,
+      hp: ABILITY_STARTING_HP,
       position: { ...initialPositions[color] },
       plannedPath: [],
       previousTurnStart: null,
@@ -912,7 +913,7 @@ export class AbilityRoom {
   private resetPlayers(): void {
     const initial = getInitialPositions();
     for (const [color, player] of this.players.entries()) {
-      player.hp = 3;
+      player.hp = ABILITY_STARTING_HP;
       player.position = { ...initial[color] };
       player.plannedPath = [];
       player.previousTurnStart = null;

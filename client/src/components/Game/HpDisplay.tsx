@@ -6,15 +6,15 @@ interface Props {
   color: PlayerColor;
   hp: number;
   myColor: PlayerColor;
+  maxHp?: number;
   healedHeartIndex?: number | null;
 }
-
-const MAX_HP = 3;
 
 export function HpDisplay({
   color,
   hp,
   myColor,
+  maxHp = 3,
   healedHeartIndex = null,
 }: Props) {
   const { heartShake } = useGameStore();
@@ -25,7 +25,7 @@ export function HpDisplay({
     <div className="hp-display">
       <span className={`hp-label ${isMe ? 'bold' : ''}`}>{label}</span>
       <div className="hearts">
-        {Array.from({ length: MAX_HP }, (_, i) => {
+        {Array.from({ length: maxHp }, (_, i) => {
           const filled = i < hp;
           const isShaking = heartShake[color] === i;
           const isHealing = healedHeartIndex === i;

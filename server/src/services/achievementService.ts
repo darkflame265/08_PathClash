@@ -311,7 +311,7 @@ export async function recordAbilitySpecialWin(args: {
   disconnectWin?: boolean;
 }): Promise<void> {
   if (!args.winnerUserId || args.disconnectWin) return;
-  if (args.winnerHp !== 3) return;
+  if (args.winnerHp !== 5) return;
   await incrementSeries(args.winnerUserId, 'ability_win_full_hp_', FULL_HP_SERIES, 1);
 }
 

@@ -26,6 +26,7 @@ interface Props {
   isBlitzing?: boolean;
   isClone?: boolean;
   hp?: number | null;
+  maxHp?: number;
   hpOffsetY?: number;
   outlineColor?: 'green' | PlayerColor | null;
   entranceAnimation?: "left" | "right" | null;
@@ -66,6 +67,7 @@ export function PlayerPiece({
   isBlitzing = false,
   isClone = false,
   hp = null,
+  maxHp = 3,
   hpOffsetY = 0,
   outlineColor = null,
   entranceAnimation = null,
@@ -146,7 +148,7 @@ export function PlayerPiece({
             style={{ ['--piece-hp-offset-y' as string]: `${hpOffsetY}px` }}
             aria-hidden="true"
           >
-            {Array.from({ length: 3 }, (_, index) => (
+            {Array.from({ length: maxHp }, (_, index) => (
               <span
                 key={index}
                 className={`piece-hp-seg${index < hp ? " is-filled" : ""}`}
