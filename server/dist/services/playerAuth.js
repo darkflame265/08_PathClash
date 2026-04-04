@@ -10,6 +10,37 @@ const supabase_1 = require("../lib/supabase");
 const achievementService_1 = require("./achievementService");
 const DAILY_REWARD_TOKENS_PER_WIN = 6;
 const DAILY_REWARD_MAX_WINS = 20;
+function normalizeNicknameCandidate(value) {
+    const trimmed = value?.trim();
+    if (!trimmed)
+        return null;
+    return trimmed.slice(0, 16);
+}
+function resolvePreferredAccountNickname(profileNickname, fallbackNickname = 'Guest', authUser) {
+    const normalizedProfile = normalizeNicknameCandidate(profileNickname);
+    if (normalizedProfile && normalizedProfile !== 'Guest') {
+        return normalizedProfile;
+    }
+    const metadataCandidates = [
+        authUser?.user_metadata?.nickname,
+        authUser?.user_metadata?.preferred_username,
+        authUser?.user_metadata?.name,
+        authUser?.user_metadata?.full_name,
+        authUser?.raw_user_meta_data?.nickname,
+        authUser?.raw_user_meta_data?.preferred_username,
+        authUser?.raw_user_meta_data?.name,
+        authUser?.raw_user_meta_data?.full_name,
+    ];
+    for (const candidate of metadataCandidates) {
+        if (typeof candidate !== 'string')
+            continue;
+        const normalizedCandidate = normalizeNicknameCandidate(candidate);
+        if (normalizedCandidate) {
+            return normalizedCandidate;
+        }
+    }
+    return normalizeNicknameCandidate(fallbackNickname) ?? 'Guest';
+}
 function getUtcDayKey(now = new Date()) {
     return now.toISOString().slice(0, 10);
 }
@@ -277,7 +308,19 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
         targetCreatedAt >= startedAt - 5000 &&
         targetCreatedAt <= startedAt + 5 * 60000;
     if (targetHasExistingData || !createdDuringFlow) {
-        const profile = await readAccountProfile(targetUser.id, targetProfile.nickname, false);
+        const targetPreferredNickname = resolvePreferredAccountNickname(targetProfile.nickname, 'Guest', targetUser);
+        if (targetPreferredNickname !== targetProfile.nickname && targetPreferredNickname !== 'Guest') {
+            const { error: syncExistingProfileError } = await supabase_1.supabaseAdmin.from('profiles').upsert({
+                id: targetUser.id,
+                nickname: targetPreferredNickname,
+                equipped_skin: targetProfile.equippedSkin,
+                is_guest: false,
+            });
+            if (syncExistingProfileError) {
+                console.error('[supabase] failed to sync existing google nickname', syncExistingProfileError);
+            }
+        }
+        const profile = await readAccountProfile(targetUser.id, targetPreferredNickname, false);
         if (!allowExistingSwitch) {
             return {
                 status: 'SWITCH_CONFIRM_REQUIRED',
