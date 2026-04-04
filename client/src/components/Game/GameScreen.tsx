@@ -471,6 +471,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   const tutorialRematchAllowed =
     currentMatchType !== "ai" || !roundInfo?.tutorialScenario;
   const resolvedBoardSkin: BoardSkin = (() => {
+    if (gameState?.tutorialActive) return "classic";
     const redBoardSkin = gameState?.players.red.boardSkin;
     const blueBoardSkin = gameState?.players.blue.boardSkin;
     if (redBoardSkin && redBoardSkin !== "classic") return redBoardSkin;

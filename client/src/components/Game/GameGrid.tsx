@@ -85,11 +85,12 @@ export function GameGrid({
     playerPieceSkins?.blue ??
     (myColor === "blue" ? pieceSkin : "classic");
   const resolvedBoardSkin: BoardSkin = (() => {
+    if (gameState?.tutorialActive) return "classic";
     const redBoardSkin = gameState?.players.red.boardSkin;
     const blueBoardSkin = gameState?.players.blue.boardSkin;
     if (redBoardSkin && redBoardSkin !== "classic") return redBoardSkin;
     if (blueBoardSkin && blueBoardSkin !== "classic") return blueBoardSkin;
-      return boardSkin;
+    return boardSkin;
   })();
   const boardSkinClass =
     resolvedBoardSkin === "blue_gray"
