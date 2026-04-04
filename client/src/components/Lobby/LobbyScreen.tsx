@@ -1032,12 +1032,16 @@ export function LobbyScreen({
       ? "Daily rewards reset every day at UTC 00:00."
       : "일일 보상은 매일 UTC 00:00에 초기화됩니다.";
 
-  const skinModalTitle = lang === "en" ? "Choose Piece Skin" : "말 스킨 선택";
+  const skinModalTitle = lang === "en" ? "Choose Skin" : "스킨 선택";
 
   const skinModalDesc =
     lang === "en"
-      ? "Select the look you want to use for your piece."
-      : "플레이어 말에 적용할 외형을 선택하세요.";
+      ? skinPickerTab === "piece"
+        ? "Select the look you want to use for your piece."
+        : "Select the look you want to use for the board."
+      : skinPickerTab === "piece"
+        ? "플레이어 말에 적용할 외형을 선택하세요."
+        : "보드에 적용할 외형을 선택하세요.";
 
   const skinApplyLabel = lang === "en" ? "Close" : "닫기";
   const pieceSkinTabLabel = lang === "en" ? "Piece Skin" : "말 스킨";
