@@ -8,7 +8,7 @@ import { GameOverOverlay } from "./GameOverOverlay";
 import { HpDisplay } from "./HpDisplay";
 import { PlayerInfo } from "./PlayerInfo";
 import { TimerBar } from "./TimerBar";
-import type { Position } from "../../types/game.types";
+import type { BoardSkin, Position } from "../../types/game.types";
 import "./GameScreen.css";
 
 interface Props {
@@ -114,6 +114,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     setRematchRequestSent,
     currentMatchType,
     accountDailyRewardTokens,
+    boardSkin,
   } = useGameStore();
   const { t } = useLang();
   const gridAreaRef = useRef<HTMLDivElement>(null);
@@ -469,10 +470,19 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       : null;
   const tutorialRematchAllowed =
     currentMatchType !== "ai" || !roundInfo?.tutorialScenario;
+  const resolvedBoardSkin: BoardSkin = (() => {
+    const redBoardSkin = gameState?.players.red.boardSkin;
+    const blueBoardSkin = gameState?.players.blue.boardSkin;
+    if (redBoardSkin && redBoardSkin !== "classic") return redBoardSkin;
+    if (blueBoardSkin && blueBoardSkin !== "classic") return blueBoardSkin;
+    return boardSkin;
+  })();
+  const screenBoardClass =
+    resolvedBoardSkin === "pharaoh" ? "board-bg-pharaoh-screen" : "";
 
   return (
     <div
-      className="game-screen"
+      className={`game-screen ${screenBoardClass}`}
       style={{ "--gs-scale": scale } as CSSProperties}
       ref={screenRef}
     >

@@ -28,6 +28,23 @@
   box-sizing: border-box;
 }
 
+.game-screen.board-bg-pharaoh-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(12, 8, 5, 0.3), rgba(12, 8, 5, 0.3)),
+    url("/board/pharaoh_board_bg.png") center / cover no-repeat;
+  opacity: 0.98;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.game-screen.board-bg-pharaoh-screen > * {
+  position: relative;
+  z-index: 1;
+}
+
 .gs-loading {
   display: flex;
   align-items: center;

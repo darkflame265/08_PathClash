@@ -25,7 +25,7 @@ import {
   startOverdriveLoop,
   stopOverdriveLoop,
 } from "../../utils/soundUtils";
-import type { PlayerColor, Position } from "../../types/game.types";
+import type { BoardSkin, PlayerColor, Position } from "../../types/game.types";
 import {
   ABILITY_SKILLS,
   type AbilityBattleState,
@@ -292,6 +292,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     isSfxMuted,
     sfxVolume,
     triggerHeartShake,
+    boardSkin,
   } = useGameStore();
 
   const [state, setState] = useState<AbilityBattleState | null>(null);
@@ -2244,6 +2245,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const me = state.players[currentColor];
   const opponent = state.players[opponentColor];
+  const resolvedBoardSkin: BoardSkin =
+    state.players.red.boardSkin !== "classic"
+      ? state.players.red.boardSkin
+      : state.players.blue.boardSkin !== "classic"
+        ? state.players.blue.boardSkin
+        : boardSkin;
+  const screenBoardClass =
+    resolvedBoardSkin === "pharaoh" ? "board-bg-pharaoh-screen" : "";
   const overdriveTurn = me.overdriveActive;
   const effectivePathPoints = me.reboundLocked ? 0 : state.pathPoints;
   const rewardTokens =
@@ -2297,7 +2306,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   return (
     <div
-      className="game-screen ability-screen"
+      className={`game-screen ability-screen ${screenBoardClass}`}
       style={{ "--gs-scale": scale } as CSSProperties}
     >
       <div className="gs-utility-bar">
