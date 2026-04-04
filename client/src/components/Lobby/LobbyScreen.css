@@ -238,10 +238,10 @@
 }
 
 .account-sync-spinner {
-  width: 14px;
-  height: 14px;
+  width: 11px;
+  height: 11px;
   margin: 0;
-  border-width: 2px;
+  border-width: 1.75px;
   flex-shrink: 0;
 }
 
