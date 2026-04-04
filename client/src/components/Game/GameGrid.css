@@ -84,10 +84,7 @@
 }
 
 .game-grid.board-skin-magic {
-  background:
-    linear-gradient(rgba(255, 178, 116, 0.08), rgba(255, 178, 116, 0.08)),
-    url("/board/magic_board_skin.svg") center / cover no-repeat,
-    #171526;
+  background: #171526;
   border-color: rgba(255, 156, 111, 0.78);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.42),
@@ -96,23 +93,26 @@
 }
 
 .game-grid.board-skin-magic .grid-cell {
-  background: rgba(35, 24, 58, 0.34);
-  border-color: rgba(255, 156, 111, 0.22);
-  backdrop-filter: saturate(1.06);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .game-grid.board-skin-magic .grid-cell:hover,
 .game-grid.board-skin-magic .grid-cell.is-hovered {
-  background: rgba(72, 46, 111, 0.42);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 206, 167, 0.24),
+    0 0 18px rgba(177, 97, 255, 0.12);
 }
 
 .game-grid.board-skin-magic .grid-cell.obstacle,
 .game-grid.board-skin-magic .grid-cell.obstacle:hover,
 .game-grid.board-skin-magic .grid-cell.obstacle.is-hovered {
-  background:
-    linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(248, 113, 113, 0.08)),
-    rgba(35, 24, 58, 0.4);
-  border-color: rgba(248, 113, 113, 0.5);
+  border: none;
+}
+
+.game-grid.board-skin-magic .obstacle-mark {
+  z-index: 3;
 }
 
 .grid-cell {

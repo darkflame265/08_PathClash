@@ -99,6 +99,32 @@ export function GameGrid({
         : resolvedBoardSkin === "magic"
           ? "board-skin-magic"
         : "";
+  const getCellStyle = (row: number, col: number, blocked: boolean): React.CSSProperties => {
+    const baseStyle: React.CSSProperties = {
+      left: col * responsiveCellSize,
+      top: row * responsiveCellSize,
+      width: responsiveCellSize,
+      height: responsiveCellSize,
+      ["--cell-size" as string]: `${responsiveCellSize}px`,
+      ["--magic-row" as string]: row,
+      ["--magic-col" as string]: col,
+    };
+
+    if (resolvedBoardSkin !== "magic") {
+      return baseStyle;
+    }
+
+    const cellUrl = `/board/magic-cells/magic-cell-${row}-${col}.svg`;
+    return {
+      ...baseStyle,
+      backgroundImage: blocked
+        ? `linear-gradient(135deg, rgba(239, 68, 68, 0.16), rgba(248, 113, 113, 0.06)), url("${cellUrl}")`
+        : `url("${cellUrl}")`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+    };
+  };
 
   const getGridOffset = () => {
     const rect = gridRef.current?.getBoundingClientRect();
@@ -520,13 +546,7 @@ export function GameGrid({
             className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? "obstacle" : ""} ${
               hoveredCell?.row === row && hoveredCell?.col === col ? "is-hovered" : ""
             }`}
-            style={{
-              left: col * responsiveCellSize,
-              top: row * responsiveCellSize,
-              width: responsiveCellSize,
-              height: responsiveCellSize,
-              ["--cell-size" as string]: `${responsiveCellSize}px`,
-            }}
+            style={getCellStyle(row, col, isBlockedCell({ row, col }, obstacles))}
           >
             {isBlockedCell({ row, col }, obstacles) && (
               <div className="obstacle-mark" />
