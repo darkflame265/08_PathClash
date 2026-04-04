@@ -48,6 +48,7 @@ interface GameStore {
   myColor: PlayerColor | null;
   roomCode: string;
   authReady: boolean;
+  accountSummaryLoading: boolean;
   authUserId: string | null;
   authAccessToken: string | null;
   isGuestUser: boolean;
@@ -135,6 +136,7 @@ interface GameStore {
       claimedAt: string | null;
     }>;
   }) => void;
+  setAccountSummaryLoading: (loading: boolean) => void;
   setMyColor: (c: PlayerColor) => void;
   setRoomCode: (c: string) => void;
   setMatchType: (matchType: "friend" | "random" | "ai" | "coop" | "2v2" | "ability" | null) => void;
@@ -285,6 +287,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   myColor: null,
   roomCode: '',
   authReady: false,
+  accountSummaryLoading: false,
   authUserId: null,
   authAccessToken: null,
   isGuestUser: false,
@@ -329,6 +332,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   setNickname: (n) => set({ myNickname: n }),
+  setAccountSummaryLoading: (loading) => set({ accountSummaryLoading: loading }),
   setAuthState: ({
     ready,
     userId,

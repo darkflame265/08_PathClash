@@ -527,6 +527,10 @@ function AccountCard({
 
   recordLabel,
 
+  accountSummaryLoading,
+
+  accountSummaryLoadingLabel,
+
   t,
 }: {
   myNickname: string;
@@ -547,12 +551,27 @@ function AccountCard({
 
   recordLabel: string;
 
+  accountSummaryLoading: boolean;
+
+  accountSummaryLoadingLabel: string;
+
   t: Translations;
 }) {
   return (
     <div className="lobby-card account-card">
       <div className="account-header">
-        <h2 data-step="1">{t.accountTitleText}</h2>
+        <div className="account-header-main">
+          <h2 data-step="1">{t.accountTitleText}</h2>
+          {accountSummaryLoading && (
+            <div className="account-sync-status" aria-live="polite">
+              <div
+                className="spinner account-sync-spinner"
+                aria-hidden="true"
+              />
+              <span>{accountSummaryLoadingLabel}</span>
+            </div>
+          )}
+        </div>
 
         {!isGuestUser && (
           <button className="account-logout" onClick={onLogout}>
@@ -561,16 +580,14 @@ function AccountCard({
         )}
       </div>
 
-      {isGuestUser ? (
-        <p>{t.accountDesc}</p>
-      ) : (
-        <p>{t.accountDescGoogle}</p>
-      )}
+      {isGuestUser ? <p>{t.accountDesc}</p> : <p>{t.accountDescGoogle}</p>}
 
       <div className="account-summary-list">
         <div className="account-summary-row">
           <span className="account-summary-label">{nicknameLabel}</span>
-          <strong className="account-summary-value">{myNickname || "Guest"}</strong>
+          <strong className="account-summary-value">
+            {myNickname || "Guest"}
+          </strong>
         </div>
 
         <div className="account-summary-row">
@@ -698,6 +715,8 @@ export function LobbyScreen({
     isGuestUser,
 
     accountWins,
+
+    accountSummaryLoading,
 
     accountLosses,
 
@@ -1033,6 +1052,11 @@ export function LobbyScreen({
   const skinLabel = lang === "en" ? "Current Skin" : "현재 스킨";
 
   const recordLabel = lang === "en" ? "Record" : "전적";
+
+  const accountSummaryLoadingLabel =
+    lang === "en"
+      ? "Loading data from DB."
+      : "DB에서 데이터를 불러오는 중입니다.";
 
   const audioModalTitle = lang === "en" ? "Audio Settings" : "오디오 설정";
 
@@ -2749,6 +2773,8 @@ export function LobbyScreen({
       onLogout={() => void handleLogout()}
       nicknameLabel={nicknameLabel}
       recordLabel={recordLabel}
+      accountSummaryLoading={accountSummaryLoading}
+      accountSummaryLoadingLabel={accountSummaryLoadingLabel}
       t={t}
     />
   );
@@ -2831,7 +2857,11 @@ export function LobbyScreen({
 
                   <div className="spinner" />
 
-                  <p>{isAiTutorialQueueing ? aiTutorialMatchmakingDesc : aiMatchmakingDesc}</p>
+                  <p>
+                    {isAiTutorialQueueing
+                      ? aiTutorialMatchmakingDesc
+                      : aiMatchmakingDesc}
+                  </p>
                 </div>
 
                 <button className="lobby-btn cancel" onClick={handleCancelAi}>

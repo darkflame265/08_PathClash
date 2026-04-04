@@ -102,6 +102,7 @@ function App() {
   const [tutorialPromptTrigger, setTutorialPromptTrigger] = useState(0);
   const {
     authReady,
+    setAccountSummaryLoading,
     authUserId,
     authAccessToken,
     isGuestUser,
@@ -211,7 +212,11 @@ function App() {
     const applyAuthPayload = (payload: Awaited<ReturnType<typeof initializeGuestAuth>>) => {
       if (!active) return;
       setAuthState(payload);
-      if (!payload.userId || !payload.accessToken) return;
+      if (!payload.userId || !payload.accessToken) {
+        setAccountSummaryLoading(false);
+        return;
+      }
+      setAccountSummaryLoading(true);
       void refreshAccountSummary({ force: true }).then(
         ({
           nickname,
@@ -241,7 +246,10 @@ function App() {
             achievements,
           });
         },
-      );
+      ).finally(() => {
+        if (!active) return;
+        setAccountSummaryLoading(false);
+      });
     };
 
     void (async () => {
@@ -259,7 +267,7 @@ function App() {
       cleanupNativeAuth();
       unsubscribe();
     };
-  }, [setAuthState]);
+  }, [setAccountSummaryLoading, setAuthState]);
 
   useEffect(() => {
     if (!authReady) return;
