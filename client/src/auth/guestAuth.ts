@@ -531,6 +531,10 @@ function clearPendingUpgradeContext() {
   window.localStorage.removeItem(UPGRADE_CONTEXT_KEY);
 }
 
+export function hasPendingGoogleUpgradeContext(): boolean {
+  return getPendingUpgradeContext() !== null;
+}
+
 function clearUpgradeQueryFromUrl() {
   const cleanUrl = `${window.location.origin}${window.location.pathname}`;
   window.history.replaceState({}, document.title, cleanUrl);

@@ -27,7 +27,6 @@ import {
   claimAllAchievementRewards,
   confirmPendingGoogleUpgradeSwitch,
   getSocketAuthPayload,
-  hasPendingGoogleUpgradeContext,
   linkGoogleAccount,
   logoutToGuestMode,
   purchaseSkinWithTokens,
@@ -816,9 +815,6 @@ export function LobbyScreen({
   });
 
   const [showUpgradeNotice, setShowUpgradeNotice] = useState(false);
-  const [upgradeFlowLoading, setUpgradeFlowLoading] = useState(() =>
-    hasPendingGoogleUpgradeContext(),
-  );
 
   const [atomicPreviewReady, setAtomicPreviewReady] = useState(false);
 
@@ -1061,10 +1057,6 @@ export function LobbyScreen({
     lang === "en"
       ? "Loading data from DB."
       : "DB에서 데이터를 불러오는 중입니다.";
-  const accountUpgradeLoadingLabel =
-    lang === "en"
-      ? "Loading account information."
-      : "계정 정보를 불러오고 있습니다.";
 
   const audioModalTitle = lang === "en" ? "Audio Settings" : "오디오 설정";
 
@@ -1892,12 +1884,8 @@ export function LobbyScreen({
 
   useEffect(() => {
     let active = true;
-    setUpgradeFlowLoading(hasPendingGoogleUpgradeContext());
 
     void resolveUpgradeFlowAfterRedirect().then((result) => {
-      if (active) {
-        setUpgradeFlowLoading(false);
-      }
       if (!active || result.kind === "none") return;
 
       if (result.kind === "switch_confirm_required") {
@@ -2636,7 +2624,6 @@ export function LobbyScreen({
     setUpgradeResult({ kind: "none" });
 
     setShowUpgradeNotice(false);
-    setUpgradeFlowLoading(true);
 
     await linkGoogleAccount();
   };
@@ -2786,12 +2773,8 @@ export function LobbyScreen({
       onLogout={() => void handleLogout()}
       nicknameLabel={nicknameLabel}
       recordLabel={recordLabel}
-      accountSummaryLoading={accountSummaryLoading || upgradeFlowLoading}
-      accountSummaryLoadingLabel={
-        upgradeFlowLoading
-          ? accountUpgradeLoadingLabel
-          : accountSummaryLoadingLabel
-      }
+      accountSummaryLoading={accountSummaryLoading}
+      accountSummaryLoadingLabel={accountSummaryLoadingLabel}
       t={t}
     />
   );
