@@ -242,6 +242,35 @@
   text-transform: uppercase;
 }
 
+.account-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.account-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.72rem 0.85rem;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(154, 164, 174, 0.14);
+  background: rgba(10, 18, 28, 0.35);
+}
+
+.account-summary-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #9aa4ae);
+}
+
+.account-summary-value {
+  color: var(--text, #f0f4f8);
+  font-size: 0.92rem;
+}
+
 .account-upgrade {
   display: flex;
   flex-direction: column;
@@ -1830,6 +1859,38 @@
 
 .settings-actions {
   margin-top: 0;
+}
+
+.settings-section-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.8rem;
+}
+
+.settings-section-head strong {
+  color: var(--text, #f0f4f8);
+  font-size: 0.92rem;
+}
+
+.settings-section-head span {
+  color: var(--text-muted, #9aa4ae);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.settings-name-change {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.settings-name-input {
+  width: 100%;
+}
+
+.settings-name-btn {
+  width: 100%;
 }
 
 .settings-policy-btn {

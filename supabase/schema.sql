@@ -214,6 +214,71 @@ begin
 end;
 $$;
 
+create or replace function public.change_nickname_with_tokens(
+  p_nickname text
+)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid;
+  v_tokens integer;
+  v_trimmed text;
+  v_cost integer := 100;
+  v_current_nickname text;
+begin
+  v_user_id := auth.uid();
+
+  if v_user_id is null then
+    return 'AUTH_REQUIRED';
+  end if;
+
+  v_trimmed := nullif(btrim(coalesce(p_nickname, '')), '');
+
+  if v_trimmed is null or char_length(v_trimmed) > 16 then
+    return 'INVALID_NICKNAME';
+  end if;
+
+  select nickname
+    into v_current_nickname
+    from public.profiles
+   where id = v_user_id;
+
+  if coalesce(v_current_nickname, '') = v_trimmed then
+    return 'NO_CHANGE';
+  end if;
+
+  insert into public.player_stats (user_id)
+  values (v_user_id)
+  on conflict (user_id) do nothing;
+
+  select tokens
+    into v_tokens
+    from public.player_stats
+   where user_id = v_user_id
+   for update;
+
+  if coalesce(v_tokens, 0) < v_cost then
+    return 'INSUFFICIENT_TOKENS';
+  end if;
+
+  update public.player_stats
+     set tokens = tokens - v_cost,
+         updated_at = now()
+   where user_id = v_user_id;
+
+  insert into public.profiles (id, nickname)
+  values (v_user_id, v_trimmed)
+  on conflict (id) do update
+    set nickname = excluded.nickname,
+        updated_at = now();
+
+  return 'UPDATED';
+end;
+$$;
+
 create or replace function public.get_account_snapshot(
   target_user_id uuid default auth.uid()
 )

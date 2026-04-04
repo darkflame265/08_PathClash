@@ -60,6 +60,22 @@ AI나 사람이 빠르게 전체 구조만 확인할 때 사용합니다.
   - 이 RPC를 우선 사용하고
   - 아직 SQL이 적용되지 않은 환경에서는 기존 다중 조회 방식으로 fallback
 
+## 닉네임 변경 RPC
+
+- `public.change_nickname_with_tokens(p_nickname text)`
+- 역할:
+  - 플레이어 토큰 100개를 차감하고
+  - `profiles.nickname`을 새 값으로 변경
+- 목적:
+  - 로비 자유 변경을 막고
+  - 설정창에서만 유료 이름 변경을 허용
+- 반환값:
+  - `UPDATED`
+  - `NO_CHANGE`
+  - `INVALID_NICKNAME`
+  - `INSUFFICIENT_TOKENS`
+  - `AUTH_REQUIRED`
+
 ## 약관 동의 메모
 
 `public.profiles`에 아래 값이 저장된다.

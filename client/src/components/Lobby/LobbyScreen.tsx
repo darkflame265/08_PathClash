@@ -22,6 +22,7 @@ import { ElectricCorePreview } from "../../skins/rare/electric_core/Preview";
 
 import {
   cancelPendingGoogleUpgradeSwitch,
+  changeNicknameWithTokens,
   claimAchievementReward,
   claimAllAchievementRewards,
   confirmPendingGoogleUpgradeSwitch,
@@ -510,8 +511,6 @@ function getUpgradeDisplayMsg(
 function AccountCard({
   myNickname,
 
-  setNickname,
-
   isGuestUser,
 
   accountWins,
@@ -524,11 +523,13 @@ function AccountCard({
 
   onLogout,
 
+  nicknameLabel,
+
+  recordLabel,
+
   t,
 }: {
   myNickname: string;
-
-  setNickname: (value: string) => void;
 
   isGuestUser: boolean;
 
@@ -541,6 +542,10 @@ function AccountCard({
   onLinkGoogle: () => void;
 
   onLogout: () => void;
+
+  nicknameLabel: string;
+
+  recordLabel: string;
 
   t: Translations;
 }) {
@@ -557,30 +562,24 @@ function AccountCard({
       </div>
 
       {isGuestUser ? (
-        <p>
-          {t.accountDesc}{" "}
-          <span className="account-record">
-            {t.record(accountWins, accountLosses)}
-          </span>
-        </p>
+        <p>{t.accountDesc}</p>
       ) : (
-        <p>
-          {t.accountDescGoogle}{" "}
-          <span className="account-record">
-            {t.record(accountWins, accountLosses)}
-          </span>
-        </p>
+        <p>{t.accountDescGoogle}</p>
       )}
 
-      <label className="account-input-label">{t.nickLabel}</label>
+      <div className="account-summary-list">
+        <div className="account-summary-row">
+          <span className="account-summary-label">{nicknameLabel}</span>
+          <strong className="account-summary-value">{myNickname || "Guest"}</strong>
+        </div>
 
-      <input
-        className="lobby-input"
-        placeholder={t.nickPlaceholder}
-        value={myNickname}
-        onChange={(e) => setNickname(e.target.value)}
-        maxLength={16}
-      />
+        <div className="account-summary-row">
+          <span className="account-summary-label">{recordLabel}</span>
+          <strong className="account-summary-value">
+            {t.record(accountWins, accountLosses)}
+          </strong>
+        </div>
+      </div>
 
       {isGuestUser && (
         <div className="account-upgrade">
@@ -779,6 +778,8 @@ export function LobbyScreen({
   const [isPatchNotesOpen, setIsPatchNotesOpen] = useState(false);
 
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
+  const [settingsNicknameDraft, setSettingsNicknameDraft] = useState("");
+  const [isChangingNickname, setIsChangingNickname] = useState(false);
 
   const [isAiTutorialPromptOpen, setIsAiTutorialPromptOpen] = useState(false);
   const [lobbySkinIconSrc, setLobbySkinIconSrc] = useState(
@@ -1078,6 +1079,29 @@ export function LobbyScreen({
     lang === "en"
       ? `${tokens} tokens were added to your account.`
       : `${tokens}토큰이 계정에 추가되었습니다.`;
+
+  const nicknameChangeCost = 100;
+  const changeNameTitle = lang === "en" ? "Change Name" : "이름 변경";
+  const changeNameDesc =
+    lang === "en"
+      ? `Spend ${nicknameChangeCost} tokens to change your player name.`
+      : `${nicknameChangeCost}토큰을 사용해 플레이어 이름을 변경할 수 있습니다.`;
+  const changeNamePlaceholder =
+    lang === "en" ? "Enter a new name" : "새 이름을 입력하세요";
+  const changeNameButtonLabel =
+    lang === "en" ? `Change (${nicknameChangeCost})` : `변경 (${nicknameChangeCost})`;
+  const changeNameInvalidMsg =
+    lang === "en"
+      ? "Please enter a name between 1 and 16 characters."
+      : "이름은 1~16자로 입력해주세요.";
+  const changeNameNoChangeMsg =
+    lang === "en" ? "That name is already in use." : "현재와 같은 이름입니다.";
+  const changeNameInsufficientMsg =
+    lang === "en" ? "Not enough tokens." : "토큰이 부족합니다.";
+  const changeNameFailedMsg =
+    lang === "en" ? "Failed to change name." : "이름 변경에 실패했습니다.";
+  const changeNameSuccessMsg =
+    lang === "en" ? "Name changed successfully." : "이름이 변경되었습니다.";
 
   const skinPurchasePrompt = (skinName: string) =>
     lang === "en"
@@ -1789,6 +1813,11 @@ export function LobbyScreen({
   }, [syncAccountSummary]);
 
   useEffect(() => {
+    if (!isSettingsOpen) return;
+    setSettingsNicknameDraft(myNickname);
+  }, [isSettingsOpen, myNickname]);
+
+  useEffect(() => {
     const clearDailyResetTimeout = () => {
       if (dailyResetTimeoutRef.current !== null) {
         window.clearTimeout(dailyResetTimeoutRef.current);
@@ -2360,6 +2389,58 @@ export function LobbyScreen({
     setMatchType(null);
   };
 
+  const handleChangeNickname = useCallback(async () => {
+    if (isChangingNickname) return;
+
+    const trimmed = settingsNicknameDraft.trim();
+    if (trimmed.length < 1 || trimmed.length > 16) {
+      window.alert(changeNameInvalidMsg);
+      return;
+    }
+
+    setIsChangingNickname(true);
+    try {
+      const result = await changeNicknameWithTokens(trimmed);
+
+      if (result === "updated") {
+        await syncAccountSummary();
+        setNickname(trimmed);
+        setSettingsNicknameDraft(trimmed);
+        window.alert(changeNameSuccessMsg);
+        return;
+      }
+
+      if (result === "no_change") {
+        window.alert(changeNameNoChangeMsg);
+        return;
+      }
+
+      if (result === "invalid_nickname") {
+        window.alert(changeNameInvalidMsg);
+        return;
+      }
+
+      if (result === "insufficient_tokens") {
+        window.alert(changeNameInsufficientMsg);
+        return;
+      }
+
+      window.alert(changeNameFailedMsg);
+    } finally {
+      setIsChangingNickname(false);
+    }
+  }, [
+    changeNameFailedMsg,
+    changeNameInsufficientMsg,
+    changeNameInvalidMsg,
+    changeNameNoChangeMsg,
+    changeNameSuccessMsg,
+    isChangingNickname,
+    setNickname,
+    settingsNicknameDraft,
+    syncAccountSummary,
+  ]);
+
   const handleCancelCoop = () => {
     const socket = connectSocket();
 
@@ -2660,13 +2741,14 @@ export function LobbyScreen({
   const accountCard = (
     <AccountCard
       myNickname={myNickname}
-      setNickname={setNickname}
       isGuestUser={isGuestUser}
       accountWins={accountWins}
       accountLosses={accountLosses}
       upgradeMessage={upgradeMessage}
       onLinkGoogle={() => void handleLinkGoogle()}
       onLogout={() => void handleLogout()}
+      nicknameLabel={nicknameLabel}
+      recordLabel={recordLabel}
       t={t}
     />
   );
@@ -3592,6 +3674,31 @@ export function LobbyScreen({
                       ? `${accountWins}W ${accountLosses}L`
                       : `${accountWins}승 ${accountLosses}패`}
                   </strong>
+                </div>
+              </div>
+
+              <div className="settings-section">
+                <div className="settings-section-head">
+                  <strong>{changeNameTitle}</strong>
+                  <span>{changeNameDesc}</span>
+                </div>
+                <div className="settings-name-change">
+                  <input
+                    className="lobby-input settings-name-input"
+                    type="text"
+                    maxLength={16}
+                    value={settingsNicknameDraft}
+                    placeholder={changeNamePlaceholder}
+                    onChange={(e) => setSettingsNicknameDraft(e.target.value)}
+                  />
+                  <button
+                    className="lobby-btn secondary settings-name-btn"
+                    onClick={() => void handleChangeNickname()}
+                    type="button"
+                    disabled={isChangingNickname}
+                  >
+                    {changeNameButtonLabel}
+                  </button>
                 </div>
               </div>
 

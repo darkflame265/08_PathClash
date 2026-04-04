@@ -721,6 +721,47 @@ export async function syncNickname(nickname: string): Promise<void> {
   knownProfileUsers.add(userId);
 }
 
+export async function changeNicknameWithTokens(
+  nickname: string,
+): Promise<"updated" | "no_change" | "invalid_nickname" | "insufficient_tokens" | "auth_required" | "failed"> {
+  if (!supabase) return "failed";
+
+  const trimmed = nickname.trim().slice(0, 16);
+  const { data, error } = await supabase.rpc("change_nickname_with_tokens", {
+    p_nickname: trimmed,
+  });
+
+  if (error) {
+    console.error("[supabase] failed to change nickname with tokens", error);
+    return "failed";
+  }
+
+  const result = String(data ?? "failed").toLowerCase();
+  const session = await getCurrentSession();
+  const userId = session?.user?.id ?? null;
+
+  if (userId && result === "updated") {
+    invalidateAccountSnapshot(userId);
+    const current = lastSyncedProfileState.get(userId);
+    lastSyncedProfileState.set(userId, {
+      ...(current ?? {}),
+      nickname: trimmed,
+    });
+    knownProfileUsers.add(userId);
+  }
+
+  switch (result) {
+    case "updated":
+    case "no_change":
+    case "invalid_nickname":
+    case "insufficient_tokens":
+    case "auth_required":
+      return result;
+    default:
+      return "failed";
+  }
+}
+
 export async function syncEquippedSkin(equippedSkin: PieceSkin): Promise<void> {
   if (!supabase) return;
   const session = await getCurrentSession();
