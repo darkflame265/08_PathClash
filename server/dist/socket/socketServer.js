@@ -685,12 +685,6 @@ function initSocketServer(io) {
             if (room && room.playerCount > 0) {
                 io.to(room.roomId).emit('opponent_disconnected', {});
             }
-            if (coopRoom && coopRoom.playerCount > 0) {
-                io.to(coopRoom.roomId).emit('coop_game_over', {
-                    result: 'lose',
-                    message: 'Ally disconnected.',
-                });
-            }
             if (abilityRoom.room &&
                 abilityRoom.disconnectResult.shouldAwardDisconnectResult &&
                 abilityRoom.disconnectResult.winnerColor) {

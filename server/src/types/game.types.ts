@@ -33,6 +33,7 @@ export interface PlayerState {
   socketId: string;
   nickname: string;
   color: PlayerColor;
+  connected?: boolean;
   pieceSkin: PieceSkin;
   hp: number;
   position: Position;
@@ -99,6 +100,7 @@ export interface ClientPlayerState {
   id: string;
   nickname: string;
   color: PlayerColor;
+  connected?: boolean;
   pieceSkin: PieceSkin;
   hp: number;
   position: Position;

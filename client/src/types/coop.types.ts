@@ -28,6 +28,7 @@ export interface CoopClientPlayerState {
   id: string;
   nickname: string;
   color: 'red' | 'blue';
+  connected: boolean;
   pieceSkin: PieceSkin;
   hp: number;
   position: Position;

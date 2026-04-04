@@ -44,6 +44,10 @@ class CoopRoom {
     get playerCount() {
         return this.players.size;
     }
+    get connectedPlayerCount() {
+        return [...this.players.values()].filter((player) => player.connected !== false)
+            .length;
+    }
     get currentPhase() {
         return this.phase;
     }
@@ -64,6 +68,7 @@ class CoopRoom {
             socketId: socket.id,
             nickname,
             color,
+            connected: true,
             pieceSkin,
             hp: 3,
             position: { ...pos },
@@ -91,15 +96,31 @@ class CoopRoom {
         for (const [color, player] of this.players.entries()) {
             if (player.socketId !== socketId)
                 continue;
-            this.players.delete(color);
-            this.timer.clear();
-            this.clearPlanningGraceTimeout();
-            this.clearNextRoundTimeout();
-            this.readySockets.clear();
-            this.pendingStart = false;
-            this.phase = "gameover";
-            this.gameResult = "lose";
+            if (this.phase === "waiting" || this.pendingStart) {
+                this.players.delete(color);
+                this.timer.clear();
+                this.clearPlanningGraceTimeout();
+                this.clearNextRoundTimeout();
+                this.readySockets.clear();
+                this.pendingStart = false;
+                this.touchActivity();
+                return;
+            }
+            player.connected = false;
+            player.hp = 0;
+            player.pathSubmitted = true;
+            player.plannedPath = [];
+            this.readySockets.delete(socketId);
             this.touchActivity();
+            this.io.to(this.roomId).emit("coop_player_disconnected", {
+                color,
+                state: this.toClientState(),
+            });
+            if (this.phase === "planning" && this.allActivePlayersSubmitted()) {
+                this.timer.clear();
+                this.clearPlanningGraceTimeout();
+                this.resolveRound();
+            }
             return;
         }
     }
@@ -398,12 +419,12 @@ class CoopRoom {
                 return;
             liveRed.position = redEnd;
             liveBlue.position = blueEnd;
-            liveRed.hp = resolution.redHp;
-            liveBlue.hp = resolution.blueHp;
+            liveRed.hp = liveRed.connected === false ? 0 : resolution.redHp;
+            liveBlue.hp = liveBlue.connected === false ? 0 : resolution.blueHp;
             liveRed.plannedPath = [];
             liveBlue.plannedPath = [];
-            liveRed.pathSubmitted = false;
-            liveBlue.pathSubmitted = false;
+            liveRed.pathSubmitted = liveRed.connected === false || liveRed.hp <= 0;
+            liveBlue.pathSubmitted = liveBlue.connected === false || liveBlue.hp <= 0;
             this.portals = nextPortals;
             this.enemies = nextEnemies;
             this.enemyPreviews = nextEnemyPreviews;
@@ -421,8 +442,9 @@ class CoopRoom {
                 });
                 if (nextResult === "win" && !this.rewardsGranted) {
                     this.rewardsGranted = true;
-                    void (0, playerAuth_1.grantDailyRewardTokens)([...this.players.values()].map((player) => player.userId), 12);
-                    void Promise.all([...this.players.values()].map((player) => (0, achievementService_1.recordModeWin)({ userId: player.userId, mode: "coop" })));
+                    const connectedPlayers = [...this.players.values()].filter((player) => player.connected !== false);
+                    void (0, playerAuth_1.grantDailyRewardTokens)(connectedPlayers.map((player) => player.userId), 12);
+                    void Promise.all(connectedPlayers.map((player) => (0, achievementService_1.recordModeWin)({ userId: player.userId, mode: "coop" })));
                 }
                 this.io.to(this.roomId).emit("coop_game_over", { result: nextResult });
                 return;
@@ -468,6 +490,7 @@ class CoopRoom {
     resetPlayers() {
         const positions = (0, GameEngine_1.getInitialPositions)();
         for (const [color, player] of this.players.entries()) {
+            player.connected = true;
             player.hp = 3;
             player.position = { ...positions[color] };
             player.pathSubmitted = false;
@@ -490,6 +513,9 @@ class CoopRoom {
     touchActivity(now = Date.now()) {
         this.lastActivityAt = now;
     }
+    allActivePlayersSubmitted() {
+        return [...this.players.values()].every((player) => player.connected === false || player.hp <= 0 || player.pathSubmitted);
+    }
     toClientState() {
         const red = this.players.get("red");
         const blue = this.players.get("blue");
@@ -505,8 +531,14 @@ class CoopRoom {
             pathPoints: (0, CoopEngine_1.calcCoopPathPoints)(this.planningRound),
             obstacles: this.obstacles.map((obstacle) => ({ ...obstacle })),
             players: {
-                red: (0, GameEngine_1.toClientPlayer)(red),
-                blue: (0, GameEngine_1.toClientPlayer)(blue),
+                red: {
+                    ...(0, GameEngine_1.toClientPlayer)(red),
+                    connected: red.connected !== false,
+                },
+                blue: {
+                    ...(0, GameEngine_1.toClientPlayer)(blue),
+                    connected: blue.connected !== false,
+                },
             },
             portals: this.portals.map((portal) => ({ ...portal })),
             enemies: this.enemies.map((enemy) => ({ ...enemy })),

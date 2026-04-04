@@ -305,6 +305,15 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
       animateResolution(payload);
     };
 
+    const onPlayerDisconnected = ({
+      state,
+    }: {
+      color: PlayerColor;
+      state: CoopClientState;
+    }) => {
+      applyState(state);
+    };
+
     const onGameOver = ({
       result,
       message,
@@ -353,6 +362,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
     socket.on("coop_path_updated", onPathUpdated);
     socket.on("coop_player_submitted", onPlayerSubmitted);
     socket.on("coop_resolution", onResolution);
+    socket.on("coop_player_disconnected", onPlayerDisconnected);
     socket.on("coop_game_over", onGameOver);
     socket.on("chat_receive", onChatReceive);
     socket.on("player_skin_updated", onPlayerSkinUpdated);
@@ -369,6 +379,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
       socket.off("coop_path_updated", onPathUpdated);
       socket.off("coop_player_submitted", onPlayerSubmitted);
       socket.off("coop_resolution", onResolution);
+      socket.off("coop_player_disconnected", onPlayerDisconnected);
       socket.off("coop_game_over", onGameOver);
       socket.off("chat_receive", onChatReceive);
       socket.off("player_skin_updated", onPlayerSkinUpdated);
