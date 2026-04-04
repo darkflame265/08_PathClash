@@ -1653,6 +1653,14 @@ export function LobbyScreen({
           ? "A cool blue-gray board with the same classic layout."
           : "기본 보드와 같은 구성에 푸른 회색 분위기를 더한 보드입니다.",
     },
+    {
+      id: "pharaoh",
+      name: lang === "en" ? "Pharaoh Board" : "파라오 보드",
+      desc:
+        lang === "en"
+          ? "An ornate sandstone board inspired by ancient Egyptian patterns."
+          : "고대 이집트 문양과 사암 분위기를 담은 화려한 보드입니다.",
+    },
   ];
 
   const getSkinRequirementLabel = (

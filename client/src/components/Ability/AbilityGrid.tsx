@@ -204,6 +204,12 @@ export function AbilityGrid({
       : state.players.blue.boardSkin !== 'classic'
         ? state.players.blue.boardSkin
         : boardSkin;
+  const boardSkinClass =
+    resolvedBoardSkin === 'blue_gray'
+      ? 'board-skin-blue-gray'
+      : resolvedBoardSkin === 'pharaoh'
+        ? 'board-skin-pharaoh'
+        : '';
   const redVisible =
     !state.players.red.hidden || currentColor === 'red' || state.phase !== 'planning';
   const blueVisible =
@@ -451,7 +457,7 @@ export function AbilityGrid({
     <div ref={shellRef} className="game-grid-shell">
       <div
         ref={gridRef}
-        className={`game-grid ability-grid ${resolvedBoardSkin === 'blue_gray' ? 'board-skin-blue-gray' : ''}`}
+        className={`game-grid ability-grid ${boardSkinClass}`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}

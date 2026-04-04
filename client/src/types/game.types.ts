@@ -27,7 +27,7 @@ export type PieceSkin =
   | 'flag_us'
   | 'flag_uk';
 
-export type BoardSkin = 'classic' | 'blue_gray';
+export type BoardSkin = 'classic' | 'blue_gray' | 'pharaoh';
 
 export interface ClientPlayerState {
   id: string;

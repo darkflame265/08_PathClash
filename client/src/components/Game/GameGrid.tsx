@@ -89,8 +89,14 @@ export function GameGrid({
     const blueBoardSkin = gameState?.players.blue.boardSkin;
     if (redBoardSkin && redBoardSkin !== "classic") return redBoardSkin;
     if (blueBoardSkin && blueBoardSkin !== "classic") return blueBoardSkin;
-    return boardSkin;
+      return boardSkin;
   })();
+  const boardSkinClass =
+    resolvedBoardSkin === "blue_gray"
+      ? "board-skin-blue-gray"
+      : resolvedBoardSkin === "pharaoh"
+        ? "board-skin-pharaoh"
+        : "";
 
   const getGridOffset = () => {
     const rect = gridRef.current?.getBoundingClientRect();
@@ -498,7 +504,7 @@ export function GameGrid({
     <div ref={shellRef} className="game-grid-shell">
       <div
         ref={gridRef}
-        className={`game-grid ${resolvedBoardSkin === "blue_gray" ? "board-skin-blue-gray" : ""}`}
+        className={`game-grid ${boardSkinClass}`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
