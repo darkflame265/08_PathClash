@@ -19,6 +19,8 @@ AI나 사람이 빠르게 전체 구조만 확인할 때 사용합니다.
   - guest -> 정식 계정 병합 이력
 - `public.google_play_token_purchases`
   - Google Play 구매 이력
+- `public.nickname_change_history`
+  - 닉네임 변경 이력과 토큰 차감 기록
 
 ## 관계 핵심
 
@@ -66,6 +68,7 @@ AI나 사람이 빠르게 전체 구조만 확인할 때 사용합니다.
 - 역할:
   - 플레이어 토큰 500개를 차감하고
   - `profiles.nickname`을 새 값으로 변경
+  - 성공 시 `nickname_change_history`에 변경 이력을 저장
 - 목적:
   - 로비 자유 변경을 막고
   - 설정창에서만 유료 이름 변경을 허용
@@ -75,6 +78,22 @@ AI나 사람이 빠르게 전체 구조만 확인할 때 사용합니다.
   - `INVALID_NICKNAME`
   - `INSUFFICIENT_TOKENS`
   - `AUTH_REQUIRED`
+
+## 닉네임 변경 이력
+
+- `public.nickname_change_history`
+- 저장되는 값:
+  - `user_id`
+  - `old_nickname`
+  - `new_nickname`
+  - `token_balance_before`
+  - `token_balance_after`
+  - `cost_tokens`
+  - `changed_at`
+- 목적:
+  - 이름 변경 문의 대응
+  - 토큰 차감 검증
+  - 운영 추적성 확보
 
 ## 약관 동의 메모
 

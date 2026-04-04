@@ -83,6 +83,20 @@ create table if not exists public.google_play_token_purchases (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.nickname_change_history (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  old_nickname text,
+  new_nickname text not null,
+  token_balance_before integer not null,
+  token_balance_after integer not null,
+  cost_tokens integer not null,
+  changed_at timestamptz not null default now()
+);
+
+create index if not exists idx_nickname_change_history_user_id_changed_at
+on public.nickname_change_history (user_id, changed_at desc);
+
 create or replace function public.grant_tokens_from_google_purchase(
   p_purchase_token text,
   p_user_id uuid,
@@ -228,6 +242,7 @@ declare
   v_trimmed text;
   v_cost integer := 500;
   v_current_nickname text;
+  v_token_balance_after integer;
 begin
   v_user_id := auth.uid();
 
@@ -269,11 +284,30 @@ begin
          updated_at = now()
    where user_id = v_user_id;
 
+  v_token_balance_after := greatest(coalesce(v_tokens, 0) - v_cost, 0);
+
   insert into public.profiles (id, nickname)
   values (v_user_id, v_trimmed)
   on conflict (id) do update
     set nickname = excluded.nickname,
         updated_at = now();
+
+  insert into public.nickname_change_history (
+    user_id,
+    old_nickname,
+    new_nickname,
+    token_balance_before,
+    token_balance_after,
+    cost_tokens
+  )
+  values (
+    v_user_id,
+    v_current_nickname,
+    v_trimmed,
+    coalesce(v_tokens, 0),
+    v_token_balance_after,
+    v_cost
+  );
 
   return 'UPDATED';
 end;
@@ -358,6 +392,7 @@ alter table public.account_merges enable row level security;
 alter table public.owned_skins enable row level security;
 alter table public.player_achievements enable row level security;
 alter table public.google_play_token_purchases enable row level security;
+alter table public.nickname_change_history enable row level security;
 
 drop policy if exists "profiles_select_own" on public.profiles;
 create policy "profiles_select_own"
@@ -405,5 +440,11 @@ using (auth.uid() = user_id);
 drop policy if exists "google_play_token_purchases_select_own" on public.google_play_token_purchases;
 create policy "google_play_token_purchases_select_own"
 on public.google_play_token_purchases
+for select
+using (auth.uid() = user_id);
+
+drop policy if exists "nickname_change_history_select_own" on public.nickname_change_history;
+create policy "nickname_change_history_select_own"
+on public.nickname_change_history
 for select
 using (auth.uid() = user_id);
