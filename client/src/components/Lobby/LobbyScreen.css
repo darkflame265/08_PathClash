@@ -1188,6 +1188,51 @@
   padding-right: 0.2rem;
 }
 
+.skin-picker-tabs {
+  display: flex;
+  gap: 0.55rem;
+  margin-top: 0.65rem;
+}
+
+.skin-picker-tab {
+  flex: 1;
+  min-height: 2.8rem;
+  border: 1px solid rgba(154, 164, 174, 0.18);
+  border-radius: 0.9rem;
+  background: rgba(42, 49, 55, 0.72);
+  color: var(--text-muted, #9aa4ae);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.skin-picker-tab:hover {
+  border-color: rgba(96, 165, 250, 0.4);
+  color: #e8f1fb;
+}
+
+.skin-picker-tab:active {
+  transform: scale(0.98);
+}
+
+.skin-picker-tab.is-active {
+  border-color: rgba(96, 165, 250, 0.75);
+  background:
+    linear-gradient(180deg, rgba(55, 89, 138, 0.32), rgba(32, 49, 74, 0.32)),
+    rgba(59, 130, 246, 0.12);
+  color: #f8fbff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 0 1px rgba(96, 165, 250, 0.16);
+}
+
 .skin-option-card {
   display: flex;
   align-items: center;
@@ -1257,6 +1302,32 @@
 .skin-preview.skin-preview-inferno,
 .skin-preview.skin-preview-quantum {
   overflow: visible;
+}
+
+.board-skin-preview {
+  width: 3.2rem;
+  height: 2.4rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(120, 136, 153, 0.6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 10px 20px rgba(0, 0, 0, 0.22);
+  transform: none;
+}
+
+.board-skin-preview-classic {
+  background:
+    linear-gradient(rgba(86, 103, 120, 0.38) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(86, 103, 120, 0.38) 1px, transparent 1px),
+    linear-gradient(180deg, #3b434b 0%, #31383f 100%);
+  background-size:
+    50% 50%,
+    50% 50%,
+    100% 100%;
+  background-position:
+    0 0,
+    0 0,
+    0 0;
 }
 
 .skin-preview-classic {

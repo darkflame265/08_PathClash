@@ -79,6 +79,7 @@ import { ABILITY_SKILLS, type AbilitySkillId } from "../../types/ability.types";
 import "./LobbyScreen.css";
 
 type LobbyView = "main" | "create" | "join";
+type SkinPickerTab = "piece" | "board";
 
 interface Props {
   onGameStart: () => void;
@@ -786,6 +787,7 @@ export function LobbyScreen({
   const [isAiTutorialQueueing, setIsAiTutorialQueueing] = useState(false);
 
   const [isSkinPickerOpen, setIsSkinPickerOpen] = useState(false);
+  const [skinPickerTab, setSkinPickerTab] = useState<SkinPickerTab>("piece");
 
   const [isTokenShopOpen, setIsTokenShopOpen] = useState(false);
 
@@ -1038,6 +1040,8 @@ export function LobbyScreen({
       : "플레이어 말에 적용할 외형을 선택하세요.";
 
   const skinApplyLabel = lang === "en" ? "Close" : "닫기";
+  const pieceSkinTabLabel = lang === "en" ? "Piece Skin" : "말 스킨";
+  const boardSkinTabLabel = lang === "en" ? "Board Skin" : "보드 스킨";
 
   const settingsModalTitle = lang === "en" ? "Profile Settings" : "프로필 설정";
 
@@ -1620,6 +1624,21 @@ export function LobbyScreen({
     },
   ];
 
+  const boardSkinChoices: Array<{
+    id: "classic";
+    name: string;
+    desc: string;
+  }> = [
+    {
+      id: "classic",
+      name: lang === "en" ? "Classic Board" : "클래식 보드",
+      desc:
+        lang === "en"
+          ? "The default dark gray board used in PathClash."
+          : "현재 PathClash에서 사용하는 기본 짙은 회색 보드입니다.",
+    },
+  ];
+
   const getSkinRequirementLabel = (
     requiredWins: number | null,
 
@@ -1675,6 +1694,10 @@ export function LobbyScreen({
     lang === "en"
       ? `Found: ${unlockedSkinCount}/${skinChoices.length}`
       : `찾음: ${unlockedSkinCount}/${skinChoices.length}`;
+  const boardSkinCollectionSummary =
+    lang === "en"
+      ? `Found: ${boardSkinChoices.length}/${boardSkinChoices.length}`
+      : `찾음: ${boardSkinChoices.length}/${boardSkinChoices.length}`;
 
   const achievementViews = useMemo(
     () => buildAchievementViews(accountAchievements),
@@ -3265,110 +3288,146 @@ export function LobbyScreen({
 
             <p>{skinModalDesc}</p>
 
-            <p className="skin-collection-summary">{skinCollectionSummary}</p>
+            <div className="skin-picker-tabs" role="tablist" aria-label={skinModalTitle}>
+              <button
+                className={`skin-picker-tab ${skinPickerTab === "piece" ? "is-active" : ""}`}
+                onClick={() => setSkinPickerTab("piece")}
+                type="button"
+                role="tab"
+                aria-selected={skinPickerTab === "piece"}
+              >
+                {pieceSkinTabLabel}
+              </button>
+              <button
+                className={`skin-picker-tab ${skinPickerTab === "board" ? "is-active" : ""}`}
+                onClick={() => setSkinPickerTab("board")}
+                type="button"
+                role="tab"
+                aria-selected={skinPickerTab === "board"}
+              >
+                {boardSkinTabLabel}
+              </button>
+            </div>
 
-            <div className="skin-option-list">
-              {skinChoices.map((choice) => {
-                const isOwned = ownedSkins.includes(choice.id);
+            <p className="skin-collection-summary">
+              {skinPickerTab === "piece"
+                ? skinCollectionSummary
+                : boardSkinCollectionSummary}
+            </p>
 
-                const lockedByWins =
-                  choice.requiredWins !== null &&
-                  accountWins < choice.requiredWins;
+            {skinPickerTab === "piece" ? (
+              <div className="skin-option-list">
+                {skinChoices.map((choice) => {
+                  const isOwned = ownedSkins.includes(choice.id);
 
-                const lockedByPlays =
-                  choice.requiredPlays !== null &&
-                  choice.requiredPlays !== undefined &&
-                  totalPlays < choice.requiredPlays;
+                  const lockedByWins =
+                    choice.requiredWins !== null &&
+                    accountWins < choice.requiredWins;
 
-                const lockedByTokens =
-                  choice.tokenPrice !== null &&
-                  choice.tokenPrice !== undefined &&
-                  !isOwned &&
-                  accountTokens < choice.tokenPrice;
+                  const lockedByPlays =
+                    choice.requiredPlays !== null &&
+                    choice.requiredPlays !== undefined &&
+                    totalPlays < choice.requiredPlays;
 
-                const isLocked =
-                  lockedByWins || lockedByPlays || lockedByTokens;
+                  const lockedByTokens =
+                    choice.tokenPrice !== null &&
+                    choice.tokenPrice !== undefined &&
+                    !isOwned &&
+                    accountTokens < choice.tokenPrice;
 
-                return (
+                  const isLocked =
+                    lockedByWins || lockedByPlays || lockedByTokens;
+
+                  return (
+                    <button
+                      key={choice.id}
+                      className={`skin-option-card ${
+                        pieceSkin === choice.id ? "is-selected" : ""
+                      } ${isLocked ? "is-locked" : ""}`}
+                      onClick={() =>
+                        void handleSkinChoiceSelect(choice, isLocked, isOwned)
+                      }
+                      disabled={false}
+                      type="button"
+                    >
+                      <span
+                        className={`skin-preview skin-preview-${choice.id}`}
+                        aria-hidden="true"
+                      >
+                        {isFlagSkin(choice.id) && <FlagSkin id={choice.id} />}
+                        {choice.id === "plasma" && <PlasmaPreview />}
+                        {choice.id === "gold_core" && <GoldCorePreview />}
+                        {choice.id === "neon_pulse" && <NeonPulsePreview />}
+                        {choice.id === "cosmic" && <CosmicPreview />}
+                        {choice.id === "inferno" && <InfernoPreview />}
+                        {choice.id === "arc_reactor" && <ArcReactorPreview />}
+                        {choice.id === "electric_core" && <ElectricCorePreview />}
+                        {choice.id === "quantum" && <QuantumPreview />}
+                        {choice.id === "atomic" && (
+                          <AtomicPreview ready={atomicPreviewReady} />
+                        )}
+                      </span>
+
+                      <span className="skin-option-copy">
+                        <strong
+                          className={
+                            choice.tier
+                              ? `skin-name-tier-${choice.tier}`
+                              : undefined
+                          }
+                        >
+                          {choice.name}
+                        </strong>
+
+                        <span>{choice.desc}</span>
+                      </span>
+
+                      {(isLocked ||
+                        (choice.tokenPrice !== null &&
+                          choice.tokenPrice !== undefined &&
+                          !isOwned)) && (
+                        <span className="skin-lock-meta" aria-label="Locked skin">
+                          <span className="skin-lock-icon" aria-hidden="true">
+                            {choice.tokenPrice !== null &&
+                            choice.tokenPrice !== undefined
+                              ? "💎"
+                              : "🔒"}
+                          </span>
+
+                          <span>
+                            {getSkinRequirementLabel(
+                              choice.requiredWins,
+                              choice.requiredPlays,
+                              choice.tokenPrice,
+                            )}
+                          </span>
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="skin-option-list">
+                {boardSkinChoices.map((choice) => (
                   <button
                     key={choice.id}
-                    className={`skin-option-card ${
-                      pieceSkin === choice.id ? "is-selected" : ""
-                    } ${isLocked ? "is-locked" : ""}`}
-                    onClick={() =>
-                      void handleSkinChoiceSelect(choice, isLocked, isOwned)
-                    }
-                    disabled={false}
+                    className="skin-option-card is-selected"
                     type="button"
                   >
                     <span
-                      className={`skin-preview skin-preview-${choice.id}`}
+                      className="skin-preview board-skin-preview board-skin-preview-classic"
                       aria-hidden="true"
-                    >
-                      {isFlagSkin(choice.id) && <FlagSkin id={choice.id} />}
-
-                      {choice.id === "plasma" && <PlasmaPreview />}
-
-                      {choice.id === "gold_core" && <GoldCorePreview />}
-
-                      {choice.id === "neon_pulse" && <NeonPulsePreview />}
-
-                      {choice.id === "cosmic" && <CosmicPreview />}
-
-                      {choice.id === "inferno" && <InfernoPreview />}
-
-                      {choice.id === "arc_reactor" && <ArcReactorPreview />}
-
-                      {choice.id === "electric_core" && <ElectricCorePreview />}
-
-                      {choice.id === "quantum" && <QuantumPreview />}
-
-                      {choice.id === "atomic" && (
-                        <AtomicPreview ready={atomicPreviewReady} />
-                      )}
-                    </span>
+                    />
 
                     <span className="skin-option-copy">
-                      <strong
-                        className={
-                          choice.tier
-                            ? `skin-name-tier-${choice.tier}`
-                            : undefined
-                        }
-                      >
-                        {choice.name}
-                      </strong>
-
+                      <strong>{choice.name}</strong>
                       <span>{choice.desc}</span>
                     </span>
-
-                    {(isLocked ||
-                      (choice.tokenPrice !== null &&
-                        choice.tokenPrice !== undefined &&
-                        !isOwned)) && (
-                      <span className="skin-lock-meta" aria-label="Locked skin">
-                        <span className="skin-lock-icon" aria-hidden="true">
-                          {choice.tokenPrice !== null &&
-                          choice.tokenPrice !== undefined
-                            ? "💎"
-                            : "🔒"}
-                        </span>
-
-                        <span>
-                          {getSkinRequirementLabel(
-                            choice.requiredWins,
-
-                            choice.requiredPlays,
-
-                            choice.tokenPrice,
-                          )}
-                        </span>
-                      </span>
-                    )}
                   </button>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            )}
 
             <div className="upgrade-modal-actions">
               <button
