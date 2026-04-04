@@ -1,21 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="39" height="39" viewBox="0 0 39 39" fill="none">
 <defs>
-  <linearGradient id="paint6_linear_213_630" x1="0.5" y1="0" x2="0.5" y2="1">
+  <linearGradient id="magicOuter" x1="0.5" y1="0" x2="0.5" y2="1">
     <stop stop-color="#F6752B" offset="0"/>
     <stop stop-color="#F8983D" offset="1"/>
   </linearGradient>
-  <radialGradient id="paint8_radial_213_630" cx="0.5" cy="0.4" r="0.7">
+  <radialGradient id="magicInner" cx="0.5" cy="0.4" r="0.7">
     <stop stop-color="#8D41CC" offset="0"/>
     <stop stop-color="#5A278F" offset="0.58"/>
     <stop stop-color="#44206C" offset="1"/>
   </radialGradient>
-  <linearGradient id="paint9_linear_213_630" x1="0.5" y1="0" x2="0.5" y2="1">
+  <linearGradient id="magicInnerStroke" x1="0.5" y1="0" x2="0.5" y2="1">
     <stop stop-color="#3D1F63" offset="0"/>
     <stop stop-color="#3D1F63" stop-opacity="0.45" offset="1"/>
   </linearGradient>
 </defs>
-<path d="m34.28 0.51h-28.79c-2.68 0-4.28 1.6-4.28 4.28v28.79c0 2.67 1.6 4.27 4.28 4.27h28.79c2.68 0 4.28-1.6 4.28-4.27v-28.79c0-2.68-1.6-4.28-4.28-4.28z" fill="url(#paint6_linear_213_630)" stroke="url(#paint6_linear_213_630)" stroke-miterlimit="10" stroke-width="2"/>
-<path d="m31.85 3.51h-24.26c-2.16 0-3.49 1.33-3.49 3.49v22.58c0 2.16 1.33 3.49 3.49 3.49h23.56c2.41 0 3.94-1.33 3.94-3.49v-22.58c0-2.16-1.19-3.49-3.24-3.49z" fill="url(#paint8_radial_213_630)" stroke="url(#paint9_linear_213_630)" stroke-miterlimit="10" stroke-width="2"/>
+<rect x="1.5" y="1.5" width="36" height="36" rx="5" fill="url(#magicOuter)"/>
+<rect x="5.0" y="5.0" width="29" height="29" rx="5" fill="url(#magicInner)" stroke="url(#magicInnerStroke)" stroke-width="2"/>
 <g transform="translate(-106, -194)">
 <path d="m30.59 31.66c5.6-4.58 12.04-4.47 15.92 0" stroke="#FF917B" stroke-miterlimit="10" stroke-width="1.2"/>
   <path d="m30.59 43.71c5.6 4.14 12.04 4.2 15.92 0" stroke="#FF917B" stroke-miterlimit="10" stroke-width="1.2"/>
