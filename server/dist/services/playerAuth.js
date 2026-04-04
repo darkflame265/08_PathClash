@@ -60,7 +60,7 @@ async function getUserFromToken(accessToken) {
 async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUser = false) {
     const profilePromise = supabase_1.supabaseAdmin
         ?.from('profiles')
-        .select('nickname, equipped_skin')
+        .select('nickname, equipped_skin, equipped_board_skin')
         .eq('id', userId)
         .maybeSingle();
     const statsPromise = supabase_1.supabaseAdmin
@@ -92,6 +92,7 @@ async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUse
         userId,
         nickname,
         equippedSkin: profileResult?.data?.equipped_skin ?? 'classic',
+        equippedBoardSkin: profileResult?.data?.equipped_board_skin ?? 'classic',
         ownedSkins,
         wins: statsResult?.data?.wins ?? 0,
         losses: statsResult?.data?.losses ?? 0,
@@ -285,6 +286,7 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
             id: targetUser.id,
             nickname: guestSnapshot?.nickname ?? 'Guest',
             equipped_skin: guestSnapshot?.equippedSkin ?? 'classic',
+            equipped_board_skin: guestSnapshot?.equippedBoardSkin ?? 'classic',
             is_guest: false,
         });
         if (profileError) {
@@ -314,6 +316,7 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
                 id: targetUser.id,
                 nickname: targetPreferredNickname,
                 equipped_skin: targetProfile.equippedSkin,
+                equipped_board_skin: targetProfile.equippedBoardSkin,
                 is_guest: false,
             });
             if (syncExistingProfileError) {
@@ -334,6 +337,7 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
     }
     const adoptedNickname = guestSnapshot?.nickname ?? guestAccountProfile.nickname ?? 'Guest';
     const adoptedEquippedSkin = guestSnapshot?.equippedSkin ?? guestAccountProfile.equippedSkin ?? 'classic';
+    const adoptedEquippedBoardSkin = guestSnapshot?.equippedBoardSkin ?? guestAccountProfile.equippedBoardSkin ?? 'classic';
     const adoptedWins = guestSnapshot?.wins ?? guestAccountProfile.wins;
     const adoptedLosses = guestSnapshot?.losses ?? guestAccountProfile.losses;
     const adoptedTokens = guestSnapshot?.tokens ?? guestAccountProfile.tokens;
@@ -343,6 +347,7 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
         id: targetUser.id,
         nickname: adoptedNickname,
         equipped_skin: adoptedEquippedSkin,
+        equipped_board_skin: adoptedEquippedBoardSkin,
         is_guest: false,
     });
     if (upsertProfileError) {

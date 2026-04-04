@@ -1,4 +1,4 @@
-import type { PieceSkin } from '../types/game.types';
+import type { BoardSkin, PieceSkin } from '../types/game.types';
 import { supabaseAdmin } from '../lib/supabase';
 import {
   listPlayerAchievements,
@@ -25,6 +25,7 @@ export interface AccountProfile {
   userId: string;
   nickname: string;
   equippedSkin: PieceSkin;
+  equippedBoardSkin: BoardSkin;
   ownedSkins: PieceSkin[];
   wins: number;
   losses: number;
@@ -48,6 +49,7 @@ export type FinalizeGoogleUpgradeResponse =
 interface ProfileRow {
   nickname: string | null;
   equipped_skin: PieceSkin | null;
+  equipped_board_skin?: BoardSkin | null;
 }
 
 interface StatsRow {
@@ -128,7 +130,7 @@ export async function getUserFromToken(accessToken?: string) {
 async function readAccountProfile(userId: string, fallbackNickname = 'Guest', isGuestUser = false): Promise<AccountProfile> {
   const profilePromise = supabaseAdmin
     ?.from('profiles')
-    .select('nickname, equipped_skin')
+    .select('nickname, equipped_skin, equipped_board_skin')
     .eq('id', userId)
     .maybeSingle<ProfileRow>();
 
@@ -165,6 +167,7 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
     userId,
     nickname,
     equippedSkin: profileResult?.data?.equipped_skin ?? 'classic',
+    equippedBoardSkin: profileResult?.data?.equipped_board_skin ?? 'classic',
     ownedSkins,
     wins: statsResult?.data?.wins ?? 0,
     losses: statsResult?.data?.losses ?? 0,
@@ -393,6 +396,7 @@ export async function finalizeGoogleUpgrade(
   guestSnapshot: {
     nickname: string | null;
     equippedSkin?: PieceSkin;
+    equippedBoardSkin?: BoardSkin;
     wins: number;
     losses: number;
     tokens?: number;
@@ -419,6 +423,7 @@ export async function finalizeGoogleUpgrade(
       id: targetUser.id,
       nickname: guestSnapshot?.nickname ?? 'Guest',
       equipped_skin: guestSnapshot?.equippedSkin ?? 'classic',
+      equipped_board_skin: guestSnapshot?.equippedBoardSkin ?? 'classic',
       is_guest: false,
     });
 
@@ -460,6 +465,7 @@ export async function finalizeGoogleUpgrade(
         id: targetUser.id,
         nickname: targetPreferredNickname,
         equipped_skin: targetProfile.equippedSkin,
+        equipped_board_skin: targetProfile.equippedBoardSkin,
         is_guest: false,
       });
 
@@ -484,6 +490,8 @@ export async function finalizeGoogleUpgrade(
   const adoptedNickname = guestSnapshot?.nickname ?? guestAccountProfile.nickname ?? 'Guest';
   const adoptedEquippedSkin =
     guestSnapshot?.equippedSkin ?? guestAccountProfile.equippedSkin ?? 'classic';
+  const adoptedEquippedBoardSkin =
+    guestSnapshot?.equippedBoardSkin ?? guestAccountProfile.equippedBoardSkin ?? 'classic';
   const adoptedWins = guestSnapshot?.wins ?? guestAccountProfile.wins;
   const adoptedLosses = guestSnapshot?.losses ?? guestAccountProfile.losses;
   const adoptedTokens = guestSnapshot?.tokens ?? guestAccountProfile.tokens;
@@ -495,6 +503,7 @@ export async function finalizeGoogleUpgrade(
     id: targetUser.id,
     nickname: adoptedNickname,
     equipped_skin: adoptedEquippedSkin,
+    equipped_board_skin: adoptedEquippedBoardSkin,
     is_guest: false,
   });
   if (upsertProfileError) {

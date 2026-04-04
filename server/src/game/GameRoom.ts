@@ -5,6 +5,7 @@ import {
   PlayerColor,
   Position,
   PieceSkin,
+  BoardSkin,
   ClientGameState,
   PathsRevealPayload,
   RoundStartPayload,
@@ -104,6 +105,7 @@ export class GameRoom {
     userId: string | null = null,
     stats: { wins: number; losses: number } = { wins: 0, losses: 0 },
     pieceSkin: PieceSkin = "classic",
+    boardSkin: BoardSkin = "classic",
   ): PlayerColor | null {
     if (this.isFull) return null;
     const color: PlayerColor = this.players.size === 0 ? "red" : "blue";
@@ -114,6 +116,7 @@ export class GameRoom {
       userId,
       stats,
       pieceSkin,
+      boardSkin,
     );
     this.players.set(color, player);
     socket.join(this.roomId);
@@ -131,6 +134,7 @@ export class GameRoom {
       nickname,
       null,
       { wins: 0, losses: 0 },
+      "classic",
       "classic",
     );
     this.players.set(color, player);
@@ -867,6 +871,7 @@ export class GameRoom {
     userId: string | null,
     stats: { wins: number; losses: number },
     pieceSkin: PieceSkin,
+    boardSkin: BoardSkin,
   ): PlayerState {
     const pos = getInitialPositions();
     return {
@@ -876,6 +881,7 @@ export class GameRoom {
       nickname,
       color,
       pieceSkin,
+      boardSkin,
       hp: 3,
       position: pos[color],
       plannedPath: [],

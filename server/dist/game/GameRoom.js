@@ -53,11 +53,11 @@ class GameRoom {
     get lastActivityTimestamp() {
         return this.lastActivityAt;
     }
-    addPlayer(socket, nickname, userId = null, stats = { wins: 0, losses: 0 }, pieceSkin = "classic") {
+    addPlayer(socket, nickname, userId = null, stats = { wins: 0, losses: 0 }, pieceSkin = "classic", boardSkin = "classic") {
         if (this.isFull)
             return null;
         const color = this.players.size === 0 ? "red" : "blue";
-        const player = this.createPlayerState(color, socket.id, nickname, userId, stats, pieceSkin);
+        const player = this.createPlayerState(color, socket.id, nickname, userId, stats, pieceSkin, boardSkin);
         this.players.set(color, player);
         socket.join(this.roomId);
         this.touchActivity();
@@ -68,7 +68,7 @@ class GameRoom {
             return null;
         const color = this.players.size === 0 ? "red" : "blue";
         const aiId = `ai_${this.roomId}_${color}`;
-        const player = this.createPlayerState(color, aiId, nickname, null, { wins: 0, losses: 0 }, "classic");
+        const player = this.createPlayerState(color, aiId, nickname, null, { wins: 0, losses: 0 }, "classic", "classic");
         this.players.set(color, player);
         this.aiColor = color;
         this.touchActivity();
@@ -716,7 +716,7 @@ class GameRoom {
     getSocketIds() {
         return [...this.players.values()].map((player) => player.socketId);
     }
-    createPlayerState(color, id, nickname, userId, stats, pieceSkin) {
+    createPlayerState(color, id, nickname, userId, stats, pieceSkin, boardSkin) {
         const pos = (0, GameEngine_1.getInitialPositions)();
         return {
             id: userId ?? id,
@@ -725,6 +725,7 @@ class GameRoom {
             nickname,
             color,
             pieceSkin,
+            boardSkin,
             hp: 3,
             position: pos[color],
             plannedPath: [],

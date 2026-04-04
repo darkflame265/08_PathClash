@@ -23,6 +23,33 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
+.game-grid.board-skin-blue-gray {
+  background: #202933;
+  border-color: #465769;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(176, 205, 235, 0.05);
+}
+
+.game-grid.board-skin-blue-gray .grid-cell {
+  background: #33404d;
+  border-color: #4b5d6f;
+}
+
+.game-grid.board-skin-blue-gray .grid-cell:hover,
+.game-grid.board-skin-blue-gray .grid-cell.is-hovered {
+  background: #3c4c5c;
+}
+
+.game-grid.board-skin-blue-gray .grid-cell.obstacle,
+.game-grid.board-skin-blue-gray .grid-cell.obstacle:hover,
+.game-grid.board-skin-blue-gray .grid-cell.obstacle.is-hovered {
+  background:
+    linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(248, 113, 113, 0.08)),
+    #33404d;
+  border-color: rgba(248, 113, 113, 0.45);
+}
+
 .grid-cell {
   position: absolute;
   border: 1px solid var(--tile-border, #3a444d);

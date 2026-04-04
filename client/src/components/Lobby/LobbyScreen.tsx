@@ -69,6 +69,7 @@ import { playLobbyClick } from "../../utils/soundUtils";
 import type { Translations } from "../../i18n/translations";
 
 import type {
+  BoardSkin,
   ClientGameState,
   PieceSkin,
   RoundStartPayload,
@@ -479,6 +480,7 @@ function applyProfileToStore(
     nickname: profile.nickname,
 
     equippedSkin: profile.equippedSkin,
+    equippedBoardSkin: profile.equippedBoardSkin,
 
     ownedSkins: profile.ownedSkins,
 
@@ -765,8 +767,10 @@ export function LobbyScreen({
     setSfxVolume,
 
     pieceSkin,
+    boardSkin,
 
     setPieceSkin,
+    setBoardSkin,
   } = useGameStore();
 
   const { lang, setLang, t } = useLang();
@@ -1629,7 +1633,7 @@ export function LobbyScreen({
   ];
 
   const boardSkinChoices: Array<{
-    id: "classic";
+    id: BoardSkin;
     name: string;
     desc: string;
   }> = [
@@ -1640,6 +1644,14 @@ export function LobbyScreen({
         lang === "en"
           ? "The default dark gray board used in PathClash."
           : "현재 PathClash에서 사용하는 기본 짙은 회색 보드입니다.",
+    },
+    {
+      id: "blue_gray",
+      name: lang === "en" ? "Blue Gray Board" : "블루 그레이 보드",
+      desc:
+        lang === "en"
+          ? "A cool blue-gray board with the same classic layout."
+          : "기본 보드와 같은 구성에 푸른 회색 분위기를 더한 보드입니다.",
     },
   ];
 
@@ -1782,6 +1794,8 @@ export function LobbyScreen({
 
         equippedSkin,
 
+        equippedBoardSkin,
+
         ownedSkins,
 
         wins,
@@ -1808,6 +1822,8 @@ export function LobbyScreen({
           nickname,
 
           equippedSkin,
+
+          equippedBoardSkin,
 
           ownedSkins,
 
@@ -2450,6 +2466,7 @@ export function LobbyScreen({
     auth: await getSocketAuthPayload(),
 
     pieceSkin: useGameStore.getState().pieceSkin,
+    boardSkin: useGameStore.getState().boardSkin,
   });
 
   const handleCreateRoom = async () => {
@@ -2887,6 +2904,10 @@ export function LobbyScreen({
     }
 
     setPieceSkin(choice.id);
+  };
+
+  const handleBoardSkinSelect = (nextBoardSkin: BoardSkin) => {
+    setBoardSkin(nextBoardSkin);
   };
 
   const accountCard = (
@@ -3416,11 +3437,12 @@ export function LobbyScreen({
                 {boardSkinChoices.map((choice) => (
                   <button
                     key={choice.id}
-                    className="skin-option-card is-selected"
+                    className={`skin-option-card ${boardSkin === choice.id ? "is-selected" : ""}`}
+                    onClick={() => handleBoardSkinSelect(choice.id)}
                     type="button"
                   >
                     <span
-                      className="skin-preview board-skin-preview board-skin-preview-classic"
+                      className={`skin-preview board-skin-preview board-skin-preview-${choice.id}`}
                       aria-hidden="true"
                     />
 

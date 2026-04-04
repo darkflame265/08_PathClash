@@ -1,6 +1,6 @@
 import { useRef, useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useGameStore } from "../../store/gameStore";
-import type { Position } from "../../types/game.types";
+import type { BoardSkin, Position } from "../../types/game.types";
 import {
   isBlockedCell,
   isValidMove,
@@ -50,6 +50,7 @@ export function GameGrid({
     roundInfo,
     setMyPath,
     pieceSkin,
+    boardSkin,
     playerPieceSkins,
     redDisplayPos,
     blueDisplayPos,
@@ -83,6 +84,13 @@ export function GameGrid({
   const bluePieceSkin =
     playerPieceSkins?.blue ??
     (myColor === "blue" ? pieceSkin : "classic");
+  const resolvedBoardSkin: BoardSkin = (() => {
+    const redBoardSkin = gameState?.players.red.boardSkin;
+    const blueBoardSkin = gameState?.players.blue.boardSkin;
+    if (redBoardSkin && redBoardSkin !== "classic") return redBoardSkin;
+    if (blueBoardSkin && blueBoardSkin !== "classic") return blueBoardSkin;
+    return boardSkin;
+  })();
 
   const getGridOffset = () => {
     const rect = gridRef.current?.getBoundingClientRect();
@@ -490,7 +498,7 @@ export function GameGrid({
     <div ref={shellRef} className="game-grid-shell">
       <div
         ref={gridRef}
-        className="game-grid"
+        className={`game-grid ${resolvedBoardSkin === "blue_gray" ? "board-skin-blue-gray" : ""}`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}

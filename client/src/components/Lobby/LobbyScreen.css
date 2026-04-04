@@ -1330,6 +1330,21 @@
     0 0;
 }
 
+.board-skin-preview-blue_gray {
+  background:
+    linear-gradient(rgba(112, 137, 161, 0.38) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(112, 137, 161, 0.38) 1px, transparent 1px),
+    linear-gradient(180deg, #40505f 0%, #34424f 100%);
+  background-size:
+    20% 20%,
+    20% 20%,
+    100% 100%;
+  background-position:
+    0 0,
+    0 0,
+    0 0;
+}
+
 .skin-preview-classic {
   background: radial-gradient(circle at 35% 35%, #ff8b8b 0%, #ef4444 70%);
   box-shadow:

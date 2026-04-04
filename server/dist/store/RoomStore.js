@@ -73,8 +73,8 @@ class RoomStore {
     generateRoomId() {
         return `room_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     }
-    enqueueRandom(socketId, nickname, userId, stats, pieceSkin) {
-        this.matchQueue.push({ socketId, nickname, userId, stats, pieceSkin });
+    enqueueRandom(socketId, nickname, userId, stats, pieceSkin, boardSkin) {
+        this.matchQueue.push({ socketId, nickname, userId, stats, pieceSkin, boardSkin });
     }
     dequeueRandom() {
         return this.matchQueue.shift();

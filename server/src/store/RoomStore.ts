@@ -1,5 +1,5 @@
 import { GameRoom } from '../game/GameRoom';
-import type { PieceSkin } from '../types/game.types';
+import type { BoardSkin, PieceSkin } from '../types/game.types';
 
 export class RoomStore {
   private rooms: Map<string, GameRoom> = new Map();
@@ -96,6 +96,7 @@ export class RoomStore {
     userId: string | null;
     stats: { wins: number; losses: number };
     pieceSkin: PieceSkin;
+    boardSkin: BoardSkin;
   }[] = [];
 
   enqueueRandom(
@@ -104,8 +105,9 @@ export class RoomStore {
     userId: string | null,
     stats: { wins: number; losses: number },
     pieceSkin: PieceSkin,
+    boardSkin: BoardSkin,
   ): void {
-    this.matchQueue.push({ socketId, nickname, userId, stats, pieceSkin });
+    this.matchQueue.push({ socketId, nickname, userId, stats, pieceSkin, boardSkin });
   }
 
   dequeueRandom(): {
@@ -114,6 +116,7 @@ export class RoomStore {
     userId: string | null;
     stats: { wins: number; losses: number };
     pieceSkin: PieceSkin;
+    boardSkin: BoardSkin;
   } | undefined {
     return this.matchQueue.shift();
   }

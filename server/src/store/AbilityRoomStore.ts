@@ -1,6 +1,6 @@
 import { AbilityRoom } from '../game/ability/AbilityRoom';
 import type { AbilitySkillId } from '../game/ability/AbilityTypes';
-import type { PieceSkin } from '../types/game.types';
+import type { BoardSkin, PieceSkin } from '../types/game.types';
 
 export class AbilityRoomStore {
   private rooms = new Map<string, AbilityRoom>();
@@ -13,6 +13,7 @@ export class AbilityRoomStore {
     userId: string | null;
     stats: { wins: number; losses: number };
     pieceSkin: PieceSkin;
+    boardSkin: BoardSkin;
     equippedSkills: AbilitySkillId[];
   }> = [];
 
@@ -45,10 +46,11 @@ export class AbilityRoomStore {
     userId: string | null,
     stats: { wins: number; losses: number },
     pieceSkin: PieceSkin,
+    boardSkin: BoardSkin,
     equippedSkills: AbilitySkillId[],
   ): void {
     this.removeFromQueue(socketId);
-    this.queue.push({ socketId, nickname, userId, stats, pieceSkin, equippedSkills });
+    this.queue.push({ socketId, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills });
   }
 
   dequeue(): {
@@ -57,6 +59,7 @@ export class AbilityRoomStore {
     userId: string | null;
     stats: { wins: number; losses: number };
     pieceSkin: PieceSkin;
+    boardSkin: BoardSkin;
     equippedSkills: AbilitySkillId[];
   } | undefined {
     return this.queue.shift();

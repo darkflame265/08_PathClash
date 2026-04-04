@@ -1,4 +1,5 @@
 ﻿import type {
+  BoardSkin,
   GamePhase,
   PieceSkin,
   PlayerColor,
@@ -72,6 +73,7 @@ export interface AbilityPlayerState {
   nickname: string;
   color: PlayerColor;
   pieceSkin: PieceSkin;
+  boardSkin: BoardSkin;
   hp: number;
   position: Position;
   pathSubmitted: boolean;
@@ -440,3 +442,4 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     icon: '☄',
   },
 };
+

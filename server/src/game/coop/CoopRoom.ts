@@ -1,5 +1,6 @@
-import { Server, Socket } from "socket.io";
+﻿import { Server, Socket } from "socket.io";
 import type {
+  BoardSkin,
   PieceSkin,
   PlayerColor,
   PlayerState,
@@ -102,6 +103,7 @@ export class CoopRoom {
     userId: string | null,
     stats: { wins: number; losses: number },
     pieceSkin: PieceSkin,
+    boardSkin: BoardSkin = "classic",
   ): PlayerColor | null {
     if (this.players.size >= 2) return null;
     const color: PlayerColor = this.players.size === 0 ? "red" : "blue";
@@ -114,6 +116,7 @@ export class CoopRoom {
       color,
       connected: true,
       pieceSkin,
+      boardSkin,
       hp: 3,
       position: { ...pos },
       plannedPath: [],
@@ -752,3 +755,4 @@ export class CoopRoom {
     return `${position.row},${position.col}`;
   }
 }
+

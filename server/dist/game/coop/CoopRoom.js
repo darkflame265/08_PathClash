@@ -57,7 +57,7 @@ class CoopRoom {
     get lastActivityTimestamp() {
         return this.lastActivityAt;
     }
-    addPlayer(socket, nickname, userId, stats, pieceSkin) {
+    addPlayer(socket, nickname, userId, stats, pieceSkin, boardSkin = "classic") {
         if (this.players.size >= 2)
             return null;
         const color = this.players.size === 0 ? "red" : "blue";
@@ -70,6 +70,7 @@ class CoopRoom {
             color,
             connected: true,
             pieceSkin,
+            boardSkin,
             hp: 3,
             position: { ...pos },
             plannedPath: [],

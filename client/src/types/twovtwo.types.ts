@@ -1,4 +1,4 @@
-import type { PieceSkin, Position } from './game.types';
+﻿import type { BoardSkin, PieceSkin, Position } from './game.types';
 
 export type TwoVsTwoPhase = 'waiting' | 'planning' | 'moving' | 'gameover';
 export type TwoVsTwoTeam = 'red' | 'blue';
@@ -18,6 +18,7 @@ export interface TwoVsTwoClientPlayerState {
   team: TwoVsTwoTeam;
   connected: boolean;
   pieceSkin: PieceSkin;
+  boardSkin: BoardSkin;
   hp: number;
   position: Position;
   pathSubmitted: boolean;
@@ -55,3 +56,4 @@ export interface TwoVsTwoResolutionPayload {
   starts: Record<TwoVsTwoSlot, Position>;
   playerHits: TwoVsTwoPlayerHitEvent[];
 }
+

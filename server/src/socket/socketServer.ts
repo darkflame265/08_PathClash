@@ -8,7 +8,7 @@ import { TwoVsTwoRoomStore } from '../store/TwoVsTwoRoomStore';
 import { AbilityRoom } from '../game/ability/AbilityRoom';
 import { AbilityRoomStore } from '../store/AbilityRoomStore';
 import { getAndroidVersionStatus } from '../config/appVersion';
-import { PieceSkin, Position } from '../types/game.types';
+import { BoardSkin, PieceSkin, Position } from '../types/game.types';
 import type { AbilitySkillId, AbilitySkillReservation } from '../game/ability/AbilityTypes';
 import {
   AuthPayload,
@@ -331,14 +331,14 @@ export function initSocketServer(io: Server): void {
       },
     );
 
-    socket.on('create_room', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
+    socket.on('create_room', async ({ nickname, auth, pieceSkin, boardSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin; boardSkin?: BoardSkin }) => {
       if (emitUpdateRequired(socket, auth)) return;
       await registerSocketSession(socket, auth);
       const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       const roomId = store.generateRoomId();
       const code = store.generateCode();
       const room = new GameRoom(roomId, code, io, 'friend');
-      const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
+      const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
       store.add(room);
       store.registerSocket(socket.id, roomId);
       socket.emit('room_created', { roomId, code, color, pieceSkin: pieceSkin ?? 'classic' });
@@ -352,7 +352,8 @@ export function initSocketServer(io: Server): void {
           auth,
           pieceSkin,
           tutorialPending,
-        }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin; tutorialPending?: boolean },
+          boardSkin,
+        }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin; boardSkin?: BoardSkin; tutorialPending?: boolean },
       ) => {
       if (emitUpdateRequired(socket, auth)) return;
       await registerSocketSession(socket, auth);
@@ -362,7 +363,7 @@ export function initSocketServer(io: Server): void {
       const room = new GameRoom(roomId, code, io, 'ai');
       store.add(room);
 
-      const humanColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
+      const humanColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
       if (!humanColor) {
         socket.emit('join_error', { message: 'AI room creation failed.' });
         return;
@@ -385,7 +386,7 @@ export function initSocketServer(io: Server): void {
       },
     );
 
-    socket.on('join_room', async ({ code, nickname, auth, pieceSkin }: { code: string; nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
+    socket.on('join_room', async ({ code, nickname, auth, pieceSkin, boardSkin }: { code: string; nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin; boardSkin?: BoardSkin }) => {
       if (emitUpdateRequired(socket, auth)) return;
       await registerSocketSession(socket, auth);
       const profile = await resolvePlayerProfileCached(socket, auth, nickname);
@@ -395,7 +396,7 @@ export function initSocketServer(io: Server): void {
         return;
       }
 
-      const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
+      const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
       if (!color) {
         socket.emit('join_error', { message: '?낆옣?????놁뒿?덈떎.' });
         return;
@@ -420,16 +421,16 @@ export function initSocketServer(io: Server): void {
 
     });
 
-    socket.on('join_random', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
+    socket.on('join_random', async ({ nickname, auth, pieceSkin, boardSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin; boardSkin?: BoardSkin }) => {
       if (emitUpdateRequired(socket, auth)) return;
       await registerSocketSession(socket, auth);
       const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       const queued = store.dequeueRandom();
       if (!queued || queued.socketId === socket.id) {
         if (queued) {
-          store.enqueueRandom(queued.socketId, queued.nickname, queued.userId, queued.stats, queued.pieceSkin);
+          store.enqueueRandom(queued.socketId, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin);
         }
-        store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
+        store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
         socket.emit('matchmaking_waiting', {});
         return;
       }
@@ -441,12 +442,12 @@ export function initSocketServer(io: Server): void {
 
       const queuedSocket = io.sockets.sockets.get(queued.socketId);
       if (!queuedSocket) {
-        store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
+        store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
         socket.emit('matchmaking_waiting', {});
         return;
       }
 
-      room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin);
+      room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin);
       room.prepareGameStart();
       store.registerSocket(queued.socketId, roomId);
       queuedSocket.emit('room_joined', {
@@ -457,7 +458,7 @@ export function initSocketServer(io: Server): void {
         opponentPieceSkin: pieceSkin ?? 'classic',
       });
 
-      room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
+      room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
       store.registerSocket(socket.id, roomId);
       socket.emit('room_joined', {
         roomId,
@@ -687,11 +688,13 @@ export function initSocketServer(io: Server): void {
           nickname,
           auth,
           pieceSkin,
+          boardSkin,
           equippedSkills,
         }: {
           nickname: string;
           auth?: AuthPayload;
           pieceSkin?: PieceSkin;
+          boardSkin?: BoardSkin;
           equippedSkills: AbilitySkillId[];
         },
       ) => {
@@ -707,6 +710,7 @@ export function initSocketServer(io: Server): void {
               queued.userId,
               queued.stats,
               queued.pieceSkin,
+              queued.boardSkin,
               queued.equippedSkills,
             );
           }
@@ -716,6 +720,7 @@ export function initSocketServer(io: Server): void {
             profile.userId,
             profile.stats,
             pieceSkin ?? 'classic',
+            boardSkin ?? 'classic',
             equippedSkills,
           );
           socket.emit('ability_matchmaking_waiting', {});
@@ -734,6 +739,7 @@ export function initSocketServer(io: Server): void {
             profile.userId,
             profile.stats,
             pieceSkin ?? 'classic',
+            boardSkin ?? 'classic',
             equippedSkills,
           );
           socket.emit('ability_matchmaking_waiting', {});
@@ -746,6 +752,7 @@ export function initSocketServer(io: Server): void {
           queued.userId,
           queued.stats,
           queued.pieceSkin,
+          queued.boardSkin,
           queued.equippedSkills,
         );
         abilityStore.registerSocket(queued.socketId, roomId);
@@ -761,6 +768,7 @@ export function initSocketServer(io: Server): void {
           profile.userId,
           profile.stats,
           pieceSkin ?? 'classic',
+          boardSkin ?? 'classic',
           equippedSkills,
         );
         abilityStore.registerSocket(socket.id, roomId);
@@ -1035,4 +1043,5 @@ export function initSocketServer(io: Server): void {
     });
   });
 }
+
 

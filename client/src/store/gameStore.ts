@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type {
   ClientGameState, PlayerColor, Position,
   CollisionEvent, ChatMessage, PathsRevealPayload,
-  RoundStartPayload, PieceSkin,
+  RoundStartPayload, PieceSkin, BoardSkin,
 } from '../types/game.types';
 import type {
   TwoVsTwoResolutionPayload,
@@ -106,6 +106,7 @@ interface GameStore {
   musicVolume: number;
   sfxVolume: number;
   pieceSkin: PieceSkin;
+  boardSkin: BoardSkin;
   playerPieceSkins: { red: PieceSkin; blue: PieceSkin } | null;
 
   // i18n
@@ -121,6 +122,7 @@ interface GameStore {
     isGuestUser: boolean;
     nickname?: string | null;
     equippedSkin?: PieceSkin;
+    equippedBoardSkin?: BoardSkin;
     ownedSkins?: PieceSkin[];
     wins?: number;
     losses?: number;
@@ -168,6 +170,7 @@ interface GameStore {
   setMusicVolume: (volume: number) => void;
   setSfxVolume: (volume: number) => void;
   setPieceSkin: (skin: PieceSkin) => void;
+  setBoardSkin: (skin: BoardSkin) => void;
   setPlayerPieceSkins: (skins: { red: PieceSkin; blue: PieceSkin }) => void;
   setPlayerPieceSkin: (color: PlayerColor, skin: PieceSkin) => void;
   resetGame: () => void;
@@ -177,6 +180,7 @@ const INITIAL_RED: Position = { row: 2, col: 0 };
 const INITIAL_BLUE: Position = { row: 2, col: 4 };
 const AUDIO_PREFS_KEY = 'audioPrefs';
 const PIECE_SKIN_KEY = 'pieceSkin';
+const BOARD_SKIN_KEY = 'boardSkin';
 const ABILITY_LOADOUT_KEY = 'abilityLoadout';
 
 function getStoredAudioPrefs() {
@@ -254,6 +258,10 @@ const initialPieceSkin = (() => {
     ? stored
     : 'classic';
 })();
+const initialBoardSkin = (() => {
+  const stored = localStorage.getItem(BOARD_SKIN_KEY);
+  return stored === 'blue_gray' ? stored : 'classic';
+})();
 const initialAbilityLoadout = (() => {
   const raw = localStorage.getItem(ABILITY_LOADOUT_KEY);
   if (!raw) return ['classic_guard'] as AbilitySkillId[];
@@ -324,6 +332,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   musicVolume: initialAudioPrefs.musicVolume,
   sfxVolume: initialAudioPrefs.sfxVolume,
   pieceSkin: initialPieceSkin,
+  boardSkin: initialBoardSkin,
   playerPieceSkins: null,
   lang: resolveInitialLang(),
   setLang: (lang: Lang) => {
@@ -340,6 +349,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     isGuestUser,
     nickname,
     equippedSkin,
+    equippedBoardSkin,
     ownedSkins,
     wins,
     losses,
@@ -351,6 +361,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (equippedSkin) {
       localStorage.setItem(PIECE_SKIN_KEY, equippedSkin);
     }
+    if (equippedBoardSkin) {
+      localStorage.setItem(BOARD_SKIN_KEY, equippedBoardSkin);
+    }
 
     set((state) => ({
       authReady: ready,
@@ -359,6 +372,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       isGuestUser,
       myNickname: nickname ?? state.myNickname,
       pieceSkin: equippedSkin ?? state.pieceSkin,
+      boardSkin: equippedBoardSkin ?? state.boardSkin,
       accountWins: wins ?? state.accountWins,
       accountLosses: losses ?? state.accountLosses,
       accountTokens: tokens ?? state.accountTokens,
@@ -589,6 +603,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     localStorage.setItem(PIECE_SKIN_KEY, skin);
     set({ pieceSkin: skin });
   },
+  setBoardSkin: (skin) => {
+    localStorage.setItem(BOARD_SKIN_KEY, skin);
+    set({ boardSkin: skin });
+  },
   setPlayerPieceSkins: (skins) => set({ playerPieceSkins: skins }),
   setPlayerPieceSkin: (color, skin) =>
     set((state) => ({
@@ -610,6 +628,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     accountAchievements: get().accountAchievements,
     myNickname: get().myNickname,
     pieceSkin: get().pieceSkin,
+    boardSkin: get().boardSkin,
     playerPieceSkins: null,
     myColor: null,
     roomCode: '',

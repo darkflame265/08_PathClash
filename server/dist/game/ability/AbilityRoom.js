@@ -178,7 +178,7 @@ class AbilityRoom {
     getSocketIds() {
         return [...this.players.values()].map((player) => player.socketId);
     }
-    addPlayer(socket, nickname, userId, stats, pieceSkin, equippedSkills) {
+    addPlayer(socket, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills) {
         if (this.isFull)
             return null;
         const color = this.players.size === 0 ? 'red' : 'blue';
@@ -190,6 +190,7 @@ class AbilityRoom {
             nickname,
             color,
             pieceSkin,
+            boardSkin,
             hp: 3,
             position: { ...initialPositions[color] },
             plannedPath: [],

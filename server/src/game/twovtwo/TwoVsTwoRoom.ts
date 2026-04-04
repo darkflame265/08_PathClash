@@ -1,5 +1,5 @@
-import { Server, Socket } from 'socket.io';
-import type { PieceSkin, Position } from '../../types/game.types';
+﻿import { Server, Socket } from 'socket.io';
+import type { BoardSkin, PieceSkin, Position } from '../../types/game.types';
 import { ServerTimer } from '../ServerTimer';
 import {
   calcTwoVsTwoPathPoints,
@@ -94,6 +94,7 @@ export class TwoVsTwoRoom {
     userId: string | null,
     stats: { wins: number; losses: number },
     pieceSkin: PieceSkin,
+    boardSkin: BoardSkin = 'classic',
   ): TwoVsTwoSlot | null {
     if (this.players.size >= 4) return null;
     const slot = TWO_VS_TWO_SLOTS.find((entry) => !this.players.has(entry)) ?? null;
@@ -108,6 +109,7 @@ export class TwoVsTwoRoom {
       team: getSlotTeam(slot),
       slot,
       pieceSkin,
+      boardSkin,
       hp: 3,
       position: { ...positions[slot] },
       plannedPath: [],
@@ -624,3 +626,4 @@ export class TwoVsTwoRoom {
     this.lastActivityAt = now;
   }
 }
+

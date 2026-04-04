@@ -3,7 +3,7 @@ import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor, type PluginListenerHandle } from "@capacitor/core";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 import { connectSocket } from "../socket/socketClient";
-import type { PieceSkin } from "../types/game.types";
+import type { BoardSkin, PieceSkin } from "../types/game.types";
 
 export interface AuthStatePayload {
   ready: boolean;
@@ -12,6 +12,7 @@ export interface AuthStatePayload {
   isGuestUser: boolean;
   nickname?: string | null;
   equippedSkin?: PieceSkin;
+  equippedBoardSkin?: BoardSkin;
   ownedSkins?: PieceSkin[];
   wins?: number;
   losses?: number;
@@ -24,6 +25,7 @@ export interface AuthStatePayload {
 interface ProfileRow {
   nickname: string | null;
   equipped_skin: PieceSkin | null;
+  equipped_board_skin?: BoardSkin | null;
   legal_consent_version?: string | null;
   legal_consented_at?: string | null;
 }
@@ -66,6 +68,7 @@ export interface LegalConsentRecord {
 interface AccountSnapshot {
   nickname: string | null;
   equippedSkin: PieceSkin;
+  equippedBoardSkin: BoardSkin;
   ownedSkins: PieceSkin[];
   wins: number;
   losses: number;
@@ -78,6 +81,7 @@ interface AccountSnapshot {
 interface AccountSnapshotRpcRow {
   nickname?: string | null;
   equippedSkin?: PieceSkin | null;
+  equippedBoardSkin?: BoardSkin | null;
   ownedSkins?: string[] | null;
   wins?: number | null;
   losses?: number | null;
@@ -98,6 +102,7 @@ export interface AccountProfile {
   userId: string;
   nickname: string;
   equippedSkin: PieceSkin;
+  equippedBoardSkin: BoardSkin;
   ownedSkins: PieceSkin[];
   wins: number;
   losses: number;
@@ -116,6 +121,7 @@ export interface PendingUpgradeContext {
   guestProfile: {
     nickname: string | null;
     equippedSkin: PieceSkin;
+    equippedBoardSkin: BoardSkin;
     wins: number;
     losses: number;
     tokens: number;
@@ -163,6 +169,7 @@ const lastSyncedProfileState = new Map<
   {
     nickname?: string | null;
     equippedSkin?: PieceSkin;
+    equippedBoardSkin?: BoardSkin;
     legalConsentVersion?: string | null;
     legalConsentedAt?: string | null;
   }
@@ -271,6 +278,7 @@ function toAuthState(session: Session | null, snapshot?: AccountSnapshot): AuthS
     isGuestUser: session?.user.is_anonymous ?? false,
     nickname: snapshot?.nickname ?? undefined,
     equippedSkin: snapshot?.equippedSkin,
+    equippedBoardSkin: snapshot?.equippedBoardSkin,
     ownedSkins: snapshot?.ownedSkins,
     wins: snapshot?.wins,
     losses: snapshot?.losses,
@@ -311,7 +319,7 @@ async function ensureProfile(userId: string): Promise<void> {
 
   const { data: existing } = await supabase
     .from("profiles")
-    .select("nickname, equipped_skin")
+    .select("nickname, equipped_skin, equipped_board_skin")
     .eq("id", userId)
     .maybeSingle<ProfileRow>();
 
@@ -322,6 +330,7 @@ async function ensureProfile(userId: string): Promise<void> {
       ...current,
       nickname: existing.nickname ?? null,
       equippedSkin: existing.equipped_skin ?? "classic",
+      equippedBoardSkin: existing.equipped_board_skin ?? "classic",
     });
     return;
   }
@@ -343,6 +352,7 @@ async function ensureProfile(userId: string): Promise<void> {
     ...current,
     nickname: null,
     equippedSkin: "classic",
+    equippedBoardSkin: "classic",
   });
 }
 
@@ -364,6 +374,7 @@ function cacheAccountSnapshot(userId: string, snapshot: AccountSnapshot) {
     ...current,
     nickname: snapshot.nickname,
     equippedSkin: snapshot.equippedSkin,
+    equippedBoardSkin: snapshot.equippedBoardSkin,
   });
 }
 
@@ -377,6 +388,7 @@ function normalizeAccountSnapshot(
   return {
     nickname: source?.nickname ?? null,
     equippedSkin: source?.equippedSkin ?? "classic",
+    equippedBoardSkin: source?.equippedBoardSkin ?? "classic",
     ownedSkins: (source?.ownedSkins ?? []).filter(
       (skin): skin is PieceSkin => Boolean(skin),
     ),
@@ -404,6 +416,7 @@ async function getAccountSnapshot(userId: string, options?: { force?: boolean })
     return {
       nickname: null,
       equippedSkin: "classic",
+      equippedBoardSkin: "classic",
       ownedSkins: [],
       wins: 0,
       losses: 0,
@@ -447,7 +460,7 @@ async function getAccountSnapshot(userId: string, options?: { force?: boolean })
     let [profileResult, statsResult, achievementsResult] = await Promise.all([
       supabase
         .from("profiles")
-        .select("nickname, equipped_skin")
+        .select("nickname, equipped_skin, equipped_board_skin")
         .eq("id", userId)
         .maybeSingle<ProfileRow>(),
       supabase
@@ -471,7 +484,7 @@ async function getAccountSnapshot(userId: string, options?: { force?: boolean })
       await ensureProfile(userId);
       profileResult = await supabase
         .from("profiles")
-        .select("nickname, equipped_skin")
+        .select("nickname, equipped_skin, equipped_board_skin")
         .eq("id", userId)
         .maybeSingle<ProfileRow>();
     }
@@ -481,6 +494,7 @@ async function getAccountSnapshot(userId: string, options?: { force?: boolean })
     const snapshot = {
       nickname: profileResult.data?.nickname ?? null,
       equippedSkin: profileResult.data?.equipped_skin ?? "classic",
+      equippedBoardSkin: profileResult.data?.equipped_board_skin ?? "classic",
       ownedSkins: (ownedSkinRows ?? [])
         .map((row) => row.skin_id)
         .filter((skin): skin is PieceSkin => Boolean(skin)),
@@ -644,6 +658,7 @@ export async function refreshAccountSummary(options?: { force?: boolean }): Prom
     AuthStatePayload,
     | "nickname"
     | "equippedSkin"
+    | "equippedBoardSkin"
     | "ownedSkins"
     | "wins"
     | "losses"
@@ -657,6 +672,7 @@ export async function refreshAccountSummary(options?: { force?: boolean }): Prom
     return {
       nickname: null,
       equippedSkin: "classic",
+      equippedBoardSkin: "classic",
       ownedSkins: [],
       wins: 0,
       losses: 0,
@@ -672,6 +688,7 @@ export async function refreshAccountSummary(options?: { force?: boolean }): Prom
     return {
       nickname: null,
       equippedSkin: "classic",
+      equippedBoardSkin: "classic",
       ownedSkins: [],
       wins: 0,
       losses: 0,
@@ -686,6 +703,7 @@ export async function refreshAccountSummary(options?: { force?: boolean }): Prom
   return {
     nickname: snapshot.nickname,
     equippedSkin: snapshot.equippedSkin,
+    equippedBoardSkin: snapshot.equippedBoardSkin,
     ownedSkins: snapshot.ownedSkins,
     wins: snapshot.wins,
     losses: snapshot.losses,
@@ -790,6 +808,34 @@ export async function syncEquippedSkin(equippedSkin: PieceSkin): Promise<void> {
   lastSyncedProfileState.set(userId, {
     ...(current ?? {}),
     equippedSkin,
+  });
+  knownProfileUsers.add(userId);
+}
+
+export async function syncEquippedBoardSkin(equippedBoardSkin: BoardSkin): Promise<void> {
+  if (!supabase) return;
+  const session = await getCurrentSession();
+
+  if (!session?.user) return;
+  const userId = session.user.id;
+  const current = lastSyncedProfileState.get(userId);
+  if (current?.equippedBoardSkin === equippedBoardSkin) return;
+
+  const { error } = await supabase.from("profiles").upsert({
+    id: userId,
+    equipped_board_skin: equippedBoardSkin,
+    is_guest: session.user.is_anonymous ?? false,
+  });
+
+  if (error) {
+    console.error("[supabase] failed to sync equipped board skin", error);
+    return;
+  }
+
+  invalidateAccountSnapshot(userId);
+  lastSyncedProfileState.set(userId, {
+    ...(current ?? {}),
+    equippedBoardSkin,
   });
   knownProfileUsers.add(userId);
 }
@@ -946,6 +992,7 @@ export async function linkGoogleAccount(): Promise<void> {
     guestProfile: {
       nickname: snapshot.nickname ?? null,
       equippedSkin: snapshot.equippedSkin ?? "classic",
+      equippedBoardSkin: snapshot.equippedBoardSkin ?? "classic",
       wins: snapshot.wins ?? 0,
       losses: snapshot.losses ?? 0,
       tokens: snapshot.tokens ?? 0,

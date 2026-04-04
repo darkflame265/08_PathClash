@@ -52,7 +52,7 @@ class TwoVsTwoRoom {
     get currentResult() {
         return this.gameResult;
     }
-    addPlayer(socket, nickname, userId, stats, pieceSkin) {
+    addPlayer(socket, nickname, userId, stats, pieceSkin, boardSkin = 'classic') {
         if (this.players.size >= 4)
             return null;
         const slot = TwoVsTwoEngine_1.TWO_VS_TWO_SLOTS.find((entry) => !this.players.has(entry)) ?? null;
@@ -68,6 +68,7 @@ class TwoVsTwoRoom {
             team: (0, TwoVsTwoEngine_1.getSlotTeam)(slot),
             slot,
             pieceSkin,
+            boardSkin,
             hp: 3,
             position: { ...positions[slot] },
             plannedPath: [],

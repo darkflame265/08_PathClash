@@ -1,5 +1,5 @@
 import { Server, Socket } from 'socket.io';
-import type { PieceSkin, PlayerColor, Position } from '../../types/game.types';
+import type { BoardSkin, PieceSkin, PlayerColor, Position } from '../../types/game.types';
 import {
   calcAnimationDuration,
   calcPathPoints,
@@ -264,6 +264,7 @@ export class AbilityRoom {
     userId: string | null,
     stats: { wins: number; losses: number },
     pieceSkin: PieceSkin,
+    boardSkin: BoardSkin,
     equippedSkills: AbilitySkillId[],
   ): PlayerColor | null {
     if (this.isFull) return null;
@@ -276,6 +277,7 @@ export class AbilityRoom {
       nickname,
       color,
       pieceSkin,
+      boardSkin,
       hp: 3,
       position: { ...initialPositions[color] },
       plannedPath: [],

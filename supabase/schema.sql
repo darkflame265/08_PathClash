@@ -2,6 +2,7 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   nickname text,
   equipped_skin text not null default 'classic',
+  equipped_board_skin text not null default 'classic',
   is_guest boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -9,6 +10,9 @@ create table if not exists public.profiles (
 
 alter table public.profiles
 add column if not exists equipped_skin text not null default 'classic';
+
+alter table public.profiles
+add column if not exists equipped_board_skin text not null default 'classic';
 
 alter table public.profiles
 add column if not exists legal_consent_version text;
@@ -342,6 +346,11 @@ begin
     'equippedSkin',
       coalesce(
         (select p.equipped_skin from public.profiles p where p.id = target_user_id),
+        'classic'
+      ),
+    'equippedBoardSkin',
+      coalesce(
+        (select p.equipped_board_skin from public.profiles p where p.id = target_user_id),
         'classic'
       ),
     'ownedSkins',

@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
+﻿import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import {
@@ -11,6 +11,7 @@ import {
   refreshAccountSummary,
   syncLegalConsent,
   syncAchievementSettings,
+  syncEquippedBoardSkin,
   syncEquippedSkin,
   syncNickname,
 } from "./auth/guestAuth";
@@ -108,6 +109,7 @@ function App() {
     isGuestUser,
     myNickname,
     pieceSkin,
+    boardSkin,
     setAuthState,
     isMusicMuted,
     isSfxMuted,
@@ -293,6 +295,11 @@ function App() {
   }, [authReady, pieceSkin]);
 
   useEffect(() => {
+    if (!authReady) return;
+    void syncEquippedBoardSkin(boardSkin);
+  }, [authReady, boardSkin]);
+
+  useEffect(() => {
     if (!authReady || !authAccessToken) return;
     const timeoutId = window.setTimeout(() => {
       void syncAchievementSettings({
@@ -309,6 +316,7 @@ function App() {
           isGuestUser: profile.isGuestUser,
           nickname: profile.nickname,
           equippedSkin: profile.equippedSkin,
+          equippedBoardSkin: profile.equippedBoardSkin,
           ownedSkins: profile.ownedSkins,
           wins: profile.wins,
           losses: profile.losses,
@@ -528,13 +536,13 @@ function App() {
   const updateRequiredTitle =
     lang === "en"
       ? "A new version is available."
-      : "새 버전이 나왔습니다.";
+      : "??踰꾩쟾???섏솕?듬땲??";
   const updateRequiredBody =
     lang === "en"
       ? "Please go to the Play Store and update the app to continue playing."
-      : "게임을 계속하려면 플레이 스토어로 이동하여 앱을 업데이트해 주세요.";
+      : "寃뚯엫??怨꾩냽?섎젮硫??뚮젅???ㅽ넗?대줈 ?대룞?섏뿬 ?깆쓣 ?낅뜲?댄듃??二쇱꽭??";
   const updateRequiredConfirm =
-    lang === "en" ? "Open Play Store" : "플레이 스토어로 이동";
+    lang === "en" ? "Open Play Store" : "?뚮젅???ㅽ넗?대줈 ?대룞";
 
   const handleOpenStoreForUpdate = useCallback(() => {
     if (!updateRequired) return;
@@ -838,7 +846,7 @@ function App() {
                 type="button"
                 aria-label={legalDocumentCloseLabel}
               >
-                ×
+                횞
               </button>
             </div>
             <div className="app-legal-doc-body">
@@ -856,3 +864,4 @@ function App() {
 }
 
 export default App;
+

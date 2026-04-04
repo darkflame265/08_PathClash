@@ -1,4 +1,5 @@
 import type {
+  BoardSkin,
   ClientPlayerState,
   GamePhase,
   PieceSkin,
@@ -160,6 +161,7 @@ export interface AbilityPlayerState {
   nickname: string;
   color: PlayerColor;
   pieceSkin: PieceSkin;
+  boardSkin: BoardSkin;
   hp: number;
   position: Position;
   plannedPath: Position[];

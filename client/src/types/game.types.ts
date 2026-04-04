@@ -27,12 +27,15 @@ export type PieceSkin =
   | 'flag_us'
   | 'flag_uk';
 
+export type BoardSkin = 'classic' | 'blue_gray';
+
 export interface ClientPlayerState {
   id: string;
   nickname: string;
   color: PlayerColor;
   connected?: boolean;
   pieceSkin: PieceSkin;
+  boardSkin: BoardSkin;
   hp: number;
   position: Position;
   pathSubmitted: boolean;

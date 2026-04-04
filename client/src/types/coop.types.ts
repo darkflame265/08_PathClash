@@ -1,4 +1,4 @@
-import type { PieceSkin, Position } from './game.types';
+﻿import type { BoardSkin, PieceSkin, Position } from './game.types';
 
 export type CoopPhase = 'waiting' | 'planning' | 'moving' | 'gameover';
 export type CoopResult = 'win' | 'lose';
@@ -30,6 +30,7 @@ export interface CoopClientPlayerState {
   color: 'red' | 'blue';
   connected: boolean;
   pieceSkin: PieceSkin;
+  boardSkin: BoardSkin;
   hp: number;
   position: Position;
   pathSubmitted: boolean;
@@ -87,3 +88,4 @@ export interface CoopResolutionPayload {
   playerHits: CoopPlayerHitEvent[];
   portalHits: CoopPortalHitEvent[];
 }
+
