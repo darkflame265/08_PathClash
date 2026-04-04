@@ -2405,6 +2405,7 @@ export function LobbyScreen({
         await syncAccountSummary();
         setNickname(trimmed);
         setSettingsNicknameDraft(trimmed);
+        setIsNameChangeOpen(false);
         window.alert(changeNameSuccessMsg);
         return;
       }
