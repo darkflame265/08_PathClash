@@ -1661,6 +1661,14 @@ export function LobbyScreen({
           ? "An ornate sandstone board inspired by ancient Egyptian patterns."
           : "고대 이집트 문양과 사암 분위기를 담은 화려한 보드입니다.",
     },
+    {
+      id: "magic",
+      name: lang === "en" ? "Magic Board" : "매직 보드",
+      desc:
+        lang === "en"
+          ? "A glowing arcane board filled with violet sigils and magical energy."
+          : "보랏빛 문양과 마력이 흐르는 신비로운 분위기의 보드입니다.",
+    },
   ];
 
   const getSkinRequirementLabel = (

@@ -96,6 +96,8 @@ export function GameGrid({
       ? "board-skin-blue-gray"
       : resolvedBoardSkin === "pharaoh"
         ? "board-skin-pharaoh"
+        : resolvedBoardSkin === "magic"
+          ? "board-skin-magic"
         : "";
 
   const getGridOffset = () => {

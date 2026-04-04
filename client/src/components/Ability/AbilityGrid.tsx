@@ -209,6 +209,8 @@ export function AbilityGrid({
       ? 'board-skin-blue-gray'
       : resolvedBoardSkin === 'pharaoh'
         ? 'board-skin-pharaoh'
+        : resolvedBoardSkin === 'magic'
+          ? 'board-skin-magic'
         : '';
   const redVisible =
     !state.players.red.hidden || currentColor === 'red' || state.phase !== 'planning';

@@ -260,7 +260,9 @@ const initialPieceSkin = (() => {
 })();
 const initialBoardSkin = (() => {
   const stored = localStorage.getItem(BOARD_SKIN_KEY);
-  return stored === 'blue_gray' || stored === 'pharaoh' ? stored : 'classic';
+  return stored === 'blue_gray' || stored === 'pharaoh' || stored === 'magic'
+    ? stored
+    : 'classic';
 })();
 const initialAbilityLoadout = (() => {
   const raw = localStorage.getItem(ABILITY_LOADOUT_KEY);
