@@ -32,6 +32,7 @@ import {
   logoutToGuestMode,
   purchaseSkinWithTokens,
   refreshAccountSummary,
+  syncNickname,
   type PlayerAchievementState,
   resolveUpgradeFlowAfterRedirect,
   type AccountProfile,
@@ -113,6 +114,7 @@ const DONATE_URL =
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
 
 const AI_TUTORIAL_PROMPT_ANSWERED_KEY = "pathclash.aiTutorialPromptAnswered.v1";
+const INITIAL_NICKNAME_COMPLETED_KEY = "pathclash.initialNicknameSetUser.v1";
 
 const PATCH_NOTES_READ_KEY = "pathclash.patchNotes.read";
 
@@ -803,6 +805,11 @@ export function LobbyScreen({
   const [isChangingNickname, setIsChangingNickname] = useState(false);
 
   const [isAiTutorialPromptOpen, setIsAiTutorialPromptOpen] = useState(false);
+  const [isInitialNicknamePromptOpen, setIsInitialNicknamePromptOpen] =
+    useState(false);
+  const [initialNicknameDraft, setInitialNicknameDraft] = useState("");
+  const [isSubmittingInitialNickname, setIsSubmittingInitialNickname] =
+    useState(false);
   const [lobbySkinIconSrc, setLobbySkinIconSrc] = useState(
     "/ui/lobby/lobby-icon-skin1.svg",
   );
@@ -1065,6 +1072,16 @@ export function LobbyScreen({
     lang === "en"
       ? "Loading account information."
       : "계정 정보를 불러오고 있습니다.";
+  const initialNicknameTitle =
+    lang === "en" ? "Choose Your Nickname" : "닉네임 설정";
+  const initialNicknameDesc =
+    lang === "en"
+      ? "Before you start, please choose the nickname you want to use. Your first nickname change is free."
+      : "게임을 시작하기 전에 사용할 닉네임을 정해주세요. 처음 한 번은 무료로 설정할 수 있습니다.";
+  const initialNicknamePlaceholder =
+    lang === "en" ? "Enter your nickname" : "닉네임을 입력하세요";
+  const initialNicknameConfirmLabel =
+    lang === "en" ? "Confirm" : "확인";
 
   const audioModalTitle = lang === "en" ? "Audio Settings" : "오디오 설정";
 
@@ -1963,7 +1980,42 @@ export function LobbyScreen({
   }, []);
 
   useEffect(() => {
+    if (!authUserId || currentMatchType) return;
+    if (accountSummaryLoading || upgradeFlowLoading) return;
+
+    const completedForUser = window.localStorage.getItem(
+      INITIAL_NICKNAME_COMPLETED_KEY,
+    );
+    const normalizedNickname = (myNickname || "").trim();
+    const hasRealNickname =
+      normalizedNickname.length > 0 && normalizedNickname !== "Guest";
+
+    if (hasRealNickname) {
+      window.localStorage.setItem(INITIAL_NICKNAME_COMPLETED_KEY, authUserId);
+      if (isInitialNicknamePromptOpen) {
+        setIsInitialNicknamePromptOpen(false);
+      }
+      return;
+    }
+
+    if (completedForUser === authUserId) {
+      return;
+    }
+
+    setInitialNicknameDraft("");
+    setIsInitialNicknamePromptOpen(true);
+  }, [
+    accountSummaryLoading,
+    authUserId,
+    currentMatchType,
+    isInitialNicknamePromptOpen,
+    myNickname,
+    upgradeFlowLoading,
+  ]);
+
+  useEffect(() => {
     if (currentMatchType) return;
+    if (isInitialNicknamePromptOpen) return;
 
     const hasSeenAiTutorial =
       window.localStorage.getItem(AI_TUTORIAL_SEEN_KEY) === "1";
@@ -1974,7 +2026,7 @@ export function LobbyScreen({
     if (!hasSeenAiTutorial && !hasAnsweredAiTutorialPrompt) {
       setIsAiTutorialPromptOpen(true);
     }
-  }, [currentMatchType, tutorialPromptTrigger]);
+  }, [currentMatchType, isInitialNicknamePromptOpen, tutorialPromptTrigger]);
 
   useEffect(() => {
     const shouldLockScroll =
@@ -1984,6 +2036,7 @@ export function LobbyScreen({
       isAudioSettingsOpen ||
       isAbilityLoadoutOpen ||
       isPatchNotesOpen ||
+      isInitialNicknamePromptOpen ||
       isAiTutorialPromptOpen;
 
     if (!shouldLockScroll) {
@@ -2020,6 +2073,8 @@ export function LobbyScreen({
     };
   }, [
     isAudioSettingsOpen,
+
+    isInitialNicknamePromptOpen,
 
     isAiTutorialPromptOpen,
 
@@ -2474,6 +2529,38 @@ export function LobbyScreen({
     isChangingNickname,
     setNickname,
     settingsNicknameDraft,
+    syncAccountSummary,
+  ]);
+
+  const handleInitialNicknameConfirm = useCallback(async () => {
+    if (isSubmittingInitialNickname) return;
+
+    const trimmed = initialNicknameDraft.trim();
+    if (trimmed.length < 1 || trimmed.length > 16) {
+      window.alert(changeNameInvalidMsg);
+      return;
+    }
+
+    setIsSubmittingInitialNickname(true);
+    try {
+      await syncNickname(trimmed);
+      await syncAccountSummary();
+      setNickname(trimmed);
+      window.localStorage.setItem(
+        INITIAL_NICKNAME_COMPLETED_KEY,
+        authUserId ?? "",
+      );
+      setIsInitialNicknamePromptOpen(false);
+      setInitialNicknameDraft(trimmed);
+    } finally {
+      setIsSubmittingInitialNickname(false);
+    }
+  }, [
+    authUserId,
+    changeNameInvalidMsg,
+    initialNicknameDraft,
+    isSubmittingInitialNickname,
+    setNickname,
     syncAccountSummary,
   ]);
 
@@ -4020,6 +4107,36 @@ export function LobbyScreen({
                 type="button"
               >
                 {aiTutorialYesLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isInitialNicknamePromptOpen && (
+        <div className="upgrade-modal-backdrop ai-tutorial-prompt-backdrop">
+          <div className="upgrade-modal ai-tutorial-prompt-modal">
+            <h3>{initialNicknameTitle}</h3>
+
+            <p>{initialNicknameDesc}</p>
+
+            <div className="settings-name-change initial-nickname-prompt-body">
+              <input
+                className="lobby-input settings-name-input"
+                type="text"
+                maxLength={16}
+                value={initialNicknameDraft}
+                placeholder={initialNicknamePlaceholder}
+                onChange={(e) => setInitialNicknameDraft(e.target.value)}
+              />
+
+              <button
+                className="lobby-btn primary settings-name-btn"
+                onClick={() => void handleInitialNicknameConfirm()}
+                type="button"
+                disabled={isSubmittingInitialNickname}
+              >
+                <span>{initialNicknameConfirmLabel}</span>
               </button>
             </div>
           </div>
