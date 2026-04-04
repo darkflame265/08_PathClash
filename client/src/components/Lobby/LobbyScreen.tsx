@@ -770,6 +770,7 @@ export function LobbyScreen({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const [isAudioSettingsOpen, setIsAudioSettingsOpen] = useState(false);
+  const [isNameChangeOpen, setIsNameChangeOpen] = useState(false);
 
   const [isAbilityLoadoutOpen, setIsAbilityLoadoutOpen] = useState(false);
 
@@ -1080,7 +1081,7 @@ export function LobbyScreen({
       ? `${tokens} tokens were added to your account.`
       : `${tokens}토큰이 계정에 추가되었습니다.`;
 
-  const nicknameChangeCost = 100;
+  const nicknameChangeCost = 500;
   const changeNameTitle = lang === "en" ? "Change Name" : "이름 변경";
   const changeNameDesc =
     lang === "en"
@@ -1088,8 +1089,6 @@ export function LobbyScreen({
       : `${nicknameChangeCost}토큰을 사용해 플레이어 이름을 변경할 수 있습니다.`;
   const changeNamePlaceholder =
     lang === "en" ? "Enter a new name" : "새 이름을 입력하세요";
-  const changeNameButtonLabel =
-    lang === "en" ? `Change (${nicknameChangeCost})` : `변경 (${nicknameChangeCost})`;
   const changeNameInvalidMsg =
     lang === "en"
       ? "Please enter a name between 1 and 16 characters."
@@ -3630,10 +3629,18 @@ export function LobbyScreen({
               <div className="settings-section">
                 <div className="settings-row">
                   <span className="settings-label">{nicknameLabel}</span>
-
-                  <strong className="settings-value">
-                    {myNickname || "-"}
-                  </strong>
+                  <div className="settings-inline-action">
+                    <strong className="settings-value">
+                      {myNickname || "-"}
+                    </strong>
+                    <button
+                      className="settings-copy-btn"
+                      type="button"
+                      onClick={() => setIsNameChangeOpen(true)}
+                    >
+                      {lang === "en" ? "Change" : "변경"}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="settings-row">
@@ -3674,31 +3681,6 @@ export function LobbyScreen({
                       ? `${accountWins}W ${accountLosses}L`
                       : `${accountWins}승 ${accountLosses}패`}
                   </strong>
-                </div>
-              </div>
-
-              <div className="settings-section">
-                <div className="settings-section-head">
-                  <strong>{changeNameTitle}</strong>
-                  <span>{changeNameDesc}</span>
-                </div>
-                <div className="settings-name-change">
-                  <input
-                    className="lobby-input settings-name-input"
-                    type="text"
-                    maxLength={16}
-                    value={settingsNicknameDraft}
-                    placeholder={changeNamePlaceholder}
-                    onChange={(e) => setSettingsNicknameDraft(e.target.value)}
-                  />
-                  <button
-                    className="lobby-btn secondary settings-name-btn"
-                    onClick={() => void handleChangeNickname()}
-                    type="button"
-                    disabled={isChangingNickname}
-                  >
-                    {changeNameButtonLabel}
-                  </button>
                 </div>
               </div>
 
@@ -3743,6 +3725,62 @@ export function LobbyScreen({
               <button
                 className="lobby-btn primary"
                 onClick={() => setIsSettingsOpen(false)}
+                type="button"
+              >
+                {skinApplyLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isNameChangeOpen && (
+        <div
+          className="upgrade-modal-backdrop"
+          onClick={() => setIsNameChangeOpen(false)}
+        >
+          <div
+            className="upgrade-modal skin-modal settings-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="skin-modal-head">
+              <h3>{changeNameTitle}</h3>
+            </div>
+
+            <div className="settings-scroll-body">
+              <p>{changeNameDesc}</p>
+
+              <div className="settings-name-change">
+                <input
+                  className="lobby-input settings-name-input"
+                  type="text"
+                  maxLength={16}
+                  value={settingsNicknameDraft}
+                  placeholder={changeNamePlaceholder}
+                  onChange={(e) => setSettingsNicknameDraft(e.target.value)}
+                />
+
+                <button
+                  className="lobby-btn primary settings-name-btn"
+                  onClick={() => void handleChangeNickname()}
+                  type="button"
+                  disabled={isChangingNickname}
+                >
+                  <span>{lang === "en" ? "Change" : "변경"}</span>
+                  <span className="settings-name-btn-cost">
+                    <span className="skin-token-icon" aria-hidden="true">
+                      {"💎"}
+                    </span>
+                    <strong>{nicknameChangeCost}</strong>
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="upgrade-modal-actions">
+              <button
+                className="lobby-btn secondary"
+                onClick={() => setIsNameChangeOpen(false)}
                 type="button"
               >
                 {skinApplyLabel}

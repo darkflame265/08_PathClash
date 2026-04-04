@@ -1833,6 +1833,13 @@
   min-width: 0;
 }
 
+.settings-inline-action {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
 .settings-id-value {
   font-family: var(--mono);
   letter-spacing: 0.04em;
@@ -1891,6 +1898,17 @@
 
 .settings-name-btn {
   width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.settings-name-btn-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  font-weight: 800;
 }
 
 .settings-policy-btn {

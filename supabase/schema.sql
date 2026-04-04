@@ -226,7 +226,7 @@ declare
   v_user_id uuid;
   v_tokens integer;
   v_trimmed text;
-  v_cost integer := 100;
+  v_cost integer := 500;
   v_current_nickname text;
 begin
   v_user_id := auth.uid();

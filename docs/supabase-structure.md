@@ -64,7 +64,7 @@ AI나 사람이 빠르게 전체 구조만 확인할 때 사용합니다.
 
 - `public.change_nickname_with_tokens(p_nickname text)`
 - 역할:
-  - 플레이어 토큰 100개를 차감하고
+  - 플레이어 토큰 500개를 차감하고
   - `profiles.nickname`을 새 값으로 변경
 - 목적:
   - 로비 자유 변경을 막고
