@@ -478,7 +478,11 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     return boardSkin;
   })();
   const screenBoardClass =
-    resolvedBoardSkin === "pharaoh" ? "board-bg-pharaoh-screen" : "";
+    resolvedBoardSkin === "pharaoh"
+      ? "board-bg-pharaoh-screen"
+      : resolvedBoardSkin === "magic"
+        ? "board-bg-magic-screen"
+        : "";
 
   return (
     <div

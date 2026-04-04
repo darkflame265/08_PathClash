@@ -2252,7 +2252,11 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         ? state.players.blue.boardSkin
         : boardSkin;
   const screenBoardClass =
-    resolvedBoardSkin === "pharaoh" ? "board-bg-pharaoh-screen" : "";
+    resolvedBoardSkin === "pharaoh"
+      ? "board-bg-pharaoh-screen"
+      : resolvedBoardSkin === "magic"
+        ? "board-bg-magic-screen"
+        : "";
   const overdriveTurn = me.overdriveActive;
   const effectivePathPoints = me.reboundLocked ? 0 : state.pathPoints;
   const rewardTokens =
