@@ -720,6 +720,9 @@ export async function syncNickname(nickname: string): Promise<void> {
   const session = await getCurrentSession();
 
   if (!session?.user) return;
+  if (!session.user.is_anonymous && (!trimmed || trimmed === "Guest")) {
+    return;
+  }
   const userId = session.user.id;
   const current = lastSyncedProfileState.get(userId);
   if (current?.nickname === trimmed) return;

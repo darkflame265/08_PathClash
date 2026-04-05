@@ -419,9 +419,19 @@ export async function finalizeGoogleUpgrade(
   }
 
   if (targetUser.id === guestUser.id) {
+    const currentLinkedProfile = await readAccountProfile(
+      targetUser.id,
+      guestSnapshot?.nickname ?? 'Guest',
+      false,
+    );
+    const preservedNickname = resolvePreferredAccountNickname(
+      currentLinkedProfile.nickname,
+      guestSnapshot?.nickname ?? 'Guest',
+      targetUser,
+    );
     const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
       id: targetUser.id,
-      nickname: guestSnapshot?.nickname ?? 'Guest',
+      nickname: preservedNickname,
       equipped_skin: guestSnapshot?.equippedSkin ?? 'classic',
       equipped_board_skin: guestSnapshot?.equippedBoardSkin ?? 'classic',
       is_guest: false,
@@ -432,7 +442,7 @@ export async function finalizeGoogleUpgrade(
       return { status: 'UPGRADE_FAILED' };
     }
 
-    const profile = await readAccountProfile(targetUser.id, guestSnapshot?.nickname ?? 'Guest', false);
+    const profile = await readAccountProfile(targetUser.id, preservedNickname, false);
     return { status: 'UPGRADE_OK', profile };
   }
 

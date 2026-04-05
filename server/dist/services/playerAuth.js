@@ -282,9 +282,11 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
         return { status: 'AUTH_INVALID' };
     }
     if (targetUser.id === guestUser.id) {
+        const currentLinkedProfile = await readAccountProfile(targetUser.id, guestSnapshot?.nickname ?? 'Guest', false);
+        const preservedNickname = resolvePreferredAccountNickname(currentLinkedProfile.nickname, guestSnapshot?.nickname ?? 'Guest', targetUser);
         const { error: profileError } = await supabase_1.supabaseAdmin.from('profiles').upsert({
             id: targetUser.id,
-            nickname: guestSnapshot?.nickname ?? 'Guest',
+            nickname: preservedNickname,
             equipped_skin: guestSnapshot?.equippedSkin ?? 'classic',
             equipped_board_skin: guestSnapshot?.equippedBoardSkin ?? 'classic',
             is_guest: false,
@@ -293,7 +295,7 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
             console.error('[supabase] failed to finalize linked profile', profileError);
             return { status: 'UPGRADE_FAILED' };
         }
-        const profile = await readAccountProfile(targetUser.id, guestSnapshot?.nickname ?? 'Guest', false);
+        const profile = await readAccountProfile(targetUser.id, preservedNickname, false);
         return { status: 'UPGRADE_OK', profile };
     }
     const [targetProfile, guestAccountProfile] = await Promise.all([

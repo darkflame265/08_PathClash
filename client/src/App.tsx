@@ -13,7 +13,6 @@ import {
   syncAchievementSettings,
   syncEquippedBoardSkin,
   syncEquippedSkin,
-  syncNickname,
 } from "./auth/guestAuth";
 import { disconnectSocket, getSocket } from "./socket/socketClient";
 import { useLang } from "./hooks/useLang";
@@ -107,7 +106,6 @@ function App() {
     authUserId,
     authAccessToken,
     isGuestUser,
-    myNickname,
     pieceSkin,
     boardSkin,
     setAuthState,
@@ -117,7 +115,6 @@ function App() {
     sfxVolume,
   } = useGameStore();
   const { lang } = useLang();
-  const nicknameSyncTimeoutRef = useRef<number | null>(null);
   const lobbyBgmRef = useRef<HTMLAudioElement | null>(null);
   const inGameBgmRef = useRef<HTMLAudioElement | null>(null);
   const achievementRefreshTimeoutRef = useRef<number | null>(null);
@@ -270,24 +267,6 @@ function App() {
       unsubscribe();
     };
   }, [setAccountSummaryLoading, setAuthState]);
-
-  useEffect(() => {
-    if (!authReady) return;
-    if (nicknameSyncTimeoutRef.current) {
-      window.clearTimeout(nicknameSyncTimeoutRef.current);
-    }
-
-    nicknameSyncTimeoutRef.current = window.setTimeout(() => {
-      void syncNickname(myNickname);
-    }, 400);
-
-    return () => {
-      if (nicknameSyncTimeoutRef.current) {
-        window.clearTimeout(nicknameSyncTimeoutRef.current);
-        nicknameSyncTimeoutRef.current = null;
-      }
-    };
-  }, [authReady, myNickname]);
 
   useEffect(() => {
     if (!authReady) return;
