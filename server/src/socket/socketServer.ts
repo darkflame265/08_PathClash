@@ -233,7 +233,7 @@ export function initSocketServer(io: Server): void {
   const registerSocketSession = async (
     socket: Socket,
     auth?: AuthPayload,
-    options?: { forceRevalidate?: boolean },
+    options?: { forceRevalidate?: boolean; allowConcurrentSessions?: boolean },
   ): Promise<string | null> => {
     const accessToken = auth?.accessToken?.trim();
     const cachedUserId =
@@ -282,7 +282,11 @@ export function initSocketServer(io: Server): void {
     socket.data.accessToken = accessToken;
     socket.data.authVerifiedAt = Date.now();
 
-    if (previousSocketId && previousSocketId !== socket.id) {
+    if (
+      !options?.allowConcurrentSessions &&
+      previousSocketId &&
+      previousSocketId !== socket.id
+    ) {
       const previousSocket = io.sockets.sockets.get(previousSocketId);
       if (previousSocket) {
         previousSocket.emit('session_replaced', {});
@@ -333,7 +337,7 @@ export function initSocketServer(io: Server): void {
 
     socket.on('create_room', async ({ nickname, auth, pieceSkin, boardSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin; boardSkin?: BoardSkin }) => {
       if (emitUpdateRequired(socket, auth)) return;
-      await registerSocketSession(socket, auth);
+      await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
       const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       const roomId = store.generateRoomId();
       const code = store.generateCode();
@@ -388,17 +392,17 @@ export function initSocketServer(io: Server): void {
 
     socket.on('join_room', async ({ code, nickname, auth, pieceSkin, boardSkin }: { code: string; nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin; boardSkin?: BoardSkin }) => {
       if (emitUpdateRequired(socket, auth)) return;
-      await registerSocketSession(socket, auth);
+      await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
       const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       const room = store.getByCode(code.toUpperCase());
       if (!room || room.isFull) {
-        socket.emit('join_error', { message: '諛⑹쓣 李얠쓣 ???녾굅???대? 媛??李쇱뒿?덈떎.' });
+        socket.emit('join_error', { message: '방을 찾을 수 없거나 이미 가득 찼습니다.' });
         return;
       }
 
       const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
       if (!color) {
-        socket.emit('join_error', { message: '?낆옣?????놁뒿?덈떎.' });
+        socket.emit('join_error', { message: '입장할 수 없습니다.' });
         return;
       }
 
