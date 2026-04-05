@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="39" height="39" viewBox="0 0 39 39" fill="none">
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="39" height="39" viewBox="0 0 39 39" fill="none">
 <defs>
   <linearGradient id="magicOuter" x1="0.5" y1="0" x2="0.5" y2="1">
     <stop stop-color="#F6752B" offset="0"/>
@@ -14,10 +14,11 @@
     <stop stop-color="#3D1F63" stop-opacity="0.45" offset="1"/>
   </linearGradient>
 </defs>
-<rect x="1.5" y="1.5" width="36" height="36" rx="5" fill="url(#magicOuter)"/>
-<rect x="5.0" y="5.0" width="29" height="29" rx="5" fill="url(#magicInner)" stroke="url(#magicInnerStroke)" stroke-width="2"/>
+<rect x="1.0" y="1.0" width="37" height="37" rx="5" fill="url(#magicOuter)"/>
+<rect x="2.5" y="2.5" width="34" height="34" rx="5" fill="url(#magicInner)" stroke="url(#magicInnerStroke)" stroke-width="1.2"/>
 <g transform="translate(-20.81, -191.17)">
 <path d="m37.91 202.1v6.61c0 2.99 2.16 4.71 4.22 4.56 2.25-0.15 3.59-2.31 3.59-4.27 0-2.2-1.29-3.74-2.9-5.18 2.9 1.09 4.43 3.4 4.29 6.39-0.3 4.24-3.5 5.69-7 5.84-3.49 0.15-6.1-2.53-6.6-4.94-0.99-4.53 1.61-7.78 4.4-9.01z" stroke="#FF917B" stroke-miterlimit="10" stroke-width=".8"/>
 <path d="m38.21 214.5v5.14" stroke="#FF917B" stroke-miterlimit="10" stroke-width="1.2"/>
 </g>
 </svg>
+
