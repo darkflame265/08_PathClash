@@ -34,7 +34,7 @@
   inset: 0;
   background:
     linear-gradient(rgba(12, 8, 5, 0.3), rgba(12, 8, 5, 0.3)),
-    url("/board/pharaoh_board_bg.png") center / cover no-repeat;
+    url("/board/pharaoh_board_bg.webp") center / cover no-repeat;
   opacity: 0.98;
   z-index: 0;
   pointer-events: none;
@@ -46,7 +46,7 @@
   inset: 0;
   background:
     linear-gradient(rgba(11, 8, 19, 0.34), rgba(11, 8, 19, 0.34)),
-    url("/board/magic_board_bg.png") center / cover no-repeat;
+    url("/board/magic_board_bg.webp") center / cover no-repeat;
   opacity: 0.99;
   z-index: 0;
   pointer-events: none;
