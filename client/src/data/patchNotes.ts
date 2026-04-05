@@ -1,4 +1,4 @@
-export type PatchNoteChange = "buff" | "nerf";
+﻿export type PatchNoteChange = "buff" | "nerf";
 
 export type PatchNoteLine = {
   text: string;
@@ -11,55 +11,37 @@ export type PatchNoteSection = {
   lines: PatchNoteLine[];
 };
 
-export const PATCH_NOTES_VERSION = "2026-04-03-v6";
+export const PATCH_NOTES_VERSION = "2026-04-05-v7";
 
 export function getPatchNotesVersionLabel(lang: "en" | "kr"): string {
-  return lang === "en" ? "Version 2026.04.03" : "버전 2026.04.03";
+  return lang === "en" ? "Version 2026.04.05" : "버전 2026.04.05";
 }
 
 export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
   if (lang === "en") {
     return [
       {
-        heading: "New systems",
+        heading: "Board skins and visuals",
         lines: [
-          {
-            text: "Added the achievements system with progress tracking, individual claims, Claim All rewards, and lobby NEW indicators.",
-          },
-          {
-            text: "Added a first-launch legal consent flow for the Terms of Service and Privacy Policy.",
-          },
-          {
-            text: "Updated the Privacy Policy and Terms of Service to match Google Sign-In, purchases, achievements, account linking, and consent records.",
-          },
+          { text: "Added board skin tabs and expanded board skin support in the skin menu." },
+          { text: "Added Pharaoh and Magic board skins with dedicated in-game backgrounds." },
+          { text: "Tutorial matches now always use the classic board for cleaner onboarding." },
         ],
       },
       {
-        heading: "Tutorial and lobby improvements",
+        heading: "Profile and lobby improvements",
         lines: [
-          {
-            text: "Expanded the AI tutorial into multiple guided scenarios and improved AI/tutorial entry flow and retry behavior.",
-          },
-          {
-            text: "Added a dedicated Tutorial button in the lobby and improved AI matchmaking entry feedback.",
-          },
-          {
-            text: "Reworked lobby utility buttons, added larger icons, and randomized the skin button icon on each lobby load.",
-          },
+          { text: "Nickname changes now happen from Settings only and cost 500 tokens." },
+          { text: "First-time players now set a free nickname before the tutorial prompt appears." },
+          { text: "Added clearer loading indicators while account data and Google account data are being fetched." },
         ],
       },
       {
-        heading: "Gameplay feel and fixes",
+        heading: "Gameplay changes and fixes",
         lines: [
-          {
-            text: "Added path drawing sound feedback when adding or erasing each tile during planning.",
-          },
-          {
-            text: "Added roll-in entrance animation for pieces and improved hit visuals, including clearer translucency on damage.",
-          },
-          {
-            text: "Fixed several timing issues, including the missing first-round AI timer after refresh and more natural collision/skill hit order in Ability Battle.",
-          },
+          { text: "Ability Battle starting HP has been increased from 3 to 5." },
+          { text: "Co-op matches now continue if one teammate disconnects, and only remaining winners receive rewards." },
+          { text: "Improved several in-game UI details including overlap HP visibility and path sound feedback." },
         ],
       },
     ];
@@ -67,45 +49,27 @@ export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
 
   return [
     {
-      heading: "신규 시스템",
+      heading: "보드 스킨 및 연출",
       lines: [
-        {
-          text: "업적 시스템을 추가했습니다. 진행도 확인, 개별 수령, 모든 보상 획득, 로비 NEW 표시를 지원합니다.",
-        },
-        {
-          text: "첫 실행 시 이용약관 및 개인정보처리방침 동의 흐름을 추가했습니다.",
-        },
-        {
-          text: "구글 로그인, 결제, 업적, 계정 연동, 동의 기록에 맞춰 개인정보처리방침과 이용약관을 갱신했습니다.",
-        },
+        { text: "스킨창에 보드 스킨 탭을 추가하고 보드 스킨 표시를 확장했습니다." },
+        { text: "파라오 보드와 매직 보드를 추가하고 전용 인게임 배경을 연결했습니다." },
+        { text: "튜토리얼에서는 항상 클래식 보드를 사용하도록 정리했습니다." },
       ],
     },
     {
-      heading: "튜토리얼 및 로비 개선",
+      heading: "프로필 및 로비 개선",
       lines: [
-        {
-          text: "AI 튜토리얼을 다단계 시나리오로 확장하고, 진입과 재시도 흐름을 더 자연스럽게 개선했습니다.",
-        },
-        {
-          text: "로비에 전용 튜토리얼 버튼을 추가하고 AI 대전 진입 피드백을 더 명확하게 다듬었습니다.",
-        },
-        {
-          text: "로비 하단 유틸리티 버튼을 개편하고, 아이콘 확대 및 스킨 버튼 랜덤 아이콘을 추가했습니다.",
-        },
+        { text: "닉네임 변경은 설정창에서만 가능하도록 바꾸고 비용을 500토큰으로 조정했습니다." },
+        { text: "처음 시작한 플레이어는 튜토리얼 전에 무료로 닉네임을 정하도록 추가했습니다." },
+        { text: "계정 데이터와 구글 계정 정보를 불러오는 동안 로딩 안내를 더 명확하게 표시합니다." },
       ],
     },
     {
-      heading: "게임 감각 및 수정",
+      heading: "게임 변경 및 수정",
       lines: [
-        {
-          text: "경로 작성 시 한 칸 추가하거나 지울 때마다 효과음이 나도록 추가했습니다.",
-        },
-        {
-          text: "말 등장 롤인 애니메이션과 피격 반투명 효과를 보강해 타격감과 가독성을 개선했습니다.",
-        },
-        {
-          text: "새로고침 후 AI 대전 첫 라운드 타이머가 보이지 않던 문제와 능력대전 충돌/스킬 피격 타이밍 표시를 수정했습니다.",
-        },
+        { text: "능력대전 시작 HP를 3에서 5로 늘리고 체력 표시도 5칸으로 맞췄습니다." },
+        { text: "협동전은 한 명이 나가도 계속 진행되며 남은 사람이 승리하면 보상을 받습니다." },
+        { text: "말 겹침 시 체력바 표시와 경로 작성 효과음을 포함한 인게임 UI를 다듬었습니다." },
       ],
     },
   ];
