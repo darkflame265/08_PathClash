@@ -1695,6 +1695,29 @@ export function LobbyScreen({
       );
     }
 
+    if (skinId === "pharaoh") {
+      return (
+        <span
+          className="skin-preview board-skin-preview board-skin-preview-magic-grid"
+          aria-hidden="true"
+        >
+          {Array.from({ length: 25 }, (_, index) => {
+            const row = Math.floor(index / 5);
+            const col = index % 5;
+            return (
+              <span
+                key={`${row}-${col}`}
+                className="board-skin-preview-magic-cell"
+                style={{
+                  backgroundImage: `url("/board/pharaoh-cells/pharaoh-cell-${row}-${col}.svg")`,
+                }}
+              />
+            );
+          })}
+        </span>
+      );
+    }
+
     return (
       <span
         className={`skin-preview board-skin-preview board-skin-preview-${skinId}`}

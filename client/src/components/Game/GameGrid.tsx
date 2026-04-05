@@ -111,11 +111,14 @@ export function GameGrid({
       ["--magic-col" as string]: col,
     };
 
-    if (resolvedBoardSkin !== "magic") {
+    if (resolvedBoardSkin !== "magic" && resolvedBoardSkin !== "pharaoh") {
       return baseStyle;
     }
 
-    const cellUrl = `/board/magic-cells/magic-cell-${row}-${col}.svg`;
+    const cellUrl =
+      resolvedBoardSkin === "magic"
+        ? `/board/magic-cells/magic-cell-${row}-${col}.svg`
+        : `/board/pharaoh-cells/pharaoh-cell-${row}-${col}.svg`;
     return {
       ...baseStyle,
       backgroundImage: blocked

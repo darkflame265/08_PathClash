@@ -52,10 +52,7 @@
 }
 
 .game-grid.board-skin-pharaoh {
-  background:
-    linear-gradient(rgba(255, 225, 140, 0.08), rgba(255, 225, 140, 0.08)),
-    url("/board/parao_board_skin.svg") center / cover no-repeat,
-    #33261a;
+  background: #33261a;
   border-color: rgba(198, 161, 82, 0.9);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.42),
@@ -64,23 +61,24 @@
 }
 
 .game-grid.board-skin-pharaoh .grid-cell {
-  background: rgba(61, 43, 28, 0.42);
-  border-color: rgba(182, 146, 78, 0.44);
-  backdrop-filter: saturate(1.05);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .game-grid.board-skin-pharaoh .grid-cell:hover,
 .game-grid.board-skin-pharaoh .grid-cell.is-hovered {
-  background: rgba(94, 68, 42, 0.52);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 221, 148, 0.18),
+    0 0 18px rgba(196, 149, 69, 0.12);
 }
 
 .game-grid.board-skin-pharaoh .grid-cell.obstacle,
 .game-grid.board-skin-pharaoh .grid-cell.obstacle:hover,
 .game-grid.board-skin-pharaoh .grid-cell.obstacle.is-hovered {
-  background:
-    linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(248, 113, 113, 0.08)),
-    rgba(61, 43, 28, 0.48);
-  border-color: rgba(248, 113, 113, 0.5);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 221, 148, 0.18),
+    0 0 18px rgba(196, 149, 69, 0.12);
 }
 
 .game-grid.board-skin-magic {
