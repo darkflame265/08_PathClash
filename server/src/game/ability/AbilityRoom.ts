@@ -537,7 +537,7 @@ export class AbilityRoom {
     this.touchActivity(now);
     const state = this.toClientState();
     const payload: AbilityRoundStartPayload = {
-      timeLimit: 7,
+      timeLimit: PLANNING_TIME_MS / 1000,
       roundEndsAt: now + PLANNING_TIME_MS,
       state,
     };
