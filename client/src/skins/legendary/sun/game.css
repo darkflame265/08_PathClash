@@ -26,6 +26,10 @@ body {
   height: calc(var(--piece-inner-size, 44px) * 2.5);
 }
 
+.player-piece.piece-skin-sun.piece-sun-chariot-active .sun {
+  inset: -14%;
+}
+
 .sun {
   align-items: center;
   justify-content: center;

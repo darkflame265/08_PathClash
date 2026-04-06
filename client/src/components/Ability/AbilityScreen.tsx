@@ -388,6 +388,20 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const scale = cellSize / DEFAULT_CELL;
   const currentColor = myColor ?? "red";
   const opponentColor: PlayerColor = currentColor === "red" ? "blue" : "red";
+  const planningSunChariots: BoolByColor = {
+    red:
+      state?.phase === "planning" &&
+      currentColor === "red" &&
+      skillReservations.some((entry) => entry.skillId === "sun_chariot"),
+    blue:
+      state?.phase === "planning" &&
+      currentColor === "blue" &&
+      skillReservations.some((entry) => entry.skillId === "sun_chariot"),
+  };
+  const visibleSunChariots: BoolByColor = {
+    red: activeSunChariots.red || planningSunChariots.red,
+    blue: activeSunChariots.blue || planningSunChariots.blue,
+  };
   const previousGuardPathRef = useRef<Position[]>([]);
   const previousChargePathRef = useRef<Position[]>([]);
   const previousBlitzPathRef = useRef<Position[]>([]);
@@ -2550,7 +2564,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             movingBlitzColors={movingBlitzColors}
             movingBlitzProgress={movingBlitzProgress}
             movingBlitzSteps={movingBlitzSteps}
-            activeSunChariots={activeSunChariots}
+            activeSunChariots={visibleSunChariots}
             movingAtomicClones={movingAtomicClones}
             movingPaths={movingPaths}
             movingStarts={movingStarts}
