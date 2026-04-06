@@ -81,7 +81,15 @@ import "./LobbyScreen.css";
 
 type LobbyView = "main" | "create" | "join";
 type SkinPickerTab = "piece" | "board";
-type LobbyModeKey = "ai" | "friend" | "random" | "coop" | "2v2" | "ability";
+type LobbyModeKey =
+  | "ai"
+  | "friend"
+  | "random"
+  | "coop"
+  | "2v2"
+  | "ability"
+  | "classic_ranked"
+  | "skill_ranked";
 
 interface Props {
   onGameStart: () => void;
@@ -685,7 +693,9 @@ export function LobbyScreen({
       saved === "random" ||
       saved === "coop" ||
       saved === "2v2" ||
-      saved === "ability"
+      saved === "ability" ||
+      saved === "classic_ranked" ||
+      saved === "skill_ranked"
       ? saved
       : "ai";
   });
@@ -872,6 +882,11 @@ export function LobbyScreen({
   const twoVsTwoStartLabel = lang === "en" ? "Start Match" : "매칭 시작";
 
   const abilityBattleTitle = lang === "en" ? "Ability Battle" : "능력 대전";
+  const classicRankedTitle =
+    lang === "en" ? "Classic Ranked" : "클래식 랭크전";
+  const skillRankedTitle = lang === "en" ? "Skill Ranked" : "스킬 랭크전";
+  const rankedComingSoonDesc =
+    lang === "en" ? "Coming soon." : "아직 준비중입니다.";
 
   const abilityBattleStartLabel = lang === "en" ? "Start Match" : "매칭 시작";
 
@@ -2923,9 +2938,9 @@ export function LobbyScreen({
     { key: "coop", icon: "🛡️", label: coopTitle },
     { key: "2v2", icon: "👥", label: twoVsTwoTitle },
     { key: "ability", icon: "✨", label: abilityBattleTitle },
+    { key: "classic_ranked", icon: "🏆", label: classicRankedTitle },
+    { key: "skill_ranked", icon: "⚔️", label: skillRankedTitle },
   ];
-
-  const lobbyModePlaceholders = Array.from({ length: 8 - lobbyModeOptions.length });
 
   const handleSelectLobbyMode = (mode: LobbyModeKey) => {
     setSelectedLobbyMode(mode);
@@ -3226,6 +3241,26 @@ export function LobbyScreen({
             )}
           </>
         );
+      case "classic_ranked":
+        return (
+          <>
+            <h2>{classicRankedTitle}</h2>
+            <p>{rankedComingSoonDesc}</p>
+            <button className="lobby-btn accent" type="button" disabled>
+              {t.startBtn}
+            </button>
+          </>
+        );
+      case "skill_ranked":
+        return (
+          <>
+            <h2>{skillRankedTitle}</h2>
+            <p>{rankedComingSoonDesc}</p>
+            <button className="lobby-btn accent" type="button" disabled>
+              {abilityBattleStartLabel}
+            </button>
+          </>
+        );
       default:
         return null;
     }
@@ -3249,13 +3284,6 @@ export function LobbyScreen({
               </span>
               <span className="mode-selector-label">{option.label}</span>
             </button>
-          ))}
-          {lobbyModePlaceholders.map((_, index) => (
-            <div
-              key={`mode-placeholder-${index}`}
-              className="mode-selector-placeholder"
-              aria-hidden="true"
-            />
           ))}
         </div>
       </div>
