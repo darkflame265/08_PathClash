@@ -492,6 +492,7 @@ function initSocketServer(io) {
             if (training) {
                 const roomId = abilityStore.generateRoomId();
                 const room = new AbilityRoom_1.AbilityRoom(roomId, roomId, io);
+                room.enableTrainingMode();
                 abilityStore.add(room);
                 room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
                 room.addIdleBot('Training Dummy', 'classic', 'classic', []);

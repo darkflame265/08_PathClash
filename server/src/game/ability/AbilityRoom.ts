@@ -39,6 +39,8 @@ const MANA_PER_TURN = 2;
 const SKILL_EVENT_BUFFER_MS = 1100;
 const OVERDRIVE_MANA = 20;
 const ABILITY_STARTING_HP = 5;
+const TRAINING_STARTING_MANA = 10;
+const TRAINING_DUMMY_POSITION: Position = { row: 2, col: 2 };
 
 function collectUtilitySkillUsageByUser(
   players: Map<PlayerColor, AbilityPlayerState>,
@@ -224,6 +226,7 @@ export class AbilityRoom {
   private readySockets = new Set<string>();
   private pendingStart = false;
   private pendingStartPaused = false;
+  private trainingMode = false;
   private rematchSet = new Set<string>();
   private planningGraceTimeout: ReturnType<typeof setTimeout> | null = null;
   private movingCompleteTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -260,6 +263,10 @@ export class AbilityRoom {
     return [...this.players.values()].map((player) => player.socketId);
   }
 
+  enableTrainingMode(): void {
+    this.trainingMode = true;
+  }
+
   addPlayer(
     socket: Socket,
     nickname: string,
@@ -290,7 +297,7 @@ export class AbilityRoom {
       pathSubmitted: false,
       role: color === 'red' ? 'attacker' : 'escaper',
       stats,
-      mana: INITIAL_MANA,
+      mana: this.trainingMode ? TRAINING_STARTING_MANA : INITIAL_MANA,
       invulnerableSteps: 0,
       pendingManaBonus: 0,
       pendingOverdriveStage: 0,
@@ -324,7 +331,9 @@ export class AbilityRoom {
       pieceSkin,
       boardSkin,
       hp: ABILITY_STARTING_HP,
-      position: { ...initialPositions[color] },
+      position: this.trainingMode
+        ? { ...TRAINING_DUMMY_POSITION }
+        : { ...initialPositions[color] },
       plannedPath: [],
       previousTurnStart: null,
       previousTurnPath: [],
@@ -332,7 +341,7 @@ export class AbilityRoom {
       pathSubmitted: false,
       role: color === 'red' ? 'attacker' : 'escaper',
       stats: { wins: 0, losses: 0 },
-      mana: INITIAL_MANA,
+      mana: this.trainingMode ? TRAINING_STARTING_MANA : INITIAL_MANA,
       invulnerableSteps: 0,
       pendingManaBonus: 0,
       pendingOverdriveStage: 0,
@@ -972,13 +981,16 @@ export class AbilityRoom {
     const initial = getInitialPositions();
     for (const [color, player] of this.players.entries()) {
       player.hp = ABILITY_STARTING_HP;
-      player.position = { ...initial[color] };
+      player.position =
+        this.trainingMode && player.isBot
+          ? { ...TRAINING_DUMMY_POSITION }
+          : { ...initial[color] };
       player.plannedPath = [];
       player.previousTurnStart = null;
       player.previousTurnPath = [];
       player.plannedSkills = [];
       player.pathSubmitted = false;
-      player.mana = INITIAL_MANA;
+      player.mana = this.trainingMode ? TRAINING_STARTING_MANA : INITIAL_MANA;
       player.invulnerableSteps = 0;
       player.pendingManaBonus = 0;
       player.pendingOverdriveStage = 0;

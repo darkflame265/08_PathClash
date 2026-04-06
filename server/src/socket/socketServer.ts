@@ -710,6 +710,7 @@ export function initSocketServer(io: Server): void {
         if (training) {
           const roomId = abilityStore.generateRoomId();
           const room = new AbilityRoom(roomId, roomId, io);
+          room.enableTrainingMode();
           abilityStore.add(room);
           room.addPlayer(
             socket,
