@@ -2153,7 +2153,9 @@
 .settings-id-group {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.65rem;
+  flex: 1;
   min-width: 0;
 }
 
@@ -2167,6 +2169,8 @@
 .settings-id-value {
   font-family: var(--mono);
   letter-spacing: 0.04em;
+  flex: 1;
+  text-align: center;
 }
 
 .settings-copy-btn {
