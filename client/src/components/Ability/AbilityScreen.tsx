@@ -377,6 +377,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [mySkillInfo, setMySkillInfo] = useState<AbilitySkillId | null>(null);
 
   const stateRef = useRef<AbilityBattleState | null>(null);
+  const winnerRef = useRef<PlayerColor | "draw" | null>(null);
   const animationTimeoutIdsRef = useRef<number[]>([]);
   const submitTimeoutIdsRef = useRef<number[]>([]);
   const gridAreaRef = useRef<HTMLDivElement>(null);
@@ -396,6 +397,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  useEffect(() => {
+    winnerRef.current = winner;
+  }, [winner]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -2141,6 +2146,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     };
 
     const onOpponentDisconnected = () => {
+      if (winnerRef.current !== null || stateRef.current?.phase === "gameover") {
+        return;
+      }
       setWinner(currentColor);
       setGameOverMessage(
         lang === "en"
