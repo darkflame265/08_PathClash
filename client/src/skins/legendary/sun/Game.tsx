@@ -9,10 +9,11 @@ export function SunGame({ cellSize }: SunGameProps) {
     <div
       className="sun-core"
       aria-hidden="true"
-      style={{ ["--sun-core-size" as string]: `${Math.max(18, cellSize * 0.34)}px` }}
+      style={{
+        ["--sun-core-size" as string]: `${Math.max(18, cellSize * 0.34)}px`,
+      }}
     >
-      <div className="sun-core-surface" />
-      <div className="sun-core-corona" />
+      <div className="sun"></div>
     </div>
   );
 }

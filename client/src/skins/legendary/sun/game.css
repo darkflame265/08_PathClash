@@ -1,70 +1,33 @@
-.player-piece.piece-skin-sun .piece-inner {
-  background: transparent;
-  border-color: rgba(255, 187, 70, 0.52);
-  box-shadow:
-    0 0 calc(var(--piece-glow, 12px) * 1.1) rgba(255, 94, 18, 0.34),
-    0 0 calc(var(--piece-glow, 12px) * 2.1) rgba(255, 168, 54, 0.18);
-  overflow: visible;
+body {
+  background-color: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 500px;
 }
-
-.sun-core-corona::before,
-.sun-core-corona::after {
-  content: "";
+.sun {
+  align-items: center;
+  justify-content: center;
   position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.sun-core {
-  position: absolute;
-  inset: -15%;
-  border-radius: 50%;
-}
-
-.sun-core-surface {
-  position: absolute;
-  inset: 0;
+  display: flex;
+  height: 100px;
+  width: 100px;
+  inset: -50%;
   border-radius: 50%;
   background: url("./sun_gemini_clean.png") center center / cover no-repeat;
-  animation: sun-core-rotate-cw 16s linear infinite;
+  background-position: center center;
+  box-shadow: 1px 1px 30px 5px #fc9328;
+  animation: pole-rotate 30s linear infinite;
 }
-
-.sun-core-corona {
-  position: absolute;
-  inset: -4%;
-  border-radius: 50%;
-  pointer-events: none;
-  animation: sun-core-pulse 2.2s ease-in-out infinite;
-}
-
-.sun-core-corona::before {
-  inset: 0;
-  background: radial-gradient(circle, rgba(255, 132, 22, 0.34) 0 62%, rgba(255, 72, 0, 0) 100%);
-  filter: blur(10px);
-}
-
-.sun-core-corona::after {
-  inset: 3%;
-  border: 1px solid rgba(255, 194, 92, 0.18);
-}
-
-@keyframes sun-core-rotate-cw {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes sun-core-rotate-ccw {
-  from { transform: rotate(360deg); }
-  to { transform: rotate(0deg); }
-}
-
-@keyframes sun-core-pulse {
-  0%, 100% {
-    transform: scale(0.98);
-    opacity: 0.86;
+@keyframes pole-rotate {
+  0% {
+    background-position: center center;
   }
   50% {
-    transform: scale(1.03);
-    opacity: 1;
+    background-position: 50% 40%;
+  }
+  to {
+    transform: rotate(360deg);
+    background-position: center center;
   }
 }
