@@ -52,6 +52,7 @@ interface Props {
   movingBlitzColors: { red: boolean; blue: boolean };
   movingBlitzProgress: { red: number; blue: number };
   movingBlitzSteps: { red: number | null; blue: number | null };
+  activeSunChariots: { red: boolean; blue: boolean };
   movingAtomicClones: {
     red: { start: Position | null; path: Position[]; step: number | null; position: Position | null };
     blue: { start: Position | null; path: Position[]; step: number | null; position: Position | null };
@@ -131,6 +132,7 @@ export function AbilityGrid({
   movingBlitzColors,
   movingBlitzProgress,
   movingBlitzSteps,
+  activeSunChariots,
   movingAtomicClones,
   movingPaths,
   movingStarts,
@@ -947,6 +949,7 @@ export function AbilityGrid({
               isPhased={activePhaseShifts.red && state.phase === 'moving'}
               isOverloaded={state.players.red.reboundLocked}
               isBlitzing={movingBlitzProgress.red > 0}
+              isSunChariotActive={activeSunChariots.red}
               hp={state.players.red.hp}
               maxHp={5}
               hpOffsetY={redHpOffsetY}
@@ -969,6 +972,7 @@ export function AbilityGrid({
               isPhased={activePhaseShifts.blue && state.phase === 'moving'}
               isOverloaded={state.players.blue.reboundLocked}
               isBlitzing={movingBlitzProgress.blue > 0}
+              isSunChariotActive={activeSunChariots.blue}
               hp={state.players.blue.hp}
               maxHp={5}
               skin={blueSkin}

@@ -368,6 +368,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   );
   const [movingBlitzSteps, setMovingBlitzSteps] =
     useState<NullableNumberByColor>(createNullSteps);
+  const [activeSunChariots, setActiveSunChariots] = useState<BoolByColor>(
+    createFalseFlags,
+  );
   const [movingAtomicClones, setMovingAtomicClones] =
     useState<AtomicCloneVisualsByColor>(createEmptyAtomicCloneVisuals);
   const [winner, setWinner] = useState<PlayerColor | "draw" | null>(null);
@@ -521,6 +524,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setMovingBlitzColors(createFalseFlags());
     setMovingBlitzProgress(createZeroCounters());
     setMovingBlitzSteps(createNullSteps());
+    setActiveSunChariots(createFalseFlags());
     setMovingAtomicClones(createEmptyAtomicCloneVisuals());
   };
 
@@ -882,6 +886,29 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setPendingTeleport(false);
   };
 
+  const beginSunChariotStepPick = () => {
+    const alreadyReserved = skillReservations.some(
+      (entry) => entry.skillId === "sun_chariot",
+    );
+    if (alreadyReserved) {
+      removeReservation("sun_chariot");
+      return;
+    }
+    if (getMyRole() !== "attacker") return;
+    if (getRemainingMana() < getSkillCost("sun_chariot")) return;
+    const nextReservations: AbilitySkillReservation[] = [
+      ...skillReservations.filter((entry) => entry.skillId !== "sun_chariot"),
+      {
+        skillId: "sun_chariot",
+        step: getCurrentSkillStep(),
+        order: reservationOrderRef.current++,
+      },
+    ];
+    updateSkillReservations(nextReservations);
+    setSelectedSkillId(null);
+    setPendingTeleport(false);
+  };
+
   const beginHealStepPick = () => {
     const alreadyReserved = skillReservations.some(
       (entry) => entry.skillId === "aurora_heal",
@@ -1197,6 +1224,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       beginNovaStepPick();
       return;
     }
+    if (skillId === "sun_chariot") {
+      beginSunChariotStepPick();
+      return;
+    }
     if (skillId === "aurora_heal") {
       beginHealStepPick();
       return;
@@ -1472,6 +1503,15 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         return;
       }
 
+      if (
+        event.skillId === "sun_chariot" &&
+        (!event.damages || event.damages.length === 0)
+      ) {
+        setAbilityBanner(null);
+        done();
+        return;
+      }
+
       if (event.skillId === "cosmic_bigbang") {
         if (!isSfxMuted) {
           playBigBang(sfxVolume);
@@ -1624,6 +1664,16 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         payload.skillEvents.find(
           (event) =>
             event.skillId === "electric_blitz" && event.color === "blue",
+        )?.step ?? null,
+    };
+    const sunChariotSteps: NullableNumberByColor = {
+      red:
+        payload.skillEvents.find(
+          (event) => event.skillId === "sun_chariot" && event.color === "red",
+        )?.step ?? null,
+      blue:
+        payload.skillEvents.find(
+          (event) => event.skillId === "sun_chariot" && event.color === "blue",
         )?.step ?? null,
     };
     const atomicCloneEvents = {
@@ -1972,6 +2022,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
 
       if (step > maxSteps) {
+        setActiveSunChariots(createFalseFlags());
         finalizeEndNotices();
         return;
       }
@@ -2001,6 +2052,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           ),
         },
       }));
+      setActiveSunChariots({
+        red: sunChariotSteps.red !== null && step >= sunChariotSteps.red,
+        blue: sunChariotSteps.blue !== null && step >= sunChariotSteps.blue,
+      });
 
       if (redShouldMoveNormally) {
         setRedDisplayPos(
@@ -2495,6 +2550,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             movingBlitzColors={movingBlitzColors}
             movingBlitzProgress={movingBlitzProgress}
             movingBlitzSteps={movingBlitzSteps}
+            activeSunChariots={activeSunChariots}
             movingAtomicClones={movingAtomicClones}
             movingPaths={movingPaths}
             movingStarts={movingStarts}
@@ -2572,6 +2628,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 skillId === "arc_reactor_field") &&
                 getMyRole() !== "escaper") ||
               ((skillId === "ember_blast" ||
+                skillId === "sun_chariot" ||
                 skillId === "atomic_fission" ||
                 skillId === "inferno_field" ||
                 skillId === "nova_blast" ||

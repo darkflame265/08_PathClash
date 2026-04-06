@@ -15,6 +15,7 @@ export type AbilitySkillId =
   | 'atomic_fission'
   | 'inferno_field'
   | 'nova_blast'
+  | 'sun_chariot'
   | 'aurora_heal'
   | 'gold_overdrive'
   | 'quantum_shift'
@@ -35,6 +36,7 @@ export const ABILITY_SKILL_COSTS: Record<AbilitySkillId, number> = {
   atomic_fission: 6,
   inferno_field: 6,
   nova_blast: 4,
+  sun_chariot: 8,
   aurora_heal: 8,
   gold_overdrive: 8,
   quantum_shift: 4,
@@ -300,6 +302,26 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     category: 'attack',
     skinId: 'nova',
     icon: '✸',
+  },
+  sun_chariot: {
+    id: 'sun_chariot',
+    name: { en: 'Sun Chariot', kr: '태양전차' },
+    description: {
+      en: 'Expand into a 3x3 collision zone while moving. The opponent can be hit once during this skill.',
+      kr: '이동 중 3x3 충돌 범위로 확장됩니다. 스킬 사용 중 상대를 1회만 피격시킬 수 있습니다.',
+    },
+    loadoutTags: {
+      en: 'Move OK · Combo OK',
+      kr: '이동 가능 · 조합 가능',
+    },
+    loadoutDescription: {
+      en: 'While moving, your collision area becomes 3x3 and can hit the opponent once.',
+      kr: '이동 중 충돌 범위가 3x3으로 커지며, 상대를 1회만 타격할 수 있습니다.',
+    },
+    manaCost: ABILITY_SKILL_COSTS.sun_chariot,
+    category: 'attack',
+    skinId: 'sun',
+    icon: '☀',
   },
   aurora_heal: {
     id: 'aurora_heal',

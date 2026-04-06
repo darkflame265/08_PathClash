@@ -16,6 +16,7 @@ export type AbilitySkillId =
   | 'atomic_fission'
   | 'inferno_field'
   | 'nova_blast'
+  | 'sun_chariot'
   | 'aurora_heal'
   | 'gold_overdrive'
   | 'quantum_shift'
@@ -48,6 +49,7 @@ export const ABILITY_SKILL_COSTS: Record<AbilitySkillId, number> = {
   atomic_fission: 6,
   inferno_field: 6,
   nova_blast: 4,
+  sun_chariot: 8,
   aurora_heal: 8,
   gold_overdrive: 8,
   quantum_shift: 4,
@@ -97,6 +99,11 @@ export const ABILITY_SKILL_SERVER_RULES: Record<
     targetRule: 'position',
   },
   nova_blast: {
+    roleRestriction: 'attacker',
+    stepRule: 'any',
+    targetRule: 'none',
+  },
+  sun_chariot: {
     roleRestriction: 'attacker',
     stepRule: 'any',
     targetRule: 'none',

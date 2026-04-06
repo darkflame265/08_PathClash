@@ -25,6 +25,7 @@ interface Props {
   isAtField?: boolean;
   isOverloaded?: boolean;
   isBlitzing?: boolean;
+  isSunChariotActive?: boolean;
   isClone?: boolean;
   hp?: number | null;
   maxHp?: number;
@@ -67,6 +68,7 @@ export function PlayerPiece({
   isAtField = false,
   isOverloaded = false,
   isBlitzing = false,
+  isSunChariotActive = false,
   isClone = false,
   hp = null,
   maxHp = 3,
@@ -94,6 +96,7 @@ export function PlayerPiece({
     isPhased ? 'piece-phased' : '',
     isOverloaded ? 'piece-overloaded' : '',
     isBlitzing ? 'piece-blitzing' : '',
+    effectiveSkin === 'sun' && isSunChariotActive ? 'piece-sun-chariot-active' : '',
     isClone ? 'piece-clone' : '',
     outlineColor ? `piece-outline-${outlineColor}` : '',
     isHit ? 'hit' : '',

@@ -35,6 +35,7 @@ function getSkillPriority(skillId: AbilitySkillId): number {
     case 'ember_blast':
     case 'atomic_fission':
     case 'nova_blast':
+    case 'sun_chariot':
     case 'electric_blitz':
     case 'cosmic_bigbang':
       return 2;
@@ -100,6 +101,17 @@ function getNovaPositions(origin: Position): Position[] {
       position.col >= 0 &&
       position.col <= 4,
   );
+}
+
+function getSquarePositions(origin: Position, radius = 1): Position[] {
+  const positions: Position[] = [];
+  for (let row = origin.row - radius; row <= origin.row + radius; row += 1) {
+    for (let col = origin.col - radius; col <= origin.col + radius; col += 1) {
+      if (row < 0 || row > 4 || col < 0 || col > 4) continue;
+      positions.push({ row, col });
+    }
+  }
+  return positions;
 }
 
 function getLinePositions(start: Position, path: Position[]): Position[] {
@@ -197,6 +209,12 @@ export function resolveAbilityRound(params: {
   let blueBlitz = false;
   let redBlitzDamagedThisStep = false;
   let blueBlitzDamagedThisStep = false;
+  let redSunChariot = false;
+  let blueSunChariot = false;
+  let redSunChariotHit = false;
+  let blueSunChariotHit = false;
+  let redSunChariotOrder: number | null = null;
+  let blueSunChariotOrder: number | null = null;
   let attackerQuantumOverlapPending = false;
   let redCloneStart: Position | null = null;
   let blueCloneStart: Position | null = null;
@@ -723,6 +741,28 @@ export function resolveAbilityRound(params: {
       return;
     }
 
+    if (reservation.skillId === 'sun_chariot') {
+      if (color === 'red') {
+        redMana = spendMana(casterMana, reservation.skillId);
+        redSunChariot = true;
+        redSunChariotHit = false;
+        redSunChariotOrder = reservation.order;
+      } else {
+        blueMana = spendMana(casterMana, reservation.skillId);
+        blueSunChariot = true;
+        blueSunChariotHit = false;
+        blueSunChariotOrder = reservation.order;
+      }
+      skillEvents.push({
+        step: reservation.step,
+        order: reservation.order,
+        color,
+        skillId: reservation.skillId,
+        affectedPositions: getSquarePositions(currentPos),
+      });
+      return;
+    }
+
     if (reservation.skillId === 'cosmic_bigbang') {
       const affectedPositions: Position[] = [];
       for (let row = 0; row < 5; row++) {
@@ -939,6 +979,61 @@ export function resolveAbilityRound(params: {
 
     if (redAtFieldSteps > 0) redAtFieldSteps -= 1;
     if (blueAtFieldSteps > 0) blueAtFieldSteps -= 1;
+
+    const applySunChariotHit = (
+      sourceColor: PlayerColor,
+      currentPos: Position,
+      targetPos: Position,
+      alreadyHit: boolean,
+      order: number | null,
+    ) => {
+      if (alreadyHit || order === null) return alreadyHit;
+      const affectedPositions = getSquarePositions(currentPos);
+      if (!affectedPositions.some((position) => samePosition(position, targetPos))) {
+        return alreadyHit;
+      }
+      const damages: AbilityDamageEvent[] = [];
+      resolveAttackSkill(
+        step,
+        sourceColor,
+        sourceColor === 'red' ? 'blue' : 'red',
+        'sun_chariot',
+        1,
+        currentPos,
+        targetPos,
+        damages,
+      );
+      if (damages.length === 0) return alreadyHit;
+      applyDamages(
+        sourceColor,
+        damages,
+        [],
+        'sun_chariot',
+        step,
+        order,
+        affectedPositions,
+      );
+      return true;
+    };
+
+    if (redSunChariot) {
+      redSunChariotHit = applySunChariotHit(
+        'red',
+        redPos,
+        bluePos,
+        redSunChariotHit,
+        redSunChariotOrder,
+      );
+    }
+    if (blueSunChariot) {
+      blueSunChariotHit = applySunChariotHit(
+        'blue',
+        bluePos,
+        redPos,
+        blueSunChariotHit,
+        blueSunChariotOrder,
+      );
+    }
   }
 
   let winner: PlayerColor | 'draw' | null = null;

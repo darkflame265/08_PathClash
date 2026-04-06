@@ -278,6 +278,7 @@ const initialAbilityLoadout = (() => {
       value === 'ember_blast' ||
       value === 'inferno_field' ||
       value === 'nova_blast' ||
+      value === 'sun_chariot' ||
       value === 'aurora_heal' ||
       value === 'gold_overdrive' ||
       value === 'quantum_shift' ||

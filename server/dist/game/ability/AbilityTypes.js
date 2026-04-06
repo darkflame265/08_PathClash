@@ -12,6 +12,7 @@ exports.ABILITY_SKILL_COSTS = {
     atomic_fission: 6,
     inferno_field: 6,
     nova_blast: 4,
+    sun_chariot: 8,
     aurora_heal: 8,
     gold_overdrive: 8,
     quantum_shift: 4,
@@ -57,6 +58,11 @@ exports.ABILITY_SKILL_SERVER_RULES = {
         targetRule: 'position',
     },
     nova_blast: {
+        roleRestriction: 'attacker',
+        stepRule: 'any',
+        targetRule: 'none',
+    },
+    sun_chariot: {
         roleRestriction: 'attacker',
         stepRule: 'any',
         targetRule: 'none',

@@ -57,6 +57,7 @@ function findFinisherSkillId(loserColor, skillEvents) {
             event.skillId === 'atomic_fission' ||
             event.skillId === 'inferno_field' ||
             event.skillId === 'nova_blast' ||
+            event.skillId === 'sun_chariot' ||
             event.skillId === 'electric_blitz' ||
             event.skillId === 'cosmic_bigbang') {
             return event.skillId;
@@ -597,6 +598,7 @@ class AbilityRoom {
             skill.skillId === 'atomic_fission' ||
             skill.skillId === 'inferno_field' ||
             skill.skillId === 'nova_blast' ||
+            skill.skillId === 'sun_chariot' ||
             skill.skillId === 'electric_blitz' ||
             skill.skillId === 'cosmic_bigbang');
         const hasBigBang = uniqueSkills.some((skill) => skill.skillId === 'cosmic_bigbang');

@@ -16,6 +16,16 @@ body {
   height: calc(var(--piece-inner-size, 44px) * 1.5);
 }
 
+.player-piece.piece-skin-sun.piece-sun-chariot-active {
+  width: calc(var(--piece-size, 56px) * 2.5);
+  height: calc(var(--piece-size, 56px) * 2.5);
+}
+
+.player-piece.piece-skin-sun.piece-sun-chariot-active .piece-inner {
+  width: calc(var(--piece-inner-size, 44px) * 2.5);
+  height: calc(var(--piece-inner-size, 44px) * 2.5);
+}
+
 .sun {
   align-items: center;
   justify-content: center;

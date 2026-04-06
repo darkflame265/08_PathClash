@@ -22,6 +22,7 @@ const FULL_HP_MILESTONES = [1, 5, 30];
 const FULL_HP_REWARDS = [80, 180, 500];
 const attackSkillNames = {
     ember_blast: { en: 'Ember Blast', kr: '엠버 폭발' },
+    sun_chariot: { en: 'Sun Chariot', kr: '태양전차' },
     atomic_fission: { en: 'Atomic Fission', kr: '원자분열' },
     inferno_field: { en: 'Inferno Field', kr: '용암지대' },
     nova_blast: { en: 'Nova Blast', kr: '노바 폭발' },

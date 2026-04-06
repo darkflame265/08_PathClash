@@ -36,6 +36,7 @@ const UTILITY_SKILL_SERIES = [5, 25, 50, 150] as const;
 
 const ATTACK_FINISH_SKILLS = new Set([
   'ember_blast',
+  'sun_chariot',
   'atomic_fission',
   'inferno_field',
   'nova_blast',

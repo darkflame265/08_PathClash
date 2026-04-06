@@ -20,6 +20,7 @@ function getSkillPriority(skillId) {
         case 'ember_blast':
         case 'atomic_fission':
         case 'nova_blast':
+        case 'sun_chariot':
         case 'electric_blitz':
         case 'cosmic_bigbang':
             return 2;
@@ -66,6 +67,17 @@ function getNovaPositions(origin) {
         position.row <= 4 &&
         position.col >= 0 &&
         position.col <= 4);
+}
+function getSquarePositions(origin, radius = 1) {
+    const positions = [];
+    for (let row = origin.row - radius; row <= origin.row + radius; row += 1) {
+        for (let col = origin.col - radius; col <= origin.col + radius; col += 1) {
+            if (row < 0 || row > 4 || col < 0 || col > 4)
+                continue;
+            positions.push({ row, col });
+        }
+    }
+    return positions;
 }
 function getLinePositions(start, path) {
     return [start, ...path];
@@ -136,6 +148,12 @@ function resolveAbilityRound(params) {
     let blueBlitz = false;
     let redBlitzDamagedThisStep = false;
     let blueBlitzDamagedThisStep = false;
+    let redSunChariot = false;
+    let blueSunChariot = false;
+    let redSunChariotHit = false;
+    let blueSunChariotHit = false;
+    let redSunChariotOrder = null;
+    let blueSunChariotOrder = null;
     let attackerQuantumOverlapPending = false;
     let redCloneStart = null;
     let blueCloneStart = null;
@@ -560,6 +578,28 @@ function resolveAbilityRound(params) {
             applyDamages(color, damages, [], reservation.skillId, reservation.step, reservation.order, affectedPositions);
             return;
         }
+        if (reservation.skillId === 'sun_chariot') {
+            if (color === 'red') {
+                redMana = spendMana(casterMana, reservation.skillId);
+                redSunChariot = true;
+                redSunChariotHit = false;
+                redSunChariotOrder = reservation.order;
+            }
+            else {
+                blueMana = spendMana(casterMana, reservation.skillId);
+                blueSunChariot = true;
+                blueSunChariotHit = false;
+                blueSunChariotOrder = reservation.order;
+            }
+            skillEvents.push({
+                step: reservation.step,
+                order: reservation.order,
+                color,
+                skillId: reservation.skillId,
+                affectedPositions: getSquarePositions(currentPos),
+            });
+            return;
+        }
         if (reservation.skillId === 'cosmic_bigbang') {
             const affectedPositions = [];
             for (let row = 0; row < 5; row++) {
@@ -718,6 +758,26 @@ function resolveAbilityRound(params) {
             redAtFieldSteps -= 1;
         if (blueAtFieldSteps > 0)
             blueAtFieldSteps -= 1;
+        const applySunChariotHit = (sourceColor, currentPos, targetPos, alreadyHit, order) => {
+            if (alreadyHit || order === null)
+                return alreadyHit;
+            const affectedPositions = getSquarePositions(currentPos);
+            if (!affectedPositions.some((position) => samePosition(position, targetPos))) {
+                return alreadyHit;
+            }
+            const damages = [];
+            resolveAttackSkill(step, sourceColor, sourceColor === 'red' ? 'blue' : 'red', 'sun_chariot', 1, currentPos, targetPos, damages);
+            if (damages.length === 0)
+                return alreadyHit;
+            applyDamages(sourceColor, damages, [], 'sun_chariot', step, order, affectedPositions);
+            return true;
+        };
+        if (redSunChariot) {
+            redSunChariotHit = applySunChariotHit('red', redPos, bluePos, redSunChariotHit, redSunChariotOrder);
+        }
+        if (blueSunChariot) {
+            blueSunChariotHit = applySunChariotHit('blue', bluePos, redPos, blueSunChariotHit, blueSunChariotOrder);
+        }
     }
     let winner = null;
     if (redHp <= 0 && blueHp <= 0)
