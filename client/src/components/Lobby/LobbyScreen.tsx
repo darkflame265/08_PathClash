@@ -514,111 +514,6 @@ function getUpgradeDisplayMsg(
   return "";
 }
 
-function AccountCard({
-  myNickname,
-
-  isGuestUser,
-
-  accountWins,
-
-  accountLosses,
-
-  upgradeMessage,
-
-  onLinkGoogle,
-
-  onLogout,
-
-  nicknameLabel,
-
-  recordLabel,
-
-  accountSummaryLoading,
-
-  accountSummaryLoadingLabel,
-
-  t,
-}: {
-  myNickname: string;
-
-  isGuestUser: boolean;
-
-  accountWins: number;
-
-  accountLosses: number;
-
-  upgradeMessage: string;
-
-  onLinkGoogle: () => void;
-
-  onLogout: () => void;
-
-  nicknameLabel: string;
-
-  recordLabel: string;
-
-  accountSummaryLoading: boolean;
-
-  accountSummaryLoadingLabel: string;
-
-  t: Translations;
-}) {
-  return (
-    <div className="lobby-card account-card">
-      <div className="account-header">
-        <div className="account-header-main">
-          <h2 data-step="1">{t.accountTitleText}</h2>
-          {accountSummaryLoading && (
-            <div className="account-sync-status" aria-live="polite">
-              <div
-                className="spinner account-sync-spinner"
-                aria-hidden="true"
-              />
-              <span>{accountSummaryLoadingLabel}</span>
-            </div>
-          )}
-        </div>
-
-        {!isGuestUser && (
-          <button className="account-logout" onClick={onLogout}>
-            {t.logout}
-          </button>
-        )}
-      </div>
-
-      {isGuestUser ? <p>{t.accountDesc}</p> : <p>{t.accountDescGoogle}</p>}
-
-      <div className="account-summary-list">
-        <div className="account-summary-row">
-          <span className="account-summary-label">{nicknameLabel}</span>
-          <strong className="account-summary-value">
-            {myNickname || "Guest"}
-          </strong>
-        </div>
-
-        <div className="account-summary-row">
-          <span className="account-summary-label">{recordLabel}</span>
-          <strong className="account-summary-value">
-            {t.record(accountWins, accountLosses)}
-          </strong>
-        </div>
-      </div>
-
-      {isGuestUser && (
-        <div className="account-upgrade">
-          <button className="google-link-btn" onClick={onLinkGoogle}>
-            <span className="google-link-mark">G</span>
-
-            <span>{t.linkGoogle}</span>
-          </button>
-        </div>
-      )}
-
-      {upgradeMessage && <p className="account-info-msg">{upgradeMessage}</p>}
-    </div>
-  );
-}
-
 function renderAbilitySkillIcon(skillId: AbilitySkillId) {
   const skill = ABILITY_SKILLS[skillId];
 
@@ -1076,14 +971,6 @@ export function LobbyScreen({
 
   const recordLabel = lang === "en" ? "Record" : "전적";
 
-  const accountSummaryLoadingLabel =
-    lang === "en"
-      ? "Loading data from DB."
-      : "DB에서 데이터를 불러오는 중입니다.";
-  const accountUpgradeLoadingLabel =
-    lang === "en"
-      ? "Loading account information."
-      : "계정 정보를 불러오고 있습니다.";
   const initialNicknameTitle =
     lang === "en" ? "Choose Your Nickname" : "닉네임 설정";
   const initialNicknameDesc =
@@ -1114,6 +1001,13 @@ export function LobbyScreen({
       ? "Guest"
       : "게스트"
     : "Google";
+  const accountTypeActionLabel = isGuestUser
+    ? lang === "en"
+      ? "Link Google"
+      : "구글 연동"
+    : lang === "en"
+      ? "Logout"
+      : "로그아웃";
 
   const tokenShopTitle = lang === "en" ? "Token Shop" : "토큰 샵";
 
@@ -2981,32 +2875,9 @@ export function LobbyScreen({
     setBoardSkin(nextBoardSkin);
   };
 
-  const accountCard = (
-    <AccountCard
-      myNickname={myNickname}
-      isGuestUser={isGuestUser}
-      accountWins={accountWins}
-      accountLosses={accountLosses}
-      upgradeMessage={upgradeMessage}
-      onLinkGoogle={() => void handleLinkGoogle()}
-      onLogout={() => void handleLogout()}
-      nicknameLabel={nicknameLabel}
-      recordLabel={recordLabel}
-      accountSummaryLoading={accountSummaryLoading || upgradeFlowLoading}
-      accountSummaryLoadingLabel={
-        upgradeFlowLoading
-          ? accountUpgradeLoadingLabel
-          : accountSummaryLoadingLabel
-      }
-      t={t}
-    />
-  );
-
   return (
     <div className="lobby-screen" onClickCapture={handleLobbyUiClickCapture}>
       <h1 className="logo">PathClash</h1>
-
-      {accountCard}
 
       {view === "create" && (
         <div className="lobby-card">
@@ -3951,8 +3822,18 @@ export function LobbyScreen({
 
                 <div className="settings-row">
                   <span className="settings-label">{accountTypeLabel}</span>
-
-                  <strong className="settings-value">{accountTypeValue}</strong>
+                  <div className="settings-inline-action">
+                    <strong className="settings-value">{accountTypeValue}</strong>
+                    <button
+                      className="settings-copy-btn"
+                      type="button"
+                      onClick={() =>
+                        void (isGuestUser ? handleLinkGoogle() : handleLogout())
+                      }
+                    >
+                      {accountTypeActionLabel}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="settings-row">
