@@ -276,6 +276,7 @@ export class AbilityRoom {
       id: userId ?? socket.id,
       userId,
       socketId: socket.id,
+      isBot: false,
       nickname,
       color,
       pieceSkin,
@@ -304,6 +305,47 @@ export class AbilityRoom {
     return color;
   }
 
+  addIdleBot(
+    nickname: string,
+    pieceSkin: PieceSkin,
+    boardSkin: BoardSkin,
+    equippedSkills: AbilitySkillId[] = [],
+  ): PlayerColor | null {
+    if (this.isFull) return null;
+    const color: PlayerColor = this.players.size === 0 ? 'red' : 'blue';
+    const initialPositions = getInitialPositions();
+    this.players.set(color, {
+      id: `bot:${this.roomId}:${color}`,
+      userId: null,
+      socketId: `bot:${this.roomId}:${color}`,
+      isBot: true,
+      nickname,
+      color,
+      pieceSkin,
+      boardSkin,
+      hp: ABILITY_STARTING_HP,
+      position: { ...initialPositions[color] },
+      plannedPath: [],
+      previousTurnStart: null,
+      previousTurnPath: [],
+      plannedSkills: [],
+      pathSubmitted: false,
+      role: color === 'red' ? 'attacker' : 'escaper',
+      stats: { wins: 0, losses: 0 },
+      mana: INITIAL_MANA,
+      invulnerableSteps: 0,
+      pendingManaBonus: 0,
+      pendingOverdriveStage: 0,
+      pendingVoidCloak: false,
+      overdriveActive: false,
+      reboundLocked: false,
+      hidden: false,
+      equippedSkills,
+    });
+    this.touchActivity();
+    return color;
+  }
+
   prepareGameStart(startPaused = false): void {
     this.pendingStart = true;
     this.pendingStartPaused = startPaused;
@@ -317,8 +359,12 @@ export class AbilityRoom {
     if (!player) return false;
     this.readySockets.add(socketId);
     this.touchActivity();
-    const humanSocketIds = [...this.players.values()].map((entry) => entry.socketId);
-    const allReady = humanSocketIds.length === 2 && humanSocketIds.every((id) => this.readySockets.has(id));
+    const humanSocketIds = [...this.players.values()]
+      .filter((entry) => !entry.isBot)
+      .map((entry) => entry.socketId);
+    const allReady =
+      humanSocketIds.length > 0 &&
+      humanSocketIds.every((id) => this.readySockets.has(id));
     if (!allReady) return false;
     this.startGame(this.pendingStartPaused);
     return true;
@@ -531,6 +577,16 @@ export class AbilityRoom {
       blue.position = getRandomTeleportPosition(blue.position, red.position);
       blue.hidden = true;
       blue.pendingVoidCloak = false;
+    }
+    if (red.isBot) {
+      red.pathSubmitted = true;
+      red.plannedPath = [];
+      red.plannedSkills = [];
+    }
+    if (blue.isBot) {
+      blue.pathSubmitted = true;
+      blue.plannedPath = [];
+      blue.plannedSkills = [];
     }
     this.obstacles = generateObstacles(this.roomId, this.turn, red.position, blue.position);
 

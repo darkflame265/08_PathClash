@@ -484,11 +484,26 @@ function initSocketServer(io) {
                 socket.emit('twovtwo_matchmaking_waiting', {});
             }
         });
-        socket.on('join_ability', async ({ nickname, auth, pieceSkin, boardSkin, equippedSkills, }) => {
+        socket.on('join_ability', async ({ nickname, auth, pieceSkin, boardSkin, equippedSkills, training, }) => {
             if (emitUpdateRequired(socket, auth))
                 return;
             await registerSocketSession(socket, auth);
             const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+            if (training) {
+                const roomId = abilityStore.generateRoomId();
+                const room = new AbilityRoom_1.AbilityRoom(roomId, roomId, io);
+                abilityStore.add(room);
+                room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
+                room.addIdleBot('Training Dummy', 'classic', 'classic', []);
+                abilityStore.registerSocket(socket.id, roomId);
+                socket.emit('ability_room_joined', {
+                    roomId,
+                    color: 'red',
+                    opponentNickname: 'Training Dummy',
+                });
+                room.prepareGameStart();
+                return;
+            }
             const queued = abilityStore.dequeue();
             if (!queued || queued.socketId === socket.id) {
                 if (queued) {

@@ -709,6 +709,8 @@ export function LobbyScreen({
 
   const [isMatchmaking, setIsMatchmaking] = useState(false);
   const [isAiTutorialQueueing, setIsAiTutorialQueueing] = useState(false);
+  const [isAbilityTrainingQueueing, setIsAbilityTrainingQueueing] =
+    useState(false);
 
   const [isSkinPickerOpen, setIsSkinPickerOpen] = useState(false);
   const [skinPickerTab, setSkinPickerTab] = useState<SkinPickerTab>("piece");
@@ -892,6 +894,7 @@ export function LobbyScreen({
   const abilityBattleStartLabel = lang === "en" ? "Start Match" : "매칭 시작";
 
   const abilityLoadoutTitle = lang === "en" ? "Equipped Skills" : "장착 스킬";
+  const abilityTrainingTitle = lang === "en" ? "Training" : "훈련장";
 
   const abilityLoadoutDesc =
     lang === "en"
@@ -899,6 +902,10 @@ export function LobbyScreen({
       : "능력 대전에 가져갈 스킬을 최대 3개까지 선택하세요.";
 
   const abilityLoadoutCount = lang === "en" ? "equipped" : "장착 중";
+  const abilityTrainingMatchmakingDesc =
+    lang === "en"
+      ? "Entering the training room. Please wait a moment."
+      : "훈련장에 입장중입니다. 잠시 기다려주세요.";
 
   const patchNotesLabel = lang === "en" ? "Patch Notes" : "패치노트";
   const modeSelectorTitle = lang === "en" ? "Select Mode" : "모드 선택";
@@ -2759,6 +2766,7 @@ export function LobbyScreen({
     setMatchType("ability");
 
     setIsMatchmaking(true);
+    setIsAbilityTrainingQueueing(false);
 
     const socket = startSocket();
 
@@ -2769,12 +2777,31 @@ export function LobbyScreen({
     });
   };
 
+  const handleAbilityTraining = async () => {
+    setError("");
+
+    setMatchType("ability");
+
+    setIsMatchmaking(true);
+    setIsAbilityTrainingQueueing(true);
+
+    const socket = startSocket();
+
+    socket.emit("join_ability", {
+      ...(await buildPlayerPayload()),
+
+      equippedSkills: abilityLoadout,
+      training: true,
+    });
+  };
+
   const handleCancelAbility = () => {
     const socket = connectSocket();
 
     socket.emit("cancel_ability");
 
     setIsMatchmaking(false);
+    setIsAbilityTrainingQueueing(false);
 
     setMatchType(null);
   };
@@ -3218,13 +3245,22 @@ export function LobbyScreen({
           <>
             <div className="lobby-card-title-row">
               <h2 data-step="4">{abilityBattleTitle}</h2>
-              <button
-                className="lobby-mini-btn"
-                type="button"
-                onClick={() => setIsAbilityLoadoutOpen(true)}
-              >
-                {abilityLoadoutTitle}
-              </button>
+              <div className="lobby-card-mini-actions">
+                <button
+                  className="lobby-mini-btn"
+                  type="button"
+                  onClick={() => void handleAbilityTraining()}
+                >
+                  {abilityTrainingTitle}
+                </button>
+                <button
+                  className="lobby-mini-btn"
+                  type="button"
+                  onClick={() => setIsAbilityLoadoutOpen(true)}
+                >
+                  {abilityLoadoutTitle}
+                </button>
+              </div>
             </div>
             <div className="ability-loadout-chip-row">
               {equippedAbilitySkillDefs.map((skill) => (
@@ -3243,7 +3279,11 @@ export function LobbyScreen({
                     <strong>{t.matchmakingHead}</strong>
                   </div>
                   <div className="spinner" />
-                  <p>{t.matchmakingDesc}</p>
+                  <p>
+                    {isAbilityTrainingQueueing
+                      ? abilityTrainingMatchmakingDesc
+                      : t.matchmakingDesc}
+                  </p>
                 </div>
                 <button
                   className="lobby-btn cancel"

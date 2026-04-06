@@ -68,6 +68,14 @@
   margin-bottom: 0;
 }
 
+.lobby-card-mini-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .lobby-mini-btn {
   display: inline-flex;
   align-items: center;

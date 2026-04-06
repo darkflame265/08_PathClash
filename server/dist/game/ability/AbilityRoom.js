@@ -189,6 +189,7 @@ class AbilityRoom {
             id: userId ?? socket.id,
             userId,
             socketId: socket.id,
+            isBot: false,
             nickname,
             color,
             pieceSkin,
@@ -216,6 +217,42 @@ class AbilityRoom {
         this.touchActivity();
         return color;
     }
+    addIdleBot(nickname, pieceSkin, boardSkin, equippedSkills = []) {
+        if (this.isFull)
+            return null;
+        const color = this.players.size === 0 ? 'red' : 'blue';
+        const initialPositions = (0, GameEngine_1.getInitialPositions)();
+        this.players.set(color, {
+            id: `bot:${this.roomId}:${color}`,
+            userId: null,
+            socketId: `bot:${this.roomId}:${color}`,
+            isBot: true,
+            nickname,
+            color,
+            pieceSkin,
+            boardSkin,
+            hp: ABILITY_STARTING_HP,
+            position: { ...initialPositions[color] },
+            plannedPath: [],
+            previousTurnStart: null,
+            previousTurnPath: [],
+            plannedSkills: [],
+            pathSubmitted: false,
+            role: color === 'red' ? 'attacker' : 'escaper',
+            stats: { wins: 0, losses: 0 },
+            mana: INITIAL_MANA,
+            invulnerableSteps: 0,
+            pendingManaBonus: 0,
+            pendingOverdriveStage: 0,
+            pendingVoidCloak: false,
+            overdriveActive: false,
+            reboundLocked: false,
+            hidden: false,
+            equippedSkills,
+        });
+        this.touchActivity();
+        return color;
+    }
     prepareGameStart(startPaused = false) {
         this.pendingStart = true;
         this.pendingStartPaused = startPaused;
@@ -230,8 +267,11 @@ class AbilityRoom {
             return false;
         this.readySockets.add(socketId);
         this.touchActivity();
-        const humanSocketIds = [...this.players.values()].map((entry) => entry.socketId);
-        const allReady = humanSocketIds.length === 2 && humanSocketIds.every((id) => this.readySockets.has(id));
+        const humanSocketIds = [...this.players.values()]
+            .filter((entry) => !entry.isBot)
+            .map((entry) => entry.socketId);
+        const allReady = humanSocketIds.length > 0 &&
+            humanSocketIds.every((id) => this.readySockets.has(id));
         if (!allReady)
             return false;
         this.startGame(this.pendingStartPaused);
@@ -440,6 +480,16 @@ class AbilityRoom {
             blue.position = getRandomTeleportPosition(blue.position, red.position);
             blue.hidden = true;
             blue.pendingVoidCloak = false;
+        }
+        if (red.isBot) {
+            red.pathSubmitted = true;
+            red.plannedPath = [];
+            red.plannedSkills = [];
+        }
+        if (blue.isBot) {
+            blue.pathSubmitted = true;
+            blue.plannedPath = [];
+            blue.plannedSkills = [];
         }
         this.obstacles = (0, GameEngine_1.generateObstacles)(this.roomId, this.turn, red.position, blue.position);
         const now = Date.now();

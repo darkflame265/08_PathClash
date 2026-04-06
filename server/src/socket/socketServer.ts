@@ -694,17 +694,42 @@ export function initSocketServer(io: Server): void {
           pieceSkin,
           boardSkin,
           equippedSkills,
+          training,
         }: {
           nickname: string;
           auth?: AuthPayload;
           pieceSkin?: PieceSkin;
           boardSkin?: BoardSkin;
           equippedSkills: AbilitySkillId[];
+          training?: boolean;
         },
       ) => {
         if (emitUpdateRequired(socket, auth)) return;
         await registerSocketSession(socket, auth);
         const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+        if (training) {
+          const roomId = abilityStore.generateRoomId();
+          const room = new AbilityRoom(roomId, roomId, io);
+          abilityStore.add(room);
+          room.addPlayer(
+            socket,
+            profile.nickname,
+            profile.userId,
+            profile.stats,
+            pieceSkin ?? 'classic',
+            boardSkin ?? 'classic',
+            equippedSkills,
+          );
+          room.addIdleBot('Training Dummy', 'classic', 'classic', []);
+          abilityStore.registerSocket(socket.id, roomId);
+          socket.emit('ability_room_joined', {
+            roomId,
+            color: 'red',
+            opponentNickname: 'Training Dummy',
+          });
+          room.prepareGameStart();
+          return;
+        }
         const queued = abilityStore.dequeue();
         if (!queued || queued.socketId === socket.id) {
           if (queued) {
