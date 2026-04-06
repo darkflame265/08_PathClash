@@ -12,6 +12,7 @@ export function SunGame({ cellSize }: SunGameProps) {
       style={{ ["--sun-core-size" as string]: `${Math.max(18, cellSize * 0.34)}px` }}
     >
       <div className="sun-core-surface" />
+      <div className="sun-core-corona" />
     </div>
   );
 }
