@@ -2433,6 +2433,30 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           </div>
         </div>
 
+        <div className="ability-opponent-panel">
+          <div className="ability-opponent-panel-name">
+            <span className="ability-opponent-panel-label">
+              {lang === "en" ? "Opponent" : "상대"}
+            </span>
+            <strong>{opponent.nickname}</strong>
+          </div>
+          <div className="ability-opponent-panel-skills">
+            {opponent.equippedSkills.map((skillId) => {
+              const skill = ABILITY_SKILLS[skillId];
+              return (
+                <div key={skillId} className="ability-opponent-panel-skill">
+                  <span className="ability-opponent-panel-skill-icon">
+                    {renderSkillIcon(skillId)}
+                  </span>
+                  <span className="ability-opponent-panel-skill-name">
+                    {lang === "en" ? skill.name.en : skill.name.kr}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="gs-grid-area" ref={gridAreaRef}>
           <AbilityGrid
             state={state}
