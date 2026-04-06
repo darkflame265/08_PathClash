@@ -551,8 +551,12 @@
   justify-content: flex-start;
 }
 
+.ability-screen .gs-board-stage {
+  --ability-result-slot-top: calc(7.6rem * var(--gs-scale, 1));
+}
+
 .ability-screen .gs-board-stage .gs-result-slot {
-  top: calc(4rem * var(--gs-scale, 1));
+  top: var(--ability-result-slot-top);
 }
 
 .ability-gameover-opponent {
