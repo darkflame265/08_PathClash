@@ -2935,9 +2935,9 @@ export function LobbyScreen({
     { key: "ai", icon: "🤖", label: t.aiTitle },
     { key: "friend", icon: "🤝", label: t.friendTitle },
     { key: "random", icon: "🎲", label: t.randomTitle },
-    { key: "coop", icon: "🛡️", label: coopTitle },
-    { key: "2v2", icon: "👥", label: twoVsTwoTitle },
     { key: "ability", icon: "✨", label: abilityBattleTitle },
+    { key: "2v2", icon: "👥", label: twoVsTwoTitle },
+    { key: "coop", icon: "🛡️", label: coopTitle },
     { key: "classic_ranked", icon: "🏆", label: classicRankedTitle },
     { key: "skill_ranked", icon: "⚔️", label: skillRankedTitle },
   ];
@@ -2999,7 +2999,7 @@ export function LobbyScreen({
         return (
           <>
             <div className="lobby-card-title-row">
-              <h2 data-step="2">{t.aiTitle}</h2>
+              <h2 data-step="1">{t.aiTitle}</h2>
               <button
                 type="button"
                 className="lobby-mini-btn tutorial"
@@ -3043,7 +3043,7 @@ export function LobbyScreen({
       case "friend":
         return (
           <>
-            <h2 data-step="3">{t.friendTitle}</h2>
+            <h2 data-step="2">{t.friendTitle}</h2>
             <p>{friendDesc}</p>
             <div className="btn-divider">
               <button
@@ -3068,7 +3068,7 @@ export function LobbyScreen({
         return (
           <>
             <div className="lobby-card-title-row">
-              <h2 data-step="4">{t.randomTitle}</h2>
+              <h2 data-step="3">{t.randomTitle}</h2>
               <div className="daily-reward-wrap">
                 <button
                   className="daily-reward-badge daily-reward-badge-btn"
@@ -3134,7 +3134,7 @@ export function LobbyScreen({
       case "coop":
         return (
           <>
-            <h2 data-step="5">{coopTitle}</h2>
+            <h2 data-step="4">{coopTitle}</h2>
             <p>{coopDesc}</p>
             {isMatchmaking && currentMatchType === "coop" ? (
               <>
@@ -3163,7 +3163,7 @@ export function LobbyScreen({
       case "2v2":
         return (
           <>
-            <h2 data-step="6">{twoVsTwoTitle}</h2>
+            <h2 data-step="5">{twoVsTwoTitle}</h2>
             <p>{twoVsTwoDesc}</p>
             {isMatchmaking && currentMatchType === "2v2" ? (
               <>
@@ -3196,7 +3196,7 @@ export function LobbyScreen({
         return (
           <>
             <div className="lobby-card-title-row">
-              <h2 data-step="7">{abilityBattleTitle}</h2>
+              <h2 data-step="6">{abilityBattleTitle}</h2>
               <button
                 className="lobby-mini-btn"
                 type="button"
@@ -3244,7 +3244,7 @@ export function LobbyScreen({
       case "classic_ranked":
         return (
           <>
-            <h2>{classicRankedTitle}</h2>
+            <h2 data-step="7">{classicRankedTitle}</h2>
             <p>{rankedComingSoonDesc}</p>
             <button className="lobby-btn accent" type="button" disabled>
               {t.startBtn}
@@ -3254,7 +3254,7 @@ export function LobbyScreen({
       case "skill_ranked":
         return (
           <>
-            <h2>{skillRankedTitle}</h2>
+            <h2 data-step="8">{skillRankedTitle}</h2>
             <p>{rankedComingSoonDesc}</p>
             <button className="lobby-btn accent" type="button" disabled>
               {abilityBattleStartLabel}
