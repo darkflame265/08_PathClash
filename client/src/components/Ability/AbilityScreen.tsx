@@ -371,6 +371,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [activeSunChariots, setActiveSunChariots] = useState<BoolByColor>(
     createFalseFlags,
   );
+  const [transitionSunChariots, setTransitionSunChariots] =
+    useState<BoolByColor>(createFalseFlags);
   const [movingAtomicClones, setMovingAtomicClones] =
     useState<AtomicCloneVisualsByColor>(createEmptyAtomicCloneVisuals);
   const [winner, setWinner] = useState<PlayerColor | "draw" | null>(null);
@@ -381,6 +383,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const stateRef = useRef<AbilityBattleState | null>(null);
   const winnerRef = useRef<PlayerColor | "draw" | null>(null);
+  const skillReservationsRef = useRef<AbilitySkillReservation[]>([]);
   const animationTimeoutIdsRef = useRef<number[]>([]);
   const submitTimeoutIdsRef = useRef<number[]>([]);
   const gridAreaRef = useRef<HTMLDivElement>(null);
@@ -399,8 +402,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       skillReservations.some((entry) => entry.skillId === "sun_chariot"),
   };
   const visibleSunChariots: BoolByColor = {
-    red: activeSunChariots.red || planningSunChariots.red,
-    blue: activeSunChariots.blue || planningSunChariots.blue,
+    red:
+      activeSunChariots.red ||
+      planningSunChariots.red ||
+      transitionSunChariots.red,
+    blue:
+      activeSunChariots.blue ||
+      planningSunChariots.blue ||
+      transitionSunChariots.blue,
   };
   const previousGuardPathRef = useRef<Position[]>([]);
   const previousChargePathRef = useRef<Position[]>([]);
@@ -418,6 +427,26 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   useEffect(() => {
     winnerRef.current = winner;
   }, [winner]);
+
+  useEffect(() => {
+    skillReservationsRef.current = skillReservations;
+  }, [skillReservations]);
+
+  useEffect(() => {
+    if (!state) return;
+    if (state.phase === "planning") {
+      setTransitionSunChariots(createFalseFlags());
+      return;
+    }
+    if (state.phase !== "moving") {
+      setTransitionSunChariots(createFalseFlags());
+      return;
+    }
+    setTransitionSunChariots((prev) => ({
+      red: activeSunChariots.red ? false : prev.red,
+      blue: activeSunChariots.blue ? false : prev.blue,
+    }));
+  }, [activeSunChariots.blue, activeSunChariots.red, state]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -2182,6 +2211,15 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
     const onResolution = (payload: AbilityResolutionPayload) => {
       setRoundInfo(null);
+      const hadSunChariotReserved = skillReservationsRef.current.some(
+        (entry) => entry.skillId === "sun_chariot",
+      );
+      if (hadSunChariotReserved) {
+        setTransitionSunChariots({
+          red: currentColor === "red",
+          blue: currentColor === "blue",
+        });
+      }
       const hadHiddenPlayer =
         !!stateRef.current &&
         (stateRef.current.players.red.hidden ||
