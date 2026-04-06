@@ -81,6 +81,7 @@ import "./LobbyScreen.css";
 
 type LobbyView = "main" | "create" | "join";
 type SkinPickerTab = "piece" | "board";
+type LobbyModeKey = "ai" | "friend" | "random" | "coop" | "2v2" | "ability";
 
 interface Props {
   onGameStart: () => void;
@@ -117,6 +118,7 @@ const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
 
 const AI_TUTORIAL_PROMPT_ANSWERED_KEY = "pathclash.aiTutorialPromptAnswered.v1";
 const INITIAL_NICKNAME_COMPLETED_KEY = "pathclash.initialNicknameSetUser.v1";
+const LAST_LOBBY_MODE_KEY = "pathclash.lastLobbyMode.v1";
 
 const PATCH_NOTES_READ_KEY = "pathclash.patchNotes.read";
 
@@ -675,6 +677,18 @@ export function LobbyScreen({
   const termsUrl = lang === "en" ? TERMS_URL_EN : TERMS_URL_KR;
 
   const [view, setView] = useState<LobbyView>("main");
+  const [selectedLobbyMode, setSelectedLobbyMode] = useState<LobbyModeKey>(() => {
+    if (typeof window === "undefined") return "ai";
+    const saved = window.localStorage.getItem(LAST_LOBBY_MODE_KEY);
+    return saved === "ai" ||
+      saved === "friend" ||
+      saved === "random" ||
+      saved === "coop" ||
+      saved === "2v2" ||
+      saved === "ability"
+      ? saved
+      : "ai";
+  });
 
   const [joinCode, setJoinCode] = useState("");
 
@@ -735,6 +749,10 @@ export function LobbyScreen({
   const lastRewardSyncDayRef = useRef<string>(getUtcDayKey());
 
   const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
+
+  useEffect(() => {
+    window.localStorage.setItem(LAST_LOBBY_MODE_KEY, selectedLobbyMode);
+  }, [selectedLobbyMode]);
 
   const handleLobbyUiClickCapture = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -858,6 +876,7 @@ export function LobbyScreen({
   const abilityLoadoutCount = lang === "en" ? "equipped" : "장착 중";
 
   const patchNotesLabel = lang === "en" ? "Patch Notes" : "패치노트";
+  const modeSelectorTitle = lang === "en" ? "Select Mode" : "모드 선택";
 
   const patchNotesTitle = lang === "en" ? "Patch Notes" : "패치노트";
 
@@ -2875,26 +2894,46 @@ export function LobbyScreen({
     setBoardSkin(nextBoardSkin);
   };
 
-  return (
-    <div className="lobby-screen" onClickCapture={handleLobbyUiClickCapture}>
-      <h1 className="logo">PathClash</h1>
+  const lobbyModeOptions: Array<{
+    key: LobbyModeKey;
+    icon: string;
+    label: string;
+  }> = [
+    { key: "ai", icon: "🤖", label: t.aiTitle },
+    { key: "friend", icon: "🤝", label: t.friendTitle },
+    { key: "random", icon: "🎲", label: t.randomTitle },
+    { key: "coop", icon: "🛡️", label: coopTitle },
+    { key: "2v2", icon: "👥", label: twoVsTwoTitle },
+    { key: "ability", icon: "✨", label: abilityBattleTitle },
+  ];
 
-      {view === "create" && (
-        <div className="lobby-card">
-          <h2 data-step="C">{t.roomCreatedTitle}</h2>
+  const lobbyModePlaceholders = Array.from({ length: 8 - lobbyModeOptions.length });
 
+  const handleSelectLobbyMode = (mode: LobbyModeKey) => {
+    setSelectedLobbyMode(mode);
+
+    if (mode !== "friend" && view !== "main") {
+      setView("main");
+      setError("");
+    }
+  };
+
+  const renderSelectedModeContent = () => {
+    if (selectedLobbyMode === "friend" && view === "create") {
+      return (
+        <>
+          <h2 data-step="3">{t.roomCreatedTitle}</h2>
           <p>{t.roomCreatedDesc}</p>
-
           <div className="room-code">{createdCode}</div>
-
           <p className="waiting-text">{t.waitingText}</p>
-        </div>
-      )}
+        </>
+      );
+    }
 
-      {view === "join" ? (
-        <div className="lobby-card">
+    if (selectedLobbyMode === "friend" && view === "join") {
+      return (
+        <>
           <h2 data-step="3">{t.joinTitle}</h2>
-
           <input
             className="lobby-input code-input"
             placeholder={t.joinPlaceholder}
@@ -2902,35 +2941,32 @@ export function LobbyScreen({
             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
             maxLength={6}
           />
-
           {error && <p className="error-msg">{error}</p>}
-
           <button
             className="lobby-btn primary"
             onClick={() => void handleJoinRoom()}
           >
             {t.joinBtn}
           </button>
-
           <button
             className="lobby-btn secondary"
             onClick={() => {
               setView("main");
-
               setError("");
             }}
           >
             {t.backBtn}
           </button>
-        </div>
-      ) : (
-        <>
-          <div
-            className={`lobby-card ${isMatchmaking && currentMatchType === "ai" ? "is-matchmaking" : ""}`}
-          >
+        </>
+      );
+    }
+
+    switch (selectedLobbyMode) {
+      case "ai":
+        return (
+          <>
             <div className="lobby-card-title-row">
               <h2 data-step="2">{t.aiTitle}</h2>
-
               <button
                 type="button"
                 className="lobby-mini-btn tutorial"
@@ -2945,19 +2981,15 @@ export function LobbyScreen({
                 <div className="matchmaking-status">
                   <div className="matchmaking-status-head">
                     <span className="matchmaking-dot" />
-
                     <strong>{aiMatchmakingHead}</strong>
                   </div>
-
                   <div className="spinner" />
-
                   <p>
                     {isAiTutorialQueueing
                       ? aiTutorialMatchmakingDesc
                       : aiMatchmakingDesc}
                   </p>
                 </div>
-
                 <button className="lobby-btn cancel" onClick={handleCancelAi}>
                   {aiCancelLabel}
                 </button>
@@ -2965,7 +2997,6 @@ export function LobbyScreen({
             ) : (
               <>
                 <p>{t.aiDesc}</p>
-
                 <button
                   className="lobby-btn ai"
                   onClick={() => void handleAiMatch()}
@@ -2974,11 +3005,12 @@ export function LobbyScreen({
                 </button>
               </>
             )}
-          </div>
-
-          <div className="lobby-card">
+          </>
+        );
+      case "friend":
+        return (
+          <>
             <h2 data-step="3">{t.friendTitle}</h2>
-
             <div className="btn-divider">
               <button
                 className="lobby-btn primary"
@@ -2986,22 +3018,23 @@ export function LobbyScreen({
               >
                 {t.createRoomBtn}
               </button>
-
               <button
                 className="lobby-btn secondary"
-                onClick={() => setView("join")}
+                onClick={() => {
+                  setView("join");
+                  setError("");
+                }}
               >
                 {t.enterCodeBtn}
               </button>
             </div>
-          </div>
-
-          <div
-            className={`lobby-card ${isMatchmaking && currentMatchType === "random" ? "is-matchmaking" : ""}`}
-          >
+          </>
+        );
+      case "random":
+        return (
+          <>
             <div className="lobby-card-title-row">
               <h2 data-step="4">{t.randomTitle}</h2>
-
               <div className="daily-reward-wrap">
                 <button
                   className="daily-reward-badge daily-reward-badge-btn"
@@ -3012,11 +3045,8 @@ export function LobbyScreen({
                   <span className="daily-reward-icon" aria-hidden="true">
                     {"💎"}
                   </span>
-
                   <span>{accountDailyRewardTokens}</span>
-
                   <span className="daily-reward-separator">/</span>
-
                   <span>120</span>
                 </button>
 
@@ -3027,15 +3057,10 @@ export function LobbyScreen({
                     aria-label={dailyRewardGuideTitle}
                   >
                     <strong>{dailyRewardGuideTitle}</strong>
-
                     <p>{dailyRewardGuideMax}</p>
-
                     <p>{dailyRewardGuideDuel}</p>
-
                     <p>{dailyRewardGuideCoop}</p>
-
                     <p>{dailyRewardGuideAi}</p>
-
                     <p>{dailyRewardGuideReset}</p>
                   </div>
                 )}
@@ -3047,15 +3072,11 @@ export function LobbyScreen({
                 <div className="matchmaking-status">
                   <div className="matchmaking-status-head">
                     <span className="matchmaking-dot" />
-
                     <strong>{t.matchmakingHead}</strong>
                   </div>
-
                   <div className="spinner" />
-
                   <p>{t.matchmakingDesc}</p>
                 </div>
-
                 <button
                   className="lobby-btn cancel"
                   onClick={handleCancelRandom}
@@ -3073,29 +3094,23 @@ export function LobbyScreen({
             )}
 
             {error && <p className="error-msg">{error}</p>}
-          </div>
-
-          <div
-            className={`lobby-card ${isMatchmaking && currentMatchType === "coop" ? "is-matchmaking" : ""}`}
-          >
+          </>
+        );
+      case "coop":
+        return (
+          <>
             <h2 data-step="5">{coopTitle}</h2>
-
             <p>{coopDesc}</p>
-
             {isMatchmaking && currentMatchType === "coop" ? (
               <>
                 <div className="matchmaking-status">
                   <div className="matchmaking-status-head">
                     <span className="matchmaking-dot" />
-
                     <strong>{t.matchmakingHead}</strong>
                   </div>
-
                   <div className="spinner" />
-
                   <p>{t.matchmakingDesc}</p>
                 </div>
-
                 <button className="lobby-btn cancel" onClick={handleCancelCoop}>
                   {t.cancelBtn}
                 </button>
@@ -3108,29 +3123,23 @@ export function LobbyScreen({
                 {coopStartLabel}
               </button>
             )}
-          </div>
-
-          <div
-            className={`lobby-card ${isMatchmaking && currentMatchType === "2v2" ? "is-matchmaking" : ""}`}
-          >
+          </>
+        );
+      case "2v2":
+        return (
+          <>
             <h2 data-step="6">{twoVsTwoTitle}</h2>
-
             <p>{twoVsTwoDesc}</p>
-
             {isMatchmaking && currentMatchType === "2v2" ? (
               <>
                 <div className="matchmaking-status">
                   <div className="matchmaking-status-head">
                     <span className="matchmaking-dot" />
-
                     <strong>{t.matchmakingHead}</strong>
                   </div>
-
                   <div className="spinner" />
-
                   <p>{t.matchmakingDesc}</p>
                 </div>
-
                 <button
                   className="lobby-btn cancel"
                   onClick={handleCancelTwoVsTwo}
@@ -3146,14 +3155,13 @@ export function LobbyScreen({
                 {twoVsTwoStartLabel}
               </button>
             )}
-          </div>
-
-          <div
-            className={`lobby-card ${isMatchmaking && currentMatchType === "ability" ? "is-matchmaking" : ""}`}
-          >
+          </>
+        );
+      case "ability":
+        return (
+          <>
             <div className="lobby-card-head-row">
               <h2 data-step="7">{abilityBattleTitle}</h2>
-
               <button
                 className="lobby-btn secondary lobby-head-btn"
                 type="button"
@@ -3162,14 +3170,11 @@ export function LobbyScreen({
                 {abilityLoadoutTitle}
               </button>
             </div>
-
             <p>{abilityBattleDesc}</p>
-
             <div className="ability-loadout-chip-row">
               {equippedAbilitySkillDefs.map((skill) => (
                 <span key={skill.id} className="ability-loadout-chip">
                   {renderAbilitySkillIcon(skill.id)}
-
                   <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
                 </span>
               ))}
@@ -3180,15 +3185,11 @@ export function LobbyScreen({
                 <div className="matchmaking-status">
                   <div className="matchmaking-status-head">
                     <span className="matchmaking-dot" />
-
                     <strong>{t.matchmakingHead}</strong>
                   </div>
-
                   <div className="spinner" />
-
                   <p>{t.matchmakingDesc}</p>
                 </div>
-
                 <button
                   className="lobby-btn cancel"
                   onClick={handleCancelAbility}
@@ -3204,9 +3205,43 @@ export function LobbyScreen({
                 {abilityBattleStartLabel}
               </button>
             )}
-          </div>
-        </>
-      )}
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="lobby-screen" onClickCapture={handleLobbyUiClickCapture}>
+      <h1 className="logo">PathClash</h1>
+      <div className="lobby-card mode-selector-card">
+        <h2>{modeSelectorTitle}</h2>
+        <div className="mode-selector-grid">
+          {lobbyModeOptions.map((option) => (
+            <button
+              key={option.key}
+              type="button"
+              className={`mode-selector-btn ${selectedLobbyMode === option.key ? "is-active" : ""}`}
+              onClick={() => handleSelectLobbyMode(option.key)}
+            >
+              <span className="mode-selector-icon" aria-hidden="true">
+                {option.icon}
+              </span>
+              <span className="mode-selector-label">{option.label}</span>
+            </button>
+          ))}
+          {lobbyModePlaceholders.map((_, index) => (
+            <div
+              key={`mode-placeholder-${index}`}
+              className="mode-selector-placeholder"
+              aria-hidden="true"
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="lobby-card mode-content-card">{renderSelectedModeContent()}</div>
 
       {showUpgradeNotice && (
         <UpgradeNoticeDialog
