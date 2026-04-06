@@ -323,20 +323,13 @@
   padding: calc(0.55rem * var(--gs-scale, 1))
     calc(0.8rem * var(--gs-scale, 1));
   border-radius: calc(0.85rem * var(--gs-scale, 1));
-  border: 1px solid rgba(71, 85, 105, 0.72);
-  background:
-    linear-gradient(
-      180deg,
-      rgba(30, 41, 59, 0.94) 0%,
-      rgba(15, 23, 42, 0.94) 100%
-    );
+  border: 1px solid var(--tile-border);
+  background: var(--panel);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: calc(0.7rem * var(--gs-scale, 1));
-  box-shadow:
-    0 12px 30px rgba(0, 0, 0, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
 }
 
 .ability-opponent-panel-name {
@@ -362,6 +355,29 @@
   white-space: nowrap;
 }
 
+.ability-opponent-panel-name .player-info {
+  max-width: 100%;
+}
+
+.ability-opponent-panel-name .nickname-btn {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: clamp(0.82rem, calc(0.98rem * var(--gs-scale, 1)), 1.08rem);
+  font-weight: 800;
+}
+
+.ability-opponent-panel-name .nickname-btn.color-red:hover,
+.ability-opponent-panel-name .nickname-btn.color-blue:hover {
+  background: transparent;
+  border-color: transparent;
+}
+
+.ability-opponent-panel-name .profile-box {
+  top: calc(100% + 0.35rem * var(--gs-scale, 1));
+}
+
 .ability-opponent-panel-skills {
   min-width: 0;
   flex: 1 1 auto;
@@ -380,8 +396,8 @@
   padding: calc(0.32rem * var(--gs-scale, 1))
     calc(0.48rem * var(--gs-scale, 1));
   border-radius: calc(0.7rem * var(--gs-scale, 1));
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: rgba(15, 23, 42, 0.52);
+  border: 1px solid var(--tile-border);
+  background: rgba(17, 24, 39, 0.3);
   color: #e2e8f0;
 }
 

@@ -2438,7 +2438,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             <span className="ability-opponent-panel-label">
               {lang === "en" ? "Opponent" : "상대"}
             </span>
-            <strong>{opponent.nickname}</strong>
+            <PlayerInfo player={opponent} isMe={false} />
           </div>
           <div className="ability-opponent-panel-skills">
             {opponent.equippedSkills.map((skillId) => {
