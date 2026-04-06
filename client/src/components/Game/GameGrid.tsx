@@ -66,6 +66,7 @@ export function GameGrid({
   const [boardSize, setBoardSize] = useState(cellSize * GRID_SIZE);
   const [hoveredCell, setHoveredCell] = useState<Position | null>(null);
   const [opponentRevealToken, setOpponentRevealToken] = useState(0);
+  const previousPhaseRef = useRef(gameState?.phase ?? null);
   const lastPathUpdateAtRef = useRef(0);
   const pendingPathUpdateRef = useRef<number | null>(null);
   const pendingPathRef = useRef<Position[]>([]);
@@ -528,14 +529,18 @@ export function GameGrid({
       : [];
 
   useEffect(() => {
-    if (!isPlaybackPhase || !animation || !myColor) return;
+    const previousPhase = previousPhaseRef.current;
+    previousPhaseRef.current = gameState?.phase ?? null;
+
+    if (gameState?.phase !== "moving" || previousPhase === "moving") return;
+    if (!animation || !myColor) return;
 
     const opponentFullPath =
       opponentColor === "red" ? animation.redPath ?? [] : animation.bluePath ?? [];
     if (opponentFullPath.length === 0) return;
 
     setOpponentRevealToken((prev) => prev + 1);
-  }, [animation, isPlaybackPhase, myColor, opponentColor]);
+  }, [animation, gameState?.phase, myColor, opponentColor]);
 
   const revealedRedPath = fullRedPath;
   const revealedBluePath = fullBluePath;
