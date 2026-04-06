@@ -642,7 +642,8 @@
 
 .gs-board-stage .gs-result-slot {
   position: absolute;
-  top: calc(0.5rem * var(--gs-scale, 1));
+  top: auto;
+  bottom: calc(0.5rem * var(--gs-scale, 1));
   left: 50%;
   transform: translateX(-50%);
   width: min(100%, calc(26rem * var(--gs-scale, 1)));

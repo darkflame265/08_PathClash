@@ -93,3 +93,7 @@
 .rematch-btn:active {
   transform: translateY(0);
 }
+
+.gameover-action-right {
+  margin-left: auto;
+}

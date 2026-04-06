@@ -116,7 +116,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     accountDailyRewardTokens,
     boardSkin,
   } = useGameStore();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const gridAreaRef = useRef<HTMLDivElement>(null);
   const screenRef = useRef<HTMLDivElement>(null);
   const selfRoleBadgeRef = useRef<HTMLDivElement>(null);
@@ -470,6 +470,8 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       : null;
   const tutorialRematchAllowed =
     currentMatchType !== "ai" || !roundInfo?.tutorialScenario;
+  const useLobbyResultAction =
+    currentMatchType === "friend" || currentMatchType === "random";
   const resolvedBoardSkin: BoardSkin = (() => {
     if (gameState?.tutorialActive) return "classic";
     const redBoardSkin = gameState?.players.red.boardSkin;
@@ -543,6 +545,15 @@ export function GameScreen({ onLeaveToLobby }: Props) {
               myColor={myColor!}
               rewardTokens={winRewardTokens}
               allowRematch={tutorialRematchAllowed}
+              actionLabel={
+                useLobbyResultAction
+                  ? lang === "en"
+                    ? "LOBBY"
+                    : "로비"
+                  : null
+              }
+              onAction={useLobbyResultAction ? onLeaveToLobby : null}
+              alignActionRight={useLobbyResultAction}
             />
           </div>
         )}

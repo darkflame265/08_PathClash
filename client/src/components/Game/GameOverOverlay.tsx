@@ -10,6 +10,9 @@ interface Props {
   myColor: PlayerColor;
   rewardTokens?: number | null;
   allowRematch?: boolean;
+  actionLabel?: string | null;
+  onAction?: (() => void) | null;
+  alignActionRight?: boolean;
 }
 
 export function GameOverOverlay({
@@ -17,11 +20,15 @@ export function GameOverOverlay({
   myColor,
   rewardTokens = null,
   allowRematch = true,
+  actionLabel = null,
+  onAction = null,
+  alignActionRight = false,
 }: Props) {
   const { t, lang } = useLang();
   const { rematchRequested, rematchRequestSent, gameOverMessage, setRematchRequestSent } = useGameStore();
   const isWinner = winner === myColor;
-  const showRematch = allowRematch && !gameOverMessage;
+  const showRematch = allowRematch && !gameOverMessage && !actionLabel;
+  const showAction = !gameOverMessage && actionLabel && onAction;
   const rewardCopy =
     isWinner && rewardTokens && rewardTokens > 0
       ? lang === 'en'
@@ -57,6 +64,15 @@ export function GameOverOverlay({
 
         {rematchRequestSent && (
           <div className="rematch-notice">{t.rematchSent}</div>
+        )}
+
+        {showAction && (
+          <button
+            className={`rematch-btn${alignActionRight ? ' gameover-action-right' : ''}`}
+            onClick={onAction}
+          >
+            {actionLabel}
+          </button>
         )}
 
         {showRematch && (
