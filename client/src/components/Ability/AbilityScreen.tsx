@@ -2298,8 +2298,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       ));
 
   const handleRematch = () => {
-    getSocket().emit("request_rematch");
-    setRematchRequestSent(true);
+    onLeaveToLobby();
   };
 
   const handleSkillPressStart = (skillId: AbilitySkillId) => {
@@ -2388,8 +2387,11 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                   </div>
                 )}
                 {!gameOverMessage && (
-                  <button className="rematch-btn" onClick={handleRematch}>
-                    {lang === "en" ? "REMATCH" : "재도전"}
+                  <button
+                    className="rematch-btn ability-gameover-lobby-btn"
+                    onClick={handleRematch}
+                  >
+                    {lang === "en" ? "LOBBY" : "로비"}
                   </button>
                 )}
               </div>

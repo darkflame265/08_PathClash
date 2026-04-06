@@ -573,6 +573,10 @@
   max-width: min(180px, 38vw);
 }
 
+.ability-gameover-lobby-btn {
+  margin-left: auto;
+}
+
 .ability-path-bar {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
