@@ -3278,6 +3278,7 @@ export function LobbyScreen({
           onConfirm={() => void handleConfirmUpgradeSwitch()}
           onCancel={() => void handleCancelUpgradeSwitch()}
           t={t}
+          lang={lang}
         />
       )}
 
@@ -4289,12 +4290,14 @@ function UpgradeSwitchConfirmDialog({
   onConfirm,
   onCancel,
   t,
+  lang,
 }: {
   message: string;
   isSubmitting: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   t: Translations;
+  lang: "en" | "kr";
 }) {
   return (
     <div className="upgrade-modal-backdrop">
@@ -4316,7 +4319,7 @@ function UpgradeSwitchConfirmDialog({
             onClick={onCancel}
             disabled={isSubmitting}
           >
-            {t.cancelBtn}
+            {lang === "en" ? "Cancel" : "취소"}
           </button>
         </div>
       </div>
