@@ -21,6 +21,7 @@ export type PieceSkin =
   | 'electric_core'
   | 'quantum'
   | 'atomic'
+  | 'sun'
   | 'flag_kr'
   | 'flag_jp'
   | 'flag_cn'

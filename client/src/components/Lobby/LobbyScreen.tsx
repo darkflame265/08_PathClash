@@ -3,6 +3,7 @@
 import { FlagSkin, isFlagSkin } from "../shared/FlagSkin";
 
 import { AtomicPreview } from "../../skins/legendary/atomic/Preview";
+import { SunPreview } from "../../skins/legendary/sun/Preview";
 
 import { CosmicPreview } from "../../skins/rare/cosmic/Preview";
 
@@ -1254,6 +1255,7 @@ export function LobbyScreen({
       | "electric_core"
       | "quantum"
       | "atomic"
+      | "sun"
       | "flag_kr"
       | "flag_jp"
       | "flag_cn"
@@ -1488,6 +1490,24 @@ export function LobbyScreen({
       requiredPlays: null,
 
       tokenPrice: 3600,
+
+      tier: "legendary",
+    },
+    {
+      id: "sun",
+
+      name: lang === "en" ? "Sun" : "썬",
+
+      desc:
+        lang === "en"
+          ? "Legendary solar core — a rotating sun burns at the center."
+          : "레전더리 태양 코어 - 중심에서 태양이 자전합니다.",
+
+      requiredWins: null,
+
+      requiredPlays: null,
+
+      tokenPrice: null,
 
       tier: "legendary",
     },
@@ -3435,6 +3455,7 @@ export function LobbyScreen({
                         {choice.id === "atomic" && (
                           <AtomicPreview ready={atomicPreviewReady} />
                         )}
+                        {choice.id === "sun" && <SunPreview />}
                       </span>
 
                       <span className="skin-option-copy">

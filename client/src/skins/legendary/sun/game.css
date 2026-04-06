@@ -1,0 +1,114 @@
+.player-piece.piece-skin-sun .piece-inner {
+  background:
+    radial-gradient(circle at 34% 34%, rgba(255, 249, 187, 0.98) 0 10%, rgba(255, 209, 94, 0.94) 20%, rgba(255, 143, 28, 0.9) 40%, rgba(255, 92, 12, 0.72) 62%, rgba(125, 38, 6, 0.2) 84%, rgba(125, 38, 6, 0) 100%);
+  border-color: rgba(255, 187, 70, 0.94);
+  box-shadow:
+    0 0 calc(var(--piece-glow, 12px) * 1.4) rgba(255, 146, 32, 0.52),
+    0 0 calc(var(--piece-glow, 12px) * 2.5) rgba(255, 214, 102, 0.24),
+    inset 0 0 18px rgba(255, 244, 170, 0.22);
+  overflow: hidden;
+}
+
+.player-piece.piece-skin-sun .piece-inner::before,
+.player-piece.piece-skin-sun .piece-inner::after,
+.sun-core::before,
+.sun-core::after,
+.sun-core-surface::before,
+.sun-core-surface::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.player-piece.piece-skin-sun .piece-inner::before,
+.sun-core::before {
+  inset: -10%;
+  background:
+    conic-gradient(
+      from 0deg,
+      rgba(255, 193, 71, 0) 0deg 24deg,
+      rgba(255, 193, 71, 0.42) 48deg 72deg,
+      rgba(255, 142, 33, 0.12) 96deg 124deg,
+      rgba(255, 198, 88, 0.44) 148deg 172deg,
+      rgba(255, 128, 18, 0.16) 194deg 224deg,
+      rgba(255, 205, 103, 0.46) 248deg 274deg,
+      rgba(255, 140, 26, 0.16) 298deg 322deg,
+      rgba(255, 193, 71, 0) 346deg 360deg
+    );
+  mix-blend-mode: screen;
+  animation: sun-core-rotate-cw 7s linear infinite;
+}
+
+.player-piece.piece-skin-sun .piece-inner::after,
+.sun-core::after {
+  inset: 9%;
+  background:
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      rgba(255, 236, 158, 0.14) 0 5%,
+      rgba(255, 161, 45, 0.04) 7% 12%,
+      rgba(255, 236, 158, 0.1) 14% 18%
+    );
+  filter: blur(0.8px);
+  animation: sun-core-pulse 2.2s ease-in-out infinite;
+}
+
+.sun-core {
+  position: absolute;
+  inset: 10%;
+  border-radius: 50%;
+}
+
+.sun-core-surface {
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 42% 35%, rgba(255, 255, 219, 0.94) 0 9%, rgba(255, 227, 110, 0.92) 16%, rgba(255, 153, 31, 0.88) 40%, rgba(255, 104, 8, 0.58) 68%, rgba(255, 104, 8, 0) 100%);
+  box-shadow:
+    inset 0 0 10px rgba(255, 243, 177, 0.34),
+    inset -6px -7px 14px rgba(165, 53, 6, 0.24);
+}
+
+.sun-core-surface::before {
+  inset: -8%;
+  background:
+    conic-gradient(
+      from 180deg,
+      rgba(255, 255, 255, 0.08) 0deg 30deg,
+      rgba(255, 150, 34, 0.22) 60deg 124deg,
+      rgba(255, 236, 158, 0.08) 168deg 206deg,
+      rgba(255, 132, 21, 0.2) 242deg 312deg,
+      rgba(255, 255, 255, 0.08) 340deg 360deg
+    );
+  animation: sun-core-rotate-ccw 5.8s linear infinite;
+}
+
+.sun-core-surface::after {
+  inset: 18%;
+  background:
+    radial-gradient(circle, rgba(255, 250, 210, 0.5) 0 20%, rgba(255, 206, 92, 0.2) 36%, rgba(255, 206, 92, 0) 100%);
+  filter: blur(1px);
+}
+
+@keyframes sun-core-rotate-cw {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sun-core-rotate-ccw {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes sun-core-pulse {
+  0%, 100% {
+    transform: scale(0.98);
+    opacity: 0.86;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+}
