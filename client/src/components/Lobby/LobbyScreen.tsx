@@ -3134,7 +3134,7 @@ export function LobbyScreen({
       case "coop":
         return (
           <>
-            <h2 data-step="4">{coopTitle}</h2>
+            <h2 data-step="6">{coopTitle}</h2>
             <p>{coopDesc}</p>
             {isMatchmaking && currentMatchType === "coop" ? (
               <>
@@ -3196,7 +3196,7 @@ export function LobbyScreen({
         return (
           <>
             <div className="lobby-card-title-row">
-              <h2 data-step="6">{abilityBattleTitle}</h2>
+              <h2 data-step="4">{abilityBattleTitle}</h2>
               <button
                 className="lobby-mini-btn"
                 type="button"
