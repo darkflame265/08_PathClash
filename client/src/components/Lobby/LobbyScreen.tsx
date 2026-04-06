@@ -1346,7 +1346,7 @@ export function LobbyScreen({
 
       requiredPlays: null,
 
-      tokenPrice: 120,
+      tokenPrice: 480,
 
       tier: "common",
     },
@@ -1365,7 +1365,7 @@ export function LobbyScreen({
 
       requiredPlays: null,
 
-      tokenPrice: 120,
+      tokenPrice: 480,
 
       tier: "common",
     },
@@ -1381,7 +1381,7 @@ export function LobbyScreen({
 
       requiredPlays: null,
 
-      tokenPrice: 120,
+      tokenPrice: 480,
 
       tier: "common",
     },
@@ -1397,7 +1397,7 @@ export function LobbyScreen({
 
       requiredPlays: null,
 
-      tokenPrice: 120,
+      tokenPrice: 480,
 
       tier: "common",
     },
@@ -1416,7 +1416,7 @@ export function LobbyScreen({
 
       requiredPlays: null,
 
-      tokenPrice: 120,
+      tokenPrice: 480,
 
       tier: "common",
     },
@@ -1435,7 +1435,7 @@ export function LobbyScreen({
 
       requiredPlays: null,
 
-      tokenPrice: 350,
+      tokenPrice: 1400,
 
       tier: "rare",
     },
@@ -1451,7 +1451,7 @@ export function LobbyScreen({
 
       requiredPlays: null,
 
-      tokenPrice: 350,
+      tokenPrice: 1400,
 
       tier: "rare",
     },
@@ -1470,7 +1470,7 @@ export function LobbyScreen({
 
       requiredPlays: null,
 
-      tokenPrice: 350,
+      tokenPrice: 1400,
 
       tier: "rare",
     },
@@ -1487,7 +1487,7 @@ export function LobbyScreen({
 
       requiredPlays: null,
 
-      tokenPrice: 900,
+      tokenPrice: 3600,
 
       tier: "legendary",
     },
