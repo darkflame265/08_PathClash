@@ -1770,6 +1770,7 @@ export function LobbyScreen({
 
   const hasAbilitySkinUnlocked = (skinId: PieceSkin) => {
     if (skinId === "classic") return true;
+    if (skinId === "sun") return true;
 
     if (skinId === "ember") return accountWins >= 10;
 
