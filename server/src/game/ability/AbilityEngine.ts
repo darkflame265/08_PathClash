@@ -366,6 +366,13 @@ export function resolveAbilityRound(params: {
     position: Position,
     step: number,
   ) => {
+    if (
+      (sourceColor === 'red' && redSunChariot) ||
+      (sourceColor === 'blue' && blueSunChariot)
+    ) {
+      return;
+    }
+
     const targetGuardActive = targetColor === 'red' ? redInv > 0 : blueInv > 0;
     if (targetGuardActive) {
       pushBlockEvent(step, targetColor, 'classic_guard', position);
