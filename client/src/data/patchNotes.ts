@@ -11,37 +11,38 @@ export type PatchNoteSection = {
   lines: PatchNoteLine[];
 };
 
-export const PATCH_NOTES_VERSION = "2026-04-05-v7";
+export const PATCH_NOTES_VERSION = "2026-04-06-v8";
 
 export function getPatchNotesVersionLabel(lang: "en" | "kr"): string {
-  return lang === "en" ? "Version 2026.04.05" : "버전 2026.04.05";
+  return lang === "en" ? "Version 2026.04.06" : "버전 2026.04.06";
 }
 
 export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
   if (lang === "en") {
     return [
       {
-        heading: "Board skins and visuals",
+        heading: "Lobby and profile",
         lines: [
-          { text: "Added board skin tabs and expanded board skin support in the skin menu." },
-          { text: "Added Pharaoh and Magic board skins with dedicated in-game backgrounds." },
+          { text: "Refactored the lobby into a mode selector panel and a mode content panel." },
+          { text: "Removed the lobby profile card and moved Google link and logout actions into Settings." },
+          { text: "Improved loading feedback while account and Google-linked data are being resolved." },
+        ],
+      },
+      {
+        heading: "Board skins and presentation",
+        lines: [
+          { text: "Added Magic board support and rebuilt Pharaoh and Magic boards with per-cell rendering." },
+          { text: "Improved board skin previews and linked matching backgrounds for supported boards." },
           { text: "Tutorial matches now always use the classic board for cleaner onboarding." },
         ],
       },
       {
-        heading: "Profile and lobby improvements",
+        heading: "Gameplay and fixes",
         lines: [
-          { text: "Nickname changes now happen from Settings only and cost 500 tokens." },
-          { text: "First-time players now set a free nickname before the tutorial prompt appears." },
-          { text: "Added clearer loading indicators while account data and Google account data are being fetched." },
-        ],
-      },
-      {
-        heading: "Gameplay changes and fixes",
-        lines: [
-          { text: "Ability Battle starting HP has been increased from 3 to 5." },
-          { text: "Co-op matches now continue if one teammate disconnects, and only remaining winners receive rewards." },
-          { text: "Improved several in-game UI details including overlap HP visibility and path sound feedback." },
+          { text: "Increased Ability Battle planning time from 7 seconds to 9 seconds." },
+          { text: "Added an opponent info panel to Ability Battle and refined result box placement and actions." },
+          { text: "Fixed cases where Google-linked nicknames could unexpectedly revert to Guest." },
+          { text: "Fixed Ability Battle result text changing after the winner disconnected." },
         ],
       },
     ];
@@ -49,27 +50,28 @@ export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
 
   return [
     {
-      heading: "보드 스킨 및 연출",
+      heading: "로비 및 프로필",
       lines: [
-        { text: "스킨창에 보드 스킨 탭을 추가하고 보드 스킨 표시를 확장했습니다." },
-        { text: "파라오 보드와 매직 보드를 추가하고 전용 인게임 배경을 연결했습니다." },
-        { text: "튜토리얼에서는 항상 클래식 보드를 사용하도록 정리했습니다." },
+        { text: "로비를 모드 선택 박스와 모드 내용 박스의 2단 구조로 개편했습니다." },
+        { text: "로비 유저정보 박스를 제거하고 설정창으로 구글 연동과 로그아웃 기능을 옮겼습니다." },
+        { text: "계정 데이터와 구글 연동 정보를 불러오는 동안 로딩 안내를 더 분명하게 표시합니다." },
       ],
     },
     {
-      heading: "프로필 및 로비 개선",
+      heading: "보드 스킨 및 연출",
       lines: [
-        { text: "닉네임 변경은 설정창에서만 가능하도록 바꾸고 비용을 500토큰으로 조정했습니다." },
-        { text: "처음 시작한 플레이어는 튜토리얼 전에 무료로 닉네임을 정하도록 추가했습니다." },
-        { text: "계정 데이터와 구글 계정 정보를 불러오는 동안 로딩 안내를 더 명확하게 표시합니다." },
+        { text: "매직 보드를 추가하고 파라오 보드와 매직 보드를 셀 단위 렌더 방식으로 정리했습니다." },
+        { text: "지원되는 보드 스킨에는 전용 인게임 배경과 스킨 미리보기를 연결했습니다." },
+        { text: "튜토리얼에서는 항상 클래식 보드를 사용하도록 정리했습니다." },
       ],
     },
     {
       heading: "게임 변경 및 수정",
       lines: [
-        { text: "능력대전 시작 HP를 3에서 5로 늘리고 체력 표시도 5칸으로 맞췄습니다." },
-        { text: "협동전은 한 명이 나가도 계속 진행되며 남은 사람이 승리하면 보상을 받습니다." },
-        { text: "말 겹침 시 체력바 표시와 경로 작성 효과음을 포함한 인게임 UI를 다듬었습니다." },
+        { text: "능력대전 경로 작성 시간을 7초에서 9초로 늘렸습니다." },
+        { text: "능력대전 상단에 상대 닉네임과 장착 스킬을 보여주는 박스를 추가했습니다." },
+        { text: "구글 연동 계정의 닉네임이 Guest로 되돌아가는 문제를 수정했습니다." },
+        { text: "능력대전에서 승패 확정 후 상대가 나가면 결과 문구가 바뀌던 문제를 수정했습니다." },
       ],
     },
   ];
