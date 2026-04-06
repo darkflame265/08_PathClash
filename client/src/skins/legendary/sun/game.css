@@ -17,17 +17,19 @@ body {
 }
 
 .player-piece.piece-skin-sun.piece-sun-chariot-active {
-  width: calc(var(--piece-size, 56px) * 2.5);
-  height: calc(var(--piece-size, 56px) * 2.5);
+  width: calc(var(--piece-size, 56px) * 6);
+  height: calc(var(--piece-size, 56px) * 6);
 }
 
 .player-piece.piece-skin-sun.piece-sun-chariot-active .piece-inner {
-  width: calc(var(--piece-inner-size, 44px) * 2.5);
-  height: calc(var(--piece-inner-size, 44px) * 2.5);
+  width: calc(var(--piece-inner-size, 44px) * 6);
+  height: calc(var(--piece-inner-size, 44px) * 6);
 }
 
 .player-piece.piece-skin-sun.piece-sun-chariot-active .sun {
-  inset: -14%;
+  inset: -30%;
+  height: 200%;
+  width: 200%;
 }
 
 .sun {
