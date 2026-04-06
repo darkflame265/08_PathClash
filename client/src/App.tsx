@@ -825,7 +825,7 @@ function App() {
                 type="button"
                 aria-label={legalDocumentCloseLabel}
               >
-                횞
+                ×
               </button>
             </div>
             <div className="app-legal-doc-body">
