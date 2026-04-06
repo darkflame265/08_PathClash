@@ -22,7 +22,7 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: url("./sun_vector.svg") center center / cover no-repeat;
+  background: url("./sun_gemini.png") center center / cover no-repeat;
   animation: sun-preview-rotate-cw 16s linear infinite;
 }
 
