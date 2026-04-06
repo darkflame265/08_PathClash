@@ -964,6 +964,51 @@
   gap: 0.75rem;
 }
 
+.upgrade-modal-actions-row {
+  flex-direction: row;
+}
+
+.upgrade-flow-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 29;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(3, 7, 18, 0.58);
+}
+
+.upgrade-flow-panel {
+  width: min(100%, 24rem);
+  background: var(--panel, #1e252b);
+  border: 1px solid var(--tile-border, #3a444d);
+  border-radius: 1.25rem;
+  padding: 1.4rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+  text-align: center;
+}
+
+.upgrade-flow-panel p {
+  color: var(--text-muted, #9aa4ae);
+  font-size: 0.9rem;
+}
+
+.upgrade-flow-spinner {
+  width: 2.1rem;
+  height: 2.1rem;
+  margin: 0;
+}
+
+.upgrade-switch-message {
+  white-space: pre-line;
+}
+
 /* ?? Language toggle ???????????????????????????????????? */
 .lobby-control-row {
   display: flex;

@@ -741,6 +741,10 @@ export function LobbyScreen({
   const [upgradeFlowLoading, setUpgradeFlowLoading] = useState(() =>
     hasPendingGoogleUpgradeContext(),
   );
+  const [pendingUpgradeSwitchProfile, setPendingUpgradeSwitchProfile] =
+    useState<AccountProfile | null>(null);
+  const [isResolvingUpgradeDecision, setIsResolvingUpgradeDecision] =
+    useState(false);
 
   const [atomicPreviewReady, setAtomicPreviewReady] = useState(false);
 
@@ -914,6 +918,10 @@ export function LobbyScreen({
   const aiMatchmakingHead = lang === "en" ? t.matchmakingHead : "매칭 중...";
 
   const aiCancelLabel = lang === "en" ? t.cancelBtn : "매칭 취소";
+  const upgradeFlowLoadingLabel =
+    lang === "en"
+      ? "Loading account information. Please wait."
+      : "계정 정보를 불러오고 있습니다. 잠시 기다려주세요.";
 
   // Keep existing Korean literals as plain UTF-8 text. Do not rewrite them
 
@@ -1950,37 +1958,7 @@ export function LobbyScreen({
       if (!active || result.kind === "none") return;
 
       if (result.kind === "switch_confirm_required") {
-        const confirmed = window.confirm(
-          buildExistingAccountSwitchPrompt(result.profile),
-        );
-
-        if (!confirmed) {
-          void cancelPendingGoogleUpgradeSwitch().then((guestState) => {
-            if (!active) return;
-
-            setAuthState(guestState);
-
-            setUpgradeResult({ kind: "none" });
-          });
-
-          return;
-        }
-
-        void confirmPendingGoogleUpgradeSwitch().then((confirmResult) => {
-          if (!active) return;
-
-          if (confirmResult.kind === "switch_ok") {
-            applyProfileToStore(confirmResult.profile, setAuthState);
-
-            setUpgradeResult(confirmResult);
-
-            setShowUpgradeNotice(true);
-
-            return;
-          }
-
-          setUpgradeResult({ kind: "auth_error" });
-        });
+        setPendingUpgradeSwitchProfile(result.profile);
 
         return;
       }
@@ -2003,7 +1981,42 @@ export function LobbyScreen({
     return () => {
       active = false;
     };
-  }, [buildExistingAccountSwitchPrompt, setAuthState]);
+  }, [setAuthState]);
+
+  const handleCancelUpgradeSwitch = async () => {
+    setIsResolvingUpgradeDecision(true);
+
+    try {
+      const guestState = await cancelPendingGoogleUpgradeSwitch();
+
+      setAuthState(guestState);
+      setUpgradeResult({ kind: "none" });
+      setPendingUpgradeSwitchProfile(null);
+    } finally {
+      setIsResolvingUpgradeDecision(false);
+    }
+  };
+
+  const handleConfirmUpgradeSwitch = async () => {
+    setIsResolvingUpgradeDecision(true);
+
+    try {
+      const confirmResult = await confirmPendingGoogleUpgradeSwitch();
+
+      if (confirmResult.kind === "switch_ok") {
+        applyProfileToStore(confirmResult.profile, setAuthState);
+        setUpgradeResult(confirmResult);
+        setPendingUpgradeSwitchProfile(null);
+        setShowUpgradeNotice(true);
+        return;
+      }
+
+      setPendingUpgradeSwitchProfile(null);
+      setUpgradeResult({ kind: "auth_error" });
+    } finally {
+      setIsResolvingUpgradeDecision(false);
+    }
+  };
 
   useEffect(() => {
     const readVersion = localStorage.getItem(PATCH_NOTES_READ_KEY);
@@ -3249,6 +3262,25 @@ export function LobbyScreen({
 
       <div className="lobby-card mode-content-card">{renderSelectedModeContent()}</div>
 
+      {upgradeFlowLoading && !pendingUpgradeSwitchProfile && !showUpgradeNotice && (
+        <div className="upgrade-flow-overlay" role="status" aria-live="polite">
+          <div className="upgrade-flow-panel">
+            <div className="spinner upgrade-flow-spinner" />
+            <p>{upgradeFlowLoadingLabel}</p>
+          </div>
+        </div>
+      )}
+
+      {pendingUpgradeSwitchProfile && (
+        <UpgradeSwitchConfirmDialog
+          message={buildExistingAccountSwitchPrompt(pendingUpgradeSwitchProfile)}
+          isSubmitting={isResolvingUpgradeDecision}
+          onConfirm={() => void handleConfirmUpgradeSwitch()}
+          onCancel={() => void handleCancelUpgradeSwitch()}
+          t={t}
+        />
+      )}
+
       {showUpgradeNotice && (
         <UpgradeNoticeDialog
           message={upgradeMessage}
@@ -4244,6 +4276,47 @@ function UpgradeNoticeDialog({
         <div className="upgrade-modal-actions">
           <button className="lobby-btn primary" onClick={onClose}>
             {t.confirmBtn}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UpgradeSwitchConfirmDialog({
+  message,
+  isSubmitting,
+  onConfirm,
+  onCancel,
+  t,
+}: {
+  message: string;
+  isSubmitting: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+  t: Translations;
+}) {
+  return (
+    <div className="upgrade-modal-backdrop">
+      <div className="upgrade-modal">
+        <h3>{t.switchedTitle}</h3>
+
+        <p className="upgrade-switch-message">{message}</p>
+
+        <div className="upgrade-modal-actions upgrade-modal-actions-row">
+          <button
+            className="lobby-btn primary"
+            onClick={onConfirm}
+            disabled={isSubmitting}
+          >
+            {t.confirmBtn}
+          </button>
+          <button
+            className="lobby-btn secondary"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            {t.cancelBtn}
           </button>
         </div>
       </div>
