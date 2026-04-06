@@ -31,7 +31,7 @@ import {
 } from './AbilityTypes';
 import { resolveAbilityRound } from './AbilityEngine';
 
-const PLANNING_TIME_MS = 7000;
+const PLANNING_TIME_MS = 9000;
 const SUBMIT_GRACE_MS = 350;
 const INITIAL_MANA = 4;
 const MAX_MANA = 10;
