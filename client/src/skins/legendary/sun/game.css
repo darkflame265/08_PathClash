@@ -5,20 +5,32 @@ body {
   align-items: center;
   height: 500px;
 }
+
+.player-piece.piece-skin-sun {
+  width: calc(var(--piece-size, 56px) * 1.5);
+  height: calc(var(--piece-size, 56px) * 1.5);
+}
+
+.player-piece.piece-skin-sun .piece-inner {
+  width: calc(var(--piece-inner-size, 44px) * 1.5);
+  height: calc(var(--piece-inner-size, 44px) * 1.5);
+}
+
 .sun {
   align-items: center;
   justify-content: center;
   position: absolute;
   display: flex;
-  height: 100px;
-  width: 100px;
-  inset: -50%;
+  height: 200px;
+  width: 200px;
+  inset: -35%;
   border-radius: 50%;
   background: url("./sun_gemini_clean.png") center center / cover no-repeat;
   background-position: center center;
   box-shadow: 1px 1px 30px 5px #fc9328;
   animation: pole-rotate 30s linear infinite;
 }
+
 @keyframes pole-rotate {
   0% {
     background-position: center center;
