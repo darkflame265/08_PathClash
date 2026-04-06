@@ -4,7 +4,7 @@
   box-shadow:
     0 0 calc(var(--piece-glow, 12px) * 1.1) rgba(255, 94, 18, 0.34),
     0 0 calc(var(--piece-glow, 12px) * 2.1) rgba(255, 168, 54, 0.18);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .sun-core-corona::before,
@@ -17,7 +17,7 @@
 
 .sun-core {
   position: absolute;
-  inset: 2%;
+  inset: -15%;
   border-radius: 50%;
 }
 
@@ -25,7 +25,7 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: url("./sun_gemini.png") center center / cover no-repeat;
+  background: url("./sun_gemini_clean.png") center center / cover no-repeat;
   animation: sun-core-rotate-cw 16s linear infinite;
 }
 
