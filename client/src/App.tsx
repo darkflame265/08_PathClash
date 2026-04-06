@@ -515,13 +515,13 @@ function App() {
   const updateRequiredTitle =
     lang === "en"
       ? "A new version is available."
-      : "??踰꾩쟾???섏솕?듬땲??";
+      : "새 버전이 출시되었습니다.";
   const updateRequiredBody =
     lang === "en"
       ? "Please go to the Play Store and update the app to continue playing."
-      : "寃뚯엫??怨꾩냽?섎젮硫??뚮젅???ㅽ넗?대줈 ?대룞?섏뿬 ?깆쓣 ?낅뜲?댄듃??二쇱꽭??";
+      : "게임을 계속하려면 플레이 스토어로 이동하여 앱을 업데이트해 주세요.";
   const updateRequiredConfirm =
-    lang === "en" ? "Open Play Store" : "?뚮젅???ㅽ넗?대줈 ?대룞";
+    lang === "en" ? "Open Play Store" : "플레이 스토어로 이동";
 
   const handleOpenStoreForUpdate = useCallback(() => {
     if (!updateRequired) return;
