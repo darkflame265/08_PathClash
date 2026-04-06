@@ -850,6 +850,16 @@ export function LobbyScreen({
 
   const twoVsTwoTitle = "2v2";
 
+  const friendDesc =
+    lang === "en"
+      ? "Create a private room or enter a code to play a direct match with a friend."
+      : "방을 만들거나 코드를 입력해 친구와 바로 대결할 수 있습니다.";
+
+  const randomDesc =
+    lang === "en"
+      ? "Find another player online and start a ranked duel match."
+      : "온라인 상태의 다른 플레이어를 찾아 바로 대결전에 입장합니다.";
+
   const twoVsTwoDesc =
     lang === "en"
       ? "A 2v2 team battle mode where teammates can share paths during planning."
@@ -858,11 +868,6 @@ export function LobbyScreen({
   const twoVsTwoStartLabel = lang === "en" ? "Start Match" : "매칭 시작";
 
   const abilityBattleTitle = lang === "en" ? "Ability Battle" : "능력 대전";
-
-  const abilityBattleDesc =
-    lang === "en"
-      ? "A duel mode where movement and skill timing are planned together."
-      : "이동 경로와 스킬 발동 시점을 함께 설계하는 1대1 스킬 대전 모드입니다.";
 
   const abilityBattleStartLabel = lang === "en" ? "Start Match" : "매칭 시작";
 
@@ -3011,6 +3016,7 @@ export function LobbyScreen({
         return (
           <>
             <h2 data-step="3">{t.friendTitle}</h2>
+            <p>{friendDesc}</p>
             <div className="btn-divider">
               <button
                 className="lobby-btn primary"
@@ -3066,6 +3072,7 @@ export function LobbyScreen({
                 )}
               </div>
             </div>
+            <p>{randomDesc}</p>
 
             {isMatchmaking && currentMatchType === "random" ? (
               <>
@@ -3160,17 +3167,16 @@ export function LobbyScreen({
       case "ability":
         return (
           <>
-            <div className="lobby-card-head-row">
+            <div className="lobby-card-title-row">
               <h2 data-step="7">{abilityBattleTitle}</h2>
               <button
-                className="lobby-btn secondary lobby-head-btn"
+                className="lobby-mini-btn"
                 type="button"
                 onClick={() => setIsAbilityLoadoutOpen(true)}
               >
                 {abilityLoadoutTitle}
               </button>
             </div>
-            <p>{abilityBattleDesc}</p>
             <div className="ability-loadout-chip-row">
               {equippedAbilitySkillDefs.map((skill) => (
                 <span key={skill.id} className="ability-loadout-chip">
