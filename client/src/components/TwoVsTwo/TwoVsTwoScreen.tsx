@@ -24,7 +24,7 @@ interface Props {
 }
 
 const STEP_DURATION_MS = 200;
-const HIT_VISUAL_DELAY_MS = 100;
+const HIT_VISUAL_DELAY_MS = 0;
 const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
