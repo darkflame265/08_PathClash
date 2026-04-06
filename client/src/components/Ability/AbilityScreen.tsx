@@ -2348,9 +2348,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           <div className="gs-result-slot">
             <div className="gameover-overlay">
               <div className="gameover-box">
-                <div className="ability-gameover-opponent">
-                  <PlayerInfo player={opponent} isMe={false} />
-                </div>
                 <div
                   className={`gameover-result ${winner === currentColor ? "win" : "lose"}`}
                 >
