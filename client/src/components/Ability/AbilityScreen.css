@@ -552,11 +552,12 @@
 }
 
 .ability-screen .gs-board-stage {
-  --ability-result-slot-top: calc(7.6rem * var(--gs-scale, 1));
+  --ability-result-slot-bottom: calc(0.5rem * var(--gs-scale, 1));
 }
 
 .ability-screen .gs-board-stage .gs-result-slot {
-  top: var(--ability-result-slot-top);
+  top: auto;
+  bottom: var(--ability-result-slot-bottom);
 }
 
 .ability-gameover-opponent {
