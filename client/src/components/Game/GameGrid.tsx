@@ -65,6 +65,7 @@ export function GameGrid({
   const gridRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState(cellSize * GRID_SIZE);
   const [hoveredCell, setHoveredCell] = useState<Position | null>(null);
+  const [opponentRevealToken, setOpponentRevealToken] = useState(0);
   const lastPathUpdateAtRef = useRef(0);
   const pendingPathUpdateRef = useRef<number | null>(null);
   const pendingPathRef = useRef<Position[]>([]);
@@ -513,24 +514,31 @@ export function GameGrid({
   }));
 
   const opponentColor = myColor === "red" ? "blue" : "red";
-  const opponentPath: Position[] = []; // opponent path hidden during planning
   const animation = useGameStore.getState().animation;
   const isPlaybackPhase = gameState?.phase === "moving" || gameState?.phase === "gameover";
-  const revealedRedPath =
-    isPlaybackPhase
-      ? (animation?.redPath ?? [])
-      : myColor === "red"
-        ? myPath
-        : [];
-  const revealedBluePath =
-    isPlaybackPhase
-      ? (animation?.bluePath ?? [])
-      : myColor === "blue"
-        ? myPath
-        : [];
+  const fullRedPath = isPlaybackPhase
+    ? (animation?.redPath ?? [])
+    : myColor === "red"
+      ? myPath
+      : [];
+  const fullBluePath = isPlaybackPhase
+    ? (animation?.bluePath ?? [])
+    : myColor === "blue"
+      ? myPath
+      : [];
 
-  void opponentColor;
-  void opponentPath;
+  useEffect(() => {
+    if (!isPlaybackPhase || !animation || !myColor) return;
+
+    const opponentFullPath =
+      opponentColor === "red" ? animation.redPath ?? [] : animation.bluePath ?? [];
+    if (opponentFullPath.length === 0) return;
+
+    setOpponentRevealToken((prev) => prev + 1);
+  }, [animation, isPlaybackPhase, myColor, opponentColor]);
+
+  const revealedRedPath = fullRedPath;
+  const revealedBluePath = fullBluePath;
 
   return (
     <div ref={shellRef} className="game-grid-shell">
@@ -586,18 +594,30 @@ export function GameGrid({
 
         {/* Path lines: red behind (lower z-index, thicker), blue on top */}
         <PathLine
+          key={
+            myColor === "blue"
+              ? `red-opponent-${opponentRevealToken}`
+              : "red-self"
+          }
           color="red"
           path={revealedRedPath}
           startPos={isPlaybackPhase ? (animation?.redStart ?? gameState?.players.red.position ?? redDisplayPos) : (gameState?.players.red.position ?? redDisplayPos)}
           cellSize={responsiveCellSize}
           isPlanning={isPlanning}
+          animateReveal={isPlaybackPhase && myColor === "blue"}
         />
         <PathLine
+          key={
+            myColor === "red"
+              ? `blue-opponent-${opponentRevealToken}`
+              : "blue-self"
+          }
           color="blue"
           path={revealedBluePath}
           startPos={isPlaybackPhase ? (animation?.blueStart ?? gameState?.players.blue.position ?? blueDisplayPos) : (gameState?.players.blue.position ?? blueDisplayPos)}
           cellSize={responsiveCellSize}
           isPlanning={isPlanning}
+          animateReveal={isPlaybackPhase && myColor === "red"}
         />
 
         {/* Collision effects */}

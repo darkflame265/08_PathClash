@@ -6,9 +6,17 @@ interface Props {
   startPos: Position;
   cellSize: number;
   isPlanning?: boolean;
+  animateReveal?: boolean;
 }
 
-export function PathLine({ color, path, startPos, cellSize, isPlanning = false }: Props) {
+export function PathLine({
+  color,
+  path,
+  startPos,
+  cellSize,
+  isPlanning = false,
+  animateReveal = false,
+}: Props) {
   if (path.length === 0) return null;
 
   const allPoints = [startPos, ...path];
@@ -38,6 +46,7 @@ export function PathLine({ color, path, startPos, cellSize, isPlanning = false }
         zIndex,
         overflow: 'visible',
       }}
+      className={animateReveal ? 'path-line path-line-reveal' : 'path-line'}
       width="100%"
       height="100%"
     >

@@ -183,6 +183,22 @@
   transform: translate(-50%, -50%) rotate(-45deg);
 }
 
+.path-line.path-line-reveal {
+  animation: opponent-path-reveal 0.32s ease-out both;
+}
+
+@keyframes opponent-path-reveal {
+  0% {
+    opacity: 0;
+  }
+  55% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
 .ai-tutorial-hint {
   position: absolute;
   transform: translateX(-20%);
@@ -274,8 +290,7 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 10 12;
-  filter:
-    drop-shadow(0 0 8px rgba(255, 255, 255, 0.24))
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.24))
     drop-shadow(0 0 16px rgba(59, 130, 246, 0.18));
   animation: tutorial-guide-pulse 1.2s ease-in-out infinite;
 }
@@ -288,8 +303,7 @@
   pointer-events: none;
   font-size: clamp(1.5rem, 2.8vw, 2rem);
   line-height: 1;
-  filter:
-    drop-shadow(0 4px 10px rgba(0, 0, 0, 0.38))
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.38))
     drop-shadow(0 0 10px rgba(255, 255, 255, 0.24));
   transform: translate(-50%, -50%);
   animation: tutorial-finger-travel 1.8s ease-in-out infinite;
