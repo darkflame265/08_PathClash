@@ -19,6 +19,16 @@
   transition: none;
 }
 
+.player-piece.piece-sun-chariot-active {
+  width: calc(var(--piece-size, 56px) * 6);
+  height: calc(var(--piece-size, 56px) * 6);
+}
+
+.player-piece.piece-sun-chariot-active .piece-inner {
+  width: calc(var(--piece-inner-size, 44px) * 6);
+  height: calc(var(--piece-inner-size, 44px) * 6);
+}
+
 .player-piece.piece-hidden {
   opacity: 0.42;
 }

@@ -96,7 +96,7 @@ export function PlayerPiece({
     isPhased ? 'piece-phased' : '',
     isOverloaded ? 'piece-overloaded' : '',
     isBlitzing ? 'piece-blitzing' : '',
-    effectiveSkin === 'sun' && isSunChariotActive ? 'piece-sun-chariot-active' : '',
+    isSunChariotActive ? 'piece-sun-chariot-active' : '',
     isClone ? 'piece-clone' : '',
     outlineColor ? `piece-outline-${outlineColor}` : '',
     isHit ? 'hit' : '',
