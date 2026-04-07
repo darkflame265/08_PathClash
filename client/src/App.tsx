@@ -6,7 +6,7 @@ import {
   getSocketAuthPayload,
   initializeGuestAuth,
   installNativeAuthCallbackHandler,
-  logoutToGuestMode,
+  logoutLocalSession,
   onAuthStateChanged,
   refreshAccountSummary,
   syncLegalConsent,
@@ -487,8 +487,8 @@ function App() {
   const handleSessionReplacedConfirm = useCallback(async () => {
     setIsSessionResetting(true);
     try {
-      const guestState = await logoutToGuestMode();
-      setAuthState(guestState);
+      const signedOutState = await logoutLocalSession();
+      setAuthState(signedOutState);
       disconnectSocket();
       useGameStore.getState().resetGame();
       setView("lobby");
@@ -508,8 +508,8 @@ function App() {
       : "\uB2E4\uB978 \uAE30\uAE30\uC5D0\uC11C \uC811\uC18D \uC911\uC785\uB2C8\uB2E4.";
   const sessionReplacedBody =
     lang === "en"
-      ? "This session was closed to prevent duplicate matchmaking and state conflicts. Tap OK to continue in guest mode on this device."
-      : "\uC911\uBCF5 \uB9E4\uCE58 \uBC0F \uC0C1\uD0DC \uCDA9\uB3CC\uC744 \uBC29\uC9C0\uD558\uAE30 \uC704\uD574 \uD604\uC7AC \uC138\uC158\uC774 \uC885\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uD655\uC778\uC744 \uB204\uB974\uBA74 \uC774 \uAE30\uAE30\uC5D0\uC11C \uAC8C\uC2A4\uD2B8 \uBAA8\uB4DC\uB85C \uACC4\uC18D\uD569\uB2C8\uB2E4.";
+      ? "This session was closed because the account was used on another device. Your account data is safe. Tap OK to return to the lobby and sign in again if needed."
+      : "\uB2E4\uB978 \uAE30\uAE30\uC5D0\uC11C \uB3D9\uC77C \uACC4\uC815\uC73C\uB85C \uC811\uC18D\uD558\uC5EC \uD604\uC7AC \uC138\uC158\uC774 \uC885\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uACC4\uC815 \uB370\uC774\uD130\uB294 \uC720\uC9C0\uB418\uBA70, \uD655\uC778\uC744 \uB204\uB974\uBA74 \uB85C\uBE44\uB85C \uB3CC\uC544\uAC11\uB2C8\uB2E4. \uD544\uC694\uD558\uBA74 \uB2E4\uC2DC \uB85C\uADF8\uC778\uD574\uC8FC\uC138\uC694.";
   const sessionReplacedConfirm =
     lang === "en" ? "OK" : "\uD655\uC778";
   const updateRequiredTitle =

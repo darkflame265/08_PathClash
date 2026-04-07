@@ -1056,14 +1056,22 @@ export function LobbyScreen({
     ? lang === "en"
       ? "Guest"
       : "게스트"
-    : "Google";
+    : authUserId
+      ? "Google"
+      : lang === "en"
+        ? "Signed Out"
+        : "로그아웃됨";
   const accountTypeActionLabel = isGuestUser
     ? lang === "en"
       ? "Link Google"
       : "구글 연동"
-    : lang === "en"
-      ? "Logout"
-      : "로그아웃";
+    : authUserId
+      ? lang === "en"
+        ? "Logout"
+        : "로그아웃"
+      : lang === "en"
+        ? "Login"
+        : "로그인";
 
   const tokenShopTitle = lang === "en" ? "Token Shop" : "토큰 샵";
 
@@ -4015,7 +4023,9 @@ export function LobbyScreen({
                       className="settings-copy-btn"
                       type="button"
                       onClick={() =>
-                        void (isGuestUser ? handleLinkGoogle() : handleLogout())
+                        void (isGuestUser || !authUserId
+                          ? handleLinkGoogle()
+                          : handleLogout())
                       }
                     >
                       {accountTypeActionLabel}

@@ -979,31 +979,31 @@ export async function syncLegalConsent(args: {
 export async function linkGoogleAccount(): Promise<void> {
   if (!supabase) return;
   const auth = await getCurrentAuthPayload();
-  if (!auth) return;
+  if (auth) {
+    const snapshot = await refreshAccountSummary();
+    if (auth.isGuestUser) {
+      const session = await getCurrentSession();
+      saveGuestSession(session);
+    }
 
-  const snapshot = await refreshAccountSummary();
-  if (auth.isGuestUser) {
-    const session = await getCurrentSession();
-    saveGuestSession(session);
+    savePendingUpgradeContext({
+      guestAuth: {
+        userId: auth.userId,
+        accessToken: auth.accessToken,
+      },
+      guestProfile: {
+        nickname: snapshot.nickname ?? null,
+        equippedSkin: snapshot.equippedSkin ?? "classic",
+        equippedBoardSkin: snapshot.equippedBoardSkin ?? "classic",
+        wins: snapshot.wins ?? 0,
+        losses: snapshot.losses ?? 0,
+        tokens: snapshot.tokens ?? 0,
+        dailyRewardWins: snapshot.dailyRewardWins ?? 0,
+        dailyRewardTokens: snapshot.dailyRewardTokens ?? 0,
+      },
+      flowStartedAt: new Date().toISOString(),
+    });
   }
-
-  savePendingUpgradeContext({
-    guestAuth: {
-      userId: auth.userId,
-      accessToken: auth.accessToken,
-    },
-    guestProfile: {
-      nickname: snapshot.nickname ?? null,
-      equippedSkin: snapshot.equippedSkin ?? "classic",
-      equippedBoardSkin: snapshot.equippedBoardSkin ?? "classic",
-      wins: snapshot.wins ?? 0,
-      losses: snapshot.losses ?? 0,
-      tokens: snapshot.tokens ?? 0,
-      dailyRewardWins: snapshot.dailyRewardWins ?? 0,
-      dailyRewardTokens: snapshot.dailyRewardTokens ?? 0,
-    },
-    flowStartedAt: new Date().toISOString(),
-  });
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -1046,6 +1046,53 @@ export async function logoutToGuestMode(): Promise<AuthStatePayload> {
 
   clearUpgradeQueryFromUrl();
   return restoreGuestSessionOrCreate();
+}
+
+export async function logoutLocalSession(): Promise<AuthStatePayload> {
+  if (!supabase) {
+    return {
+      ready: true,
+      userId: null,
+      accessToken: null,
+      isGuestUser: false,
+      nickname: "",
+      equippedSkin: "classic",
+      equippedBoardSkin: "classic",
+      ownedSkins: [],
+      wins: 0,
+      losses: 0,
+      tokens: 0,
+      dailyRewardWins: 0,
+      dailyRewardTokens: 0,
+      achievements: [],
+    };
+  }
+
+  const { error } = await supabase.auth.signOut({ scope: "local" });
+  if (error) {
+    console.error("[supabase] failed to sign out local session", error);
+  }
+
+  window.localStorage.removeItem(GUEST_SESSION_KEY);
+  clearPendingUpgradeContext();
+  clearUpgradeQueryFromUrl();
+
+  return {
+    ready: true,
+    userId: null,
+    accessToken: null,
+    isGuestUser: false,
+    nickname: "",
+    equippedSkin: "classic",
+    equippedBoardSkin: "classic",
+    ownedSkins: [],
+    wins: 0,
+    losses: 0,
+    tokens: 0,
+    dailyRewardWins: 0,
+    dailyRewardTokens: 0,
+    achievements: [],
+  };
 }
 
 export async function resolveUpgradeFlowAfterRedirect(): Promise<UpgradeResolution> {
