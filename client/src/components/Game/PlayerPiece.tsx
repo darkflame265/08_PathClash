@@ -4,6 +4,7 @@ import { CosmicGame } from '../../skins/rare/cosmic/Game';
 import { ArcReactorGame } from '../../skins/rare/arc_reactor/Game';
 import { AtomicGame } from '../../skins/legendary/atomic/Game';
 import { SunGame } from '../../skins/legendary/sun/Game';
+import { WizardGame } from '../../skins/legendary/wizard/Game';
 import { PlasmaGame } from '../../skins/common/plasma/Game';
 import { GoldCoreGame } from '../../skins/common/gold_core/Game';
 import { NeonPulseGame } from '../../skins/common/neon_pulse/Game';
@@ -48,6 +49,7 @@ interface Props {
     | "quantum"
     | "atomic"
     | "sun"
+    | "wizard"
     | "flag_kr"
     | "flag_jp"
     | "flag_cn"
@@ -87,6 +89,14 @@ export function PlayerPiece({
   const meBorder = Math.max(2, Math.round(pieceSize * 0.055));
   const meGlow = Math.max(2, Math.round(pieceSize * 0.055));
   const pieceGlow = Math.max(8, Math.round(pieceSize * 0.22));
+  const sunChariotScaleMultiplier = isSunChariotActive ? 6 : 1;
+  const arcReactorScale =
+    effectiveSkin === 'arc_reactor'
+      ? isSunChariotActive
+        ? (pieceSize * sunChariotScaleMultiplier) / 210
+        : innerSize / 250
+      : (innerSize / 250) * sunChariotScaleMultiplier;
+  const wizardScale = innerSize / 250;
   const classes = [
     'player-piece',
     `piece-${color}`,
@@ -116,7 +126,8 @@ export function PlayerPiece({
         ['--me-border-width' as string]: `${meBorder}px`,
         ['--me-glow-width' as string]: `${meGlow}px`,
         ['--piece-glow' as string]: `${pieceGlow}px`,
-        ['--arc-reactor-scale' as string]: `${innerSize / 250}`,
+        ['--arc-reactor-scale' as string]: `${arcReactorScale}`,
+        ['--wizard-scale' as string]: `${wizardScale}`,
       }}
     >
       {isAtField && (
@@ -146,6 +157,7 @@ export function PlayerPiece({
           {effectiveSkin === "electric_core" && <ElectricCoreGame />}
           {effectiveSkin === "atomic" && <AtomicGame cellSize={cellSize} />}
           {effectiveSkin === "sun" && <SunGame cellSize={cellSize} />}
+          {effectiveSkin === "wizard" && <WizardGame />}
           {effectiveSkin === "quantum" && <QuantumGame />}
         </div>
         {hp !== null && !isClone && (

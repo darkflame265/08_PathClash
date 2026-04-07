@@ -4,6 +4,7 @@ import { FlagSkin, isFlagSkin } from "../shared/FlagSkin";
 
 import { AtomicPreview } from "../../skins/legendary/atomic/Preview";
 import { SunPreview } from "../../skins/legendary/sun/Preview";
+import { WizardPreview } from "../../skins/legendary/wizard/Preview";
 
 import { CosmicPreview } from "../../skins/rare/cosmic/Preview";
 
@@ -1259,6 +1260,7 @@ export function LobbyScreen({
       | "cosmic"
       | "inferno"
       | "arc_reactor"
+      | "wizard"
       | "electric_core"
       | "quantum"
       | "atomic"
@@ -1482,6 +1484,25 @@ export function LobbyScreen({
       tokenPrice: 1400,
 
       tier: "rare",
+    },
+
+    {
+      id: "wizard",
+
+      name: lang === "en" ? "Wizard" : "위저드",
+
+      desc:
+        lang === "en"
+          ? "Legendary magic circle — hexagram, orbiting diamonds, and plasma arms pulse with arcane energy."
+          : "레전더리 마법진 — 헥사그램, 공전 다이아, 플라즈마 암이 신비로운 에너지로 맥동.",
+
+      requiredWins: null,
+
+      requiredPlays: null,
+
+      tokenPrice: 3600,
+
+      tier: "legendary",
     },
 
     {
@@ -3493,6 +3514,7 @@ export function LobbyScreen({
                         {choice.id === "arc_reactor" && <ArcReactorPreview />}
                         {choice.id === "electric_core" && <ElectricCorePreview />}
                         {choice.id === "quantum" && <QuantumPreview />}
+                        {choice.id === "wizard" && <WizardPreview />}
                         {choice.id === "atomic" && (
                           <AtomicPreview ready={atomicPreviewReady} />
                         )}

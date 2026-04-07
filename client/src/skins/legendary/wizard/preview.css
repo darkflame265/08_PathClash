@@ -1,0 +1,224 @@
+/* 로비 스킨 선택창 배경 */
+.skin-preview-wizard {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(18, 4, 38, 0.97) 0%,
+    rgba(10, 2, 24, 0.98) 65%,
+    rgba(4, 1, 12, 1) 100%
+  );
+  box-shadow:
+    0 0 0 2px rgba(160, 70, 255, 0.7),
+    0 0 14px rgba(160, 50, 255, 0.2),
+    0 0 28px rgba(110, 20, 210, 0.12);
+  overflow: visible;
+}
+
+/* scale 래퍼 (game.css와 동일한 250px 기반, 로비 크기에 맞게 scale) */
+.wizard-preview-scale {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 250px;
+  height: 250px;
+  transform: translate(-50%, -50%) scale(0.14);
+  transform-origin: center;
+  pointer-events: none;
+  display: block;
+}
+
+.wizard-preview-wrap {
+  position: relative;
+  display: block;
+  width: 250px;
+  height: 250px;
+}
+
+/* 위치 헬퍼: 모든 자식을 중앙 기준 절대 배치 */
+.wizard-preview-wrap > * {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+}
+
+/* 외곽 링 */
+.wizard-preview-outer-ring {
+  width: 236px;
+  height: 236px;
+  margin-left: -118px;
+  margin-top: -118px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(200, 75, 255, 0.35);
+  animation: wizardPreviewCW 20s linear infinite;
+}
+
+.wizard-preview-outer-ring::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 1px dashed rgba(200, 75, 255, 0.18);
+}
+
+/* 틱 마크 */
+.wizard-preview-tick {
+  width: 3px;
+  height: 11px;
+  margin-left: -1.5px;
+  margin-top: -129px;
+  background: rgba(210, 85, 255, 0.7);
+  border-radius: 1.5px;
+  transform-origin: center 129px;
+  transform: rotate(var(--wizard-tick-angle));
+}
+
+/* 중간 링 */
+.wizard-preview-mid-ring {
+  width: 166px;
+  height: 166px;
+  margin-left: -83px;
+  margin-top: -83px;
+  border-radius: 50%;
+  border: 1px solid rgba(175, 55, 255, 0.45);
+  animation: wizardPreviewCCW 8s linear infinite;
+}
+
+/* 다이아 노드 */
+.wizard-preview-diamond {
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  margin-top: -4px;
+  background: rgba(215, 95, 255, 0.9);
+  box-shadow: 0 0 6px 2px rgba(190, 55, 255, 0.8);
+  transform: rotate(45deg);
+}
+
+.wizard-preview-d1 { animation: wizardPreviewDiamondOrbit 8s linear infinite 0s; }
+.wizard-preview-d2 { animation: wizardPreviewDiamondOrbit 8s linear infinite -2s; }
+.wizard-preview-d3 { animation: wizardPreviewDiamondOrbit 8s linear infinite -4s; }
+.wizard-preview-d4 { animation: wizardPreviewDiamondOrbit 8s linear infinite -6s; }
+
+@keyframes wizardPreviewDiamondOrbit {
+  from { transform: rotate(0deg)    translateX(83px) rotate(45deg); }
+  to   { transform: rotate(-360deg) translateX(83px) rotate(45deg); }
+}
+
+/* 삼각형 */
+.wizard-preview-triangle {
+  width: 118px;
+  height: 118px;
+  margin-left: -59px;
+  margin-top: -59px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wizard-preview-tri-1 { animation: wizardPreviewCW 7s linear infinite; }
+.wizard-preview-tri-2 { animation: wizardPreviewCCW 11s linear infinite; }
+
+.wizard-preview-tri-svg { width: 100%; height: 100%; overflow: visible; }
+
+/* 에너지 암 */
+.wizard-preview-arm {
+  width: 2px;
+  height: 52px;
+  margin-left: -1px;
+  margin-top: -52px;
+  transform-origin: center bottom;
+  transform: rotate(var(--wizard-arm-angle));
+}
+
+.wizard-preview-arm-inner {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top, rgba(200, 75, 255, 0.9), transparent);
+  border-radius: 1px;
+  animation: wizardPreviewArmFlare 2.4s ease-in-out infinite;
+}
+
+/* 공전 점 */
+.wizard-preview-dot {
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  margin-top: -3px;
+  border-radius: 50%;
+  background: #e06aff;
+  box-shadow: 0 0 8px 3px rgba(200, 55, 255, 0.95);
+}
+
+.wizard-preview-dot-1 { animation: wizardPreviewDotOrbit 2.2s linear infinite 0s; }
+.wizard-preview-dot-2 { animation: wizardPreviewDotOrbit 2.2s linear infinite -0.73s; }
+.wizard-preview-dot-3 { animation: wizardPreviewDotOrbit 2.2s linear infinite -1.47s; }
+
+@keyframes wizardPreviewDotOrbit {
+  from { transform: rotate(0deg)   translateX(66px); }
+  to   { transform: rotate(360deg) translateX(66px); }
+}
+
+/* 코어 */
+.wizard-preview-core {
+  width: 72px;
+  height: 72px;
+  margin-left: -36px;
+  margin-top: -36px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 28%,
+    #f0d8ff 0%,
+    #c460ff 38%,
+    #7010c8 72%,
+    #1c0038 100%
+  );
+  border: 1.5px solid rgba(180, 65, 255, 0.7);
+  box-shadow:
+    0 0 16px rgba(160, 50, 255, 0.9),
+    0 0 34px rgba(110, 20, 210, 0.55);
+  animation: wizardPreviewCorePulse 1.5s ease-in-out infinite;
+  z-index: 3;
+}
+
+.wizard-preview-core::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48%;
+  height: 48%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.97) 0%,
+    rgba(230, 170, 255, 0.62) 52%,
+    transparent 100%
+  );
+  animation: wizardPreviewCoreInner 1.5s ease-in-out infinite;
+}
+
+/* 키프레임 */
+@keyframes wizardPreviewCW  { to { transform: rotate(360deg); } }
+@keyframes wizardPreviewCCW { to { transform: rotate(-360deg); } }
+
+@keyframes wizardPreviewArmFlare {
+  0%, 100% { opacity: 0.22; }
+  50%       { opacity: 1; }
+}
+
+@keyframes wizardPreviewCorePulse {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(160, 50, 255, 0.9), 0 0 34px rgba(110, 20, 210, 0.55);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 26px rgba(190, 80, 255, 1), 0 0 54px rgba(140, 40, 230, 0.75);
+    transform: scale(1.06);
+  }
+}
+
+@keyframes wizardPreviewCoreInner {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.9);  opacity: 0.78; }
+  50%       { transform: translate(-50%, -50%) scale(1.14); opacity: 1; }
+}

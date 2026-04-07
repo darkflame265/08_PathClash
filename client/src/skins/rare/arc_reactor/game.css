@@ -1,3 +1,7 @@
+/* ═══════════════════════════════════════════════════════════════════
+   OLD CODE — 주석 처리 (원래대로 되돌리려면 아래 주석 해제)
+   ═══════════════════════════════════════════════════════════════════
+
 .player-piece.piece-skin-arc_reactor .piece-inner {
   background: transparent;
   overflow: visible;
@@ -131,4 +135,138 @@
   animation: colour_ease2 3s infinite ease-in-out;
   animation-delay: var(--mark-delay);
   background: rgba(2, 254, 255, 0.8);
+}
+
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════
+   NEW: HEXAGON LATTICE
+   ═══════════════════════════════════════════════════════════════════ */
+
+.player-piece.piece-skin-arc_reactor .piece-inner {
+  background: transparent;
+  overflow: visible;
+  box-shadow: none;
+  border-color: transparent;
+}
+
+/* scale wrapper — PlayerPiece.tsx의 --arc-reactor-scale 변수 재사용 */
+.arc-reactor-scale {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 250px;
+  height: 250px;
+  transform: translate(-50%, -50%) scale(var(--arc-reactor-scale, 0.176));
+  transform-origin: center;
+  pointer-events: none;
+}
+
+.arc-hex-wrap {
+  position: relative;
+  width: 250px;
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 회전하는 육각형 레이어 */
+.arc-hex-layer {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.arc-hex-layer-1 {
+  width: 230px;
+  height: 230px;
+  animation: arcHexCW 10s linear infinite;
+}
+
+.arc-hex-layer-2 {
+  width: 162px;
+  height: 162px;
+  animation: arcHexCCW 6s linear infinite;
+}
+
+.arc-hex-layer-3 {
+  width: 104px;
+  height: 104px;
+  animation: arcHexCW 4s linear infinite;
+}
+
+.arc-hex-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* 중앙 코어 */
+.arc-hex-core {
+  position: relative;
+  z-index: 2;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 28%,
+    #fef3c7 0%,
+    #fbbf24 38%,
+    #d97706 72%,
+    #431407 100%
+  );
+  border: 1.5px solid rgba(251, 191, 36, 0.65);
+  box-shadow:
+    0 0 20px rgba(251, 191, 36, 0.85),
+    0 0 42px rgba(217, 119, 6, 0.45),
+    inset 0 0 12px rgba(255, 255, 255, 0.2);
+  animation: arcHexCorePulse 1.8s ease-in-out infinite;
+}
+
+.arc-hex-core::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46%;
+  height: 46%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(255, 236, 153, 0.65) 55%,
+    transparent 100%
+  );
+  animation: arcHexCoreInner 1.8s ease-in-out infinite;
+}
+
+@keyframes arcHexCW {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes arcHexCCW {
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes arcHexCorePulse {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(251, 191, 36, 0.85),
+      0 0 42px rgba(217, 119, 6, 0.45),
+      inset 0 0 12px rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 32px rgba(251, 210, 36, 1),
+      0 0 62px rgba(217, 140, 6, 0.7),
+      inset 0 0 18px rgba(255, 255, 255, 0.32);
+  }
+}
+
+@keyframes arcHexCoreInner {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.9);  opacity: 0.78; }
+  50%       { transform: translate(-50%, -50%) scale(1.12); opacity: 1; }
 }

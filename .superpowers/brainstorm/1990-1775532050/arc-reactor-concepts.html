@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Arc Reactor Skin Concepts</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #12181B;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', sans-serif;
+    padding: 24px;
+  }
+  h2 { color: #fff; margin-bottom: 6px; font-size: 1.3rem; }
+  .subtitle { color: #888; margin-bottom: 24px; font-size: 0.9rem; }
+  .cards {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .card {
+    background: #1E252B;
+    border: 2px solid #3A444D;
+    border-radius: 12px;
+    padding: 20px;
+    width: 240px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+    text-align: center;
+  }
+  .card:hover { border-color: #607080; transform: translateY(-2px); }
+  .card.selected { border-color: #3b82f6; background: #1a2535; }
+  .card h3 { color: #fff; font-size: 1rem; margin-bottom: 6px; }
+  .card p { color: #888; font-size: 0.8rem; line-height: 1.4; margin-top: 8px; }
+  .preview-box {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 12px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── CONCEPT A: Orbital Nodes (3D orb feel) ── */
+  .orb-wrap {
+    width: 100px; height: 100px;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .orb-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1.5px solid rgba(80,160,255,0.6);
+  }
+  .orb-ring-1 {
+    width: 96px; height: 96px;
+    border-color: rgba(80,160,255,0.25);
+    animation: orbRing1 6s linear infinite;
+  }
+  .orb-ring-2 {
+    width: 72px; height: 36px;
+    border-color: rgba(100,180,255,0.7);
+    animation: orbRing2 3s linear infinite;
+  }
+  .orb-ring-2::after {
+    content:'';
+    position:absolute;
+    width:6px; height:6px;
+    background:#60b0ff;
+    border-radius:50%;
+    top:-3px; left:33px;
+    box-shadow: 0 0 8px 3px rgba(80,160,255,0.9);
+    animation: none;
+  }
+  .orb-ring-3 {
+    width: 72px; height: 36px;
+    transform: rotateX(60deg) rotateZ(60deg);
+    border-color: rgba(160,220,255,0.5);
+    animation: orbRing3 4s linear infinite;
+  }
+  .orb-ring-3::after {
+    content:'';
+    position:absolute;
+    width:6px; height:6px;
+    background:#a0dcff;
+    border-radius:50%;
+    top:-3px; left:33px;
+    box-shadow: 0 0 8px 3px rgba(160,220,255,0.9);
+  }
+  .orb-ring-4 {
+    width: 36px; height: 72px;
+    border-color: rgba(80,180,255,0.4);
+    animation: orbRing4 5s linear infinite;
+  }
+  .orb-ring-4::after {
+    content:'';
+    position:absolute;
+    width:6px; height:6px;
+    background:#80c8ff;
+    border-radius:50%;
+    left:-3px; top:33px;
+    box-shadow: 0 0 8px 3px rgba(80,180,255,0.9);
+  }
+  .orb-core {
+    width: 22px; height: 22px;
+    background: radial-gradient(circle, #ffffff 0%, #80c8ff 40%, #2060ff 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 12px 4px rgba(80,150,255,0.8), 0 0 24px 8px rgba(80,150,255,0.3);
+    animation: orbCorePulse 2s ease-in-out infinite;
+    z-index: 2;
+  }
+  @keyframes orbRing1 { to { transform: rotate(360deg); } }
+  @keyframes orbRing2 { to { transform: rotate(360deg); } }
+  @keyframes orbRing3 { to { transform: rotate(360deg); } }
+  @keyframes orbRing4 { to { transform: rotate(360deg); } }
+  @keyframes orbCorePulse {
+    0%,100% { box-shadow: 0 0 12px 4px rgba(80,150,255,0.8), 0 0 24px 8px rgba(80,150,255,0.3); }
+    50% { box-shadow: 0 0 18px 7px rgba(80,150,255,1), 0 0 36px 14px rgba(80,150,255,0.5); }
+  }
+
+  /* ── CONCEPT B: Hexagonal Lattice ── */
+  .hex-wrap {
+    width: 100px; height: 100px;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .hex-outer {
+    position: absolute;
+    width: 88px; height: 88px;
+    animation: hexSpin 8s linear infinite;
+  }
+  .hex-inner {
+    position: absolute;
+    width: 54px; height: 54px;
+    animation: hexSpinRev 5s linear infinite;
+  }
+  .hex-mid {
+    position: absolute;
+    width: 68px; height: 68px;
+    animation: hexSpin 3.5s linear infinite;
+  }
+  .hex-svg { width: 100%; height: 100%; }
+  .hex-core {
+    width: 18px; height: 18px;
+    background: radial-gradient(circle, #fff 0%, #f0c040 40%, #e06000 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 10px 4px rgba(255,160,0,0.9), 0 0 24px 8px rgba(255,100,0,0.4);
+    animation: hexCorePulse 1.5s ease-in-out infinite;
+    z-index: 2;
+    position: relative;
+  }
+  @keyframes hexSpin { to { transform: rotate(360deg); } }
+  @keyframes hexSpinRev { to { transform: rotate(-360deg); } }
+  @keyframes hexCorePulse {
+    0%,100% { box-shadow: 0 0 10px 4px rgba(255,160,0,0.9), 0 0 24px 8px rgba(255,100,0,0.4); }
+    50% { box-shadow: 0 0 16px 7px rgba(255,180,0,1), 0 0 36px 14px rgba(255,120,0,0.6); }
+  }
+
+  /* ── CONCEPT C: Plasma Cross (star pattern) ── */
+  .plasma-wrap {
+    width: 100px; height: 100px;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .plasma-ring {
+    position: absolute;
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    border: 1px solid rgba(160,80,255,0.3);
+    animation: plasmaRingSpin 10s linear infinite;
+  }
+  .plasma-arm {
+    position: absolute;
+    width: 2px;
+    background: linear-gradient(to bottom, transparent, rgba(200,100,255,0.9), transparent);
+    border-radius: 2px;
+    transform-origin: center center;
+    animation: plasmaArmPulse 2s ease-in-out infinite;
+  }
+  .plasma-arm-1 { height: 80px; top: 10px; left: calc(50% - 1px); transform: rotate(0deg);   animation-delay: 0s; }
+  .plasma-arm-2 { height: 80px; top: 10px; left: calc(50% - 1px); transform: rotate(60deg);  animation-delay: 0.33s; }
+  .plasma-arm-3 { height: 80px; top: 10px; left: calc(50% - 1px); transform: rotate(120deg); animation-delay: 0.66s; }
+  .plasma-dot {
+    position: absolute;
+    width: 5px; height: 5px;
+    background: rgba(200,100,255,0.9);
+    border-radius: 50%;
+    box-shadow: 0 0 6px 2px rgba(180,80,255,0.8);
+    animation: plasmaDotOrbit 4s linear infinite;
+  }
+  .plasma-dot:nth-child(1) { animation-delay: 0s; }
+  .plasma-dot:nth-child(2) { animation-delay: -1.33s; }
+  .plasma-dot:nth-child(3) { animation-delay: -2.66s; }
+  .plasma-core {
+    width: 18px; height: 18px;
+    background: radial-gradient(circle, #fff 0%, #d080ff 40%, #6020c0 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 10px 4px rgba(160,60,255,0.9), 0 0 24px 8px rgba(120,20,220,0.4);
+    animation: plasmaCoreRotate 3s linear infinite;
+    z-index: 2;
+    position: relative;
+  }
+  @keyframes plasmaRingSpin { to { transform: rotate(360deg); } }
+  @keyframes plasmaArmPulse {
+    0%,100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+  @keyframes plasmaDotOrbit {
+    0%   { transform: rotate(0deg)   translateX(36px); }
+    100% { transform: rotate(360deg) translateX(36px); }
+  }
+  @keyframes plasmaCoreRotate { to { transform: rotate(360deg); } }
+
+  /* selection */
+  .selected-label {
+    display: none;
+    color: #3b82f6;
+    font-size: 0.75rem;
+    margin-top: 6px;
+    font-weight: bold;
+  }
+  .card.selected .selected-label { display: block; }
+</style>
+</head>
+<body>
+<h2>Arc Reactor 스킨 — 디자인 방향 선택</h2>
+<p class="subtitle">3가지 완전히 새로운 컨셉 중 하나를 고르세요. 클릭하면 선택됩니다.</p>
+
+<div class="cards">
+
+  <!-- A -->
+  <div class="card" onclick="select(this,'a')">
+    <div class="preview-box">
+      <div class="orb-wrap">
+        <div class="orb-ring orb-ring-1"></div>
+        <div class="orb-ring orb-ring-2"></div>
+        <div class="orb-ring orb-ring-3"></div>
+        <div class="orb-ring orb-ring-4"></div>
+        <div class="orb-core"></div>
+      </div>
+    </div>
+    <h3>A. 오비탈 노드</h3>
+    <p>3개의 타원형 궤도가 서로 다른 각도로 회전하며 에너지 노드(점)가 궤도를 따라 이동. 색상: 전기 파란빛. 3D 구(球) 느낌.</p>
+    <div class="selected-label">✔ 선택됨</div>
+  </div>
+
+  <!-- B -->
+  <div class="card" onclick="select(this,'b')">
+    <div class="preview-box">
+      <div class="hex-wrap">
+        <div class="hex-outer">
+          <svg class="hex-svg" viewBox="0 0 88 88">
+            <polygon points="44,4 80,24 80,64 44,84 8,64 8,24"
+              fill="none" stroke="rgba(255,160,0,0.7)" stroke-width="1.5"
+              stroke-dasharray="8 4"/>
+          </svg>
+        </div>
+        <div class="hex-mid">
+          <svg class="hex-svg" viewBox="0 0 68 68">
+            <polygon points="34,3 62,18.5 62,49.5 34,65 6,49.5 6,18.5"
+              fill="none" stroke="rgba(255,120,0,0.5)" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="hex-inner">
+          <svg class="hex-svg" viewBox="0 0 54 54">
+            <polygon points="27,3 49,15.5 49,38.5 27,51 5,38.5 5,15.5"
+              fill="none" stroke="rgba(255,180,0,0.8)" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="hex-core"></div>
+      </div>
+    </div>
+    <h3>B. 헥사곤 래티스</h3>
+    <p>3중 육각형 프레임이 서로 반대 방향으로 회전. 색상: 앰버/오렌지 골드. 에너지 결정체 느낌.</p>
+    <div class="selected-label">✔ 선택됨</div>
+  </div>
+
+  <!-- C -->
+  <div class="card" onclick="select(this,'c')">
+    <div class="preview-box">
+      <div class="plasma-wrap">
+        <div class="plasma-ring"></div>
+        <div class="plasma-arm plasma-arm-1"></div>
+        <div class="plasma-arm plasma-arm-2"></div>
+        <div class="plasma-arm plasma-arm-3"></div>
+        <div class="plasma-dot"></div>
+        <div class="plasma-dot"></div>
+        <div class="plasma-dot"></div>
+        <div class="plasma-core"></div>
+      </div>
+    </div>
+    <h3>C. 플라즈마 크로스</h3>
+    <p>6방향 에너지 암(arm)이 뻗고 3개의 점이 궤도를 공전. 색상: 보라/자주. 방사형 에너지장 느낌.</p>
+    <div class="selected-label">✔ 선택됨</div>
+  </div>
+
+</div>
+
+<script>
+let selected = null;
+function select(el, choice) {
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selected = choice;
+  try {
+    fetch('/__choice', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({type:'click', choice, text: el.querySelector('h3').textContent, timestamp: Date.now()})
+    });
+  } catch(e) {}
+}
+</script>
+</body>
+</html>
