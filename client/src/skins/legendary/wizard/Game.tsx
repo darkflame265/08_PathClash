@@ -1,13 +1,12 @@
 import "./game.css";
 
 const WIZARD_TICK_ANGLES = Array.from({ length: 8 }, (_, i) => i * 45);
-const WIZARD_ARM_ANGLES  = Array.from({ length: 6 }, (_, i) => i * 60);
+const WIZARD_ARM_ANGLES = Array.from({ length: 6 }, (_, i) => i * 60);
 
 export function WizardGame() {
   return (
     <div className="wizard-scale" aria-hidden="true">
       <div className="wizard-wrap">
-
         {/* 외곽 링 */}
         <div className="wizard-outer-ring" />
 
@@ -31,22 +30,30 @@ export function WizardGame() {
 
         {/* 내부 삼각형 두 개 (헥사그램) */}
         <div className="wizard-triangle wizard-tri-1">
-          <svg className="wizard-tri-svg" viewBox="0 0 120 120" aria-hidden="true">
+          <svg
+            className="wizard-tri-svg"
+            viewBox="0 0 120 120"
+            aria-hidden="true"
+          >
             <polygon
               points="60,6 111,99 9,99"
               fill="none"
               stroke="rgba(190,70,255,0.65)"
-              strokeWidth="2"
+              strokeWidth="8"
             />
           </svg>
         </div>
         <div className="wizard-triangle wizard-tri-2">
-          <svg className="wizard-tri-svg" viewBox="0 0 120 120" aria-hidden="true">
+          <svg
+            className="wizard-tri-svg"
+            viewBox="0 0 120 120"
+            aria-hidden="true"
+          >
             <polygon
               points="60,114 9,21 111,21"
               fill="none"
               stroke="rgba(220,110,255,0.42)"
-              strokeWidth="1.5"
+              strokeWidth="8"
             />
           </svg>
         </div>
@@ -69,7 +76,6 @@ export function WizardGame() {
 
         {/* 코어 */}
         <div className="wizard-core" />
-
       </div>
     </div>
   );

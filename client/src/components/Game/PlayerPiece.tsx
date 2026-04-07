@@ -96,7 +96,10 @@ export function PlayerPiece({
         ? (pieceSize * sunChariotScaleMultiplier) / 210
         : innerSize / 250
       : (innerSize / 250) * sunChariotScaleMultiplier;
-  const wizardScale = innerSize / 250;
+  const wizardScale =
+    effectiveSkin === 'wizard'
+      ? (innerSize / 250) * 1.2 * sunChariotScaleMultiplier
+      : (innerSize / 250) * sunChariotScaleMultiplier;
   const classes = [
     'player-piece',
     `piece-${color}`,
