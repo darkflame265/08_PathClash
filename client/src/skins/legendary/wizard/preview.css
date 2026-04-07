@@ -105,10 +105,10 @@
 
 /* 삼각형 */
 .wizard-preview-triangle {
-  width: 156px;
-  height: 156px;
-  margin-left: -78px;
-  margin-top: -78px;
+  width: 206px;
+  height: 206px;
+  margin-left: -103px;
+  margin-top: -103px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -121,10 +121,10 @@
 
 /* 에너지 암 */
 .wizard-preview-arm {
-  width: 3px;
-  height: 62px;
-  margin-left: -1.5px;
-  margin-top: -62px;
+  width: 111px;
+  height: 111px;
+  margin-left: -61px;
+  margin-top: -111px;
   transform-origin: center bottom;
   transform: rotate(var(--wizard-arm-angle));
 }
@@ -140,10 +140,10 @@
 
 /* 공전 점 */
 .wizard-preview-dot {
-  width: 16px;
-  height: 16px;
-  margin-left: -4px;
-  margin-top: -4px;
+  width: 22px;
+  height: 22px;
+  margin-left: -11px;
+  margin-top: -11px;
   border-radius: 50%;
   background: #e06aff;
   box-shadow: 0 0 8px 3px rgba(200, 55, 255, 0.95);
