@@ -38,7 +38,7 @@ export function WizardGame() {
             <polygon
               points="60,6 111,99 9,99"
               fill="none"
-              stroke="rgba(190,70,255,0.65)"
+              stroke="rgba(190,70,255,0.85)"
               strokeWidth="8"
             />
           </svg>
@@ -52,7 +52,7 @@ export function WizardGame() {
             <polygon
               points="60,114 9,21 111,21"
               fill="none"
-              stroke="rgba(220,110,255,0.42)"
+              stroke="rgba(220,110,255,0.80)"
               strokeWidth="8"
             />
           </svg>

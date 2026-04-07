@@ -119,8 +119,8 @@
 /* ─── 내부 삼각형 (헥사그램) ─── */
 .wizard-triangle {
   position: absolute;
-  width: 156px;
-  height: 156px;
+  width: 206px;
+  height: 206px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -144,10 +144,10 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 3px;
-  height: 62px;
-  margin-left: -1.5px;
-  margin-top: -62px;
+  width: 111px;
+  height: 111px;
+  margin-left: -61px;
+  margin-top: -111px;
   transform-origin: center bottom;
   transform: rotate(var(--wizard-arm-angle));
 }
@@ -184,8 +184,8 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 16px;
-  height: 16px;
+  width: 22px;
+  height: 22px;
   margin-left: -4px;
   margin-top: -4px;
   border-radius: 50%;
