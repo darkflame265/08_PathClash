@@ -1454,9 +1454,9 @@ export function LobbyScreen({
     {
       id: "arc_reactor",
 
-      name: lang === "en" ? "Arc Reactor" : "아크 리액터",
+      name: lang === "en" ? "Hexagon" : "헥사곤",
 
-      desc: lang === "en" ? "High-energy reactor core." : "고출력 리액터 코어.",
+      desc: lang === "en" ? "Hexagonal reactor core with layered rotating rings." : "육각형 리액터 코어와 다층 회전 링.",
 
       requiredWins: null,
 
