@@ -121,6 +121,7 @@
   height: 140%;
   transform: translate3d(-50%, -50%, 0);
   transform-origin: 50% 50%;
+  transform-style: preserve-3d;
   will-change: transform;
   backface-visibility: hidden;
 }
