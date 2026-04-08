@@ -25,7 +25,7 @@ type AbilitySfxId =
   | "void_cloak"
   | "gold_overdrive_loop";
 
-type UiSfxId = "lobby_click";
+type UiSfxId = "lobby_click" | "victory_result" | "defeat_result";
 
 type AbilitySfxConfig = {
   path: string;
@@ -98,7 +98,20 @@ const UI_SFX: Record<UiSfxId, AbilitySfxConfig> = {
     path: "/sfx/ui/lobby_click.mp3",
     gain: 0.55,
   },
+  victory_result: {
+    path: "/sfx/ui/victory_result.mp3",
+    gain: 0.75,
+  },
+  defeat_result: {
+    path: "/sfx/ui/defeat_result.mp3",
+    gain: 0.75,
+  },
 };
+
+export type MatchResultAudioKind = "victory" | "defeat";
+
+const MATCH_RESULT_AUDIO_EVENT = "pathclash:match-result-audio";
+const STOP_MATCH_RESULT_AUDIO_EVENT = "pathclash:stop-match-result-audio";
 
 const audioCache: Partial<Record<AbilitySfxId, HTMLAudioElement>> = {};
 const uiAudioCache: Partial<Record<UiSfxId, HTMLAudioElement>> = {};
@@ -177,6 +190,32 @@ export function preloadAbilitySfxAssets(): void {
 
 export function playLobbyClick(volume = 0.55): void {
   playUiSfx("lobby_click", volume);
+}
+
+export function playMatchResultSfx(
+  kind: MatchResultAudioKind,
+  volume = 0.55,
+): void {
+  playUiSfx(kind === "victory" ? "victory_result" : "defeat_result", volume);
+}
+
+export function startMatchResultBgm(kind: MatchResultAudioKind): void {
+  window.dispatchEvent(
+    new CustomEvent(MATCH_RESULT_AUDIO_EVENT, {
+      detail: { kind },
+    }),
+  );
+}
+
+export function stopMatchResultBgm(): void {
+  window.dispatchEvent(new CustomEvent(STOP_MATCH_RESULT_AUDIO_EVENT));
+}
+
+export function getMatchResultAudioEvents() {
+  return {
+    start: MATCH_RESULT_AUDIO_EVENT,
+    stop: STOP_MATCH_RESULT_AUDIO_EVENT,
+  };
 }
 
 export function playHit(volume = 0.55): void {

@@ -9,6 +9,11 @@ import { HpDisplay } from "./HpDisplay";
 import { PlayerInfo } from "./PlayerInfo";
 import { TimerBar } from "./TimerBar";
 import type { BoardSkin, Position } from "../../types/game.types";
+import {
+  playMatchResultSfx,
+  startMatchResultBgm,
+  stopMatchResultBgm,
+} from "../../utils/soundUtils";
 import "./GameScreen.css";
 
 interface Props {
@@ -115,6 +120,8 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     currentMatchType,
     accountDailyRewardTokens,
     boardSkin,
+    isSfxMuted,
+    sfxVolume,
   } = useGameStore();
   const { t, lang } = useLang();
   const gridAreaRef = useRef<HTMLDivElement>(null);
@@ -134,6 +141,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   } | null>(null);
   const [showEntranceAnimation, setShowEntranceAnimation] = useState(true);
   const tutorialStartedRef = useRef(false);
+  const resultAudioPlayedRef = useRef(false);
 
   useEffect(() => {
     const socket = getSocket();
@@ -154,6 +162,29 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       setShowEntranceAnimation(false);
     }, 620);
     return () => window.clearTimeout(timeout);
+  }, []);
+
+  useEffect(() => {
+    if (!winner || !myColor) {
+      resultAudioPlayedRef.current = false;
+      stopMatchResultBgm();
+      return;
+    }
+
+    if (resultAudioPlayedRef.current) return;
+
+    const didWin = winner === myColor;
+    if (!isSfxMuted) {
+      playMatchResultSfx(didWin ? "victory" : "defeat", sfxVolume);
+    }
+    startMatchResultBgm(didWin ? "victory" : "defeat");
+    resultAudioPlayedRef.current = true;
+  }, [isSfxMuted, myColor, sfxVolume, winner]);
+
+  useEffect(() => {
+    return () => {
+      stopMatchResultBgm();
+    };
   }, []);
 
   useEffect(() => {

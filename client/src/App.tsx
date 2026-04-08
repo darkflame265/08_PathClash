@@ -18,6 +18,10 @@ import {
 import { disconnectSocket, getSocket } from "./socket/socketClient";
 import { useLang } from "./hooks/useLang";
 import { useGameStore } from "./store/gameStore";
+import {
+  getMatchResultAudioEvents,
+  type MatchResultAudioKind,
+} from "./utils/soundUtils";
 import "./App.css";
 
 const LobbyScreen = lazy(() =>
@@ -101,6 +105,8 @@ function App() {
   const [openLegalDocument, setOpenLegalDocument] =
     useState<LegalDocumentType | null>(null);
   const [tutorialPromptTrigger, setTutorialPromptTrigger] = useState(0);
+  const [matchResultAudioKind, setMatchResultAudioKind] =
+    useState<MatchResultAudioKind | null>(null);
   const {
     authReady,
     setAccountSummaryLoading,
@@ -118,6 +124,8 @@ function App() {
   const { lang } = useLang();
   const lobbyBgmRef = useRef<HTMLAudioElement | null>(null);
   const inGameBgmRef = useRef<HTMLAudioElement | null>(null);
+  const victoryBgmRef = useRef<HTMLAudioElement | null>(null);
+  const defeatBgmRef = useRef<HTMLAudioElement | null>(null);
   const achievementRefreshTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -171,6 +179,7 @@ function App() {
       setShowExitConfirm(false);
       setShowSessionReplaced(false);
       setView("lobby");
+      setMatchResultAudioKind(null);
       setUpdateRequired(payload);
     },
     [],
@@ -186,25 +195,61 @@ function App() {
     inGameBgm.loop = true;
     inGameBgm.preload = "auto";
     inGameBgm.volume = musicVolume;
+    const victoryBgm = new Audio("/music/victory_bgm.mp3");
+    victoryBgm.loop = true;
+    victoryBgm.preload = "auto";
+    victoryBgm.volume = musicVolume;
+    const defeatBgm = new Audio("/music/defeat_bgm.mp3");
+    defeatBgm.loop = true;
+    defeatBgm.preload = "auto";
+    defeatBgm.volume = musicVolume;
 
     lobbyBgmRef.current = lobbyBgm;
     inGameBgmRef.current = inGameBgm;
+    victoryBgmRef.current = victoryBgm;
+    defeatBgmRef.current = defeatBgm;
 
     return () => {
       lobbyBgm.pause();
       inGameBgm.pause();
+      victoryBgm.pause();
+      defeatBgm.pause();
       lobbyBgmRef.current = null;
       inGameBgmRef.current = null;
+      victoryBgmRef.current = null;
+      defeatBgmRef.current = null;
     };
   }, []);
 
   useEffect(() => {
     const lobbyBgm = lobbyBgmRef.current;
     const inGameBgm = inGameBgmRef.current;
-    if (!lobbyBgm || !inGameBgm) return;
+    const victoryBgm = victoryBgmRef.current;
+    const defeatBgm = defeatBgmRef.current;
+    if (!lobbyBgm || !inGameBgm || !victoryBgm || !defeatBgm) return;
     lobbyBgm.volume = musicVolume;
     inGameBgm.volume = musicVolume;
+    victoryBgm.volume = musicVolume;
+    defeatBgm.volume = musicVolume;
   }, [musicVolume]);
+
+  useEffect(() => {
+    const { start, stop } = getMatchResultAudioEvents();
+    const handleStart = (event: Event) => {
+      const customEvent = event as CustomEvent<{ kind: MatchResultAudioKind }>;
+      setMatchResultAudioKind(customEvent.detail.kind);
+    };
+    const handleStop = () => {
+      setMatchResultAudioKind(null);
+    };
+
+    window.addEventListener(start, handleStart as EventListener);
+    window.addEventListener(stop, handleStop);
+    return () => {
+      window.removeEventListener(start, handleStart as EventListener);
+      window.removeEventListener(stop, handleStop);
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -382,6 +427,7 @@ function App() {
       useGameStore.getState().resetGame();
       setShowExitConfirm(false);
       setView("lobby");
+      setMatchResultAudioKind(null);
       setShowSessionReplaced(true);
     };
 
@@ -499,6 +545,7 @@ function App() {
     disconnectSocket();
     useGameStore.getState().resetGame();
     setShowExitConfirm(false);
+    setMatchResultAudioKind(null);
     setView("lobby");
   }, []);
 
@@ -512,6 +559,7 @@ function App() {
       });
       disconnectSocket();
       useGameStore.getState().resetGame();
+      setMatchResultAudioKind(null);
       setView("lobby");
       const restoredState = await reconnectStoredAccount();
       console.log("[session-debug] session_replaced confirm:restored", {
@@ -627,24 +675,50 @@ function App() {
   const tryStartBgm = useCallback(() => {
     const lobbyBgm = lobbyBgmRef.current;
     const inGameBgm = inGameBgmRef.current;
-    if (!lobbyBgm || !inGameBgm) return;
+    const victoryBgm = victoryBgmRef.current;
+    const defeatBgm = defeatBgmRef.current;
+    if (!lobbyBgm || !inGameBgm || !victoryBgm || !defeatBgm) return;
 
     if (isMusicMuted) {
       lobbyBgm.pause();
       inGameBgm.pause();
+      victoryBgm.pause();
+      defeatBgm.pause();
+      return;
+    }
+
+    if (matchResultAudioKind) {
+      const targetResultBgm =
+        matchResultAudioKind === "victory" ? victoryBgm : defeatBgm;
+      const otherResultBgm =
+        matchResultAudioKind === "victory" ? defeatBgm : victoryBgm;
+      lobbyBgm.pause();
+      inGameBgm.pause();
+      otherResultBgm.pause();
+      otherResultBgm.currentTime = 0;
+      if (targetResultBgm.paused) {
+        targetResultBgm.currentTime = 0;
+        void targetResultBgm.play().catch(() => {
+          // Autoplay can fail until the user interacts with the screen.
+        });
+      }
       return;
     }
 
     const isBattleView = view === "game" || view === "coop" || view === "twovtwo" || view === "ability";
     const targetBgm = isBattleView ? inGameBgm : lobbyBgm;
     const otherBgm = isBattleView ? lobbyBgm : inGameBgm;
+    victoryBgm.pause();
+    victoryBgm.currentTime = 0;
+    defeatBgm.pause();
+    defeatBgm.currentTime = 0;
 
     otherBgm.pause();
     otherBgm.currentTime = 0;
     void targetBgm.play().catch(() => {
       // Autoplay can fail until the user interacts with the screen.
     });
-  }, [isMusicMuted, view]);
+  }, [isMusicMuted, matchResultAudioKind, view]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;

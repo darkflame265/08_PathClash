@@ -11,7 +11,12 @@ import type {
   CoopResolutionPayload,
   CoopRoundStartPayload,
 } from "../../types/coop.types";
-import { playHit } from "../../utils/soundUtils";
+import {
+  playHit,
+  playMatchResultSfx,
+  startMatchResultBgm,
+  stopMatchResultBgm,
+} from "../../utils/soundUtils";
 import { HpDisplay } from "../Game/HpDisplay";
 import { PlayerInfo } from "../Game/PlayerInfo";
 import { TimerBar } from "../Game/TimerBar";
@@ -62,6 +67,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
   const playerHitTimeoutsRef = useRef<number[]>([]);
   const stepEffectTimeoutsRef = useRef<number[]>([]);
   const portalsRef = useRef<CoopPortal[]>([]);
+  const resultAudioPlayedRef = useRef(false);
 
   const currentColor = myColor ?? "red";
   const allyColor: PlayerColor = currentColor === "red" ? "blue" : "red";
@@ -104,6 +110,30 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
   useEffect(() => {
     portalsRef.current = portals;
   }, [portals]);
+
+  useEffect(() => {
+    const result = coopState?.phase === "gameover" ? coopState.gameResult : null;
+    if (!result) {
+      resultAudioPlayedRef.current = false;
+      stopMatchResultBgm();
+      return;
+    }
+
+    if (resultAudioPlayedRef.current) return;
+
+    const didWin = result === "win";
+    if (!isSfxMuted) {
+      playMatchResultSfx(didWin ? "victory" : "defeat", sfxVolume);
+    }
+    startMatchResultBgm(didWin ? "victory" : "defeat");
+    resultAudioPlayedRef.current = true;
+  }, [coopState?.gameResult, coopState?.phase, isSfxMuted, sfxVolume]);
+
+  useEffect(() => {
+    return () => {
+      stopMatchResultBgm();
+    };
+  }, []);
 
   const applyState = useCallback(
     (state: CoopClientState) => {

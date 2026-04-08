@@ -11,6 +11,11 @@ import type {
   TwoVsTwoRoundStartPayload,
   TwoVsTwoSlot,
 } from '../../types/twovtwo.types';
+import {
+  playMatchResultSfx,
+  startMatchResultBgm,
+  stopMatchResultBgm,
+} from '../../utils/soundUtils';
 import { TimerBar } from '../Game/TimerBar';
 import { PlayerInfo } from '../Game/PlayerInfo';
 import { TwoVsTwoGrid } from './TwoVsTwoGrid';
@@ -82,6 +87,8 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     advanceTwoVsTwoStep,
     finishTwoVsTwoAnimation,
     accountDailyRewardTokens,
+    isSfxMuted,
+    sfxVolume,
   } = useGameStore();
   const [state, setState] = useState<TwoVsTwoClientState | null>(null);
   const [roundInfo, setRoundInfo] = useState<TwoVsTwoRoundStartPayload | null>(null);
@@ -105,6 +112,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
   const stateRef = useRef<TwoVsTwoClientState | null>(null);
   const currentSlotRef = useRef<TwoVsTwoSlot>(twoVsTwoSlot ?? 'red_top');
   const gridAreaRef = useRef<HTMLDivElement>(null);
+  const resultAudioPlayedRef = useRef(false);
 
   const currentSlot = twoVsTwoSlot ?? 'red_top';
   const cellSize = useAdaptiveCellSize(gridAreaRef);
@@ -117,6 +125,32 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
   useEffect(() => {
     currentSlotRef.current = currentSlot;
   }, [currentSlot]);
+
+  useEffect(() => {
+    const result =
+      state?.phase === 'gameover' ? state.gameResult : null;
+    if (!result || result === 'draw' || !state) {
+      resultAudioPlayedRef.current = false;
+      stopMatchResultBgm();
+      return;
+    }
+
+    if (resultAudioPlayedRef.current) return;
+
+    const myCurrentTeam = state.players[currentSlot].team;
+    const didWin = result === myCurrentTeam;
+    if (!isSfxMuted) {
+      playMatchResultSfx(didWin ? 'victory' : 'defeat', sfxVolume);
+    }
+    startMatchResultBgm(didWin ? 'victory' : 'defeat');
+    resultAudioPlayedRef.current = true;
+  }, [currentSlot, isSfxMuted, sfxVolume, state]);
+
+  useEffect(() => {
+    return () => {
+      stopMatchResultBgm();
+    };
+  }, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });

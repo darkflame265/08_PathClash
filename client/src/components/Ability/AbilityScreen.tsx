@@ -22,8 +22,11 @@ import {
   preloadAbilitySfxAssets,
   playQuantum,
   playVoidCloak,
+  playMatchResultSfx,
   startOverdriveLoop,
+  startMatchResultBgm,
   stopOverdriveLoop,
+  stopMatchResultBgm,
 } from "../../utils/soundUtils";
 import type { BoardSkin, PlayerColor, Position } from "../../types/game.types";
 import {
@@ -395,6 +398,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [rematchRequested, setRematchRequested] = useState(false);
   const [abilityBanner, setAbilityBanner] = useState<string | null>(null);
   const [mySkillInfo, setMySkillInfo] = useState<AbilitySkillId | null>(null);
+  const resultAudioPlayedRef = useRef(false);
 
   const stateRef = useRef<AbilityBattleState | null>(null);
   const winnerRef = useRef<PlayerColor | "draw" | null>(null);
@@ -489,6 +493,29 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       stopOverdriveLoop();
     };
   }, [isSfxMuted, sfxVolume, state, winner]);
+
+  useEffect(() => {
+    if (!winner || winner === "draw") {
+      resultAudioPlayedRef.current = false;
+      stopMatchResultBgm();
+      return;
+    }
+
+    if (resultAudioPlayedRef.current) return;
+
+    const didWin = winner === currentColor;
+    if (!isSfxMuted) {
+      playMatchResultSfx(didWin ? "victory" : "defeat", sfxVolume);
+    }
+    startMatchResultBgm(didWin ? "victory" : "defeat");
+    resultAudioPlayedRef.current = true;
+  }, [currentColor, isSfxMuted, sfxVolume, winner]);
+
+  useEffect(() => {
+    return () => {
+      stopMatchResultBgm();
+    };
+  }, []);
 
   useEffect(() => {
     const handleGlobalPointerDown = (event: PointerEvent) => {
