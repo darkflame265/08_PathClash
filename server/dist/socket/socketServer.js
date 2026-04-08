@@ -737,39 +737,10 @@ function initSocketServer(io) {
             const coopRoom = coopStore.removeSocket(socket.id);
             const twoVsTwoRoom = twoVsTwoStore.removeSocket(socket.id);
             const abilityRoom = abilityStore.removeSocket(socket.id);
-            if (room &&
-                disconnectResult.shouldAwardDisconnectResult &&
-                disconnectResult.winnerColor) {
-                const winner = room.getPlayerByColor(disconnectResult.winnerColor);
-                void (0, playerAuth_1.recordMatchmakingResult)(winner?.userId ?? null, socket.data.userId ?? null);
-                void (0, achievementService_1.recordMatchPlayed)({
-                    userIds: [winner?.userId ?? null, socket.data.userId ?? null],
-                    matchType: 'duel',
-                });
-                void (0, achievementService_1.recordModeWin)({ userId: winner?.userId ?? null, mode: 'duel' });
-            }
-            if (room && room.playerCount > 0) {
+            if (room && disconnectResult.disconnectedColor) {
                 io.to(room.roomId).emit('opponent_disconnected', {});
             }
-            if (abilityRoom.room &&
-                abilityRoom.room.isRewardEligible() &&
-                abilityRoom.disconnectResult.shouldAwardDisconnectResult &&
-                abilityRoom.disconnectResult.winnerColor) {
-                const winner = abilityRoom.room.getPlayerByColor(abilityRoom.disconnectResult.winnerColor);
-                void (0, playerAuth_1.recordMatchmakingResult)(winner?.userId ?? null, socket.data.userId ?? null);
-                void (0, playerAuth_1.grantDailyRewardTokens)([winner?.userId ?? null], 6);
-                void (0, achievementService_1.recordMatchPlayed)({
-                    userIds: [winner?.userId ?? null, socket.data.userId ?? null],
-                    matchType: 'ability',
-                });
-                void (0, achievementService_1.recordModeWin)({ userId: winner?.userId ?? null, mode: 'ability' });
-                void (0, achievementService_1.recordAbilitySpecialWin)({
-                    winnerUserId: winner?.userId ?? null,
-                    winnerHp: winner?.hp ?? 0,
-                    disconnectWin: true,
-                });
-            }
-            if (abilityRoom.room && abilityRoom.room.playerCount > 0) {
+            if (abilityRoom.room && abilityRoom.disconnectResult.disconnectedColor) {
                 io.to(abilityRoom.room.roomId).emit('opponent_disconnected', {});
             }
         });

@@ -1119,55 +1119,11 @@ export function initSocketServer(io: Server): void {
       const twoVsTwoRoom = twoVsTwoStore.removeSocket(socket.id);
       const abilityRoom = abilityStore.removeSocket(socket.id);
 
-      if (
-        room &&
-        disconnectResult.shouldAwardDisconnectResult &&
-        disconnectResult.winnerColor
-      ) {
-        const winner = room.getPlayerByColor(disconnectResult.winnerColor);
-        void recordMatchmakingResult(
-          winner?.userId ?? null,
-          socket.data.userId ?? null,
-        );
-        void recordMatchPlayed({
-          userIds: [winner?.userId ?? null, socket.data.userId ?? null],
-          matchType: 'duel',
-        });
-        void recordModeWin({ userId: winner?.userId ?? null, mode: 'duel' });
-      }
-
-      if (room && room.playerCount > 0) {
+      if (room && disconnectResult.disconnectedColor) {
         io.to(room.roomId).emit('opponent_disconnected', {});
       }
 
-      if (
-        abilityRoom.room &&
-        abilityRoom.room.isRewardEligible() &&
-        abilityRoom.disconnectResult.shouldAwardDisconnectResult &&
-        abilityRoom.disconnectResult.winnerColor
-      ) {
-        const winner = abilityRoom.room.getPlayerByColor(abilityRoom.disconnectResult.winnerColor);
-        void recordMatchmakingResult(
-          winner?.userId ?? null,
-          socket.data.userId ?? null,
-        );
-        void grantDailyRewardTokens(
-          [winner?.userId ?? null],
-          6,
-        );
-        void recordMatchPlayed({
-          userIds: [winner?.userId ?? null, socket.data.userId ?? null],
-          matchType: 'ability',
-        });
-        void recordModeWin({ userId: winner?.userId ?? null, mode: 'ability' });
-        void recordAbilitySpecialWin({
-          winnerUserId: winner?.userId ?? null,
-          winnerHp: winner?.hp ?? 0,
-          disconnectWin: true,
-        });
-      }
-
-      if (abilityRoom.room && abilityRoom.room.playerCount > 0) {
+      if (abilityRoom.room && abilityRoom.disconnectResult.disconnectedColor) {
         io.to(abilityRoom.room.roomId).emit('opponent_disconnected', {});
       }
 

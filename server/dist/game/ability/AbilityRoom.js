@@ -404,19 +404,30 @@ class AbilityRoom {
             if (player.socketId !== socketId)
                 continue;
             disconnectedColor = color;
+            const wasActive = this.phase === 'planning' || this.phase === 'moving';
+            if (wasActive && !player.isBot) {
+                player.connected = false;
+                player.pathSubmitted = true;
+                player.plannedPath = [];
+                player.plannedSkills = [];
+                this.readySockets.delete(socketId);
+                this.touchActivity();
+                if (this.phase === 'planning') {
+                    const allSubmitted = [...this.players.values()].every((entry) => entry.pathSubmitted);
+                    if (allSubmitted) {
+                        this.timer.clear();
+                        this.clearPlanningGraceTimeout();
+                        this.revealPlans();
+                    }
+                }
+                break;
+            }
             this.players.delete(color);
             this.timer.clear();
             this.clearPendingTimeouts();
             this.readySockets.clear();
             this.pendingStart = false;
             this.pendingStartPaused = false;
-            const wasActive = this.phase === 'planning' || this.phase === 'moving';
-            if (wasActive && this.players.size === 1) {
-                winnerColor = [...this.players.keys()][0] ?? null;
-                shouldAwardDisconnectResult = winnerColor !== null;
-                if (winnerColor)
-                    this.phase = 'gameover';
-            }
             this.touchActivity();
             break;
         }
@@ -460,6 +471,12 @@ class AbilityRoom {
         blue.plannedPath = [];
         red.plannedSkills = [];
         blue.plannedSkills = [];
+        if (red.connected === false) {
+            red.pathSubmitted = true;
+        }
+        if (blue.connected === false) {
+            blue.pathSubmitted = true;
+        }
         red.hidden = false;
         blue.hidden = false;
         red.overdriveActive = false;

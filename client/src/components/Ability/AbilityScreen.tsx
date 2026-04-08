@@ -2492,13 +2492,11 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       if (winnerRef.current !== null || stateRef.current?.phase === "gameover") {
         return;
       }
-      setWinner(currentColor);
       setGameOverMessage(
         lang === "en"
           ? "The opponent disconnected."
           : "상대가 연결을 끊었습니다.",
       );
-      setState((prev) => (prev ? { ...prev, phase: "gameover" } : prev));
     };
 
     const onRematchRequested = () => {

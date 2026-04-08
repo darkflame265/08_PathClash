@@ -165,9 +165,27 @@ export class GameRoom {
 
     for (const [color, p] of this.players) {
       if (p.socketId === socketId) {
+        disconnectedColor = color;
         const wasActiveMatch =
           this.phase === "planning" || this.phase === "moving";
-        disconnectedColor = color;
+        if (wasActiveMatch) {
+          p.connected = false;
+          p.pathSubmitted = true;
+          p.plannedPath = [];
+          this.readySockets.delete(socketId);
+          this.touchActivity();
+          if (this.phase === "planning") {
+            const allSubmitted = [...this.players.values()].every(
+              (player) => player.pathSubmitted,
+            );
+            if (allSubmitted) {
+              this.timer.clear();
+              this.clearPlanningGraceTimeout();
+              this.revealPaths();
+            }
+          }
+          break;
+        }
         this.players.delete(color);
         if (this.aiColor === color) this.aiColor = null;
         this.timer.clear();
@@ -175,18 +193,6 @@ export class GameRoom {
         this.readySockets.clear();
         this.pendingStart = false;
         this.pendingStartPaused = false;
-        if (
-          this.matchType === "random" &&
-          !this.aiColor &&
-          wasActiveMatch &&
-          this.players.size === 1
-        ) {
-          winnerColor = [...this.players.keys()][0] ?? null;
-          shouldAwardDisconnectResult = winnerColor !== null;
-          if (winnerColor) {
-            this.phase = "gameover";
-          }
-        }
         this.touchActivity();
         break;
       }
@@ -290,6 +296,12 @@ export class GameRoom {
     red.pathSubmitted = false;
     blue.plannedPath = [];
     blue.pathSubmitted = false;
+    if (red.connected === false) {
+      red.pathSubmitted = true;
+    }
+    if (blue.connected === false) {
+      blue.pathSubmitted = true;
+    }
     this.obstacles = this.tutorialActive
       ? getTutorialObstacles(this.tutorialScenario)
       : generateObstacles(this.roomId, this.turn, red.position, blue.position);
@@ -880,6 +892,7 @@ export class GameRoom {
       socketId: id,
       nickname,
       color,
+      connected: true,
       pieceSkin,
       boardSkin,
       hp: 3,

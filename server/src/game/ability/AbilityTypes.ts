@@ -178,6 +178,7 @@ export interface AbilityPlayerState {
   id: string;
   userId: string | null;
   socketId: string;
+  connected?: boolean;
   isBot?: boolean;
   nickname: string;
   color: PlayerColor;
