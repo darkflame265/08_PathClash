@@ -388,6 +388,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [mineRevealedPositions, setMineRevealedPositions] = useState<
     Array<{ id: number; position: Position }>
   >([]);
+  const [pendingOwnedTriggeredTrapTiles, setPendingOwnedTriggeredTrapTiles] =
+    useState<AbilityTrapTile[]>([]);
   const [winner, setWinner] = useState<PlayerColor | "draw" | null>(null);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const [rematchRequested, setRematchRequested] = useState(false);
@@ -570,6 +572,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setExplodingFlags(createFalseFlags());
     setCollisionEffects([]);
     setTeleportEffects([]);
+    setPendingOwnedTriggeredTrapTiles([]);
   };
 
   const resetMovingVisualState = () => {
@@ -729,13 +732,25 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     )
       ? [...trapTiles, previewWizardMineTile]
       : trapTiles;
+  const ownerVisibleTrapTiles = pendingOwnedTriggeredTrapTiles.reduce(
+    (tiles, pendingTile) =>
+      tiles.some(
+        (tile) =>
+          tile.owner === pendingTile.owner &&
+          tile.position.row === pendingTile.position.row &&
+          tile.position.col === pendingTile.position.col,
+      )
+        ? tiles
+        : [...tiles, pendingTile],
+    baseTrapTiles,
+  );
   // 상대방 눈에 노출된 함정도 포함 (중복 제거)
   const visibleTrapTiles = [
-    ...baseTrapTiles,
+    ...ownerVisibleTrapTiles,
     ...mineRevealedPositions
       .filter(
         (rev) =>
-          !baseTrapTiles.some(
+          !ownerVisibleTrapTiles.some(
             (t) =>
               t.position.row === rev.position.row &&
               t.position.col === rev.position.col,
@@ -2310,6 +2325,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     const onGameStart = (nextState: AbilityBattleState) => {
       setRoundInfo(null);
       setTrapTiles([]);
+      setPendingOwnedTriggeredTrapTiles([]);
       resetPlanningState();
       applyState(nextState);
     };
@@ -2336,6 +2352,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
       setRoundInfo(payload);
       setTrapTiles(nextState.trapTiles ?? []);
+      setPendingOwnedTriggeredTrapTiles([]);
       resetPlanningState();
       applyState(nextState);
     };
@@ -2387,6 +2404,21 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     const onResolution = (payload: AbilityResolutionPayload & { trapTiles?: AbilityTrapTile[] }) => {
       setRoundInfo(null);
       setTrapTiles(payload.trapTiles ?? []);
+      const triggeredOwnedMinePositions = payload.skillEvents
+        .filter(
+          (event) =>
+            event.skillId === "wizard_magic_mine" &&
+            !!event.damages?.length &&
+            event.color === currentColor,
+        )
+        .flatMap((event) => event.affectedPositions ?? []);
+      setPendingOwnedTriggeredTrapTiles(
+        triggeredOwnedMinePositions.map((position) => ({
+          position,
+          owner: currentColor,
+          remainingTurns: 1,
+        })),
+      );
       const hadSunChariotReserved = skillReservationsRef.current.some(
         (entry) => entry.skillId === "sun_chariot",
       );
