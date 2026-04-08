@@ -1501,40 +1501,99 @@
   position: absolute;
   z-index: 2;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(160, 40, 255, 0.18) 0%, transparent 70%);
-  border: 1px solid rgba(200, 80, 255, 0.45);
+  background: radial-gradient(circle, rgba(140, 30, 255, 0.12) 0%, transparent 65%);
+  box-shadow:
+    0 0 16px rgba(180, 60, 255, 0.5),
+    0 0 32px rgba(150, 30, 255, 0.2);
   transform: translate(-50%, -50%);
   pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation:
-    wizardMinePulse 3s ease-in-out infinite,
-    wizardMineRotate 20s linear infinite;
+  overflow: visible;
+  animation: wizardMinePulse 2.5s ease-in-out infinite;
+}
+
+.ability-wizard-mine svg {
+  overflow: visible;
+}
+
+/* SVG layer rotations */
+.mine-g-outer {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wizardMineRotateCW 28s linear infinite;
+}
+
+.mine-g-hex {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wizardMineRotateCCW 16s linear infinite;
+}
+
+.mine-g-inner {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wizardMineRotateCW 9s linear infinite;
 }
 
 @keyframes wizardMinePulse {
-  0%, 100% { opacity: 0.55; }
-  50%       { opacity: 1; }
+  0%, 100% { opacity: 0.55; filter: brightness(0.85); }
+  50%       { opacity: 1;    filter: brightness(1.45); }
 }
 
-@keyframes wizardMineRotate {
-  to { transform: translate(-50%, -50%) rotate(360deg); }
+@keyframes wizardMineRotateCW {
+  to { transform: rotate(360deg); }
 }
 
+@keyframes wizardMineRotateCCW {
+  to { transform: rotate(-360deg); }
+}
+
+/* Trigger explosion */
 .ability-wizard-mine-trigger {
   position: absolute;
   z-index: 4;
   border-radius: 50%;
   pointer-events: none;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(220, 80, 255, 0.9) 0%, transparent 70%);
-  box-shadow: 0 0 20px rgba(200, 60, 255, 1);
-  animation: wizardMineBurst 0.5s ease-out forwards;
+  background: radial-gradient(circle,
+    rgba(255, 230, 255, 0.98) 0%,
+    rgba(220, 80, 255, 0.88) 30%,
+    transparent 70%
+  );
+  box-shadow:
+    0 0 24px rgba(200, 60, 255, 1),
+    0 0 52px rgba(160, 30, 255, 0.6);
+  border: 1.5px solid rgba(255, 210, 255, 0.8);
+  animation: wizardMineBurst 0.7s ease-out forwards;
+}
+
+.ability-wizard-mine-trigger::before {
+  content: '';
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 220, 255, 0.65);
+  animation: wizardMineBurstRing 0.7s ease-out forwards;
+}
+
+.ability-wizard-mine-trigger::after {
+  content: '';
+  position: absolute;
+  inset: 25%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 200, 255, 0.4);
+  animation: wizardMineBurstRing 0.7s 0.06s ease-out forwards;
 }
 
 @keyframes wizardMineBurst {
-  0%   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
-  60%  { transform: translate(-50%, -50%) scale(2.2); opacity: 0.85; }
-  100% { transform: translate(-50%, -50%) scale(3);   opacity: 0; }
+  0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
+  35%  { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(4);   opacity: 0; }
+}
+
+@keyframes wizardMineBurstRing {
+  0%   { transform: scale(1)   rotate(0deg);   opacity: 0.9; }
+  100% { transform: scale(2.6) rotate(120deg); opacity: 0;   }
 }

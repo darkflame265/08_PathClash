@@ -534,23 +534,70 @@ export function AbilityGrid({
             style={{
               left: trap.position.col * responsiveCellSize + responsiveCellSize / 2,
               top: trap.position.row * responsiveCellSize + responsiveCellSize / 2,
-              width: responsiveCellSize * 0.7,
-              height: responsiveCellSize * 0.7,
+              width: responsiveCellSize * 0.85,
+              height: responsiveCellSize * 0.85,
             }}
           >
-            <svg viewBox="0 0 60 60" width="70%" height="70%">
-              <polygon
-                points="30,4 56,50 4,50"
-                fill="none"
-                stroke="rgba(190,70,255,0.7)"
-                strokeWidth="2"
-              />
-              <polygon
-                points="30,56 4,10 56,10"
-                fill="none"
-                stroke="rgba(220,110,255,0.6)"
-                strokeWidth="2"
-              />
+            <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+              {/* Outer ring — rotates CW slowly */}
+              <g className="mine-g-outer">
+                <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(200,80,255,0.38)" strokeWidth="0.8"/>
+                <circle cx="50" cy="50" r="39" fill="none" stroke="rgba(180,60,255,0.25)" strokeWidth="0.55" strokeDasharray="3.5 4.5"/>
+                {Array.from({ length: 12 }).map((_, i) => {
+                  const a = (i * 30 - 90) * Math.PI / 180;
+                  const major = i % 3 === 0;
+                  const r1 = major ? 40 : 43;
+                  return (
+                    <line key={i}
+                      x1={50 + r1 * Math.cos(a)} y1={50 + r1 * Math.sin(a)}
+                      x2={50 + 47 * Math.cos(a)} y2={50 + 47 * Math.sin(a)}
+                      stroke={major ? "rgba(230,110,255,0.82)" : "rgba(200,80,255,0.5)"}
+                      strokeWidth={major ? "1.4" : "0.7"}
+                    />
+                  );
+                })}
+                {Array.from({ length: 8 }).map((_, i) => {
+                  const a = (i * 45 - 90) * Math.PI / 180;
+                  return <circle key={i} cx={50 + 43 * Math.cos(a)} cy={50 + 43 * Math.sin(a)} r="1.8" fill="rgba(230,110,255,0.9)"/>;
+                })}
+              </g>
+
+              {/* Hexagram — rotates CCW */}
+              <g className="mine-g-hex">
+                <polygon points="50,7 87,72 13,72" fill="rgba(150,30,255,0.05)" stroke="rgba(205,85,255,0.72)" strokeWidth="1.3"/>
+                <polygon points="50,93 87,28 13,28" fill="none" stroke="rgba(220,110,255,0.58)" strokeWidth="1.1"/>
+                {[
+                  { x: 50, y: 7 }, { x: 87, y: 72 }, { x: 13, y: 72 },
+                  { x: 50, y: 93 }, { x: 87, y: 28 }, { x: 13, y: 28 },
+                ].map((p, i) => (
+                  <circle key={i} cx={p.x} cy={p.y} r="2.5"
+                    fill="rgba(235,115,255,0.85)" stroke="rgba(255,180,255,0.45)" strokeWidth="0.5"/>
+                ))}
+              </g>
+
+              {/* Inner ring — rotates CW faster */}
+              <g className="mine-g-inner">
+                <circle cx="50" cy="50" r="22" fill="rgba(140,20,255,0.06)" stroke="rgba(195,75,255,0.58)" strokeWidth="0.9"/>
+                <circle cx="50" cy="50" r="14" fill="none" stroke="rgba(185,65,255,0.3)" strokeWidth="0.6" strokeDasharray="2.5 3.2"/>
+                {Array.from({ length: 6 }).map((_, i) => {
+                  const a = (i * 60 - 90) * Math.PI / 180;
+                  return (
+                    <line key={i}
+                      x1={50 + 14 * Math.cos(a)} y1={50 + 14 * Math.sin(a)}
+                      x2={50 + 22 * Math.cos(a)} y2={50 + 22 * Math.sin(a)}
+                      stroke="rgba(205,85,255,0.55)" strokeWidth="0.8"
+                    />
+                  );
+                })}
+                {Array.from({ length: 6 }).map((_, i) => {
+                  const a = (i * 60 - 60) * Math.PI / 180;
+                  return <circle key={i} cx={50 + 22 * Math.cos(a)} cy={50 + 22 * Math.sin(a)} r="1.4" fill="rgba(215,95,255,0.75)"/>;
+                })}
+              </g>
+
+              {/* Center orb */}
+              <circle cx="50" cy="50" r="5.5" fill="rgba(185,55,255,0.18)" stroke="rgba(235,125,255,0.65)" strokeWidth="0.9"/>
+              <circle cx="50" cy="50" r="2.8" fill="rgba(255,215,255,0.95)"/>
             </svg>
           </div>
         ))}
