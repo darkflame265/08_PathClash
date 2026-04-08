@@ -112,10 +112,15 @@ function collectSkillEventsByStep(
 ) {
   const skillMap = new Map<number, AbilityResolutionPayload["skillEvents"]>();
   for (const event of events) {
-    const list = skillMap.get(event.step) ?? [];
+    const visualStep =
+      event.skillId === "wizard_magic_mine" &&
+      (!event.damages || event.damages.length === 0)
+        ? 0
+        : event.step;
+    const list = skillMap.get(visualStep) ?? [];
     list.push(event);
     skillMap.set(
-      event.step,
+      visualStep,
       list.sort((left, right) => {
         const leftPriority = getSkillPriority(left.skillId);
         const rightPriority = getSkillPriority(right.skillId);
