@@ -385,6 +385,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [mineTriggeredPositions, setMineTriggeredPositions] = useState<
     Array<{ id: number; position: Position }>
   >([]);
+  const [mineRevealedPositions, setMineRevealedPositions] = useState<
+    Array<{ id: number; position: Position }>
+  >([]);
   const [winner, setWinner] = useState<PlayerColor | "draw" | null>(null);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const [rematchRequested, setRematchRequested] = useState(false);
@@ -716,7 +719,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           remainingTurns: 5,
         }
       : null;
-  const visibleTrapTiles =
+  const baseTrapTiles =
     previewWizardMineTile &&
     !trapTiles.some(
       (trap) =>
@@ -726,6 +729,24 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     )
       ? [...trapTiles, previewWizardMineTile]
       : trapTiles;
+  // 상대방 눈에 노출된 함정도 포함 (중복 제거)
+  const visibleTrapTiles = [
+    ...baseTrapTiles,
+    ...mineRevealedPositions
+      .filter(
+        (rev) =>
+          !baseTrapTiles.some(
+            (t) =>
+              t.position.row === rev.position.row &&
+              t.position.col === rev.position.col,
+          ),
+      )
+      .map((rev) => ({
+        position: rev.position,
+        owner: currentColor,
+        remainingTurns: 0,
+      })),
+  ];
 
   const syncMyPlan = (
     path: Position[],
@@ -1717,18 +1738,40 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
       if (event.skillId === "wizard_magic_mine") {
         if (event.damages && event.damages.length > 0) {
-          // Trap triggered — explosion animation
+          // 함정 설치자: trapTiles에서 즉시 제거 (밟는 순간 사라짐)
+          // 상대방: mineRevealedPositions에 추가 (밟는 순간 보임)
+          const triggeredPositions = event.affectedPositions ?? [];
+          setTrapTiles((prev) =>
+            prev.filter(
+              (trap) =>
+                !triggeredPositions.some(
+                  (pos) =>
+                    trap.position.row === pos.row &&
+                    trap.position.col === pos.col,
+                ),
+            ),
+          );
           if (!isSfxMuted) {
             playEmber(sfxVolume);
           }
-          for (const position of event.affectedPositions ?? []) {
+          for (const position of triggeredPositions) {
             const effectId = Date.now() + Math.random();
-            setMineTriggeredPositions((prev) => [...prev, { id: effectId, position }]);
+            setMineRevealedPositions((prev) => [
+              ...prev,
+              { id: effectId, position },
+            ]);
+            setMineTriggeredPositions((prev) => [
+              ...prev,
+              { id: effectId, position },
+            ]);
             queueAnimationTimeout(() => {
+              setMineRevealedPositions((prev) =>
+                prev.filter((entry) => entry.id !== effectId),
+              );
               setMineTriggeredPositions((prev) =>
                 prev.filter((entry) => entry.id !== effectId),
               );
-            }, 550);
+            }, 700);
           }
           for (const damage of event.damages) {
             setState((prev) => {
