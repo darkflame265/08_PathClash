@@ -73,16 +73,25 @@ async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUse
         .select('skin_id')
         .eq('user_id', userId)
         .returns();
-    const [profileResult, statsResult, ownedSkinsResult] = await Promise.all([
+    const ownedBoardSkinsPromise = supabase_1.supabaseAdmin
+        ?.from('owned_board_skins')
+        .select('board_skin_id')
+        .eq('user_id', userId)
+        .returns();
+    const [profileResult, statsResult, ownedSkinsResult, ownedBoardSkinsResult] = await Promise.all([
         profilePromise,
         statsPromise,
         ownedSkinsPromise,
+        ownedBoardSkinsPromise,
     ]);
     const nickname = profileResult?.data?.nickname?.trim() || fallbackNickname;
     const dailyRewardWins = getActiveDailyRewardWins(statsResult?.data);
     const ownedSkins = (ownedSkinsResult?.data ?? [])
         .map((row) => row.skin_id)
         .filter((skin) => Boolean(skin));
+    const ownedBoardSkins = (ownedBoardSkinsResult?.data ?? [])
+        .map((row) => row.board_skin_id)
+        .filter((skin) => skin === 'blue_gray' || skin === 'pharaoh' || skin === 'magic');
     await (0, achievementService_1.syncAchievementDerivedProgress)({
         userId,
         ownedSkins,
@@ -94,6 +103,7 @@ async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUse
         equippedSkin: profileResult?.data?.equipped_skin ?? 'classic',
         equippedBoardSkin: profileResult?.data?.equipped_board_skin ?? 'classic',
         ownedSkins,
+        ownedBoardSkins,
         wins: statsResult?.data?.wins ?? 0,
         losses: statsResult?.data?.losses ?? 0,
         tokens: statsResult?.data?.tokens ?? 0,
@@ -389,6 +399,21 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
         if (mergeOwnedSkinsError) {
             console.error('[supabase] failed to merge owned skins after upgrade', mergeOwnedSkinsError);
         }
+    }
+    if (guestAccountProfile.ownedBoardSkins.length > 0) {
+        const { error: mergeOwnedBoardSkinsError } = await supabase_1.supabaseAdmin
+            .from('owned_board_skins')
+            .upsert(guestAccountProfile.ownedBoardSkins.map((boardSkinId) => ({
+            user_id: targetUser.id,
+            board_skin_id: boardSkinId,
+        })), { onConflict: 'user_id,board_skin_id' });
+        if (mergeOwnedBoardSkinsError) {
+            console.error('[supabase] failed to merge owned board skins after upgrade', mergeOwnedBoardSkinsError);
+        }
+        await supabase_1.supabaseAdmin
+            .from('owned_board_skins')
+            .delete()
+            .eq('user_id', guestUser.id);
     }
     const { error: clearGuestOwnedSkinsError } = await supabase_1.supabaseAdmin
         .from('owned_skins')

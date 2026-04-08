@@ -56,6 +56,7 @@ interface GameStore {
   accountLosses: number;
   accountTokens: number;
   ownedSkins: PieceSkin[];
+  ownedBoardSkins: BoardSkin[];
   accountDailyRewardWins: number;
   accountDailyRewardTokens: number;
   accountAchievements: Array<{
@@ -124,6 +125,7 @@ interface GameStore {
     equippedSkin?: PieceSkin;
     equippedBoardSkin?: BoardSkin;
     ownedSkins?: PieceSkin[];
+    ownedBoardSkins?: BoardSkin[];
     wins?: number;
     losses?: number;
     tokens?: number;
@@ -309,6 +311,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   accountLosses: 0,
   accountTokens: 0,
   ownedSkins: [],
+  ownedBoardSkins: [],
   accountDailyRewardWins: 0,
   accountDailyRewardTokens: 0,
   accountAchievements: [],
@@ -357,6 +360,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     equippedSkin,
     equippedBoardSkin,
     ownedSkins,
+    ownedBoardSkins,
     wins,
     losses,
     tokens,
@@ -383,6 +387,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       accountLosses: losses ?? state.accountLosses,
       accountTokens: tokens ?? state.accountTokens,
       ownedSkins: ownedSkins ?? state.ownedSkins,
+      ownedBoardSkins: ownedBoardSkins ?? state.ownedBoardSkins,
       accountDailyRewardWins: dailyRewardWins ?? state.accountDailyRewardWins,
       accountDailyRewardTokens:
         dailyRewardTokens ?? state.accountDailyRewardTokens,

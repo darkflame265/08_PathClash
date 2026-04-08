@@ -54,6 +54,13 @@ create table if not exists public.owned_skins (
   primary key (user_id, skin_id)
 );
 
+create table if not exists public.owned_board_skins (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  board_skin_id text not null,
+  purchased_at timestamptz not null default now(),
+  primary key (user_id, board_skin_id)
+);
+
 create table if not exists public.player_achievements (
   user_id uuid not null references auth.users(id) on delete cascade,
   achievement_id text not null,
@@ -234,6 +241,76 @@ begin
 end;
 $$;
 
+create or replace function public.purchase_board_skin_with_tokens(
+  p_board_skin_id text
+)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid;
+  v_tokens integer;
+  v_cost integer;
+begin
+  v_user_id := auth.uid();
+
+  if v_user_id is null then
+    return 'AUTH_REQUIRED';
+  end if;
+
+  v_cost := case p_board_skin_id
+    when 'blue_gray' then 2000
+    when 'pharaoh' then 7000
+    when 'magic' then 7000
+    else null
+  end;
+
+  if v_cost is null then
+    return 'INVALID_SKIN';
+  end if;
+
+  select tokens
+    into v_tokens
+    from public.player_stats
+   where user_id = v_user_id
+   for update;
+
+  if not found then
+    return 'INSUFFICIENT_TOKENS';
+  end if;
+
+  if exists (
+    select 1
+      from public.owned_board_skins
+     where user_id = v_user_id
+       and board_skin_id = p_board_skin_id
+  ) then
+    return 'ALREADY_OWNED';
+  end if;
+
+  if coalesce(v_tokens, 0) < v_cost then
+    return 'INSUFFICIENT_TOKENS';
+  end if;
+
+  insert into public.owned_board_skins (user_id, board_skin_id)
+  values (v_user_id, p_board_skin_id)
+  on conflict (user_id, board_skin_id) do nothing;
+
+  if not found then
+    return 'ALREADY_OWNED';
+  end if;
+
+  update public.player_stats
+     set tokens = tokens - v_cost,
+         updated_at = now()
+   where user_id = v_user_id;
+
+  return 'PURCHASED';
+end;
+$$;
+
 create or replace function public.change_nickname_with_tokens(
   p_nickname text
 )
@@ -364,6 +441,15 @@ begin
         ),
         '[]'::jsonb
       ),
+    'ownedBoardSkins',
+      coalesce(
+        (
+          select jsonb_agg(obs.board_skin_id order by obs.board_skin_id)
+          from public.owned_board_skins obs
+          where obs.user_id = target_user_id
+        ),
+        '[]'::jsonb
+      ),
     'wins',
       coalesce((select ps.wins from public.player_stats ps where ps.user_id = target_user_id), 0),
     'losses',
@@ -401,6 +487,7 @@ alter table public.profiles enable row level security;
 alter table public.player_stats enable row level security;
 alter table public.account_merges enable row level security;
 alter table public.owned_skins enable row level security;
+alter table public.owned_board_skins enable row level security;
 alter table public.player_achievements enable row level security;
 alter table public.google_play_token_purchases enable row level security;
 alter table public.nickname_change_history enable row level security;
@@ -439,6 +526,12 @@ using (auth.uid() = source_user_id or auth.uid() = target_user_id);
 drop policy if exists "owned_skins_select_own" on public.owned_skins;
 create policy "owned_skins_select_own"
 on public.owned_skins
+for select
+using (auth.uid() = user_id);
+
+drop policy if exists "owned_board_skins_select_own" on public.owned_board_skins;
+create policy "owned_board_skins_select_own"
+on public.owned_board_skins
 for select
 using (auth.uid() = user_id);
 

@@ -27,6 +27,7 @@ export interface AccountProfile {
   equippedSkin: PieceSkin;
   equippedBoardSkin: BoardSkin;
   ownedSkins: PieceSkin[];
+  ownedBoardSkins: BoardSkin[];
   wins: number;
   losses: number;
   tokens: number;
@@ -62,6 +63,10 @@ interface StatsRow {
 
 interface OwnedSkinRow {
   skin_id: PieceSkin | null;
+}
+
+interface OwnedBoardSkinRow {
+  board_skin_id: BoardSkin | null;
 }
 
 const DAILY_REWARD_TOKENS_PER_WIN = 6;
@@ -146,16 +151,29 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
     .eq('user_id', userId)
     .returns<OwnedSkinRow[]>();
 
-  const [profileResult, statsResult, ownedSkinsResult] = await Promise.all([
+  const ownedBoardSkinsPromise = supabaseAdmin
+    ?.from('owned_board_skins')
+    .select('board_skin_id')
+    .eq('user_id', userId)
+    .returns<OwnedBoardSkinRow[]>();
+
+  const [profileResult, statsResult, ownedSkinsResult, ownedBoardSkinsResult] = await Promise.all([
     profilePromise,
     statsPromise,
     ownedSkinsPromise,
+    ownedBoardSkinsPromise,
   ]);
   const nickname = profileResult?.data?.nickname?.trim() || fallbackNickname;
   const dailyRewardWins = getActiveDailyRewardWins(statsResult?.data);
   const ownedSkins = (ownedSkinsResult?.data ?? [])
     .map((row) => row.skin_id)
     .filter((skin): skin is PieceSkin => Boolean(skin));
+  const ownedBoardSkins = (ownedBoardSkinsResult?.data ?? [])
+    .map((row) => row.board_skin_id)
+    .filter(
+      (skin): skin is BoardSkin =>
+        skin === 'blue_gray' || skin === 'pharaoh' || skin === 'magic',
+    );
 
   await syncAchievementDerivedProgress({
     userId,
@@ -169,6 +187,7 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
     equippedSkin: profileResult?.data?.equipped_skin ?? 'classic',
     equippedBoardSkin: profileResult?.data?.equipped_board_skin ?? 'classic',
     ownedSkins,
+    ownedBoardSkins,
     wins: statsResult?.data?.wins ?? 0,
     losses: statsResult?.data?.losses ?? 0,
     tokens: statsResult?.data?.tokens ?? 0,
@@ -566,6 +585,30 @@ export async function finalizeGoogleUpgrade(
     if (mergeOwnedSkinsError) {
       console.error('[supabase] failed to merge owned skins after upgrade', mergeOwnedSkinsError);
     }
+  }
+
+  if (guestAccountProfile.ownedBoardSkins.length > 0) {
+    const { error: mergeOwnedBoardSkinsError } = await supabaseAdmin
+      .from('owned_board_skins')
+      .upsert(
+        guestAccountProfile.ownedBoardSkins.map((boardSkinId) => ({
+          user_id: targetUser.id,
+          board_skin_id: boardSkinId,
+        })),
+        { onConflict: 'user_id,board_skin_id' },
+      );
+
+    if (mergeOwnedBoardSkinsError) {
+      console.error(
+        '[supabase] failed to merge owned board skins after upgrade',
+        mergeOwnedBoardSkinsError,
+      );
+    }
+
+    await supabaseAdmin
+      .from('owned_board_skins')
+      .delete()
+      .eq('user_id', guestUser.id);
   }
 
   const { error: clearGuestOwnedSkinsError } = await supabaseAdmin

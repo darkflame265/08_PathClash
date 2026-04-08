@@ -13,6 +13,8 @@ AI나 사람이 빠르게 전체 구조만 확인할 때 사용합니다.
   - 승, 패, 토큰, 일일 보상 진행도
 - `public.owned_skins`
   - 보유 스킨 목록
+- `public.owned_board_skins`
+  - 보유 보드 스킨 목록
 - `public.player_achievements`
   - 업적 진행도, 완료 여부, 보상 수령 여부
 - `public.account_merges`
@@ -53,6 +55,7 @@ AI나 사람이 빠르게 전체 구조만 확인할 때 사용합니다.
   - `profiles`
   - `player_stats`
   - `owned_skins`
+  - `owned_board_skins`
   - `player_achievements`
   를 한 번에 묶어서 현재 계정 요약 JSON으로 반환
 - 목적:
@@ -76,6 +79,22 @@ AI나 사람이 빠르게 전체 구조만 확인할 때 사용합니다.
   - `UPDATED`
   - `NO_CHANGE`
   - `INVALID_NICKNAME`
+  - `INSUFFICIENT_TOKENS`
+  - `AUTH_REQUIRED`
+
+## 보드 스킨 구매 RPC
+
+- `public.purchase_board_skin_with_tokens(p_board_skin_id text)`
+- 역할:
+  - 플레이어 토큰을 차감하고
+  - `owned_board_skins`에 보드 스킨 소유 정보를 추가
+- 현재 가격:
+  - `blue_gray`: `2000`
+  - `pharaoh`: `7000`
+  - `magic`: `7000`
+- 반환값:
+  - `PURCHASED`
+  - `ALREADY_OWNED`
   - `INSUFFICIENT_TOKENS`
   - `AUTH_REQUIRED`
 

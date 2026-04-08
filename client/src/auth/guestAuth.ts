@@ -14,6 +14,7 @@ export interface AuthStatePayload {
   equippedSkin?: PieceSkin;
   equippedBoardSkin?: BoardSkin;
   ownedSkins?: PieceSkin[];
+  ownedBoardSkins?: BoardSkin[];
   wins?: number;
   losses?: number;
   tokens?: number;
@@ -40,6 +41,10 @@ interface StatsRow {
 
 interface OwnedSkinRow {
   skin_id: PieceSkin | null;
+}
+
+interface OwnedBoardSkinRow {
+  board_skin_id: BoardSkin | null;
 }
 
 interface PlayerAchievementRow {
@@ -70,6 +75,7 @@ interface AccountSnapshot {
   equippedSkin: PieceSkin;
   equippedBoardSkin: BoardSkin;
   ownedSkins: PieceSkin[];
+  ownedBoardSkins: BoardSkin[];
   wins: number;
   losses: number;
   tokens: number;
@@ -83,6 +89,7 @@ interface AccountSnapshotRpcRow {
   equippedSkin?: PieceSkin | null;
   equippedBoardSkin?: BoardSkin | null;
   ownedSkins?: string[] | null;
+  ownedBoardSkins?: string[] | null;
   wins?: number | null;
   losses?: number | null;
   tokens?: number | null;
@@ -104,6 +111,7 @@ export interface AccountProfile {
   equippedSkin: PieceSkin;
   equippedBoardSkin: BoardSkin;
   ownedSkins: PieceSkin[];
+  ownedBoardSkins: BoardSkin[];
   wins: number;
   losses: number;
   tokens: number;
@@ -306,6 +314,7 @@ function toAuthState(session: Session | null, snapshot?: AccountSnapshot): AuthS
     equippedSkin: snapshot?.equippedSkin,
     equippedBoardSkin: snapshot?.equippedBoardSkin,
     ownedSkins: snapshot?.ownedSkins,
+    ownedBoardSkins: snapshot?.ownedBoardSkins,
     wins: snapshot?.wins,
     losses: snapshot?.losses,
     tokens: snapshot?.tokens,
@@ -325,6 +334,7 @@ function createDisconnectedAuthState(): AuthStatePayload {
     equippedSkin: "classic",
     equippedBoardSkin: "classic",
     ownedSkins: [],
+    ownedBoardSkins: [],
     wins: 0,
     losses: 0,
     tokens: 0,
@@ -504,6 +514,10 @@ function normalizeAccountSnapshot(
     ownedSkins: (source?.ownedSkins ?? []).filter(
       (skin): skin is PieceSkin => Boolean(skin),
     ),
+    ownedBoardSkins: (source?.ownedBoardSkins ?? []).filter(
+      (skin): skin is BoardSkin =>
+        skin === "blue_gray" || skin === "pharaoh" || skin === "magic",
+    ),
     wins: Number(source?.wins ?? 0),
     losses: Number(source?.losses ?? 0),
     tokens: Number(source?.tokens ?? 0),
@@ -530,6 +544,7 @@ async function getAccountSnapshot(userId: string, options?: { force?: boolean })
       equippedSkin: "classic",
       equippedBoardSkin: "classic",
       ownedSkins: [],
+      ownedBoardSkins: [],
       wins: 0,
       losses: 0,
       tokens: 0,
@@ -591,6 +606,11 @@ async function getAccountSnapshot(userId: string, options?: { force?: boolean })
       .select("skin_id")
       .eq("user_id", userId)
       .returns<OwnedSkinRow[]>();
+    const { data: ownedBoardSkinRows } = await supabase
+      .from("owned_board_skins")
+      .select("board_skin_id")
+      .eq("user_id", userId)
+      .returns<OwnedBoardSkinRow[]>();
 
     if (!profileResult.data) {
       await ensureProfile(userId);
@@ -610,6 +630,12 @@ async function getAccountSnapshot(userId: string, options?: { force?: boolean })
       ownedSkins: (ownedSkinRows ?? [])
         .map((row) => row.skin_id)
         .filter((skin): skin is PieceSkin => Boolean(skin)),
+      ownedBoardSkins: (ownedBoardSkinRows ?? [])
+        .map((row) => row.board_skin_id)
+        .filter(
+          (skin): skin is BoardSkin =>
+            skin === "blue_gray" || skin === "pharaoh" || skin === "magic",
+        ),
       wins: statsResult.data?.wins ?? 0,
       losses: statsResult.data?.losses ?? 0,
       tokens: statsResult.data?.tokens ?? 0,
@@ -840,6 +866,7 @@ export async function refreshAccountSummary(options?: { force?: boolean }): Prom
     | "equippedSkin"
     | "equippedBoardSkin"
     | "ownedSkins"
+    | "ownedBoardSkins"
     | "wins"
     | "losses"
     | "tokens"
@@ -854,6 +881,7 @@ export async function refreshAccountSummary(options?: { force?: boolean }): Prom
       equippedSkin: "classic",
       equippedBoardSkin: "classic",
       ownedSkins: [],
+      ownedBoardSkins: [],
       wins: 0,
       losses: 0,
       tokens: 0,
@@ -870,6 +898,7 @@ export async function refreshAccountSummary(options?: { force?: boolean }): Prom
       equippedSkin: "classic",
       equippedBoardSkin: "classic",
       ownedSkins: [],
+      ownedBoardSkins: [],
       wins: 0,
       losses: 0,
       tokens: 0,
@@ -885,6 +914,7 @@ export async function refreshAccountSummary(options?: { force?: boolean }): Prom
     equippedSkin: snapshot.equippedSkin,
     equippedBoardSkin: snapshot.equippedBoardSkin,
     ownedSkins: snapshot.ownedSkins,
+    ownedBoardSkins: snapshot.ownedBoardSkins,
     wins: snapshot.wins,
     losses: snapshot.losses,
     tokens: snapshot.tokens,
@@ -1034,6 +1064,27 @@ export async function purchaseSkinWithTokens(
 
   if (error) {
     console.error("[supabase] failed to purchase skin", error);
+    return "failed";
+  }
+
+  if (data === "PURCHASED") return "purchased";
+  if (data === "ALREADY_OWNED") return "already_owned";
+  if (data === "INSUFFICIENT_TOKENS") return "insufficient_tokens";
+  if (data === "AUTH_REQUIRED") return "auth_required";
+  return "failed";
+}
+
+export async function purchaseBoardSkinWithTokens(
+  boardSkinId: BoardSkin,
+): Promise<"purchased" | "already_owned" | "insufficient_tokens" | "auth_required" | "failed"> {
+  if (!supabase) return "failed";
+
+  const { data, error } = await supabase.rpc("purchase_board_skin_with_tokens", {
+    p_board_skin_id: boardSkinId,
+  });
+
+  if (error) {
+    console.error("[supabase] failed to purchase board skin", error);
     return "failed";
   }
 

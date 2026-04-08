@@ -33,6 +33,7 @@ import {
   linkGoogleAccount,
   logoutToGuestMode,
   purchaseSkinWithTokens,
+  purchaseBoardSkinWithTokens,
   refreshAccountSummary,
   syncNickname,
   type PlayerAchievementState,
@@ -496,6 +497,7 @@ function applyProfileToStore(
     equippedBoardSkin: profile.equippedBoardSkin,
 
     ownedSkins: profile.ownedSkins,
+    ownedBoardSkins: profile.ownedBoardSkins,
 
     wins: profile.wins,
 
@@ -637,6 +639,7 @@ export function LobbyScreen({
     accountTokens,
 
     ownedSkins,
+    ownedBoardSkins,
 
     accountDailyRewardTokens,
 
@@ -1652,6 +1655,7 @@ export function LobbyScreen({
     id: BoardSkin;
     name: string;
     desc: string;
+    tokenPrice: number | null;
   }> = [
     {
       id: "classic",
@@ -1660,6 +1664,7 @@ export function LobbyScreen({
         lang === "en"
           ? "The default dark gray board used in PathClash."
           : "현재 PathClash에서 사용하는 기본 짙은 회색 보드입니다.",
+      tokenPrice: null,
     },
     {
       id: "blue_gray",
@@ -1668,6 +1673,7 @@ export function LobbyScreen({
         lang === "en"
           ? "A cool blue-gray board with the same classic layout."
           : "기본 보드와 같은 구성에 푸른 회색 분위기를 더한 보드입니다.",
+      tokenPrice: 2000,
     },
     {
       id: "pharaoh",
@@ -1676,6 +1682,7 @@ export function LobbyScreen({
         lang === "en"
           ? "An ornate sandstone board inspired by ancient Egyptian patterns."
           : "고대 이집트 문양과 사암 분위기를 담은 화려한 보드입니다.",
+      tokenPrice: 7000,
     },
     {
       id: "magic",
@@ -1684,6 +1691,7 @@ export function LobbyScreen({
         lang === "en"
           ? "A glowing arcane board filled with violet sigils and magical energy."
           : "보랏빛 문양과 마력이 흐르는 신비로운 분위기의 보드입니다.",
+      tokenPrice: 7000,
     },
   ];
 
@@ -1799,8 +1807,18 @@ export function LobbyScreen({
       : `찾음: ${unlockedSkinCount}/${skinChoices.length}`;
   const boardSkinCollectionSummary =
     lang === "en"
-      ? `Found: ${boardSkinChoices.length}/${boardSkinChoices.length}`
-      : `찾음: ${boardSkinChoices.length}/${boardSkinChoices.length}`;
+      ? `Found: ${
+          boardSkinChoices.filter(
+            (choice) =>
+              choice.id === "classic" || ownedBoardSkins.includes(choice.id),
+          ).length
+        }/${boardSkinChoices.length}`
+      : `찾음: ${
+          boardSkinChoices.filter(
+            (choice) =>
+              choice.id === "classic" || ownedBoardSkins.includes(choice.id),
+          ).length
+        }/${boardSkinChoices.length}`;
 
   const achievementViews = useMemo(
     () => buildAchievementViews(accountAchievements),
@@ -1884,6 +1902,7 @@ export function LobbyScreen({
         equippedBoardSkin,
 
         ownedSkins,
+        ownedBoardSkins,
 
         wins,
 
@@ -1913,6 +1932,7 @@ export function LobbyScreen({
           equippedBoardSkin,
 
           ownedSkins,
+          ownedBoardSkins,
 
           wins,
 
@@ -3144,8 +3164,41 @@ export function LobbyScreen({
     setPieceSkin(choice.id);
   };
 
-  const handleBoardSkinSelect = (nextBoardSkin: BoardSkin) => {
-    setBoardSkin(nextBoardSkin);
+  const handleBoardSkinSelect = async (
+    choice: (typeof boardSkinChoices)[number],
+    isLocked: boolean,
+    isOwned: boolean,
+  ) => {
+    if (isLocked) return;
+
+    if (
+      choice.tokenPrice !== null &&
+      choice.tokenPrice !== undefined &&
+      !isOwned
+    ) {
+      const confirmed = window.confirm(skinPurchasePrompt(choice.name));
+
+      if (!confirmed) return;
+
+      const result = await purchaseBoardSkinWithTokens(choice.id);
+
+      if (result === "purchased" || result === "already_owned") {
+        await syncAccountSummary();
+        setBoardSkin(choice.id);
+        window.alert(skinPurchaseSuccessMsg(choice.name));
+        return;
+      }
+
+      if (result === "insufficient_tokens") {
+        window.alert(skinPurchaseInsufficientMsg);
+        return;
+      }
+
+      window.alert(skinPurchaseFailedMsg);
+      return;
+    }
+
+    setBoardSkin(choice.id);
   };
 
   const lobbyModeOptions: Array<{
@@ -3728,21 +3781,57 @@ export function LobbyScreen({
               </div>
             ) : (
               <div className="skin-option-list">
-                {boardSkinChoices.map((choice) => (
-                  <button
-                    key={choice.id}
-                    className={`skin-option-card ${boardSkin === choice.id ? "is-selected" : ""}`}
-                    onClick={() => handleBoardSkinSelect(choice.id)}
-                    type="button"
-                  >
-                    {renderBoardSkinPreview(choice.id)}
+                {boardSkinChoices.map((choice) => {
+                  const isOwned =
+                    choice.id === "classic" || ownedBoardSkins.includes(choice.id);
 
-                    <span className="skin-option-copy">
-                      <strong>{choice.name}</strong>
-                      <span>{choice.desc}</span>
-                    </span>
-                  </button>
-                ))}
+                  const lockedByTokens =
+                    choice.tokenPrice !== null &&
+                    choice.tokenPrice !== undefined &&
+                    !isOwned &&
+                    accountTokens < choice.tokenPrice;
+
+                  const isLocked = lockedByTokens;
+
+                  return (
+                    <button
+                      key={choice.id}
+                      className={`skin-option-card ${
+                        boardSkin === choice.id ? "is-selected" : ""
+                      } ${isLocked ? "is-locked" : ""}`}
+                      onClick={() =>
+                        void handleBoardSkinSelect(choice, isLocked, isOwned)
+                      }
+                      type="button"
+                    >
+                      {renderBoardSkinPreview(choice.id)}
+
+                      <span className="skin-option-copy">
+                        <strong>{choice.name}</strong>
+                        <span>{choice.desc}</span>
+                      </span>
+
+                      {(isLocked ||
+                        (choice.tokenPrice !== null &&
+                          choice.tokenPrice !== undefined &&
+                          !isOwned)) && (
+                        <span className="skin-lock-meta" aria-label="Locked skin">
+                          <span className="skin-lock-icon" aria-hidden="true">
+                            {"💎"}
+                          </span>
+
+                          <span>
+                            {getSkinRequirementLabel(
+                              null,
+                              null,
+                              choice.tokenPrice,
+                            )}
+                          </span>
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
 
