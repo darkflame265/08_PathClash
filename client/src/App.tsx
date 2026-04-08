@@ -6,6 +6,7 @@ import {
   getSocketAuthPayload,
   initializeGuestAuth,
   installNativeAuthCallbackHandler,
+  reconnectStoredAccount,
   logoutLocalSession,
   onAuthStateChanged,
   refreshAccountSummary,
@@ -487,16 +488,42 @@ function App() {
   const handleSessionReplacedConfirm = useCallback(async () => {
     setIsSessionResetting(true);
     try {
-      const signedOutState = await logoutLocalSession();
-      setAuthState(signedOutState);
+      await logoutLocalSession();
       disconnectSocket();
       useGameStore.getState().resetGame();
       setView("lobby");
+      const restoredState = await reconnectStoredAccount();
+      setAuthState(restoredState);
+      if (restoredState.userId && restoredState.accessToken) {
+        setAccountSummaryLoading(true);
+        try {
+          const summary = await refreshAccountSummary({ force: true });
+          setAuthState({
+            ready: true,
+            userId: restoredState.userId,
+            accessToken:
+              useGameStore.getState().authAccessToken ?? restoredState.accessToken,
+            isGuestUser: useGameStore.getState().isGuestUser,
+            nickname: summary.nickname,
+            equippedSkin: summary.equippedSkin,
+            equippedBoardSkin: summary.equippedBoardSkin,
+            ownedSkins: summary.ownedSkins,
+            wins: summary.wins,
+            losses: summary.losses,
+            tokens: summary.tokens,
+            dailyRewardWins: summary.dailyRewardWins,
+            dailyRewardTokens: summary.dailyRewardTokens,
+            achievements: summary.achievements,
+          });
+        } finally {
+          setAccountSummaryLoading(false);
+        }
+      }
       setShowSessionReplaced(false);
     } finally {
       setIsSessionResetting(false);
     }
-  }, [setAuthState]);
+  }, [setAccountSummaryLoading, setAuthState]);
 
   const exitTitle =
     lang === "en" ? "Exit PathClash?" : "\uC815\uB9D0\uB85C \uAC8C\uC784\uC744 \uC885\uB8CC\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?";
@@ -511,7 +538,7 @@ function App() {
       ? "This session was closed because the account was used on another device. Your account data is safe. Tap OK to return to the lobby and sign in again if needed."
       : "\uB2E4\uB978 \uAE30\uAE30\uC5D0\uC11C \uB3D9\uC77C \uACC4\uC815\uC73C\uB85C \uC811\uC18D\uD558\uC5EC \uD604\uC7AC \uC138\uC158\uC774 \uC885\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uACC4\uC815 \uB370\uC774\uD130\uB294 \uC720\uC9C0\uB418\uBA70, \uD655\uC778\uC744 \uB204\uB974\uBA74 \uB85C\uBE44\uB85C \uB3CC\uC544\uAC11\uB2C8\uB2E4. \uD544\uC694\uD558\uBA74 \uB2E4\uC2DC \uB85C\uADF8\uC778\uD574\uC8FC\uC138\uC694.";
   const sessionReplacedConfirm =
-    lang === "en" ? "OK" : "\uD655\uC778";
+    lang === "en" ? "Reconnect" : "\uB2E4\uC2DC \uC5F0\uACB0";
   const updateRequiredTitle =
     lang === "en"
       ? "A new version is available."

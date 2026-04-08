@@ -192,8 +192,16 @@ interface StoredGuestSession {
   refreshToken: string;
 }
 
+interface StoredReconnectSession {
+  userId: string;
+  accessToken: string;
+  refreshToken: string;
+  isGuestUser: boolean;
+}
+
 const UPGRADE_CONTEXT_KEY = "pathclash.pendingUpgrade";
 const GUEST_SESSION_KEY = "pathclash.guestSession";
+const RECONNECT_SESSION_KEY = "pathclash.reconnectSession";
 
 function getNativeRedirectUrl() {
   return import.meta.env.VITE_NATIVE_REDIRECT_URL?.trim() || "com.pathclash.game://auth/callback";
@@ -287,6 +295,52 @@ function toAuthState(session: Session | null, snapshot?: AccountSnapshot): AuthS
     dailyRewardTokens: snapshot?.dailyRewardTokens,
     achievements: snapshot?.achievements,
   };
+}
+
+function createDisconnectedAuthState(): AuthStatePayload {
+  return {
+    ready: true,
+    userId: null,
+    accessToken: null,
+    isGuestUser: false,
+    nickname: "",
+    equippedSkin: "classic",
+    equippedBoardSkin: "classic",
+    ownedSkins: [],
+    wins: 0,
+    losses: 0,
+    tokens: 0,
+    dailyRewardWins: 0,
+    dailyRewardTokens: 0,
+    achievements: [],
+  };
+}
+
+function saveReconnectSession(session: Session | null) {
+  if (!session?.user || !session.refresh_token) return;
+
+  const stored: StoredReconnectSession = {
+    userId: session.user.id,
+    accessToken: session.access_token,
+    refreshToken: session.refresh_token,
+    isGuestUser: session.user.is_anonymous ?? false,
+  };
+  window.localStorage.setItem(RECONNECT_SESSION_KEY, JSON.stringify(stored));
+}
+
+function getStoredReconnectSession(): StoredReconnectSession | null {
+  const raw = window.localStorage.getItem(RECONNECT_SESSION_KEY);
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as StoredReconnectSession;
+  } catch {
+    return null;
+  }
+}
+
+function clearStoredReconnectSession() {
+  window.localStorage.removeItem(RECONNECT_SESSION_KEY);
 }
 
 function saveGuestSession(session: Session | null) {
@@ -592,18 +646,44 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
     };
   }
 
+  let hasStoredIdentity = false;
+
+  const storedReconnectSession = getStoredReconnectSession();
+  if (storedReconnectSession) {
+    hasStoredIdentity = true;
+    const { data, error } = await supabase.auth.setSession({
+      access_token: storedReconnectSession.accessToken,
+      refresh_token: storedReconnectSession.refreshToken,
+    });
+
+    if (!error && data.session?.user) {
+      saveReconnectSession(data.session);
+      if (data.session.user.is_anonymous) {
+        saveGuestSession(data.session);
+      }
+      const snapshot = readCachedAccountSnapshot(data.session.user.id) ?? undefined;
+      return toAuthState(data.session, snapshot);
+    }
+  }
+
   const storedGuest = getStoredGuestSession();
   if (storedGuest) {
+    hasStoredIdentity = true;
     const { data, error } = await supabase.auth.setSession({
       access_token: storedGuest.accessToken,
       refresh_token: storedGuest.refreshToken,
     });
 
     if (!error && data.session?.user?.is_anonymous) {
+      saveReconnectSession(data.session);
       saveGuestSession(data.session);
       const snapshot = readCachedAccountSnapshot(data.session.user.id) ?? undefined;
       return toAuthState(data.session, snapshot);
     }
+  }
+
+  if (hasStoredIdentity) {
+    return createDisconnectedAuthState();
   }
 
   const { data, error } = await supabase.auth.signInAnonymously();
@@ -620,6 +700,7 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
     };
   }
 
+  saveReconnectSession(data.session);
   saveGuestSession(data.session);
   await ensureProfile(data.session.user.id);
   const snapshot = readCachedAccountSnapshot(data.session.user.id) ?? undefined;
@@ -645,6 +726,7 @@ export async function initializeGuestAuth(): Promise<AuthStatePayload> {
     return restoreGuestSessionOrCreate();
   }
 
+  saveReconnectSession(session);
   if (session.user.is_anonymous) {
     saveGuestSession(session);
   }
@@ -1039,6 +1121,8 @@ export async function logoutToGuestMode(): Promise<AuthStatePayload> {
     };
   }
 
+  clearStoredReconnectSession();
+  window.localStorage.removeItem(GUEST_SESSION_KEY);
   const { error } = await supabase.auth.signOut({ scope: "local" });
   if (error) {
     console.error("[supabase] failed to sign out current session", error);
@@ -1050,22 +1134,7 @@ export async function logoutToGuestMode(): Promise<AuthStatePayload> {
 
 export async function logoutLocalSession(): Promise<AuthStatePayload> {
   if (!supabase) {
-    return {
-      ready: true,
-      userId: null,
-      accessToken: null,
-      isGuestUser: false,
-      nickname: "",
-      equippedSkin: "classic",
-      equippedBoardSkin: "classic",
-      ownedSkins: [],
-      wins: 0,
-      losses: 0,
-      tokens: 0,
-      dailyRewardWins: 0,
-      dailyRewardTokens: 0,
-      achievements: [],
-    };
+    return createDisconnectedAuthState();
   }
 
   const { error } = await supabase.auth.signOut({ scope: "local" });
@@ -1073,26 +1142,14 @@ export async function logoutLocalSession(): Promise<AuthStatePayload> {
     console.error("[supabase] failed to sign out local session", error);
   }
 
-  window.localStorage.removeItem(GUEST_SESSION_KEY);
   clearPendingUpgradeContext();
   clearUpgradeQueryFromUrl();
 
-  return {
-    ready: true,
-    userId: null,
-    accessToken: null,
-    isGuestUser: false,
-    nickname: "",
-    equippedSkin: "classic",
-    equippedBoardSkin: "classic",
-    ownedSkins: [],
-    wins: 0,
-    losses: 0,
-    tokens: 0,
-    dailyRewardWins: 0,
-    dailyRewardTokens: 0,
-    achievements: [],
-  };
+  return createDisconnectedAuthState();
+}
+
+export async function reconnectStoredAccount(): Promise<AuthStatePayload> {
+  return initializeGuestAuth();
 }
 
 export async function resolveUpgradeFlowAfterRedirect(): Promise<UpgradeResolution> {
@@ -1210,6 +1267,9 @@ export function onAuthStateChanged(callback: (payload: AuthStatePayload) => void
     void (async () => {
       if (session?.user?.is_anonymous) {
         saveGuestSession(session);
+      }
+      if (session?.user) {
+        saveReconnectSession(session);
       }
 
       const snapshot = session?.user
