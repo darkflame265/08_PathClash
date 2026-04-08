@@ -82,6 +82,7 @@ export interface AbilityPlayerState {
   id: string;
   nickname: string;
   color: PlayerColor;
+  connected?: boolean;
   pieceSkin: PieceSkin;
   boardSkin: BoardSkin;
   hp: number;

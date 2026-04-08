@@ -646,6 +646,7 @@ export function GameGrid({
             isHit={hitEffect.red}
             isExploding={explosionEffect === "red"}
             isMe={myColor === "red"}
+            isOverloaded={myColor !== "red" && gameState?.players.red.connected === false}
             entranceAnimation={entranceAnimation ? "left" : null}
             skin={redPieceSkin}
           />
@@ -661,6 +662,7 @@ export function GameGrid({
             isHit={hitEffect.blue}
             isExploding={explosionEffect === "blue"}
             isMe={myColor === "blue"}
+            isOverloaded={myColor !== "blue" && gameState?.players.blue.connected === false}
             entranceAnimation={entranceAnimation ? "right" : null}
             skin={bluePieceSkin}
           />

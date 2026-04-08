@@ -1039,7 +1039,10 @@ export function AbilityGrid({
               isHidden={state.players.red.hidden && currentColor === 'red' && state.phase === 'planning'}
               isAtField={activeAtFields.red && state.phase === 'moving'}
               isPhased={activePhaseShifts.red && state.phase === 'moving'}
-              isOverloaded={state.players.red.reboundLocked}
+              isOverloaded={
+                state.players.red.reboundLocked ||
+                (currentColor !== 'red' && state.players.red.connected === false)
+              }
               isBlitzing={movingBlitzProgress.red > 0}
               isSunChariotActive={activeSunChariots.red}
               hp={state.players.red.hp}
@@ -1062,7 +1065,10 @@ export function AbilityGrid({
               isHidden={state.players.blue.hidden && currentColor === 'blue' && state.phase === 'planning'}
               isAtField={activeAtFields.blue && state.phase === 'moving'}
               isPhased={activePhaseShifts.blue && state.phase === 'moving'}
-              isOverloaded={state.players.blue.reboundLocked}
+              isOverloaded={
+                state.players.blue.reboundLocked ||
+                (currentColor !== 'blue' && state.players.blue.connected === false)
+              }
               isBlitzing={movingBlitzProgress.blue > 0}
               isSunChariotActive={activeSunChariots.blue}
               hp={state.players.blue.hp}
