@@ -2492,6 +2492,22 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       if (winnerRef.current !== null || stateRef.current?.phase === "gameover") {
         return;
       }
+      const disconnectedColor = currentColor === "red" ? "blue" : "red";
+      setState((prev) => {
+        if (!prev) return prev;
+        const nextState = {
+          ...prev,
+          players: {
+            ...prev.players,
+            [disconnectedColor]: {
+              ...prev.players[disconnectedColor],
+              connected: false,
+            },
+          },
+        };
+        stateRef.current = nextState;
+        return nextState;
+      });
       setGameOverMessage(
         lang === "en"
           ? "The opponent disconnected."
