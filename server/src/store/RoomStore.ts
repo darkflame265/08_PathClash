@@ -13,9 +13,13 @@ export class RoomStore {
     return RoomStore.instance;
   }
 
+  private normalizeCode(code: string): string {
+    return code.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  }
+
   add(room: GameRoom): void {
     this.rooms.set(room.roomId, room);
-    this.codeToRoom.set(room.code, room.roomId);
+    this.codeToRoom.set(this.normalizeCode(room.code), room.roomId);
   }
 
   getById(roomId: string): GameRoom | undefined {
@@ -23,8 +27,18 @@ export class RoomStore {
   }
 
   getByCode(code: string): GameRoom | undefined {
-    const roomId = this.codeToRoom.get(code);
-    return roomId ? this.rooms.get(roomId) : undefined;
+    const normalizedCode = this.normalizeCode(code);
+    const roomId = this.codeToRoom.get(normalizedCode);
+    if (roomId) return this.rooms.get(roomId);
+
+    for (const room of this.rooms.values()) {
+      if (this.normalizeCode(room.code) === normalizedCode) {
+        this.codeToRoom.set(normalizedCode, room.roomId);
+        return room;
+      }
+    }
+
+    return undefined;
   }
 
   getBySocket(socketId: string): GameRoom | undefined {
@@ -70,7 +84,7 @@ export class RoomStore {
     const disconnectResult = room.removePlayer(socketId);
     if (room.playerCount === 0 || !room.hasHumanPlayers()) {
       this.rooms.delete(roomId);
-      this.codeToRoom.delete(room.code);
+      this.codeToRoom.delete(this.normalizeCode(room.code));
     }
     return { room, disconnectResult };
   }
@@ -82,7 +96,7 @@ export class RoomStore {
       code = Array.from({ length: 6 }, () =>
         chars[Math.floor(Math.random() * chars.length)]
       ).join('');
-    } while (this.codeToRoom.has(code));
+    } while (this.codeToRoom.has(this.normalizeCode(code)));
     return code;
   }
 
@@ -169,7 +183,7 @@ export class RoomStore {
       }
 
       this.rooms.delete(roomId);
-      this.codeToRoom.delete(room.code);
+      this.codeToRoom.delete(this.normalizeCode(room.code));
 
       for (const socketId of roomSocketIds) {
         if (this.socketToRoom.get(socketId) === roomId) {

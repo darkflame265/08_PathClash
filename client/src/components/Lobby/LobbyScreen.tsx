@@ -2557,7 +2557,9 @@ export function LobbyScreen({
   };
 
   const handleJoinRoom = async () => {
-    if (!joinCode.trim()) {
+    const normalizedJoinCode = joinCode.replace(/\s+/g, "").toUpperCase();
+
+    if (!normalizedJoinCode) {
       setError(t.joinError);
 
       return;
@@ -2572,7 +2574,7 @@ export function LobbyScreen({
     const socket = startSocket();
 
     socket.emit("join_room", {
-      code: joinCode.trim().toUpperCase(),
+      code: normalizedJoinCode,
 
       ...(await buildPlayerPayload()),
     });

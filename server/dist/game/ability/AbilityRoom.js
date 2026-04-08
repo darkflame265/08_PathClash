@@ -61,7 +61,8 @@ function findFinisherSkillId(loserColor, skillEvents) {
             event.skillId === 'nova_blast' ||
             event.skillId === 'sun_chariot' ||
             event.skillId === 'electric_blitz' ||
-            event.skillId === 'cosmic_bigbang') {
+            event.skillId === 'cosmic_bigbang' ||
+            event.skillId === 'wizard_magic_mine') {
             return event.skillId;
         }
     }
@@ -152,6 +153,7 @@ class AbilityRoom {
         this.attackerColor = 'red';
         this.obstacles = [];
         this.lavaTiles = [];
+        this.trapTiles = [];
         this.readySockets = new Set();
         this.pendingStart = false;
         this.pendingStartPaused = false;
@@ -296,8 +298,9 @@ class AbilityRoom {
         this.resetPlayers();
         this.updateRoles();
         this.touchActivity();
-        const gameStartState = this.toClientState();
-        this.io.to(this.roomId).emit('ability_game_start', gameStartState);
+        for (const player of this.players.values()) {
+            this.io.to(player.socketId).emit('ability_game_start', this.toClientState(player.color));
+        }
         if (!startPaused)
             this.startRound();
     }
@@ -412,7 +415,7 @@ class AbilityRoom {
         }
         return { disconnectedColor, shouldAwardDisconnectResult, winnerColor };
     }
-    toClientState() {
+    toClientState(forColor) {
         const red = this.players.get('red');
         const blue = this.players.get('blue');
         return {
@@ -423,6 +426,9 @@ class AbilityRoom {
             pathPoints: (0, GameEngine_1.calcPathPoints)(this.turn),
             obstacles: this.obstacles,
             lavaTiles: this.lavaTiles,
+            trapTiles: forColor
+                ? this.trapTiles.filter((trap) => trap.owner === forColor)
+                : [],
             players: {
                 red: this.toClientPlayer(red),
                 blue: this.toClientPlayer(blue),
@@ -502,13 +508,14 @@ class AbilityRoom {
         this.obstacles = (0, GameEngine_1.generateObstacles)(this.roomId, this.turn, red.position, blue.position);
         const now = Date.now();
         this.touchActivity(now);
-        const state = this.toClientState();
-        const payload = {
-            timeLimit: PLANNING_TIME_MS / 1000,
-            roundEndsAt: now + PLANNING_TIME_MS,
-            state,
-        };
-        this.io.to(this.roomId).emit('ability_round_start', payload);
+        for (const player of this.players.values()) {
+            const payload = {
+                timeLimit: PLANNING_TIME_MS / 1000,
+                roundEndsAt: now + PLANNING_TIME_MS,
+                state: this.toClientState(player.color),
+            };
+            this.io.to(player.socketId).emit('ability_round_start', payload);
+        }
         this.timer.start(PLANNING_TIME_MS, () => this.onPlanningTimeout());
     }
     onPlanningTimeout() {
@@ -543,6 +550,7 @@ class AbilityRoom {
             attackerColor: this.attackerColor,
             obstacles: this.obstacles,
             lavaTiles: this.lavaTiles,
+            trapTiles: this.trapTiles,
         });
         red.previousTurnStart = { ...resolution.payload.redStart };
         red.previousTurnPath = resolution.payload.redPath.map((position) => ({ ...position }));
@@ -567,8 +575,14 @@ class AbilityRoom {
         blue.overdriveActive = resolution.blueState.overdriveActive;
         blue.reboundLocked = resolution.blueState.reboundLocked;
         this.lavaTiles = resolution.lavaTiles;
+        this.trapTiles = resolution.trapTiles;
         this.touchActivity();
-        this.io.to(this.roomId).emit('ability_resolution', resolution.payload);
+        for (const player of this.players.values()) {
+            this.io.to(player.socketId).emit('ability_resolution', {
+                ...resolution.payload,
+                trapTiles: this.trapTiles.filter((trap) => trap.owner === player.color),
+            });
+        }
         void (0, achievementService_1.recordAbilityUtilityUsage)({
             byUserId: collectUtilitySkillUsageByUser(this.players, resolution.payload.skillEvents),
         });
@@ -658,7 +672,8 @@ class AbilityRoom {
             skill.skillId === 'nova_blast' ||
             skill.skillId === 'sun_chariot' ||
             skill.skillId === 'electric_blitz' ||
-            skill.skillId === 'cosmic_bigbang');
+            skill.skillId === 'cosmic_bigbang' ||
+            skill.skillId === 'wizard_magic_mine');
         const hasBigBang = uniqueSkills.some((skill) => skill.skillId === 'cosmic_bigbang');
         const bigBang = uniqueSkills.find((skill) => skill.skillId === 'cosmic_bigbang') ?? null;
         const hasCharge = uniqueSkills.some((skill) => skill.skillId === 'plasma_charge');
@@ -890,6 +905,7 @@ class AbilityRoom {
         this.phase = 'waiting';
         this.obstacles = [];
         this.lavaTiles = [];
+        this.trapTiles = [];
         this.resetPlayers();
         this.updateRoles();
         this.readySockets.clear();

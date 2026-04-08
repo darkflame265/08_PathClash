@@ -20,6 +20,7 @@ exports.ABILITY_SKILL_COSTS = {
     void_cloak: 4,
     electric_blitz: 6,
     cosmic_bigbang: 10,
+    wizard_magic_mine: 8,
 };
 // Shared validation metadata for server-side planning rules.
 // Keep common restrictions here so role/timing/target/cost rules do not drift
@@ -105,5 +106,10 @@ exports.ABILITY_SKILL_SERVER_RULES = {
         targetRule: 'none',
         requiresEmptyPathWhenNotOverdrive: true,
         exclusiveWhenNotOverdrive: true,
+    },
+    wizard_magic_mine: {
+        roleRestriction: 'attacker',
+        stepRule: 'any',
+        targetRule: 'none',
     },
 };
