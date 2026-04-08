@@ -202,6 +202,24 @@ interface StoredReconnectSession {
 const UPGRADE_CONTEXT_KEY = "pathclash.pendingUpgrade";
 const GUEST_SESSION_KEY = "pathclash.guestSession";
 const RECONNECT_SESSION_KEY = "pathclash.reconnectSession";
+const CLIENT_INSTANCE_ID_KEY = "pathclash.clientInstanceId";
+
+function getClientInstanceId(): string {
+  const existing = window.sessionStorage.getItem(CLIENT_INSTANCE_ID_KEY);
+  if (existing) return existing;
+  const created =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `client-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  window.sessionStorage.setItem(CLIENT_INSTANCE_ID_KEY, created);
+  return created;
+}
+
+const clientInstanceId = getClientInstanceId();
+
+function logAuthDebug(message: string, details?: Record<string, unknown>) {
+  console.log(`[auth-debug][${clientInstanceId}] ${message}`, details ?? {});
+}
 
 function getNativeRedirectUrl() {
   return import.meta.env.VITE_NATIVE_REDIRECT_URL?.trim() || "com.pathclash.game://auth/callback";
@@ -326,6 +344,11 @@ function saveReconnectSession(session: Session | null) {
     isGuestUser: session.user.is_anonymous ?? false,
   };
   window.localStorage.setItem(RECONNECT_SESSION_KEY, JSON.stringify(stored));
+  logAuthDebug("saved reconnect session", {
+    userId: stored.userId,
+    isGuestUser: stored.isGuestUser,
+    reconnectKeyPresent: true,
+  });
 }
 
 function getStoredReconnectSession(): StoredReconnectSession | null {
@@ -333,14 +356,24 @@ function getStoredReconnectSession(): StoredReconnectSession | null {
   if (!raw) return null;
 
   try {
-    return JSON.parse(raw) as StoredReconnectSession;
+    const parsed = JSON.parse(raw) as StoredReconnectSession;
+    logAuthDebug("loaded reconnect session", {
+      userId: parsed.userId,
+      isGuestUser: parsed.isGuestUser,
+      reconnectKeyPresent: true,
+    });
+    return parsed;
   } catch {
+    logAuthDebug("failed to parse reconnect session", {
+      reconnectKeyPresent: true,
+    });
     return null;
   }
 }
 
 function clearStoredReconnectSession() {
   window.localStorage.removeItem(RECONNECT_SESSION_KEY);
+  logAuthDebug("cleared reconnect session");
 }
 
 function saveGuestSession(session: Session | null) {
@@ -354,6 +387,10 @@ function saveGuestSession(session: Session | null) {
     refreshToken: session.refresh_token,
   };
   window.localStorage.setItem(GUEST_SESSION_KEY, JSON.stringify(stored));
+  logAuthDebug("saved guest session", {
+    userId: stored.userId,
+    guestKeyPresent: true,
+  });
 }
 
 function getStoredGuestSession(): StoredGuestSession | null {
@@ -361,10 +398,31 @@ function getStoredGuestSession(): StoredGuestSession | null {
   if (!raw) return null;
 
   try {
-    return JSON.parse(raw) as StoredGuestSession;
+    const parsed = JSON.parse(raw) as StoredGuestSession;
+    logAuthDebug("loaded guest session", {
+      userId: parsed.userId,
+      guestKeyPresent: true,
+    });
+    return parsed;
   } catch {
+    logAuthDebug("failed to parse guest session", {
+      guestKeyPresent: true,
+    });
     return null;
   }
+}
+
+export function getStoredIdentityDebugSnapshot() {
+  const reconnect = getStoredReconnectSession();
+  const guest = getStoredGuestSession();
+  return {
+    clientInstanceId,
+    reconnectKeyPresent: Boolean(reconnect),
+    reconnectUserId: reconnect?.userId ?? null,
+    reconnectIsGuestUser: reconnect?.isGuestUser ?? null,
+    guestKeyPresent: Boolean(guest),
+    guestUserId: guest?.userId ?? null,
+  };
 }
 
 async function ensureProfile(userId: string): Promise<void> {
@@ -613,6 +671,11 @@ async function getCurrentSession() {
   const {
     data: { session },
   } = await supabase.auth.getSession();
+  logAuthDebug("getCurrentSession", {
+    userId: session?.user.id ?? null,
+    isGuestUser: session?.user.is_anonymous ?? null,
+    hasAccessToken: Boolean(session?.access_token),
+  });
   return session;
 }
 
@@ -634,6 +697,7 @@ async function emitSocketAck<T>(event: string, payload: unknown): Promise<T> {
 }
 
 async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
+  logAuthDebug("restoreGuestSessionOrCreate:start", getStoredIdentityDebugSnapshot());
   if (!supabase) {
     return {
       ready: true,
@@ -657,6 +721,10 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
     });
 
     if (!error && data.session?.user) {
+      logAuthDebug("restoreGuestSessionOrCreate:restored reconnect session", {
+        userId: data.session.user.id,
+        isGuestUser: data.session.user.is_anonymous ?? false,
+      });
       saveReconnectSession(data.session);
       if (data.session.user.is_anonymous) {
         saveGuestSession(data.session);
@@ -664,6 +732,11 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
       const snapshot = readCachedAccountSnapshot(data.session.user.id) ?? undefined;
       return toAuthState(data.session, snapshot);
     }
+
+    logAuthDebug("restoreGuestSessionOrCreate:reconnect restore failed", {
+      userId: storedReconnectSession.userId,
+      error: error?.message ?? null,
+    });
   }
 
   const storedGuest = getStoredGuestSession();
@@ -675,17 +748,33 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
     });
 
     if (!error && data.session?.user?.is_anonymous) {
+      logAuthDebug("restoreGuestSessionOrCreate:restored guest session", {
+        userId: data.session.user.id,
+      });
       saveReconnectSession(data.session);
       saveGuestSession(data.session);
       const snapshot = readCachedAccountSnapshot(data.session.user.id) ?? undefined;
       return toAuthState(data.session, snapshot);
     }
+
+    logAuthDebug("restoreGuestSessionOrCreate:guest restore failed", {
+      userId: storedGuest.userId,
+      error: error?.message ?? null,
+    });
   }
 
   if (hasStoredIdentity) {
+    logAuthDebug(
+      "restoreGuestSessionOrCreate:stored identity exists but restore failed; returning disconnected state",
+      getStoredIdentityDebugSnapshot(),
+    );
     return createDisconnectedAuthState();
   }
 
+  logAuthDebug(
+    "restoreGuestSessionOrCreate:creating new guest because no stored identity exists",
+    getStoredIdentityDebugSnapshot(),
+  );
   const { data, error } = await supabase.auth.signInAnonymously();
   if (error || !data.session) {
     console.error("[supabase] failed to create guest session after logout", error);
@@ -702,12 +791,16 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
 
   saveReconnectSession(data.session);
   saveGuestSession(data.session);
+  logAuthDebug("restoreGuestSessionOrCreate:created new guest session", {
+    userId: data.session.user.id,
+  });
   await ensureProfile(data.session.user.id);
   const snapshot = readCachedAccountSnapshot(data.session.user.id) ?? undefined;
   return toAuthState(data.session, snapshot);
 }
 
 export async function initializeGuestAuth(): Promise<AuthStatePayload> {
+  logAuthDebug("initializeGuestAuth:start", getStoredIdentityDebugSnapshot());
   if (!isSupabaseConfigured || !supabase) {
     return {
       ready: true,
@@ -723,9 +816,14 @@ export async function initializeGuestAuth(): Promise<AuthStatePayload> {
   const session = await getCurrentSession();
 
   if (!session) {
+    logAuthDebug("initializeGuestAuth:no current session; attempting restore flow");
     return restoreGuestSessionOrCreate();
   }
 
+  logAuthDebug("initializeGuestAuth:using current session", {
+    userId: session.user.id,
+    isGuestUser: session.user.is_anonymous ?? false,
+  });
   saveReconnectSession(session);
   if (session.user.is_anonymous) {
     saveGuestSession(session);
@@ -1105,6 +1203,7 @@ export async function linkGoogleAccount(): Promise<void> {
 }
 
 export async function logoutToGuestMode(): Promise<AuthStatePayload> {
+  logAuthDebug("logoutToGuestMode:start", getStoredIdentityDebugSnapshot());
   if (!supabase) {
     return {
       ready: true,
@@ -1133,22 +1232,24 @@ export async function logoutToGuestMode(): Promise<AuthStatePayload> {
 }
 
 export async function logoutLocalSession(): Promise<AuthStatePayload> {
+  logAuthDebug("logoutLocalSession:start", getStoredIdentityDebugSnapshot());
   if (!supabase) {
     return createDisconnectedAuthState();
-  }
-
-  const { error } = await supabase.auth.signOut({ scope: "local" });
-  if (error) {
-    console.error("[supabase] failed to sign out local session", error);
   }
 
   clearPendingUpgradeContext();
   clearUpgradeQueryFromUrl();
 
+  logAuthDebug(
+    "logoutLocalSession:return disconnected without clearing stored identity",
+    getStoredIdentityDebugSnapshot(),
+  );
+
   return createDisconnectedAuthState();
 }
 
 export async function reconnectStoredAccount(): Promise<AuthStatePayload> {
+  logAuthDebug("reconnectStoredAccount:start", getStoredIdentityDebugSnapshot());
   return initializeGuestAuth();
 }
 
@@ -1265,6 +1366,12 @@ export function onAuthStateChanged(callback: (payload: AuthStatePayload) => void
     data: { subscription },
   } = supabase.auth.onAuthStateChange((_event, session) => {
     void (async () => {
+      logAuthDebug("onAuthStateChanged", {
+        event: _event,
+        userId: session?.user.id ?? null,
+        isGuestUser: session?.user.is_anonymous ?? null,
+        ...getStoredIdentityDebugSnapshot(),
+      });
       if (session?.user?.is_anonymous) {
         saveGuestSession(session);
       }

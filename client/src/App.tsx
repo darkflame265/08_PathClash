@@ -3,11 +3,11 @@ import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import {
   fetchLegalConsentRecord,
+  getStoredIdentityDebugSnapshot,
   getSocketAuthPayload,
   initializeGuestAuth,
   installNativeAuthCallbackHandler,
   reconnectStoredAccount,
-  logoutLocalSession,
   onAuthStateChanged,
   refreshAccountSummary,
   syncLegalConsent,
@@ -210,6 +210,12 @@ function App() {
     let active = true;
     let cleanupNativeAuth = () => {};
     const applyAuthPayload = (payload: Awaited<ReturnType<typeof initializeGuestAuth>>) => {
+      console.log("[session-debug] applyAuthPayload", {
+        ...getStoredIdentityDebugSnapshot(),
+        userId: payload.userId,
+        isGuestUser: payload.isGuestUser,
+        hasAccessToken: Boolean(payload.accessToken),
+      });
       if (!active) return;
       setAuthState(payload);
       if (!payload.userId || !payload.accessToken) {
@@ -259,6 +265,12 @@ function App() {
     })();
 
     const unsubscribe = onAuthStateChanged((payload) => {
+      console.log("[session-debug] onAuthStateChanged callback", {
+        ...getStoredIdentityDebugSnapshot(),
+        userId: payload.userId,
+        isGuestUser: payload.isGuestUser,
+        hasAccessToken: Boolean(payload.accessToken),
+      });
       applyAuthPayload(payload);
     });
 
@@ -361,6 +373,11 @@ function App() {
   useEffect(() => {
     const socket = getSocket();
     const onSessionReplaced = () => {
+      console.log("[session-debug] received session_replaced", {
+        ...getStoredIdentityDebugSnapshot(),
+        authUserId: useGameStore.getState().authUserId,
+        isGuestUser: useGameStore.getState().isGuestUser,
+      });
       disconnectSocket();
       useGameStore.getState().resetGame();
       setShowExitConfirm(false);
@@ -488,16 +505,34 @@ function App() {
   const handleSessionReplacedConfirm = useCallback(async () => {
     setIsSessionResetting(true);
     try {
-      await logoutLocalSession();
+      console.log("[session-debug] session_replaced confirm:start", {
+        ...getStoredIdentityDebugSnapshot(),
+        authUserId: useGameStore.getState().authUserId,
+        isGuestUser: useGameStore.getState().isGuestUser,
+      });
       disconnectSocket();
       useGameStore.getState().resetGame();
       setView("lobby");
       const restoredState = await reconnectStoredAccount();
+      console.log("[session-debug] session_replaced confirm:restored", {
+        ...getStoredIdentityDebugSnapshot(),
+        userId: restoredState.userId,
+        isGuestUser: restoredState.isGuestUser,
+        hasAccessToken: Boolean(restoredState.accessToken),
+      });
       setAuthState(restoredState);
       if (restoredState.userId && restoredState.accessToken) {
         setAccountSummaryLoading(true);
         try {
           const summary = await refreshAccountSummary({ force: true });
+          console.log("[session-debug] session_replaced confirm:summary restored", {
+            ...getStoredIdentityDebugSnapshot(),
+            userId: restoredState.userId,
+            nickname: summary.nickname,
+            wins: summary.wins,
+            losses: summary.losses,
+            tokens: summary.tokens,
+          });
           setAuthState({
             ready: true,
             userId: restoredState.userId,
