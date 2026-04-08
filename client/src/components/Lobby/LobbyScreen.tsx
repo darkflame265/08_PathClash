@@ -875,6 +875,14 @@ export function LobbyScreen({
     lang === "en" ? "Classic" : "클래식";
   const friendAbilityTabLabel =
     lang === "en" ? "Ability Battle" : "능력대전";
+  const friendModeToggleLabel =
+    friendBattleMode === "classic"
+      ? friendAbilityTabLabel
+      : friendClassicTabLabel;
+  const friendModeTitle =
+    lang === "en"
+      ? `Friend Match (${friendBattleMode === "classic" ? "Classic" : "Ability Battle"})`
+      : `친구 대전(${friendBattleMode === "classic" ? "클래식" : "능력대전"})`;
   const friendClassicDesc =
     lang === "en"
       ? "Create a private room or enter a code to play a classic duel with a friend."
@@ -2698,25 +2706,19 @@ export function LobbyScreen({
     }
   };
 
-  const renderFriendBattleTabs = () => (
-    <div className="friend-battle-tabs" role="tablist" aria-label={t.friendTitle}>
+  const renderFriendBattleHeader = () => (
+    <div className="lobby-card-title-row">
+      <h2 data-step="2">{friendModeTitle}</h2>
       <button
         type="button"
-        className={`friend-battle-tab${
-          friendBattleMode === "classic" ? " is-active" : ""
-        }`}
-        onClick={() => handleFriendBattleModeChange("classic")}
+        className="lobby-mini-btn"
+        onClick={() =>
+          handleFriendBattleModeChange(
+            friendBattleMode === "classic" ? "ability" : "classic",
+          )
+        }
       >
-        {friendClassicTabLabel}
-      </button>
-      <button
-        type="button"
-        className={`friend-battle-tab${
-          friendBattleMode === "ability" ? " is-active" : ""
-        }`}
-        onClick={() => handleFriendBattleModeChange("ability")}
-      >
-        {friendAbilityTabLabel}
+        {friendModeToggleLabel}
       </button>
     </div>
   );
@@ -3176,7 +3178,7 @@ export function LobbyScreen({
     if (selectedLobbyMode === "friend" && view === "create") {
       return (
         <>
-          {renderFriendBattleTabs()}
+          {renderFriendBattleHeader()}
           <h2 data-step="3">{t.roomCreatedTitle}</h2>
           <p>{t.roomCreatedDesc}</p>
           <div className="room-code">{createdCode}</div>
@@ -3188,7 +3190,7 @@ export function LobbyScreen({
     if (selectedLobbyMode === "friend" && view === "join") {
       return (
         <>
-          {renderFriendBattleTabs()}
+          {renderFriendBattleHeader()}
           <h2 data-step="3">{t.joinTitle}</h2>
           <input
             className="lobby-input code-input"
@@ -3270,8 +3272,7 @@ export function LobbyScreen({
       case "friend":
         return (
           <>
-            {renderFriendBattleTabs()}
-            <h2 data-step="2">{t.friendTitle}</h2>
+            {renderFriendBattleHeader()}
             <p>
               {friendBattleMode === "ability"
                 ? friendAbilityDesc
