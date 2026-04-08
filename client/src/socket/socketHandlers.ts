@@ -1,6 +1,5 @@
 import { Socket } from 'socket.io-client';
 import { useGameStore } from '../store/gameStore';
-import { translations } from '../i18n/translations';
 import type {
   ClientGameState, PathsRevealPayload, RoundStartPayload,
   ChatMessage, PlayerColor, PieceSkin,
@@ -44,19 +43,16 @@ export function registerSocketHandlers(socket: Socket): () => void {
     if (!gs || !myColor) return;
 
     const existingWinner = store().winner;
-    if (!existingWinner) {
-      store().setWinner(myColor);
+    if (existingWinner || gs.phase === 'gameover') {
+      useGameStore.setState({
+        gameState: { ...gs, phase: 'gameover' },
+        rematchRequested: false,
+      });
+      return;
     }
 
-    const leaveNotice = translations[store().lang].opponentLeft;
-    const prevMessage = store().gameOverMessage;
-    const nextMessage = prevMessage
-      ? prevMessage.includes(leaveNotice)
-        ? prevMessage
-        : `${prevMessage} ${leaveNotice}`
-      : leaveNotice;
-
-    store().setGameOverMessage(nextMessage);
+    store().setWinner(myColor);
+    store().setGameOverMessage(null);
     useGameStore.setState({
       gameState: { ...gs, phase: 'gameover' },
       rematchRequested: false,
