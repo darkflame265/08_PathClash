@@ -296,6 +296,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setMyColor,
     setRoomCode,
     accountDailyRewardTokens,
+    currentMatchType,
     rematchRequestSent,
     setRematchRequestSent,
     isSfxMuted,
@@ -2610,7 +2611,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const overdriveTurn = me.overdriveActive;
   const effectivePathPoints = me.reboundLocked ? 0 : state.pathPoints;
   const rewardTokens =
-    winner && winner === currentColor
+    winner && winner === currentColor && currentMatchType === "ability"
       ? Math.min(6, Math.max(0, 120 - accountDailyRewardTokens))
       : 0;
   const isPlanning = state.phase === "planning";
