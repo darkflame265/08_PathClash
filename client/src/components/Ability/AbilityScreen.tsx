@@ -676,6 +676,52 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     return Math.max(0, myPath.length - blitzPath.length);
   };
 
+  const getPreviewPositionAtStep = (step: number): Position => {
+    const basePosition =
+      state?.players[currentColor].position ?? { row: 2, col: 0 };
+    const teleport = teleportReservation;
+
+    if (!teleport?.target) {
+      if (step <= 0) return basePosition;
+      return myPath[step - 1] ?? basePosition;
+    }
+
+    if (teleport.step === 0) {
+      if (step === 0) return teleport.target;
+      return myPath[step - 1] ?? teleport.target;
+    }
+
+    if (step <= 0) return basePosition;
+    if (step < teleport.step) return myPath[step - 1] ?? basePosition;
+    if (step === teleport.step) return teleport.target;
+    return myPath[step - 1] ?? teleport.target;
+  };
+
+  const previewWizardMineReservation =
+    state?.phase === "planning"
+      ? skillReservations.find(
+          (entry) => entry.skillId === "wizard_magic_mine",
+        ) ?? null
+      : null;
+  const previewWizardMineTile: AbilityTrapTile | null =
+    previewWizardMineReservation
+      ? {
+          position: getPreviewPositionAtStep(previewWizardMineReservation.step),
+          owner: currentColor,
+          remainingTurns: 5,
+        }
+      : null;
+  const visibleTrapTiles =
+    previewWizardMineTile &&
+    !trapTiles.some(
+      (trap) =>
+        trap.owner === previewWizardMineTile.owner &&
+        trap.position.row === previewWizardMineTile.position.row &&
+        trap.position.col === previewWizardMineTile.position.col,
+    )
+      ? [...trapTiles, previewWizardMineTile]
+      : trapTiles;
+
   const syncMyPlan = (
     path: Position[],
     reservations: AbilitySkillReservation[],
@@ -2657,7 +2703,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           <AbilityGrid
             state={state}
             currentColor={currentColor}
-            trapTiles={trapTiles}
+            trapTiles={visibleTrapTiles}
             mineTriggeredPositions={mineTriggeredPositions}
             pathPoints={effectivePathPoints}
             myPath={myPath}
