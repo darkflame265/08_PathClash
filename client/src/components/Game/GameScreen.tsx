@@ -503,6 +503,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     currentMatchType !== "ai" || !roundInfo?.tutorialScenario;
   const useLobbyResultAction =
     currentMatchType === "friend" || currentMatchType === "random";
+  const showFriendRematchAction = currentMatchType === "friend";
   const resolvedBoardSkin: BoardSkin = (() => {
     if (gameState?.tutorialActive) return "classic";
     const redBoardSkin = gameState?.players.red.boardSkin;
@@ -585,6 +586,8 @@ export function GameScreen({ onLeaveToLobby }: Props) {
               }
               onAction={useLobbyResultAction ? onLeaveToLobby : null}
               alignActionRight={useLobbyResultAction}
+              showActionWithRematch={showFriendRematchAction}
+              rematchButtonTone={showFriendRematchAction ? "blue" : "green"}
             />
           </div>
         )}

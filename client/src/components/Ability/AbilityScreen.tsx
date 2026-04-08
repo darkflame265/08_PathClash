@@ -2644,6 +2644,11 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     onLeaveToLobby();
   };
 
+  const handleRequestRematch = () => {
+    getSocket().emit("request_rematch");
+    setRematchRequestSent(true);
+  };
+
   const handleSkillPressStart = (skillId: AbilitySkillId) => {
     clearSkillPressTimeout();
     longPressTriggeredRef.current = false;
@@ -2728,6 +2733,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                       ? "Rematch request sent."
                       : "재도전 요청을 보냈습니다."}
                   </div>
+                )}
+                {!gameOverMessage && currentMatchType === "friend" && (
+                  <button
+                    className="rematch-btn rematch-btn-blue"
+                    onClick={handleRequestRematch}
+                  >
+                    {lang === "en" ? "REMATCH" : "재시합"}
+                  </button>
                 )}
                 {!gameOverMessage && (
                   <button

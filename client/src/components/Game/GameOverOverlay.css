@@ -94,6 +94,16 @@
   transform: translateY(0);
 }
 
+.rematch-btn-blue {
+  background: #2d5ea8;
+  box-shadow: 0 4px 16px rgba(45, 94, 168, 0.4);
+}
+
+.rematch-btn-blue:hover {
+  background: #234b86;
+  box-shadow: 0 8px 24px rgba(45, 94, 168, 0.55);
+}
+
 .gameover-action-right {
   margin-left: auto;
 }

@@ -13,6 +13,8 @@ interface Props {
   actionLabel?: string | null;
   onAction?: (() => void) | null;
   alignActionRight?: boolean;
+  showActionWithRematch?: boolean;
+  rematchButtonTone?: "green" | "blue";
 }
 
 export function GameOverOverlay({
@@ -23,11 +25,16 @@ export function GameOverOverlay({
   actionLabel = null,
   onAction = null,
   alignActionRight = false,
+  showActionWithRematch = false,
+  rematchButtonTone = "green",
 }: Props) {
   const { t, lang } = useLang();
   const { rematchRequested, rematchRequestSent, gameOverMessage, setRematchRequestSent } = useGameStore();
   const isWinner = winner === myColor;
-  const showRematch = allowRematch && !gameOverMessage && !actionLabel;
+  const showRematch =
+    allowRematch &&
+    !gameOverMessage &&
+    (!actionLabel || showActionWithRematch);
   const showAction = !gameOverMessage && actionLabel && onAction;
   const rewardCopy =
     isWinner && rewardTokens && rewardTokens > 0
@@ -76,7 +83,12 @@ export function GameOverOverlay({
         )}
 
         {showRematch && (
-          <button className="rematch-btn" onClick={handleRematch}>
+          <button
+            className={`rematch-btn${
+              rematchButtonTone === "blue" ? " rematch-btn-blue" : ""
+            }`}
+            onClick={handleRematch}
+          >
             {t.rematchBtn}
           </button>
         )}
