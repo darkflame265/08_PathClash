@@ -83,6 +83,7 @@ import "./LobbyScreen.css";
 
 type LobbyView = "main" | "create" | "join";
 type SkinPickerTab = "piece" | "board";
+type FriendBattleMode = "classic" | "ability";
 type LobbyModeKey =
   | "ai"
   | "friend"
@@ -703,6 +704,8 @@ export function LobbyScreen({
   });
 
   const [joinCode, setJoinCode] = useState("");
+  const [friendBattleMode, setFriendBattleMode] =
+    useState<FriendBattleMode>("classic");
 
   const [createdCode, setCreatedCode] = useState("");
 
@@ -868,10 +871,18 @@ export function LobbyScreen({
 
   const twoVsTwoTitle = "2v2";
 
-  const friendDesc =
+  const friendClassicTabLabel =
+    lang === "en" ? "Classic" : "클래식";
+  const friendAbilityTabLabel =
+    lang === "en" ? "Ability Battle" : "능력대전";
+  const friendClassicDesc =
     lang === "en"
-      ? "Create a private room or enter a code to play a direct match with a friend."
-      : "방을 만들거나 코드를 입력해 친구와 바로 대결할 수 있습니다.";
+      ? "Create a private room or enter a code to play a classic duel with a friend."
+      : "방을 만들거나 코드를 입력해 친구와 클래식 대결전을 즐길 수 있습니다.";
+  const friendAbilityDesc =
+    lang === "en"
+      ? "Create a private room or enter a code to play Ability Battle with a friend using your current equipped skills."
+      : "방을 만들거나 코드를 입력해 현재 장착한 스킬로 친구와 능력대전을 즐길 수 있습니다.";
 
   const randomDesc =
     lang === "en"
@@ -2259,6 +2270,10 @@ export function LobbyScreen({
 
     socket.off("ability_room_joined");
 
+    socket.off("ability_room_created");
+
+    socket.off("ability_opponent_joined");
+
     socket.off("ability_matchmaking_waiting");
 
     socket.off("game_start");
@@ -2503,6 +2518,56 @@ export function LobbyScreen({
     });
 
     socket.on(
+      "ability_room_created",
+
+      ({
+        code,
+
+        color,
+      }: {
+        roomId: string;
+
+        code: string;
+
+        color: "red" | "blue";
+      }) => {
+        setMyColor(color);
+
+        setRoomCode(code);
+
+        setCreatedCode(code);
+
+        setError("");
+
+        setIsMatchmaking(false);
+
+        setView("create");
+      },
+    );
+
+    socket.on(
+      "ability_opponent_joined",
+
+      ({
+        color,
+      }: {
+        nickname: string;
+
+        color?: "red" | "blue";
+      }) => {
+        if (color) {
+          setMyColor(color === "red" ? "blue" : "red");
+        }
+
+        setError("");
+
+        setIsMatchmaking(false);
+
+        onAbilityStart();
+      },
+    );
+
+    socket.on(
       "ability_room_joined",
 
       ({
@@ -2546,6 +2611,11 @@ export function LobbyScreen({
     boardSkin: useGameStore.getState().boardSkin,
   });
 
+  const buildAbilityPlayerPayload = async () => ({
+    ...(await buildPlayerPayload()),
+    equippedSkills: useGameStore.getState().abilityLoadout,
+  });
+
   const handleCreateRoom = async () => {
     setError("");
 
@@ -2556,6 +2626,18 @@ export function LobbyScreen({
     const socket = startSocket();
 
     socket.emit("create_room", await buildPlayerPayload());
+  };
+
+  const handleCreateAbilityRoom = async () => {
+    setError("");
+
+    setIsMatchmaking(false);
+
+    setMatchType("friend");
+
+    const socket = startSocket();
+
+    socket.emit("create_ability_room", await buildAbilityPlayerPayload());
   };
 
   const handleJoinRoom = async () => {
@@ -2581,6 +2663,63 @@ export function LobbyScreen({
       ...(await buildPlayerPayload()),
     });
   };
+
+  const handleJoinAbilityRoom = async () => {
+    const normalizedJoinCode = joinCode.replace(/\s+/g, "").toUpperCase();
+
+    if (!normalizedJoinCode) {
+      setError(t.joinError);
+
+      return;
+    }
+
+    setError("");
+
+    setIsMatchmaking(false);
+
+    setMatchType("friend");
+
+    const socket = startSocket();
+
+    socket.emit("join_ability_room", {
+      code: normalizedJoinCode,
+
+      ...(await buildAbilityPlayerPayload()),
+    });
+  };
+
+  const handleFriendBattleModeChange = (nextMode: FriendBattleMode) => {
+    setFriendBattleMode(nextMode);
+    setError("");
+    setJoinCode("");
+    setCreatedCode("");
+    if (view !== "main") {
+      setView("main");
+    }
+  };
+
+  const renderFriendBattleTabs = () => (
+    <div className="friend-battle-tabs" role="tablist" aria-label={t.friendTitle}>
+      <button
+        type="button"
+        className={`friend-battle-tab${
+          friendBattleMode === "classic" ? " is-active" : ""
+        }`}
+        onClick={() => handleFriendBattleModeChange("classic")}
+      >
+        {friendClassicTabLabel}
+      </button>
+      <button
+        type="button"
+        className={`friend-battle-tab${
+          friendBattleMode === "ability" ? " is-active" : ""
+        }`}
+        onClick={() => handleFriendBattleModeChange("ability")}
+      >
+        {friendAbilityTabLabel}
+      </button>
+    </div>
+  );
 
   const handleRandom = async () => {
     setError("");
@@ -3037,6 +3176,7 @@ export function LobbyScreen({
     if (selectedLobbyMode === "friend" && view === "create") {
       return (
         <>
+          {renderFriendBattleTabs()}
           <h2 data-step="3">{t.roomCreatedTitle}</h2>
           <p>{t.roomCreatedDesc}</p>
           <div className="room-code">{createdCode}</div>
@@ -3048,6 +3188,7 @@ export function LobbyScreen({
     if (selectedLobbyMode === "friend" && view === "join") {
       return (
         <>
+          {renderFriendBattleTabs()}
           <h2 data-step="3">{t.joinTitle}</h2>
           <input
             className="lobby-input code-input"
@@ -3059,7 +3200,11 @@ export function LobbyScreen({
           {error && <p className="error-msg">{error}</p>}
           <button
             className="lobby-btn primary"
-            onClick={() => void handleJoinRoom()}
+            onClick={() =>
+              void (friendBattleMode === "ability"
+                ? handleJoinAbilityRoom()
+                : handleJoinRoom())
+            }
           >
             {t.joinBtn}
           </button>
@@ -3125,12 +3270,21 @@ export function LobbyScreen({
       case "friend":
         return (
           <>
+            {renderFriendBattleTabs()}
             <h2 data-step="2">{t.friendTitle}</h2>
-            <p>{friendDesc}</p>
+            <p>
+              {friendBattleMode === "ability"
+                ? friendAbilityDesc
+                : friendClassicDesc}
+            </p>
             <div className="btn-divider">
               <button
                 className="lobby-btn primary"
-                onClick={() => void handleCreateRoom()}
+                onClick={() =>
+                  void (friendBattleMode === "ability"
+                    ? handleCreateAbilityRoom()
+                    : handleCreateRoom())
+                }
               >
                 {t.createRoomBtn}
               </button>
