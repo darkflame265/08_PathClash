@@ -9,6 +9,7 @@ import type {
   AbilityDamageEvent,
   AbilityHealEvent,
   AbilityLavaTile,
+  AbilityTrapTile,
   AbilityPlayerState,
   AbilityResolutionPayload,
   AbilitySkillEvent,
@@ -38,6 +39,7 @@ function getSkillPriority(skillId: AbilitySkillId): number {
     case 'sun_chariot':
     case 'electric_blitz':
     case 'cosmic_bigbang':
+    case 'wizard_magic_mine':
       return 2;
     default:
       return 99;
@@ -163,11 +165,13 @@ export function resolveAbilityRound(params: {
   attackerColor: PlayerColor;
   obstacles: Position[];
   lavaTiles: AbilityLavaTile[];
+  trapTiles: AbilityTrapTile[];
 }): {
   payload: AbilityResolutionPayload;
   redState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'pendingVoidCloak' | 'overdriveActive' | 'reboundLocked'>;
   blueState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'pendingVoidCloak' | 'overdriveActive' | 'reboundLocked'>;
   lavaTiles: AbilityLavaTile[];
+  trapTiles: AbilityTrapTile[];
   winner: PlayerColor | 'draw' | null;
 } {
   const { red, blue, attackerColor, obstacles } = params;
@@ -180,6 +184,11 @@ export function resolveAbilityRound(params: {
   const skillEvents: AbilitySkillEvent[] = [];
   const activeLavaTiles: AbilityLavaTile[] = params.lavaTiles.map((tile) => ({
     position: { ...tile.position },
+    remainingTurns: tile.remainingTurns,
+  }));
+  const activeTrapTiles: AbilityTrapTile[] = params.trapTiles.map((tile) => ({
+    position: { ...tile.position },
+    owner: tile.owner,
     remainingTurns: tile.remainingTurns,
   }));
 
@@ -795,6 +804,30 @@ export function resolveAbilityRound(params: {
         blueMana = spendMana(casterMana, reservation.skillId);
       }
       applyDamages(color, damages, [], reservation.skillId, reservation.step, reservation.order, affectedPositions);
+      return;
+    }
+
+    if (reservation.skillId === 'wizard_magic_mine') {
+      if (color === 'red') {
+        redMana = spendMana(casterMana, reservation.skillId);
+      } else {
+        blueMana = spendMana(casterMana, reservation.skillId);
+      }
+      const existing = activeTrapTiles.find(
+        (trap) => trap.owner === color && samePosition(trap.position, currentPos),
+      );
+      if (existing) {
+        existing.remainingTurns = Math.max(existing.remainingTurns, 5);
+      } else {
+        activeTrapTiles.push({ position: { ...currentPos }, owner: color, remainingTurns: 5 });
+      }
+      skillEvents.push({
+        step: reservation.step,
+        order: reservation.order,
+        color,
+        skillId: reservation.skillId,
+        affectedPositions: [{ ...currentPos }],
+      });
     }
   };
 
@@ -984,6 +1017,45 @@ export function resolveAbilityRound(params: {
     applyLavaDamage('red', redPrevForStep, redPos, isProtectedByCollision('red'));
     applyLavaDamage('blue', bluePrevForStep, bluePos, isProtectedByCollision('blue'));
 
+    // Trap tile check — runs after lava, one trigger per step
+    for (const trap of activeTrapTiles) {
+      if (trap.owner === 'red') {
+        // Blue steps on red's trap
+        if (!samePosition(bluePos, trap.position)) continue;
+        if (isProtectedByCollision('blue')) break;
+        const damages: AbilityDamageEvent[] = [];
+        blueHp = Math.max(0, blueHp - 1);
+        damages.push({ color: 'blue', newHp: blueHp, position: { ...trap.position } });
+        skillEvents.push({
+          step,
+          order: 0,
+          color: 'red',
+          skillId: 'wizard_magic_mine',
+          affectedPositions: [{ ...trap.position }],
+          damages,
+        });
+        activeTrapTiles.splice(activeTrapTiles.indexOf(trap), 1);
+        break;
+      } else {
+        // Red steps on blue's trap
+        if (!samePosition(redPos, trap.position)) continue;
+        if (isProtectedByCollision('red')) break;
+        const damages: AbilityDamageEvent[] = [];
+        redHp = Math.max(0, redHp - 1);
+        damages.push({ color: 'red', newHp: redHp, position: { ...trap.position } });
+        skillEvents.push({
+          step,
+          order: 0,
+          color: 'blue',
+          skillId: 'wizard_magic_mine',
+          affectedPositions: [{ ...trap.position }],
+          damages,
+        });
+        activeTrapTiles.splice(activeTrapTiles.indexOf(trap), 1);
+        break;
+      }
+    }
+
     if (redAtFieldSteps > 0) redAtFieldSteps -= 1;
     if (blueAtFieldSteps > 0) blueAtFieldSteps -= 1;
 
@@ -1055,6 +1127,14 @@ export function resolveAbilityRound(params: {
     }))
     .filter((tile) => tile.remainingTurns > 0);
 
+  const nextTrapTiles = activeTrapTiles
+    .map((tile) => ({
+      position: { ...tile.position },
+      owner: tile.owner,
+      remainingTurns: tile.remainingTurns - 1,
+    }))
+    .filter((tile) => tile.remainingTurns > 0);
+
   return {
     payload: {
       redPath,
@@ -1065,6 +1145,7 @@ export function resolveAbilityRound(params: {
         position: { ...tile.position },
         remainingTurns: tile.remainingTurns,
       })),
+      trapTiles: nextTrapTiles,
       blocks,
       collisions,
       skillEvents,
@@ -1092,6 +1173,7 @@ export function resolveAbilityRound(params: {
       reboundLocked: blueReboundLocked,
     },
     lavaTiles: nextLavaTiles,
+    trapTiles: nextTrapTiles,
     winner,
   };
 }

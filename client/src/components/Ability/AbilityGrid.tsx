@@ -1,6 +1,6 @@
 ﻿import { useRef, useCallback, useEffect, useState } from 'react';
 import type { BoardSkin, PlayerColor, Position } from '../../types/game.types';
-import type { AbilityBattleState, AbilitySkillReservation } from '../../types/ability.types';
+import type { AbilityBattleState, AbilitySkillReservation, AbilityTrapTile } from '../../types/ability.types';
 import { useGameStore } from '../../store/gameStore';
 import { pixelToCell, isBlockedCell, isValidMove, posEqual } from '../../utils/pathUtils';
 import { playLobbyClick } from '../../utils/soundUtils';
@@ -69,6 +69,8 @@ interface Props {
   onBlitzTargetSelect: (target: Position) => void;
   onInfernoTargetSelect: (target: Position) => void;
   onTeleportCancel: () => void;
+  trapTiles: AbilityTrapTile[];
+  mineTriggeredPositions: Array<{ id: number; position: Position }>;
 }
 
 const GRID_SIZE = 5;
@@ -146,6 +148,8 @@ export function AbilityGrid({
   onBlitzTargetSelect,
   onInfernoTargetSelect,
   onTeleportCancel,
+  trapTiles,
+  mineTriggeredPositions,
 }: Props) {
   const isSfxMuted = useGameStore((store) => store.isSfxMuted);
   const sfxVolume = useGameStore((store) => store.sfxVolume);
@@ -517,6 +521,47 @@ export function AbilityGrid({
             style={{
               left: tile.position.col * responsiveCellSize,
               top: tile.position.row * responsiveCellSize,
+              width: responsiveCellSize,
+              height: responsiveCellSize,
+            }}
+          />
+        ))}
+
+        {trapTiles.map((trap) => (
+          <div
+            key={`mine-${trap.position.row}-${trap.position.col}`}
+            className="ability-wizard-mine"
+            style={{
+              left: trap.position.col * responsiveCellSize + responsiveCellSize / 2,
+              top: trap.position.row * responsiveCellSize + responsiveCellSize / 2,
+              width: responsiveCellSize * 0.7,
+              height: responsiveCellSize * 0.7,
+            }}
+          >
+            <svg viewBox="0 0 60 60" width="70%" height="70%">
+              <polygon
+                points="30,4 56,50 4,50"
+                fill="none"
+                stroke="rgba(190,70,255,0.7)"
+                strokeWidth="2"
+              />
+              <polygon
+                points="30,56 4,10 56,10"
+                fill="none"
+                stroke="rgba(220,110,255,0.6)"
+                strokeWidth="2"
+              />
+            </svg>
+          </div>
+        ))}
+
+        {mineTriggeredPositions.map((entry) => (
+          <div
+            key={`mine-trigger-${entry.id}`}
+            className="ability-wizard-mine-trigger"
+            style={{
+              left: entry.position.col * responsiveCellSize + responsiveCellSize / 2,
+              top: entry.position.row * responsiveCellSize + responsiveCellSize / 2,
               width: responsiveCellSize,
               height: responsiveCellSize,
             }}

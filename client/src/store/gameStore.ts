@@ -287,7 +287,8 @@ const initialAbilityLoadout = (() => {
       value === 'void_cloak' ||
       value === 'electric_blitz' ||
       value === 'atomic_fission' ||
-      value === 'cosmic_bigbang',
+      value === 'cosmic_bigbang' ||
+      value === 'wizard_magic_mine',
     );
     return normalized.length > 0 ? normalized.slice(0, 3) : (['classic_guard'] as AbilitySkillId[]);
   } catch {

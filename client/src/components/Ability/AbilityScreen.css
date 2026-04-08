@@ -1495,3 +1495,46 @@
     font-size: clamp(0.6rem, calc(0.7rem * var(--gs-scale, 1)), 0.78rem);
   }
 }
+
+/* ── Wizard Magic Mine ─────────────────────────────────────── */
+.ability-wizard-mine {
+  position: absolute;
+  z-index: 2;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(160, 40, 255, 0.18) 0%, transparent 70%);
+  border: 1px solid rgba(200, 80, 255, 0.45);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation:
+    wizardMinePulse 3s ease-in-out infinite,
+    wizardMineRotate 20s linear infinite;
+}
+
+@keyframes wizardMinePulse {
+  0%, 100% { opacity: 0.55; }
+  50%       { opacity: 1; }
+}
+
+@keyframes wizardMineRotate {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.ability-wizard-mine-trigger {
+  position: absolute;
+  z-index: 4;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(220, 80, 255, 0.9) 0%, transparent 70%);
+  box-shadow: 0 0 20px rgba(200, 60, 255, 1);
+  animation: wizardMineBurst 0.5s ease-out forwards;
+}
+
+@keyframes wizardMineBurst {
+  0%   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+  60%  { transform: translate(-50%, -50%) scale(2.2); opacity: 0.85; }
+  100% { transform: translate(-50%, -50%) scale(3);   opacity: 0; }
+}

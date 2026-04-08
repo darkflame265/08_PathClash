@@ -22,7 +22,8 @@ export type AbilitySkillId =
   | 'plasma_charge'
   | 'void_cloak'
   | 'electric_blitz'
-  | 'cosmic_bigbang';
+  | 'cosmic_bigbang'
+  | 'wizard_magic_mine';
 export type AbilitySkillCategory = 'attack' | 'defense' | 'utility';
 
 // Client-side single source of truth for displayed mana costs.
@@ -44,6 +45,7 @@ export const ABILITY_SKILL_COSTS: Record<AbilitySkillId, number> = {
   void_cloak: 4,
   electric_blitz: 6,
   cosmic_bigbang: 10,
+  wizard_magic_mine: 8,
 };
 
 export interface AbilitySkillDefinition {
@@ -67,6 +69,12 @@ export interface AbilitySkillReservation {
 
 export interface AbilityLavaTile {
   position: Position;
+  remainingTurns: number;
+}
+
+export interface AbilityTrapTile {
+  position: Position;
+  owner: PlayerColor;
   remainingTurns: number;
 }
 
@@ -99,6 +107,7 @@ export interface AbilityBattleState {
   pathPoints: number;
   obstacles: Position[];
   lavaTiles: AbilityLavaTile[];
+  trapTiles: AbilityTrapTile[];
   players: {
     red: AbilityPlayerState;
     blue: AbilityPlayerState;
@@ -152,6 +161,7 @@ export interface AbilityResolutionPayload {
   redStart: Position;
   blueStart: Position;
   lavaTiles: AbilityLavaTile[];
+  trapTiles: AbilityTrapTile[];
   blocks: AbilityBlockEvent[];
   collisions: Array<{
     step: number;
@@ -442,6 +452,23 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     category: 'attack',
     skinId: 'electric_core',
     icon: '⚡',
+  },
+  wizard_magic_mine: {
+    id: 'wizard_magic_mine',
+    name: { en: 'Magic Mine', kr: '매직마인' },
+    description: {
+      en: 'Place an invisible trap at your position (at the chosen step). If the opponent steps on it, they take 1 damage and the trap disappears. Lasts 5 turns.',
+      kr: '지정한 스텝 시점의 현재 위치에 보이지 않는 함정을 설치합니다. 상대가 밟으면 1 피해를 주고 사라집니다. 5턴 지속됩니다.',
+    },
+    loadoutTags: { en: 'Move OK · Combo OK', kr: '이동 가능 · 조합 가능' },
+    loadoutDescription: {
+      en: 'Place an invisible 1-damage trap at your movement position. Lasts 5 turns.',
+      kr: '이동 위치에 1 피해짜리 보이지 않는 함정을 설치합니다. 5턴 지속됩니다.',
+    },
+    manaCost: ABILITY_SKILL_COSTS.wizard_magic_mine,
+    category: 'attack',
+    skinId: 'wizard',
+    icon: '✦',
   },
   cosmic_bigbang: {
     id: 'cosmic_bigbang',

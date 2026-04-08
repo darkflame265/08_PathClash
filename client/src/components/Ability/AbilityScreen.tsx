@@ -33,6 +33,7 @@ import {
   type AbilityRoundStartPayload,
   type AbilitySkillId,
   type AbilitySkillReservation,
+  type AbilityTrapTile,
 } from "../../types/ability.types";
 import { AbilityGrid } from "./AbilityGrid";
 import "../Game/GameScreen.css";
@@ -375,6 +376,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     useState<BoolByColor>(createFalseFlags);
   const [movingAtomicClones, setMovingAtomicClones] =
     useState<AtomicCloneVisualsByColor>(createEmptyAtomicCloneVisuals);
+  const [trapTiles, setTrapTiles] = useState<AbilityTrapTile[]>([]);
+  const [mineTriggeredPositions, setMineTriggeredPositions] = useState<
+    Array<{ id: number; position: Position }>
+  >([]);
   const [winner, setWinner] = useState<PlayerColor | "draw" | null>(null);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const [rematchRequested, setRematchRequested] = useState(false);
@@ -1630,6 +1635,51 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         return;
       }
 
+      if (event.skillId === "wizard_magic_mine") {
+        if (event.damages && event.damages.length > 0) {
+          // Trap triggered — explosion animation
+          if (!isSfxMuted) {
+            playEmber(sfxVolume);
+          }
+          for (const position of event.affectedPositions ?? []) {
+            const effectId = Date.now() + Math.random();
+            setMineTriggeredPositions((prev) => [...prev, { id: effectId, position }]);
+            queueAnimationTimeout(() => {
+              setMineTriggeredPositions((prev) =>
+                prev.filter((entry) => entry.id !== effectId),
+              );
+            }, 550);
+          }
+          for (const damage of event.damages) {
+            setState((prev) => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                players: {
+                  ...prev.players,
+                  [damage.color]: {
+                    ...prev.players[damage.color],
+                    hp: damage.newHp,
+                  },
+                },
+              };
+            });
+            triggerLocalHit(damage.color, damage.newHp, damage.position);
+          }
+          queueAnimationTimeout(() => {
+            setAbilityBanner(null);
+            done();
+          }, SKILL_PAUSE_MS);
+          return;
+        }
+        // Trap placed — short banner then done
+        queueAnimationTimeout(() => {
+          setAbilityBanner(null);
+          done();
+        }, SKILL_PAUSE_MS);
+        return;
+      }
+
       if (event.skillId === "quantum_shift" && event.to) {
         const target = event.to;
         const fallbackFrom =
@@ -2136,6 +2186,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
     const onGameStart = (nextState: AbilityBattleState) => {
       setRoundInfo(null);
+      setTrapTiles([]);
       resetPlanningState();
       applyState(nextState);
     };
@@ -2161,6 +2212,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         playVoidCloak(sfxVolume);
       }
       setRoundInfo(payload);
+      setTrapTiles(nextState.trapTiles ?? []);
       resetPlanningState();
       applyState(nextState);
     };
@@ -2209,8 +2261,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       setOpponentSubmitted(true);
     };
 
-    const onResolution = (payload: AbilityResolutionPayload) => {
+    const onResolution = (payload: AbilityResolutionPayload & { trapTiles?: AbilityTrapTile[] }) => {
       setRoundInfo(null);
+      setTrapTiles(payload.trapTiles ?? []);
       const hadSunChariotReserved = skillReservationsRef.current.some(
         (entry) => entry.skillId === "sun_chariot",
       );
@@ -2575,6 +2628,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           <AbilityGrid
             state={state}
             currentColor={currentColor}
+            trapTiles={trapTiles}
+            mineTriggeredPositions={mineTriggeredPositions}
             pathPoints={effectivePathPoints}
             myPath={myPath}
             setMyPath={updateMyPath}

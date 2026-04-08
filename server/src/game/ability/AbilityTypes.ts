@@ -23,7 +23,8 @@ export type AbilitySkillId =
   | 'plasma_charge'
   | 'void_cloak'
   | 'electric_blitz'
-  | 'cosmic_bigbang';
+  | 'cosmic_bigbang'
+  | 'wizard_magic_mine';
 export type AbilitySkillCategory = 'attack' | 'defense' | 'utility';
 export type AbilitySkillRoleRestriction = 'any' | 'attacker' | 'escaper';
 export type AbilitySkillStepRule = 'any' | 'zero_only';
@@ -57,6 +58,7 @@ export const ABILITY_SKILL_COSTS: Record<AbilitySkillId, number> = {
   void_cloak: 4,
   electric_blitz: 6,
   cosmic_bigbang: 10,
+  wizard_magic_mine: 8,
 };
 
 // Shared validation metadata for server-side planning rules.
@@ -147,6 +149,11 @@ export const ABILITY_SKILL_SERVER_RULES: Record<
     requiresEmptyPathWhenNotOverdrive: true,
     exclusiveWhenNotOverdrive: true,
   },
+  wizard_magic_mine: {
+    roleRestriction: 'attacker',
+    stepRule: 'any',
+    targetRule: 'none',
+  },
 };
 
 export interface AbilitySkillReservation {
@@ -158,6 +165,12 @@ export interface AbilitySkillReservation {
 
 export interface AbilityLavaTile {
   position: Position;
+  remainingTurns: number;
+}
+
+export interface AbilityTrapTile {
+  position: Position;
+  owner: PlayerColor;
   remainingTurns: number;
 }
 
@@ -209,6 +222,7 @@ export interface AbilityBattleState {
   pathPoints: number;
   obstacles: Position[];
   lavaTiles: AbilityLavaTile[];
+  trapTiles: AbilityTrapTile[];
   players: {
     red: ClientAbilityPlayerState;
     blue: ClientAbilityPlayerState;
@@ -262,6 +276,7 @@ export interface AbilityResolutionPayload {
   redStart: Position;
   blueStart: Position;
   lavaTiles: AbilityLavaTile[];
+  trapTiles: AbilityTrapTile[];
   blocks: AbilityBlockEvent[];
   collisions: Array<{
     step: number;
