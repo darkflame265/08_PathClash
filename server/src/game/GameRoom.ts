@@ -309,9 +309,10 @@ export class GameRoom {
     const now = Date.now();
     this.touchActivity(now);
     const timeLimitSeconds = this.tutorialActive ? 0 : 7;
+    const pathPoints = this.currentPathPoints();
     const payload: RoundStartPayload = {
       turn: this.turn,
-      pathPoints: calcPathPoints(this.turn),
+      pathPoints,
       attackerColor: this.attackerColor,
       redPosition: red.position,
       bluePosition: blue.position,
@@ -348,7 +349,7 @@ export class GameRoom {
 
       for (const [, p] of this.players) {
         if (!p.pathSubmitted) {
-          const maxPoints = calcPathPoints(this.turn);
+          const maxPoints = this.currentPathPoints();
           if (
             !isValidPath(p.position, p.plannedPath, maxPoints, this.obstacles)
           ) {
@@ -366,7 +367,7 @@ export class GameRoom {
     const player = this.getPlayerBySocket(socketId);
     if (!player || player.pathSubmitted) return;
 
-    const maxPoints = calcPathPoints(this.turn);
+    const maxPoints = this.currentPathPoints();
     if (!isValidPath(player.position, path, maxPoints, this.obstacles)) return;
     player.plannedPath = path;
     this.touchActivity();
@@ -377,7 +378,7 @@ export class GameRoom {
     const player = this.getPlayerBySocket(socketId);
     if (!player || player.pathSubmitted) return false;
 
-    const maxPoints = calcPathPoints(this.turn);
+    const maxPoints = this.currentPathPoints();
     if (isValidPath(player.position, path, maxPoints, this.obstacles)) {
       // Invalid path — treat as empty
       player.plannedPath = path;
@@ -853,7 +854,7 @@ export class GameRoom {
       code: this.code,
       turn: this.turn,
       phase: this.phase,
-      pathPoints: calcPathPoints(this.turn),
+      pathPoints: this.currentPathPoints(),
       obstacles: this.obstacles,
       tutorialActive: this.tutorialActive,
       players: {
@@ -902,6 +903,13 @@ export class GameRoom {
       role: color === "red" ? "attacker" : "escaper",
       stats,
     };
+  }
+
+  private currentPathPoints(): number {
+    const hasDisconnectedHuman = [...this.players.values()].some(
+      (player) => player.connected === false && player.color !== this.aiColor,
+    );
+    return hasDisconnectedHuman ? 99 : calcPathPoints(this.turn);
   }
 
   private submitAiPath(): void {

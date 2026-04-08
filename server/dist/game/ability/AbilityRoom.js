@@ -441,7 +441,7 @@ class AbilityRoom {
             code: this.code,
             turn: this.turn,
             phase: this.phase,
-            pathPoints: (0, GameEngine_1.calcPathPoints)(this.turn),
+            pathPoints: this.currentPathPoints(),
             obstacles: this.obstacles,
             lavaTiles: this.lavaTiles,
             trapTiles: forColor
@@ -674,7 +674,7 @@ class AbilityRoom {
         }, 500);
     }
     validatePlan(player, path, skills) {
-        const pathPoints = (0, GameEngine_1.calcPathPoints)(this.turn);
+        const pathPoints = this.currentPathPoints();
         const uniqueSkills = normalizeSkillReservations(skills);
         const isOverdriveTurn = player.overdriveActive;
         const manaCost = uniqueSkills.reduce((sum, skill) => sum + AbilityTypes_1.ABILITY_SKILL_COSTS[skill.skillId], 0);
@@ -894,6 +894,10 @@ class AbilityRoom {
             previousTurnPath: player.previousTurnPath,
             equippedSkills: player.equippedSkills,
         };
+    }
+    currentPathPoints() {
+        const hasDisconnectedHuman = [...this.players.values()].some((player) => player.connected === false && !player.isBot);
+        return hasDisconnectedHuman ? 99 : (0, GameEngine_1.calcPathPoints)(this.turn);
     }
     resetPlayers() {
         const initial = (0, GameEngine_1.getInitialPositions)();

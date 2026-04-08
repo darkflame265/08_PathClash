@@ -2493,10 +2493,22 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         return;
       }
       const disconnectedColor = currentColor === "red" ? "blue" : "red";
+      setRoundInfo((prev) =>
+        prev
+          ? {
+              ...prev,
+              state: {
+                ...prev.state,
+                pathPoints: 99,
+              },
+            }
+          : prev,
+      );
       setState((prev) => {
         if (!prev) return prev;
         const nextState = {
           ...prev,
+          pathPoints: 99,
           players: {
             ...prev.players,
             [disconnectedColor]: {

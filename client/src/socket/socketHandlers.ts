@@ -41,12 +41,20 @@ export function registerSocketHandlers(socket: Socket): () => void {
   const onOpponentDisconnected = () => {
     const gs = store().gameState;
     const myColor = store().myColor;
+    const currentRoundInfo = store().roundInfo;
     if (!gs || !myColor) return;
     const opponentColor = myColor === 'red' ? 'blue' : 'red';
     store().setGameOverMessage(translations[store().lang].opponentLeft);
     useGameStore.setState({
+      roundInfo: currentRoundInfo
+        ? {
+            ...currentRoundInfo,
+            pathPoints: 99,
+          }
+        : null,
       gameState: {
         ...gs,
+        pathPoints: 99,
         players: {
           ...gs.players,
           [opponentColor]: {

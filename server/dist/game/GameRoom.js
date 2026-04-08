@@ -218,9 +218,10 @@ class GameRoom {
         const now = Date.now();
         this.touchActivity(now);
         const timeLimitSeconds = this.tutorialActive ? 0 : 7;
+        const pathPoints = this.currentPathPoints();
         const payload = {
             turn: this.turn,
-            pathPoints: (0, GameEngine_1.calcPathPoints)(this.turn),
+            pathPoints,
             attackerColor: this.attackerColor,
             redPosition: red.position,
             bluePosition: blue.position,
@@ -255,7 +256,7 @@ class GameRoom {
                 return;
             for (const [, p] of this.players) {
                 if (!p.pathSubmitted) {
-                    const maxPoints = (0, GameEngine_1.calcPathPoints)(this.turn);
+                    const maxPoints = this.currentPathPoints();
                     if (!(0, GameEngine_1.isValidPath)(p.position, p.plannedPath, maxPoints, this.obstacles)) {
                         p.plannedPath = [];
                     }
@@ -271,7 +272,7 @@ class GameRoom {
         const player = this.getPlayerBySocket(socketId);
         if (!player || player.pathSubmitted)
             return;
-        const maxPoints = (0, GameEngine_1.calcPathPoints)(this.turn);
+        const maxPoints = this.currentPathPoints();
         if (!(0, GameEngine_1.isValidPath)(player.position, path, maxPoints, this.obstacles))
             return;
         player.plannedPath = path;
@@ -283,7 +284,7 @@ class GameRoom {
         const player = this.getPlayerBySocket(socketId);
         if (!player || player.pathSubmitted)
             return false;
-        const maxPoints = (0, GameEngine_1.calcPathPoints)(this.turn);
+        const maxPoints = this.currentPathPoints();
         if ((0, GameEngine_1.isValidPath)(player.position, path, maxPoints, this.obstacles)) {
             // Invalid path — treat as empty
             player.plannedPath = path;
@@ -709,7 +710,7 @@ class GameRoom {
             code: this.code,
             turn: this.turn,
             phase: this.phase,
-            pathPoints: (0, GameEngine_1.calcPathPoints)(this.turn),
+            pathPoints: this.currentPathPoints(),
             obstacles: this.obstacles,
             tutorialActive: this.tutorialActive,
             players: {
@@ -746,6 +747,10 @@ class GameRoom {
             role: color === "red" ? "attacker" : "escaper",
             stats,
         };
+    }
+    currentPathPoints() {
+        const hasDisconnectedHuman = [...this.players.values()].some((player) => player.connected === false && player.color !== this.aiColor);
+        return hasDisconnectedHuman ? 99 : (0, GameEngine_1.calcPathPoints)(this.turn);
     }
     submitAiPath() {
         if (!this.aiColor || this.phase !== "planning")

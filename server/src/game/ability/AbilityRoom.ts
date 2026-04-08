@@ -546,7 +546,7 @@ export class AbilityRoom {
       code: this.code,
       turn: this.turn,
       phase: this.phase,
-      pathPoints: calcPathPoints(this.turn),
+      pathPoints: this.currentPathPoints(),
       obstacles: this.obstacles,
       lavaTiles: this.lavaTiles,
       trapTiles: forColor
@@ -794,7 +794,7 @@ export class AbilityRoom {
   }
 
   private validatePlan(player: AbilityPlayerState, path: Position[], skills: AbilitySkillReservation[]): { path: Position[]; skills: AbilitySkillReservation[] } | null {
-    const pathPoints = calcPathPoints(this.turn);
+    const pathPoints = this.currentPathPoints();
     const uniqueSkills = normalizeSkillReservations(skills);
     const isOverdriveTurn = player.overdriveActive;
 
@@ -1022,6 +1022,13 @@ export class AbilityRoom {
       previousTurnPath: player.previousTurnPath,
       equippedSkills: player.equippedSkills,
     };
+  }
+
+  private currentPathPoints(): number {
+    const hasDisconnectedHuman = [...this.players.values()].some(
+      (player) => player.connected === false && !player.isBot,
+    );
+    return hasDisconnectedHuman ? 99 : calcPathPoints(this.turn);
   }
 
   private resetPlayers(): void {
