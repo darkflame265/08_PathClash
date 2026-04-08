@@ -230,6 +230,7 @@ export class AbilityRoom {
   private pendingStart = false;
   private pendingStartPaused = false;
   private trainingMode = false;
+  private privateMatch = false;
   private rematchSet = new Set<string>();
   private planningGraceTimeout: ReturnType<typeof setTimeout> | null = null;
   private movingCompleteTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -268,6 +269,14 @@ export class AbilityRoom {
 
   enableTrainingMode(): void {
     this.trainingMode = true;
+  }
+
+  enablePrivateMatch(): void {
+    this.privateMatch = true;
+  }
+
+  isRewardEligible(): boolean {
+    return !this.trainingMode && !this.privateMatch;
   }
 
   addPlayer(
@@ -713,14 +722,16 @@ export class AbilityRoom {
     if (this.phase !== 'moving') return;
     if (!this.hasBothPlayers()) return;
 
-    void recordMatchPlayed({
-      userIds: [...this.players.values()].map((player) => player.userId),
-      matchType: 'ability',
-    });
+    if (this.isRewardEligible()) {
+      void recordMatchPlayed({
+        userIds: [...this.players.values()].map((player) => player.userId),
+        matchType: 'ability',
+      });
+    }
 
     if (winner) {
       this.phase = 'gameover';
-      if (winner !== 'draw' && !this.rewardsGranted) {
+      if (winner !== 'draw' && !this.rewardsGranted && this.isRewardEligible()) {
         const loserColor: PlayerColor = winner === 'red' ? 'blue' : 'red';
         const winnerUserId = this.players.get(winner)?.userId ?? null;
         this.players.get(winner)!.stats.wins += 1;

@@ -158,6 +158,7 @@ class AbilityRoom {
         this.pendingStart = false;
         this.pendingStartPaused = false;
         this.trainingMode = false;
+        this.privateMatch = false;
         this.rematchSet = new Set();
         this.planningGraceTimeout = null;
         this.movingCompleteTimeout = null;
@@ -187,6 +188,12 @@ class AbilityRoom {
     }
     enableTrainingMode() {
         this.trainingMode = true;
+    }
+    enablePrivateMatch() {
+        this.privateMatch = true;
+    }
+    isRewardEligible() {
+        return !this.trainingMode && !this.privateMatch;
     }
     addPlayer(socket, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills) {
         if (this.isFull)
@@ -601,13 +608,15 @@ class AbilityRoom {
             return;
         if (!this.hasBothPlayers())
             return;
-        void (0, achievementService_1.recordMatchPlayed)({
-            userIds: [...this.players.values()].map((player) => player.userId),
-            matchType: 'ability',
-        });
+        if (this.isRewardEligible()) {
+            void (0, achievementService_1.recordMatchPlayed)({
+                userIds: [...this.players.values()].map((player) => player.userId),
+                matchType: 'ability',
+            });
+        }
         if (winner) {
             this.phase = 'gameover';
-            if (winner !== 'draw' && !this.rewardsGranted) {
+            if (winner !== 'draw' && !this.rewardsGranted && this.isRewardEligible()) {
                 const loserColor = winner === 'red' ? 'blue' : 'red';
                 const winnerUserId = this.players.get(winner)?.userId ?? null;
                 this.players.get(winner).stats.wins += 1;

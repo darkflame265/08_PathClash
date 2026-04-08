@@ -4,6 +4,7 @@ exports.AbilityRoomStore = void 0;
 class AbilityRoomStore {
     constructor() {
         this.rooms = new Map();
+        this.codeToRoom = new Map();
         this.socketToRoom = new Map();
         this.queue = [];
     }
@@ -12,8 +13,25 @@ class AbilityRoomStore {
             AbilityRoomStore.instance = new AbilityRoomStore();
         return AbilityRoomStore.instance;
     }
+    normalizeCode(code) {
+        return code.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    }
     add(room) {
         this.rooms.set(room.roomId, room);
+        this.codeToRoom.set(this.normalizeCode(room.code), room.roomId);
+    }
+    getByCode(code) {
+        const normalizedCode = this.normalizeCode(code);
+        const roomId = this.codeToRoom.get(normalizedCode);
+        if (roomId)
+            return this.rooms.get(roomId);
+        for (const room of this.rooms.values()) {
+            if (this.normalizeCode(room.code) === normalizedCode) {
+                this.codeToRoom.set(normalizedCode, room.roomId);
+                return room;
+            }
+        }
+        return undefined;
     }
     getBySocket(socketId) {
         const roomId = this.socketToRoom.get(socketId);
@@ -24,6 +42,14 @@ class AbilityRoomStore {
     }
     generateRoomId() {
         return `ability_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    }
+    generateCode() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code;
+        do {
+            code = Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        } while (this.codeToRoom.has(this.normalizeCode(code)));
+        return code;
     }
     enqueue(socketId, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills) {
         this.removeFromQueue(socketId);
@@ -69,6 +95,7 @@ class AbilityRoomStore {
         const disconnectResult = room.removePlayer(socketId);
         if (room.playerCount === 0) {
             this.rooms.delete(roomId);
+            this.codeToRoom.delete(this.normalizeCode(room.code));
         }
         return { room, disconnectResult };
     }
@@ -87,6 +114,7 @@ class AbilityRoomStore {
             if (!isEmptyRoom && !(isStaleWaitingRoom && !hasLiveSocket))
                 continue;
             this.rooms.delete(roomId);
+            this.codeToRoom.delete(this.normalizeCode(room.code));
             for (const socketId of roomSocketIds) {
                 if (this.socketToRoom.get(socketId) === roomId) {
                     this.socketToRoom.delete(socketId);

@@ -291,7 +291,6 @@ function initSocketServer(io) {
                 socket.emit('join_error', { message: '입장할 수 없습니다.' });
                 return;
             }
-            room.prepareGameStart();
             store.registerSocket(socket.id, room.roomId);
             const roomState = room.toClientState();
             const opponent = roomState.players[color === 'red' ? 'blue' : 'red'];
@@ -306,6 +305,53 @@ function initSocketServer(io) {
                 nickname: profile.nickname,
                 color,
                 pieceSkin: pieceSkin ?? 'classic',
+            });
+            room.startGame();
+        });
+        socket.on('create_ability_room', async ({ nickname, auth, pieceSkin, boardSkin, equippedSkills, }) => {
+            if (emitUpdateRequired(socket, auth))
+                return;
+            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+            const roomId = abilityStore.generateRoomId();
+            const code = abilityStore.generateCode();
+            const room = new AbilityRoom_1.AbilityRoom(roomId, code, io);
+            room.enablePrivateMatch();
+            const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
+            abilityStore.add(room);
+            abilityStore.registerSocket(socket.id, roomId);
+            socket.emit('ability_room_created', {
+                roomId,
+                code,
+                color,
+            });
+        });
+        socket.on('join_ability_room', async ({ code, nickname, auth, pieceSkin, boardSkin, equippedSkills, }) => {
+            if (emitUpdateRequired(socket, auth))
+                return;
+            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+            const room = abilityStore.getByCode(code);
+            if (!room || room.isFull) {
+                socket.emit('join_error', { message: '방을 찾을 수 없거나 이미 가득 찼습니다.' });
+                return;
+            }
+            room.enablePrivateMatch();
+            const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
+            if (!color) {
+                socket.emit('join_error', { message: '입장할 수 없습니다.' });
+                return;
+            }
+            room.prepareGameStart();
+            abilityStore.registerSocket(socket.id, room.roomId);
+            socket.emit('ability_room_joined', {
+                roomId: room.roomId,
+                color,
+                opponentNickname: room.toClientState(color).players[color === 'red' ? 'blue' : 'red'].nickname,
+            });
+            socket.to(room.roomId).emit('ability_opponent_joined', {
+                nickname: profile.nickname,
+                color,
             });
         });
         socket.on('join_random', async ({ nickname, auth, pieceSkin, boardSkin }) => {
@@ -706,6 +752,7 @@ function initSocketServer(io) {
                 io.to(room.roomId).emit('opponent_disconnected', {});
             }
             if (abilityRoom.room &&
+                abilityRoom.room.isRewardEligible() &&
                 abilityRoom.disconnectResult.shouldAwardDisconnectResult &&
                 abilityRoom.disconnectResult.winnerColor) {
                 const winner = abilityRoom.room.getPlayerByColor(abilityRoom.disconnectResult.winnerColor);

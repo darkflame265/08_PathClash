@@ -4,6 +4,7 @@ import type { BoardSkin, PieceSkin } from '../types/game.types';
 
 export class AbilityRoomStore {
   private rooms = new Map<string, AbilityRoom>();
+  private codeToRoom = new Map<string, string>();
   private socketToRoom = new Map<string, string>();
   private static readonly WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
 
@@ -23,8 +24,28 @@ export class AbilityRoomStore {
     return AbilityRoomStore.instance;
   }
 
+  private normalizeCode(code: string): string {
+    return code.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  }
+
   add(room: AbilityRoom): void {
     this.rooms.set(room.roomId, room);
+    this.codeToRoom.set(this.normalizeCode(room.code), room.roomId);
+  }
+
+  getByCode(code: string): AbilityRoom | undefined {
+    const normalizedCode = this.normalizeCode(code);
+    const roomId = this.codeToRoom.get(normalizedCode);
+    if (roomId) return this.rooms.get(roomId);
+
+    for (const room of this.rooms.values()) {
+      if (this.normalizeCode(room.code) === normalizedCode) {
+        this.codeToRoom.set(normalizedCode, room.roomId);
+        return room;
+      }
+    }
+
+    return undefined;
   }
 
   getBySocket(socketId: string): AbilityRoom | undefined {
@@ -38,6 +59,17 @@ export class AbilityRoomStore {
 
   generateRoomId(): string {
     return `ability_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  }
+
+  generateCode(): string {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code: string;
+    do {
+      code = Array.from({ length: 6 }, () =>
+        chars[Math.floor(Math.random() * chars.length)]
+      ).join('');
+    } while (this.codeToRoom.has(this.normalizeCode(code)));
+    return code;
   }
 
   enqueue(
@@ -115,6 +147,7 @@ export class AbilityRoomStore {
     const disconnectResult = room.removePlayer(socketId);
     if (room.playerCount === 0) {
       this.rooms.delete(roomId);
+      this.codeToRoom.delete(this.normalizeCode(room.code));
     }
     return { room, disconnectResult };
   }
@@ -133,6 +166,7 @@ export class AbilityRoomStore {
       const isStaleWaitingRoom = room.currentPhase === 'waiting' && now - room.lastActivityTimestamp >= AbilityRoomStore.WAITING_ROOM_TIMEOUT_MS;
       if (!isEmptyRoom && !(isStaleWaitingRoom && !hasLiveSocket)) continue;
       this.rooms.delete(roomId);
+      this.codeToRoom.delete(this.normalizeCode(room.code));
       for (const socketId of roomSocketIds) {
         if (this.socketToRoom.get(socketId) === roomId) {
           this.socketToRoom.delete(socketId);
