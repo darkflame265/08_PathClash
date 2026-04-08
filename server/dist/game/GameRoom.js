@@ -750,7 +750,7 @@ class GameRoom {
     }
     currentPathPoints() {
         const hasDisconnectedHuman = [...this.players.values()].some((player) => player.connected === false && player.color !== this.aiColor);
-        return hasDisconnectedHuman ? 99 : (0, GameEngine_1.calcPathPoints)(this.turn);
+        return hasDisconnectedHuman ? 30 : (0, GameEngine_1.calcPathPoints)(this.turn);
     }
     submitAiPath() {
         if (!this.aiColor || this.phase !== "planning")

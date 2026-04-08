@@ -2499,7 +2499,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               ...prev,
               state: {
                 ...prev.state,
-                pathPoints: 99,
+                pathPoints: 30,
               },
             }
           : prev,
@@ -2508,7 +2508,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         if (!prev) return prev;
         const nextState = {
           ...prev,
-          pathPoints: 99,
+          pathPoints: 30,
           players: {
             ...prev.players,
             [disconnectedColor]: {

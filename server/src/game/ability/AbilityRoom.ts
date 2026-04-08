@@ -1028,7 +1028,7 @@ export class AbilityRoom {
     const hasDisconnectedHuman = [...this.players.values()].some(
       (player) => player.connected === false && !player.isBot,
     );
-    return hasDisconnectedHuman ? 99 : calcPathPoints(this.turn);
+    return hasDisconnectedHuman ? 30 : calcPathPoints(this.turn);
   }
 
   private resetPlayers(): void {

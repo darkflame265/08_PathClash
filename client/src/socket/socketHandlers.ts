@@ -49,12 +49,12 @@ export function registerSocketHandlers(socket: Socket): () => void {
       roundInfo: currentRoundInfo
         ? {
             ...currentRoundInfo,
-            pathPoints: 99,
+            pathPoints: 30,
           }
         : null,
       gameState: {
         ...gs,
-        pathPoints: 99,
+        pathPoints: 30,
         players: {
           ...gs.players,
           [opponentColor]: {

@@ -909,7 +909,7 @@ export class GameRoom {
     const hasDisconnectedHuman = [...this.players.values()].some(
       (player) => player.connected === false && player.color !== this.aiColor,
     );
-    return hasDisconnectedHuman ? 99 : calcPathPoints(this.turn);
+    return hasDisconnectedHuman ? 30 : calcPathPoints(this.turn);
   }
 
   private submitAiPath(): void {

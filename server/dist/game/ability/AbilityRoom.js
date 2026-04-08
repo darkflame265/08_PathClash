@@ -897,7 +897,7 @@ class AbilityRoom {
     }
     currentPathPoints() {
         const hasDisconnectedHuman = [...this.players.values()].some((player) => player.connected === false && !player.isBot);
-        return hasDisconnectedHuman ? 99 : (0, GameEngine_1.calcPathPoints)(this.turn);
+        return hasDisconnectedHuman ? 30 : (0, GameEngine_1.calcPathPoints)(this.turn);
     }
     resetPlayers() {
         const initial = (0, GameEngine_1.getInitialPositions)();
