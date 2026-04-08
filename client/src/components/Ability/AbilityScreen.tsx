@@ -957,6 +957,31 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setPendingTeleport(false);
   };
 
+  const beginWizardMagicMineStepPick = () => {
+    const alreadyReserved = skillReservations.some(
+      (entry) => entry.skillId === "wizard_magic_mine",
+    );
+    if (alreadyReserved) {
+      removeReservation("wizard_magic_mine");
+      return;
+    }
+    if (getMyRole() !== "attacker") return;
+    if (getRemainingMana() < getSkillCost("wizard_magic_mine")) return;
+    const nextReservations: AbilitySkillReservation[] = [
+      ...skillReservations.filter(
+        (entry) => entry.skillId !== "wizard_magic_mine",
+      ),
+      {
+        skillId: "wizard_magic_mine",
+        step: getCurrentSkillStep(),
+        order: reservationOrderRef.current++,
+      },
+    ];
+    updateSkillReservations(nextReservations);
+    setSelectedSkillId(null);
+    setPendingTeleport(false);
+  };
+
   const beginHealStepPick = () => {
     const alreadyReserved = skillReservations.some(
       (entry) => entry.skillId === "aurora_heal",
@@ -1274,6 +1299,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }
     if (skillId === "sun_chariot") {
       beginSunChariotStepPick();
+      return;
+    }
+    if (skillId === "wizard_magic_mine") {
+      beginWizardMagicMineStepPick();
       return;
     }
     if (skillId === "aurora_heal") {
@@ -2739,6 +2768,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 skillId === "atomic_fission" ||
                 skillId === "inferno_field" ||
                 skillId === "nova_blast" ||
+                skillId === "wizard_magic_mine" ||
                 skillId === "electric_blitz" ||
                 skillId === "cosmic_bigbang") &&
                 getMyRole() !== "attacker");
