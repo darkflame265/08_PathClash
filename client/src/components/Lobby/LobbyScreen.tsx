@@ -1527,7 +1527,7 @@ export function LobbyScreen({
 
       requiredPlays: null,
 
-      tokenPrice: null,
+      tokenPrice: 3600,
 
       tier: "legendary",
     },
@@ -1562,7 +1562,7 @@ export function LobbyScreen({
 
       requiredPlays: null,
 
-      tokenPrice: null,
+      tokenPrice: 3600,
 
       tier: "legendary",
     },
@@ -1825,9 +1825,7 @@ export function LobbyScreen({
 
   const hasAbilitySkinUnlocked = (skinId: PieceSkin) => {
     if (skinId === "classic") return true;
-    if (skinId === "sun") return true;
-    if (skinId === "wizard") return true;
-
+        
     if (skinId === "ember") return accountWins >= 10;
 
     if (skinId === "nova") return accountWins >= 50;
@@ -4608,3 +4606,4 @@ function UpgradeSwitchConfirmDialog({
     </div>
   );
 }
+

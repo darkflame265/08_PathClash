@@ -1,4 +1,4 @@
-create table if not exists public.profiles (
+﻿create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   nickname text,
   equipped_skin text not null default 'classic',
@@ -176,15 +176,17 @@ begin
   end if;
 
   v_cost := case p_skin_id
-    when 'plasma' then 120
-    when 'gold_core' then 120
-    when 'neon_pulse' then 120
-    when 'inferno' then 120
-    when 'quantum' then 120
-    when 'cosmic' then 350
-    when 'arc_reactor' then 350
-    when 'electric_core' then 350
-    when 'atomic' then 900
+    when 'plasma' then 480
+    when 'gold_core' then 480
+    when 'neon_pulse' then 480
+    when 'inferno' then 480
+    when 'quantum' then 480
+    when 'cosmic' then 1400
+    when 'arc_reactor' then 1400
+    when 'electric_core' then 1400
+    when 'atomic' then 3600
+    when 'wizard' then 3600
+    when 'sun' then 3600
     else null
   end;
 
@@ -457,3 +459,4 @@ create policy "nickname_change_history_select_own"
 on public.nickname_change_history
 for select
 using (auth.uid() = user_id);
+
