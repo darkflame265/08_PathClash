@@ -40,9 +40,21 @@ export function registerSocketHandlers(socket: Socket): () => void {
 
   const onOpponentDisconnected = () => {
     const gs = store().gameState;
-    if (!gs) return;
+    const myColor = store().myColor;
+    if (!gs || !myColor) return;
+    const opponentColor = myColor === 'red' ? 'blue' : 'red';
     store().setGameOverMessage(translations[store().lang].opponentLeft);
     useGameStore.setState({
+      gameState: {
+        ...gs,
+        players: {
+          ...gs.players,
+          [opponentColor]: {
+            ...gs.players[opponentColor],
+            connected: false,
+          },
+        },
+      },
       rematchRequested: false,
     });
   };
