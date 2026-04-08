@@ -2397,6 +2397,8 @@ export function LobbyScreen({
         setError("");
 
         setIsMatchmaking(false);
+
+        socket.emit("game_client_ready");
       },
     );
 

@@ -231,7 +231,9 @@ function initSocketServer(io) {
                 });
                 return;
             }
-            const userId = await registerSocketSession(socket, auth);
+            const userId = await registerSocketSession(socket, auth, {
+                allowConcurrentSessions: true,
+            });
             ack?.({ ok: Boolean(userId), updateRequired: false });
         });
         socket.on('create_room', async ({ nickname, auth, pieceSkin, boardSkin }) => {

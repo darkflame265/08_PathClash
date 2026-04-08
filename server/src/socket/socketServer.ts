@@ -330,7 +330,9 @@ export function initSocketServer(io: Server): void {
           });
           return;
         }
-        const userId = await registerSocketSession(socket, auth);
+        const userId = await registerSocketSession(socket, auth, {
+          allowConcurrentSessions: true,
+        });
         ack?.({ ok: Boolean(userId), updateRequired: false });
       },
     );
