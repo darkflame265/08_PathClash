@@ -19,35 +19,39 @@
 }
 
 .player-piece.piece-skin-sun.piece-sun-chariot-active .sun {
-  inset: -30%;
-  height: 200%;
-  width: 200%;
+  inset: -34%;
+  background-size: 152% 152%;
+}
+
+.sun-core {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
 .sun {
-  align-items: center;
-  justify-content: center;
   position: absolute;
-  display: flex;
-  height: 200px;
-  width: 200px;
-  inset: -35%;
+  inset: -44%;
   border-radius: 50%;
-  background: url("./sun_cdn.jpg") center center / cover no-repeat;
-  background-position: center center;
-  box-shadow: 1px 1px 30px 5px #fc9328;
+  background: url("./sun_cdn.jpg") 50% 50% / 160% 160% no-repeat;
+  box-shadow:
+    0 0 24px 4px rgba(252, 147, 40, 0.74),
+    0 0 42px 8px rgba(252, 147, 40, 0.26);
   animation: pole-rotate 30s linear infinite;
+  will-change: transform, background-position;
 }
 
 @keyframes pole-rotate {
   0% {
-    background-position: center center;
+    transform: rotate(0deg);
+    background-position: 50% 50%;
   }
   50% {
-    background-position: 50% 40%;
+    transform: rotate(180deg);
+    background-position: 54% 46%;
   }
   to {
     transform: rotate(360deg);
-    background-position: center center;
+    background-position: 50% 50%;
   }
 }
