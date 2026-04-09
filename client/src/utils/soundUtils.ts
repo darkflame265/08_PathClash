@@ -23,6 +23,8 @@ type AbilitySfxId =
   | "phase_shift"
   | "arc_reactor_field"
   | "void_cloak"
+  | "chronos_tick_tock"
+  | "chronos_rewind_loop"
   | "gold_overdrive_loop";
 
 type UiSfxId = "lobby_click" | "victory_result" | "defeat_result";
@@ -31,6 +33,8 @@ type AbilitySfxConfig = {
   path: string;
   gain: number;
   loop?: boolean;
+  loopWindowStart?: number;
+  loopWindowEndOffset?: number;
 };
 
 const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
@@ -86,6 +90,17 @@ const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
     path: "/sfx/ability/void_cloak.mp3",
     gain: 0.6,
   },
+  chronos_tick_tock: {
+    path: "/sfx/ability/chronos_tick_tock.mp3",
+    gain: 0.72,
+  },
+  chronos_rewind_loop: {
+    path: "/sfx/ability/chronos_rewind_loop.mp3",
+    gain: 0.62,
+    loop: true,
+    loopWindowStart: 0.48,
+    loopWindowEndOffset: 0.05,
+  },
   gold_overdrive_loop: {
     path: "/sfx/ability/gold_overdrive_loop.mp3",
     gain: 0.4,
@@ -115,6 +130,10 @@ const STOP_MATCH_RESULT_AUDIO_EVENT = "pathclash:stop-match-result-audio";
 
 const audioCache: Partial<Record<AbilitySfxId, HTMLAudioElement>> = {};
 const uiAudioCache: Partial<Record<UiSfxId, HTMLAudioElement>> = {};
+const segmentedLoopHandlers = new WeakMap<
+  HTMLAudioElement,
+  { timeupdate: () => void; ended: () => void }
+>();
 
 function getAbilityAudio(id: AbilitySfxId): HTMLAudioElement | null {
   try {
@@ -129,6 +148,55 @@ function getAbilityAudio(id: AbilitySfxId): HTMLAudioElement | null {
   } catch {
     return null;
   }
+}
+
+function detachSegmentedLoop(audio: HTMLAudioElement): void {
+  const handlers = segmentedLoopHandlers.get(audio);
+  if (!handlers) return;
+  audio.removeEventListener("timeupdate", handlers.timeupdate);
+  audio.removeEventListener("ended", handlers.ended);
+  segmentedLoopHandlers.delete(audio);
+}
+
+function attachSegmentedLoop(
+  audio: HTMLAudioElement,
+  config: AbilitySfxConfig,
+): void {
+  detachSegmentedLoop(audio);
+  if (
+    typeof config.loopWindowStart !== "number" ||
+    typeof config.loopWindowEndOffset !== "number"
+  ) {
+    return;
+  }
+  const loopWindowStart = config.loopWindowStart;
+  const loopWindowEndOffset = config.loopWindowEndOffset;
+
+  const timeupdate = () => {
+    const duration = audio.duration;
+    if (!Number.isFinite(duration) || duration <= 0) return;
+    const loopEnd = Math.max(
+      loopWindowStart + 0.05,
+      duration - loopWindowEndOffset,
+    );
+    if (audio.currentTime >= loopEnd) {
+      audio.currentTime = loopWindowStart;
+      void audio.play().catch(() => {
+        // Ignore playback restart failures.
+      });
+    }
+  };
+
+  const ended = () => {
+    audio.currentTime = loopWindowStart;
+    void audio.play().catch(() => {
+      // Ignore playback restart failures.
+    });
+  };
+
+  audio.addEventListener("timeupdate", timeupdate);
+  audio.addEventListener("ended", ended);
+  segmentedLoopHandlers.set(audio, { timeupdate, ended });
 }
 
 function playAbilitySfx(id: AbilitySfxId, volume = 0.55): void {
@@ -288,6 +356,41 @@ export function playArcReactor(volume = 0.55): void {
 
 export function playVoidCloak(volume = 0.55): void {
   playAbilitySfx("void_cloak", volume);
+}
+
+export function playChronosTickTock(volume = 0.55): void {
+  playAbilitySfx("chronos_tick_tock", volume);
+}
+
+export function startChronosRewindLoop(volume = 0.55): void {
+  try {
+    const audio = getAbilityAudio("chronos_rewind_loop");
+    if (!audio) return;
+    const config = ABILITY_SFX.chronos_rewind_loop;
+    audio.loop = false;
+    attachSegmentedLoop(audio, config);
+    audio.volume = Math.max(0, Math.min(1, volume * config.gain));
+    if (audio.paused) {
+      audio.currentTime = 0;
+      void audio.play().catch(() => {
+        // Playback can fail if browser blocks audio; ignore.
+      });
+    }
+  } catch {
+    // Audio element not available
+  }
+}
+
+export function stopChronosRewindLoop(): void {
+  try {
+    const audio = audioCache.chronos_rewind_loop;
+    if (!audio) return;
+    detachSegmentedLoop(audio);
+    audio.pause();
+    audio.currentTime = 0;
+  } catch {
+    // Audio element not available
+  }
 }
 
 export function startOverdriveLoop(volume = 0.55): void {

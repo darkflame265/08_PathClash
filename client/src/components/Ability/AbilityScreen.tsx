@@ -22,6 +22,9 @@ import {
   preloadAbilitySfxAssets,
   playQuantum,
   playVoidCloak,
+  playChronosTickTock,
+  startChronosRewindLoop,
+  stopChronosRewindLoop,
   playMatchResultSfx,
   startOverdriveLoop,
   startMatchResultBgm,
@@ -483,6 +486,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   useEffect(() => {
     preloadAbilitySfxAssets();
+    return () => {
+      stopChronosRewindLoop();
+    };
   }, []);
 
   useEffect(() => {
@@ -1881,12 +1887,19 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         const movementTrail = trail.slice(1);
         setTimeRewindFocusColor(event.color);
         setRewindingPieceColor(event.color);
+        if (!isSfxMuted) {
+          playChronosTickTock(sfxVolume);
+        }
 
         queueAnimationTimeout(() => {
           const totalTicks = Math.max(
             movementTrail.length,
             Math.max(0, rewindHp - currentHp),
           );
+
+          if (!isSfxMuted && totalTicks > 0) {
+            startChronosRewindLoop(sfxVolume);
+          }
 
           if (totalTicks === 0) {
             setState((prev) => {
@@ -1909,6 +1922,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               setBlueDisplayPos(rewindTarget);
             }
             queueAnimationTimeout(() => {
+              stopChronosRewindLoop();
               setRewindingPieceColor(null);
               setTimeRewindFocusColor(null);
               setAbilityBanner(null);
@@ -1952,6 +1966,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           }
 
           queueAnimationTimeout(() => {
+            stopChronosRewindLoop();
             setState((prev) => {
               if (!prev) return prev;
               return {
