@@ -11,38 +11,39 @@ export type PatchNoteSection = {
   lines: PatchNoteLine[];
 };
 
-export const PATCH_NOTES_VERSION = "2026-04-06-v8";
+export const PATCH_NOTES_VERSION = "2026-04-09-v9";
 
 export function getPatchNotesVersionLabel(lang: "en" | "kr"): string {
-  return lang === "en" ? "Version 2026.04.06" : "버전 2026.04.06";
+  return lang === "en" ? "Version 2026.04.09" : "버전 2026.04.09";
 }
 
 export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
   if (lang === "en") {
     return [
       {
-        heading: "Lobby and profile",
+        heading: "Lobby and friend matches",
         lines: [
-          { text: "Refactored the lobby into a mode selector panel and a mode content panel." },
-          { text: "Removed the lobby profile card and moved Google link and logout actions into Settings." },
-          { text: "Improved loading feedback while account and Google-linked data are being resolved." },
+          { text: "Added Classic and Ability Battle switching to Friend Match." },
+          { text: "Added rematch buttons to Friend Match result boxes." },
+          { text: "Removed token reward messages from Friend Match victory boxes." },
         ],
       },
       {
-        heading: "Board skins and presentation",
+        heading: "Skins and unlocks",
         lines: [
-          { text: "Added Magic board support and rebuilt Pharaoh and Magic boards with per-cell rendering." },
-          { text: "Improved board skin previews and linked matching backgrounds for supported boards." },
-          { text: "Tutorial matches now always use the classic board for cleaner onboarding." },
+          { text: "Added the Chronos legendary skin and the Time Rewind passive skill." },
+          { text: "Added token prices and ownership unlock flow for board skins." },
+          { text: "Chronos now requires purchasing the skin before its passive can be used." },
         ],
       },
       {
-        heading: "Gameplay and fixes",
+        heading: "Ability Battle and combat",
         lines: [
-          { text: "Increased Ability Battle planning time from 7 seconds to 9 seconds." },
-          { text: "Added an opponent info panel to Ability Battle and refined result box placement and actions." },
-          { text: "Fixed cases where Google-linked nicknames could unexpectedly revert to Guest." },
-          { text: "Fixed Ability Battle result text changing after the winner disconnected." },
+          { text: "Added the Magic Mine skill for Wizard and improved its trap preview and trigger timing." },
+          { text: "Added the Sun Chariot skill for Sun and tuned its size and hit behavior." },
+          { text: "Disconnected opponents now remain in the match as grayscale pieces instead of ending the game immediately." },
+          { text: "When the opponent disconnects, your path points are temporarily raised so you can finish the match faster." },
+          { text: "Improved Time Rewind so Chronos rewinds after movement ends along the turn path." },
         ],
       },
     ];
@@ -50,28 +51,29 @@ export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
 
   return [
     {
-      heading: "로비 및 프로필",
+      heading: "로비 및 친구 대전",
       lines: [
-        { text: "로비를 모드 선택 박스와 모드 내용 박스의 2단 구조로 개편했습니다." },
-        { text: "로비 유저정보 박스를 제거하고 설정창으로 구글 연동과 로그아웃 기능을 옮겼습니다." },
-        { text: "계정 데이터와 구글 연동 정보를 불러오는 동안 로딩 안내를 더 분명하게 표시합니다." },
+        { text: "친구 대전에 클래식과 능력대전 전환 기능을 추가했습니다." },
+        { text: "친구 대전 승패 박스에 재시합 버튼을 추가했습니다." },
+        { text: "친구 대전 승리 박스에서 토큰 획득 문구가 뜨지 않도록 수정했습니다." },
       ],
     },
     {
-      heading: "보드 스킨 및 연출",
+      heading: "스킨 및 해금",
       lines: [
-        { text: "매직 보드를 추가하고 파라오 보드와 매직 보드를 셀 단위 렌더 방식으로 정리했습니다." },
-        { text: "지원되는 보드 스킨에는 전용 인게임 배경과 스킨 미리보기를 연결했습니다." },
-        { text: "튜토리얼에서는 항상 클래식 보드를 사용하도록 정리했습니다." },
+        { text: "레전더리 스킨 크로노스와 패시브 스킬 타임 리와인드를 추가했습니다." },
+        { text: "보드 스킨에도 토큰 구매와 보유 해금 흐름을 추가했습니다." },
+        { text: "크로노스는 스킨을 구매해야 패시브를 사용할 수 있도록 조정했습니다." },
       ],
     },
     {
-      heading: "게임 변경 및 수정",
+      heading: "능력대전 및 전투",
       lines: [
-        { text: "능력대전 경로 작성 시간을 7초에서 9초로 늘렸습니다." },
-        { text: "능력대전 상단에 상대 닉네임과 장착 스킬을 보여주는 박스를 추가했습니다." },
-        { text: "구글 연동 계정의 닉네임이 Guest로 되돌아가는 문제를 수정했습니다." },
-        { text: "능력대전에서 승패 확정 후 상대가 나가면 결과 문구가 바뀌던 문제를 수정했습니다." },
+        { text: "위자드 전용 공격 스킬 매직마인을 추가하고 함정 표시와 발동 타이밍을 개선했습니다." },
+        { text: "썬 전용 공격 스킬 태양전차를 추가하고 크기와 충돌 판정을 조정했습니다." },
+        { text: "상대가 연결을 끊어도 게임이 즉시 끝나지 않고 흑백 말 상태로 계속 진행되도록 변경했습니다." },
+        { text: "상대가 연결을 끊으면 남아 있는 플레이어의 패스 포인트를 일시적으로 30까지 높여 마무리를 돕습니다." },
+        { text: "크로노스의 타임 리와인드가 턴 종료 후 경로를 거꾸로 따라 되감기되도록 개선했습니다." },
       ],
     },
   ];
