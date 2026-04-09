@@ -1,5 +1,10 @@
 .player-piece.piece-skin-chronos .piece-inner {
-  background: radial-gradient(circle at 50% 50%, rgba(10, 15, 24, 0.96) 0%, rgba(6, 10, 18, 0.98) 68%, rgba(3, 5, 10, 1) 100%);
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(10, 15, 24, 0.96) 0%,
+    rgba(6, 10, 18, 0.98) 68%,
+    rgba(3, 5, 10, 1) 100%
+  );
   overflow: visible;
   box-shadow:
     0 0 calc(var(--piece-glow, 12px) * 0.95) rgba(203, 213, 225, 0.24),
@@ -30,7 +35,13 @@
   width: 260px;
   height: 260px;
   border-radius: 50%;
-  background: radial-gradient(circle at 38% 32%, #f1f5f9 0%, #cbd5e1 34%, #475569 68%, #0f1923 100%);
+  background: radial-gradient(
+    circle at 38% 32%,
+    #f1f5f9 0%,
+    #cbd5e1 34%,
+    #475569 68%,
+    #0f1923 100%
+  );
   border: 2px solid rgba(203, 213, 225, 0.85);
   box-shadow:
     0 0 18px rgba(203, 213, 225, 0.4),
@@ -43,7 +54,13 @@
   position: absolute;
   inset: 70px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 40%, #78350f 80%, transparent 100%);
+  background: radial-gradient(
+    circle at 35% 30%,
+    #fde68a 0%,
+    #f59e0b 40%,
+    #78350f 80%,
+    transparent 100%
+  );
   opacity: 0.72;
   animation: chronosCorePulse 2s ease-in-out infinite;
 }
@@ -55,20 +72,20 @@
 }
 
 .chronos-ring-inner {
-  inset: -16px;
-  border: 1.5px solid rgba(251, 191, 36, 0.5);
+  inset: -20px;
+  border: 2.5px solid rgba(251, 191, 36, 0.56);
   animation: chronosSpinCW 12s linear infinite;
 }
 
 .chronos-ring-mid {
-  inset: -34px;
-  border: 1.5px solid rgba(203, 213, 225, 0.45);
+  inset: -40px;
+  border: 2px solid rgba(203, 213, 225, 0.52);
   animation: chronosSpinCCW 20s linear infinite;
 }
 
 .chronos-ring-outer {
-  inset: -52px;
-  border: 1px solid rgba(251, 191, 36, 0.25);
+  inset: -60px;
+  border: 1.5px solid rgba(251, 191, 36, 0.34);
   animation: chronosSpinCW 35s linear infinite;
 }
 
@@ -115,30 +132,30 @@
 }
 
 .chronos-hand-hour {
-  width: 2.5px;
-  height: 24px;
-  margin-left: -1.25px;
-  margin-top: -24px;
+  width: 3.5px;
+  height: 32px;
+  margin-left: -1.75px;
+  margin-top: -32px;
   background: linear-gradient(to top, #fde68a, #e2e8f0);
   animation: chronosHandHour 3600s linear infinite;
 }
 
 .chronos-hand-minute {
-  width: 2px;
-  height: 34px;
-  margin-left: -1px;
-  margin-top: -34px;
+  width: 3px;
+  height: 44px;
+  margin-left: -1.5px;
+  margin-top: -44px;
   background: linear-gradient(to top, #cbd5e1, #ffffff);
   animation: chronosHandMinute 60s linear infinite;
 }
 
 .chronos-hand-second {
-  width: 1px;
-  height: 40px;
-  margin-left: -0.5px;
-  margin-top: -40px;
+  width: 2px;
+  height: 52px;
+  margin-left: -1px;
+  margin-top: -52px;
   background: #fbbf24;
-  box-shadow: 0 0 3px rgba(251, 191, 36, 0.9);
+  box-shadow: 0 0 5px rgba(251, 191, 36, 0.9);
   animation: chronosHandSecond 3s linear infinite;
 }
 
@@ -164,12 +181,12 @@
 }
 
 .chronos-orb {
-  width: 10px;
-  height: 10px;
-  margin-left: -5px;
-  margin-top: -5px;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  margin-top: -8px;
   background: radial-gradient(circle at 30% 30%, #fde68a, #d97706);
-  box-shadow: 0 0 6px rgba(251, 191, 36, 0.8);
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.85);
   animation: chronosOrbOrbit 7s linear infinite;
   animation-delay: var(--chronos-orbit-delay);
 }
@@ -245,18 +262,18 @@
 
 @keyframes chronosOrbOrbit {
   from {
-    transform: rotate(0deg) translateX(104px);
+    transform: rotate(0deg) translateX(114px);
   }
   to {
-    transform: rotate(360deg) translateX(104px);
+    transform: rotate(360deg) translateX(114px);
   }
 }
 
 @keyframes chronosStarOrbit {
   from {
-    transform: rotate(0deg) translateX(142px);
+    transform: rotate(0deg) translateX(158px);
   }
   to {
-    transform: rotate(-360deg) translateX(142px);
+    transform: rotate(-360deg) translateX(158px);
   }
 }
