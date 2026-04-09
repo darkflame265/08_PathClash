@@ -1,8 +1,9 @@
-﻿create table if not exists public.profiles (
+create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   nickname text,
   equipped_skin text not null default 'classic',
   equipped_board_skin text not null default 'classic',
+  equipped_ability_skills text[] not null default array['classic_guard']::text[],
   is_guest boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -13,6 +14,9 @@ add column if not exists equipped_skin text not null default 'classic';
 
 alter table public.profiles
 add column if not exists equipped_board_skin text not null default 'classic';
+
+alter table public.profiles
+add column if not exists equipped_ability_skills text[] not null default array['classic_guard']::text[];
 
 alter table public.profiles
 add column if not exists legal_consent_version text;
@@ -433,6 +437,15 @@ begin
         (select p.equipped_board_skin from public.profiles p where p.id = target_user_id),
         'classic'
       ),
+    'equippedAbilitySkills',
+      coalesce(
+        (
+          select to_jsonb(p.equipped_ability_skills)
+          from public.profiles p
+          where p.id = target_user_id
+        ),
+        '["classic_guard"]'::jsonb
+      ),
     'ownedSkins',
       coalesce(
         (
@@ -553,4 +566,6 @@ create policy "nickname_change_history_select_own"
 on public.nickname_change_history
 for select
 using (auth.uid() = user_id);
+
+
 

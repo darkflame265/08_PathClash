@@ -8,7 +8,7 @@ AI나 사람이 빠르게 전체 구조만 확인할 때 사용합니다.
 - `auth.users`
   - 계정의 기준 테이블
 - `public.profiles`
-  - 닉네임, 장착 스킨, guest 여부, 약관/개인정보 동의 버전 기록
+  - 닉네임, 장착 스킨, 장착 보드 스킨, 장착 스킬, guest 여부, 약관/개인정보 동의 버전 기록
 - `public.player_stats`
   - 승, 패, 토큰, 일일 보상 진행도
 - `public.owned_skins`
@@ -56,6 +56,7 @@ AI나 사람이 빠르게 전체 구조만 확인할 때 사용합니다.
   - `player_stats`
   - `owned_skins`
   - `owned_board_skins`
+  - 장착 능력 스킬
   - `player_achievements`
   를 한 번에 묶어서 현재 계정 요약 JSON으로 반환
 - 목적:

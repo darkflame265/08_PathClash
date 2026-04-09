@@ -12,6 +12,7 @@ import {
   refreshAccountSummary,
   syncLegalConsent,
   syncAchievementSettings,
+  syncEquippedAbilitySkills,
   syncEquippedBoardSkin,
   syncEquippedSkin,
 } from "./auth/guestAuth";
@@ -115,6 +116,7 @@ function App() {
     isGuestUser,
     pieceSkin,
     boardSkin,
+    abilityLoadout,
     setAuthState,
     isMusicMuted,
     isSfxMuted,
@@ -272,7 +274,10 @@ function App() {
         ({
           nickname,
           equippedSkin,
+          equippedBoardSkin,
+          equippedAbilitySkills,
           ownedSkins,
+          ownedBoardSkins,
           wins,
           losses,
           tokens,
@@ -288,7 +293,10 @@ function App() {
             isGuestUser: useGameStore.getState().isGuestUser,
             nickname,
             equippedSkin,
+            equippedBoardSkin,
+            equippedAbilitySkills,
             ownedSkins,
+            ownedBoardSkins,
             wins,
             losses,
             tokens,
@@ -337,6 +345,11 @@ function App() {
   }, [authReady, boardSkin]);
 
   useEffect(() => {
+    if (!authReady) return;
+    void syncEquippedAbilitySkills(abilityLoadout);
+  }, [abilityLoadout, authReady]);
+
+  useEffect(() => {
     if (!authReady || !authAccessToken) return;
     const timeoutId = window.setTimeout(() => {
       void syncAchievementSettings({
@@ -354,7 +367,9 @@ function App() {
           nickname: profile.nickname,
           equippedSkin: profile.equippedSkin,
           equippedBoardSkin: profile.equippedBoardSkin,
+          equippedAbilitySkills: profile.equippedAbilitySkills,
           ownedSkins: profile.ownedSkins,
+          ownedBoardSkins: profile.ownedBoardSkins,
           wins: profile.wins,
           losses: profile.losses,
           tokens: profile.tokens,
@@ -459,11 +474,14 @@ function App() {
       }
       achievementRefreshTimeoutRef.current = window.setTimeout(() => {
         void refreshAccountSummary({ force: true }).then(
-          ({
-            nickname,
-            equippedSkin,
-            ownedSkins,
-            wins,
+        ({
+          nickname,
+          equippedSkin,
+          equippedBoardSkin,
+          equippedAbilitySkills,
+          ownedSkins,
+          ownedBoardSkins,
+          wins,
             losses,
             tokens,
             dailyRewardWins,
@@ -475,10 +493,13 @@ function App() {
               userId: authUserId,
               accessToken: useGameStore.getState().authAccessToken,
               isGuestUser,
-              nickname,
-              equippedSkin,
-              ownedSkins,
-              wins,
+            nickname,
+            equippedSkin,
+            equippedBoardSkin,
+            equippedAbilitySkills,
+            ownedSkins,
+            ownedBoardSkins,
+            wins,
               losses,
               tokens,
               dailyRewardWins,

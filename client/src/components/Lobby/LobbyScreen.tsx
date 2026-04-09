@@ -496,6 +496,7 @@ function applyProfileToStore(
 
     equippedSkin: profile.equippedSkin,
     equippedBoardSkin: profile.equippedBoardSkin,
+    equippedAbilitySkills: profile.equippedAbilitySkills,
 
     ownedSkins: profile.ownedSkins,
     ownedBoardSkins: profile.ownedBoardSkins,

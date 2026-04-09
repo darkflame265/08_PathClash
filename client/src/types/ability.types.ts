@@ -27,6 +27,43 @@ export type AbilitySkillId =
   | 'chronos_time_rewind';
 export type AbilitySkillCategory = 'attack' | 'defense' | 'utility' | 'passive';
 
+export const ABILITY_SKILL_IDS: AbilitySkillId[] = [
+  'classic_guard',
+  'arc_reactor_field',
+  'phase_shift',
+  'ember_blast',
+  'atomic_fission',
+  'inferno_field',
+  'nova_blast',
+  'sun_chariot',
+  'aurora_heal',
+  'gold_overdrive',
+  'quantum_shift',
+  'plasma_charge',
+  'void_cloak',
+  'electric_blitz',
+  'cosmic_bigbang',
+  'wizard_magic_mine',
+  'chronos_time_rewind',
+];
+
+export function normalizeAbilityLoadout(
+  value: unknown,
+  fallback: AbilitySkillId[] = ['classic_guard'],
+): AbilitySkillId[] {
+  if (!Array.isArray(value)) {
+    return fallback;
+  }
+
+  const normalized = value.filter(
+    (entry): entry is AbilitySkillId =>
+      typeof entry === 'string' &&
+      ABILITY_SKILL_IDS.includes(entry as AbilitySkillId),
+  );
+
+  return normalized.length > 0 ? normalized.slice(0, 3) : fallback;
+}
+
 // Client-side single source of truth for displayed mana costs.
 // When balance changes happen, update this object first so skill buttons,
 // tooltips, and lobby cards stay in sync.

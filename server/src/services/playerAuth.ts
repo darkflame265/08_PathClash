@@ -1,4 +1,5 @@
 import type { BoardSkin, PieceSkin } from '../types/game.types';
+import type { AbilitySkillId } from '../game/ability/AbilityTypes';
 import { supabaseAdmin } from '../lib/supabase';
 import {
   listPlayerAchievements,
@@ -26,6 +27,7 @@ export interface AccountProfile {
   nickname: string;
   equippedSkin: PieceSkin;
   equippedBoardSkin: BoardSkin;
+  equippedAbilitySkills: AbilitySkillId[];
   ownedSkins: PieceSkin[];
   ownedBoardSkins: BoardSkin[];
   wins: number;
@@ -51,6 +53,7 @@ interface ProfileRow {
   nickname: string | null;
   equipped_skin: PieceSkin | null;
   equipped_board_skin?: BoardSkin | null;
+  equipped_ability_skills?: AbilitySkillId[] | null;
 }
 
 interface StatsRow {
@@ -67,6 +70,40 @@ interface OwnedSkinRow {
 
 interface OwnedBoardSkinRow {
   board_skin_id: BoardSkin | null;
+}
+
+function normalizeAbilityLoadout(value: unknown): AbilitySkillId[] {
+  if (!Array.isArray(value)) {
+    return ['classic_guard'];
+  }
+
+  const validSkills: AbilitySkillId[] = [
+    'classic_guard',
+    'arc_reactor_field',
+    'phase_shift',
+    'ember_blast',
+    'atomic_fission',
+    'inferno_field',
+    'nova_blast',
+    'sun_chariot',
+    'aurora_heal',
+    'gold_overdrive',
+    'quantum_shift',
+    'plasma_charge',
+    'void_cloak',
+    'electric_blitz',
+    'cosmic_bigbang',
+    'wizard_magic_mine',
+    'chronos_time_rewind',
+  ];
+
+  const normalized = value.filter(
+    (entry): entry is AbilitySkillId =>
+      typeof entry === 'string' &&
+      validSkills.includes(entry as AbilitySkillId),
+  );
+
+  return normalized.length > 0 ? normalized.slice(0, 3) : ['classic_guard'];
 }
 
 const DAILY_REWARD_TOKENS_PER_WIN = 6;
@@ -135,7 +172,7 @@ export async function getUserFromToken(accessToken?: string) {
 async function readAccountProfile(userId: string, fallbackNickname = 'Guest', isGuestUser = false): Promise<AccountProfile> {
   const profilePromise = supabaseAdmin
     ?.from('profiles')
-    .select('nickname, equipped_skin, equipped_board_skin')
+    .select('nickname, equipped_skin, equipped_board_skin, equipped_ability_skills')
     .eq('id', userId)
     .maybeSingle<ProfileRow>();
 
@@ -186,6 +223,9 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
     nickname,
     equippedSkin: profileResult?.data?.equipped_skin ?? 'classic',
     equippedBoardSkin: profileResult?.data?.equipped_board_skin ?? 'classic',
+    equippedAbilitySkills: normalizeAbilityLoadout(
+      profileResult?.data?.equipped_ability_skills ?? [],
+    ),
     ownedSkins,
     ownedBoardSkins,
     wins: statsResult?.data?.wins ?? 0,
@@ -416,6 +456,7 @@ export async function finalizeGoogleUpgrade(
     nickname: string | null;
     equippedSkin?: PieceSkin;
     equippedBoardSkin?: BoardSkin;
+    equippedAbilitySkills?: AbilitySkillId[];
     wins: number;
     losses: number;
     tokens?: number;
@@ -453,6 +494,9 @@ export async function finalizeGoogleUpgrade(
       nickname: preservedNickname,
       equipped_skin: guestSnapshot?.equippedSkin ?? 'classic',
       equipped_board_skin: guestSnapshot?.equippedBoardSkin ?? 'classic',
+      equipped_ability_skills:
+        guestSnapshot?.equippedAbilitySkills ??
+        currentLinkedProfile.equippedAbilitySkills,
       is_guest: false,
     });
 
@@ -521,6 +565,10 @@ export async function finalizeGoogleUpgrade(
     guestSnapshot?.equippedSkin ?? guestAccountProfile.equippedSkin ?? 'classic';
   const adoptedEquippedBoardSkin =
     guestSnapshot?.equippedBoardSkin ?? guestAccountProfile.equippedBoardSkin ?? 'classic';
+  const adoptedEquippedAbilitySkills =
+    guestSnapshot?.equippedAbilitySkills ??
+    guestAccountProfile.equippedAbilitySkills ??
+    ['classic_guard'];
   const adoptedWins = guestSnapshot?.wins ?? guestAccountProfile.wins;
   const adoptedLosses = guestSnapshot?.losses ?? guestAccountProfile.losses;
   const adoptedTokens = guestSnapshot?.tokens ?? guestAccountProfile.tokens;
@@ -533,6 +581,7 @@ export async function finalizeGoogleUpgrade(
     nickname: adoptedNickname,
     equipped_skin: adoptedEquippedSkin,
     equipped_board_skin: adoptedEquippedBoardSkin,
+    equipped_ability_skills: adoptedEquippedAbilitySkills,
     is_guest: false,
   });
   if (upsertProfileError) {

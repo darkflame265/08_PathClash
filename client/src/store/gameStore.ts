@@ -8,7 +8,10 @@ import type {
   TwoVsTwoResolutionPayload,
   TwoVsTwoSlot,
 } from '../types/twovtwo.types';
-import type { AbilitySkillId } from '../types/ability.types';
+import {
+  normalizeAbilityLoadout,
+  type AbilitySkillId,
+} from '../types/ability.types';
 import { type Lang } from '../i18n/translations';
 
 function resolveInitialLang(): Lang {
@@ -57,6 +60,7 @@ interface GameStore {
   accountTokens: number;
   ownedSkins: PieceSkin[];
   ownedBoardSkins: BoardSkin[];
+  equippedAbilitySkills?: AbilitySkillId[];
   accountDailyRewardWins: number;
   accountDailyRewardTokens: number;
   accountAchievements: Array<{
@@ -124,6 +128,7 @@ interface GameStore {
     nickname?: string | null;
     equippedSkin?: PieceSkin;
     equippedBoardSkin?: BoardSkin;
+    equippedAbilitySkills?: AbilitySkillId[];
     ownedSkins?: PieceSkin[];
     ownedBoardSkins?: BoardSkin[];
     wins?: number;
@@ -183,8 +188,6 @@ const INITIAL_BLUE: Position = { row: 2, col: 4 };
 const AUDIO_PREFS_KEY = 'audioPrefs';
 const PIECE_SKIN_KEY = 'pieceSkin';
 const BOARD_SKIN_KEY = 'boardSkin';
-const ABILITY_LOADOUT_KEY = 'abilityLoadout';
-
 function getStoredAudioPrefs() {
   const raw = localStorage.getItem(AUDIO_PREFS_KEY);
   if (!raw) {
@@ -269,36 +272,7 @@ const initialBoardSkin = (() => {
     ? stored
     : 'classic';
 })();
-const initialAbilityLoadout = (() => {
-  const raw = localStorage.getItem(ABILITY_LOADOUT_KEY);
-  if (!raw) return ['classic_guard'] as AbilitySkillId[];
-  try {
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return ['classic_guard'] as AbilitySkillId[];
-    const normalized = parsed.filter((value): value is AbilitySkillId =>
-      value === 'classic_guard' ||
-      value === 'arc_reactor_field' ||
-      value === 'phase_shift' ||
-      value === 'ember_blast' ||
-      value === 'inferno_field' ||
-      value === 'nova_blast' ||
-      value === 'sun_chariot' ||
-      value === 'aurora_heal' ||
-      value === 'gold_overdrive' ||
-      value === 'quantum_shift' ||
-      value === 'plasma_charge' ||
-      value === 'void_cloak' ||
-      value === 'electric_blitz' ||
-      value === 'atomic_fission' ||
-      value === 'cosmic_bigbang' ||
-      value === 'wizard_magic_mine' ||
-      value === 'chronos_time_rewind',
-    );
-    return normalized.length > 0 ? normalized.slice(0, 3) : (['classic_guard'] as AbilitySkillId[]);
-  } catch {
-    return ['classic_guard'] as AbilitySkillId[];
-  }
-})();
+const initialAbilityLoadout = ['classic_guard'] as AbilitySkillId[];
 
 export const useGameStore = create<GameStore>((set, get) => ({
   myNickname: '',
@@ -361,6 +335,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     nickname,
     equippedSkin,
     equippedBoardSkin,
+    equippedAbilitySkills,
     ownedSkins,
     ownedBoardSkins,
     wins,
@@ -390,6 +365,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
       accountTokens: tokens ?? state.accountTokens,
       ownedSkins: ownedSkins ?? state.ownedSkins,
       ownedBoardSkins: ownedBoardSkins ?? state.ownedBoardSkins,
+      abilityLoadout:
+        equippedAbilitySkills !== undefined
+          ? normalizeAbilityLoadout(equippedAbilitySkills)
+          : userId
+            ? userId !== state.authUserId
+              ? initialAbilityLoadout
+              : state.abilityLoadout
+            : initialAbilityLoadout,
       accountDailyRewardWins: dailyRewardWins ?? state.accountDailyRewardWins,
       accountDailyRewardTokens:
         dailyRewardTokens ?? state.accountDailyRewardTokens,
@@ -401,8 +384,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setMatchType: (matchType) => set({ currentMatchType: matchType }),
   setTwoVsTwoSlot: (slot) => set({ twoVsTwoSlot: slot }),
   setAbilityLoadout: (skills) => {
-    const next = skills.slice(0, 3);
-    localStorage.setItem(ABILITY_LOADOUT_KEY, JSON.stringify(next));
+    const next = normalizeAbilityLoadout(skills);
     set({ abilityLoadout: next });
   },
 
