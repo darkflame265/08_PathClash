@@ -1551,7 +1551,7 @@ export function LobbyScreen({
 
       requiredPlays: null,
 
-      tokenPrice: 3600,
+      tokenPrice: null,
 
       tier: "legendary",
     },

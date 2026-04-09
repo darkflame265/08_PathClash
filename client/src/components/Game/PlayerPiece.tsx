@@ -98,6 +98,10 @@ export function PlayerPiece({
         ? (pieceSize * sunChariotScaleMultiplier) / 210
         : innerSize / 250
       : (innerSize / 250) * sunChariotScaleMultiplier;
+  const chronosScale =
+    effectiveSkin === 'chronos'
+      ? (innerSize / 260) * 0.92 * sunChariotScaleMultiplier
+      : (innerSize / 260) * sunChariotScaleMultiplier;
   const wizardScale =
     effectiveSkin === 'wizard'
       ? (innerSize / 250) * 1.2 * sunChariotScaleMultiplier
@@ -132,6 +136,7 @@ export function PlayerPiece({
         ['--me-glow-width' as string]: `${meGlow}px`,
         ['--piece-glow' as string]: `${pieceGlow}px`,
         ['--arc-reactor-scale' as string]: `${arcReactorScale}`,
+        ['--chronos-scale' as string]: `${chronosScale}`,
         ['--wizard-scale' as string]: `${wizardScale}`,
       }}
     >

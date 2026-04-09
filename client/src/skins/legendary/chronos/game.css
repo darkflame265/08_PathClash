@@ -14,7 +14,7 @@
   top: 50%;
   width: 260px;
   height: 260px;
-  transform: translate(-50%, -50%) scale(calc((var(--piece-inner-size, 24px) / 260) * 1.06));
+  transform: translate(-50%, -50%) scale(var(--chronos-scale, 0.1));
   transform-origin: center;
   pointer-events: none;
 }
