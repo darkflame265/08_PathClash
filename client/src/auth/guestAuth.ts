@@ -784,6 +784,7 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
     });
 
     if (!error && data.session?.user) {
+      const snapshot = await getAccountSnapshot(data.session.user.id, { force: true });
       logAuthDebug("restoreGuestSessionOrCreate:restored reconnect session", {
         userId: data.session.user.id,
         isGuestUser: data.session.user.is_anonymous ?? false,
@@ -792,7 +793,6 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
       if (data.session.user.is_anonymous) {
         saveGuestSession(data.session);
       }
-      const snapshot = readCachedAccountSnapshot(data.session.user.id) ?? undefined;
       return toAuthState(data.session, snapshot);
     }
 
@@ -811,12 +811,12 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
     });
 
     if (!error && data.session?.user?.is_anonymous) {
+      const snapshot = await getAccountSnapshot(data.session.user.id, { force: true });
       logAuthDebug("restoreGuestSessionOrCreate:restored guest session", {
         userId: data.session.user.id,
       });
       saveReconnectSession(data.session);
       saveGuestSession(data.session);
-      const snapshot = readCachedAccountSnapshot(data.session.user.id) ?? undefined;
       return toAuthState(data.session, snapshot);
     }
 
@@ -1347,7 +1347,6 @@ export async function logoutToGuestMode(): Promise<AuthStatePayload> {
   }
 
   clearStoredReconnectSession();
-  window.localStorage.removeItem(GUEST_SESSION_KEY);
   const { error } = await supabase.auth.signOut({ scope: "local" });
   if (error) {
     console.error("[supabase] failed to sign out current session", error);
