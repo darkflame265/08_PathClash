@@ -29,6 +29,7 @@
 }
 
 .chronos-preview-body {
+  display: block;
   position: relative;
   width: 260px;
   height: 260px;
@@ -58,20 +59,20 @@
 }
 
 .chronos-preview-ring-inner {
-  inset: -16px;
-  border: 1.5px solid rgba(251, 191, 36, 0.5);
+  inset: -20px;
+  border: 2.5px solid rgba(251, 191, 36, 0.56);
   animation: chronosPreviewSpinCW 12s linear infinite;
 }
 
 .chronos-preview-ring-mid {
-  inset: -34px;
-  border: 1.5px solid rgba(203, 213, 225, 0.45);
+  inset: -40px;
+  border: 2px solid rgba(203, 213, 225, 0.52);
   animation: chronosPreviewSpinCCW 20s linear infinite;
 }
 
 .chronos-preview-ring-outer {
-  inset: -52px;
-  border: 1px solid rgba(251, 191, 36, 0.25);
+  inset: -60px;
+  border: 1.5px solid rgba(251, 191, 36, 0.34);
   animation: chronosPreviewSpinCW 35s linear infinite;
 }
 
@@ -118,30 +119,30 @@
 }
 
 .chronos-preview-hand-hour {
-  width: 2.5px;
-  height: 24px;
-  margin-left: -1.25px;
-  margin-top: -24px;
+  width: 3.5px;
+  height: 32px;
+  margin-left: -1.75px;
+  margin-top: -32px;
   background: linear-gradient(to top, #fde68a, #e2e8f0);
   animation: chronosPreviewHandHour 3600s linear infinite;
 }
 
 .chronos-preview-hand-minute {
-  width: 2px;
-  height: 34px;
-  margin-left: -1px;
-  margin-top: -34px;
+  width: 3px;
+  height: 44px;
+  margin-left: -1.5px;
+  margin-top: -44px;
   background: linear-gradient(to top, #cbd5e1, #ffffff);
   animation: chronosPreviewHandMinute 60s linear infinite;
 }
 
 .chronos-preview-hand-second {
-  width: 1px;
-  height: 40px;
-  margin-left: -0.5px;
-  margin-top: -40px;
+  width: 2px;
+  height: 52px;
+  margin-left: -1px;
+  margin-top: -52px;
   background: #fbbf24;
-  box-shadow: 0 0 3px rgba(251, 191, 36, 0.9);
+  box-shadow: 0 0 5px rgba(251, 191, 36, 0.9);
   animation: chronosPreviewHandSecond 3s linear infinite;
 }
 
@@ -167,12 +168,12 @@
 }
 
 .chronos-preview-orb {
-  width: 10px;
-  height: 10px;
-  margin-left: -5px;
-  margin-top: -5px;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  margin-top: -8px;
   background: radial-gradient(circle at 30% 30%, #fde68a, #d97706);
-  box-shadow: 0 0 6px rgba(251, 191, 36, 0.8);
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.85);
   animation: chronosPreviewOrbOrbit 7s linear infinite;
   animation-delay: var(--chronos-orbit-delay);
 }
@@ -248,18 +249,18 @@
 
 @keyframes chronosPreviewOrbOrbit {
   from {
-    transform: rotate(0deg) translateX(104px);
+    transform: rotate(0deg) translateX(114px);
   }
   to {
-    transform: rotate(360deg) translateX(104px);
+    transform: rotate(360deg) translateX(114px);
   }
 }
 
 @keyframes chronosPreviewStarOrbit {
   from {
-    transform: rotate(0deg) translateX(142px);
+    transform: rotate(0deg) translateX(158px);
   }
   to {
-    transform: rotate(-360deg) translateX(142px);
+    transform: rotate(-360deg) translateX(158px);
   }
 }
