@@ -236,6 +236,12 @@ export function resolveAbilityRound(params: {
 
   const redReservations = sortReservations(red.plannedSkills);
   const blueReservations = sortReservations(blue.plannedSkills);
+  const redSunChariotPlanned = redReservations.some(
+    (reservation) => reservation.skillId === 'sun_chariot',
+  );
+  const blueSunChariotPlanned = blueReservations.some(
+    (reservation) => reservation.skillId === 'sun_chariot',
+  );
   const maxStep = Math.max(redPath.length, bluePath.length);
   const escapeeColor: PlayerColor = attackerColor === 'red' ? 'blue' : 'red';
   const escaperPath = escapeeColor === 'red' ? redPath : bluePath;
@@ -377,7 +383,9 @@ export function resolveAbilityRound(params: {
   ) => {
     if (
       (sourceColor === 'red' && redSunChariot) ||
-      (sourceColor === 'blue' && blueSunChariot)
+      (sourceColor === 'blue' && blueSunChariot) ||
+      (sourceColor === 'red' && redSunChariotPlanned) ||
+      (sourceColor === 'blue' && blueSunChariotPlanned)
     ) {
       return;
     }
@@ -1177,4 +1185,3 @@ export function resolveAbilityRound(params: {
     winner,
   };
 }
-

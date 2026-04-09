@@ -171,6 +171,8 @@ function resolveAbilityRound(params) {
     let blueClonePos = null;
     const redReservations = sortReservations(red.plannedSkills);
     const blueReservations = sortReservations(blue.plannedSkills);
+    const redSunChariotPlanned = redReservations.some((reservation) => reservation.skillId === 'sun_chariot');
+    const blueSunChariotPlanned = blueReservations.some((reservation) => reservation.skillId === 'sun_chariot');
     const maxStep = Math.max(redPath.length, bluePath.length);
     const escapeeColor = attackerColor === 'red' ? 'blue' : 'red';
     const escaperPath = escapeeColor === 'red' ? redPath : bluePath;
@@ -260,7 +262,9 @@ function resolveAbilityRound(params) {
     };
     const resolveCollisionHit = (sourceColor, targetColor, position, step) => {
         if ((sourceColor === 'red' && redSunChariot) ||
-            (sourceColor === 'blue' && blueSunChariot)) {
+            (sourceColor === 'blue' && blueSunChariot) ||
+            (sourceColor === 'red' && redSunChariotPlanned) ||
+            (sourceColor === 'blue' && blueSunChariotPlanned)) {
             return;
         }
         const targetGuardActive = targetColor === 'red' ? redInv > 0 : blueInv > 0;
