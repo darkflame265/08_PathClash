@@ -478,16 +478,16 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: 'chronos_time_rewind',
     name: { en: 'Time Rewind', kr: '타임 리와인드' },
     description: {
-      en: 'When lethal damage would reduce your HP to 0, rewind once per match to the start of the current turn.',
-      kr: '치명상을 입어 HP가 0이 되면, 경기당 1회 현재 턴 시작 시점으로 되감깁니다.',
+      en: 'If lethal damage reduces your HP to 0, finish the turn, then rewind once per match along this turn\'s path back to the start of the turn.',
+      kr: '치명상을 입어 HP가 0이 되면, 이번 턴 이동이 끝난 뒤 경기당 1회 이번 턴 경로를 거꾸로 따라 턴 시작 지점으로 되감깁니다.',
     },
     loadoutTags: {
       en: 'Passive · Auto Trigger',
       kr: '패시브 · 자동 발동',
     },
     loadoutDescription: {
-      en: 'Automatically rewinds once per match to the start of the current turn when lethal damage would defeat you.',
-      kr: '치명상을 입으면 경기당 1회 자동으로 현재 턴 시작 시점으로 되감습니다.',
+      en: 'Automatically rewinds once per match after the turn finishes, returning along this turn\'s path to the start of the turn.',
+      kr: '치명상을 입으면 이번 턴 이동이 끝난 뒤 경기당 1회 이번 턴 경로를 거꾸로 따라 턴 시작 지점으로 되감습니다.',
     },
     manaCost: ABILITY_SKILL_COSTS.chronos_time_rewind,
     category: 'passive',

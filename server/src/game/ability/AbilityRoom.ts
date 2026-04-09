@@ -1137,16 +1137,20 @@ export class AbilityRoom {
     const path = color === 'red' ? resolution.payload.redPath : resolution.payload.bluePath;
     const turnStart =
       color === 'red' ? resolution.payload.redStart : resolution.payload.blueStart;
+    const finalStep = Math.max(
+      resolution.payload.redPath.length,
+      resolution.payload.bluePath.length,
+    );
     const rewindFrom =
-      lethalStep > 0
-        ? { ...(path[Math.min(lethalStep - 1, path.length - 1)] ?? turnStart) }
+      path.length > 0
+        ? { ...path[path.length - 1] }
         : { ...turnStart };
-    const traversedPath = path.slice(0, Math.min(lethalStep, path.length)).reverse();
+    const traversedPath = [...path].reverse();
     nextState.position = { ...rewindSnapshot.position };
     nextState.hp = rewindSnapshot.hp;
 
     resolution.payload.skillEvents.push({
-      step: lethalStep,
+      step: finalStep,
       order: 999,
       color,
       skillId: 'chronos_time_rewind',
