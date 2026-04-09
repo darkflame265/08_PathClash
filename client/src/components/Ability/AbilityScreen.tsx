@@ -2328,15 +2328,17 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
 
       queueAnimationTimeout(() => {
-        const { endedGuards, endedAtFields } = consumeDefenseVisualStep();
+        runStepEventsAndCollisions(step, () => {
+          const { endedGuards, endedAtFields } = consumeDefenseVisualStep();
 
-        const continueStep = () => {
-          runStepEventsAndCollisions(step, () => advance(step + 1));
-        };
+          const continueStep = () => {
+            advance(step + 1);
+          };
 
-        runGuardEndNotice(endedGuards, () =>
-          runAtFieldEndNotice(endedAtFields, continueStep),
-        );
+          runGuardEndNotice(endedGuards, () =>
+            runAtFieldEndNotice(endedAtFields, continueStep),
+          );
+        });
       }, STEP_DURATION_MS);
     };
 
