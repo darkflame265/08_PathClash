@@ -631,19 +631,19 @@ function App() {
   }, [setAccountSummaryLoading, setAuthState]);
 
   const exitTitle =
-    lang === "en" ? "Exit PathClash?" : "\uC815\uB9D0\uB85C \uAC8C\uC784\uC744 \uC885\uB8CC\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?";
-  const exitConfirmLabel = lang === "en" ? "Yes" : "\uC608";
-  const exitCancelLabel = lang === "en" ? "No" : "\uC544\uB2C8\uC694";
+    lang === "en" ? "Exit PathClash?" : "정말로 게임을 종료하시겠습니까?";
+  const exitConfirmLabel = lang === "en" ? "Yes" : "예";
+  const exitCancelLabel = lang === "en" ? "No" : "아니요";
   const sessionReplacedTitle =
     lang === "en"
       ? "This account is active on another device."
-      : "\uB2E4\uB978 \uAE30\uAE30\uC5D0\uC11C \uC811\uC18D \uC911\uC785\uB2C8\uB2E4.";
+      : "다른 기기에서 접속 중입니다.";
   const sessionReplacedBody =
     lang === "en"
       ? "This session was closed because the account was used on another device. Your account data is safe. Tap OK to return to the lobby and sign in again if needed."
-      : "\uB2E4\uB978 \uAE30\uAE30\uC5D0\uC11C \uB3D9\uC77C \uACC4\uC815\uC73C\uB85C \uC811\uC18D\uD558\uC5EC \uD604\uC7AC \uC138\uC158\uC774 \uC885\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uACC4\uC815 \uB370\uC774\uD130\uB294 \uC720\uC9C0\uB418\uBA70, \uD655\uC778\uC744 \uB204\uB974\uBA74 \uB85C\uBE44\uB85C \uB3CC\uC544\uAC11\uB2C8\uB2E4. \uD544\uC694\uD558\uBA74 \uB2E4\uC2DC \uB85C\uADF8\uC778\uD574\uC8FC\uC138\uC694.";
+      : "다른 기기에서 동일 계정으로 접속하여 현재 세션이 종료되었습니다. 계정 데이터는 유지되며, 확인을 누르면 로비로 돌아갑니다. 필요하면 다시 로그인해주세요.";
   const sessionReplacedConfirm =
-    lang === "en" ? "Reconnect" : "\uB2E4\uC2DC \uC5F0\uACB0";
+    lang === "en" ? "Reconnect" : "다시 연결";
   const updateRequiredTitle =
     lang === "en"
       ? "A new version is available."
@@ -820,32 +820,32 @@ function App() {
   const legalConsentTitle =
     lang === "en"
       ? "Terms of Service and Privacy Policy"
-      : "\uC774\uC6A9\uC57D\uAD00 \uBC0F \uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68";
+      : "이용약관 및 개인정보처리방침";
   const legalConsentBody =
     lang === "en"
       ? "Please review the Terms of Service and Privacy Policy before continuing. You must agree to both to use PathClash."
-      : "PathClash\uB97C \uC774\uC6A9\uD558\uB824\uBA74 \uC774\uC6A9\uC57D\uAD00\uACFC \uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68\uC744 \uD655\uC778\uD55C \uB4A4 \uB3D9\uC758\uD574\uC57C \uD569\uB2C8\uB2E4.";
+      : "PathClash를 이용하려면 이용약관과 개인정보처리방침을 확인한 뒤 동의해야 합니다.";
   const legalConsentTermsLabel =
-    lang === "en" ? "View Terms of Service" : "\uC774\uC6A9\uC57D\uAD00 \uBCF4\uAE30";
+    lang === "en" ? "View Terms of Service" : "이용약관 보기";
   const legalConsentPolicyLabel =
-    lang === "en" ? "View Privacy Policy" : "\uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68 \uBCF4\uAE30";
+    lang === "en" ? "View Privacy Policy" : "개인정보처리방침 보기";
   const legalConsentCheckboxLabel =
     lang === "en"
       ? "I agree to the Terms of Service and Privacy Policy."
-      : "\uC774\uC6A9\uC57D\uAD00\uACFC \uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68\uC5D0 \uB3D9\uC758\uD569\uB2C8\uB2E4.";
+      : "이용약관과 개인정보처리방침에 동의합니다.";
   const legalConsentConfirmLabel =
-    lang === "en" ? "Agree and Start" : "\uB3D9\uC758\uD558\uACE0 \uC2DC\uC791";
+    lang === "en" ? "Agree and Start" : "동의하고 시작";
   const legalConsentTermsPath = lang === "en" ? TERMS_PATH_EN : TERMS_PATH_KR;
   const legalConsentPolicyPath = lang === "en" ? POLICY_PATH_EN : POLICY_PATH_KR;
   const legalDocumentTitle =
     openLegalDocument === "terms"
       ? lang === "en"
         ? "Terms of Service"
-        : "\uC774\uC6A9\uC57D\uAD00"
+        : "이용약관"
       : lang === "en"
         ? "Privacy Policy"
-        : "\uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68";
-  const legalDocumentCloseLabel = lang === "en" ? "Close" : "\uB2EB\uAE30";
+        : "개인정보처리방침";
+  const legalDocumentCloseLabel = lang === "en" ? "Close" : "닫기";
   const legalDocumentSrc =
     openLegalDocument === "terms" ? legalConsentTermsPath : legalConsentPolicyPath;
 
