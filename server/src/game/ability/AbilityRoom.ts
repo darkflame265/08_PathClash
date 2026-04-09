@@ -59,7 +59,9 @@ function collectUtilitySkillUsageByUser(
       event.skillId !== 'plasma_charge' &&
       event.skillId !== 'void_cloak' &&
       event.skillId !== 'phase_shift' &&
-      event.skillId !== 'gold_overdrive'
+      event.skillId !== 'gold_overdrive' &&
+      event.skillId !== 'wizard_magic_mine' &&
+      event.skillId !== 'chronos_time_rewind'
     ) {
       continue;
     }

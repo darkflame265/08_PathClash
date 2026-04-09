@@ -43,6 +43,8 @@ const UTILITY_USE_SKILLS = new Set([
     'void_cloak',
     'phase_shift',
     'gold_overdrive',
+    'wizard_magic_mine',
+    'chronos_time_rewind',
 ]);
 function toState(row) {
     return {
@@ -180,6 +182,7 @@ async function listPlayerAchievements(userId) {
     return [...rows.values()];
 }
 async function syncAchievementDerivedProgress(args) {
+    await setSingleProgressAbsolute(args.userId, 'welcome_to_pathclash', 1);
     const ownedSkinCount = new Set(['classic', ...(args.ownedSkins ?? [])]).size;
     await applySeriesAbsolute(args.userId, 'skins_owned_', SKIN_SERIES, ownedSkinCount);
 }

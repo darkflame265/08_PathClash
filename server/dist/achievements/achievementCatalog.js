@@ -40,6 +40,8 @@ const utilitySkillNames = {
     void_cloak: { en: 'Void Cloak', kr: '투명화' },
     phase_shift: { en: 'Phase Shift', kr: '페이즈 시프트' },
     gold_overdrive: { en: 'Overdrive', kr: '오버드라이브' },
+    wizard_magic_mine: { en: 'Magic Mine', kr: '매직마인' },
+    chronos_time_rewind: { en: 'Time Rewind', kr: '타임 리와인드' },
 };
 function buildSeries(category, prefix, milestones, rewards, builder) {
     return milestones.map((goal, index) => {
@@ -63,6 +65,14 @@ const catalog = [
         rewardTokens: 20,
         name: { en: 'First Match', kr: '첫 대결' },
         description: { en: 'Play any mode once.', kr: '아무 모드나 한 번 플레이하세요.' },
+    },
+    {
+        id: 'welcome_to_pathclash',
+        category: 'progress',
+        goal: 1,
+        rewardTokens: 2000,
+        name: { en: 'Welcome to PathClash', kr: 'PathClash에 오신 것을 환영합니다' },
+        description: { en: 'Log in with this account once.', kr: '해당 계정으로 한 번 접속하세요.' },
     },
     {
         id: 'first_win',
