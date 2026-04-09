@@ -59,6 +59,9 @@ interface Props {
   };
   movingPaths: { red: Position[]; blue: Position[] };
   movingStarts: { red: Position; blue: Position } | null;
+  timeRewindFocusColor: PlayerColor | null;
+  timeRewindActive: boolean;
+  rewindingPieceColor: PlayerColor | null;
   cellSize: number;
   isPlanning: boolean;
   canEditPath: boolean;
@@ -138,6 +141,9 @@ export function AbilityGrid({
   movingAtomicClones,
   movingPaths,
   movingStarts,
+  timeRewindFocusColor,
+  timeRewindActive,
+  rewindingPieceColor,
   cellSize,
   isPlanning,
   canEditPath,
@@ -494,7 +500,7 @@ export function AbilityGrid({
     <div ref={shellRef} className="game-grid-shell">
       <div
         ref={gridRef}
-        className={`game-grid ability-grid ${boardSkinClass}`}
+        className={`game-grid ability-grid ${boardSkinClass}${timeRewindActive ? ' is-time-rewinding' : ''}${timeRewindFocusColor ? ` rewind-focus-${timeRewindFocusColor}` : ''}`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
@@ -820,6 +826,7 @@ export function AbilityGrid({
               isHit={false}
               isExploding={false}
               isMe={currentColor === previewAtomicClone.color}
+              isRewinding={false}
               isClone
               skin={previewAtomicClone.color === 'red' ? redSkin : blueSkin}
             />
@@ -846,6 +853,7 @@ export function AbilityGrid({
                 isHit={false}
                 isExploding={false}
                 isMe={currentColor === color}
+                isRewinding={false}
                 isClone
                 skin={color === 'red' ? redSkin : blueSkin}
               />
@@ -1045,6 +1053,7 @@ export function AbilityGrid({
               }
               isBlitzing={movingBlitzProgress.red > 0}
               isSunChariotActive={activeSunChariots.red}
+              isRewinding={rewindingPieceColor === 'red'}
               hp={state.players.red.hp}
               maxHp={5}
               hpOffsetY={redHpOffsetY}
@@ -1071,6 +1080,7 @@ export function AbilityGrid({
               }
               isBlitzing={movingBlitzProgress.blue > 0}
               isSunChariotActive={activeSunChariots.blue}
+              isRewinding={rewindingPieceColor === 'blue'}
               hp={state.players.blue.hp}
               maxHp={5}
               skin={blueSkin}

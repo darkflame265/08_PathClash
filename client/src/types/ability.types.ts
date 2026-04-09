@@ -23,8 +23,9 @@ export type AbilitySkillId =
   | 'void_cloak'
   | 'electric_blitz'
   | 'cosmic_bigbang'
-  | 'wizard_magic_mine';
-export type AbilitySkillCategory = 'attack' | 'defense' | 'utility';
+  | 'wizard_magic_mine'
+  | 'chronos_time_rewind';
+export type AbilitySkillCategory = 'attack' | 'defense' | 'utility' | 'passive';
 
 // Client-side single source of truth for displayed mana costs.
 // When balance changes happen, update this object first so skill buttons,
@@ -46,6 +47,7 @@ export const ABILITY_SKILL_COSTS: Record<AbilitySkillId, number> = {
   electric_blitz: 6,
   cosmic_bigbang: 10,
   wizard_magic_mine: 8,
+  chronos_time_rewind: 0,
 };
 
 export interface AbilitySkillDefinition {
@@ -154,6 +156,7 @@ export interface AbilitySkillEvent {
   invulnerableSteps?: number;
   cloneStart?: Position | null;
   clonePath?: Position[];
+  rewindHp?: number;
 }
 
 export interface AbilityResolutionPayload {
@@ -470,6 +473,26 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     category: 'attack',
     skinId: 'wizard',
     icon: '✦',
+  },
+  chronos_time_rewind: {
+    id: 'chronos_time_rewind',
+    name: { en: 'Time Rewind', kr: '타임 리와인드' },
+    description: {
+      en: 'When lethal damage would reduce your HP to 0, rewind once per match to your position and HP from 2 turns ago.',
+      kr: '치명상을 입어 HP가 0이 되면, 경기당 1회 2턴 전의 위치와 체력으로 되감깁니다.',
+    },
+    loadoutTags: {
+      en: 'Passive · Auto Trigger',
+      kr: '패시브 · 자동 발동',
+    },
+    loadoutDescription: {
+      en: 'Automatically rewinds once per match when lethal damage would defeat you.',
+      kr: '치명상을 입으면 경기당 1회 자동으로 되감기를 발동합니다.',
+    },
+    manaCost: ABILITY_SKILL_COSTS.chronos_time_rewind,
+    category: 'passive',
+    skinId: 'chronos',
+    icon: '⏪',
   },
   cosmic_bigbang: {
     id: 'cosmic_bigbang',

@@ -24,8 +24,9 @@ export type AbilitySkillId =
   | 'void_cloak'
   | 'electric_blitz'
   | 'cosmic_bigbang'
-  | 'wizard_magic_mine';
-export type AbilitySkillCategory = 'attack' | 'defense' | 'utility';
+  | 'wizard_magic_mine'
+  | 'chronos_time_rewind';
+export type AbilitySkillCategory = 'attack' | 'defense' | 'utility' | 'passive';
 export type AbilitySkillRoleRestriction = 'any' | 'attacker' | 'escaper';
 export type AbilitySkillStepRule = 'any' | 'zero_only';
 export type AbilitySkillTargetRule = 'none' | 'position';
@@ -59,6 +60,7 @@ export const ABILITY_SKILL_COSTS: Record<AbilitySkillId, number> = {
   electric_blitz: 6,
   cosmic_bigbang: 10,
   wizard_magic_mine: 8,
+  chronos_time_rewind: 0,
 };
 
 // Shared validation metadata for server-side planning rules.
@@ -154,7 +156,18 @@ export const ABILITY_SKILL_SERVER_RULES: Record<
     stepRule: 'any',
     targetRule: 'none',
   },
+  chronos_time_rewind: {
+    roleRestriction: 'any',
+    stepRule: 'zero_only',
+    targetRule: 'none',
+  },
 };
+
+export interface AbilityTurnSnapshot {
+  turn: number;
+  position: Position;
+  hp: number;
+}
 
 export interface AbilitySkillReservation {
   skillId: AbilitySkillId;
@@ -202,6 +215,8 @@ export interface AbilityPlayerState {
   reboundLocked: boolean;
   hidden: boolean;
   equippedSkills: AbilitySkillId[];
+  timeRewindUsed: boolean;
+  turnHistory: AbilityTurnSnapshot[];
 }
 
 export interface ClientAbilityPlayerState extends ClientPlayerState {
@@ -269,6 +284,7 @@ export interface AbilitySkillEvent {
   invulnerableSteps?: number;
   cloneStart?: Position | null;
   clonePath?: Position[];
+  rewindHp?: number;
 }
 
 export interface AbilityResolutionPayload {

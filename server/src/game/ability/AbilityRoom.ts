@@ -29,6 +29,7 @@ import {
   type AbilityRoundStartPayload,
   type AbilitySkillId,
   type AbilitySkillReservation,
+  type AbilityTurnSnapshot,
 } from './AbilityTypes';
 import { resolveAbilityRound } from './AbilityEngine';
 
@@ -319,6 +320,8 @@ export class AbilityRoom {
       reboundLocked: false,
       hidden: false,
       equippedSkills,
+      timeRewindUsed: false,
+      turnHistory: [],
     });
     socket.join(this.roomId);
     this.touchActivity();
@@ -363,6 +366,8 @@ export class AbilityRoom {
       reboundLocked: false,
       hidden: false,
       equippedSkills,
+      timeRewindUsed: false,
+      turnHistory: [],
     });
     this.touchActivity();
     return color;
@@ -634,6 +639,8 @@ export class AbilityRoom {
       blue.plannedPath = [];
       blue.plannedSkills = [];
     }
+    this.recordTurnSnapshot(red);
+    this.recordTurnSnapshot(blue);
     this.obstacles = generateObstacles(this.roomId, this.turn, red.position, blue.position);
 
     const now = Date.now();
@@ -681,6 +688,9 @@ export class AbilityRoom {
       lavaTiles: this.lavaTiles,
       trapTiles: this.trapTiles,
     });
+
+    this.applyTimeRewindIfNeeded('red', red, resolution);
+    this.applyTimeRewindIfNeeded('blue', blue, resolution);
 
     red.previousTurnStart = { ...resolution.payload.redStart };
     red.previousTurnPath = resolution.payload.redPath.map((position) => ({ ...position }));
@@ -1038,6 +1048,104 @@ export class AbilityRoom {
     return hasDisconnectedHuman ? 30 : calcPathPoints(this.turn);
   }
 
+  private recordTurnSnapshot(player: AbilityPlayerState): void {
+    const existingIndex = player.turnHistory.findIndex(
+      (snapshot) => snapshot.turn === this.turn,
+    );
+    const nextSnapshot: AbilityTurnSnapshot = {
+      turn: this.turn,
+      position: { ...player.position },
+      hp: player.hp,
+    };
+
+    if (existingIndex >= 0) {
+      player.turnHistory[existingIndex] = nextSnapshot;
+    } else {
+      player.turnHistory.push(nextSnapshot);
+    }
+
+    if (player.turnHistory.length > 3) {
+      player.turnHistory = player.turnHistory.slice(player.turnHistory.length - 3);
+    }
+  }
+
+  private getTimeRewindSnapshot(player: AbilityPlayerState): AbilityTurnSnapshot | null {
+    if (player.turnHistory.length === 0) return null;
+    const index = Math.max(0, player.turnHistory.length - 3);
+    return player.turnHistory[index] ?? null;
+  }
+
+  private findLethalStep(
+    color: PlayerColor,
+    payload: AbilityResolutionPayload,
+  ): number | null {
+    let lethalStep: number | null = null;
+
+    for (const collision of payload.collisions) {
+      if (collision.escapeeColor !== color || collision.newHp > 0) continue;
+      lethalStep = collision.step;
+    }
+
+    for (const event of payload.skillEvents) {
+      const lethalDamage = event.damages?.some(
+        (damage) => damage.color === color && damage.newHp <= 0,
+      );
+      if (!lethalDamage) continue;
+      lethalStep = event.step;
+    }
+
+    return lethalStep;
+  }
+
+  private applyTimeRewindIfNeeded(
+    color: PlayerColor,
+    player: AbilityPlayerState,
+    resolution: {
+      payload: AbilityResolutionPayload;
+      redState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'pendingVoidCloak' | 'overdriveActive' | 'reboundLocked'>;
+      blueState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'pendingVoidCloak' | 'overdriveActive' | 'reboundLocked'>;
+      winner: PlayerColor | 'draw' | null;
+    },
+  ): void {
+    const nextState = color === 'red' ? resolution.redState : resolution.blueState;
+    if (nextState.hp > 0) return;
+    if (player.timeRewindUsed) return;
+    if (!player.equippedSkills.includes('chronos_time_rewind')) return;
+
+    const rewindSnapshot = this.getTimeRewindSnapshot(player);
+    if (!rewindSnapshot) return;
+
+    const lethalStep = this.findLethalStep(color, resolution.payload);
+    if (lethalStep === null) return;
+
+    player.timeRewindUsed = true;
+    const rewindFrom = { ...nextState.position };
+    nextState.position = { ...rewindSnapshot.position };
+    nextState.hp = rewindSnapshot.hp;
+
+    resolution.payload.skillEvents.push({
+      step: lethalStep,
+      order: 999,
+      color,
+      skillId: 'chronos_time_rewind',
+      from: rewindFrom,
+      to: { ...rewindSnapshot.position },
+      affectedPositions: [{ ...rewindSnapshot.position }],
+      rewindHp: rewindSnapshot.hp,
+    });
+
+    const redHp = resolution.redState.hp;
+    const blueHp = resolution.blueState.hp;
+    resolution.winner =
+      redHp <= 0 && blueHp <= 0
+        ? 'draw'
+        : redHp <= 0
+          ? 'blue'
+          : blueHp <= 0
+            ? 'red'
+            : null;
+  }
+
   private resetPlayers(): void {
     const initial = getInitialPositions();
     for (const [color, player] of this.players.entries()) {
@@ -1059,6 +1167,8 @@ export class AbilityRoom {
       player.overdriveActive = false;
       player.reboundLocked = false;
       player.hidden = false;
+      player.timeRewindUsed = false;
+      player.turnHistory = [];
     }
   }
 

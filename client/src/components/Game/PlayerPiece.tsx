@@ -28,6 +28,7 @@ interface Props {
   isOverloaded?: boolean;
   isBlitzing?: boolean;
   isSunChariotActive?: boolean;
+  isRewinding?: boolean;
   isClone?: boolean;
   hp?: number | null;
   maxHp?: number;
@@ -73,6 +74,7 @@ export function PlayerPiece({
   isOverloaded = false,
   isBlitzing = false,
   isSunChariotActive = false,
+  isRewinding = false,
   isClone = false,
   hp = null,
   maxHp = 3,
@@ -116,6 +118,7 @@ export function PlayerPiece({
     isOverloaded ? 'piece-overloaded' : '',
     isBlitzing ? 'piece-blitzing' : '',
     isSunChariotActive ? 'piece-sun-chariot-active' : '',
+    isRewinding ? 'piece-rewinding' : '',
     isClone ? 'piece-clone' : '',
     outlineColor ? `piece-outline-${outlineColor}` : '',
     isHit ? 'hit' : '',

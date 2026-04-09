@@ -291,7 +291,8 @@ const initialAbilityLoadout = (() => {
       value === 'electric_blitz' ||
       value === 'atomic_fission' ||
       value === 'cosmic_bigbang' ||
-      value === 'wizard_magic_mine',
+      value === 'wizard_magic_mine' ||
+      value === 'chronos_time_rewind',
     );
     return normalized.length > 0 ? normalized.slice(0, 3) : (['classic_guard'] as AbilitySkillId[]);
   } catch {

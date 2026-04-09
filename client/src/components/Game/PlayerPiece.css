@@ -19,6 +19,11 @@
   transition: none;
 }
 
+.player-piece.piece-rewinding {
+  transition-duration: 600ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .player-piece.piece-sun-chariot-active {
   width: calc(var(--piece-size, 56px) * 6);
   height: calc(var(--piece-size, 56px) * 6);

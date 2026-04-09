@@ -62,6 +62,8 @@ const AT_FIELD_VISUAL_STEPS = 1;
 const GUARD_END_PAUSE_MS = 360;
 const AT_FIELD_END_PAUSE_MS = 360;
 const AT_FIELD_END_DELAY_MS = 700;
+const TIME_REWIND_FREEZE_MS = 600;
+const TIME_REWIND_HP_STEP_MS = 120;
 
 type BoolByColor = { red: boolean; blue: boolean };
 type NumberByColor = { red: number; blue: number };
@@ -267,6 +269,8 @@ function getSkillPriority(skillId: AbilitySkillId): number {
     ? 0
     : ABILITY_SKILLS[skillId].category === "defense"
       ? 1
+      : ABILITY_SKILLS[skillId].category === "passive"
+        ? 3
       : 2;
 }
 
@@ -398,6 +402,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [rematchRequested, setRematchRequested] = useState(false);
   const [abilityBanner, setAbilityBanner] = useState<string | null>(null);
   const [mySkillInfo, setMySkillInfo] = useState<AbilitySkillId | null>(null);
+  const [timeRewindFocusColor, setTimeRewindFocusColor] =
+    useState<PlayerColor | null>(null);
+  const [rewindingPieceColor, setRewindingPieceColor] =
+    useState<PlayerColor | null>(null);
   const resultAudioPlayedRef = useRef(false);
 
   const stateRef = useRef<AbilityBattleState | null>(null);
@@ -600,6 +608,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setCollisionEffects([]);
     setTeleportEffects([]);
     setPendingOwnedTriggeredTrapTiles([]);
+    setTimeRewindFocusColor(null);
+    setRewindingPieceColor(null);
   };
 
   const resetMovingVisualState = () => {
@@ -1386,6 +1396,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const handleSkillClick = (skillId: AbilitySkillId) => {
     if (state?.phase !== "planning" || mySubmitted) return;
+    if (skillId === "chronos_time_rewind") return;
     if (skillId !== "inferno_field") {
       setPendingInferno(false);
     }
@@ -1844,6 +1855,81 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           setAbilityBanner(null);
           done();
         }, SKILL_PAUSE_MS);
+        return;
+      }
+
+      if (
+        event.skillId === "chronos_time_rewind" &&
+        event.to &&
+        typeof event.rewindHp === "number"
+      ) {
+        const rewindTarget = event.to;
+        const rewindHp = event.rewindHp;
+        const currentHp = stateRef.current?.players[event.color].hp ?? 0;
+        setTimeRewindFocusColor(event.color);
+        setRewindingPieceColor(event.color);
+
+        queueAnimationTimeout(() => {
+          setState((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+                players: {
+                  ...prev.players,
+                  [event.color]: {
+                    ...prev.players[event.color],
+                    position: rewindTarget,
+                  },
+                },
+              };
+            });
+
+          if (event.color === "red") {
+            setRedDisplayPos(rewindTarget);
+          } else {
+            setBlueDisplayPos(rewindTarget);
+          }
+
+          const hpSteps = Math.max(0, rewindHp - currentHp);
+          if (hpSteps === 0) {
+            queueAnimationTimeout(() => {
+              setRewindingPieceColor(null);
+              setTimeRewindFocusColor(null);
+              setAbilityBanner(null);
+              done();
+            }, TIME_REWIND_HP_STEP_MS);
+            return;
+          }
+
+          for (let index = 0; index < hpSteps; index += 1) {
+            queueAnimationTimeout(() => {
+              setState((prev) => {
+                if (!prev) return prev;
+                const nextHp = Math.min(
+                  rewindHp,
+                  prev.players[event.color].hp + 1,
+                );
+                return {
+                  ...prev,
+                  players: {
+                    ...prev.players,
+                    [event.color]: {
+                      ...prev.players[event.color],
+                      hp: nextHp,
+                    },
+                  },
+                };
+              });
+            }, (index + 1) * TIME_REWIND_HP_STEP_MS);
+          }
+
+          queueAnimationTimeout(() => {
+            setRewindingPieceColor(null);
+            setTimeRewindFocusColor(null);
+            setAbilityBanner(null);
+            done();
+          }, hpSteps * TIME_REWIND_HP_STEP_MS + 40);
+        }, TIME_REWIND_FREEZE_MS);
         return;
       }
 
@@ -2903,6 +2989,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             movingAtomicClones={movingAtomicClones}
             movingPaths={movingPaths}
             movingStarts={movingStarts}
+            timeRewindFocusColor={timeRewindFocusColor}
+            timeRewindActive={timeRewindFocusColor !== null}
+            rewindingPieceColor={rewindingPieceColor}
             cellSize={cellSize}
             isPlanning={state.phase === "planning"}
             canEditPath={canDrawPath}
@@ -2964,6 +3053,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             const reserved = skillReservations.some(
               (entry) => entry.skillId === skillId,
             );
+            const passiveSkill = skill.category === "passive";
             const blitzReserved = skillReservations.some(
               (entry) => entry.skillId === "electric_blitz",
             );
@@ -2994,6 +3084,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             const disabled =
               !isPlanning ||
               mySubmitted ||
+              passiveSkill ||
               roleBlocked ||
               atomicUnavailable ||
               blitzBlocked ||

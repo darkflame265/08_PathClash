@@ -1864,6 +1864,7 @@ export function LobbyScreen({
 
   const hasAbilitySkinUnlocked = (skinId: PieceSkin) => {
     if (skinId === "classic") return true;
+    if (skinId === "chronos") return true;
         
     if (skinId === "ember") return accountWins >= 10;
 
@@ -4051,8 +4052,12 @@ export function LobbyScreen({
                       <span>
                         {unlocked
                           ? lang === "en"
-                            ? `${skill.manaCost} mana · ${skill.category}`
-                            : `마나 ${skill.manaCost} · ${skill.category === "attack" ? "공격" : skill.category === "defense" ? "방어" : "유틸"}`
+                            ? skill.category === "passive"
+                              ? "Passive · Auto"
+                              : `${skill.manaCost} mana · ${skill.category}`
+                            : skill.category === "passive"
+                              ? "패시브 · 자동"
+                              : `마나 ${skill.manaCost} · ${skill.category === "attack" ? "공격" : skill.category === "defense" ? "방어" : "유틸"}`
                           : lang === "en"
                             ? "Locked"
                             : "잠김"}

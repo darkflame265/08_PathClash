@@ -259,6 +259,33 @@
   font-size: clamp(0.72rem, calc(0.82rem * var(--gs-scale, 1)), 0.92rem);
 }
 
+.ability-grid.is-time-rewinding .grid-cell,
+.ability-grid.is-time-rewinding .obstacle-mark,
+.ability-grid.is-time-rewinding .path-line,
+.ability-grid.is-time-rewinding .ability-lava-tile,
+.ability-grid.is-time-rewinding .ability-wizard-mine,
+.ability-grid.is-time-rewinding .ability-wizard-mine-trigger,
+.ability-grid.is-time-rewinding .ability-inferno-marker,
+.ability-grid.is-time-rewinding .ability-teleport-marker,
+.ability-grid.is-time-rewinding .ability-teleport-burst,
+.ability-grid.is-time-rewinding .ability-charge-effect,
+.ability-grid.is-time-rewinding .ability-heal-effect,
+.ability-grid.is-time-rewinding .ability-overdrive-effect,
+.ability-grid.is-time-rewinding .ability-guard-ring,
+.ability-grid.is-time-rewinding .ability-blitz-line,
+.ability-grid.is-time-rewinding .collision-effect {
+  filter: grayscale(1) saturate(0.06) brightness(0.88);
+}
+
+.ability-grid.is-time-rewinding .player-piece {
+  filter: grayscale(1) saturate(0.08) brightness(0.9);
+}
+
+.ability-grid.is-time-rewinding.rewind-focus-red .player-piece.piece-red,
+.ability-grid.is-time-rewinding.rewind-focus-blue .player-piece.piece-blue {
+  filter: none !important;
+}
+
 .ability-skill-tooltip strong {
   color: #f8fafc;
 }
