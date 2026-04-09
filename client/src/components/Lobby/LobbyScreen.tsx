@@ -96,6 +96,13 @@ type LobbyModeKey =
   | "classic_ranked"
   | "skill_ranked";
 
+const DISABLED_LOBBY_MODES = new Set<LobbyModeKey>([
+  "2v2",
+  "coop",
+  "classic_ranked",
+  "skill_ranked",
+]);
+
 interface Props {
   onGameStart: () => void;
 
@@ -696,7 +703,8 @@ export function LobbyScreen({
   const [selectedLobbyMode, setSelectedLobbyMode] = useState<LobbyModeKey>(() => {
     if (typeof window === "undefined") return "ai";
     const saved = window.localStorage.getItem(LAST_LOBBY_MODE_KEY);
-    return saved === "ai" ||
+    const nextMode =
+      saved === "ai" ||
       saved === "friend" ||
       saved === "random" ||
       saved === "coop" ||
@@ -706,6 +714,7 @@ export function LobbyScreen({
       saved === "skill_ranked"
       ? saved
       : "ai";
+    return DISABLED_LOBBY_MODES.has(nextMode) ? "ai" : nextMode;
   });
 
   const [joinCode, setJoinCode] = useState("");
@@ -3239,6 +3248,7 @@ export function LobbyScreen({
   ];
 
   const handleSelectLobbyMode = (mode: LobbyModeKey) => {
+    if (DISABLED_LOBBY_MODES.has(mode)) return;
     setSelectedLobbyMode(mode);
 
     if (mode !== "friend" && view !== "main") {
@@ -3599,8 +3609,9 @@ export function LobbyScreen({
             <button
               key={option.key}
               type="button"
-              className={`mode-selector-btn ${selectedLobbyMode === option.key ? "is-active" : ""}`}
+              className={`mode-selector-btn ${selectedLobbyMode === option.key ? "is-active" : ""} ${DISABLED_LOBBY_MODES.has(option.key) ? "is-disabled" : ""}`}
               onClick={() => handleSelectLobbyMode(option.key)}
+              disabled={DISABLED_LOBBY_MODES.has(option.key)}
             >
               <span className="mode-selector-icon" aria-hidden="true">
                 {option.icon}

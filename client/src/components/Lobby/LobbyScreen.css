@@ -267,6 +267,37 @@
   transform: scale(0.98);
 }
 
+.mode-selector-btn.is-disabled,
+.mode-selector-btn:disabled {
+  cursor: not-allowed;
+  color: rgba(240, 244, 248, 0.58);
+  border-color: rgba(58, 68, 77, 0.42);
+  background: linear-gradient(
+    180deg,
+    rgba(40, 48, 60, 0.72),
+    rgba(20, 26, 32, 0.9)
+  );
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  filter: saturate(0.58) brightness(0.82);
+}
+
+.mode-selector-btn.is-disabled:hover,
+.mode-selector-btn:disabled:hover {
+  border-color: rgba(58, 68, 77, 0.42);
+  background: linear-gradient(
+    180deg,
+    rgba(40, 48, 60, 0.72),
+    rgba(20, 26, 32, 0.9)
+  );
+}
+
+.mode-selector-btn.is-disabled:active,
+.mode-selector-btn:disabled:active {
+  transform: none;
+}
+
 .mode-selector-btn.is-active {
   border-color: rgba(96, 165, 250, 0.55);
   background: linear-gradient(
