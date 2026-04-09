@@ -114,6 +114,7 @@ function App() {
     authUserId,
     authAccessToken,
     isGuestUser,
+    accountSummaryLoading,
     pieceSkin,
     boardSkin,
     abilityLoadout,
@@ -335,19 +336,19 @@ function App() {
   }, [setAccountSummaryLoading, setAuthState]);
 
   useEffect(() => {
-    if (!authReady) return;
+    if (!authReady || !authUserId || !authAccessToken || accountSummaryLoading) return;
     void syncEquippedSkin(pieceSkin);
-  }, [authReady, pieceSkin]);
+  }, [accountSummaryLoading, authAccessToken, authReady, authUserId, pieceSkin]);
 
   useEffect(() => {
-    if (!authReady) return;
+    if (!authReady || !authUserId || !authAccessToken || accountSummaryLoading) return;
     void syncEquippedBoardSkin(boardSkin);
-  }, [authReady, boardSkin]);
+  }, [accountSummaryLoading, authAccessToken, authReady, authUserId, boardSkin]);
 
   useEffect(() => {
-    if (!authReady) return;
+    if (!authReady || !authUserId || !authAccessToken || accountSummaryLoading) return;
     void syncEquippedAbilitySkills(abilityLoadout);
-  }, [abilityLoadout, authReady]);
+  }, [abilityLoadout, accountSummaryLoading, authAccessToken, authReady, authUserId]);
 
   useEffect(() => {
     if (!authReady || !authAccessToken) return;

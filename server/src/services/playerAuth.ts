@@ -492,8 +492,8 @@ export async function finalizeGoogleUpgrade(
     const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
       id: targetUser.id,
       nickname: preservedNickname,
-      equipped_skin: guestSnapshot?.equippedSkin ?? 'classic',
-      equipped_board_skin: guestSnapshot?.equippedBoardSkin ?? 'classic',
+      equipped_skin: currentLinkedProfile.equippedSkin,
+      equipped_board_skin: currentLinkedProfile.equippedBoardSkin,
       equipped_ability_skills:
         guestSnapshot?.equippedAbilitySkills ??
         currentLinkedProfile.equippedAbilitySkills,

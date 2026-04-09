@@ -325,8 +325,8 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
         const { error: profileError } = await supabase_1.supabaseAdmin.from('profiles').upsert({
             id: targetUser.id,
             nickname: preservedNickname,
-            equipped_skin: guestSnapshot?.equippedSkin ?? 'classic',
-            equipped_board_skin: guestSnapshot?.equippedBoardSkin ?? 'classic',
+            equipped_skin: currentLinkedProfile.equippedSkin,
+            equipped_board_skin: currentLinkedProfile.equippedBoardSkin,
             equipped_ability_skills: guestSnapshot?.equippedAbilitySkills ??
                 currentLinkedProfile.equippedAbilitySkills,
             is_guest: false,
