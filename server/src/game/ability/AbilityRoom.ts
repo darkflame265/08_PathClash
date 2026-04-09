@@ -729,15 +729,17 @@ export class AbilityRoom {
         trapTiles: this.trapTiles.filter((trap) => trap.owner === player.color),
       });
     }
-    void recordAbilityUtilityUsage({
-      byUserId: collectUtilitySkillUsageByUser(
-        this.players,
-        resolution.payload.skillEvents,
-      ),
-    });
-    void recordAbilityBlockEvents({
-      byUserId: collectBlockEventsByUser(this.players, resolution.payload.blocks),
-    });
+    if (this.isRewardEligible()) {
+      void recordAbilityUtilityUsage({
+        byUserId: collectUtilitySkillUsageByUser(
+          this.players,
+          resolution.payload.skillEvents,
+        ),
+      });
+      void recordAbilityBlockEvents({
+        byUserId: collectBlockEventsByUser(this.players, resolution.payload.blocks),
+      });
+    }
 
     const atFieldEventCount = resolution.payload.skillEvents.filter(
       (event) => event.skillId === 'arc_reactor_field',

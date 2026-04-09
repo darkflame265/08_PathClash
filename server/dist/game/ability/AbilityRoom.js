@@ -620,12 +620,14 @@ class AbilityRoom {
                 trapTiles: this.trapTiles.filter((trap) => trap.owner === player.color),
             });
         }
-        void (0, achievementService_1.recordAbilityUtilityUsage)({
-            byUserId: collectUtilitySkillUsageByUser(this.players, resolution.payload.skillEvents),
-        });
-        void (0, achievementService_1.recordAbilityBlockEvents)({
-            byUserId: collectBlockEventsByUser(this.players, resolution.payload.blocks),
-        });
+        if (this.isRewardEligible()) {
+            void (0, achievementService_1.recordAbilityUtilityUsage)({
+                byUserId: collectUtilitySkillUsageByUser(this.players, resolution.payload.skillEvents),
+            });
+            void (0, achievementService_1.recordAbilityBlockEvents)({
+                byUserId: collectBlockEventsByUser(this.players, resolution.payload.blocks),
+            });
+        }
         const atFieldEventCount = resolution.payload.skillEvents.filter((event) => event.skillId === 'arc_reactor_field').length;
         const timeRewindExtraDelayMs = resolution.payload.skillEvents
             .filter((event) => event.skillId === 'chronos_time_rewind')
