@@ -38,6 +38,7 @@ const INITIAL_MANA = 4;
 const MAX_MANA = 10;
 const MANA_PER_TURN = 2;
 const SKILL_EVENT_BUFFER_MS = 1100;
+const AT_FIELD_END_DELAY_MS = 700;
 const OVERDRIVE_MANA = 20;
 const ABILITY_STARTING_HP = 5;
 const TRAINING_STARTING_MANA = 10;
@@ -724,9 +725,15 @@ export class AbilityRoom {
       byUserId: collectBlockEventsByUser(this.players, resolution.payload.blocks),
     });
 
+    const atFieldEventCount = resolution.payload.skillEvents.filter(
+      (event) => event.skillId === 'arc_reactor_field',
+    ).length;
+
     const animTime = calcAnimationDuration(
       Math.max(red.plannedPath.length, blue.plannedPath.length) + resolution.payload.skillEvents.length,
-    ) + resolution.payload.skillEvents.length * SKILL_EVENT_BUFFER_MS;
+    ) +
+      resolution.payload.skillEvents.length * SKILL_EVENT_BUFFER_MS +
+      atFieldEventCount * AT_FIELD_END_DELAY_MS;
 
     this.clearMovingCompleteTimeout();
     this.movingCompleteTimeout = setTimeout(() => {

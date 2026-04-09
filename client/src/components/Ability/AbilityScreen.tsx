@@ -61,6 +61,7 @@ const VOID_REVEAL_PAUSE_MS = 450;
 const AT_FIELD_VISUAL_STEPS = 1;
 const GUARD_END_PAUSE_MS = 360;
 const AT_FIELD_END_PAUSE_MS = 360;
+const AT_FIELD_END_DELAY_MS = 700;
 
 type BoolByColor = { red: boolean; blue: boolean };
 type NumberByColor = { red: number; blue: number };
@@ -138,7 +139,10 @@ function collectSkillEventsByStep(
 function collectCollisionsByStep(
   collisions: AbilityResolutionPayload["collisions"],
 ) {
-  const collisionMap = new Map<number, AbilityResolutionPayload["collisions"]>();
+  const collisionMap = new Map<
+    number,
+    AbilityResolutionPayload["collisions"]
+  >();
   for (const collision of collisions) {
     const list = collisionMap.get(collision.step) ?? [];
     list.push(collision);
@@ -353,16 +357,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     red: number | null;
     blue: number | null;
   }>({ red: null, blue: null });
-  const [activeGuards, setActiveGuards] = useState<BoolByColor>(
-    createFalseFlags,
-  );
-  const [activeAtFields, setActiveAtFields] = useState<BoolByColor>(
-    createFalseFlags,
-  );
-  const [activePhaseShifts, setActivePhaseShifts] = useState<BoolByColor>(
-    createFalseFlags,
-  );
-  const [movingPaths, setMovingPaths] = useState<PathsByColor>(createEmptyPaths);
+  const [activeGuards, setActiveGuards] =
+    useState<BoolByColor>(createFalseFlags);
+  const [activeAtFields, setActiveAtFields] =
+    useState<BoolByColor>(createFalseFlags);
+  const [activePhaseShifts, setActivePhaseShifts] =
+    useState<BoolByColor>(createFalseFlags);
+  const [movingPaths, setMovingPaths] =
+    useState<PathsByColor>(createEmptyPaths);
   const [movingStarts, setMovingStarts] = useState<PositionByColor | null>(
     null,
   );
@@ -370,17 +372,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     useState<NullablePositionByColor>(createNullMarkers);
   const [movingTeleportSteps, setMovingTeleportSteps] =
     useState<NullableNumberByColor>(createNullSteps);
-  const [movingBlitzColors, setMovingBlitzColors] = useState<BoolByColor>(
-    createFalseFlags,
-  );
-  const [movingBlitzProgress, setMovingBlitzProgress] = useState<NumberByColor>(
-    createZeroCounters,
-  );
+  const [movingBlitzColors, setMovingBlitzColors] =
+    useState<BoolByColor>(createFalseFlags);
+  const [movingBlitzProgress, setMovingBlitzProgress] =
+    useState<NumberByColor>(createZeroCounters);
   const [movingBlitzSteps, setMovingBlitzSteps] =
     useState<NullableNumberByColor>(createNullSteps);
-  const [activeSunChariots, setActiveSunChariots] = useState<BoolByColor>(
-    createFalseFlags,
-  );
+  const [activeSunChariots, setActiveSunChariots] =
+    useState<BoolByColor>(createFalseFlags);
   const [transitionSunChariots, setTransitionSunChariots] =
     useState<BoolByColor>(createFalseFlags);
   const [movingAtomicClones, setMovingAtomicClones] =
@@ -716,8 +715,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   };
 
   const getPreviewPositionAtStep = (step: number): Position => {
-    const basePosition =
-      state?.players[currentColor].position ?? { row: 2, col: 0 };
+    const basePosition = state?.players[currentColor].position ?? {
+      row: 2,
+      col: 0,
+    };
     const teleport = teleportReservation;
 
     if (!teleport?.target) {
@@ -738,9 +739,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const previewWizardMineReservation =
     state?.phase === "planning"
-      ? skillReservations.find(
+      ? (skillReservations.find(
           (entry) => entry.skillId === "wizard_magic_mine",
-        ) ?? null
+        ) ?? null)
       : null;
   const previewWizardMineTile: AbilityTrapTile | null =
     previewWizardMineReservation
@@ -2329,15 +2330,27 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
       queueAnimationTimeout(() => {
         runStepEventsAndCollisions(step, () => {
-          const { endedGuards, endedAtFields } = consumeDefenseVisualStep();
+          const shouldDelayAtFieldEnd =
+            atFieldCounters.red === 1 || atFieldCounters.blue === 1;
 
-          const continueStep = () => {
-            advance(step + 1);
+          const finalizeDefenseEnd = () => {
+            const { endedGuards, endedAtFields } = consumeDefenseVisualStep();
+
+            const continueStep = () => {
+              advance(step + 1);
+            };
+
+            runGuardEndNotice(endedGuards, () =>
+              runAtFieldEndNotice(endedAtFields, continueStep),
+            );
           };
 
-          runGuardEndNotice(endedGuards, () =>
-            runAtFieldEndNotice(endedAtFields, continueStep),
-          );
+          if (shouldDelayAtFieldEnd) {
+            queueAnimationTimeout(finalizeDefenseEnd, AT_FIELD_END_DELAY_MS);
+            return;
+          }
+
+          finalizeDefenseEnd();
         });
       }, STEP_DURATION_MS);
     };
@@ -2431,7 +2444,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       setOpponentSubmitted(true);
     };
 
-    const onResolution = (payload: AbilityResolutionPayload & { trapTiles?: AbilityTrapTile[] }) => {
+    const onResolution = (
+      payload: AbilityResolutionPayload & { trapTiles?: AbilityTrapTile[] },
+    ) => {
       setRoundInfo(null);
       setTrapTiles(payload.trapTiles ?? []);
       const triggeredOwnedMinePositions = payload.skillEvents
@@ -2491,7 +2506,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     };
 
     const onOpponentDisconnected = () => {
-      if (winnerRef.current !== null || stateRef.current?.phase === "gameover") {
+      if (
+        winnerRef.current !== null ||
+        stateRef.current?.phase === "gameover"
+      ) {
         return;
       }
       const disconnectedColor = currentColor === "red" ? "blue" : "red";
