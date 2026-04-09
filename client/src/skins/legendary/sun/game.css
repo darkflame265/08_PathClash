@@ -33,7 +33,7 @@
   width: 200px;
   inset: -35%;
   border-radius: 50%;
-  background: url("./sun_gemini_clean.png") center center / cover no-repeat;
+  background: url("./sun_cdn.jpg") center center / cover no-repeat;
   background-position: center center;
   box-shadow: 1px 1px 30px 5px #fc9328;
   animation: pole-rotate 30s linear infinite;
