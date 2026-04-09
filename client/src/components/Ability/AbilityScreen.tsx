@@ -1866,32 +1866,48 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         const rewindTarget = event.to;
         const rewindHp = event.rewindHp;
         const currentHp = stateRef.current?.players[event.color].hp ?? 0;
+        const trail = [
+          ...(event.from ? [event.from] : []),
+          ...(event.affectedPositions ?? []),
+          rewindTarget,
+        ].filter((position, index, array) => {
+          if (index === 0) return true;
+          const prev = array[index - 1];
+          return !(
+            prev.row === position.row &&
+            prev.col === position.col
+          );
+        });
+        const movementTrail = trail.slice(1);
         setTimeRewindFocusColor(event.color);
         setRewindingPieceColor(event.color);
 
         queueAnimationTimeout(() => {
-          setState((prev) => {
-            if (!prev) return prev;
-            return {
-              ...prev,
+          const totalTicks = Math.max(
+            movementTrail.length,
+            Math.max(0, rewindHp - currentHp),
+          );
+
+          if (totalTicks === 0) {
+            setState((prev) => {
+              if (!prev) return prev;
+              return {
+                ...prev,
                 players: {
                   ...prev.players,
                   [event.color]: {
                     ...prev.players[event.color],
                     position: rewindTarget,
+                    hp: rewindHp,
                   },
                 },
               };
             });
-
-          if (event.color === "red") {
-            setRedDisplayPos(rewindTarget);
-          } else {
-            setBlueDisplayPos(rewindTarget);
-          }
-
-          const hpSteps = Math.max(0, rewindHp - currentHp);
-          if (hpSteps === 0) {
+            if (event.color === "red") {
+              setRedDisplayPos(rewindTarget);
+            } else {
+              setBlueDisplayPos(rewindTarget);
+            }
             queueAnimationTimeout(() => {
               setRewindingPieceColor(null);
               setTimeRewindFocusColor(null);
@@ -1901,13 +1917,18 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             return;
           }
 
-          for (let index = 0; index < hpSteps; index += 1) {
+          for (let index = 0; index < totalTicks; index += 1) {
             queueAnimationTimeout(() => {
+              const nextPos =
+                movementTrail[index] ??
+                movementTrail[movementTrail.length - 1] ??
+                rewindTarget;
+
               setState((prev) => {
                 if (!prev) return prev;
                 const nextHp = Math.min(
                   rewindHp,
-                  prev.players[event.color].hp + 1,
+                  prev.players[event.color].hp + (index < rewindHp - currentHp ? 1 : 0),
                 );
                 return {
                   ...prev,
@@ -1915,20 +1936,46 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                     ...prev.players,
                     [event.color]: {
                       ...prev.players[event.color],
+                      position: nextPos,
                       hp: nextHp,
                     },
                   },
                 };
               });
+
+              if (event.color === "red") {
+                setRedDisplayPos(nextPos);
+              } else {
+                setBlueDisplayPos(nextPos);
+              }
             }, (index + 1) * TIME_REWIND_HP_STEP_MS);
           }
 
           queueAnimationTimeout(() => {
+            setState((prev) => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                players: {
+                  ...prev.players,
+                  [event.color]: {
+                    ...prev.players[event.color],
+                    position: rewindTarget,
+                    hp: rewindHp,
+                  },
+                },
+              };
+            });
+            if (event.color === "red") {
+              setRedDisplayPos(rewindTarget);
+            } else {
+              setBlueDisplayPos(rewindTarget);
+            }
             setRewindingPieceColor(null);
             setTimeRewindFocusColor(null);
             setAbilityBanner(null);
             done();
-          }, hpSteps * TIME_REWIND_HP_STEP_MS + 40);
+          }, totalTicks * TIME_REWIND_HP_STEP_MS + 40);
         }, TIME_REWIND_FREEZE_MS);
         return;
       }

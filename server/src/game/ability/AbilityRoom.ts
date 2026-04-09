@@ -1071,8 +1071,7 @@ export class AbilityRoom {
 
   private getTimeRewindSnapshot(player: AbilityPlayerState): AbilityTurnSnapshot | null {
     if (player.turnHistory.length === 0) return null;
-    const index = Math.max(0, player.turnHistory.length - 3);
-    return player.turnHistory[index] ?? null;
+    return player.turnHistory[player.turnHistory.length - 1] ?? null;
   }
 
   private findLethalStep(
@@ -1119,7 +1118,14 @@ export class AbilityRoom {
     if (lethalStep === null) return;
 
     player.timeRewindUsed = true;
-    const rewindFrom = { ...nextState.position };
+    const path = color === 'red' ? resolution.payload.redPath : resolution.payload.bluePath;
+    const turnStart =
+      color === 'red' ? resolution.payload.redStart : resolution.payload.blueStart;
+    const rewindFrom =
+      lethalStep > 0
+        ? { ...(path[Math.min(lethalStep - 1, path.length - 1)] ?? turnStart) }
+        : { ...turnStart };
+    const traversedPath = path.slice(0, Math.min(lethalStep, path.length)).reverse();
     nextState.position = { ...rewindSnapshot.position };
     nextState.hp = rewindSnapshot.hp;
 
@@ -1130,7 +1136,7 @@ export class AbilityRoom {
       skillId: 'chronos_time_rewind',
       from: rewindFrom,
       to: { ...rewindSnapshot.position },
-      affectedPositions: [{ ...rewindSnapshot.position }],
+      affectedPositions: traversedPath.map((position) => ({ ...position })),
       rewindHp: rewindSnapshot.hp,
     });
 
