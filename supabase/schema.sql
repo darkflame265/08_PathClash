@@ -192,6 +192,7 @@ begin
     when 'arc_reactor' then 1400
     when 'electric_core' then 1400
     when 'atomic' then 3600
+    when 'chronos' then 3600
     when 'wizard' then 3600
     when 'sun' then 3600
     else null

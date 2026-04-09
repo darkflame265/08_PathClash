@@ -252,6 +252,7 @@ const initialPieceSkin = (() => {
     stored === 'electric_core' ||
     stored === 'quantum' ||
     stored === 'atomic' ||
+    stored === 'chronos' ||
     stored === 'wizard' ||
     stored === 'sun' ||
     stored === 'flag_kr' ||

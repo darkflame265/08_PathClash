@@ -3,6 +3,7 @@ import { FlagSkin, isFlagSkin } from '../shared/FlagSkin';
 import { CosmicGame } from '../../skins/rare/cosmic/Game';
 import { ArcReactorGame } from '../../skins/rare/arc_reactor/Game';
 import { AtomicGame } from '../../skins/legendary/atomic/Game';
+import { ChronosGame } from '../../skins/legendary/chronos/Game';
 import { SunGame } from '../../skins/legendary/sun/Game';
 import { WizardGame } from '../../skins/legendary/wizard/Game';
 import { PlasmaGame } from '../../skins/common/plasma/Game';
@@ -48,6 +49,7 @@ interface Props {
     | "electric_core"
     | "quantum"
     | "atomic"
+    | "chronos"
     | "sun"
     | "wizard"
     | "flag_kr"
@@ -159,6 +161,7 @@ export function PlayerPiece({
           {effectiveSkin === "arc_reactor" && <ArcReactorGame />}
           {effectiveSkin === "electric_core" && <ElectricCoreGame />}
           {effectiveSkin === "atomic" && <AtomicGame cellSize={cellSize} />}
+          {effectiveSkin === "chronos" && <ChronosGame />}
           {effectiveSkin === "sun" && <SunGame cellSize={cellSize} />}
           {effectiveSkin === "wizard" && <WizardGame />}
           {effectiveSkin === "quantum" && <QuantumGame />}

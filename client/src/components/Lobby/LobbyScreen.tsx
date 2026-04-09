@@ -3,6 +3,7 @@
 import { FlagSkin, isFlagSkin } from "../shared/FlagSkin";
 
 import { AtomicPreview } from "../../skins/legendary/atomic/Preview";
+import { ChronosPreview } from "../../skins/legendary/chronos/Preview";
 import { SunPreview } from "../../skins/legendary/sun/Preview";
 import { WizardPreview } from "../../skins/legendary/wizard/Preview";
 
@@ -1294,6 +1295,7 @@ export function LobbyScreen({
       | "electric_core"
       | "quantum"
       | "atomic"
+      | "chronos"
       | "sun"
       | "flag_kr"
       | "flag_jp"
@@ -1525,6 +1527,25 @@ export function LobbyScreen({
         lang === "en"
           ? "Legendary magic circle — hexagram, orbiting diamonds, and plasma arms pulse with arcane energy."
           : "레전더리 마법진 — 헥사그램, 공전 다이아, 플라즈마 암이 신비로운 에너지로 맥동.",
+
+      requiredWins: null,
+
+      requiredPlays: null,
+
+      tokenPrice: 3600,
+
+      tier: "legendary",
+    },
+
+    {
+      id: "chronos",
+
+      name: lang === "en" ? "Chronos" : "크로노스",
+
+      desc:
+        lang === "en"
+          ? "Legendary astral clockwork core with orbiting time rings and luminous hands."
+          : "레전더리 천체 시계 코어 - 공전하는 시간 링과 빛나는 시곗바늘이 흐릅니다.",
 
       requiredWins: null,
 
@@ -3737,6 +3758,7 @@ export function LobbyScreen({
                         {choice.id === "atomic" && (
                           <AtomicPreview ready={atomicPreviewReady} />
                         )}
+                        {choice.id === "chronos" && <ChronosPreview />}
                         {choice.id === "sun" && <SunPreview />}
                       </span>
 

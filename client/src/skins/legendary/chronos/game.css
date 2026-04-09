@@ -1,0 +1,262 @@
+.player-piece.piece-skin-chronos .piece-inner {
+  background: radial-gradient(circle at 50% 50%, rgba(10, 15, 24, 0.96) 0%, rgba(6, 10, 18, 0.98) 68%, rgba(3, 5, 10, 1) 100%);
+  overflow: visible;
+  box-shadow:
+    0 0 calc(var(--piece-glow, 12px) * 0.95) rgba(203, 213, 225, 0.24),
+    0 0 calc(var(--piece-glow, 12px) * 2) rgba(251, 191, 36, 0.12),
+    inset 0 0 12px rgba(255, 255, 255, 0.08);
+  border-color: rgba(203, 213, 225, 0.72);
+}
+
+.chronos-scale {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 260px;
+  height: 260px;
+  transform: translate(-50%, -50%) scale(calc((var(--piece-inner-size, 24px) / 260) * 1.06));
+  transform-origin: center;
+  pointer-events: none;
+}
+
+.chronos-wrap {
+  position: relative;
+  width: 260px;
+  height: 260px;
+}
+
+.chronos-body {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #f1f5f9 0%, #cbd5e1 34%, #475569 68%, #0f1923 100%);
+  border: 2px solid rgba(203, 213, 225, 0.85);
+  box-shadow:
+    0 0 18px rgba(203, 213, 225, 0.4),
+    0 0 40px rgba(148, 163, 184, 0.22),
+    inset 0 0 12px rgba(255, 255, 255, 0.12);
+  animation: chronosPulse 2s ease-in-out infinite;
+}
+
+.chronos-core {
+  position: absolute;
+  inset: 70px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 40%, #78350f 80%, transparent 100%);
+  opacity: 0.72;
+  animation: chronosCorePulse 2s ease-in-out infinite;
+}
+
+.chronos-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.chronos-ring-inner {
+  inset: -16px;
+  border: 1.5px solid rgba(251, 191, 36, 0.5);
+  animation: chronosSpinCW 12s linear infinite;
+}
+
+.chronos-ring-mid {
+  inset: -34px;
+  border: 1.5px solid rgba(203, 213, 225, 0.45);
+  animation: chronosSpinCCW 20s linear infinite;
+}
+
+.chronos-ring-outer {
+  inset: -52px;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  animation: chronosSpinCW 35s linear infinite;
+}
+
+.chronos-tick {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  border-radius: 999px;
+}
+
+.chronos-tick-inner {
+  width: 2px;
+  height: 6px;
+  margin-left: -1px;
+  background: rgba(251, 191, 36, 0.84);
+  transform-origin: 1px 114px;
+  transform: rotate(var(--chronos-tick-angle));
+}
+
+.chronos-tick-mid {
+  width: 2px;
+  height: 7px;
+  margin-left: -1px;
+  background: rgba(203, 213, 225, 0.68);
+  transform-origin: 1px 132px;
+  transform: rotate(var(--chronos-tick-angle));
+}
+
+.chronos-tick-outer {
+  width: 1.5px;
+  height: 8px;
+  margin-left: -0.75px;
+  background: rgba(251, 191, 36, 0.52);
+  transform-origin: 0.75px 150px;
+  transform: rotate(var(--chronos-tick-angle));
+}
+
+.chronos-hand {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 999px;
+  transform-origin: center bottom;
+}
+
+.chronos-hand-hour {
+  width: 2.5px;
+  height: 24px;
+  margin-left: -1.25px;
+  margin-top: -24px;
+  background: linear-gradient(to top, #fde68a, #e2e8f0);
+  animation: chronosHandHour 3600s linear infinite;
+}
+
+.chronos-hand-minute {
+  width: 2px;
+  height: 34px;
+  margin-left: -1px;
+  margin-top: -34px;
+  background: linear-gradient(to top, #cbd5e1, #ffffff);
+  animation: chronosHandMinute 60s linear infinite;
+}
+
+.chronos-hand-second {
+  width: 1px;
+  height: 40px;
+  margin-left: -0.5px;
+  margin-top: -40px;
+  background: #fbbf24;
+  box-shadow: 0 0 3px rgba(251, 191, 36, 0.9);
+  animation: chronosHandSecond 3s linear infinite;
+}
+
+.chronos-pivot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin-left: -3.5px;
+  margin-top: -3.5px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fde68a, #d97706);
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.9);
+}
+
+.chronos-orb,
+.chronos-star {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+}
+
+.chronos-orb {
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  margin-top: -5px;
+  background: radial-gradient(circle at 30% 30%, #fde68a, #d97706);
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.8);
+  animation: chronosOrbOrbit 7s linear infinite;
+  animation-delay: var(--chronos-orbit-delay);
+}
+
+.chronos-star {
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  margin-top: -3px;
+  background: #e2e8f0;
+  box-shadow: 0 0 5px rgba(226, 232, 240, 0.9);
+  animation: chronosStarOrbit 14s linear infinite;
+  animation-delay: var(--chronos-star-delay);
+}
+
+@keyframes chronosPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 18px rgba(203, 213, 225, 0.4),
+      0 0 40px rgba(148, 163, 184, 0.22),
+      inset 0 0 12px rgba(255, 255, 255, 0.12);
+  }
+  50% {
+    box-shadow:
+      0 0 28px rgba(226, 232, 240, 0.6),
+      0 0 60px rgba(203, 213, 225, 0.35),
+      inset 0 0 18px rgba(255, 255, 255, 0.2);
+  }
+}
+
+@keyframes chronosCorePulse {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 0.92;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes chronosSpinCW {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes chronosSpinCCW {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes chronosHandHour {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes chronosHandMinute {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes chronosHandSecond {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes chronosOrbOrbit {
+  from {
+    transform: rotate(0deg) translateX(104px);
+  }
+  to {
+    transform: rotate(360deg) translateX(104px);
+  }
+}
+
+@keyframes chronosStarOrbit {
+  from {
+    transform: rotate(0deg) translateX(142px);
+  }
+  to {
+    transform: rotate(-360deg) translateX(142px);
+  }
+}

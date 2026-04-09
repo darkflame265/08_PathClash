@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>크로노스 스킨 후보 v2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0d1117;
+    color: #e0e6ed;
+    font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    padding: 40px 20px 70px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: #8899aa;
+    margin-bottom: 48px;
+  }
+  .cards {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .card {
+    background: #161d26;
+    border: 2px solid transparent;
+    border-radius: 20px;
+    width: 310px;
+    padding: 32px 28px 28px;
+    cursor: pointer;
+    transition: border-color 0.25s, box-shadow 0.25s, transform 0.18s;
+    position: relative;
+  }
+  .card:hover { transform: translateY(-4px); }
+  .card.selected {
+    border-color: #fbbf24;
+    box-shadow: 0 0 32px rgba(251,191,36,0.18), 0 0 60px rgba(251,191,36,0.08);
+  }
+  .badge {
+    position: absolute;
+    top: 16px; right: 16px;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+  .stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    margin-bottom: 28px;
+    position: relative;
+  }
+
+  /* ═══════════════════════════════════════
+     A. 클락워크 크로노스 — 황금 시계 (원본)
+  ═══════════════════════════════════════ */
+  .piece-cw {
+    position: relative;
+    width: 86px; height: 86px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, #fde68a 0%, #d97706 42%, #78350f 78%, #1c0900 100%);
+    border: 2px solid rgba(253,211,77,0.85);
+    box-shadow:
+      0 0 18px rgba(251,191,36,0.55),
+      0 0 40px rgba(217,119,6,0.3),
+      inset 0 0 12px rgba(255,255,255,0.08);
+    animation: cw-pulse 2s ease-in-out infinite;
+  }
+  .cw-face {
+    position: absolute;
+    inset: 6px;
+    border-radius: 50%;
+    border: 1px solid rgba(253,211,77,0.3);
+  }
+  /* 눈금 링 */
+  .cw-ring {
+    position: absolute;
+    inset: -20px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(253,211,77,0.35);
+    animation: spin-cw 30s linear infinite;
+  }
+  .cw-tick {
+    position: absolute;
+    left: 50%; top: 0;
+    width: 2px; height: 8px;
+    margin-left: -1px;
+    background: rgba(253,211,77,0.75);
+    border-radius: 1px;
+    transform-origin: 1px 63px;
+  }
+  .cw-tick-sm {
+    width: 1.5px; height: 5px;
+    background: rgba(253,211,77,0.4);
+    transform-origin: 0.75px 63px;
+  }
+  /* 기어 링 */
+  .cw-gear {
+    position: absolute;
+    inset: -36px;
+    border-radius: 50%;
+    border: 1px dashed rgba(217,119,6,0.4);
+    animation: spin-cw 45s linear infinite reverse;
+  }
+  /* 시침 분침 초침 */
+  .cw-hand {
+    position: absolute;
+    left: 50%; bottom: 50%;
+    transform-origin: bottom center;
+    border-radius: 2px 2px 0 0;
+  }
+  .cw-h-hr  { width: 2.5px; height: 20px; margin-left: -1.25px; background: linear-gradient(to top, #fde68a, #fbbf24); animation: hand-hr 3600s linear infinite; }
+  .cw-h-min { width: 2px;   height: 28px; margin-left: -1px;    background: linear-gradient(to top, #fde68a, #f59e0b); animation: hand-min 60s linear infinite; }
+  .cw-h-sec { width: 1.5px; height: 34px; margin-left: -0.75px; background: #ef4444; animation: hand-sec 3s linear infinite; }
+  .cw-pivot {
+    position: absolute; left: 50%; top: 50%;
+    width: 7px; height: 7px;
+    background: #fde68a;
+    border-radius: 50%;
+    transform: translate(-50%,-50%);
+    box-shadow: 0 0 6px rgba(253,230,138,0.9);
+    z-index: 5;
+  }
+  /* 공전 구슬 3개 */
+  .cw-orb {
+    position: absolute; left: 50%; top: 50%;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin: -5px;
+    background: radial-gradient(circle at 30% 30%, #fde68a, #d97706);
+    box-shadow: 0 0 7px rgba(251,191,36,0.85);
+  }
+  .cw-orb-1 { animation: orbit-a 4s linear infinite 0s; }
+  .cw-orb-2 { animation: orbit-a 4s linear infinite -1.33s; }
+  .cw-orb-3 { animation: orbit-a 4s linear infinite -2.67s; }
+  @keyframes cw-pulse {
+    0%,100% { box-shadow: 0 0 18px rgba(251,191,36,0.55), 0 0 40px rgba(217,119,6,0.3), inset 0 0 12px rgba(255,255,255,0.08); }
+    50%      { box-shadow: 0 0 28px rgba(251,191,36,0.75), 0 0 60px rgba(217,119,6,0.5), inset 0 0 18px rgba(255,255,255,0.14); }
+  }
+  @keyframes spin-cw  { to { transform: rotate(360deg); } }
+  @keyframes hand-hr  { from { transform: rotate(-90deg); } to { transform: rotate(270deg); } }
+  @keyframes hand-min { from { transform: rotate(-90deg); } to { transform: rotate(270deg); } }
+  @keyframes hand-sec { from { transform: rotate(-90deg); } to { transform: rotate(270deg); } }
+  @keyframes orbit-a  { from { transform: rotate(0deg) translateX(56px); } to { transform: rotate(360deg) translateX(56px); } }
+
+
+  /* ═══════════════════════════════════════
+     B. 심판의 시계 — 건메탈 + 붉은 경고
+        "자정이 다가온다"
+  ═══════════════════════════════════════ */
+  .piece-doom {
+    position: relative;
+    width: 86px; height: 86px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, #3d3d3d 0%, #1a1a1a 45%, #0a0a0a 80%, #000 100%);
+    border: 2px solid rgba(180,30,30,0.75);
+    box-shadow:
+      0 0 18px rgba(200,30,30,0.45),
+      0 0 40px rgba(180,0,0,0.22),
+      inset 0 0 12px rgba(255,60,60,0.06);
+    animation: doom-pulse 2.4s ease-in-out infinite;
+  }
+  /* 균열 효과 */
+  .doom-crack {
+    position: absolute;
+    inset: 0; border-radius: 50%; overflow: hidden;
+  }
+  .doom-crack::before {
+    content: '';
+    position: absolute;
+    left: 52%; top: 8%;
+    width: 1px; height: 55%;
+    background: linear-gradient(to bottom, transparent, rgba(255,60,60,0.7) 35%, rgba(220,30,30,0.4) 70%, transparent);
+    transform: rotate(12deg);
+    filter: blur(0.5px);
+    animation: crack-flicker 3s ease-in-out infinite;
+  }
+  .doom-crack::after {
+    content: '';
+    position: absolute;
+    left: 38%; top: 25%;
+    width: 1px; height: 35%;
+    background: linear-gradient(to bottom, transparent, rgba(255,60,60,0.5) 50%, transparent);
+    transform: rotate(-20deg);
+    filter: blur(0.3px);
+    animation: crack-flicker 3s ease-in-out infinite 1.1s;
+  }
+  /* 눈금 링 (건메탈) */
+  .doom-ring {
+    position: absolute;
+    inset: -20px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(160,160,160,0.3);
+    animation: spin-cw 28s linear infinite;
+  }
+  .doom-tick {
+    position: absolute;
+    left: 50%; top: 0;
+    width: 2px; height: 9px;
+    margin-left: -1px;
+    background: rgba(180,180,180,0.6);
+    border-radius: 1px;
+    transform-origin: 1px 63px;
+  }
+  /* 12시 방향 경고 틱은 붉게 */
+  .doom-tick-warn {
+    background: rgba(220,50,50,0.9);
+    height: 12px;
+    box-shadow: 0 0 4px rgba(220,50,50,0.6);
+  }
+  /* 외곽 경고 링 */
+  .doom-outer {
+    position: absolute;
+    inset: -36px;
+    border-radius: 50%;
+    border: 1px dashed rgba(180,30,30,0.35);
+    animation: spin-cw 50s linear infinite reverse;
+  }
+  /* 시침 — 자정 5분 전 위치로 고정하듯 느리게 */
+  .doom-hand {
+    position: absolute;
+    left: 50%; bottom: 50%;
+    transform-origin: bottom center;
+    border-radius: 2px 2px 0 0;
+  }
+  .doom-h-hr  { width: 3px; height: 20px; margin-left: -1.5px; background: linear-gradient(to top, #888, #ccc); animation: doom-hr 3600s linear infinite; animation-delay: -3240s; }
+  .doom-h-min { width: 2px; height: 29px; margin-left: -1px; background: linear-gradient(to top, #777, #bbb); animation: doom-min 60s linear infinite; animation-delay: -54s; /* 자정 5분 전 */ }
+  .doom-h-sec { width: 1.5px; height: 34px; margin-left: -0.75px; background: #ef4444; box-shadow: 0 0 4px rgba(239,68,68,0.8); animation: hand-sec 3s linear infinite; }
+  .doom-pivot {
+    position: absolute; left: 50%; top: 50%;
+    width: 7px; height: 7px;
+    background: #cc3333;
+    border-radius: 50%;
+    transform: translate(-50%,-50%);
+    box-shadow: 0 0 8px rgba(200,50,50,0.9);
+    z-index: 5;
+  }
+  /* 공전 붉은 경고 점 */
+  .doom-dot {
+    position: absolute; left: 50%; top: 50%;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    margin: -4.5px;
+    background: radial-gradient(circle at 30% 30%, #fca5a5, #ef4444);
+    box-shadow: 0 0 8px rgba(239,68,68,0.9);
+    animation: doom-dot-flicker 1.2s ease-in-out infinite;
+  }
+  .doom-dot-1 { animation: orbit-doom 5s linear infinite 0s, doom-dot-flicker 1.2s ease-in-out infinite 0s; }
+  .doom-dot-2 { animation: orbit-doom 5s linear infinite -2.5s, doom-dot-flicker 1.2s ease-in-out infinite 0.6s; }
+  @keyframes orbit-doom  { from { transform: rotate(0deg) translateX(52px); } to { transform: rotate(360deg) translateX(52px); } }
+  @keyframes doom-pulse {
+    0%,100% { box-shadow: 0 0 18px rgba(200,30,30,0.45), 0 0 40px rgba(180,0,0,0.22), inset 0 0 12px rgba(255,60,60,0.06); }
+    50%      { box-shadow: 0 0 30px rgba(220,40,40,0.65), 0 0 60px rgba(200,0,0,0.38), inset 0 0 18px rgba(255,60,60,0.12); }
+  }
+  @keyframes doom-hr  { from { transform: rotate(-90deg); } to { transform: rotate(270deg); } }
+  @keyframes doom-min { from { transform: rotate(-90deg); } to { transform: rotate(270deg); } }
+  @keyframes crack-flicker { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+  @keyframes doom-dot-flicker { 0%,100% { opacity: 0.6; } 50% { opacity: 1; transform: scale(1.15); } }
+
+
+  /* ═══════════════════════════════════════
+     C. 천문 크로노스 — 은/금 다층 궤도링
+        "우주 시간의 군주"
+  ═══════════════════════════════════════ */
+  .piece-astro {
+    position: relative;
+    width: 86px; height: 86px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, #f1f5f9 0%, #cbd5e1 35%, #475569 70%, #0f1923 100%);
+    border: 2px solid rgba(203,213,225,0.85);
+    box-shadow:
+      0 0 18px rgba(203,213,225,0.4),
+      0 0 40px rgba(148,163,184,0.22),
+      inset 0 0 12px rgba(255,255,255,0.12);
+    animation: astro-pulse 2s ease-in-out infinite;
+  }
+  /* 코어 골드 하이라이트 */
+  .astro-core-inner {
+    position: absolute;
+    inset: 24px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 40%, #78350f 80%, transparent 100%);
+    opacity: 0.7;
+    animation: astro-core 2s ease-in-out infinite;
+  }
+  /* 내부 골드 눈금 링 (가장 안) */
+  .astro-ring-inner {
+    position: absolute;
+    inset: -16px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(251,191,36,0.5);
+    animation: spin-cw 12s linear infinite;
+  }
+  .astro-tick-i {
+    position: absolute;
+    left: 50%; top: 0;
+    width: 2px; height: 6px;
+    margin-left: -1px;
+    background: rgba(251,191,36,0.8);
+    border-radius: 1px;
+    transform-origin: 1px 59px;
+  }
+  /* 중간 은 링 */
+  .astro-ring-mid {
+    position: absolute;
+    inset: -32px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(203,213,225,0.45);
+    animation: spin-cw 20s linear infinite reverse;
+  }
+  .astro-tick-m {
+    position: absolute;
+    left: 50%; top: 0;
+    width: 2px; height: 7px;
+    margin-left: -1px;
+    background: rgba(203,213,225,0.65);
+    border-radius: 1px;
+    transform-origin: 1px 75px;
+  }
+  /* 외곽 골드 링 */
+  .astro-ring-outer {
+    position: absolute;
+    inset: -50px;
+    border-radius: 50%;
+    border: 1px solid rgba(251,191,36,0.25);
+    animation: spin-cw 35s linear infinite;
+  }
+  .astro-tick-o {
+    position: absolute;
+    left: 50%; top: 0;
+    width: 1.5px; height: 8px;
+    margin-left: -0.75px;
+    background: rgba(251,191,36,0.5);
+    border-radius: 1px;
+    transform-origin: 0.75px 93px;
+  }
+  /* 시침 분침 — 정교하고 길게 */
+  .astro-hand {
+    position: absolute;
+    left: 50%; bottom: 50%;
+    transform-origin: bottom center;
+    border-radius: 2px 2px 0 0;
+  }
+  .astro-h-hr  { width: 2.5px; height: 19px; margin-left: -1.25px; background: linear-gradient(to top, #fde68a, #e2e8f0); animation: hand-hr 3600s linear infinite; }
+  .astro-h-min { width: 2px;   height: 27px; margin-left: -1px;    background: linear-gradient(to top, #cbd5e1, #fff); animation: hand-min 60s linear infinite; }
+  .astro-h-sec { width: 1px;   height: 32px; margin-left: -0.5px;  background: #fbbf24; box-shadow: 0 0 3px rgba(251,191,36,0.9); animation: hand-sec 3s linear infinite; }
+  .astro-pivot {
+    position: absolute; left: 50%; top: 50%;
+    width: 7px; height: 7px;
+    background: radial-gradient(circle, #fde68a, #d97706);
+    border-radius: 50%;
+    transform: translate(-50%,-50%);
+    box-shadow: 0 0 8px rgba(251,191,36,0.9);
+    z-index: 5;
+  }
+  /* 중간 링 공전 — 금 구슬 4개 */
+  .astro-orb {
+    position: absolute; left: 50%; top: 50%;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    margin: -4.5px;
+    background: radial-gradient(circle at 30% 30%, #fde68a, #d97706);
+    box-shadow: 0 0 6px rgba(251,191,36,0.8);
+  }
+  .astro-orb-1 { animation: astro-orb-mid 7s linear infinite 0s; }
+  .astro-orb-2 { animation: astro-orb-mid 7s linear infinite -1.75s; }
+  .astro-orb-3 { animation: astro-orb-mid 7s linear infinite -3.5s; }
+  .astro-orb-4 { animation: astro-orb-mid 7s linear infinite -5.25s; }
+  /* 외곽 링 공전 — 은 점 3개 */
+  .astro-star {
+    position: absolute; left: 50%; top: 50%;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin: -3px;
+    background: #e2e8f0;
+    box-shadow: 0 0 5px rgba(226,232,240,0.9);
+  }
+  .astro-star-1 { animation: astro-star-out 14s linear infinite 0s; }
+  .astro-star-2 { animation: astro-star-out 14s linear infinite -4.67s; }
+  .astro-star-3 { animation: astro-star-out 14s linear infinite -9.33s; }
+  @keyframes astro-orb-mid  { from { transform: rotate(0deg) translateX(49px); } to { transform: rotate(360deg) translateX(49px); } }
+  @keyframes astro-star-out { from { transform: rotate(0deg) translateX(70px); } to { transform: rotate(-360deg) translateX(70px); } }
+  @keyframes astro-pulse {
+    0%,100% { box-shadow: 0 0 18px rgba(203,213,225,0.4), 0 0 40px rgba(148,163,184,0.22), inset 0 0 12px rgba(255,255,255,0.12); }
+    50%      { box-shadow: 0 0 28px rgba(226,232,240,0.6), 0 0 60px rgba(203,213,225,0.35), inset 0 0 18px rgba(255,255,255,0.2); }
+  }
+  @keyframes astro-core {
+    0%,100% { opacity: 0.6; transform: scale(0.95); }
+    50%      { opacity: 0.9; transform: scale(1.05); }
+  }
+
+  /* ── 카드 공통 ── */
+  .card-label { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 8px; }
+  .card h3 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+  .card-sub { font-size: 12px; color: #889aab; margin-bottom: 16px; line-height: 1.55; }
+  .card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; letter-spacing: 0.06em; }
+
+  /* A */
+  .card-a { border-color: rgba(251,191,36,0.25); }
+  .card-a .badge { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+  .card-a .card-label { color: #fbbf24; }
+  .card-a h3 { color: #fde68a; }
+  .card-a .tag { background: rgba(251,191,36,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+  /* B */
+  .card-b { border-color: rgba(180,30,30,0.3); }
+  .card-b .badge { background: rgba(180,30,30,0.15); color: #f87171; border: 1px solid rgba(180,30,30,0.4); }
+  .card-b .card-label { color: #f87171; }
+  .card-b h3 { color: #fca5a5; }
+  .card-b .tag { background: rgba(180,30,30,0.12); color: #f87171; border: 1px solid rgba(180,30,30,0.3); }
+  /* C */
+  .card-c { border-color: rgba(203,213,225,0.25); }
+  .card-c .badge { background: rgba(203,213,225,0.1); color: #cbd5e1; border: 1px solid rgba(203,213,225,0.3); }
+  .card-c .card-label { color: #cbd5e1; }
+  .card-c h3 { color: #f1f5f9; }
+  .card-c .tag { background: rgba(203,213,225,0.1); color: #cbd5e1; border: 1px solid rgba(203,213,225,0.25); }
+
+  .selected-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 14px 24px;
+    background: rgba(13,17,23,0.95);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    text-align: center;
+    font-size: 14px;
+    color: #8899aa;
+    backdrop-filter: blur(8px);
+    display: none;
+  }
+  .selected-bar.show { display: block; }
+  .selected-bar span { color: #fbbf24; font-weight: 700; }
+</style>
+</head>
+<body>
+<h1>크로노스 (Chronos) — 클락워크 파생 3종</h1>
+<p class="subtitle">A 황금 시계를 기준으로 파생된 3가지 방향입니다. 마음에 드는 디자인을 클릭하세요.</p>
+
+<div class="cards">
+
+  <!-- A. 황금 시계 원본 -->
+  <div class="card card-a" onclick="sel(this,'A')">
+    <div class="badge">A — 원본</div>
+    <div class="stage">
+      <div class="piece-cw">
+        <div class="cw-face"></div>
+        <div class="cw-ring">
+          <div class="cw-tick" style="transform:rotate(0deg)"></div>
+          <div class="cw-tick cw-tick-sm" style="transform:rotate(15deg)"></div>
+          <div class="cw-tick cw-tick-sm" style="transform:rotate(30deg)"></div>
+          <div class="cw-tick" style="transform:rotate(45deg)"></div>
+          <div class="cw-tick cw-tick-sm" style="transform:rotate(60deg)"></div>
+          <div class="cw-tick cw-tick-sm" style="transform:rotate(75deg)"></div>
+          <div class="cw-tick" style="transform:rotate(90deg)"></div>
+          <div class="cw-tick cw-tick-sm" style="transform:rotate(105deg)"></div>
+          <div class="cw-tick cw-tick-sm" style="transform:rotate(120deg)"></div>
+          <div class="cw-tick" style="transform:rotate(135deg)"></div>
+          <div class="cw-tick cw-tick-sm" style="transform:rotate(150deg)"></div>
+          <div class="cw-tick cw-tick-sm" style="transform:rotate(165deg)"></div>
+          <div class="cw-tick" style="transform:rotate(180deg)"></div>
+          <div class="cw-tick cw-tick-sm" style="transform:rotate(195deg)"></div>
+          <div class="cw-tick cw-tick-sm" style="transform:rotate(210deg)"></div>
+          <div class="cw-tick" style="transform:rotate(225deg)"></div>
+          <div class="cw-tick cw-tick-sm" style="transform:rotate(240deg)"></div>
+          <div class="cw-tick cw-tick-sm" style="transform:rotate(255deg)"></div>
+          <div class="cw-tick" style="transform:rotate(270deg)"></div>
+          <div class="cw-tick cw-tick-sm" style="transform:rotate(285deg)"></div>
+          <div class="cw-tick cw-tick-sm" style="transform:rotate(300deg)"></div>
+          <div class="cw-tick" style="transform:rotate(315deg)"></div>
+          <div class="cw-tick cw-tick-sm" style="transform:rotate(330deg)"></div>
+          <div class="cw-tick cw-tick-sm" style="transform:rotate(345deg)"></div>
+        </div>
+        <div class="cw-gear"></div>
+        <div class="cw-hand cw-h-hr"></div>
+        <div class="cw-hand cw-h-min"></div>
+        <div class="cw-hand cw-h-sec"></div>
+        <div class="cw-pivot"></div>
+        <div class="cw-orb cw-orb-1"></div>
+        <div class="cw-orb cw-orb-2"></div>
+        <div class="cw-orb cw-orb-3"></div>
+      </div>
+    </div>
+    <div class="card-label">A — Clockwork</div>
+    <h3>황금 시계</h3>
+    <p class="card-sub">시침·분침·초침 + 황금 눈금 링. 따뜻한 황금/청동 톤의 기계적 시간 지배자.</p>
+    <div class="card-tags">
+      <span class="tag">황금 / 청동</span>
+      <span class="tag">시계 바늘</span>
+      <span class="tag">따뜻한 위압감</span>
+    </div>
+  </div>
+
+  <!-- B. 심판의 시계 -->
+  <div class="card card-b" onclick="sel(this,'B')">
+    <div class="badge">B — 파생</div>
+    <div class="stage">
+      <div class="piece-doom">
+        <div class="doom-crack"></div>
+        <div class="doom-ring">
+          <div class="doom-tick doom-tick-warn" style="transform:rotate(0deg)"></div>
+          <div class="doom-tick" style="transform:rotate(30deg)"></div>
+          <div class="doom-tick" style="transform:rotate(60deg)"></div>
+          <div class="doom-tick" style="transform:rotate(90deg)"></div>
+          <div class="doom-tick" style="transform:rotate(120deg)"></div>
+          <div class="doom-tick" style="transform:rotate(150deg)"></div>
+          <div class="doom-tick" style="transform:rotate(180deg)"></div>
+          <div class="doom-tick" style="transform:rotate(210deg)"></div>
+          <div class="doom-tick" style="transform:rotate(240deg)"></div>
+          <div class="doom-tick" style="transform:rotate(270deg)"></div>
+          <div class="doom-tick" style="transform:rotate(300deg)"></div>
+          <div class="doom-tick" style="transform:rotate(330deg)"></div>
+        </div>
+        <div class="doom-outer"></div>
+        <div class="doom-hand doom-h-hr"></div>
+        <div class="doom-hand doom-h-min"></div>
+        <div class="doom-hand doom-h-sec"></div>
+        <div class="doom-pivot"></div>
+        <div class="doom-dot doom-dot-1"></div>
+        <div class="doom-dot doom-dot-2"></div>
+      </div>
+    </div>
+    <div class="card-label">B — Doomsday Clock</div>
+    <h3>심판의 시계</h3>
+    <p class="card-sub">자정 5분 전에 멈춘 듯한 건메탈 시계. 적색 균열, 붉은 경고 눈금, 핏빛 초침. 위협적이고 불길한 변형.</p>
+    <div class="card-tags">
+      <span class="tag">건메탈 / 흑철</span>
+      <span class="tag">붉은 경고</span>
+      <span class="tag">균열 / 파괴감</span>
+    </div>
+  </div>
+
+  <!-- C. 천문 크로노스 -->
+  <div class="card card-c" onclick="sel(this,'C')">
+    <div class="badge">C — 파생</div>
+    <div class="stage">
+      <div class="piece-astro">
+        <div class="astro-core-inner"></div>
+        <!-- 내부 금 눈금 링 -->
+        <div class="astro-ring-inner">
+          <div class="astro-tick-i" style="transform:rotate(0deg)"></div>
+          <div class="astro-tick-i" style="transform:rotate(45deg)"></div>
+          <div class="astro-tick-i" style="transform:rotate(90deg)"></div>
+          <div class="astro-tick-i" style="transform:rotate(135deg)"></div>
+          <div class="astro-tick-i" style="transform:rotate(180deg)"></div>
+          <div class="astro-tick-i" style="transform:rotate(225deg)"></div>
+          <div class="astro-tick-i" style="transform:rotate(270deg)"></div>
+          <div class="astro-tick-i" style="transform:rotate(315deg)"></div>
+        </div>
+        <!-- 중간 은 링 -->
+        <div class="astro-ring-mid">
+          <div class="astro-tick-m" style="transform:rotate(0deg)"></div>
+          <div class="astro-tick-m" style="transform:rotate(30deg)"></div>
+          <div class="astro-tick-m" style="transform:rotate(60deg)"></div>
+          <div class="astro-tick-m" style="transform:rotate(90deg)"></div>
+          <div class="astro-tick-m" style="transform:rotate(120deg)"></div>
+          <div class="astro-tick-m" style="transform:rotate(150deg)"></div>
+          <div class="astro-tick-m" style="transform:rotate(180deg)"></div>
+          <div class="astro-tick-m" style="transform:rotate(210deg)"></div>
+          <div class="astro-tick-m" style="transform:rotate(240deg)"></div>
+          <div class="astro-tick-m" style="transform:rotate(270deg)"></div>
+          <div class="astro-tick-m" style="transform:rotate(300deg)"></div>
+          <div class="astro-tick-m" style="transform:rotate(330deg)"></div>
+        </div>
+        <!-- 외곽 금 링 -->
+        <div class="astro-ring-outer">
+          <div class="astro-tick-o" style="transform:rotate(0deg)"></div>
+          <div class="astro-tick-o" style="transform:rotate(22.5deg)"></div>
+          <div class="astro-tick-o" style="transform:rotate(45deg)"></div>
+          <div class="astro-tick-o" style="transform:rotate(67.5deg)"></div>
+          <div class="astro-tick-o" style="transform:rotate(90deg)"></div>
+          <div class="astro-tick-o" style="transform:rotate(112.5deg)"></div>
+          <div class="astro-tick-o" style="transform:rotate(135deg)"></div>
+          <div class="astro-tick-o" style="transform:rotate(157.5deg)"></div>
+          <div class="astro-tick-o" style="transform:rotate(180deg)"></div>
+          <div class="astro-tick-o" style="transform:rotate(202.5deg)"></div>
+          <div class="astro-tick-o" style="transform:rotate(225deg)"></div>
+          <div class="astro-tick-o" style="transform:rotate(247.5deg)"></div>
+          <div class="astro-tick-o" style="transform:rotate(270deg)"></div>
+          <div class="astro-tick-o" style="transform:rotate(292.5deg)"></div>
+          <div class="astro-tick-o" style="transform:rotate(315deg)"></div>
+          <div class="astro-tick-o" style="transform:rotate(337.5deg)"></div>
+        </div>
+        <div class="astro-hand astro-h-hr"></div>
+        <div class="astro-hand astro-h-min"></div>
+        <div class="astro-hand astro-h-sec"></div>
+        <div class="astro-pivot"></div>
+        <!-- 중간 공전 금 구슬 4개 -->
+        <div class="astro-orb astro-orb-1"></div>
+        <div class="astro-orb astro-orb-2"></div>
+        <div class="astro-orb astro-orb-3"></div>
+        <div class="astro-orb astro-orb-4"></div>
+        <!-- 외곽 공전 은 점 3개 -->
+        <div class="astro-star astro-star-1"></div>
+        <div class="astro-star astro-star-2"></div>
+        <div class="astro-star astro-star-3"></div>
+      </div>
+    </div>
+    <div class="card-label">C — Astronomical</div>
+    <h3>천문 크로노스</h3>
+    <p class="card-sub">3겹 동심 궤도링 + 안팎 공전 구슬. 은/금이 교차하며 천체 관측기 같은 장엄하고 복잡한 시간의 군주 느낌.</p>
+    <div class="card-tags">
+      <span class="tag">은 / 금 교차</span>
+      <span class="tag">3겹 궤도링</span>
+      <span class="tag">천체 장엄함</span>
+    </div>
+  </div>
+
+</div>
+
+<div class="selected-bar" id="bar">
+  선택됨: <span id="bt"></span> — 터미널에서 피드백을 주세요.
+</div>
+
+<script>
+function sel(el, c) {
+  document.querySelectorAll('.card').forEach(x => x.classList.remove('selected'));
+  el.classList.add('selected');
+  const names = { A:'A — 황금 시계 (원본)', B:'B — 심판의 시계 (Doomsday)', C:'C — 천문 크로노스 (Astronomical)' };
+  document.getElementById('bt').textContent = names[c];
+  document.getElementById('bar').classList.add('show');
+  if (window.__superpowers_select) window.__superpowers_select(c, el.querySelector('h3').textContent);
+}
+</script>
+</body>
+</html>
