@@ -1034,7 +1034,11 @@ export function AbilityGrid({
           />
         )}
 
-        {redVisible && (state.players.red.hp > 0 || hitFlags.red || explodingFlags.red) ? (
+        {redVisible &&
+        (state.players.red.hp > 0 ||
+          hitFlags.red ||
+          explodingFlags.red ||
+          rewindingPieceColor === 'red') ? (
           <>
             <PlayerPiece
               color="red"
@@ -1061,7 +1065,11 @@ export function AbilityGrid({
           />
           </>
         ) : null}
-        {blueVisible && (state.players.blue.hp > 0 || hitFlags.blue || explodingFlags.blue) ? (
+        {blueVisible &&
+        (state.players.blue.hp > 0 ||
+          hitFlags.blue ||
+          explodingFlags.blue ||
+          rewindingPieceColor === 'blue') ? (
           <>
             <PlayerPiece
               color="blue"
