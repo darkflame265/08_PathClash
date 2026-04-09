@@ -754,8 +754,33 @@ async function getCurrentAuthPayload() {
 
 async function emitSocketAck<T>(event: string, payload: unknown): Promise<T> {
   const socket = connectSocket();
-  return new Promise((resolve) => {
-    socket.emit(event, payload, (response: T) => resolve(response));
+  if (!socket.connected) {
+    await new Promise<void>((resolve, reject) => {
+      const timeoutId = window.setTimeout(() => {
+        socket.off("connect", handleConnect);
+        reject(new Error(`socket connect timeout before ${event}`));
+      }, 8000);
+
+      const handleConnect = () => {
+        window.clearTimeout(timeoutId);
+        socket.off("connect", handleConnect);
+        resolve();
+      };
+
+      socket.on("connect", handleConnect);
+      socket.connect();
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    const timeoutId = window.setTimeout(() => {
+      reject(new Error(`socket ack timeout for ${event}`));
+    }, 8000);
+
+    socket.emit(event, payload, (response: T) => {
+      window.clearTimeout(timeoutId);
+      resolve(response);
+    });
   });
 }
 
@@ -1389,12 +1414,31 @@ export async function resolveUpgradeFlowAfterRedirect(): Promise<UpgradeResoluti
     return { kind: "auth_error" };
   }
 
-  const finalizeResult = await emitSocketAck<ServerFinalizeUpgradeResponse>("finalize_google_upgrade", {
-    auth: await getSocketAuthPayload(),
-    guestAuth: pending.guestAuth,
-    guestProfile: pending.guestProfile,
-    flowStartedAt: pending.flowStartedAt,
-  });
+  let finalizeResult: ServerFinalizeUpgradeResponse | null = null;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      finalizeResult = await emitSocketAck<ServerFinalizeUpgradeResponse>("finalize_google_upgrade", {
+        auth: await getSocketAuthPayload(),
+        guestAuth: pending.guestAuth,
+        guestProfile: pending.guestProfile,
+        flowStartedAt: pending.flowStartedAt,
+      });
+      break;
+    } catch (error) {
+      console.warn("[auth] finalize_google_upgrade failed", {
+        attempt: attempt + 1,
+        error,
+      });
+      if (attempt === 0) {
+        await new Promise((resolve) => window.setTimeout(resolve, 600));
+      }
+    }
+  }
+
+  if (!finalizeResult) {
+    return { kind: "none" };
+  }
 
   if (finalizeResult.status === "SWITCH_CONFIRM_REQUIRED" && finalizeResult.profile) {
     clearUpgradeQueryFromUrl();
