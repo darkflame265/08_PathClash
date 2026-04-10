@@ -1,0 +1,24 @@
+- generic [ref=e1295]:
+  - generic [ref=e1296]:
+    - generic [ref=e1300]: 4s
+    - button "Lobby" [ref=e1302] [cursor=pointer]
+  - generic [ref=e1303]:
+    - generic [ref=e1304]:
+      - generic [ref=e1305]:
+        - generic [ref=e1306]: ATK
+        - generic [ref=e1307]: Attack
+      - generic [ref=e1309]:
+        - generic [ref=e1310]: Path Points
+        - generic [ref=e1311]: 0 / 5
+    - generic [ref=e1319]:
+      - generic [ref=e1320]: Opponent
+      - button "Training Dummy ▼" [ref=e1322] [cursor=pointer]
+  - generic [ref=e1355]:
+    - strong [ref=e1357]: Skills
+    - button "Guard 2" [disabled] [ref=e1359] [cursor=pointer]:
+      - generic [ref=e1361]: 🛡
+      - generic [ref=e1362]: Guard
+      - generic [ref=e1363]: "2"
+    - generic [ref=e1365]:
+      - generic [ref=e1366]: Mana
+      - generic [ref=e1367]: 10 / 10

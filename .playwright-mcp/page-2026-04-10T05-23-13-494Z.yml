@@ -1,0 +1,237 @@
+- generic [ref=e4]:
+  - heading "PathClash" [level=1] [ref=e5]
+  - generic [ref=e6]:
+    - heading "Select Mode" [level=2] [ref=e360]
+    - generic [ref=e8]:
+      - button "AI Match" [ref=e361] [cursor=pointer]:
+        - generic [ref=e10]: 🤖
+        - generic [ref=e11]: AI Match
+      - button "Friend Match" [ref=e362] [cursor=pointer]:
+        - generic [ref=e13]: 🤝
+        - generic [ref=e14]: Friend Match
+      - button "Random Match" [ref=e363] [cursor=pointer]:
+        - generic [ref=e16]: 🎲
+        - generic [ref=e17]: Random Match
+      - button "Ability Battle" [ref=e364] [cursor=pointer]:
+        - generic [ref=e19]: ✨
+        - generic [ref=e20]: Ability Battle
+      - button "2v2" [disabled] [ref=e21]:
+        - generic [ref=e22]: 👥
+        - generic [ref=e23]: 2v2
+      - button "Co-op Mode" [disabled] [ref=e365]:
+        - generic [ref=e25]: 🛡️
+        - generic [ref=e26]: Co-op Mode
+      - button "Classic Ranked" [disabled] [ref=e366]:
+        - generic [ref=e28]: 🏆
+        - generic [ref=e29]: Classic Ranked
+      - button "Skill Ranked" [disabled] [ref=e367]:
+        - generic [ref=e31]: ⚔️
+        - generic [ref=e32]: Skill Ranked
+  - generic [ref=e33]:
+    - generic [ref=e34]:
+      - heading "1 AI Match" [level=2] [ref=e368]
+      - button "Tutorial" [ref=e369] [cursor=pointer]
+    - paragraph [ref=e37]: Practice against AI. Stats are not recorded.
+    - button "Start AI Match" [ref=e370] [cursor=pointer]
+  - generic [ref=e376]:
+    - generic [ref=e377]:
+      - heading "Choose Skin" [level=3] [ref=e378]
+      - generic "Current tokens" [ref=e379]:
+        - generic [ref=e380]:
+          - generic [ref=e381]: 💎
+          - generic [ref=e382]: "0"
+        - button "Token Shop" [ref=e383] [cursor=pointer]: +
+    - paragraph [ref=e384]: Select the look you want to use for your piece.
+    - tablist "Choose Skin" [ref=e385]:
+      - tab "Piece Skin" [selected] [ref=e386] [cursor=pointer]
+      - tab "Board Skin" [ref=e387] [cursor=pointer]
+    - paragraph [ref=e388]: "Found: 1/22"
+    - generic [ref=e389]:
+      - button "Classic Default red glow." [ref=e390] [cursor=pointer]:
+        - generic [ref=e392]:
+          - strong [ref=e393]: Classic
+          - generic [ref=e394]: Default red glow.
+      - button "Ember Warm orange flare. Locked skin" [ref=e395]:
+        - generic [ref=e397]:
+          - strong [ref=e398]: Ember
+          - generic [ref=e399]: Warm orange flare.
+        - generic "Locked skin" [ref=e400]:
+          - generic [ref=e401]: 🔒
+          - generic [ref=e402]: Wins 10
+      - button "Nova Cool cyan core. Locked skin" [ref=e403]:
+        - generic [ref=e405]:
+          - strong [ref=e406]: Nova
+          - generic [ref=e407]: Cool cyan core.
+        - generic "Locked skin" [ref=e408]:
+          - generic [ref=e409]: 🔒
+          - generic [ref=e410]: Wins 50
+      - button "Aurora Vivid green-yellow glow. Locked skin" [ref=e411]:
+        - generic [ref=e413]:
+          - strong [ref=e414]: Aurora
+          - generic [ref=e415]: Vivid green-yellow glow.
+        - generic "Locked skin" [ref=e416]:
+          - generic [ref=e417]: 🔒
+          - generic [ref=e418]: Wins 100
+      - button "Void Deep violet core. Locked skin" [ref=e419]:
+        - generic [ref=e421]:
+          - strong [ref=e422]: Void
+          - generic [ref=e423]: Deep violet core.
+        - generic "Locked skin" [ref=e424]:
+          - generic [ref=e425]: 🔒
+          - generic [ref=e426]: Wins 500
+      - button "Plasma Plasma energy core. Locked skin" [ref=e427]:
+        - generic [ref=e429]:
+          - strong [ref=e430]: Plasma
+          - generic [ref=e431]: Plasma energy core.
+        - generic "Locked skin" [ref=e432]:
+          - generic [ref=e433]: 💎
+          - generic [ref=e434]: Tokens 480
+      - button "Gold Core Gilded core — a sunburst mandala spins within molten gold. Locked skin" [ref=e435]:
+        - generic [ref=e437]:
+          - strong [ref=e438]: Gold Core
+          - generic [ref=e439]: Gilded core — a sunburst mandala spins within molten gold.
+        - generic "Locked skin" [ref=e440]:
+          - generic [ref=e441]: 💎
+          - generic [ref=e442]: Tokens 480
+      - button "Neon Pulse Vibrant neon pulse. Locked skin" [ref=e443]:
+        - generic [ref=e445]:
+          - strong [ref=e446]: Neon Pulse
+          - generic [ref=e447]: Vibrant neon pulse.
+        - generic "Locked skin" [ref=e448]:
+          - generic [ref=e449]: 💎
+          - generic [ref=e450]: Tokens 480
+      - button "Inferno Burning inferno core. Locked skin" [ref=e451]:
+        - generic [ref=e453]:
+          - strong [ref=e454]: Inferno
+          - generic [ref=e455]: Burning inferno core.
+        - generic "Locked skin" [ref=e456]:
+          - generic [ref=e457]: 💎
+          - generic [ref=e458]: Tokens 480
+      - button "Quantum Quantum flux core — mint and lavender rings oscillate in superposition. Locked skin" [ref=e459]:
+        - generic [ref=e461]:
+          - strong [ref=e462]: Quantum
+          - generic [ref=e463]: Quantum flux core — mint and lavender rings oscillate in superposition.
+        - generic "Locked skin" [ref=e464]:
+          - generic [ref=e465]: 💎
+          - generic [ref=e466]: Tokens 480
+      - button "Cosmic Rare nebula — twin orbit rings pulse with cosmic energy. Locked skin" [ref=e467]:
+        - generic [ref=e469]:
+          - strong [ref=e470]: Cosmic
+          - generic [ref=e471]: Rare nebula — twin orbit rings pulse with cosmic energy.
+        - generic "Locked skin" [ref=e472]:
+          - generic [ref=e473]: 💎
+          - generic [ref=e474]: Tokens 1400
+      - button "Hexagon Hexagonal reactor core with layered rotating rings. Locked skin" [ref=e475]:
+        - generic [ref=e476]:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - img
+                - generic:
+                  - img
+                - generic:
+                  - img
+        - generic [ref=e477]:
+          - strong [ref=e478]: Hexagon
+          - generic [ref=e479]: Hexagonal reactor core with layered rotating rings.
+        - generic "Locked skin" [ref=e480]:
+          - generic [ref=e481]: 💎
+          - generic [ref=e482]: Tokens 1400
+      - button "Electric Core Electric core — cyan lightning branches orbit a dark reactor shell. Locked skin" [ref=e483]:
+        - generic [ref=e485]:
+          - strong [ref=e486]: Electric Core
+          - generic [ref=e487]: Electric core — cyan lightning branches orbit a dark reactor shell.
+        - generic "Locked skin" [ref=e488]:
+          - generic [ref=e489]: 💎
+          - generic [ref=e490]: Tokens 1400
+      - button "Wizard Legendary magic circle — hexagram, orbiting diamonds, and plasma arms pulse with arcane energy. Locked skin" [ref=e491]:
+        - generic [ref=e492]:
+          - generic:
+            - generic:
+              - generic:
+                - img
+              - generic:
+                - img
+        - generic [ref=e493]:
+          - strong [ref=e494]: Wizard
+          - generic [ref=e495]: Legendary magic circle — hexagram, orbiting diamonds, and plasma arms pulse with arcane energy.
+        - generic "Locked skin" [ref=e496]:
+          - generic [ref=e497]: 💎
+          - generic [ref=e498]: Tokens 3600
+      - button "Chronos Legendary astral clockwork core with orbiting time rings and luminous hands. Locked skin" [ref=e499]:
+        - generic [ref=e501]:
+          - strong [ref=e502]: Chronos
+          - generic [ref=e503]: Legendary astral clockwork core with orbiting time rings and luminous hands.
+        - generic "Locked skin" [ref=e504]:
+          - generic [ref=e505]: 💎
+          - generic [ref=e506]: Tokens 3600
+      - button "Atomic Atomic orbit energy core. Locked skin" [ref=e507]:
+        - generic [ref=e520]:
+          - strong [ref=e521]: Atomic
+          - generic [ref=e522]: Atomic orbit energy core.
+        - generic "Locked skin" [ref=e523]:
+          - generic [ref=e524]: 💎
+          - generic [ref=e525]: Tokens 3600
+      - button "Sun Legendary solar core — a rotating sun burns at the center. Locked skin" [ref=e526]:
+        - generic [ref=e528]:
+          - strong [ref=e529]: Sun
+          - generic [ref=e530]: Legendary solar core — a rotating sun burns at the center.
+        - generic "Locked skin" [ref=e531]:
+          - generic [ref=e532]: 💎
+          - generic [ref=e533]: Tokens 3600
+      - button "Korea The Korean flag. Locked skin" [ref=e534]:
+        - img [ref=e536]
+        - generic [ref=e562]:
+          - strong [ref=e563]: Korea
+          - generic [ref=e564]: The Korean flag.
+        - generic "Locked skin" [ref=e565]:
+          - generic [ref=e566]: 🔒
+          - generic [ref=e567]: Plays 100
+      - button "Japan The Japanese flag. Locked skin" [ref=e568]:
+        - img [ref=e570]
+        - generic [ref=e573]:
+          - strong [ref=e574]: Japan
+          - generic [ref=e575]: The Japanese flag.
+        - generic "Locked skin" [ref=e576]:
+          - generic [ref=e577]: 🔒
+          - generic [ref=e578]: Plays 100
+      - button "China The Chinese flag. Locked skin" [ref=e579]:
+        - img [ref=e581]
+        - generic [ref=e588]:
+          - strong [ref=e589]: China
+          - generic [ref=e590]: The Chinese flag.
+        - generic "Locked skin" [ref=e591]:
+          - generic [ref=e592]: 🔒
+          - generic [ref=e593]: Plays 100
+      - button "USA The American flag. Locked skin" [ref=e594]:
+        - img [ref=e596]
+        - generic [ref=e632]:
+          - strong [ref=e633]: USA
+          - generic [ref=e634]: The American flag.
+        - generic "Locked skin" [ref=e635]:
+          - generic [ref=e636]: 🔒
+          - generic [ref=e637]: Plays 100
+      - button "UK The British flag. Locked skin" [ref=e638]:
+        - img [ref=e640]
+        - generic [ref=e656]:
+          - strong [ref=e657]: UK
+          - generic [ref=e658]: The British flag.
+        - generic "Locked skin" [ref=e659]:
+          - generic [ref=e660]: 🔒
+          - generic [ref=e661]: Plays 100
+    - button "Close" [ref=e663] [cursor=pointer]
+  - generic [ref=e39]:
+    - generic [ref=e40]:
+      - button "Skin" [active] [pressed] [ref=e371] [cursor=pointer]:
+        - generic [ref=e43]: Skin
+      - button "Patch Notes NEW" [ref=e372] [cursor=pointer]:
+        - generic [ref=e46]: Patch Notes
+        - generic [ref=e47]: NEW
+      - button "Achievements" [ref=e373] [cursor=pointer]:
+        - generic [ref=e50]: Achievements
+      - button "Settings" [ref=e374] [cursor=pointer]:
+        - generic [ref=e53]: Settings
+    - group "Language toggle" [ref=e54]:
+      - button "EN" [pressed] [ref=e55] [cursor=pointer]
+      - button "KR" [ref=e56] [cursor=pointer]

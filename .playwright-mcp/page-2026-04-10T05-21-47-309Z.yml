@@ -1,0 +1,237 @@
+- generic [ref=e4]:
+  - heading "PathClash" [level=1] [ref=e5]
+  - generic [ref=e6]:
+    - heading "모드 선택" [level=2] [ref=e7]
+    - generic [ref=e8]:
+      - button "AI 대전" [ref=e9] [cursor=pointer]:
+        - generic [ref=e10]: 🤖
+        - generic [ref=e11]: AI 대전
+      - button "친구 대전" [ref=e12] [cursor=pointer]:
+        - generic [ref=e13]: 🤝
+        - generic [ref=e14]: 친구 대전
+      - button "랜덤 매칭" [ref=e15] [cursor=pointer]:
+        - generic [ref=e16]: 🎲
+        - generic [ref=e17]: 랜덤 매칭
+      - button "능력 대전" [ref=e18] [cursor=pointer]:
+        - generic [ref=e19]: ✨
+        - generic [ref=e20]: 능력 대전
+      - button "2v2" [disabled] [ref=e21]:
+        - generic [ref=e22]: 👥
+        - generic [ref=e23]: 2v2
+      - button "협동전" [disabled] [ref=e24]:
+        - generic [ref=e25]: 🛡️
+        - generic [ref=e26]: 협동전
+      - button "클래식 랭크전" [disabled] [ref=e27]:
+        - generic [ref=e28]: 🏆
+        - generic [ref=e29]: 클래식 랭크전
+      - button "스킬 랭크전" [disabled] [ref=e30]:
+        - generic [ref=e31]: ⚔️
+        - generic [ref=e32]: 스킬 랭크전
+  - generic [ref=e33]:
+    - generic [ref=e34]:
+      - heading "1 AI 대전" [level=2] [ref=e35]
+      - button "튜토리얼" [ref=e36] [cursor=pointer]
+    - paragraph [ref=e37]: AI와 연습 대전을 즐겨보세요. 전적은 저장되지 않습니다.
+    - button "AI와 대전 시작" [ref=e38] [cursor=pointer]
+  - generic [ref=e72]:
+    - generic [ref=e73]:
+      - heading "스킨 선택" [level=3] [ref=e74]
+      - generic "Current tokens" [ref=e75]:
+        - generic [ref=e76]:
+          - generic [ref=e77]: 💎
+          - generic [ref=e78]: "0"
+        - button "토큰 샵" [ref=e79] [cursor=pointer]: +
+    - paragraph [ref=e80]: 플레이어 말에 적용할 외형을 선택하세요.
+    - tablist "스킨 선택" [ref=e81]:
+      - tab "말 스킨" [selected] [ref=e82] [cursor=pointer]
+      - tab "보드 스킨" [ref=e83] [cursor=pointer]
+    - paragraph [ref=e84]: "찾음: 1/22"
+    - generic [ref=e85]:
+      - button "기본 기본 붉은 글로우 스타일." [ref=e86] [cursor=pointer]:
+        - generic [ref=e88]:
+          - strong [ref=e89]: 기본
+          - generic [ref=e90]: 기본 붉은 글로우 스타일.
+      - button "엠버 주황빛이 도는 강한 발광. Locked skin" [ref=e91]:
+        - generic [ref=e93]:
+          - strong [ref=e94]: 엠버
+          - generic [ref=e95]: 주황빛이 도는 강한 발광.
+        - generic "Locked skin" [ref=e96]:
+          - generic [ref=e97]: 🔒
+          - generic [ref=e98]: 승리 10
+      - button "노바 청록 계열의 차가운 코어. Locked skin" [ref=e99]:
+        - generic [ref=e101]:
+          - strong [ref=e102]: 노바
+          - generic [ref=e103]: 청록 계열의 차가운 코어.
+        - generic "Locked skin" [ref=e104]:
+          - generic [ref=e105]: 🔒
+          - generic [ref=e106]: 승리 50
+      - button "오로라 연두빛과 황금빛이 섞인 발광. Locked skin" [ref=e107]:
+        - generic [ref=e109]:
+          - strong [ref=e110]: 오로라
+          - generic [ref=e111]: 연두빛과 황금빛이 섞인 발광.
+        - generic "Locked skin" [ref=e112]:
+          - generic [ref=e113]: 🔒
+          - generic [ref=e114]: 승리 100
+      - button "보이드 짙은 보랏빛 코어 스타일. Locked skin" [ref=e115]:
+        - generic [ref=e117]:
+          - strong [ref=e118]: 보이드
+          - generic [ref=e119]: 짙은 보랏빛 코어 스타일.
+        - generic "Locked skin" [ref=e120]:
+          - generic [ref=e121]: 🔒
+          - generic [ref=e122]: 승리 500
+      - button "플라즈마 플라즈마 에너지 코어. Locked skin" [ref=e123]:
+        - generic [ref=e125]:
+          - strong [ref=e126]: 플라즈마
+          - generic [ref=e127]: 플라즈마 에너지 코어.
+        - generic "Locked skin" [ref=e128]:
+          - generic [ref=e129]: 💎
+          - generic [ref=e130]: 토큰 480
+      - button "골드 코어 황금 코어 — 녹아내린 금 속에서 선버스트 만다라가 회전. Locked skin" [ref=e131]:
+        - generic [ref=e133]:
+          - strong [ref=e134]: 골드 코어
+          - generic [ref=e135]: 황금 코어 — 녹아내린 금 속에서 선버스트 만다라가 회전.
+        - generic "Locked skin" [ref=e136]:
+          - generic [ref=e137]: 💎
+          - generic [ref=e138]: 토큰 480
+      - button "네온 펄스 선명한 네온 펄스. Locked skin" [ref=e139]:
+        - generic [ref=e141]:
+          - strong [ref=e142]: 네온 펄스
+          - generic [ref=e143]: 선명한 네온 펄스.
+        - generic "Locked skin" [ref=e144]:
+          - generic [ref=e145]: 💎
+          - generic [ref=e146]: 토큰 480
+      - button "인페르노 타오르는 인페르노 코어. Locked skin" [ref=e147]:
+        - generic [ref=e149]:
+          - strong [ref=e150]: 인페르노
+          - generic [ref=e151]: 타오르는 인페르노 코어.
+        - generic "Locked skin" [ref=e152]:
+          - generic [ref=e153]: 💎
+          - generic [ref=e154]: 토큰 480
+      - button "퀀텀 퀀텀 플럭스 코어 — 민트와 라벤더 링이 중첩 상태로 진동. Locked skin" [ref=e155]:
+        - generic [ref=e157]:
+          - strong [ref=e158]: 퀀텀
+          - generic [ref=e159]: 퀀텀 플럭스 코어 — 민트와 라벤더 링이 중첩 상태로 진동.
+        - generic "Locked skin" [ref=e160]:
+          - generic [ref=e161]: 💎
+          - generic [ref=e162]: 토큰 480
+      - button "코스믹 희귀 성운 — 이중 궤도 링이 우주 에너지로 맥동. Locked skin" [ref=e163]:
+        - generic [ref=e165]:
+          - strong [ref=e166]: 코스믹
+          - generic [ref=e167]: 희귀 성운 — 이중 궤도 링이 우주 에너지로 맥동.
+        - generic "Locked skin" [ref=e168]:
+          - generic [ref=e169]: 💎
+          - generic [ref=e170]: 토큰 1400
+      - button "헥사곤 육각형 리액터 코어와 다층 회전 링. Locked skin" [ref=e171]:
+        - generic [ref=e172]:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - img
+                - generic:
+                  - img
+                - generic:
+                  - img
+        - generic [ref=e173]:
+          - strong [ref=e174]: 헥사곤
+          - generic [ref=e175]: 육각형 리액터 코어와 다층 회전 링.
+        - generic "Locked skin" [ref=e176]:
+          - generic [ref=e177]: 💎
+          - generic [ref=e178]: 토큰 1400
+      - button "일렉트릭 코어 일렉트릭 코어 — 청록 번개 갈래가 어두운 리액터 코어를 감쌉니다. Locked skin" [ref=e179]:
+        - generic [ref=e181]:
+          - strong [ref=e182]: 일렉트릭 코어
+          - generic [ref=e183]: 일렉트릭 코어 — 청록 번개 갈래가 어두운 리액터 코어를 감쌉니다.
+        - generic "Locked skin" [ref=e184]:
+          - generic [ref=e185]: 💎
+          - generic [ref=e186]: 토큰 1400
+      - button "위저드 레전더리 마법진 — 헥사그램, 공전 다이아, 플라즈마 암이 신비로운 에너지로 맥동. Locked skin" [ref=e187]:
+        - generic [ref=e188]:
+          - generic:
+            - generic:
+              - generic:
+                - img
+              - generic:
+                - img
+        - generic [ref=e189]:
+          - strong [ref=e190]: 위저드
+          - generic [ref=e191]: 레전더리 마법진 — 헥사그램, 공전 다이아, 플라즈마 암이 신비로운 에너지로 맥동.
+        - generic "Locked skin" [ref=e192]:
+          - generic [ref=e193]: 💎
+          - generic [ref=e194]: 토큰 3600
+      - button "크로노스 레전더리 천체 시계 코어 - 공전하는 시간 링과 빛나는 시곗바늘이 흐릅니다. Locked skin" [ref=e195]:
+        - generic [ref=e197]:
+          - strong [ref=e198]: 크로노스
+          - generic [ref=e199]: 레전더리 천체 시계 코어 - 공전하는 시간 링과 빛나는 시곗바늘이 흐릅니다.
+        - generic "Locked skin" [ref=e200]:
+          - generic [ref=e201]: 💎
+          - generic [ref=e202]: 토큰 3600
+      - button "아토믹 원자 궤도 에너지 코어. Locked skin" [ref=e203]:
+        - generic [ref=e216]:
+          - strong [ref=e217]: 아토믹
+          - generic [ref=e218]: 원자 궤도 에너지 코어.
+        - generic "Locked skin" [ref=e219]:
+          - generic [ref=e220]: 💎
+          - generic [ref=e221]: 토큰 3600
+      - button "썬 레전더리 태양 코어 - 중심에서 태양이 자전합니다. Locked skin" [ref=e222]:
+        - generic [ref=e224]:
+          - strong [ref=e225]: 썬
+          - generic [ref=e226]: 레전더리 태양 코어 - 중심에서 태양이 자전합니다.
+        - generic "Locked skin" [ref=e227]:
+          - generic [ref=e228]: 💎
+          - generic [ref=e229]: 토큰 3600
+      - button "한국 대한민국 국기. Locked skin" [ref=e230]:
+        - img [ref=e232]
+        - generic [ref=e258]:
+          - strong [ref=e259]: 한국
+          - generic [ref=e260]: 대한민국 국기.
+        - generic "Locked skin" [ref=e261]:
+          - generic [ref=e262]: 🔒
+          - generic [ref=e263]: 플레이 100
+      - button "일본 일본 국기. Locked skin" [ref=e264]:
+        - img [ref=e266]
+        - generic [ref=e269]:
+          - strong [ref=e270]: 일본
+          - generic [ref=e271]: 일본 국기.
+        - generic "Locked skin" [ref=e272]:
+          - generic [ref=e273]: 🔒
+          - generic [ref=e274]: 플레이 100
+      - button "중국 중국 국기. Locked skin" [ref=e275]:
+        - img [ref=e277]
+        - generic [ref=e284]:
+          - strong [ref=e285]: 중국
+          - generic [ref=e286]: 중국 국기.
+        - generic "Locked skin" [ref=e287]:
+          - generic [ref=e288]: 🔒
+          - generic [ref=e289]: 플레이 100
+      - button "미국 미국 국기. Locked skin" [ref=e290]:
+        - img [ref=e292]
+        - generic [ref=e328]:
+          - strong [ref=e329]: 미국
+          - generic [ref=e330]: 미국 국기.
+        - generic "Locked skin" [ref=e331]:
+          - generic [ref=e332]: 🔒
+          - generic [ref=e333]: 플레이 100
+      - button "영국 영국 국기. Locked skin" [ref=e334]:
+        - img [ref=e336]
+        - generic [ref=e352]:
+          - strong [ref=e353]: 영국
+          - generic [ref=e354]: 영국 국기.
+        - generic "Locked skin" [ref=e355]:
+          - generic [ref=e356]: 🔒
+          - generic [ref=e357]: 플레이 100
+    - button "닫기" [ref=e359] [cursor=pointer]
+  - generic [ref=e39]:
+    - generic [ref=e40]:
+      - button "스킨" [active] [pressed] [ref=e41] [cursor=pointer]:
+        - generic [ref=e43]: 스킨
+      - button "패치노트 NEW" [ref=e44] [cursor=pointer]:
+        - generic [ref=e46]: 패치노트
+        - generic [ref=e47]: NEW
+      - button "업적" [ref=e48] [cursor=pointer]:
+        - generic [ref=e50]: 업적
+      - button "설정" [ref=e51] [cursor=pointer]:
+        - generic [ref=e53]: 설정
+    - group "Language toggle" [ref=e54]:
+      - button "EN" [ref=e55] [cursor=pointer]
+      - button "KR" [pressed] [ref=e56] [cursor=pointer]

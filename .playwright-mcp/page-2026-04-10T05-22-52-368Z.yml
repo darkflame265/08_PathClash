@@ -1,0 +1,49 @@
+- generic [ref=e4]:
+  - heading "PathClash" [level=1] [ref=e5]
+  - generic [ref=e6]:
+    - heading "모드 선택" [level=2] [ref=e7]
+    - generic [ref=e8]:
+      - button "AI 대전" [ref=e9] [cursor=pointer]:
+        - generic [ref=e10]: 🤖
+        - generic [ref=e11]: AI 대전
+      - button "친구 대전" [ref=e12] [cursor=pointer]:
+        - generic [ref=e13]: 🤝
+        - generic [ref=e14]: 친구 대전
+      - button "랜덤 매칭" [ref=e15] [cursor=pointer]:
+        - generic [ref=e16]: 🎲
+        - generic [ref=e17]: 랜덤 매칭
+      - button "능력 대전" [ref=e18] [cursor=pointer]:
+        - generic [ref=e19]: ✨
+        - generic [ref=e20]: 능력 대전
+      - button "2v2" [disabled] [ref=e21]:
+        - generic [ref=e22]: 👥
+        - generic [ref=e23]: 2v2
+      - button "협동전" [disabled] [ref=e24]:
+        - generic [ref=e25]: 🛡️
+        - generic [ref=e26]: 협동전
+      - button "클래식 랭크전" [disabled] [ref=e27]:
+        - generic [ref=e28]: 🏆
+        - generic [ref=e29]: 클래식 랭크전
+      - button "스킬 랭크전" [disabled] [ref=e30]:
+        - generic [ref=e31]: ⚔️
+        - generic [ref=e32]: 스킬 랭크전
+  - generic [ref=e33]:
+    - generic [ref=e34]:
+      - heading "1 AI 대전" [level=2] [ref=e35]
+      - button "튜토리얼" [ref=e36] [cursor=pointer]
+    - paragraph [ref=e37]: AI와 연습 대전을 즐겨보세요. 전적은 저장되지 않습니다.
+    - button "AI와 대전 시작" [ref=e38] [cursor=pointer]
+  - generic [ref=e39]:
+    - generic [ref=e40]:
+      - button "스킨" [ref=e41] [cursor=pointer]:
+        - generic [ref=e43]: 스킨
+      - button "패치노트 NEW" [ref=e44] [cursor=pointer]:
+        - generic [ref=e46]: 패치노트
+        - generic [ref=e47]: NEW
+      - button "업적" [ref=e48] [cursor=pointer]:
+        - generic [ref=e50]: 업적
+      - button "설정" [ref=e51] [cursor=pointer]:
+        - generic [ref=e53]: 설정
+    - group "Language toggle" [ref=e54]:
+      - button "EN" [ref=e55] [cursor=pointer]
+      - button "KR" [pressed] [ref=e56] [cursor=pointer]

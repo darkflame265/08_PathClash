@@ -1,0 +1,53 @@
+- generic [ref=e4]:
+  - heading "PathClash" [level=1] [ref=e5]
+  - generic [ref=e6]:
+    - heading "모드 선택" [level=2] [ref=e850]
+    - generic [ref=e8]:
+      - button "AI 대전" [ref=e851] [cursor=pointer]:
+        - generic [ref=e10]: 🤖
+        - generic [ref=e11]: AI 대전
+      - button "친구 대전" [ref=e852] [cursor=pointer]:
+        - generic [ref=e13]: 🤝
+        - generic [ref=e14]: 친구 대전
+      - button "랜덤 매칭" [ref=e853] [cursor=pointer]:
+        - generic [ref=e16]: 🎲
+        - generic [ref=e17]: 랜덤 매칭
+      - button "능력 대전" [ref=e854] [cursor=pointer]:
+        - generic [ref=e19]: ✨
+        - generic [ref=e20]: 능력 대전
+      - button "2v2" [disabled] [ref=e21]:
+        - generic [ref=e22]: 👥
+        - generic [ref=e23]: 2v2
+      - button "협동전" [disabled] [ref=e855]:
+        - generic [ref=e25]: 🛡️
+        - generic [ref=e26]: 협동전
+      - button "클래식 랭크전" [disabled] [ref=e856]:
+        - generic [ref=e28]: 🏆
+        - generic [ref=e29]: 클래식 랭크전
+      - button "스킬 랭크전" [disabled] [ref=e857]:
+        - generic [ref=e31]: ⚔️
+        - generic [ref=e32]: 스킬 랭크전
+  - generic [ref=e33]:
+    - generic [ref=e34]:
+      - heading "4 능력 대전" [level=2] [ref=e858]
+      - generic [ref=e665]:
+        - button "훈련장" [ref=e859] [cursor=pointer]
+        - button "장착 스킬" [ref=e860] [cursor=pointer]
+    - generic [ref=e669]:
+      - generic [ref=e670]: 🛡
+      - generic [ref=e671]: 가드
+    - button "매칭 시작" [ref=e861] [cursor=pointer]
+  - generic [ref=e39]:
+    - generic [ref=e40]:
+      - button "스킨" [ref=e862] [cursor=pointer]:
+        - generic [ref=e43]: 스킨
+      - button "패치노트 NEW" [ref=e863] [cursor=pointer]:
+        - generic [ref=e46]: 패치노트
+        - generic [ref=e47]: NEW
+      - button "업적" [ref=e864] [cursor=pointer]:
+        - generic [ref=e50]: 업적
+      - button "설정" [ref=e865] [cursor=pointer]:
+        - generic [ref=e53]: 설정
+    - group "Language toggle" [ref=e54]:
+      - button "EN" [ref=e55] [cursor=pointer]
+      - button "KR" [active] [pressed] [ref=e56] [cursor=pointer]

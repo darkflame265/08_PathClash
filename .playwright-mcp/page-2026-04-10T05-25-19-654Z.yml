@@ -1,0 +1,53 @@
+- generic [ref=e1051]:
+  - heading "PathClash" [level=1] [ref=e1052]
+  - generic [ref=e1053]:
+    - heading "모드 선택" [level=2] [ref=e1054]
+    - generic [ref=e1055]:
+      - button "AI 대전" [ref=e1056] [cursor=pointer]:
+        - generic [ref=e1057]: 🤖
+        - generic [ref=e1058]: AI 대전
+      - button "친구 대전" [ref=e1059] [cursor=pointer]:
+        - generic [ref=e1060]: 🤝
+        - generic [ref=e1061]: 친구 대전
+      - button "랜덤 매칭" [ref=e1062] [cursor=pointer]:
+        - generic [ref=e1063]: 🎲
+        - generic [ref=e1064]: 랜덤 매칭
+      - button "능력 대전" [ref=e1065] [cursor=pointer]:
+        - generic [ref=e1066]: ✨
+        - generic [ref=e1067]: 능력 대전
+      - button "2v2" [disabled] [ref=e1068]:
+        - generic [ref=e1069]: 👥
+        - generic [ref=e1070]: 2v2
+      - button "협동전" [disabled] [ref=e1071]:
+        - generic [ref=e1072]: 🛡️
+        - generic [ref=e1073]: 협동전
+      - button "클래식 랭크전" [disabled] [ref=e1074]:
+        - generic [ref=e1075]: 🏆
+        - generic [ref=e1076]: 클래식 랭크전
+      - button "스킬 랭크전" [disabled] [ref=e1077]:
+        - generic [ref=e1078]: ⚔️
+        - generic [ref=e1079]: 스킬 랭크전
+  - generic [ref=e1080]:
+    - generic [ref=e1081]:
+      - heading "4 능력 대전" [level=2] [ref=e1082]
+      - generic [ref=e1083]:
+        - button "훈련장" [ref=e1084] [cursor=pointer]
+        - button "장착 스킬" [ref=e1085] [cursor=pointer]
+    - generic [ref=e1087]:
+      - generic [ref=e1088]: 🛡
+      - generic [ref=e1089]: 가드
+    - button "매칭 시작" [ref=e1090] [cursor=pointer]
+  - generic [ref=e1091]:
+    - generic [ref=e1092]:
+      - button "스킨" [ref=e1093] [cursor=pointer]:
+        - generic [ref=e1095]: 스킨
+      - button "패치노트 NEW" [ref=e1096] [cursor=pointer]:
+        - generic [ref=e1098]: 패치노트
+        - generic [ref=e1099]: NEW
+      - button "업적" [ref=e1100] [cursor=pointer]:
+        - generic [ref=e1102]: 업적
+      - button "설정" [ref=e1103] [cursor=pointer]:
+        - generic [ref=e1105]: 설정
+    - group "Language toggle" [ref=e1106]:
+      - button "EN" [ref=e1107] [cursor=pointer]
+      - button "KR" [pressed] [ref=e1108] [cursor=pointer]

@@ -1,0 +1,49 @@
+- generic [ref=e4]:
+  - heading "PathClash" [level=1] [ref=e5]
+  - generic [ref=e6]:
+    - heading "Select Mode" [level=2] [ref=e360]
+    - generic [ref=e8]:
+      - button "AI Match" [ref=e361] [cursor=pointer]:
+        - generic [ref=e10]: 🤖
+        - generic [ref=e11]: AI Match
+      - button "Friend Match" [ref=e362] [cursor=pointer]:
+        - generic [ref=e13]: 🤝
+        - generic [ref=e14]: Friend Match
+      - button "Random Match" [ref=e363] [cursor=pointer]:
+        - generic [ref=e16]: 🎲
+        - generic [ref=e17]: Random Match
+      - button "Ability Battle" [ref=e364] [cursor=pointer]:
+        - generic [ref=e19]: ✨
+        - generic [ref=e20]: Ability Battle
+      - button "2v2" [disabled] [ref=e21]:
+        - generic [ref=e22]: 👥
+        - generic [ref=e23]: 2v2
+      - button "Co-op Mode" [disabled] [ref=e365]:
+        - generic [ref=e25]: 🛡️
+        - generic [ref=e26]: Co-op Mode
+      - button "Classic Ranked" [disabled] [ref=e366]:
+        - generic [ref=e28]: 🏆
+        - generic [ref=e29]: Classic Ranked
+      - button "Skill Ranked" [disabled] [ref=e367]:
+        - generic [ref=e31]: ⚔️
+        - generic [ref=e32]: Skill Ranked
+  - generic [ref=e33]:
+    - generic [ref=e34]:
+      - heading "1 AI Match" [level=2] [ref=e368]
+      - button "Tutorial" [ref=e369] [cursor=pointer]
+    - paragraph [ref=e37]: Practice against AI. Stats are not recorded.
+    - button "Start AI Match" [ref=e370] [cursor=pointer]
+  - generic [ref=e39]:
+    - generic [ref=e40]:
+      - button "Skin" [ref=e371] [cursor=pointer]:
+        - generic [ref=e43]: Skin
+      - button "Patch Notes NEW" [ref=e372] [cursor=pointer]:
+        - generic [ref=e46]: Patch Notes
+        - generic [ref=e47]: NEW
+      - button "Achievements" [ref=e373] [cursor=pointer]:
+        - generic [ref=e50]: Achievements
+      - button "Settings" [ref=e374] [cursor=pointer]:
+        - generic [ref=e53]: Settings
+    - group "Language toggle" [ref=e54]:
+      - button "EN" [active] [pressed] [ref=e55] [cursor=pointer]
+      - button "KR" [ref=e56] [cursor=pointer]

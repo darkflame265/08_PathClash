@@ -1,0 +1,24 @@
+- generic [ref=e1109]:
+  - generic [ref=e1110]:
+    - generic [ref=e1114]: 4s
+    - button "Lobby" [ref=e1116] [cursor=pointer]
+  - generic [ref=e1117]:
+    - generic [ref=e1118]:
+      - generic [ref=e1119]:
+        - generic [ref=e1120]: ATK
+        - generic [ref=e1121]: 공격
+      - generic [ref=e1123]:
+        - generic [ref=e1124]: 경로 포인트
+        - generic [ref=e1125]: 0 / 5
+    - generic [ref=e1133]:
+      - generic [ref=e1134]: 상대
+      - button "Training Dummy ▼" [ref=e1136] [cursor=pointer]
+  - generic [ref=e1169]:
+    - strong [ref=e1171]: 스킬
+    - button "가드 2" [disabled] [ref=e1173] [cursor=pointer]:
+      - generic [ref=e1175]: 🛡
+      - generic [ref=e1176]: 가드
+      - generic [ref=e1177]: "2"
+    - generic [ref=e1179]:
+      - generic [ref=e1180]: 마나
+      - generic [ref=e1181]: 10 / 10
