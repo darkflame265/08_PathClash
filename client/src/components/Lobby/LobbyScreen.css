@@ -2393,7 +2393,7 @@
 .skin-detail-preview {
   width: 7rem;
   height: 7rem;
-  transform: scale(3.4);
+  transform: scale(2.35);
   transform-origin: center;
   z-index: 1;
 }
@@ -2749,7 +2749,7 @@
   .skin-detail-preview {
     width: 5.4rem;
     height: 5.4rem;
-    transform: scale(2.95);
+    transform: scale(2.15);
   }
 
   .skin-detail-preview-stage .board-skin-preview {
