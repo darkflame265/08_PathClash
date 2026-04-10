@@ -16,7 +16,7 @@
   background: url("./sun_cdn.jpg") center center / cover no-repeat;
   background-position: center center;
   box-shadow: 1px 1px 30px 5px #fc9328;
-  animation: pole-rotate 30s linear infinite;
+  animation: pole-rotate 90s linear infinite;
 }
 
 @keyframes sun-preview-pole-rotate {
