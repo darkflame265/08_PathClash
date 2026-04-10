@@ -1,6 +1,11 @@
 .skin-preview-chronos {
   background:
-    radial-gradient(circle at 50% 50%, rgba(26, 33, 44, 0.98) 0%, rgba(10, 15, 24, 0.98) 70%, rgba(4, 7, 14, 1) 100%),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(26, 33, 44, 0.98) 0%,
+      rgba(10, 15, 24, 0.98) 70%,
+      rgba(4, 7, 14, 1) 100%
+    ),
     linear-gradient(135deg, rgba(251, 191, 36, 0.05), rgba(148, 163, 184, 0.08));
   box-shadow:
     0 0 0 2px rgba(203, 213, 225, 0.34),
@@ -15,7 +20,7 @@
   top: 50%;
   width: 260px;
   height: 260px;
-  transform: translate(-50%, -50%) scale(0.158);
+  transform: translate(-50%, -50%) scale(0.125);
   transform-origin: center;
   pointer-events: none;
   display: block;
@@ -34,7 +39,13 @@
   width: 260px;
   height: 260px;
   border-radius: 50%;
-  background: radial-gradient(circle at 38% 32%, #f1f5f9 0%, #cbd5e1 34%, #475569 68%, #0f1923 100%);
+  background: radial-gradient(
+    circle at 38% 32%,
+    #f1f5f9 0%,
+    #cbd5e1 34%,
+    #475569 68%,
+    #0f1923 100%
+  );
   border: 2px solid rgba(203, 213, 225, 0.85);
   box-shadow:
     0 0 18px rgba(203, 213, 225, 0.4),
@@ -47,7 +58,13 @@
   position: absolute;
   inset: 70px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 40%, #78350f 80%, transparent 100%);
+  background: radial-gradient(
+    circle at 35% 30%,
+    #fde68a 0%,
+    #f59e0b 40%,
+    #78350f 80%,
+    transparent 100%
+  );
   opacity: 0.72;
   animation: chronosPreviewCorePulse 2s ease-in-out infinite;
 }
