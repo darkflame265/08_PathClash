@@ -1851,6 +1851,31 @@ export function LobbyScreen({
           ).length
         }/${boardSkinChoices.length}`;
 
+  const isPieceSkinUnlocked = (choice: (typeof skinChoices)[number]) => {
+    const isOwned = ownedSkins.includes(choice.id);
+    if (
+      choice.tokenPrice !== null &&
+      choice.tokenPrice !== undefined &&
+      choice.tokenPrice > 0
+    ) {
+      return isOwned;
+    }
+    const unlockedByWins =
+      choice.requiredWins !== null && accountWins >= choice.requiredWins;
+    const unlockedByPlays =
+      choice.requiredPlays !== null &&
+      choice.requiredPlays !== undefined &&
+      totalPlays >= choice.requiredPlays;
+    return (
+      (!choice.requiredWins && !choice.requiredPlays) ||
+      unlockedByWins ||
+      unlockedByPlays
+    );
+  };
+
+  const isBoardSkinUnlocked = (choice: (typeof boardSkinChoices)[number]) =>
+    choice.id === "classic" || ownedBoardSkins.includes(choice.id);
+
   const achievementViews = useMemo(
     () => buildAchievementViews(accountAchievements),
 
@@ -3719,9 +3744,10 @@ export function LobbyScreen({
             </p>
 
             {skinPickerTab === "piece" ? (
-              <div className="skin-option-list">
+              <div className="skin-option-grid">
                 {skinChoices.map((choice) => {
                   const isOwned = ownedSkins.includes(choice.id);
+                  const isUnlocked = isPieceSkinUnlocked(choice);
 
                   const lockedByWins =
                     choice.requiredWins !== null &&
@@ -3744,7 +3770,7 @@ export function LobbyScreen({
                   return (
                     <button
                       key={choice.id}
-                      className={`skin-option-card ${
+                      className={`skin-option-card skin-picker-card ${
                         pieceSkin === choice.id ? "is-selected" : ""
                       } ${isLocked ? "is-locked" : ""}`}
                       onClick={() =>
@@ -3754,7 +3780,7 @@ export function LobbyScreen({
                       type="button"
                     >
                       <span
-                        className={`skin-preview skin-preview-${choice.id}`}
+                        className={`skin-preview skin-picker-preview skin-preview-${choice.id}`}
                         aria-hidden="true"
                       >
                         {isFlagSkin(choice.id) && <FlagSkin id={choice.id} />}
@@ -3774,7 +3800,7 @@ export function LobbyScreen({
                         {choice.id === "sun" && <SunPreview />}
                       </span>
 
-                      <span className="skin-option-copy">
+                      <span className="skin-option-copy skin-picker-copy">
                         <strong
                           className={
                             choice.tier
@@ -3784,40 +3810,24 @@ export function LobbyScreen({
                         >
                           {choice.name}
                         </strong>
-
-                        <span>{choice.desc}</span>
-                      </span>
-
-                      {(isLocked ||
-                        (choice.tokenPrice !== null &&
-                          choice.tokenPrice !== undefined &&
-                          !isOwned)) && (
-                        <span className="skin-lock-meta" aria-label="Locked skin">
-                          <span className="skin-lock-icon" aria-hidden="true">
-                            {choice.tokenPrice !== null &&
-                            choice.tokenPrice !== undefined
-                              ? "💎"
-                              : "🔒"}
-                          </span>
-
-                          <span>
+                        {!isUnlocked && (
+                          <span className="skin-unlock-meta skin-picker-unlock-meta">
                             {getSkinRequirementLabel(
                               choice.requiredWins,
                               choice.requiredPlays,
                               choice.tokenPrice,
                             )}
                           </span>
-                        </span>
-                      )}
+                        )}
+                      </span>
                     </button>
                   );
                 })}
               </div>
             ) : (
-              <div className="skin-option-list">
+              <div className="skin-option-grid">
                 {boardSkinChoices.map((choice) => {
-                  const isOwned =
-                    choice.id === "classic" || ownedBoardSkins.includes(choice.id);
+                  const isOwned = isBoardSkinUnlocked(choice);
 
                   const lockedByTokens =
                     choice.tokenPrice !== null &&
@@ -3830,7 +3840,7 @@ export function LobbyScreen({
                   return (
                     <button
                       key={choice.id}
-                      className={`skin-option-card ${
+                      className={`skin-option-card skin-picker-card ${
                         boardSkin === choice.id ? "is-selected" : ""
                       } ${isLocked ? "is-locked" : ""}`}
                       onClick={() =>
@@ -3840,29 +3850,18 @@ export function LobbyScreen({
                     >
                       {renderBoardSkinPreview(choice.id)}
 
-                      <span className="skin-option-copy">
+                      <span className="skin-option-copy skin-picker-copy">
                         <strong>{choice.name}</strong>
-                        <span>{choice.desc}</span>
-                      </span>
-
-                      {(isLocked ||
-                        (choice.tokenPrice !== null &&
-                          choice.tokenPrice !== undefined &&
-                          !isOwned)) && (
-                        <span className="skin-lock-meta" aria-label="Locked skin">
-                          <span className="skin-lock-icon" aria-hidden="true">
-                            {"💎"}
-                          </span>
-
-                          <span>
+                        {!isOwned && (
+                          <span className="skin-unlock-meta skin-picker-unlock-meta">
                             {getSkinRequirementLabel(
                               null,
                               null,
                               choice.tokenPrice,
                             )}
                           </span>
-                        </span>
-                      )}
+                        )}
+                      </span>
                     </button>
                   );
                 })}
