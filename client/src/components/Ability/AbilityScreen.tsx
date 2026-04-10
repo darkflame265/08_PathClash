@@ -1080,7 +1080,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       ...skillReservations.filter((entry) => entry.skillId !== "sun_chariot"),
       {
         skillId: "sun_chariot",
-        step: getCurrentSkillStep(),
+        step: 0,
         order: reservationOrderRef.current++,
       },
     ];
