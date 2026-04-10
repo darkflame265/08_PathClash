@@ -1789,16 +1789,35 @@ export function LobbyScreen({
     tokenPrice?: number | null,
   ) => {
     if (tokenPrice !== null && tokenPrice !== undefined) {
-      return lang === "en" ? `Tokens ${tokenPrice}` : `토큰 ${tokenPrice}`;
+      return (
+        <>
+          <span className="skin-requirement-icon" aria-hidden="true">
+            💎
+          </span>
+          <span>{tokenPrice}</span>
+        </>
+      );
     }
 
     if (requiredPlays !== null && requiredPlays !== undefined) {
-      return lang === "en"
-        ? `Plays ${requiredPlays}`
-        : `플레이 ${requiredPlays}`;
+      return (
+        <>
+          <span className="skin-requirement-icon" aria-hidden="true">
+            🎮
+          </span>
+          <span>{requiredPlays}</span>
+        </>
+      );
     }
 
-    return lang === "en" ? `Wins ${requiredWins}` : `승리 ${requiredWins}`;
+    return (
+      <>
+        <span className="skin-requirement-icon" aria-hidden="true">
+          🏆
+        </span>
+        <span>{requiredWins}</span>
+      </>
+    );
   };
 
   const currentSkinName =

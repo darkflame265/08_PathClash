@@ -1704,6 +1704,17 @@
   font-weight: 700;
   line-height: 1.15;
   word-break: keep-all;
+  white-space: nowrap;
+}
+
+.skin-requirement-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.18rem;
+  font-size: 0.78em;
+  line-height: 1;
+  vertical-align: baseline;
 }
 
 @media (max-width: 640px) {
