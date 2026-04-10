@@ -1512,6 +1512,14 @@
   overflow: visible;
 }
 
+.skin-preview.skin-preview-wizard {
+  overflow: visible;
+}
+
+.skin-preview.skin-preview-chronos {
+  overflow: visible;
+}
+
 .skin-preview.skin-preview-plasma,
 .skin-preview.skin-preview-gold_core,
 .skin-preview.skin-preview-neon_pulse,
@@ -2403,15 +2411,15 @@
 }
 
 .skin-detail-preview-stage .skin-preview-arc-reactor-scale {
-  transform: scale(0.205);
+  transform: scale(0.405);
 }
 
 .skin-detail-preview-stage .wizard-preview-scale {
-  transform: translate(-50%, -50%) scale(0.208);
+  transform: translate(-50%, -50%) scale(0.408);
 }
 
 .skin-detail-preview-stage .chronos-preview-scale {
-  transform: translate(-50%, -50%) scale(0.198);
+  transform: translate(-50%, -50%) scale(0.408);
 }
 
 .skin-detail-preview-stage .board-skin-preview {
