@@ -2804,8 +2804,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         : "";
   const overdriveTurn = me.overdriveActive;
   const effectivePathPoints = me.reboundLocked ? 0 : state.pathPoints;
+  const isTrainingMatch = opponent.nickname === "Training Dummy";
   const rewardTokens =
-    winner && winner === currentColor && currentMatchType === "ability"
+    winner &&
+    winner === currentColor &&
+    currentMatchType === "ability" &&
+    !isTrainingMatch
       ? Math.min(6, Math.max(0, 120 - accountDailyRewardTokens))
       : 0;
   const isPlanning = state.phase === "planning";
