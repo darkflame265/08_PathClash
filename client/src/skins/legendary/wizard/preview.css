@@ -20,7 +20,7 @@
   top: 50%;
   width: 250px;
   height: 250px;
-  transform: translate(-50%, -50%) scale(0.13);
+  transform: translate(-50%, -50%) scale(0.168);
   transform-origin: center;
   pointer-events: none;
   display: block;
@@ -52,7 +52,7 @@
 }
 
 .wizard-preview-outer-ring::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -5px;
   border-radius: 50%;
@@ -93,14 +93,26 @@
   transform: rotate(45deg);
 }
 
-.wizard-preview-d1 { animation: wizardPreviewDiamondOrbit 8s linear infinite 0s; }
-.wizard-preview-d2 { animation: wizardPreviewDiamondOrbit 8s linear infinite -2s; }
-.wizard-preview-d3 { animation: wizardPreviewDiamondOrbit 8s linear infinite -4s; }
-.wizard-preview-d4 { animation: wizardPreviewDiamondOrbit 8s linear infinite -6s; }
+.wizard-preview-d1 {
+  animation: wizardPreviewDiamondOrbit 8s linear infinite 0s;
+}
+.wizard-preview-d2 {
+  animation: wizardPreviewDiamondOrbit 8s linear infinite -2s;
+}
+.wizard-preview-d3 {
+  animation: wizardPreviewDiamondOrbit 8s linear infinite -4s;
+}
+.wizard-preview-d4 {
+  animation: wizardPreviewDiamondOrbit 8s linear infinite -6s;
+}
 
 @keyframes wizardPreviewDiamondOrbit {
-  from { transform: rotate(0deg)    translateX(92px) rotate(45deg); }
-  to   { transform: rotate(-360deg) translateX(92px) rotate(45deg); }
+  from {
+    transform: rotate(0deg) translateX(92px) rotate(45deg);
+  }
+  to {
+    transform: rotate(-360deg) translateX(92px) rotate(45deg);
+  }
 }
 
 /* 삼각형 */
@@ -114,10 +126,18 @@
   justify-content: center;
 }
 
-.wizard-preview-tri-1 { animation: wizardPreviewCW 7s linear infinite; }
-.wizard-preview-tri-2 { animation: wizardPreviewCCW 11s linear infinite; }
+.wizard-preview-tri-1 {
+  animation: wizardPreviewCW 7s linear infinite;
+}
+.wizard-preview-tri-2 {
+  animation: wizardPreviewCCW 11s linear infinite;
+}
 
-.wizard-preview-tri-svg { width: 100%; height: 100%; overflow: visible; }
+.wizard-preview-tri-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
 
 /* 에너지 암 */
 .wizard-preview-arm {
@@ -149,13 +169,23 @@
   box-shadow: 0 0 8px 3px rgba(200, 55, 255, 0.95);
 }
 
-.wizard-preview-dot-1 { animation: wizardPreviewDotOrbit 2.2s linear infinite 0s; }
-.wizard-preview-dot-2 { animation: wizardPreviewDotOrbit 2.2s linear infinite -0.73s; }
-.wizard-preview-dot-3 { animation: wizardPreviewDotOrbit 2.2s linear infinite -1.47s; }
+.wizard-preview-dot-1 {
+  animation: wizardPreviewDotOrbit 2.2s linear infinite 0s;
+}
+.wizard-preview-dot-2 {
+  animation: wizardPreviewDotOrbit 2.2s linear infinite -0.73s;
+}
+.wizard-preview-dot-3 {
+  animation: wizardPreviewDotOrbit 2.2s linear infinite -1.47s;
+}
 
 @keyframes wizardPreviewDotOrbit {
-  from { transform: rotate(0deg)   translateX(76px); }
-  to   { transform: rotate(360deg) translateX(76px); }
+  from {
+    transform: rotate(0deg) translateX(76px);
+  }
+  to {
+    transform: rotate(360deg) translateX(76px);
+  }
 }
 
 /* 코어 */
@@ -181,7 +211,7 @@
 }
 
 .wizard-preview-core::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 50%;
   top: 50%;
@@ -199,26 +229,51 @@
 }
 
 /* 키프레임 */
-@keyframes wizardPreviewCW  { to { transform: rotate(360deg); } }
-@keyframes wizardPreviewCCW { to { transform: rotate(-360deg); } }
+@keyframes wizardPreviewCW {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes wizardPreviewCCW {
+  to {
+    transform: rotate(-360deg);
+  }
+}
 
 @keyframes wizardPreviewArmFlare {
-  0%, 100% { opacity: 0.22; }
-  50%       { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.22;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes wizardPreviewCorePulse {
-  0%, 100% {
-    box-shadow: 0 0 16px rgba(160, 50, 255, 0.9), 0 0 34px rgba(110, 20, 210, 0.55);
+  0%,
+  100% {
+    box-shadow:
+      0 0 16px rgba(160, 50, 255, 0.9),
+      0 0 34px rgba(110, 20, 210, 0.55);
     transform: scale(1);
   }
   50% {
-    box-shadow: 0 0 26px rgba(190, 80, 255, 1), 0 0 54px rgba(140, 40, 230, 0.75);
+    box-shadow:
+      0 0 26px rgba(190, 80, 255, 1),
+      0 0 54px rgba(140, 40, 230, 0.75);
     transform: scale(1.06);
   }
 }
 
 @keyframes wizardPreviewCoreInner {
-  0%, 100% { transform: translate(-50%, -50%) scale(0.9);  opacity: 0.78; }
-  50%       { transform: translate(-50%, -50%) scale(1.14); opacity: 1; }
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(0.9);
+    opacity: 0.78;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.14);
+    opacity: 1;
+  }
 }

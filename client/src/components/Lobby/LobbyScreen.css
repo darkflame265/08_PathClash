@@ -2384,7 +2384,11 @@
   max-height: 22rem;
   border-radius: 1.15rem;
   background:
-    radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.14), transparent 58%),
+    radial-gradient(
+      circle at 50% 30%,
+      rgba(59, 130, 246, 0.14),
+      transparent 58%
+    ),
     linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(10, 16, 24, 0.92));
   border: 1px solid rgba(96, 165, 250, 0.18);
   overflow: hidden;
@@ -2396,6 +2400,18 @@
   transform: scale(2.35);
   transform-origin: center;
   z-index: 1;
+}
+
+.skin-detail-preview-stage .skin-preview-arc-reactor-scale {
+  transform: scale(0.205);
+}
+
+.skin-detail-preview-stage .wizard-preview-scale {
+  transform: translate(-50%, -50%) scale(0.208);
+}
+
+.skin-detail-preview-stage .chronos-preview-scale {
+  transform: translate(-50%, -50%) scale(0.198);
 }
 
 .skin-detail-preview-stage .board-skin-preview {
@@ -2750,6 +2766,18 @@
     width: 5.4rem;
     height: 5.4rem;
     transform: scale(2.15);
+  }
+
+  .skin-detail-preview-stage .skin-preview-arc-reactor-scale {
+    transform: scale(0.192);
+  }
+
+  .skin-detail-preview-stage .wizard-preview-scale {
+    transform: translate(-50%, -50%) scale(0.194);
+  }
+
+  .skin-detail-preview-stage .chronos-preview-scale {
+    transform: translate(-50%, -50%) scale(0.186);
   }
 
   .skin-detail-preview-stage .board-skin-preview {
