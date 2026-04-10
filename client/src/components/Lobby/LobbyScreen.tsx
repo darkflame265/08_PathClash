@@ -86,6 +86,29 @@ import "./LobbyScreen.css";
 type LobbyView = "main" | "create" | "join";
 type SkinPickerTab = "piece" | "board";
 type FriendBattleMode = "classic" | "ability";
+type SkinDetailState =
+  | {
+      tab: "piece";
+      choice: {
+        id: PieceSkin;
+        name: string;
+        desc: string;
+        requiredWins: number | null;
+        requiredPlays?: number | null;
+        tokenPrice?: number | null;
+        tier?: "common" | "rare" | "legendary" | null;
+      };
+    }
+  | {
+      tab: "board";
+      choice: {
+        id: BoardSkin;
+        name: string;
+        desc: string;
+        tokenPrice: number | null;
+      };
+    }
+  | null;
 type LobbyModeKey =
   | "ai"
   | "friend"
@@ -734,6 +757,7 @@ export function LobbyScreen({
   const [skinPickerTab, setSkinPickerTab] = useState<SkinPickerTab>("piece");
 
   const [isTokenShopOpen, setIsTokenShopOpen] = useState(false);
+  const [skinDetail, setSkinDetail] = useState<SkinDetailState>(null);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -1819,6 +1843,27 @@ export function LobbyScreen({
       </>
     );
   };
+
+  const renderPieceSkinPreview = (
+    skinId: PieceSkin,
+    className = "skin-preview",
+  ) => (
+    <span className={`${className} skin-preview-${skinId}`} aria-hidden="true">
+      {isFlagSkin(skinId) && <FlagSkin id={skinId} />}
+      {skinId === "plasma" && <PlasmaPreview />}
+      {skinId === "gold_core" && <GoldCorePreview />}
+      {skinId === "neon_pulse" && <NeonPulsePreview />}
+      {skinId === "cosmic" && <CosmicPreview />}
+      {skinId === "inferno" && <InfernoPreview />}
+      {skinId === "arc_reactor" && <ArcReactorPreview />}
+      {skinId === "electric_core" && <ElectricCorePreview />}
+      {skinId === "quantum" && <QuantumPreview />}
+      {skinId === "wizard" && <WizardPreview />}
+      {skinId === "atomic" && <AtomicPreview ready={atomicPreviewReady} />}
+      {skinId === "chronos" && <ChronosPreview />}
+      {skinId === "sun" && <SunPreview />}
+    </span>
+  );
 
   const currentSkinName =
     skinChoices.find((choice) => choice.id === pieceSkin)?.name ?? pieceSkin;
@@ -3202,7 +3247,7 @@ export function LobbyScreen({
 
     isOwned: boolean,
   ) => {
-    if (isLocked) return;
+    if (isLocked) return false;
 
     if (
       choice.tokenPrice !== null &&
@@ -3211,7 +3256,7 @@ export function LobbyScreen({
     ) {
       const confirmed = window.confirm(skinPurchasePrompt(choice.name));
 
-      if (!confirmed) return;
+      if (!confirmed) return false;
 
       const result = await purchaseSkinWithTokens(choice.id);
 
@@ -3222,21 +3267,22 @@ export function LobbyScreen({
 
         window.alert(skinPurchaseSuccessMsg(choice.name));
 
-        return;
+        return true;
       }
 
       if (result === "insufficient_tokens") {
         window.alert(skinPurchaseInsufficientMsg);
 
-        return;
+        return false;
       }
 
       window.alert(skinPurchaseFailedMsg);
 
-      return;
+      return false;
     }
 
     setPieceSkin(choice.id);
+    return true;
   };
 
   const handleBoardSkinSelect = async (
@@ -3244,7 +3290,7 @@ export function LobbyScreen({
     isLocked: boolean,
     isOwned: boolean,
   ) => {
-    if (isLocked) return;
+    if (isLocked) return false;
 
     if (
       choice.tokenPrice !== null &&
@@ -3253,7 +3299,7 @@ export function LobbyScreen({
     ) {
       const confirmed = window.confirm(skinPurchasePrompt(choice.name));
 
-      if (!confirmed) return;
+      if (!confirmed) return false;
 
       const result = await purchaseBoardSkinWithTokens(choice.id);
 
@@ -3261,19 +3307,58 @@ export function LobbyScreen({
         await syncAccountSummary();
         setBoardSkin(choice.id);
         window.alert(skinPurchaseSuccessMsg(choice.name));
-        return;
+        return true;
       }
 
       if (result === "insufficient_tokens") {
         window.alert(skinPurchaseInsufficientMsg);
-        return;
+        return false;
       }
 
       window.alert(skinPurchaseFailedMsg);
-      return;
+      return false;
     }
 
     setBoardSkin(choice.id);
+    return true;
+  };
+
+  const handleSkinDetailAction = async () => {
+    if (!skinDetail) return;
+
+    if (skinDetail.tab === "piece") {
+      const choice = skinDetail.choice;
+      const isOwned = ownedSkins.includes(choice.id);
+      const lockedByWins =
+        choice.requiredWins !== null && accountWins < choice.requiredWins;
+      const lockedByPlays =
+        choice.requiredPlays !== null &&
+        choice.requiredPlays !== undefined &&
+        totalPlays < choice.requiredPlays;
+      const lockedByTokens =
+        choice.tokenPrice !== null &&
+        choice.tokenPrice !== undefined &&
+        !isOwned &&
+        accountTokens < choice.tokenPrice;
+      const isLocked = lockedByWins || lockedByPlays || lockedByTokens;
+      const applied = await handleSkinChoiceSelect(choice, isLocked, isOwned);
+      if (applied) {
+        setSkinDetail(null);
+      }
+      return;
+    }
+
+    const choice = skinDetail.choice;
+    const isOwned = isBoardSkinUnlocked(choice);
+    const lockedByTokens =
+      choice.tokenPrice !== null &&
+      choice.tokenPrice !== undefined &&
+      !isOwned &&
+      accountTokens < choice.tokenPrice;
+    const applied = await handleBoardSkinSelect(choice, lockedByTokens, isOwned);
+    if (applied) {
+      setSkinDetail(null);
+    }
   };
 
   const lobbyModeOptions: Array<{
@@ -3792,32 +3877,14 @@ export function LobbyScreen({
                       className={`skin-option-card skin-picker-card ${
                         pieceSkin === choice.id ? "is-selected" : ""
                       } ${isLocked ? "is-locked" : ""}`}
-                      onClick={() =>
-                        void handleSkinChoiceSelect(choice, isLocked, isOwned)
-                      }
+                      onClick={() => setSkinDetail({ tab: "piece", choice })}
                       disabled={false}
                       type="button"
                     >
-                      <span
-                        className={`skin-preview skin-picker-preview skin-preview-${choice.id}`}
-                        aria-hidden="true"
-                      >
-                        {isFlagSkin(choice.id) && <FlagSkin id={choice.id} />}
-                        {choice.id === "plasma" && <PlasmaPreview />}
-                        {choice.id === "gold_core" && <GoldCorePreview />}
-                        {choice.id === "neon_pulse" && <NeonPulsePreview />}
-                        {choice.id === "cosmic" && <CosmicPreview />}
-                        {choice.id === "inferno" && <InfernoPreview />}
-                        {choice.id === "arc_reactor" && <ArcReactorPreview />}
-                        {choice.id === "electric_core" && <ElectricCorePreview />}
-                        {choice.id === "quantum" && <QuantumPreview />}
-                        {choice.id === "wizard" && <WizardPreview />}
-                        {choice.id === "atomic" && (
-                          <AtomicPreview ready={atomicPreviewReady} />
-                        )}
-                        {choice.id === "chronos" && <ChronosPreview />}
-                        {choice.id === "sun" && <SunPreview />}
-                      </span>
+                      {renderPieceSkinPreview(
+                        choice.id,
+                        "skin-preview skin-picker-preview",
+                      )}
 
                       <span className="skin-option-copy skin-picker-copy">
                         <strong
@@ -3862,9 +3929,7 @@ export function LobbyScreen({
                       className={`skin-option-card skin-picker-card ${
                         boardSkin === choice.id ? "is-selected" : ""
                       } ${isLocked ? "is-locked" : ""}`}
-                      onClick={() =>
-                        void handleBoardSkinSelect(choice, isLocked, isOwned)
-                      }
+                      onClick={() => setSkinDetail({ tab: "board", choice })}
                       type="button"
                     >
                       {renderBoardSkinPreview(choice.id)}
@@ -3891,6 +3956,161 @@ export function LobbyScreen({
               <button
                 className="lobby-btn primary"
                 onClick={() => setIsSkinPickerOpen(false)}
+                type="button"
+              >
+                {skinApplyLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {skinDetail && (
+        <div
+          className="upgrade-modal-backdrop"
+          onClick={() => setSkinDetail(null)}
+        >
+          <div
+            className="upgrade-modal skin-modal skin-detail-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="skin-detail-preview-stage">
+              {skinDetail.tab === "piece"
+                ? renderPieceSkinPreview(
+                    skinDetail.choice.id,
+                    "skin-preview skin-detail-preview",
+                  )
+                : renderBoardSkinPreview(skinDetail.choice.id)}
+            </div>
+
+            <div className="skin-detail-body">
+              <h3 className="skin-detail-title">
+                {skinDetail.choice.name}
+              </h3>
+
+              {skinDetail.tab === "piece" ? (
+                (() => {
+                  const linkedSkill =
+                    Object.values(ABILITY_SKILLS).find(
+                      (skill) => skill.skinId === skinDetail.choice.id,
+                    ) ?? null;
+                  return (
+                    <div className="skin-detail-skill">
+                      <strong className="skin-detail-skill-name">
+                        {linkedSkill
+                          ? lang === "en"
+                            ? linkedSkill.name.en
+                            : linkedSkill.name.kr
+                          : lang === "en"
+                            ? "No linked skill"
+                            : "연결 스킬 없음"}
+                      </strong>
+                      <p className="skin-detail-skill-desc">
+                        {linkedSkill
+                          ? lang === "en"
+                            ? linkedSkill.loadoutDescription.en
+                            : linkedSkill.loadoutDescription.kr
+                          : lang === "en"
+                            ? "This skin does not have a linked Ability Battle skill."
+                            : "이 스킨에는 연결된 능력대전 스킬이 없습니다."}
+                      </p>
+                    </div>
+                  );
+                })()
+              ) : (
+                <div className="skin-detail-skill">
+                  <strong className="skin-detail-skill-name">
+                    {lang === "en" ? "Board Style" : "보드 스타일"}
+                  </strong>
+                  <p className="skin-detail-skill-desc">
+                    {skinDetail.choice.desc}
+                  </p>
+                </div>
+              )}
+
+              <div className="skin-detail-actions">
+                <button
+                  className="lobby-btn secondary skin-detail-action-btn"
+                  type="button"
+                  onClick={() => void handleSkinDetailAction()}
+                  disabled={
+                    skinDetail.tab === "piece"
+                      ? (() => {
+                          const choice = skinDetail.choice;
+                          const isOwned = ownedSkins.includes(choice.id);
+                          const lockedByWins =
+                            choice.requiredWins !== null &&
+                            accountWins < choice.requiredWins;
+                          const lockedByPlays =
+                            choice.requiredPlays !== null &&
+                            choice.requiredPlays !== undefined &&
+                            totalPlays < choice.requiredPlays;
+                          const lockedByTokens =
+                            choice.tokenPrice !== null &&
+                            choice.tokenPrice !== undefined &&
+                            !isOwned &&
+                            accountTokens < choice.tokenPrice;
+                          return lockedByWins || lockedByPlays || lockedByTokens;
+                        })()
+                      : (() => {
+                          const choice = skinDetail.choice;
+                          const isOwned = isBoardSkinUnlocked(choice);
+                          return (
+                            choice.tokenPrice !== null &&
+                            choice.tokenPrice !== undefined &&
+                            !isOwned &&
+                            accountTokens < choice.tokenPrice
+                          );
+                        })()
+                  }
+                >
+                  {skinDetail.tab === "piece"
+                    ? (() => {
+                        const choice = skinDetail.choice;
+                        const isOwned = ownedSkins.includes(choice.id);
+                        const isEquipped = pieceSkin === choice.id;
+                        if (
+                          choice.tokenPrice !== null &&
+                          choice.tokenPrice !== undefined &&
+                          !isOwned
+                        ) {
+                          return lang === "en" ? "Buy" : "구매";
+                        }
+                        return isEquipped
+                          ? lang === "en"
+                            ? "Equipped"
+                            : "사용 중"
+                          : lang === "en"
+                            ? "Use"
+                            : "사용";
+                      })()
+                    : (() => {
+                        const choice = skinDetail.choice;
+                        const isOwned = isBoardSkinUnlocked(choice);
+                        const isEquipped = boardSkin === choice.id;
+                        if (
+                          choice.tokenPrice !== null &&
+                          choice.tokenPrice !== undefined &&
+                          !isOwned
+                        ) {
+                          return lang === "en" ? "Buy" : "구매";
+                        }
+                        return isEquipped
+                          ? lang === "en"
+                            ? "Equipped"
+                            : "사용 중"
+                          : lang === "en"
+                            ? "Use"
+                            : "사용";
+                      })()}
+                </button>
+              </div>
+            </div>
+
+            <div className="upgrade-modal-actions">
+              <button
+                className="lobby-btn primary"
+                onClick={() => setSkinDetail(null)}
                 type="button"
               >
                 {skinApplyLabel}

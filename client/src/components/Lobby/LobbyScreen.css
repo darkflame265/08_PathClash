@@ -2369,6 +2369,90 @@
   width: min(100%, 34rem);
 }
 
+.skin-detail-modal {
+  width: min(100%, 30rem);
+  max-height: min(52rem, calc(100dvh - 2rem));
+  overflow: hidden;
+  gap: 0.9rem;
+}
+
+.skin-detail-preview-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 18rem;
+  max-height: 22rem;
+  border-radius: 1.15rem;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.14), transparent 58%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(10, 16, 24, 0.92));
+  border: 1px solid rgba(96, 165, 250, 0.18);
+  overflow: hidden;
+}
+
+.skin-detail-preview {
+  width: 7rem;
+  height: 7rem;
+  transform: scale(3.4);
+  transform-origin: center;
+  z-index: 1;
+}
+
+.skin-detail-preview-stage .board-skin-preview {
+  width: min(78vw, 18rem);
+  height: min(78vw, 18rem);
+  max-width: 18rem;
+  max-height: 18rem;
+  border-radius: 1.2rem;
+}
+
+.skin-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.skin-detail-title {
+  margin: 0;
+  text-align: center;
+  color: var(--text, #f0f4f8);
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.skin-detail-skill {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 42, 0.38);
+}
+
+.skin-detail-skill-name {
+  color: #dbeafe;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.skin-detail-skill-desc {
+  margin: 0;
+  color: var(--text-muted, #9aa4ae);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.skin-detail-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.skin-detail-action-btn {
+  width: auto;
+  min-width: 8.25rem;
+}
+
 .patch-notes-scroll-body {
   max-height: min(60vh, 28rem);
   overflow-y: auto;
@@ -2651,6 +2735,28 @@
 }
 
 @media (max-width: 640px) {
+  .skin-detail-modal {
+    width: min(100%, 24rem);
+    max-height: calc(100dvh - 1.7rem);
+    padding: 1rem;
+  }
+
+  .skin-detail-preview-stage {
+    min-height: 14.5rem;
+    max-height: 16.5rem;
+  }
+
+  .skin-detail-preview {
+    width: 5.4rem;
+    height: 5.4rem;
+    transform: scale(2.95);
+  }
+
+  .skin-detail-preview-stage .board-skin-preview {
+    width: min(74vw, 14rem);
+    height: min(74vw, 14rem);
+  }
+
   .ai-tutorial-prompt-backdrop {
     align-items: center;
   }
