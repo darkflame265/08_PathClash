@@ -2418,6 +2418,21 @@
   transform: translate(-50%, -50%) scale(0.808);
 }
 
+.skin-detail-preview-stage .skin-preview-electric_core-orb {
+  transform: scale(1);
+  transform-origin: center;
+}
+
+.skin-detail-preview-stage .skin-preview-electric_core-canvas {
+  transform: scale(2.1);
+  transform-origin: center;
+}
+
+.skin-detail-preview-stage .skin-preview-cosmic-canvas {
+  transform: scale(1.18);
+  transform-origin: center;
+}
+
 .skin-detail-preview-stage .wizard-preview-scale {
   transform: translate(-50%, -50%) scale(0.408);
 }
@@ -2786,6 +2801,18 @@
 
   .skin-detail-preview-stage .skin-preview-atomic-atom {
     transform: translate(-50%, -50%) scale(1.1);
+  }
+
+  .skin-detail-preview-stage .skin-preview-electric_core-orb {
+    transform: scale(1.12);
+  }
+
+  .skin-detail-preview-stage .skin-preview-electric_core-canvas {
+    transform: scale(1.08);
+  }
+
+  .skin-detail-preview-stage .skin-preview-cosmic-canvas {
+    transform: scale(1.12);
   }
 
   .skin-detail-preview-stage .wizard-preview-scale {
