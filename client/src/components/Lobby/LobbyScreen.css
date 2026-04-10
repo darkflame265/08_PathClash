@@ -2414,6 +2414,10 @@
   transform: scale(0.405);
 }
 
+.skin-detail-preview-stage .skin-preview-atomic-atom {
+  transform: translate(-50%, -50%) scale(0.808);
+}
+
 .skin-detail-preview-stage .wizard-preview-scale {
   transform: translate(-50%, -50%) scale(0.408);
 }
@@ -2778,6 +2782,10 @@
 
   .skin-detail-preview-stage .skin-preview-arc-reactor-scale {
     transform: scale(0.192);
+  }
+
+  .skin-detail-preview-stage .skin-preview-atomic-atom {
+    transform: translate(-50%, -50%) scale(1.1);
   }
 
   .skin-detail-preview-stage .wizard-preview-scale {
