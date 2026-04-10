@@ -1369,6 +1369,7 @@
 .skin-option-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: max-content;
   gap: 0.68rem;
   margin-top: 0.5rem;
   overflow-y: auto;
@@ -1472,15 +1473,18 @@
 }
 
 .skin-picker-card {
+  position: relative;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
   gap: 0.52rem;
-  min-height: 9.8rem;
+  min-height: 0;
+  height: auto;
   padding: 0.78rem 0.5rem 0.62rem;
 }
 
 .skin-preview {
+  z-index: 1;
   flex-shrink: 0;
   width: 1.6rem;
   height: 1.6rem;
@@ -1652,6 +1656,8 @@
 }
 
 .skin-picker-copy {
+  position: relative;
+  z-index: 3;
   align-items: center;
   justify-content: flex-start;
   gap: 0.16rem;
@@ -1750,7 +1756,8 @@
   }
 
   .skin-picker-card {
-    min-height: 9rem;
+    min-height: 0;
+    height: auto;
     gap: 0.46rem;
     padding: 0.72rem 0.34rem 0.56rem;
   }
