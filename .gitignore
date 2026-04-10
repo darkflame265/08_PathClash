@@ -15,3 +15,8 @@ server/.env.*
 client/android/*.jks
 client/android/*.keystore
 client/android/keystore.properties
+
+.superpowers/
+
+# Local screenshots
+docs/screenshots_v2/
