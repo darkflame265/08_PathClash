@@ -2947,7 +2947,7 @@
     inset: 4px;
     width: calc(100% - 8px);
     height: calc(100% - 8px);
-    transform: scale(1.95);
+    transform: scale(2.4);
   }
 
   .skin-detail-preview-stage .skin-preview-cosmic-canvas {
