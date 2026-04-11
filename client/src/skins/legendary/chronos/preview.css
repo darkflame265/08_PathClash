@@ -133,32 +133,32 @@
 }
 
 .chronos-preview-hand-hour {
-  width: 3.5px;
-  height: 32px;
-  margin-left: -1.75px;
-  margin-top: -32px;
+  width: 7px;
+  height: 64px;
+  margin-left: -3.5px;
+  margin-top: -64px;
   background: linear-gradient(to top, #a07820, #ffd700);
-  box-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
   animation: chronosPreviewHandHour 3600s linear infinite;
 }
 
 .chronos-preview-hand-minute {
-  width: 3px;
-  height: 44px;
-  margin-left: -1.5px;
-  margin-top: -44px;
+  width: 6px;
+  height: 88px;
+  margin-left: -3px;
+  margin-top: -88px;
   background: linear-gradient(to top, #a07820, #ffd700);
-  box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+  box-shadow: 0 0 9px rgba(255, 215, 0, 0.5);
   animation: chronosPreviewHandMinute 60s linear infinite;
 }
 
 .chronos-preview-hand-second {
-  width: 2px;
-  height: 52px;
-  margin-left: -1px;
-  margin-top: -52px;
+  width: 4px;
+  height: 104px;
+  margin-left: -2px;
+  margin-top: -104px;
   background: #fbbf24;
-  box-shadow: 0 0 5px rgba(251, 191, 36, 0.9);
+  box-shadow: 0 0 9px rgba(251, 191, 36, 0.9);
   animation: chronosPreviewHandSecond 3s linear infinite;
 }
 
