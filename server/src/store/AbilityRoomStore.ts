@@ -7,7 +7,7 @@ export class AbilityRoomStore {
   private codeToRoom = new Map<string, string>();
   private socketToRoom = new Map<string, string>();
   private static readonly WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
-  private static readonly MAX_ACTIVE_TURN = 3;
+  private static readonly MAX_ACTIVE_TURN = 200;
 
   private notifyRoomRemoved(
     room: AbilityRoom,

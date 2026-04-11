@@ -5,7 +5,7 @@ export class CoopRoomStore {
   private rooms: Map<string, CoopRoom> = new Map();
   private socketToRoom: Map<string, string> = new Map();
   private static readonly WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
-  private static readonly MAX_ACTIVE_TURN = 3;
+  private static readonly MAX_ACTIVE_TURN = 200;
   private queue: {
     socketId: string;
     nickname: string;

@@ -154,4 +154,4 @@ class RoomStore {
 }
 exports.RoomStore = RoomStore;
 RoomStore.WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
-RoomStore.MAX_ACTIVE_TURN = 3;
+RoomStore.MAX_ACTIVE_TURN = 200;

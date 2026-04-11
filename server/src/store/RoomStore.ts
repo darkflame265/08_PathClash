@@ -6,7 +6,7 @@ export class RoomStore {
   private codeToRoom: Map<string, string> = new Map();
   private socketToRoom: Map<string, string> = new Map();
   private static readonly WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
-  private static readonly MAX_ACTIVE_TURN = 3;
+  private static readonly MAX_ACTIVE_TURN = 200;
 
   private notifyRoomRemoved(
     room: GameRoom,

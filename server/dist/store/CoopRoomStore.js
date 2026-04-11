@@ -108,4 +108,4 @@ class CoopRoomStore {
 }
 exports.CoopRoomStore = CoopRoomStore;
 CoopRoomStore.WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
-CoopRoomStore.MAX_ACTIVE_TURN = 3;
+CoopRoomStore.MAX_ACTIVE_TURN = 200;

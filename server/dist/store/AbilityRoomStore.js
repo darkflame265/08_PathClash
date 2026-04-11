@@ -141,4 +141,4 @@ class AbilityRoomStore {
 }
 exports.AbilityRoomStore = AbilityRoomStore;
 AbilityRoomStore.WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
-AbilityRoomStore.MAX_ACTIVE_TURN = 3;
+AbilityRoomStore.MAX_ACTIVE_TURN = 200;

@@ -17,7 +17,7 @@ export class TwoVsTwoRoomStore {
   private rooms: Map<string, TwoVsTwoRoom> = new Map();
   private socketToRoom: Map<string, string> = new Map();
   private static readonly WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
-  private static readonly MAX_ACTIVE_TURN = 3;
+  private static readonly MAX_ACTIVE_TURN = 200;
   private queue: QueueEntry[] = [];
   private teamQueue: TeamQueueEntry[] = [];
   private static instance: TwoVsTwoRoomStore;

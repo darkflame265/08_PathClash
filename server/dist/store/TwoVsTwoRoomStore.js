@@ -145,4 +145,4 @@ class TwoVsTwoRoomStore {
 }
 exports.TwoVsTwoRoomStore = TwoVsTwoRoomStore;
 TwoVsTwoRoomStore.WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
-TwoVsTwoRoomStore.MAX_ACTIVE_TURN = 3;
+TwoVsTwoRoomStore.MAX_ACTIVE_TURN = 200;
