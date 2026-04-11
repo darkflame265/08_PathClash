@@ -347,8 +347,7 @@
   width: 100%;
   margin-top: calc(0.45rem * var(--gs-scale, 1));
   margin-bottom: calc(0.5rem * var(--gs-scale, 1));
-  padding: calc(0.55rem * var(--gs-scale, 1))
-    calc(0.8rem * var(--gs-scale, 1));
+  padding: calc(0.55rem * var(--gs-scale, 1)) calc(0.8rem * var(--gs-scale, 1));
   border-radius: calc(0.85rem * var(--gs-scale, 1));
   border: 1px solid var(--tile-border);
   background: var(--panel);
@@ -420,8 +419,7 @@
   display: inline-flex;
   align-items: center;
   gap: calc(0.28rem * var(--gs-scale, 1));
-  padding: calc(0.32rem * var(--gs-scale, 1))
-    calc(0.48rem * var(--gs-scale, 1));
+  padding: calc(0.32rem * var(--gs-scale, 1)) calc(0.48rem * var(--gs-scale, 1));
   border-radius: calc(0.7rem * var(--gs-scale, 1));
   border: 1px solid var(--tile-border);
   background: rgba(17, 24, 39, 0.3);
@@ -522,7 +520,7 @@
   justify-content: center;
   flex: 0 0 auto;
   color: #f87171;
-  font-size: 1em;
+  font-size: 1.4em;
   font-weight: 900;
   line-height: 1;
   text-shadow: 0 0 8px rgba(248, 113, 113, 0.35);
@@ -1543,7 +1541,11 @@
   position: absolute;
   z-index: 2;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(140, 30, 255, 0.12) 0%, transparent 65%);
+  background: radial-gradient(
+    circle,
+    rgba(140, 30, 255, 0.12) 0%,
+    transparent 65%
+  );
   box-shadow:
     0 0 16px rgba(180, 60, 255, 0.5),
     0 0 32px rgba(150, 30, 255, 0.2);
@@ -1580,16 +1582,27 @@
 }
 
 @keyframes wizardMinePulse {
-  0%, 100% { opacity: 0.55; filter: brightness(0.85); }
-  50%       { opacity: 1;    filter: brightness(1.45); }
+  0%,
+  100% {
+    opacity: 0.55;
+    filter: brightness(0.85);
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.45);
+  }
 }
 
 @keyframes wizardMineRotateCW {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes wizardMineRotateCCW {
-  to { transform: rotate(-360deg); }
+  to {
+    transform: rotate(-360deg);
+  }
 }
 
 /* Trigger explosion */
@@ -1599,7 +1612,8 @@
   border-radius: 50%;
   pointer-events: none;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle,
+  background: radial-gradient(
+    circle,
     rgba(255, 230, 255, 0.98) 0%,
     rgba(220, 80, 255, 0.88) 30%,
     transparent 70%
@@ -1612,7 +1626,7 @@
 }
 
 .ability-wizard-mine-trigger::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 8%;
   border-radius: 50%;
@@ -1621,7 +1635,7 @@
 }
 
 .ability-wizard-mine-trigger::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 25%;
   border-radius: 50%;
@@ -1630,12 +1644,27 @@
 }
 
 @keyframes wizardMineBurst {
-  0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
-  35%  { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(4);   opacity: 0; }
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 1;
+  }
+  35% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(4);
+    opacity: 0;
+  }
 }
 
 @keyframes wizardMineBurstRing {
-  0%   { transform: scale(1)   rotate(0deg);   opacity: 0.9; }
-  100% { transform: scale(2.6) rotate(120deg); opacity: 0;   }
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.6) rotate(120deg);
+    opacity: 0;
+  }
 }
