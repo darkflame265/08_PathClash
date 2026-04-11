@@ -12,21 +12,21 @@ interface StarColor {
 }
 
 const PALETTE: StarColor[] = [
-  { r: 232, g: 237, b: 242 }, // light gray
-  { r: 200, g: 211, b: 224 }, // gray-blue
-  { r: 170, g: 188, b: 212 }, // medium gray
-  { r: 126, g: 184, b: 247 }, // light blue
-  { r: 147, g: 168, b: 232 }, // periwinkle blue
-  { r: 181, g: 157, b: 232 }, // soft purple
-  { r: 212, g: 184, b: 255 }, // light purple
-  { r: 255, g: 255, b: 255 }, // white
+  { r: 220, g: 232, b: 248 }, // ice white
+  { r: 190, g: 208, b: 230 }, // slate blue
+  { r: 155, g: 182, b: 218 }, // steel blue
+  { r: 108, g: 178, b: 252 }, // sky blue
+  { r: 138, g: 160, b: 238 }, // violet-blue
+  { r: 192, g: 148, b: 240 }, // soft violet
+  { r: 222, g: 176, b: 255 }, // lavender
+  { r: 245, g: 250, b: 255 }, // near-white
 ];
 
 const RING_CONFIGS = [
-  { count: 3, rf: 0.20, baseSpeed: 0.012 },
-  { count: 5, rf: 0.39, baseSpeed: 0.007 },
-  { count: 6, rf: 0.61, baseSpeed: 0.004 },
-  { count: 8, rf: 0.83, baseSpeed: 0.002 },
+  { count: 3, rf: 0.22, baseSpeed: 0.011 },
+  { count: 5, rf: 0.41, baseSpeed: 0.0065 },
+  { count: 7, rf: 0.63, baseSpeed: 0.0038 },
+  { count: 9, rf: 0.85, baseSpeed: 0.0019 },
 ] as const;
 
 interface Star {
@@ -110,9 +110,9 @@ export function CosmicCanvas({ className, variant = "game" }: Props) {
 
       // Background: deep space radial gradient
       const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, halfR);
-      bg.addColorStop(0, "#1c2040");
-      bg.addColorStop(0.55, "#0e1328");
-      bg.addColorStop(1, "#080b18");
+      bg.addColorStop(0, "#1a1d3e");
+      bg.addColorStop(0.5, "#0c1124");
+      bg.addColorStop(1, "#060914");
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, w, h);
 
@@ -128,11 +128,11 @@ export function CosmicCanvas({ className, variant = "game" }: Props) {
       ctx.restore();
 
       // Central star glow
-      const coreR = halfR * 0.13;
+      const coreR = halfR * 0.14;
       const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreR);
-      core.addColorStop(0, "rgba(215, 228, 255, 0.95)");
-      core.addColorStop(0.45, "rgba(160, 190, 255, 0.45)");
-      core.addColorStop(1, "rgba(100, 140, 220, 0)");
+      core.addColorStop(0, "rgba(230, 240, 255, 0.98)");
+      core.addColorStop(0.40, "rgba(170, 195, 255, 0.50)");
+      core.addColorStop(1, "rgba(110, 148, 230, 0)");
       ctx.fillStyle = core;
       ctx.beginPath();
       ctx.arc(cx, cy, coreR, 0, Math.PI * 2);

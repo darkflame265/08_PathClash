@@ -16,7 +16,7 @@
 
 .skin-preview-cosmic-canvas {
   position: absolute;
-  inset: 0%;
+  inset: 0;
   width: 150%;
   height: 150%;
   display: block;

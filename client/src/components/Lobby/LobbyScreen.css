@@ -2429,8 +2429,13 @@
 }
 
 .skin-detail-preview-stage .skin-preview-cosmic-canvas {
-  transform: scale(1.18);
-  transform-origin: center;
+  width: 235%;
+  height: 235%;
+  border-radius: 0;
+  transform: translate(0%, 0%) scale(1);
+
+  top: 0;
+  left: 0;
 }
 
 .skin-detail-preview-stage .wizard-preview-scale {
@@ -2812,7 +2817,7 @@
   }
 
   .skin-detail-preview-stage .skin-preview-cosmic-canvas {
-    transform: scale(1.12);
+    transform: scale(1);
   }
 
   .skin-detail-preview-stage .wizard-preview-scale {
