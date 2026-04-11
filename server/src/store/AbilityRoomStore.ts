@@ -7,7 +7,35 @@ export class AbilityRoomStore {
   private codeToRoom = new Map<string, string>();
   private socketToRoom = new Map<string, string>();
   private static readonly WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
-  private static readonly MAX_ACTIVE_TURN = 200;
+  private static readonly MAX_ACTIVE_TURN = 3;
+
+  private notifyRoomRemoved(
+    room: AbilityRoom,
+    roomId: string,
+    roomSocketIds: string[],
+    reason: 'turn_limit' | 'waiting_timeout' | 'empty',
+    onRemove?: (
+      payload: {
+        roomId: string;
+        socketIds: string[];
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+      },
+    ) => void,
+  ) {
+    onRemove?.({
+      roomId,
+      socketIds: roomSocketIds,
+      reason,
+    });
+
+    this.rooms.delete(roomId);
+    this.codeToRoom.delete(this.normalizeCode(room.code));
+    for (const socketId of roomSocketIds) {
+      if (this.socketToRoom.get(socketId) === roomId) {
+        this.socketToRoom.delete(socketId);
+      }
+    }
+  }
 
   private queue: Array<{
     socketId: string;
@@ -153,7 +181,17 @@ export class AbilityRoomStore {
     return { room, disconnectResult };
   }
 
-  sweep(activeSocketIds: Set<string>, now = Date.now()): void {
+  sweep(
+    activeSocketIds: Set<string>,
+    now = Date.now(),
+    onRemove?: (
+      payload: {
+        roomId: string;
+        socketIds: string[];
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+      },
+    ) => void,
+  ): void {
     this.queue = this.queue.filter((entry) => activeSocketIds.has(entry.socketId));
     for (const [socketId, roomId] of this.socketToRoom.entries()) {
       if (!activeSocketIds.has(socketId) || !this.rooms.has(roomId)) {
@@ -171,13 +209,12 @@ export class AbilityRoomStore {
         !exceededTurnLimit &&
         !(isStaleWaitingRoom && !hasLiveSocket)
       ) continue;
-      this.rooms.delete(roomId);
-      this.codeToRoom.delete(this.normalizeCode(room.code));
-      for (const socketId of roomSocketIds) {
-        if (this.socketToRoom.get(socketId) === roomId) {
-          this.socketToRoom.delete(socketId);
-        }
-      }
+      const reason: 'turn_limit' | 'waiting_timeout' | 'empty' = isEmptyRoom
+        ? 'empty'
+        : exceededTurnLimit
+          ? 'turn_limit'
+          : 'waiting_timeout';
+      this.notifyRoomRemoved(room, roomId, roomSocketIds, reason, onRemove);
     }
   }
 }

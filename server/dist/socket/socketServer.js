@@ -72,6 +72,17 @@ function initSocketServer(io) {
             }
         }
     };
+    const notifyRoomClosed = ({ socketIds, reason, }) => {
+        if (reason !== 'turn_limit')
+            return;
+        for (const socketId of socketIds) {
+            if (!io.sockets.sockets.has(socketId))
+                continue;
+            io.to(socketId).emit('room_closed', {
+                reason,
+            });
+        }
+    };
     const resolvePlayerProfileCached = async (socket, auth, fallbackNickname) => {
         const userId = typeof socket.data.userId === 'string' ? socket.data.userId : null;
         if (userId) {
@@ -96,10 +107,10 @@ function initSocketServer(io) {
     };
     setInterval(() => {
         const activeSocketIds = new Set(io.sockets.sockets.keys());
-        store.sweep(activeSocketIds);
-        coopStore.sweep(activeSocketIds);
-        twoVsTwoStore.sweep(activeSocketIds);
-        abilityStore.sweep(activeSocketIds);
+        store.sweep(activeSocketIds, Date.now(), notifyRoomClosed);
+        coopStore.sweep(activeSocketIds, Date.now(), notifyRoomClosed);
+        twoVsTwoStore.sweep(activeSocketIds, Date.now(), notifyRoomClosed);
+        abilityStore.sweep(activeSocketIds, Date.now(), notifyRoomClosed);
     }, roomSweepIntervalMs);
     setInterval(() => {
         clearExpiredProfileCache();

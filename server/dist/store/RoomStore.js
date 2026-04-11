@@ -8,6 +8,20 @@ class RoomStore {
         this.socketToRoom = new Map();
         this.matchQueue = [];
     }
+    notifyRoomRemoved(room, roomId, roomSocketIds, reason, onRemove) {
+        onRemove?.({
+            roomId,
+            socketIds: roomSocketIds,
+            reason,
+        });
+        this.rooms.delete(roomId);
+        this.codeToRoom.delete(this.normalizeCode(room.code));
+        for (const socketId of roomSocketIds) {
+            if (this.socketToRoom.get(socketId) === roomId) {
+                this.socketToRoom.delete(socketId);
+            }
+        }
+    }
     static getInstance() {
         if (!RoomStore.instance)
             RoomStore.instance = new RoomStore();
@@ -101,10 +115,10 @@ class RoomStore {
             socketMappings: this.socketToRoom.size,
         };
     }
-    sweep(activeSocketIds, now = Date.now()) {
+    sweep(activeSocketIds, now = Date.now(), onRemove) {
         this.sweepQueue(activeSocketIds);
         this.sweepSocketMappings(activeSocketIds);
-        this.sweepRooms(activeSocketIds, now);
+        this.sweepRooms(activeSocketIds, now, onRemove);
     }
     sweepQueue(activeSocketIds) {
         this.matchQueue = this.matchQueue.filter((entry) => activeSocketIds.has(entry.socketId));
@@ -116,7 +130,7 @@ class RoomStore {
             }
         }
     }
-    sweepRooms(activeSocketIds, now) {
+    sweepRooms(activeSocketIds, now, onRemove) {
         for (const [roomId, room] of this.rooms.entries()) {
             const roomSocketIds = room.getSocketIds();
             const hasLiveSocket = roomSocketIds.some((socketId) => activeSocketIds.has(socketId));
@@ -129,16 +143,15 @@ class RoomStore {
                 !(isStaleWaitingRoom && !hasLiveSocket)) {
                 continue;
             }
-            this.rooms.delete(roomId);
-            this.codeToRoom.delete(this.normalizeCode(room.code));
-            for (const socketId of roomSocketIds) {
-                if (this.socketToRoom.get(socketId) === roomId) {
-                    this.socketToRoom.delete(socketId);
-                }
-            }
+            const reason = isEmptyRoom
+                ? 'empty'
+                : exceededTurnLimit
+                    ? 'turn_limit'
+                    : 'waiting_timeout';
+            this.notifyRoomRemoved(room, roomId, roomSocketIds, reason, onRemove);
         }
     }
 }
 exports.RoomStore = RoomStore;
 RoomStore.WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
-RoomStore.MAX_ACTIVE_TURN = 200;
+RoomStore.MAX_ACTIVE_TURN = 3;

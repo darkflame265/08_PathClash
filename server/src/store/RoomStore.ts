@@ -6,7 +6,36 @@ export class RoomStore {
   private codeToRoom: Map<string, string> = new Map();
   private socketToRoom: Map<string, string> = new Map();
   private static readonly WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
-  private static readonly MAX_ACTIVE_TURN = 200;
+  private static readonly MAX_ACTIVE_TURN = 3;
+
+  private notifyRoomRemoved(
+    room: GameRoom,
+    roomId: string,
+    roomSocketIds: string[],
+    reason: 'turn_limit' | 'waiting_timeout' | 'empty',
+    onRemove?: (
+      payload: {
+        roomId: string;
+        socketIds: string[];
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+      },
+    ) => void,
+  ) {
+    onRemove?.({
+      roomId,
+      socketIds: roomSocketIds,
+      reason,
+    });
+
+    this.rooms.delete(roomId);
+    this.codeToRoom.delete(this.normalizeCode(room.code));
+
+    for (const socketId of roomSocketIds) {
+      if (this.socketToRoom.get(socketId) === roomId) {
+        this.socketToRoom.delete(socketId);
+      }
+    }
+  }
 
   private static instance: RoomStore;
   static getInstance(): RoomStore {
@@ -152,10 +181,20 @@ export class RoomStore {
     };
   }
 
-  sweep(activeSocketIds: Set<string>, now = Date.now()): void {
+  sweep(
+    activeSocketIds: Set<string>,
+    now = Date.now(),
+    onRemove?: (
+      payload: {
+        roomId: string;
+        socketIds: string[];
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+      },
+    ) => void,
+  ): void {
     this.sweepQueue(activeSocketIds);
     this.sweepSocketMappings(activeSocketIds);
-    this.sweepRooms(activeSocketIds, now);
+    this.sweepRooms(activeSocketIds, now, onRemove);
   }
 
   private sweepQueue(activeSocketIds: Set<string>): void {
@@ -170,7 +209,17 @@ export class RoomStore {
     }
   }
 
-  private sweepRooms(activeSocketIds: Set<string>, now: number): void {
+  private sweepRooms(
+    activeSocketIds: Set<string>,
+    now: number,
+    onRemove?: (
+      payload: {
+        roomId: string;
+        socketIds: string[];
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+      },
+    ) => void,
+  ): void {
     for (const [roomId, room] of this.rooms.entries()) {
       const roomSocketIds = room.getSocketIds();
       const hasLiveSocket = roomSocketIds.some((socketId) => activeSocketIds.has(socketId));
@@ -187,15 +236,12 @@ export class RoomStore {
       ) {
         continue;
       }
-
-      this.rooms.delete(roomId);
-      this.codeToRoom.delete(this.normalizeCode(room.code));
-
-      for (const socketId of roomSocketIds) {
-        if (this.socketToRoom.get(socketId) === roomId) {
-          this.socketToRoom.delete(socketId);
-        }
-      }
+      const reason: 'turn_limit' | 'waiting_timeout' | 'empty' = isEmptyRoom
+        ? 'empty'
+        : exceededTurnLimit
+          ? 'turn_limit'
+          : 'waiting_timeout';
+      this.notifyRoomRemoved(room, roomId, roomSocketIds, reason, onRemove);
     }
   }
 }

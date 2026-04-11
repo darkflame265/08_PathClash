@@ -14,6 +14,19 @@ class TwoVsTwoRoomStore {
         }
         return TwoVsTwoRoomStore.instance;
     }
+    notifyRoomRemoved(room, roomId, roomSocketIds, reason, onRemove) {
+        onRemove?.({
+            roomId,
+            socketIds: roomSocketIds,
+            reason,
+        });
+        this.rooms.delete(roomId);
+        for (const socketId of roomSocketIds) {
+            if (this.socketToRoom.get(socketId) === roomId) {
+                this.socketToRoom.delete(socketId);
+            }
+        }
+    }
     add(room) {
         this.rooms.set(room.roomId, room);
     }
@@ -71,10 +84,10 @@ class TwoVsTwoRoomStore {
             socketMappings: this.socketToRoom.size,
         };
     }
-    sweep(activeSocketIds, now = Date.now()) {
+    sweep(activeSocketIds, now = Date.now(), onRemove) {
         this.sweepQueue(activeSocketIds);
         this.sweepSocketMappings(activeSocketIds);
-        this.sweepRooms(activeSocketIds, now);
+        this.sweepRooms(activeSocketIds, now, onRemove);
     }
     removeSocket(socketId) {
         const roomId = this.socketToRoom.get(socketId);
@@ -108,7 +121,7 @@ class TwoVsTwoRoomStore {
             }
         }
     }
-    sweepRooms(activeSocketIds, now) {
+    sweepRooms(activeSocketIds, now, onRemove) {
         for (const [roomId, room] of this.rooms.entries()) {
             const roomSocketIds = room.getSocketIds();
             const hasLiveSocket = roomSocketIds.some((socketId) => activeSocketIds.has(socketId));
@@ -121,15 +134,15 @@ class TwoVsTwoRoomStore {
                 !(isStaleWaitingRoom && !hasLiveSocket)) {
                 continue;
             }
-            this.rooms.delete(roomId);
-            for (const socketId of roomSocketIds) {
-                if (this.socketToRoom.get(socketId) === roomId) {
-                    this.socketToRoom.delete(socketId);
-                }
-            }
+            const reason = isEmptyRoom
+                ? 'empty'
+                : exceededTurnLimit
+                    ? 'turn_limit'
+                    : 'waiting_timeout';
+            this.notifyRoomRemoved(room, roomId, roomSocketIds, reason, onRemove);
         }
     }
 }
 exports.TwoVsTwoRoomStore = TwoVsTwoRoomStore;
 TwoVsTwoRoomStore.WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
-TwoVsTwoRoomStore.MAX_ACTIVE_TURN = 200;
+TwoVsTwoRoomStore.MAX_ACTIVE_TURN = 3;

@@ -467,6 +467,26 @@ function App() {
 
   useEffect(() => {
     const socket = getSocket();
+    const onRoomClosed = ({
+      reason,
+    }: {
+      reason?: "turn_limit" | "waiting_timeout" | "empty";
+    }) => {
+      if (reason !== "turn_limit") return;
+      useGameStore.getState().resetGame();
+      setShowExitConfirm(false);
+      setMatchResultAudioKind(null);
+      setView("lobby");
+    };
+
+    socket.on("room_closed", onRoomClosed);
+    return () => {
+      socket.off("room_closed", onRoomClosed);
+    };
+  }, []);
+
+  useEffect(() => {
+    const socket = getSocket();
 
     const refreshAchievementSummary = () => {
       if (!authReady || !authUserId || !authAccessToken) return;

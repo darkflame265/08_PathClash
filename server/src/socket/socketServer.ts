@@ -106,6 +106,22 @@ export function initSocketServer(io: Server): void {
     }
   };
 
+  const notifyRoomClosed = ({
+    socketIds,
+    reason,
+  }: {
+    socketIds: string[];
+    reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+  }) => {
+    if (reason !== 'turn_limit') return;
+    for (const socketId of socketIds) {
+      if (!io.sockets.sockets.has(socketId)) continue;
+      io.to(socketId).emit('room_closed', {
+        reason,
+      });
+    }
+  };
+
   const resolvePlayerProfileCached = async (
     socket: Socket,
     auth: AuthPayload | undefined,
@@ -143,10 +159,10 @@ export function initSocketServer(io: Server): void {
 
   setInterval(() => {
     const activeSocketIds = new Set(io.sockets.sockets.keys());
-    store.sweep(activeSocketIds);
-    coopStore.sweep(activeSocketIds);
-    twoVsTwoStore.sweep(activeSocketIds);
-    abilityStore.sweep(activeSocketIds);
+    store.sweep(activeSocketIds, Date.now(), notifyRoomClosed);
+    coopStore.sweep(activeSocketIds, Date.now(), notifyRoomClosed);
+    twoVsTwoStore.sweep(activeSocketIds, Date.now(), notifyRoomClosed);
+    abilityStore.sweep(activeSocketIds, Date.now(), notifyRoomClosed);
   }, roomSweepIntervalMs);
 
   setInterval(() => {

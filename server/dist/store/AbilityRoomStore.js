@@ -8,6 +8,20 @@ class AbilityRoomStore {
         this.socketToRoom = new Map();
         this.queue = [];
     }
+    notifyRoomRemoved(room, roomId, roomSocketIds, reason, onRemove) {
+        onRemove?.({
+            roomId,
+            socketIds: roomSocketIds,
+            reason,
+        });
+        this.rooms.delete(roomId);
+        this.codeToRoom.delete(this.normalizeCode(room.code));
+        for (const socketId of roomSocketIds) {
+            if (this.socketToRoom.get(socketId) === roomId) {
+                this.socketToRoom.delete(socketId);
+            }
+        }
+    }
     static getInstance() {
         if (!AbilityRoomStore.instance)
             AbilityRoomStore.instance = new AbilityRoomStore();
@@ -99,7 +113,7 @@ class AbilityRoomStore {
         }
         return { room, disconnectResult };
     }
-    sweep(activeSocketIds, now = Date.now()) {
+    sweep(activeSocketIds, now = Date.now(), onRemove) {
         this.queue = this.queue.filter((entry) => activeSocketIds.has(entry.socketId));
         for (const [socketId, roomId] of this.socketToRoom.entries()) {
             if (!activeSocketIds.has(socketId) || !this.rooms.has(roomId)) {
@@ -116,16 +130,15 @@ class AbilityRoomStore {
                 !exceededTurnLimit &&
                 !(isStaleWaitingRoom && !hasLiveSocket))
                 continue;
-            this.rooms.delete(roomId);
-            this.codeToRoom.delete(this.normalizeCode(room.code));
-            for (const socketId of roomSocketIds) {
-                if (this.socketToRoom.get(socketId) === roomId) {
-                    this.socketToRoom.delete(socketId);
-                }
-            }
+            const reason = isEmptyRoom
+                ? 'empty'
+                : exceededTurnLimit
+                    ? 'turn_limit'
+                    : 'waiting_timeout';
+            this.notifyRoomRemoved(room, roomId, roomSocketIds, reason, onRemove);
         }
     }
 }
 exports.AbilityRoomStore = AbilityRoomStore;
 AbilityRoomStore.WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
-AbilityRoomStore.MAX_ACTIVE_TURN = 200;
+AbilityRoomStore.MAX_ACTIVE_TURN = 3;
