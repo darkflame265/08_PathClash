@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>크로노스 스킨 — 디자인 후보 3종</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0d1117;
+  color: #e2e8f0;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  min-height: 100vh;
+  padding: 56px 24px 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f5c842;
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+
+.subtitle {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.candidates {
+  display: flex;
+  gap: 56px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.candidate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.candidate-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f5c842;
+  letter-spacing: 0.04em;
+}
+
+.candidate-desc {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  text-align: center;
+  max-width: 200px;
+  line-height: 1.65;
+}
+
+/* ── Hand animation ── */
+@keyframes spinSec  { to { transform: rotate(360deg); } }
+@keyframes spinMin  { to { transform: rotate(360deg); } }
+@keyframes spinHour { to { transform: rotate(360deg); } }
+@keyframes ringCW   { to { transform: rotate(360deg);  } }
+@keyframes ringCCW  { to { transform: rotate(-360deg); } }
+@keyframes orbCW {
+  from { transform: rotate(0deg)   translateX(82px) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(82px) rotate(-360deg); }
+}
+@keyframes orbCCW {
+  from { transform: rotate(0deg)    translateX(100px) rotate(0deg); }
+  to   { transform: rotate(-360deg) translateX(100px) rotate(360deg); }
+}
+@keyframes glowBeat {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
+/* SVG animation helpers */
+.hand { transform-box: view-box; }
+
+/* ── A: Classic ── */
+.a-hour   { transform-origin: 120px 120px; animation: spinHour 720s  linear infinite; }
+.a-minute { transform-origin: 120px 120px; animation: spinMin  60s   linear infinite; }
+.a-second { transform-origin: 120px 120px; animation: spinSec  6s    linear infinite; }
+
+/* ── B: Luxury ── */
+.b-hour   { transform-origin: 120px 120px; animation: spinHour 720s  linear infinite; }
+.b-minute { transform-origin: 120px 120px; animation: spinMin  60s   linear infinite; }
+.b-second { transform-origin: 120px 120px; animation: spinSec  6s    linear infinite; }
+
+/* ── C: Cosmos ── */
+.c-hour   { transform-origin: 120px 120px; animation: spinHour 720s  linear infinite; }
+.c-minute { transform-origin: 120px 120px; animation: spinMin  60s   linear infinite; }
+.c-second { transform-origin: 120px 120px; animation: spinSec  6s    linear infinite; }
+.c-ring-inner { transform-origin: 120px 120px; animation: ringCW   10s linear infinite; }
+.c-ring-outer { transform-origin: 120px 120px; animation: ringCCW  18s linear infinite; }
+.c-orb-inner  { transform-origin: 120px 120px; animation: orbCW    7s  linear infinite; }
+.c-orb-outer  { transform-origin: 120px 120px; animation: orbCCW  11s  linear infinite; }
+</style>
+</head>
+<body>
+
+<h1>크로노스 스킨 — 디자인 후보 3종</h1>
+<p class="subtitle">검정 배경 &middot; 금색 시침 &middot; 금색 로마자 (30도 간격)</p>
+
+<div class="candidates">
+
+<!-- ============================================================
+     후보 A — 클래식 엘레강스
+     순수 블랙 / 얇은 금 테두리 / 세리프 로마자 / 단순한 금침
+     ============================================================ -->
+<div class="candidate">
+  <div class="candidate-title">후보 A — 클래식</div>
+  <svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="faceA" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"   stop-color="#1a1a1a"/>
+        <stop offset="65%"  stop-color="#0d0d0d"/>
+        <stop offset="100%" stop-color="#050505"/>
+      </radialGradient>
+    </defs>
+
+    <!-- Face -->
+    <circle cx="120" cy="120" r="110" fill="url(#faceA)"
+            stroke="#c9a84c" stroke-width="2.5"/>
+    <!-- Inner bezel line -->
+    <circle cx="120" cy="120" r="104" fill="none"
+            stroke="rgba(201,168,76,0.18)" stroke-width="1"/>
+
+    <!-- Minute ticks (60개, 로마자 자리 제외하고 가는 선) -->
+    <!-- 12개 시 자리는 두꺼운 틱 -->
+    <!-- 나머지 48개는 가는 틱 — JavaScript로 그림 -->
+
+    <!-- Roman Numerals (radius 83 from center 120,120) — bold + glow like B -->
+    <text x="120"   y="37"    text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowA)">XII</text>
+    <text x="161.5" y="48"    text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowA)">I</text>
+    <text x="192"   y="78.5"  text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowA)">II</text>
+    <text x="203"   y="120"   text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowA)">III</text>
+    <text x="192"   y="161.5" text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowA)">IV</text>
+    <text x="161.5" y="192"   text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowA)">V</text>
+    <text x="120"   y="203"   text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowA)">VI</text>
+    <text x="78.5"  y="192"   text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowA)">VII</text>
+    <text x="48"    y="161.5" text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowA)">VIII</text>
+    <text x="37"    y="120"   text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowA)">IX</text>
+    <text x="48"    y="78.5"  text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowA)">X</text>
+    <text x="78.5"  y="48"    text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowA)">XI</text>
+
+    <!-- Hour hand (초기 2시 방향) -->
+    <line class="hand a-hour"
+          x1="120" y1="120" x2="120" y2="76"
+          stroke="#c9a84c" stroke-width="4.5" stroke-linecap="round"
+          style="transform: rotate(60deg)"/>
+    <!-- Minute hand (초기 10분) -->
+    <line class="hand a-minute"
+          x1="120" y1="123" x2="120" y2="58"
+          stroke="#c9a84c" stroke-width="3" stroke-linecap="round"
+          style="transform: rotate(60deg)"/>
+    <!-- Second hand (초기 임의 위치) -->
+    <line class="hand a-second"
+          x1="120" y1="134" x2="120" y2="44"
+          stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"
+          style="transform: rotate(180deg)"/>
+
+    <!-- Pivot -->
+    <circle cx="120" cy="120" r="4" fill="#c9a84c"/>
+    <circle cx="120" cy="120" r="1.5" fill="#fffbe0"/>
+  </svg>
+  <div class="candidate-desc">
+    순수 블랙 페이스<br>
+    얇은 금 테두리 + 얇은 베젤<br>
+    세리프 로마자, 직선 금침<br>
+    <span style="color:#64748b;font-size:0.72rem">미니멀 &middot; 클래식 &middot; 시계 본연의 미</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     후보 B — 럭셔리 골드
+     딥 블랙에 짙은 금빛 분위기 / 굵고 빛나는 로마자 / 화려한 시침
+     ============================================================ -->
+<div class="candidate">
+  <div class="candidate-title">후보 B — 럭셔리</div>
+  <svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="faceB" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"   stop-color="#1c1400"/>
+        <stop offset="55%"  stop-color="#0c0900"/>
+        <stop offset="100%" stop-color="#030200"/>
+      </radialGradient>
+      <filter id="glowA" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="glowB" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="handGlowB" x="-200%" y="-200%" width="500%" height="500%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <!-- Outer ambient glow ring -->
+    <circle cx="120" cy="120" r="114" fill="none"
+            stroke="rgba(212,175,55,0.12)" stroke-width="8"/>
+    <!-- Face -->
+    <circle cx="120" cy="120" r="110" fill="url(#faceB)"
+            stroke="#d4af37" stroke-width="3.5"/>
+    <!-- Inner gold ring decoration -->
+    <circle cx="120" cy="120" r="100" fill="none"
+            stroke="rgba(212,175,55,0.35)" stroke-width="1"/>
+    <circle cx="120" cy="120" r="96" fill="none"
+            stroke="rgba(212,175,55,0.15)" stroke-width="0.5"/>
+
+    <!-- Roman Numerals — bold + glow -->
+    <text x="120"   y="37"    text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowB)">XII</text>
+    <text x="161.5" y="48"    text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowB)">I</text>
+    <text x="192"   y="78.5"  text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowB)">II</text>
+    <text x="203"   y="120"   text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowB)">III</text>
+    <text x="192"   y="161.5" text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowB)">IV</text>
+    <text x="161.5" y="192"   text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowB)">V</text>
+    <text x="120"   y="203"   text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowB)">VI</text>
+    <text x="78.5"  y="192"   text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowB)">VII</text>
+    <text x="48"    y="161.5" text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowB)">VIII</text>
+    <text x="37"    y="120"   text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowB)">IX</text>
+    <text x="48"    y="78.5"  text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowB)">X</text>
+    <text x="78.5"  y="48"    text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="13" font-family="Georgia,serif" font-weight="bold" filter="url(#glowB)">XI</text>
+
+    <!-- Hour hand — wide, tapering, gold glow -->
+    <line class="hand b-hour"
+          x1="120" y1="124" x2="120" y2="74"
+          stroke="#d4af37" stroke-width="6" stroke-linecap="round"
+          filter="url(#handGlowB)"
+          style="transform: rotate(60deg)"/>
+    <!-- Minute hand -->
+    <line class="hand b-minute"
+          x1="120" y1="126" x2="120" y2="56"
+          stroke="#f5c842" stroke-width="3.5" stroke-linecap="round"
+          filter="url(#handGlowB)"
+          style="transform: rotate(60deg)"/>
+    <!-- Second hand (amber-orange contrast) -->
+    <line class="hand b-second"
+          x1="120" y1="138" x2="120" y2="44"
+          stroke="#ff9500" stroke-width="1.5" stroke-linecap="round"
+          filter="url(#handGlowB)"
+          style="transform: rotate(180deg)"/>
+
+    <!-- Center jewel -->
+    <circle cx="120" cy="120" r="7"   fill="#d4af37" filter="url(#glowB)"/>
+    <circle cx="120" cy="120" r="3.5" fill="#fffbe6"/>
+    <circle cx="118.5" cy="118.5" r="1" fill="white" opacity="0.8"/>
+  </svg>
+  <div class="candidate-desc">
+    딥 블랙 + 미세한 금빛 분위기<br>
+    굵고 빛나는 로마자 (글로우)<br>
+    두꺼운 금침 + 호박색 초침<br>
+    <span style="color:#64748b;font-size:0.72rem">럭셔리 시계 &middot; 귀족적 &middot; 화려함</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     후보 C — 다크 코스모스
+     기존 회전 링 유지 / 네온 금빛 글로우 로마자 / 금빛 오브
+     ============================================================ -->
+<div class="candidate">
+  <div class="candidate-title">후보 C — 코스모스</div>
+  <svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="faceC" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"   stop-color="#111111"/>
+        <stop offset="70%"  stop-color="#080808"/>
+        <stop offset="100%" stop-color="#020202"/>
+      </radialGradient>
+      <filter id="neonC" x="-80%" y="-80%" width="260%" height="260%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="neonCsm" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <!-- Outer rotating dashed ring -->
+    <g class="c-ring-outer">
+      <circle cx="120" cy="120" r="117" fill="none"
+              stroke="rgba(212,175,55,0.28)" stroke-width="1.5" stroke-dasharray="5 7"/>
+    </g>
+
+    <!-- Inner rotating ring -->
+    <g class="c-ring-inner">
+      <circle cx="120" cy="120" r="112" fill="none"
+              stroke="rgba(212,175,55,0.5)" stroke-width="1.5" stroke-dasharray="8 5"/>
+    </g>
+
+    <!-- Face -->
+    <circle cx="120" cy="120" r="107" fill="url(#faceC)"
+            stroke="rgba(212,175,55,0.85)" stroke-width="2"/>
+
+    <!-- Orbiting gold orb (inner) -->
+    <g class="c-orb-inner">
+      <circle cx="120" cy="120" r="5" fill="#d4af37" filter="url(#neonC)"/>
+    </g>
+
+    <!-- Orbiting small orb (outer) -->
+    <g class="c-orb-outer">
+      <circle cx="120" cy="120" r="3" fill="#fbbf24" filter="url(#neonCsm)"/>
+    </g>
+
+    <!-- Roman Numerals — neon gold -->
+    <text x="120"   y="37"    text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="12" font-family="Georgia,serif" font-weight="bold" filter="url(#neonCsm)">XII</text>
+    <text x="161.5" y="48"    text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="12" font-family="Georgia,serif" filter="url(#neonCsm)">I</text>
+    <text x="192"   y="78.5"  text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="12" font-family="Georgia,serif" filter="url(#neonCsm)">II</text>
+    <text x="203"   y="120"   text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="12" font-family="Georgia,serif" filter="url(#neonCsm)">III</text>
+    <text x="192"   y="161.5" text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="12" font-family="Georgia,serif" filter="url(#neonCsm)">IV</text>
+    <text x="161.5" y="192"   text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="12" font-family="Georgia,serif" filter="url(#neonCsm)">V</text>
+    <text x="120"   y="203"   text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="12" font-family="Georgia,serif" filter="url(#neonCsm)">VI</text>
+    <text x="78.5"  y="192"   text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="12" font-family="Georgia,serif" filter="url(#neonCsm)">VII</text>
+    <text x="48"    y="161.5" text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="12" font-family="Georgia,serif" filter="url(#neonCsm)">VIII</text>
+    <text x="37"    y="120"   text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="12" font-family="Georgia,serif" filter="url(#neonCsm)">IX</text>
+    <text x="48"    y="78.5"  text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="12" font-family="Georgia,serif" filter="url(#neonCsm)">X</text>
+    <text x="78.5"  y="48"    text-anchor="middle" dominant-baseline="central" fill="#ffd700" font-size="12" font-family="Georgia,serif" filter="url(#neonCsm)">XI</text>
+
+    <!-- Hour hand — gold glow -->
+    <line class="hand c-hour"
+          x1="120" y1="120" x2="120" y2="76"
+          stroke="#d4af37" stroke-width="4.5" stroke-linecap="round"
+          filter="url(#neonC)"
+          style="transform: rotate(60deg)"/>
+    <!-- Minute hand -->
+    <line class="hand c-minute"
+          x1="120" y1="120" x2="120" y2="58"
+          stroke="#ffd700" stroke-width="2.5" stroke-linecap="round"
+          filter="url(#neonC)"
+          style="transform: rotate(60deg)"/>
+    <!-- Second hand -->
+    <line class="hand c-second"
+          x1="120" y1="134" x2="120" y2="44"
+          stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"
+          filter="url(#neonCsm)"
+          style="transform: rotate(180deg)"/>
+
+    <!-- Center pivot -->
+    <circle cx="120" cy="120" r="5" fill="#d4af37" filter="url(#neonC)"/>
+    <circle cx="120" cy="120" r="2" fill="#fffbe0"/>
+  </svg>
+  <div class="candidate-desc">
+    기존 회전 링 계승 (올 금빛)<br>
+    네온 글로우 로마자<br>
+    공전하는 금빛 오브 유지<br>
+    <span style="color:#64748b;font-size:0.72rem">다크 코스모스 &middot; 가장 드라마틱</span>
+  </div>
+</div>
+
+</div><!-- .candidates -->
+</body>
+</html>
