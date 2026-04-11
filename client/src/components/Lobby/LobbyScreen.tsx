@@ -3885,7 +3885,13 @@ export function LobbyScreen({
                 {skinChoices.map((choice) => {
                   const isOwned = ownedSkins.includes(choice.id);
                   const isUnlocked = isPieceSkinUnlocked(choice);
-                  const isVisualUnlocked = choice.id === "classic" || isOwned;
+                  const isTokenSkin =
+                    choice.tokenPrice !== null &&
+                    choice.tokenPrice !== undefined &&
+                    choice.tokenPrice > 0;
+                  const isVisualUnlocked =
+                    choice.id === "classic" ||
+                    (isTokenSkin ? isOwned : isUnlocked);
 
                   return (
                     <button
