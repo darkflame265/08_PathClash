@@ -3885,31 +3885,14 @@ export function LobbyScreen({
                 {skinChoices.map((choice) => {
                   const isOwned = ownedSkins.includes(choice.id);
                   const isUnlocked = isPieceSkinUnlocked(choice);
-
-                  const lockedByWins =
-                    choice.requiredWins !== null &&
-                    accountWins < choice.requiredWins;
-
-                  const lockedByPlays =
-                    choice.requiredPlays !== null &&
-                    choice.requiredPlays !== undefined &&
-                    totalPlays < choice.requiredPlays;
-
-                  const lockedByTokens =
-                    choice.tokenPrice !== null &&
-                    choice.tokenPrice !== undefined &&
-                    !isOwned &&
-                    accountTokens < choice.tokenPrice;
-
-                  const isLocked =
-                    lockedByWins || lockedByPlays || lockedByTokens;
+                  const isVisualUnlocked = choice.id === "classic" || isOwned;
 
                   return (
                     <button
                       key={choice.id}
                       className={`skin-option-card skin-picker-card ${
                         pieceSkin === choice.id ? "is-selected" : ""
-                      } ${isLocked ? "is-locked" : ""}`}
+                      } ${!isVisualUnlocked ? "is-locked" : ""}`}
                       onClick={() => setSkinDetail({ tab: "piece", choice })}
                       disabled={false}
                       type="button"
@@ -3947,21 +3930,15 @@ export function LobbyScreen({
               <div className="skin-option-grid">
                 {boardSkinChoices.map((choice) => {
                   const isOwned = isBoardSkinUnlocked(choice);
-
-                  const lockedByTokens =
-                    choice.tokenPrice !== null &&
-                    choice.tokenPrice !== undefined &&
-                    !isOwned &&
-                    accountTokens < choice.tokenPrice;
-
-                  const isLocked = lockedByTokens;
+                  const isVisualUnlocked =
+                    choice.id === "classic" || ownedBoardSkins.includes(choice.id);
 
                   return (
                     <button
                       key={choice.id}
                       className={`skin-option-card skin-picker-card ${
                         boardSkin === choice.id ? "is-selected" : ""
-                      } ${isLocked ? "is-locked" : ""}`}
+                      } ${!isVisualUnlocked ? "is-locked" : ""}`}
                       onClick={() => setSkinDetail({ tab: "board", choice })}
                       type="button"
                     >
