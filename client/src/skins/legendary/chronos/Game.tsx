@@ -6,6 +6,22 @@ const MID_TICK_ANGLES = Array.from({ length: 12 }, (_, i) => i * 30);
 const OUTER_TICK_ANGLES = Array.from({ length: 16 }, (_, i) => i * 22.5);
 const ORBIT_DELAYS = [0, -1.75, -3.5, -5.25];
 const STAR_DELAYS = [0, -4.67, -9.33];
+const ROMAN_NUMERALS = [
+  { label: "XII", angle: 0 },
+  { label: "I", angle: 30 },
+  { label: "II", angle: 60 },
+  { label: "III", angle: 90 },
+  { label: "IV", angle: 120 },
+  { label: "V", angle: 150 },
+  { label: "VI", angle: 180 },
+  { label: "VII", angle: 210 },
+  { label: "VIII", angle: 240 },
+  { label: "IX", angle: 270 },
+  { label: "X", angle: 300 },
+  { label: "XI", angle: 330 },
+];
+const NUMERAL_RADIUS = 103;
+const BODY_CENTER = 130;
 
 function getClockAngles() {
   const now = new Date();
@@ -34,7 +50,6 @@ export function ChronosGame() {
     <div className="chronos-scale" aria-hidden="true">
       <div className="chronos-wrap">
         <div className="chronos-body">
-          <div className="chronos-core" />
           <div className="chronos-ring chronos-ring-inner">
             {INNER_TICK_ANGLES.map((angle) => (
               <div
@@ -62,6 +77,20 @@ export function ChronosGame() {
               />
             ))}
           </div>
+          {ROMAN_NUMERALS.map(({ label, angle }) => {
+            const rad = (angle * Math.PI) / 180;
+            const x = BODY_CENTER + NUMERAL_RADIUS * Math.sin(rad);
+            const y = BODY_CENTER - NUMERAL_RADIUS * Math.cos(rad);
+            return (
+              <div
+                key={label}
+                className="chronos-numeral"
+                style={{ left: `${x}px`, top: `${y}px` }}
+              >
+                {label}
+              </div>
+            );
+          })}
           <div
             className="chronos-hand chronos-hand-hour"
             style={{ transform: `rotate(${angles.hour}deg)` }}

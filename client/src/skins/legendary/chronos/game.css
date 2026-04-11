@@ -36,33 +36,30 @@
   height: 260px;
   border-radius: 50%;
   background: radial-gradient(
-    circle at 38% 32%,
-    #f1f5f9 0%,
-    #cbd5e1 34%,
-    #475569 68%,
-    #0f1923 100%
+    circle at 50% 50%,
+    #1a1a1a 0%,
+    #0d0d0d 65%,
+    #050505 100%
   );
-  border: 2px solid rgba(203, 213, 225, 0.85);
+  border: 2.5px solid #c9a84c;
   box-shadow:
-    0 0 18px rgba(203, 213, 225, 0.4),
-    0 0 40px rgba(148, 163, 184, 0.22),
-    inset 0 0 12px rgba(255, 255, 255, 0.12);
-  animation: chronosPulse 2s ease-in-out infinite;
+    0 0 20px rgba(201, 168, 76, 0.25),
+    inset 0 0 15px rgba(0, 0, 0, 0.8);
 }
 
-.chronos-core {
+.chronos-numeral {
   position: absolute;
-  inset: 70px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 35% 30%,
-    #fde68a 0%,
-    #f59e0b 40%,
-    #78350f 80%,
-    transparent 100%
-  );
-  opacity: 0.72;
-  animation: chronosCorePulse 2s ease-in-out infinite;
+  transform: translate(-50%, -50%);
+  font-family: Georgia, serif;
+  font-size: 18px;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow:
+    0 0 8px rgba(255, 215, 0, 0.9),
+    0 0 18px rgba(255, 215, 0, 0.5);
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
 }
 
 .chronos-ring {
@@ -136,7 +133,8 @@
   height: 64px;
   margin-left: -3.5px;
   margin-top: -64px;
-  background: linear-gradient(to top, #fde68a, #e2e8f0);
+  background: linear-gradient(to top, #a07820, #ffd700);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
 }
 
 .chronos-hand-minute {
@@ -144,7 +142,8 @@
   height: 88px;
   margin-left: -3px;
   margin-top: -88px;
-  background: linear-gradient(to top, #cbd5e1, #ffffff);
+  background: linear-gradient(to top, #a07820, #ffd700);
+  box-shadow: 0 0 9px rgba(255, 215, 0, 0.5);
 }
 
 .chronos-hand-second {
@@ -197,34 +196,6 @@
   box-shadow: 0 0 5px rgba(226, 232, 240, 0.9);
   animation: chronosStarOrbit 14s linear infinite;
   animation-delay: var(--chronos-star-delay);
-}
-
-@keyframes chronosPulse {
-  0%,
-  100% {
-    box-shadow:
-      0 0 18px rgba(203, 213, 225, 0.4),
-      0 0 40px rgba(148, 163, 184, 0.22),
-      inset 0 0 12px rgba(255, 255, 255, 0.12);
-  }
-  50% {
-    box-shadow:
-      0 0 28px rgba(226, 232, 240, 0.6),
-      0 0 60px rgba(203, 213, 225, 0.35),
-      inset 0 0 18px rgba(255, 255, 255, 0.2);
-  }
-}
-
-@keyframes chronosCorePulse {
-  0%,
-  100% {
-    opacity: 0.6;
-    transform: scale(0.95);
-  }
-  50% {
-    opacity: 0.92;
-    transform: scale(1.05);
-  }
 }
 
 @keyframes chronosSpinCW {
