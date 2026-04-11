@@ -1466,6 +1466,18 @@
   opacity: 0.72;
 }
 
+.skin-option-card.is-locked .skin-preview,
+.skin-option-card.is-locked .skin-preview::before,
+.skin-option-card.is-locked .skin-preview::after,
+.skin-option-card.is-locked .skin-preview > *,
+.skin-option-card.is-locked .skin-preview canvas,
+.skin-option-card.is-locked .board-skin-preview,
+.skin-option-card.is-locked .board-skin-preview::before,
+.skin-option-card.is-locked .board-skin-preview::after,
+.skin-option-card.is-locked .board-skin-preview > * {
+  filter: grayscale(1) saturate(0.14) brightness(0.9) contrast(1.05);
+}
+
 .skin-option-card.is-locked:hover {
   border-color: rgba(154, 164, 174, 0.18);
   background: rgba(42, 49, 55, 0.78);
