@@ -69,6 +69,7 @@ type StoredLegalConsent = {
 };
 
 type LegalDocumentType = "terms" | "privacy";
+type RoomClosedReason = "turn_limit" | "waiting_timeout" | "empty";
 
 const LEGAL_CONSENT_VERSION = "2026-04-01-v1";
 const LEGAL_CONSENT_STORAGE_KEY = "pathclash.legalConsent.v1";
@@ -97,6 +98,8 @@ function App() {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showSessionReplaced, setShowSessionReplaced] = useState(false);
   const [isSessionResetting, setIsSessionResetting] = useState(false);
+  const [roomClosedReason, setRoomClosedReason] =
+    useState<RoomClosedReason | null>(null);
   const [updateRequired, setUpdateRequired] =
     useState<UpdateRequiredPayload | null>(null);
   const [legalConsentResolved, setLegalConsentResolved] = useState(false);
@@ -470,13 +473,14 @@ function App() {
     const onRoomClosed = ({
       reason,
     }: {
-      reason?: "turn_limit" | "waiting_timeout" | "empty";
+      reason?: RoomClosedReason;
     }) => {
       if (reason !== "turn_limit") return;
       useGameStore.getState().resetGame();
       setShowExitConfirm(false);
       setMatchResultAudioKind(null);
       setView("lobby");
+      setRoomClosedReason(reason);
     };
 
     socket.on("room_closed", onRoomClosed);
@@ -674,6 +678,13 @@ function App() {
       : "게임을 계속하려면 플레이 스토어로 이동하여 앱을 업데이트해 주세요.";
   const updateRequiredConfirm =
     lang === "en" ? "Open Play Store" : "플레이 스토어로 이동";
+  const roomClosedTitle =
+    lang === "en" ? "Game session closed" : "게임 세션이 종료되었습니다.";
+  const roomClosedBody =
+    lang === "en"
+      ? "This match was closed automatically because it exceeded the round limit."
+      : "이 게임은 진행 라운드 수 상한을 초과하여 자동으로 종료되었습니다.";
+  const roomClosedDismiss = lang === "en" ? "Close" : "닫기";
 
   const handleOpenStoreForUpdate = useCallback(() => {
     if (!updateRequired) return;
@@ -945,6 +956,29 @@ function App() {
                 type="button"
               >
                 {updateRequiredConfirm}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {roomClosedReason === "turn_limit" && (
+        <div
+          className="app-confirm-backdrop"
+          onClick={() => setRoomClosedReason(null)}
+        >
+          <div
+            className="app-confirm-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3>{roomClosedTitle}</h3>
+            <p className="app-confirm-copy">{roomClosedBody}</p>
+            <div className="app-confirm-actions app-confirm-actions-single">
+              <button
+                className="app-confirm-btn app-confirm-btn-primary"
+                onClick={() => setRoomClosedReason(null)}
+                type="button"
+              >
+                {roomClosedDismiss}
               </button>
             </div>
           </div>
