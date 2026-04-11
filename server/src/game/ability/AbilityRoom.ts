@@ -45,6 +45,7 @@ const TIME_REWIND_HP_STEP_MS = 120;
 const OVERDRIVE_MANA = 20;
 const ABILITY_STARTING_HP = 5;
 const TRAINING_STARTING_MANA = 10;
+const TRAINING_PATH_POINTS = 10;
 const TRAINING_DUMMY_POSITION: Position = { row: 2, col: 2 };
 
 function collectUtilitySkillUsageByUser(
@@ -1062,6 +1063,9 @@ export class AbilityRoom {
   }
 
   private currentPathPoints(): number {
+    if (this.trainingMode) {
+      return TRAINING_PATH_POINTS;
+    }
     const hasDisconnectedHuman = [...this.players.values()].some(
       (player) => player.connected === false && !player.isBot,
     );

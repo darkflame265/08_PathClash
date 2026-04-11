@@ -66,7 +66,7 @@ exports.ABILITY_SKILL_SERVER_RULES = {
     },
     sun_chariot: {
         roleRestriction: 'attacker',
-        stepRule: 'any',
+        stepRule: 'zero_only',
         targetRule: 'none',
     },
     aurora_heal: {
