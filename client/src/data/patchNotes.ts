@@ -11,7 +11,7 @@ export type PatchNoteSection = {
   lines: PatchNoteLine[];
 };
 
-export const PATCH_NOTES_VERSION = "2026-04-11-v12";
+export const PATCH_NOTES_VERSION = "2026-04-11-v13";
 
 export function getPatchNotesVersionLabel(lang: "en" | "kr"): string {
   return lang === "en" ? "Version 2026.04.11" : "버전 2026.04.11";
@@ -25,7 +25,7 @@ export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
         lines: [
           { text: "Expanded skin detail previews with richer linked skill info, including icon, type, and mana cost." },
           { text: "Aligned and enlarged skill icons inside the skin detail modal for clearer readability." },
-          { text: "Locked skins now appear in grayscale in the skin selection grid." },
+          { text: "Locked skins now appear in grayscale in the skin selection grid, and unlock-based skins now return to full color correctly once their conditions are met." },
         ],
       },
       {
@@ -53,7 +53,7 @@ export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
       lines: [
         { text: "스킨 상세 미리보기 창에 연결 스킬의 아이콘, 유형, 소모 마나 정보를 추가했습니다." },
         { text: "스킨 상세 미리보기 창의 스킬 아이콘 정렬과 크기를 다듬어 가독성을 높였습니다." },
-        { text: "해금하지 않은 스킨이 스킨 선택 그리드에서 흑백으로 보이도록 변경했습니다." },
+        { text: "해금하지 않은 스킨이 스킨 선택 그리드에서 흑백으로 보이도록 변경하고, 승리 횟수·플레이 횟수 조건을 달성한 스킨은 정상 색상으로 보이도록 수정했습니다." },
       ],
     },
     {
