@@ -118,6 +118,8 @@
   width: 140%;
   height: 140%;
   transform: translate(-50%, -50%);
+  transform-style: preserve-3d;
+
   transform-origin: 50% 50%;
   will-change: transform;
 }
@@ -193,8 +195,10 @@
   animation-play-state: paused;
 }
 
-.skin-preview-atomic-atom.atomic-preview-ready .skin-preview-atomic-electron-ring,
-.skin-preview-atomic-atom.atomic-preview-ready .skin-preview-atomic-electron-particle {
+.skin-preview-atomic-atom.atomic-preview-ready
+  .skin-preview-atomic-electron-ring,
+.skin-preview-atomic-atom.atomic-preview-ready
+  .skin-preview-atomic-electron-particle {
   animation-play-state: running;
 }
 
@@ -225,52 +229,65 @@
     transform: translate(-50%, -50%) rotateY(60deg) rotateX(-30deg) rotate(0deg);
   }
   100% {
-    transform: translate(-50%, -50%) rotateY(60deg) rotateX(-30deg) rotate(360deg);
+    transform: translate(-50%, -50%) rotateY(60deg) rotateX(-30deg)
+      rotate(360deg);
   }
 }
 
 @keyframes atomic-preview-orbit-particle-1 {
   0% {
-    transform: translate(-50%, -50%) rotateZ(0deg) rotateX(30deg) rotateY(-40deg) scale(0.8);
+    transform: translate(-50%, -50%) rotateZ(0deg) rotateX(30deg)
+      rotateY(-40deg) scale(0.8);
   }
   25% {
-    transform: translate(-50%, -50%) rotateZ(-90deg) rotateX(30deg) rotateY(-40deg) scale(0.6);
+    transform: translate(-50%, -50%) rotateZ(-90deg) rotateX(30deg)
+      rotateY(-40deg) scale(0.6);
   }
   50% {
-    transform: translate(-50%, -50%) rotateZ(-180deg) rotateX(30deg) rotateY(-40deg) scale(0.8);
+    transform: translate(-50%, -50%) rotateZ(-180deg) rotateX(30deg)
+      rotateY(-40deg) scale(0.8);
   }
   75% {
-    transform: translate(-50%, -50%) rotateZ(-270deg) rotateX(30deg) rotateY(-40deg) scale(1);
+    transform: translate(-50%, -50%) rotateZ(-270deg) rotateX(30deg)
+      rotateY(-40deg) scale(1);
   }
   100% {
-    transform: translate(-50%, -50%) rotateZ(-360deg) rotateX(30deg) rotateY(-40deg) scale(0.8);
+    transform: translate(-50%, -50%) rotateZ(-360deg) rotateX(30deg)
+      rotateY(-40deg) scale(0.8);
   }
 }
 
 @keyframes atomic-preview-orbit-2 {
   0% {
-    transform: translate(-50%, -50%) rotateY(60deg) rotateX(30deg) rotate(180deg);
+    transform: translate(-50%, -50%) rotateY(60deg) rotateX(30deg)
+      rotate(180deg);
   }
   100% {
-    transform: translate(-50%, -50%) rotateY(60deg) rotateX(30deg) rotate(540deg);
+    transform: translate(-50%, -50%) rotateY(60deg) rotateX(30deg)
+      rotate(540deg);
   }
 }
 
 @keyframes atomic-preview-orbit-particle-2 {
   0% {
-    transform: translate(-50%, -50%) rotateZ(-180deg) rotateX(-30deg) rotateY(-40deg) scale(0.8);
+    transform: translate(-50%, -50%) rotateZ(-180deg) rotateX(-30deg)
+      rotateY(-40deg) scale(0.8);
   }
   25% {
-    transform: translate(-50%, -50%) rotateZ(-270deg) rotateX(-30deg) rotateY(-40deg) scale(1);
+    transform: translate(-50%, -50%) rotateZ(-270deg) rotateX(-30deg)
+      rotateY(-40deg) scale(1);
   }
   50% {
-    transform: translate(-50%, -50%) rotateZ(-360deg) rotateX(-30deg) rotateY(-40deg) scale(0.8);
+    transform: translate(-50%, -50%) rotateZ(-360deg) rotateX(-30deg)
+      rotateY(-40deg) scale(0.8);
   }
   75% {
-    transform: translate(-50%, -50%) rotateZ(-450deg) rotateX(-30deg) rotateY(-40deg) scale(0.6);
+    transform: translate(-50%, -50%) rotateZ(-450deg) rotateX(-30deg)
+      rotateY(-40deg) scale(0.6);
   }
   100% {
-    transform: translate(-50%, -50%) rotateZ(-540deg) rotateX(-30deg) rotateY(-40deg) scale(0.8);
+    transform: translate(-50%, -50%) rotateZ(-540deg) rotateX(-30deg)
+      rotateY(-40deg) scale(0.8);
   }
 }
 
@@ -285,18 +302,23 @@
 
 @keyframes atomic-preview-orbit-particle-3 {
   0% {
-    transform: translate(-50%, -50%) rotateZ(-180deg) rotateX(-80deg) rotateY(0deg) scale(1);
+    transform: translate(-50%, -50%) rotateZ(-180deg) rotateX(-80deg)
+      rotateY(0deg) scale(1);
   }
   25% {
-    transform: translate(-50%, -50%) rotateZ(-270deg) rotateX(-80deg) rotateY(0deg) scale(0.8);
+    transform: translate(-50%, -50%) rotateZ(-270deg) rotateX(-80deg)
+      rotateY(0deg) scale(0.8);
   }
   50% {
-    transform: translate(-50%, -50%) rotateZ(-360deg) rotateX(-80deg) rotateY(0deg) scale(0.6);
+    transform: translate(-50%, -50%) rotateZ(-360deg) rotateX(-80deg)
+      rotateY(0deg) scale(0.6);
   }
   75% {
-    transform: translate(-50%, -50%) rotateZ(-450deg) rotateX(-80deg) rotateY(0deg) scale(0.8);
+    transform: translate(-50%, -50%) rotateZ(-450deg) rotateX(-80deg)
+      rotateY(0deg) scale(0.8);
   }
   100% {
-    transform: translate(-50%, -50%) rotateZ(-540deg) rotateX(-80deg) rotateY(0deg) scale(1);
+    transform: translate(-50%, -50%) rotateZ(-540deg) rotateX(-80deg)
+      rotateY(0deg) scale(1);
   }
 }
