@@ -2925,7 +2925,7 @@
   }
 
   .skin-detail-preview-stage .skin-preview-arc-reactor-scale {
-    transform: scale(0.192);
+    transform: scale(0.34);
   }
 
   .skin-detail-preview-stage .skin-preview-atomic-atom {
@@ -2933,11 +2933,11 @@
   }
 
   .skin-detail-preview-stage .skin-preview-electric_core-orb {
-    transform: scale(1.12);
+    transform: scale(1.18);
   }
 
   .skin-detail-preview-stage .skin-preview-electric_core-canvas {
-    transform: scale(1.08);
+    transform: scale(1.85);
   }
 
   .skin-detail-preview-stage .skin-preview-cosmic-canvas {
@@ -2945,7 +2945,7 @@
   }
 
   .skin-detail-preview-stage .wizard-preview-scale {
-    transform: translate(-50%, -50%) scale(0.194);
+    transform: translate(-50%, -50%) scale(0.34);
   }
 
   .skin-detail-preview-stage .chronos-preview-scale {
