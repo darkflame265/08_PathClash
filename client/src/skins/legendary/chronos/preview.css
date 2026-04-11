@@ -49,7 +49,6 @@
   box-shadow:
     0 0 20px rgba(201, 168, 76, 0.25),
     inset 0 0 15px rgba(0, 0, 0, 0.8);
-  animation: chronosPreviewPulse 2s ease-in-out infinite;
 }
 
 .chronos-preview-numeral {
@@ -204,21 +203,6 @@
   box-shadow: 0 0 5px rgba(226, 232, 240, 0.9);
   animation: chronosPreviewStarOrbit 14s linear infinite;
   animation-delay: var(--chronos-star-delay);
-}
-
-@keyframes chronosPreviewPulse {
-  0%,
-  100% {
-    box-shadow:
-      0 0 20px rgba(201, 168, 76, 0.25),
-      inset 0 0 15px rgba(0, 0, 0, 0.8);
-  }
-  50% {
-    box-shadow:
-      0 0 36px rgba(212, 175, 55, 0.45),
-      0 0 60px rgba(212, 175, 55, 0.2),
-      inset 0 0 20px rgba(0, 0, 0, 0.9);
-  }
 }
 
 @keyframes chronosPreviewSpinCW {
