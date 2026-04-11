@@ -16,10 +16,12 @@
 
 .skin-preview-cosmic-canvas {
   position: absolute;
-  inset: 0;
+  top: 50%;
+  left: 50%;
   width: 150%;
   height: 150%;
   display: block;
-  border-radius: 999px;
   pointer-events: none;
+  transform: translate(-33%, -33%);
+  transform-origin: center;
 }

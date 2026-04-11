@@ -2445,15 +2445,15 @@
   box-shadow: none;
   overflow: visible;
 }
-
+/* 컴퓨터 미리보기창 설정. */
 .skin-detail-preview-stage .skin-preview-cosmic-canvas {
-  width: 235%;
-  height: 235%;
+  width: 225%;
+  height: 225%;
   border-radius: 0;
-  transform: translate(0%, 0%) scale(1);
-
-  top: 0;
-  left: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-21%, -21%) scale(1);
+  transform-origin: center;
 }
 
 .skin-detail-preview-stage .wizard-preview-scale {
@@ -2949,9 +2949,15 @@
     height: calc(100% - 8px);
     transform: scale(2.4);
   }
-
+  /* 모바일 미리보기창 설정. */
   .skin-detail-preview-stage .skin-preview-cosmic-canvas {
-    transform: scale(1);
+    width: 225%;
+    height: 225%;
+    border-radius: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-23%, -23%) scale(1);
+    transform-origin: center;
   }
 
   .skin-detail-preview-stage .wizard-preview-scale {
