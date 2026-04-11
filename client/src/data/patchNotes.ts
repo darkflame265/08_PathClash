@@ -12,9 +12,12 @@ export type PatchNoteSection = {
 };
 
 export const PATCH_NOTES_VERSION = "2026-04-11-v13";
+const PATCH_NOTES_APP_VERSION = "1.0.24";
 
 export function getPatchNotesVersionLabel(lang: "en" | "kr"): string {
-  return lang === "en" ? "Version 2026.04.11" : "버전 2026.04.11";
+  return lang === "en"
+    ? `${PATCH_NOTES_APP_VERSION} Version 2026.04.11`
+    : `${PATCH_NOTES_APP_VERSION}버전 2026.04.11`;
 }
 
 export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
