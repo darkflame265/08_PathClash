@@ -137,6 +137,7 @@ export interface AbilityPlayerState {
   previousTurnStart: Position | null;
   previousTurnPath: Position[];
   equippedSkills: AbilitySkillId[];
+  timeRewindUsed: boolean;
 }
 
 export interface AbilityBattleState {

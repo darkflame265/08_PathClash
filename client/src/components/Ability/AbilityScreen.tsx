@@ -3119,6 +3119,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             const reserved = skillReservations.some(
               (entry) => entry.skillId === skillId,
             );
+            const isTimeRewindSpent =
+              skillId === "chronos_time_rewind" && me.timeRewindUsed;
             const passiveSkill = skill.category === "passive";
             const blitzReserved = skillReservations.some(
               (entry) => entry.skillId === "electric_blitz",
@@ -3183,6 +3185,15 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 </span>
                 <span className="ability-skill-name">
                   {lang === "en" ? skill.name.en : skill.name.kr}
+                  {isTimeRewindSpent && (
+                    <span
+                      className="ability-skill-consumed-mark"
+                      aria-label={lang === "en" ? "Used" : "사용 완료"}
+                      title={lang === "en" ? "Used" : "사용 완료"}
+                    >
+                      ×
+                    </span>
+                  )}
                 </span>
                 <span className="ability-skill-cost">{skill.manaCost}</span>
               </button>

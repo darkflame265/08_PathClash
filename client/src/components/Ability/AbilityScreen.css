@@ -505,12 +505,27 @@
   min-width: 0;
   font-size: clamp(0.62rem, calc(0.72rem * var(--gs-scale, 1)), 0.88rem);
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(0.22rem * var(--gs-scale, 1));
 }
 
 .ability-skill-cost {
   color: #fbbf24;
   font-family: var(--mono);
   font-size: clamp(0.64rem, calc(0.72rem * var(--gs-scale, 1)), 0.86rem);
+}
+
+.ability-skill-consumed-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: #f87171;
+  font-size: 1em;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 0 8px rgba(248, 113, 113, 0.35);
 }
 
 .ability-step-picker {

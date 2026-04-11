@@ -228,6 +228,7 @@ export interface ClientAbilityPlayerState extends ClientPlayerState {
   previousTurnStart: Position | null;
   previousTurnPath: Position[];
   equippedSkills: AbilitySkillId[];
+  timeRewindUsed: boolean;
 }
 
 export interface AbilityBattleState {

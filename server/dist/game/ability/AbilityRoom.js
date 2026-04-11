@@ -922,6 +922,7 @@ class AbilityRoom {
             previousTurnStart: player.previousTurnStart,
             previousTurnPath: player.previousTurnPath,
             equippedSkills: player.equippedSkills,
+            timeRewindUsed: player.timeRewindUsed,
         };
     }
     currentPathPoints() {
