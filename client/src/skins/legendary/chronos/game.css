@@ -137,7 +137,6 @@
   margin-left: -3.5px;
   margin-top: -64px;
   background: linear-gradient(to top, #fde68a, #e2e8f0);
-  animation: chronosHandHour 3600s linear infinite;
 }
 
 .chronos-hand-minute {
@@ -146,7 +145,6 @@
   margin-left: -3px;
   margin-top: -88px;
   background: linear-gradient(to top, #cbd5e1, #ffffff);
-  animation: chronosHandMinute 60s linear infinite;
 }
 
 .chronos-hand-second {
@@ -156,7 +154,6 @@
   margin-top: -104px;
   background: #fbbf24;
   box-shadow: 0 0 9px rgba(251, 191, 36, 0.9);
-  animation: chronosHandSecond 3s linear infinite;
 }
 
 .chronos-pivot {
@@ -239,24 +236,6 @@
 @keyframes chronosSpinCCW {
   to {
     transform: rotate(-360deg);
-  }
-}
-
-@keyframes chronosHandHour {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes chronosHandMinute {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes chronosHandSecond {
-  to {
-    transform: rotate(360deg);
   }
 }
 

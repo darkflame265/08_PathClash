@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import "./preview.css";
 
 const INNER_TICK_ANGLES = Array.from({ length: 8 }, (_, i) => i * 45);
@@ -23,7 +24,29 @@ const ROMAN_NUMERALS = [
 const NUMERAL_RADIUS = 103;
 const BODY_CENTER = 130;
 
+function getClockAngles() {
+  const now = new Date();
+  const sec = now.getSeconds();
+  const min = now.getMinutes();
+  const hour = now.getHours() % 12;
+
+  return {
+    second: sec * 6,
+    minute: min * 6 + sec * 0.1,
+    hour: hour * 30 + min * 0.5,
+  };
+}
+
 export function ChronosPreview() {
+  const [angles, setAngles] = useState(getClockAngles);
+
+  useEffect(() => {
+    const update = () => setAngles(getClockAngles());
+    update();
+    const timer = window.setInterval(update, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   return (
     <span className="chronos-preview-scale" aria-hidden="true">
       <span className="chronos-preview-wrap">
@@ -69,9 +92,18 @@ export function ChronosPreview() {
               </span>
             );
           })}
-          <span className="chronos-preview-hand chronos-preview-hand-hour" />
-          <span className="chronos-preview-hand chronos-preview-hand-minute" />
-          <span className="chronos-preview-hand chronos-preview-hand-second" />
+          <span
+            className="chronos-preview-hand chronos-preview-hand-hour"
+            style={{ transform: `rotate(${angles.hour}deg)` }}
+          />
+          <span
+            className="chronos-preview-hand chronos-preview-hand-minute"
+            style={{ transform: `rotate(${angles.minute}deg)` }}
+          />
+          <span
+            className="chronos-preview-hand chronos-preview-hand-second"
+            style={{ transform: `rotate(${angles.second}deg)` }}
+          />
           <span className="chronos-preview-pivot" />
           {ORBIT_DELAYS.map((delay, index) => (
             <span

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import "./game.css";
 
 const INNER_TICK_ANGLES = Array.from({ length: 8 }, (_, i) => i * 45);
@@ -6,7 +7,29 @@ const OUTER_TICK_ANGLES = Array.from({ length: 16 }, (_, i) => i * 22.5);
 const ORBIT_DELAYS = [0, -1.75, -3.5, -5.25];
 const STAR_DELAYS = [0, -4.67, -9.33];
 
+function getClockAngles() {
+  const now = new Date();
+  const sec = now.getSeconds();
+  const min = now.getMinutes();
+  const hour = now.getHours() % 12;
+
+  return {
+    second: sec * 6,
+    minute: min * 6 + sec * 0.1,
+    hour: hour * 30 + min * 0.5,
+  };
+}
+
 export function ChronosGame() {
+  const [angles, setAngles] = useState(getClockAngles);
+
+  useEffect(() => {
+    const update = () => setAngles(getClockAngles());
+    update();
+    const timer = window.setInterval(update, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   return (
     <div className="chronos-scale" aria-hidden="true">
       <div className="chronos-wrap">
@@ -39,9 +62,18 @@ export function ChronosGame() {
               />
             ))}
           </div>
-          <div className="chronos-hand chronos-hand-hour" />
-          <div className="chronos-hand chronos-hand-minute" />
-          <div className="chronos-hand chronos-hand-second" />
+          <div
+            className="chronos-hand chronos-hand-hour"
+            style={{ transform: `rotate(${angles.hour}deg)` }}
+          />
+          <div
+            className="chronos-hand chronos-hand-minute"
+            style={{ transform: `rotate(${angles.minute}deg)` }}
+          />
+          <div
+            className="chronos-hand chronos-hand-second"
+            style={{ transform: `rotate(${angles.second}deg)` }}
+          />
           <div className="chronos-pivot" />
           {ORBIT_DELAYS.map((delay, index) => (
             <div

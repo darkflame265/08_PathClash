@@ -139,7 +139,6 @@
   margin-top: -64px;
   background: linear-gradient(to top, #a07820, #ffd700);
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
-  animation: chronosPreviewHandHour 43200s linear infinite;
 }
 
 .chronos-preview-hand-minute {
@@ -149,7 +148,6 @@
   margin-top: -88px;
   background: linear-gradient(to top, #a07820, #ffd700);
   box-shadow: 0 0 9px rgba(255, 215, 0, 0.5);
-  animation: chronosPreviewHandMinute 3600s linear infinite;
 }
 
 .chronos-preview-hand-second {
@@ -159,7 +157,6 @@
   margin-top: -104px;
   background: #fbbf24;
   box-shadow: 0 0 9px rgba(251, 191, 36, 0.9);
-  animation: chronosPreviewHandSecond 60s linear infinite;
 }
 
 .chronos-preview-pivot {
@@ -214,24 +211,6 @@
 @keyframes chronosPreviewSpinCCW {
   to {
     transform: rotate(-360deg);
-  }
-}
-
-@keyframes chronosPreviewHandHour {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes chronosPreviewHandMinute {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes chronosPreviewHandSecond {
-  to {
-    transform: rotate(360deg);
   }
 }
 
