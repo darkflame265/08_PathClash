@@ -83,6 +83,9 @@ export class TwoVsTwoRoom {
   get lastActivityTimestamp(): number {
     return this.lastActivityAt;
   }
+  get currentTurn(): number {
+    return this.turn;
+  }
 
   get currentResult(): TwoVsTwoResult | null {
     return this.gameResult;

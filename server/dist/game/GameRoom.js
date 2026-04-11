@@ -53,6 +53,9 @@ class GameRoom {
     get lastActivityTimestamp() {
         return this.lastActivityAt;
     }
+    get currentTurn() {
+        return this.turn;
+    }
     addPlayer(socket, nickname, userId = null, stats = { wins: 0, losses: 0 }, pieceSkin = "classic", boardSkin = "classic") {
         if (this.isFull)
             return null;

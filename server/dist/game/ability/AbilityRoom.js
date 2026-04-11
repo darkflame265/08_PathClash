@@ -189,6 +189,9 @@ class AbilityRoom {
     get lastActivityTimestamp() {
         return this.lastActivityAt;
     }
+    get currentTurn() {
+        return this.turn;
+    }
     getSocketIds() {
         return [...this.players.values()].map((player) => player.socketId);
     }

@@ -17,6 +17,7 @@ export class TwoVsTwoRoomStore {
   private rooms: Map<string, TwoVsTwoRoom> = new Map();
   private socketToRoom: Map<string, string> = new Map();
   private static readonly WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
+  private static readonly MAX_ACTIVE_TURN = 200;
   private queue: QueueEntry[] = [];
   private teamQueue: TeamQueueEntry[] = [];
   private static instance: TwoVsTwoRoomStore;
@@ -149,11 +150,17 @@ export class TwoVsTwoRoomStore {
       const roomSocketIds = room.getSocketIds();
       const hasLiveSocket = roomSocketIds.some((socketId) => activeSocketIds.has(socketId));
       const isEmptyRoom = room.connectedPlayerCount === 0;
+      const exceededTurnLimit =
+        room.currentTurn >= TwoVsTwoRoomStore.MAX_ACTIVE_TURN;
       const isStaleWaitingRoom =
         room.currentPhase === 'waiting' &&
         now - room.lastActivityTimestamp >= TwoVsTwoRoomStore.WAITING_ROOM_TIMEOUT_MS;
 
-      if (!isEmptyRoom && !(isStaleWaitingRoom && !hasLiveSocket)) {
+      if (
+        !isEmptyRoom &&
+        !exceededTurnLimit &&
+        !(isStaleWaitingRoom && !hasLiveSocket)
+      ) {
         continue;
       }
 

@@ -49,6 +49,9 @@ class TwoVsTwoRoom {
     get lastActivityTimestamp() {
         return this.lastActivityAt;
     }
+    get currentTurn() {
+        return this.turn;
+    }
     get currentResult() {
         return this.gameResult;
     }

@@ -76,9 +76,12 @@ class CoopRoomStore {
             const roomSocketIds = room.getSocketIds();
             const hasLiveSocket = roomSocketIds.some((socketId) => activeSocketIds.has(socketId));
             const isEmptyRoom = room.connectedPlayerCount === 0;
+            const exceededTurnLimit = room.currentTurn >= CoopRoomStore.MAX_ACTIVE_TURN;
             const isStaleWaitingRoom = room.currentPhase === 'waiting' &&
                 now - room.lastActivityTimestamp >= CoopRoomStore.WAITING_ROOM_TIMEOUT_MS;
-            if (!isEmptyRoom && !(isStaleWaitingRoom && !hasLiveSocket)) {
+            if (!isEmptyRoom &&
+                !exceededTurnLimit &&
+                !(isStaleWaitingRoom && !hasLiveSocket)) {
                 continue;
             }
             this.rooms.delete(roomId);
@@ -92,3 +95,4 @@ class CoopRoomStore {
 }
 exports.CoopRoomStore = CoopRoomStore;
 CoopRoomStore.WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
+CoopRoomStore.MAX_ACTIVE_TURN = 200;

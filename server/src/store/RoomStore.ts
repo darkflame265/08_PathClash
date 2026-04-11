@@ -6,6 +6,7 @@ export class RoomStore {
   private codeToRoom: Map<string, string> = new Map();
   private socketToRoom: Map<string, string> = new Map();
   private static readonly WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
+  private static readonly MAX_ACTIVE_TURN = 200;
 
   private static instance: RoomStore;
   static getInstance(): RoomStore {
@@ -174,11 +175,16 @@ export class RoomStore {
       const roomSocketIds = room.getSocketIds();
       const hasLiveSocket = roomSocketIds.some((socketId) => activeSocketIds.has(socketId));
       const isEmptyRoom = room.playerCount === 0;
+      const exceededTurnLimit = room.currentTurn >= RoomStore.MAX_ACTIVE_TURN;
       const isStaleWaitingRoom =
         room.currentPhase === 'waiting' &&
         now - room.lastActivityTimestamp >= RoomStore.WAITING_ROOM_TIMEOUT_MS;
 
-      if (!isEmptyRoom && !(isStaleWaitingRoom && !hasLiveSocket)) {
+      if (
+        !isEmptyRoom &&
+        !exceededTurnLimit &&
+        !(isStaleWaitingRoom && !hasLiveSocket)
+      ) {
         continue;
       }
 

@@ -57,6 +57,9 @@ class CoopRoom {
     get lastActivityTimestamp() {
         return this.lastActivityAt;
     }
+    get currentTurn() {
+        return this.planningRound;
+    }
     addPlayer(socket, nickname, userId, stats, pieceSkin, boardSkin = "classic") {
         if (this.players.size >= 2)
             return null;

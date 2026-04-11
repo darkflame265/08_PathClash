@@ -7,6 +7,7 @@ export class AbilityRoomStore {
   private codeToRoom = new Map<string, string>();
   private socketToRoom = new Map<string, string>();
   private static readonly WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
+  private static readonly MAX_ACTIVE_TURN = 200;
 
   private queue: Array<{
     socketId: string;
@@ -163,8 +164,13 @@ export class AbilityRoomStore {
       const roomSocketIds = room.getSocketIds();
       const hasLiveSocket = roomSocketIds.some((socketId) => activeSocketIds.has(socketId));
       const isEmptyRoom = room.playerCount === 0;
+      const exceededTurnLimit = room.currentTurn >= AbilityRoomStore.MAX_ACTIVE_TURN;
       const isStaleWaitingRoom = room.currentPhase === 'waiting' && now - room.lastActivityTimestamp >= AbilityRoomStore.WAITING_ROOM_TIMEOUT_MS;
-      if (!isEmptyRoom && !(isStaleWaitingRoom && !hasLiveSocket)) continue;
+      if (
+        !isEmptyRoom &&
+        !exceededTurnLimit &&
+        !(isStaleWaitingRoom && !hasLiveSocket)
+      ) continue;
       this.rooms.delete(roomId);
       this.codeToRoom.delete(this.normalizeCode(room.code));
       for (const socketId of roomSocketIds) {

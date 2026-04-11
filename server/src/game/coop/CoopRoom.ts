@@ -96,6 +96,9 @@ export class CoopRoom {
   get lastActivityTimestamp(): number {
     return this.lastActivityAt;
   }
+  get currentTurn(): number {
+    return this.planningRound;
+  }
 
   addPlayer(
     socket: Socket,

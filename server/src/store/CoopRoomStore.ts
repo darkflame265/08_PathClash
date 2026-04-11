@@ -5,6 +5,7 @@ export class CoopRoomStore {
   private rooms: Map<string, CoopRoom> = new Map();
   private socketToRoom: Map<string, string> = new Map();
   private static readonly WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
+  private static readonly MAX_ACTIVE_TURN = 200;
   private queue: {
     socketId: string;
     nickname: string;
@@ -110,11 +111,16 @@ export class CoopRoomStore {
       const roomSocketIds = room.getSocketIds();
       const hasLiveSocket = roomSocketIds.some((socketId) => activeSocketIds.has(socketId));
       const isEmptyRoom = room.connectedPlayerCount === 0;
+      const exceededTurnLimit = room.currentTurn >= CoopRoomStore.MAX_ACTIVE_TURN;
       const isStaleWaitingRoom =
         room.currentPhase === 'waiting' &&
         now - room.lastActivityTimestamp >= CoopRoomStore.WAITING_ROOM_TIMEOUT_MS;
 
-      if (!isEmptyRoom && !(isStaleWaitingRoom && !hasLiveSocket)) {
+      if (
+        !isEmptyRoom &&
+        !exceededTurnLimit &&
+        !(isStaleWaitingRoom && !hasLiveSocket)
+      ) {
         continue;
       }
 

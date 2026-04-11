@@ -121,9 +121,12 @@ class RoomStore {
             const roomSocketIds = room.getSocketIds();
             const hasLiveSocket = roomSocketIds.some((socketId) => activeSocketIds.has(socketId));
             const isEmptyRoom = room.playerCount === 0;
+            const exceededTurnLimit = room.currentTurn >= RoomStore.MAX_ACTIVE_TURN;
             const isStaleWaitingRoom = room.currentPhase === 'waiting' &&
                 now - room.lastActivityTimestamp >= RoomStore.WAITING_ROOM_TIMEOUT_MS;
-            if (!isEmptyRoom && !(isStaleWaitingRoom && !hasLiveSocket)) {
+            if (!isEmptyRoom &&
+                !exceededTurnLimit &&
+                !(isStaleWaitingRoom && !hasLiveSocket)) {
                 continue;
             }
             this.rooms.delete(roomId);
@@ -138,3 +141,4 @@ class RoomStore {
 }
 exports.RoomStore = RoomStore;
 RoomStore.WAITING_ROOM_TIMEOUT_MS = 15 * 60 * 1000;
+RoomStore.MAX_ACTIVE_TURN = 200;

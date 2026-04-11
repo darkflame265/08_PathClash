@@ -98,6 +98,9 @@ export class GameRoom {
   get lastActivityTimestamp(): number {
     return this.lastActivityAt;
   }
+  get currentTurn(): number {
+    return this.turn;
+  }
 
   addPlayer(
     socket: Socket,
