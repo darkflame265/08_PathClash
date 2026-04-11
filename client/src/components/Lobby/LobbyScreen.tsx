@@ -636,6 +636,39 @@ function renderAbilitySkillIcon(skillId: AbilitySkillId) {
   );
 }
 
+function getAbilitySkillCategoryLabel(
+  category: "attack" | "defense" | "utility" | "passive",
+  lang: "en" | "kr",
+) {
+  if (lang === "en") {
+    switch (category) {
+      case "attack":
+        return "Attack";
+      case "defense":
+        return "Defense";
+      case "utility":
+        return "Utility";
+      case "passive":
+        return "Passive";
+      default:
+        return category;
+    }
+  }
+
+  switch (category) {
+    case "attack":
+      return "공격";
+    case "defense":
+      return "방어";
+    case "utility":
+      return "유틸";
+    case "passive":
+      return "패시브";
+    default:
+      return category;
+  }
+}
+
 export function LobbyScreen({
   onGameStart,
 
@@ -3996,15 +4029,51 @@ export function LobbyScreen({
                     ) ?? null;
                   return (
                     <div className="skin-detail-skill">
-                      <strong className="skin-detail-skill-name">
-                        {linkedSkill
-                          ? lang === "en"
-                            ? linkedSkill.name.en
-                            : linkedSkill.name.kr
-                          : lang === "en"
-                            ? "No linked skill"
-                            : "연결 스킬 없음"}
-                      </strong>
+                      {linkedSkill ? (
+                        <>
+                          <div className="skin-detail-skill-head">
+                            <span className="skin-preview skin-detail-skill-icon">
+                              {renderAbilitySkillIcon(linkedSkill.id)}
+                            </span>
+
+                            <div className="skin-detail-skill-title-wrap">
+                              <strong className="skin-detail-skill-name">
+                                {lang === "en"
+                                  ? linkedSkill.name.en
+                                  : linkedSkill.name.kr}
+                              </strong>
+
+                              <div className="skin-detail-skill-meta">
+                                <span
+                                  className={`skin-detail-skill-pill is-${linkedSkill.category}`}
+                                >
+                                  {getAbilitySkillCategoryLabel(
+                                    linkedSkill.category,
+                                    lang,
+                                  )}
+                                </span>
+
+                                <span className="skin-detail-skill-pill is-mana">
+                                  <span aria-hidden="true">✦</span>
+                                  <span>
+                                    {linkedSkill.category === "passive"
+                                      ? lang === "en"
+                                        ? "Auto"
+                                        : "자동"
+                                      : lang === "en"
+                                        ? `${linkedSkill.manaCost} Mana`
+                                        : `마나 ${linkedSkill.manaCost}`}
+                                  </span>
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <strong className="skin-detail-skill-name">
+                          {lang === "en" ? "No linked skill" : "연결 스킬 없음"}
+                        </strong>
+                      )}
                       <p className="skin-detail-skill-desc">
                         {linkedSkill
                           ? lang === "en"
