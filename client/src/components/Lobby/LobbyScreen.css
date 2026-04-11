@@ -2440,6 +2440,12 @@
   transform-origin: center;
 }
 
+.skin-detail-preview-stage .skin-preview-electric_core {
+  border-color: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
 .skin-detail-preview-stage .skin-preview-cosmic-canvas {
   width: 235%;
   height: 235%;
@@ -2933,11 +2939,15 @@
   }
 
   .skin-detail-preview-stage .skin-preview-electric_core-orb {
-    transform: scale(1.18);
+    transform: scale(1.26);
+    border-width: 3px;
   }
 
   .skin-detail-preview-stage .skin-preview-electric_core-canvas {
-    transform: scale(1.85);
+    inset: 4px;
+    width: calc(100% - 8px);
+    height: calc(100% - 8px);
+    transform: scale(1.95);
   }
 
   .skin-detail-preview-stage .skin-preview-cosmic-canvas {
