@@ -8,6 +8,7 @@ import { TwoVsTwoRoomStore } from '../store/TwoVsTwoRoomStore';
 import { AbilityRoom } from '../game/ability/AbilityRoom';
 import { AbilityRoomStore } from '../store/AbilityRoomStore';
 import { getAndroidVersionStatus } from '../config/appVersion';
+import { FAKE_RANDOM_NICKNAMES } from '../config/fakeRandomNicknames';
 import { BoardSkin, PieceSkin, Position } from '../types/game.types';
 import type { AbilitySkillId, AbilitySkillReservation } from '../game/ability/AbilityTypes';
 import {
@@ -119,21 +120,6 @@ export function initSocketServer(io: Server): void {
     }
   };
 
-  const fakeRandomNicknames = [
-    'Minho',
-    'Jisoo',
-    'Haru',
-    'Noah',
-    'Sora',
-    'Yuna',
-    'Luca',
-    'Mina',
-    'Kai',
-    'Rin',
-    'Daeho',
-    'Aria',
-  ] as const;
-
   const fakeRandomSkins: PieceSkin[] = [
     'classic',
     'ember',
@@ -154,8 +140,8 @@ export function initSocketServer(io: Server): void {
     boardSkin: BoardSkin;
   } => {
     const nickname =
-      fakeRandomNicknames[
-        Math.floor(Math.random() * fakeRandomNicknames.length)
+      FAKE_RANDOM_NICKNAMES[
+        Math.floor(Math.random() * FAKE_RANDOM_NICKNAMES.length)
       ];
     const fakeId = `${randomHex(8)}-${randomHex(4)}-${randomHex(4)}-${randomHex(4)}-${randomHex(12)}`;
     const winsBase = Math.max(

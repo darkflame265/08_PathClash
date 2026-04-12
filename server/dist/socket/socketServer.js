@@ -10,6 +10,7 @@ const TwoVsTwoRoomStore_1 = require("../store/TwoVsTwoRoomStore");
 const AbilityRoom_1 = require("../game/ability/AbilityRoom");
 const AbilityRoomStore_1 = require("../store/AbilityRoomStore");
 const appVersion_1 = require("../config/appVersion");
+const fakeRandomNicknames_1 = require("../config/fakeRandomNicknames");
 const playerAuth_1 = require("../services/playerAuth");
 const achievementService_1 = require("../services/achievementService");
 function initSocketServer(io) {
@@ -81,20 +82,6 @@ function initSocketServer(io) {
             randomFallbackTimers.delete(socketId);
         }
     };
-    const fakeRandomNicknames = [
-        'Minho',
-        'Jisoo',
-        'Haru',
-        'Noah',
-        'Sora',
-        'Yuna',
-        'Luca',
-        'Mina',
-        'Kai',
-        'Rin',
-        'Daeho',
-        'Aria',
-    ];
     const fakeRandomSkins = [
         'classic',
         'ember',
@@ -104,7 +91,7 @@ function initSocketServer(io) {
         'plasma',
     ];
     const createDisguisedRandomProfile = (profile) => {
-        const nickname = fakeRandomNicknames[Math.floor(Math.random() * fakeRandomNicknames.length)];
+        const nickname = fakeRandomNicknames_1.FAKE_RANDOM_NICKNAMES[Math.floor(Math.random() * fakeRandomNicknames_1.FAKE_RANDOM_NICKNAMES.length)];
         const fakeId = `${randomHex(8)}-${randomHex(4)}-${randomHex(4)}-${randomHex(4)}-${randomHex(12)}`;
         const winsBase = Math.max(0, profile.stats.wins + Math.floor(Math.random() * 101) - 50);
         const lossesBase = Math.max(0, profile.stats.losses + Math.floor(Math.random() * 101) - 50);
