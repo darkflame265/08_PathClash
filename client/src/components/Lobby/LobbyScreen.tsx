@@ -1237,8 +1237,6 @@ export function LobbyScreen({
     tokens: number;
 
     blurb: string;
-
-    benefit: string;
   }> = [
     {
       id: "starter",
@@ -1251,11 +1249,9 @@ export function LobbyScreen({
 
       blurb:
         lang === "en"
-          ? "A little more than a day of play"
-          : "하루 플레이보다 조금 더",
+          ? "A small boost to start saving toward token skins"
+          : "토큰 스킨 구매를 위한 첫 저축용 구성",
 
-      benefit:
-        lang === "en" ? "Can buy 1 Common skin" : "Common 스킨 1개 구매 가능",
     },
 
     {
@@ -1269,11 +1265,9 @@ export function LobbyScreen({
 
       blurb:
         lang === "en"
-          ? "A clean step into premium skins"
-          : "프리미엄 스킨으로 가는 가벼운 시작",
+          ? "A light pack for your first token skin"
+          : "첫 토큰 스킨 구매에 맞는 가벼운 구성",
 
-      benefit:
-        lang === "en" ? "Can buy 1 Rare skin" : "Rare 스킨 1개 구매 가능",
     },
 
     {
@@ -1287,13 +1281,9 @@ export function LobbyScreen({
 
       blurb:
         lang === "en"
-          ? "Efficient value for a serious upgrade"
-          : "본격적인 업그레이드를 위한 효율적 구성",
+          ? "A solid bundle for expanding your collection"
+          : "수집 범위를 넓히기 좋은 실속형 구성",
 
-      benefit:
-        lang === "en"
-          ? "1 Legendary skin + leftover"
-          : "Legendary 1개 + 여유 토큰",
     },
 
     {
@@ -1307,13 +1297,9 @@ export function LobbyScreen({
 
       blurb:
         lang === "en"
-          ? "Built for collecting multiple premium skins"
-          : "여러 프리미엄 스킨 수집에 맞춘 구성",
+          ? "Built for picking up higher-tier token skins"
+          : "상위 토큰 스킨 확보에 좋은 구성",
 
-      benefit:
-        lang === "en"
-          ? "Several Rares or 3 Legendaries"
-          : "Rare 여러 개 또는 Legendary 3개",
     },
 
     {
@@ -1327,13 +1313,9 @@ export function LobbyScreen({
 
       blurb:
         lang === "en"
-          ? "For nearly the full collection"
-          : "거의 전체 콜렉션을 위한 구성",
+          ? "The premium bundle for legendary skins and boards"
+          : "레전더리 스킨과 보드까지 노릴 수 있는 최상위 구성",
 
-      benefit:
-        lang === "en"
-          ? "Can buy almost every skin"
-          : "거의 모든 스킨 구매 가능",
     },
   ];
 
@@ -4220,8 +4202,6 @@ export function LobbyScreen({
                   </div>
 
                   <p className="token-pack-blurb">{pack.blurb}</p>
-
-                  <p className="token-pack-benefit">{pack.benefit}</p>
 
                   <button
                     className="lobby-btn primary token-pack-btn"
