@@ -8,6 +8,7 @@ const DIRECTIONS: Position[] = [
   { row: 0, col: 1 },
 ];
 const RANDOM_PATTERN_CHANCE = 0.5;
+const DUAL_ESCAPE_PRESSURE_FORCE_CHANCE = 0.7;
 
 export function createAiPath(params: {
   color: PlayerColor;
@@ -40,13 +41,7 @@ export function createAiPath(params: {
 }
 
 function createAttackerPath(selfPosition: Position, targetPosition: Position, pathPoints: number, obstacles: Position[]): Position[] {
-  const guaranteedHitPath = buildShortestPath(
-    selfPosition,
-    targetPosition,
-    obstacles,
-  );
   const openNeighbors = getOpenNeighbors(targetPosition, obstacles);
-  const targetIsTrapped = openNeighbors.length === 0;
   const onlyEscapeTile = openNeighbors.length === 1 ? openNeighbors[0] : null;
   const escapeBlockPath = onlyEscapeTile
     ? buildShortestPath(selfPosition, onlyEscapeTile, obstacles)
@@ -60,30 +55,20 @@ function createAttackerPath(selfPosition: Position, targetPosition: Position, pa
           obstacles,
         )
       : null;
-  const canForceDirectHit =
-    targetIsTrapped &&
-    guaranteedHitPath.length > 0 &&
-    guaranteedHitPath.length <= pathPoints;
   const canForceEscapeBlock =
     !!onlyEscapeTile &&
     escapeBlockPath.length > 0 &&
     escapeBlockPath.length <= pathPoints;
   const canForceDualEscapePressure =
     !!dualEscapePressurePath && dualEscapePressurePath.length <= pathPoints;
+  const shouldForceDualEscapePressure =
+    canForceDualEscapePressure &&
+    Math.random() < DUAL_ESCAPE_PRESSURE_FORCE_CHANCE;
   const canForceHitThisTurn =
-    canForceDirectHit || canForceEscapeBlock || canForceDualEscapePressure;
+    canForceEscapeBlock || shouldForceDualEscapePressure;
 
   if (!canForceHitThisTurn && Math.random() < RANDOM_PATTERN_CHANCE) {
     return createRandomRoamPath(selfPosition, targetPosition, pathPoints, obstacles);
-  }
-
-  if (canForceDirectHit) {
-    return extendAttackerPathToFullPoints(
-      selfPosition,
-      targetPosition,
-      pathPoints,
-      obstacles,
-    );
   }
 
   if (canForceEscapeBlock && onlyEscapeTile) {
@@ -96,7 +81,7 @@ function createAttackerPath(selfPosition: Position, targetPosition: Position, pa
     );
   }
 
-  if (canForceDualEscapePressure && dualEscapePressurePath) {
+  if (shouldForceDualEscapePressure && dualEscapePressurePath) {
     return extendAttackerPathFromBase(
       selfPosition,
       dualEscapePressurePath,

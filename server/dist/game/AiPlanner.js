@@ -9,6 +9,7 @@ const DIRECTIONS = [
     { row: 0, col: 1 },
 ];
 const RANDOM_PATTERN_CHANCE = 0.5;
+const DUAL_ESCAPE_PRESSURE_FORCE_CHANCE = 0.7;
 function createAiPath(params) {
     const { role } = params;
     const rawPath = role === 'attacker'
@@ -17,9 +18,7 @@ function createAiPath(params) {
     return collapseImmediateBacktracks(params.selfPosition, rawPath).slice(0, params.pathPoints);
 }
 function createAttackerPath(selfPosition, targetPosition, pathPoints, obstacles) {
-    const guaranteedHitPath = buildShortestPath(selfPosition, targetPosition, obstacles);
     const openNeighbors = getOpenNeighbors(targetPosition, obstacles);
-    const targetIsTrapped = openNeighbors.length === 0;
     const onlyEscapeTile = openNeighbors.length === 1 ? openNeighbors[0] : null;
     const escapeBlockPath = onlyEscapeTile
         ? buildShortestPath(selfPosition, onlyEscapeTile, obstacles)
@@ -27,24 +26,20 @@ function createAttackerPath(selfPosition, targetPosition, pathPoints, obstacles)
     const dualEscapePressurePath = openNeighbors.length === 2
         ? findPathCoveringTargets(selfPosition, openNeighbors, pathPoints, obstacles)
         : null;
-    const canForceDirectHit = targetIsTrapped &&
-        guaranteedHitPath.length > 0 &&
-        guaranteedHitPath.length <= pathPoints;
     const canForceEscapeBlock = !!onlyEscapeTile &&
         escapeBlockPath.length > 0 &&
         escapeBlockPath.length <= pathPoints;
     const canForceDualEscapePressure = !!dualEscapePressurePath && dualEscapePressurePath.length <= pathPoints;
-    const canForceHitThisTurn = canForceDirectHit || canForceEscapeBlock || canForceDualEscapePressure;
+    const shouldForceDualEscapePressure = canForceDualEscapePressure &&
+        Math.random() < DUAL_ESCAPE_PRESSURE_FORCE_CHANCE;
+    const canForceHitThisTurn = canForceEscapeBlock || shouldForceDualEscapePressure;
     if (!canForceHitThisTurn && Math.random() < RANDOM_PATTERN_CHANCE) {
         return createRandomRoamPath(selfPosition, targetPosition, pathPoints, obstacles);
-    }
-    if (canForceDirectHit) {
-        return extendAttackerPathToFullPoints(selfPosition, targetPosition, pathPoints, obstacles);
     }
     if (canForceEscapeBlock && onlyEscapeTile) {
         return extendAttackerPathFromBase(selfPosition, escapeBlockPath, onlyEscapeTile, pathPoints, obstacles);
     }
-    if (canForceDualEscapePressure && dualEscapePressurePath) {
+    if (shouldForceDualEscapePressure && dualEscapePressurePath) {
         return extendAttackerPathFromBase(selfPosition, dualEscapePressurePath, targetPosition, pathPoints, obstacles);
     }
     const predictedEscapePath = predictEscaperPath(targetPosition, selfPosition, pathPoints, obstacles);
