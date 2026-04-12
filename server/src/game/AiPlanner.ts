@@ -17,9 +17,25 @@ export function createAiPath(params: {
   obstacles: Position[];
 }): Position[] {
   const { role } = params;
-  return role === 'attacker'
-    ? createAttackerPath(params.selfPosition, params.opponentPosition, params.pathPoints, params.obstacles)
-    : createEscaperPath(params.selfPosition, params.opponentPosition, params.pathPoints, params.obstacles);
+  const rawPath =
+    role === 'attacker'
+      ? createAttackerPath(
+          params.selfPosition,
+          params.opponentPosition,
+          params.pathPoints,
+          params.obstacles,
+        )
+      : createEscaperPath(
+          params.selfPosition,
+          params.opponentPosition,
+          params.pathPoints,
+          params.obstacles,
+        );
+
+  return collapseImmediateBacktracks(params.selfPosition, rawPath).slice(
+    0,
+    params.pathPoints,
+  );
 }
 
 function createAttackerPath(selfPosition: Position, targetPosition: Position, pathPoints: number, obstacles: Position[]): Position[] {
@@ -154,4 +170,29 @@ function isBlocked(position: Position, obstacles: Position[]): boolean {
 
 function toKey(position: Position): string {
   return `${position.row},${position.col}`;
+}
+
+function collapseImmediateBacktracks(
+  start: Position,
+  path: Position[],
+): Position[] {
+  const normalized: Position[] = [];
+
+  for (const step of path) {
+    const secondLast =
+      normalized.length >= 2
+        ? normalized[normalized.length - 2]
+        : normalized.length === 1
+          ? start
+          : null;
+
+    if (secondLast && isSamePosition(step, secondLast)) {
+      normalized.pop();
+      continue;
+    }
+
+    normalized.push(step);
+  }
+
+  return normalized;
 }
