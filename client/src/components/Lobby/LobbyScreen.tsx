@@ -2087,6 +2087,43 @@ export function LobbyScreen({
     );
   }, [authUserId, isGuestUser, setAuthState]);
 
+  const handleOpenSettings = useCallback(() => {
+    setIsSettingsOpen(true);
+    void refreshAccountSummary({ force: true }).then(
+      ({
+        nickname,
+        equippedSkin,
+        equippedBoardSkin,
+        ownedSkins,
+        ownedBoardSkins,
+        wins,
+        losses,
+        tokens,
+        dailyRewardWins,
+        dailyRewardTokens,
+        achievements,
+      }) => {
+        setAuthState({
+          ready: true,
+          userId: authUserId,
+          accessToken: useGameStore.getState().authAccessToken,
+          isGuestUser,
+          nickname,
+          equippedSkin,
+          equippedBoardSkin,
+          ownedSkins,
+          ownedBoardSkins,
+          wins,
+          losses,
+          tokens,
+          dailyRewardWins,
+          dailyRewardTokens,
+          achievements,
+        });
+      },
+    );
+  }, [authUserId, isGuestUser, setAuthState]);
+
   const handleClaimAchievement = useCallback(
     async (achievementId: string) => {
       if (isClaimingAchievements) return;
@@ -4428,7 +4465,7 @@ export function LobbyScreen({
 
           <button
             className="lobby-bottom-action"
-            onClick={() => setIsSettingsOpen(true)}
+            onClick={handleOpenSettings}
             type="button"
           >
             <span className="lobby-bottom-action-icon-wrap" aria-hidden="true">
