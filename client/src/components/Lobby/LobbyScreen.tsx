@@ -2779,8 +2779,7 @@ export function LobbyScreen({
 
   const handleCreateRoom = async () => {
     setError("");
-
-    setIsMatchmaking(false);
+    setIsMatchmaking(true);
 
     setMatchType("friend");
 
@@ -2791,8 +2790,7 @@ export function LobbyScreen({
 
   const handleCreateAbilityRoom = async () => {
     setError("");
-
-    setIsMatchmaking(false);
+    setIsMatchmaking(true);
 
     setMatchType("friend");
 
@@ -2811,8 +2809,7 @@ export function LobbyScreen({
     }
 
     setError("");
-
-    setIsMatchmaking(false);
+    setIsMatchmaking(true);
 
     setMatchType("friend");
 
@@ -2835,8 +2832,7 @@ export function LobbyScreen({
     }
 
     setError("");
-
-    setIsMatchmaking(false);
+    setIsMatchmaking(true);
 
     setMatchType("friend");
 
@@ -2878,6 +2874,7 @@ export function LobbyScreen({
 
   const handleRandom = async () => {
     setError("");
+    setIsMatchmaking(true);
 
     setMatchType("random");
 
@@ -3070,6 +3067,7 @@ export function LobbyScreen({
 
   const handleCoopMatch = async () => {
     setError("");
+    setIsMatchmaking(true);
 
     setMatchType("coop");
 
@@ -3080,6 +3078,7 @@ export function LobbyScreen({
 
   const handleTwoVsTwoMatch = async () => {
     setError("");
+    setIsMatchmaking(true);
 
     setMatchType("2v2");
 
