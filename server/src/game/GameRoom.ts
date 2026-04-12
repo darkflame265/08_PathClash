@@ -127,7 +127,15 @@ export class GameRoom {
     return color;
   }
 
-  addAiPlayer(nickname = "AI Bot"): PlayerColor | null {
+  addAiPlayer(
+    nickname = "AI Bot",
+    options?: {
+      userId?: string | null;
+      stats?: { wins: number; losses: number };
+      pieceSkin?: PieceSkin;
+      boardSkin?: BoardSkin;
+    },
+  ): PlayerColor | null {
     if (this.isFull) return null;
     const color: PlayerColor = this.players.size === 0 ? "red" : "blue";
     const aiId = `ai_${this.roomId}_${color}`;
@@ -135,10 +143,10 @@ export class GameRoom {
       color,
       aiId,
       nickname,
-      null,
-      { wins: 0, losses: 0 },
-      "classic",
-      "classic",
+      options?.userId ?? null,
+      options?.stats ?? { wins: 0, losses: 0 },
+      options?.pieceSkin ?? "classic",
+      options?.boardSkin ?? "classic",
     );
     this.players.set(color, player);
     this.aiColor = color;
@@ -705,18 +713,30 @@ export class GameRoom {
       const loser: PlayerColor = winner === "red" ? "blue" : "red";
       const winnerUserId = this.players.get(winner)?.userId ?? null;
       const loserUserId = this.players.get(loser)?.userId ?? null;
-      if (this.matchType === "random" && !this.aiColor) {
+      if (this.matchType === "random") {
         this.players.get(winner)!.stats.wins++;
-        this.players.get(loser)!.stats.losses++;
-        void recordMatchmakingResult(
-          winnerUserId,
-          loserUserId,
-        );
-        void recordMatchPlayed({
-          userIds: [winnerUserId, loserUserId],
-          matchType: "duel",
-        });
-        void recordModeWin({ userId: winnerUserId, mode: "duel" });
+        if (loserUserId) {
+          this.players.get(loser)!.stats.losses++;
+          void recordMatchmakingResult(
+            winnerUserId,
+            loserUserId,
+          );
+        } else if (winnerUserId) {
+          void recordModeWin({ userId: winnerUserId, mode: "duel" });
+          void recordMatchPlayed({
+            userIds: [winnerUserId],
+            matchType: "duel",
+          });
+        }
+        if (winnerUserId && loserUserId) {
+          void recordModeWin({ userId: winnerUserId, mode: "duel" });
+        }
+        if (winnerUserId && loserUserId) {
+          void recordMatchPlayed({
+            userIds: [winnerUserId, loserUserId],
+            matchType: "duel",
+          });
+        }
       } else if (this.matchType === "ai" && !this.tutorialActive) {
         const humanUserIds = [...this.players.values()]
           .filter((player) => player.color !== this.aiColor)

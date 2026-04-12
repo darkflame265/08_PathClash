@@ -24,6 +24,8 @@ function initSocketServer(io) {
     const roomSweepIntervalMs = 60 * 1000;
     const metricsLogIntervalMs = 60 * 1000;
     const slowProfileResolveThresholdMs = 150;
+    const randomFallbackMatchMs = 7000;
+    const randomFallbackTimers = new Map();
     const profileCache = new Map();
     const unregisterSocketSession = (socketId) => {
         const userId = socketUsers.get(socketId);
@@ -71,6 +73,96 @@ function initSocketServer(io) {
                 profileCache.delete(userId);
             }
         }
+    };
+    const clearRandomFallback = (socketId) => {
+        const timer = randomFallbackTimers.get(socketId);
+        if (timer) {
+            clearTimeout(timer);
+            randomFallbackTimers.delete(socketId);
+        }
+    };
+    const fakeRandomNicknames = [
+        'Minho',
+        'Jisoo',
+        'Haru',
+        'Noah',
+        'Sora',
+        'Yuna',
+        'Luca',
+        'Mina',
+        'Kai',
+        'Rin',
+        'Daeho',
+        'Aria',
+    ];
+    const fakeRandomSkins = [
+        'classic',
+        'ember',
+        'nova',
+        'aurora',
+        'void',
+        'plasma',
+    ];
+    const createDisguisedRandomProfile = (profile) => {
+        const nickname = fakeRandomNicknames[Math.floor(Math.random() * fakeRandomNicknames.length)];
+        const fakeId = `usr_${Math.random().toString(36).slice(2, 10)}${Math.random()
+            .toString(36)
+            .slice(2, 6)}`;
+        const winsBase = Math.max(0, profile.stats.wins + Math.floor(Math.random() * 101) - 50);
+        const lossesBase = Math.max(0, profile.stats.losses + Math.floor(Math.random() * 101) - 50);
+        const pieceSkin = fakeRandomSkins[Math.floor(Math.random() * fakeRandomSkins.length)] ??
+            'classic';
+        return {
+            nickname,
+            userId: fakeId,
+            stats: { wins: winsBase, losses: lossesBase },
+            pieceSkin,
+            boardSkin: 'classic',
+        };
+    };
+    const createRandomFallbackMatch = async ({ socket, profile, pieceSkin, boardSkin, }) => {
+        clearRandomFallback(socket.id);
+        if (!io.sockets.sockets.has(socket.id))
+            return;
+        if (!store.isQueuedRandom(socket.id))
+            return;
+        store.removeFromQueue(socket.id);
+        const roomId = store.generateRoomId();
+        const code = store.generateCode();
+        const room = new GameRoom_1.GameRoom(roomId, code, io, 'random');
+        store.add(room);
+        const humanColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin, boardSkin);
+        if (!humanColor)
+            return;
+        const fakeProfile = createDisguisedRandomProfile(profile);
+        room.addAiPlayer(fakeProfile.nickname, {
+            userId: fakeProfile.userId,
+            stats: fakeProfile.stats,
+            pieceSkin: fakeProfile.pieceSkin,
+            boardSkin: fakeProfile.boardSkin,
+        });
+        store.registerSocket(socket.id, roomId);
+        const opponentColor = humanColor === 'red' ? 'blue' : 'red';
+        const opponent = room.toClientState().players[opponentColor];
+        socket.emit('room_joined', {
+            roomId,
+            color: humanColor,
+            opponentNickname: opponent.nickname,
+            selfPieceSkin: pieceSkin,
+            opponentPieceSkin: opponent.pieceSkin,
+        });
+        room.startGame();
+    };
+    const scheduleRandomFallback = ({ socket, profile, pieceSkin, boardSkin, }) => {
+        clearRandomFallback(socket.id);
+        randomFallbackTimers.set(socket.id, setTimeout(() => {
+            void createRandomFallbackMatch({
+                socket,
+                profile,
+                pieceSkin,
+                boardSkin,
+            });
+        }, randomFallbackMatchMs));
     };
     const notifyRoomClosed = ({ socketIds, reason, }) => {
         if (reason !== 'turn_limit')
@@ -370,23 +462,39 @@ function initSocketServer(io) {
                 return;
             await registerSocketSession(socket, auth);
             const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+            const selectedPieceSkin = pieceSkin ?? 'classic';
+            const selectedBoardSkin = boardSkin ?? 'classic';
             const queued = store.dequeueRandom();
             if (!queued || queued.socketId === socket.id) {
                 if (queued) {
                     store.enqueueRandom(queued.socketId, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin);
                 }
-                store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
+                store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats, selectedPieceSkin, selectedBoardSkin);
                 socket.emit('matchmaking_waiting', {});
+                scheduleRandomFallback({
+                    socket,
+                    profile,
+                    pieceSkin: selectedPieceSkin,
+                    boardSkin: selectedBoardSkin,
+                });
                 return;
             }
+            clearRandomFallback(socket.id);
+            clearRandomFallback(queued.socketId);
             const roomId = store.generateRoomId();
             const code = store.generateCode();
             const room = new GameRoom_1.GameRoom(roomId, code, io, 'random');
             store.add(room);
             const queuedSocket = io.sockets.sockets.get(queued.socketId);
             if (!queuedSocket) {
-                store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
+                store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats, selectedPieceSkin, selectedBoardSkin);
                 socket.emit('matchmaking_waiting', {});
+                scheduleRandomFallback({
+                    socket,
+                    profile,
+                    pieceSkin: selectedPieceSkin,
+                    boardSkin: selectedBoardSkin,
+                });
                 return;
             }
             room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin);
@@ -397,19 +505,20 @@ function initSocketServer(io) {
                 color: 'red',
                 opponentNickname: profile.nickname,
                 selfPieceSkin: queued.pieceSkin,
-                opponentPieceSkin: pieceSkin ?? 'classic',
+                opponentPieceSkin: selectedPieceSkin,
             });
-            room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
+            room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, selectedPieceSkin, selectedBoardSkin);
             store.registerSocket(socket.id, roomId);
             socket.emit('room_joined', {
                 roomId,
                 color: 'blue',
                 opponentNickname: queued.nickname,
-                selfPieceSkin: pieceSkin ?? 'classic',
+                selfPieceSkin: selectedPieceSkin,
                 opponentPieceSkin: queued.pieceSkin,
             });
         });
         socket.on('cancel_random', () => {
+            clearRandomFallback(socket.id);
             store.removeFromQueue(socket.id);
         });
         socket.on('join_coop', async ({ nickname, auth, pieceSkin }) => {
@@ -738,6 +847,7 @@ function initSocketServer(io) {
             ack?.({ ok });
         });
         socket.on('disconnect', () => {
+            clearRandomFallback(socket.id);
             console.log(`[-] Disconnected: ${socket.id}`);
             unregisterSocketSession(socket.id);
             store.removeFromQueue(socket.id);

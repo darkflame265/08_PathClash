@@ -100,6 +100,7 @@ class RoomStore {
         return `room_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     }
     enqueueRandom(socketId, nickname, userId, stats, pieceSkin, boardSkin) {
+        this.matchQueue = this.matchQueue.filter((entry) => entry.socketId !== socketId);
         this.matchQueue.push({ socketId, nickname, userId, stats, pieceSkin, boardSkin });
     }
     dequeueRandom() {
@@ -107,6 +108,9 @@ class RoomStore {
     }
     removeFromQueue(socketId) {
         this.matchQueue = this.matchQueue.filter((entry) => entry.socketId !== socketId);
+    }
+    isQueuedRandom(socketId) {
+        return this.matchQueue.some((entry) => entry.socketId === socketId);
     }
     getStats() {
         return {

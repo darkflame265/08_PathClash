@@ -151,6 +151,7 @@ export class RoomStore {
     pieceSkin: PieceSkin,
     boardSkin: BoardSkin,
   ): void {
+    this.matchQueue = this.matchQueue.filter((entry) => entry.socketId !== socketId);
     this.matchQueue.push({ socketId, nickname, userId, stats, pieceSkin, boardSkin });
   }
 
@@ -167,6 +168,10 @@ export class RoomStore {
 
   removeFromQueue(socketId: string): void {
     this.matchQueue = this.matchQueue.filter((entry) => entry.socketId !== socketId);
+  }
+
+  isQueuedRandom(socketId: string): boolean {
+    return this.matchQueue.some((entry) => entry.socketId === socketId);
   }
 
   getStats(): {
