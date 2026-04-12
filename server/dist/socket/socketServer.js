@@ -26,7 +26,9 @@ function initSocketServer(io) {
     const metricsLogIntervalMs = 60 * 1000;
     const slowProfileResolveThresholdMs = 150;
     const randomFallbackMatchMs = 7000;
+    const abilityFallbackMatchMs = 7000;
     const randomFallbackTimers = new Map();
+    const abilityFallbackTimers = new Map();
     const profileCache = new Map();
     const unregisterSocketSession = (socketId) => {
         const userId = socketUsers.get(socketId);
@@ -80,6 +82,13 @@ function initSocketServer(io) {
         if (timer) {
             clearTimeout(timer);
             randomFallbackTimers.delete(socketId);
+        }
+    };
+    const clearAbilityFallback = (socketId) => {
+        const timer = abilityFallbackTimers.get(socketId);
+        if (timer) {
+            clearTimeout(timer);
+            abilityFallbackTimers.delete(socketId);
         }
     };
     const createDisguisedRandomProfile = (profile) => {
@@ -148,6 +157,47 @@ function initSocketServer(io) {
                 boardSkin,
             });
         }, randomFallbackMatchMs));
+    };
+    const createAbilityFallbackMatch = async ({ socket, profile, pieceSkin, boardSkin, equippedSkills, }) => {
+        clearAbilityFallback(socket.id);
+        if (!io.sockets.sockets.has(socket.id))
+            return;
+        if (!abilityStore.isQueued(socket.id))
+            return;
+        abilityStore.removeFromQueue(socket.id);
+        const roomId = abilityStore.generateRoomId();
+        const room = new AbilityRoom_1.AbilityRoom(roomId, roomId, io);
+        abilityStore.add(room);
+        const humanColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin, boardSkin, equippedSkills);
+        if (!humanColor)
+            return;
+        const fakeProfile = createDisguisedRandomProfile(profile);
+        room.addIdleBot(fakeProfile.nickname, fakeProfile.pieceSkin, fakeProfile.boardSkin, ['classic_guard'], {
+            displayId: fakeProfile.displayId,
+            stats: fakeProfile.stats,
+        });
+        abilityStore.registerSocket(socket.id, roomId);
+        const opponentColor = humanColor === 'red' ? 'blue' : 'red';
+        const opponent = room.toClientState(humanColor).players[opponentColor];
+        socket.emit('ability_room_joined', {
+            roomId,
+            color: humanColor,
+            opponentNickname: opponent.nickname,
+        });
+        room.prepareGameStart();
+        room.startGame();
+    };
+    const scheduleAbilityFallback = ({ socket, profile, pieceSkin, boardSkin, equippedSkills, }) => {
+        clearAbilityFallback(socket.id);
+        abilityFallbackTimers.set(socket.id, setTimeout(() => {
+            void createAbilityFallbackMatch({
+                socket,
+                profile,
+                pieceSkin,
+                boardSkin,
+                equippedSkills,
+            });
+        }, abilityFallbackMatchMs));
     };
     const notifyRoomClosed = ({ socketIds, reason, }) => {
         if (reason !== 'turn_limit')
@@ -643,6 +693,7 @@ function initSocketServer(io) {
             await registerSocketSession(socket, auth);
             const profile = await resolvePlayerProfileCached(socket, auth, nickname);
             if (training) {
+                clearAbilityFallback(socket.id);
                 const roomId = abilityStore.generateRoomId();
                 const room = new AbilityRoom_1.AbilityRoom(roomId, roomId, io);
                 room.enableTrainingMode();
@@ -665,8 +716,17 @@ function initSocketServer(io) {
                 }
                 abilityStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
                 socket.emit('ability_matchmaking_waiting', {});
+                scheduleAbilityFallback({
+                    socket,
+                    profile,
+                    pieceSkin: pieceSkin ?? 'classic',
+                    boardSkin: boardSkin ?? 'classic',
+                    equippedSkills,
+                });
                 return;
             }
+            clearAbilityFallback(socket.id);
+            clearAbilityFallback(queued.socketId);
             const roomId = abilityStore.generateRoomId();
             const room = new AbilityRoom_1.AbilityRoom(roomId, roomId, io);
             abilityStore.add(room);
@@ -674,6 +734,13 @@ function initSocketServer(io) {
             if (!queuedSocket) {
                 abilityStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
                 socket.emit('ability_matchmaking_waiting', {});
+                scheduleAbilityFallback({
+                    socket,
+                    profile,
+                    pieceSkin: pieceSkin ?? 'classic',
+                    boardSkin: boardSkin ?? 'classic',
+                    equippedSkills,
+                });
                 return;
             }
             room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin, queued.equippedSkills);
@@ -696,6 +763,7 @@ function initSocketServer(io) {
             twoVsTwoStore.removeFromQueue(socket.id);
         });
         socket.on('cancel_ability', () => {
+            clearAbilityFallback(socket.id);
             abilityStore.removeFromQueue(socket.id);
         });
         socket.on('twovtwo_client_ready', () => {
@@ -833,6 +901,7 @@ function initSocketServer(io) {
         });
         socket.on('disconnect', () => {
             clearRandomFallback(socket.id);
+            clearAbilityFallback(socket.id);
             console.log(`[-] Disconnected: ${socket.id}`);
             unregisterSocketSession(socket.id);
             store.removeFromQueue(socket.id);

@@ -8,6 +8,7 @@ import {
   isValidPath,
   toClientPlayer,
 } from '../GameEngine';
+import { createAiPath } from '../AiPlanner';
 import { ServerTimer } from '../ServerTimer';
 import { grantDailyRewardTokens, recordMatchmakingResult } from '../../services/playerAuth';
 import {
@@ -341,12 +342,16 @@ export class AbilityRoom {
     pieceSkin: PieceSkin,
     boardSkin: BoardSkin,
     equippedSkills: AbilitySkillId[] = [],
+    options?: {
+      displayId?: string;
+      stats?: { wins: number; losses: number };
+    },
   ): PlayerColor | null {
     if (this.isFull) return null;
     const color: PlayerColor = this.players.size === 0 ? 'red' : 'blue';
     const initialPositions = getInitialPositions();
     this.players.set(color, {
-      id: `bot:${this.roomId}:${color}`,
+      id: options?.displayId ?? `bot:${this.roomId}:${color}`,
       userId: null,
       socketId: `bot:${this.roomId}:${color}`,
       isBot: true,
@@ -364,7 +369,7 @@ export class AbilityRoom {
       plannedSkills: [],
       pathSubmitted: false,
       role: color === 'red' ? 'attacker' : 'escaper',
-      stats: { wins: 0, losses: 0 },
+      stats: options?.stats ?? { wins: 0, losses: 0 },
       mana: this.trainingMode ? TRAINING_STARTING_MANA : INITIAL_MANA,
       invulnerableSteps: 0,
       pendingManaBonus: 0,
@@ -638,14 +643,10 @@ export class AbilityRoom {
       blue.pendingVoidCloak = false;
     }
     if (red.isBot) {
-      red.pathSubmitted = true;
-      red.plannedPath = [];
-      red.plannedSkills = [];
+      this.planBotTurn(red, blue);
     }
     if (blue.isBot) {
-      blue.pathSubmitted = true;
-      blue.plannedPath = [];
-      blue.plannedSkills = [];
+      this.planBotTurn(blue, red);
     }
     this.recordTurnSnapshot(red);
     this.recordTurnSnapshot(blue);
@@ -1074,6 +1075,53 @@ export class AbilityRoom {
       (player) => player.connected === false && !player.isBot,
     );
     return hasDisconnectedHuman ? 30 : calcPathPoints(this.turn);
+  }
+
+  private planBotTurn(
+    bot: AbilityPlayerState,
+    opponent: AbilityPlayerState,
+  ): void {
+    if (this.trainingMode) {
+      bot.pathSubmitted = true;
+      bot.plannedPath = [];
+      bot.plannedSkills = [];
+      return;
+    }
+
+    const pathPoints = this.currentPathPoints();
+    const withinGuardRange =
+      Math.abs(bot.position.row - opponent.position.row) +
+        Math.abs(bot.position.col - opponent.position.col) <=
+      2;
+    const canUseGuard =
+      bot.role === 'escaper' &&
+      bot.equippedSkills.includes('classic_guard') &&
+      bot.mana >= ABILITY_SKILL_COSTS.classic_guard &&
+      withinGuardRange &&
+      Math.random() < 0.5;
+
+    const requestedPath = canUseGuard
+      ? []
+      : createAiPath({
+          color: bot.color,
+          role: bot.role,
+          selfPosition: bot.position,
+          opponentPosition: opponent.position,
+          pathPoints,
+          obstacles: this.obstacles,
+        });
+    const requestedSkills: AbilitySkillReservation[] = canUseGuard
+      ? [{ skillId: 'classic_guard', step: 0, order: 0 }]
+      : [];
+    const validated =
+      this.validatePlan(bot, requestedPath, requestedSkills) ?? {
+        path: [],
+        skills: [],
+      };
+
+    bot.plannedPath = validated.path;
+    bot.plannedSkills = validated.skills;
+    bot.pathSubmitted = true;
   }
 
   private recordTurnSnapshot(player: AbilityPlayerState): void {

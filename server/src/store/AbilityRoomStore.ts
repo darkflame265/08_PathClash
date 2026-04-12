@@ -114,6 +114,10 @@ export class AbilityRoomStore {
     this.queue.push({ socketId, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills });
   }
 
+  isQueued(socketId: string): boolean {
+    return this.queue.some((entry) => entry.socketId === socketId);
+  }
+
   dequeue(): {
     socketId: string;
     nickname: string;

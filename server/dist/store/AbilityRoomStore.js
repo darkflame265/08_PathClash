@@ -69,6 +69,9 @@ class AbilityRoomStore {
         this.removeFromQueue(socketId);
         this.queue.push({ socketId, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills });
     }
+    isQueued(socketId) {
+        return this.queue.some((entry) => entry.socketId === socketId);
+    }
     dequeue() {
         return this.queue.shift();
     }
