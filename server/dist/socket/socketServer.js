@@ -82,27 +82,18 @@ function initSocketServer(io) {
             randomFallbackTimers.delete(socketId);
         }
     };
-    const fakeRandomSkins = [
-        'classic',
-        'ember',
-        'nova',
-        'aurora',
-        'void',
-        'plasma',
-    ];
     const createDisguisedRandomProfile = (profile) => {
         const nickname = fakeRandomNicknames_1.FAKE_RANDOM_NICKNAMES[Math.floor(Math.random() * fakeRandomNicknames_1.FAKE_RANDOM_NICKNAMES.length)];
         const fakeId = `${randomHex(8)}-${randomHex(4)}-${randomHex(4)}-${randomHex(4)}-${randomHex(12)}`;
-        const winsBase = Math.max(0, profile.stats.wins + Math.floor(Math.random() * 101) - 50);
-        const lossesBase = Math.max(0, profile.stats.losses + Math.floor(Math.random() * 101) - 50);
-        const pieceSkin = fakeRandomSkins[Math.floor(Math.random() * fakeRandomSkins.length)] ??
-            'classic';
         return {
             nickname,
             displayId: fakeId,
             userId: null,
-            stats: { wins: winsBase, losses: lossesBase },
-            pieceSkin,
+            stats: {
+                wins: Math.floor(Math.random() * 21),
+                losses: Math.floor(Math.random() * 21),
+            },
+            pieceSkin: 'classic',
             boardSkin: 'classic',
         };
     };
