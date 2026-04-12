@@ -7,6 +7,7 @@ import {
   getSocketAuthPayload,
   initializeGuestAuth,
   installNativeAuthCallbackHandler,
+  markPendingForfeitLoss,
   reconnectStoredAccount,
   onAuthStateChanged,
   refreshAccountSummary,
@@ -118,6 +119,8 @@ function App() {
     authAccessToken,
     isGuestUser,
     accountSummaryLoading,
+    accountLosses,
+    currentMatchType,
     pieceSkin,
     boardSkin,
     abilityLoadout,
@@ -588,12 +591,61 @@ function App() {
   }, [applyUpdateRequired]);
 
   const handleReturnToLobby = useCallback(() => {
+    const shouldMarkForfeitLoss =
+      (view === "game" || view === "ability") &&
+      currentMatchType !== null &&
+      authUserId !== null;
+
+    if (shouldMarkForfeitLoss) {
+      const nextLosses = accountLosses + 1;
+      markPendingForfeitLoss(authUserId, nextLosses);
+      setAuthState({
+        ready: true,
+        userId: authUserId,
+        accessToken: useGameStore.getState().authAccessToken ?? authAccessToken,
+        isGuestUser,
+        losses: nextLosses,
+      });
+
+      window.setTimeout(() => {
+        void refreshAccountSummary({ force: true }).then((summary) => {
+          setAuthState({
+            ready: true,
+            userId: authUserId,
+            accessToken:
+              useGameStore.getState().authAccessToken ?? authAccessToken,
+            isGuestUser,
+            nickname: summary.nickname,
+            equippedSkin: summary.equippedSkin,
+            equippedBoardSkin: summary.equippedBoardSkin,
+            equippedAbilitySkills: summary.equippedAbilitySkills,
+            ownedSkins: summary.ownedSkins,
+            ownedBoardSkins: summary.ownedBoardSkins,
+            wins: summary.wins,
+            losses: summary.losses,
+            tokens: summary.tokens,
+            dailyRewardWins: summary.dailyRewardWins,
+            dailyRewardTokens: summary.dailyRewardTokens,
+            achievements: summary.achievements,
+          });
+        });
+      }, 1500);
+    }
+
     disconnectSocket();
     useGameStore.getState().resetGame();
     setShowExitConfirm(false);
     setMatchResultAudioKind(null);
     setView("lobby");
-  }, []);
+  }, [
+    accountLosses,
+    authAccessToken,
+    authUserId,
+    currentMatchType,
+    isGuestUser,
+    setAuthState,
+    view,
+  ]);
 
   const handleSessionReplacedConfirm = useCallback(async () => {
     setIsSessionResetting(true);
