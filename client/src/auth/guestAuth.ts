@@ -91,12 +91,6 @@ interface AccountSnapshot {
   achievements: PlayerAchievementState[];
 }
 
-interface PendingForfeitLossState {
-  userId: string;
-  minLosses: number;
-  recordedAt: number;
-}
-
 interface AccountSnapshotRpcRow {
   nickname?: string | null;
   equippedSkin?: PieceSkin | null;
@@ -134,68 +128,6 @@ export interface AccountProfile {
   dailyRewardTokens: number;
   isGuestUser: boolean;
   achievements: PlayerAchievementState[];
-}
-
-const PENDING_FORFEIT_LOSS_KEY = "pathclash.pendingForfeitLoss.v1";
-
-function readPendingForfeitLoss(): PendingForfeitLossState | null {
-  const raw = window.localStorage.getItem(PENDING_FORFEIT_LOSS_KEY);
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as PendingForfeitLossState;
-    if (
-      !parsed ||
-      typeof parsed.userId !== "string" ||
-      typeof parsed.minLosses !== "number" ||
-      typeof parsed.recordedAt !== "number"
-    ) {
-      return null;
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-function clearPendingForfeitLoss(userId?: string | null) {
-  const pending = readPendingForfeitLoss();
-  if (!pending) return;
-  if (userId && pending.userId !== userId) return;
-  window.localStorage.removeItem(PENDING_FORFEIT_LOSS_KEY);
-}
-
-function applyPendingForfeitLoss(
-  userId: string | null | undefined,
-  snapshot?: AccountSnapshot,
-): AccountSnapshot | undefined {
-  if (!snapshot || !userId) return snapshot;
-  const pending = readPendingForfeitLoss();
-  if (!pending) return snapshot;
-  if (pending.userId !== userId) {
-    clearPendingForfeitLoss();
-    return snapshot;
-  }
-  if (snapshot.losses >= pending.minLosses) {
-    clearPendingForfeitLoss(userId);
-    return snapshot;
-  }
-  return {
-    ...snapshot,
-    losses: pending.minLosses,
-  };
-}
-
-export function markPendingForfeitLoss(userId: string, minLosses: number) {
-  const pending = readPendingForfeitLoss();
-  const nextMinLosses = Math.max(minLosses, pending?.minLosses ?? 0);
-  window.localStorage.setItem(
-    PENDING_FORFEIT_LOSS_KEY,
-    JSON.stringify({
-      userId,
-      minLosses: nextMinLosses,
-      recordedAt: Date.now(),
-    } satisfies PendingForfeitLossState),
-  );
 }
 
 export interface PendingUpgradeContext {
@@ -396,24 +328,23 @@ export async function installNativeAuthCallbackHandler(): Promise<() => void> {
 }
 
 function toAuthState(session: Session | null, snapshot?: AccountSnapshot): AuthStatePayload {
-  const effectiveSnapshot = applyPendingForfeitLoss(session?.user.id, snapshot);
   return {
     ready: true,
     userId: session?.user.id ?? null,
     accessToken: session?.access_token ?? null,
     isGuestUser: session?.user.is_anonymous ?? false,
-    nickname: effectiveSnapshot?.nickname ?? undefined,
-    equippedSkin: effectiveSnapshot?.equippedSkin,
-    equippedBoardSkin: effectiveSnapshot?.equippedBoardSkin,
-    equippedAbilitySkills: effectiveSnapshot?.equippedAbilitySkills,
-    ownedSkins: effectiveSnapshot?.ownedSkins,
-    ownedBoardSkins: effectiveSnapshot?.ownedBoardSkins,
-    wins: effectiveSnapshot?.wins,
-    losses: effectiveSnapshot?.losses,
-    tokens: effectiveSnapshot?.tokens,
-    dailyRewardWins: effectiveSnapshot?.dailyRewardWins,
-    dailyRewardTokens: effectiveSnapshot?.dailyRewardTokens,
-    achievements: effectiveSnapshot?.achievements,
+    nickname: snapshot?.nickname ?? undefined,
+    equippedSkin: snapshot?.equippedSkin,
+    equippedBoardSkin: snapshot?.equippedBoardSkin,
+    equippedAbilitySkills: snapshot?.equippedAbilitySkills,
+    ownedSkins: snapshot?.ownedSkins,
+    ownedBoardSkins: snapshot?.ownedBoardSkins,
+    wins: snapshot?.wins,
+    losses: snapshot?.losses,
+    tokens: snapshot?.tokens,
+    dailyRewardWins: snapshot?.dailyRewardWins,
+    dailyRewardTokens: snapshot?.dailyRewardTokens,
+    achievements: snapshot?.achievements,
   };
 }
 
@@ -1043,20 +974,19 @@ export async function refreshAccountSummary(options?: { force?: boolean }): Prom
   }
 
   const snapshot = await getAccountSnapshot(session.user.id, options);
-  const effectiveSnapshot = applyPendingForfeitLoss(session.user.id, snapshot) ?? snapshot;
   return {
-    nickname: effectiveSnapshot.nickname,
-    equippedSkin: effectiveSnapshot.equippedSkin,
-    equippedBoardSkin: effectiveSnapshot.equippedBoardSkin,
-    equippedAbilitySkills: effectiveSnapshot.equippedAbilitySkills,
-    ownedSkins: effectiveSnapshot.ownedSkins,
-    ownedBoardSkins: effectiveSnapshot.ownedBoardSkins,
-    wins: effectiveSnapshot.wins,
-    losses: effectiveSnapshot.losses,
-    tokens: effectiveSnapshot.tokens,
-    dailyRewardWins: effectiveSnapshot.dailyRewardWins,
-    dailyRewardTokens: effectiveSnapshot.dailyRewardTokens,
-    achievements: effectiveSnapshot.achievements,
+    nickname: snapshot.nickname,
+    equippedSkin: snapshot.equippedSkin,
+    equippedBoardSkin: snapshot.equippedBoardSkin,
+    equippedAbilitySkills: snapshot.equippedAbilitySkills,
+    ownedSkins: snapshot.ownedSkins,
+    ownedBoardSkins: snapshot.ownedBoardSkins,
+    wins: snapshot.wins,
+    losses: snapshot.losses,
+    tokens: snapshot.tokens,
+    dailyRewardWins: snapshot.dailyRewardWins,
+    dailyRewardTokens: snapshot.dailyRewardTokens,
+    achievements: snapshot.achievements,
   };
 }
 
