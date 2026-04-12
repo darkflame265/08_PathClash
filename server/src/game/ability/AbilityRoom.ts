@@ -642,6 +642,7 @@ export class AbilityRoom {
       blue.hidden = true;
       blue.pendingVoidCloak = false;
     }
+    this.obstacles = generateObstacles(this.roomId, this.turn, red.position, blue.position);
     if (red.isBot) {
       this.planBotTurn(red, blue);
     }
@@ -650,7 +651,6 @@ export class AbilityRoom {
     }
     this.recordTurnSnapshot(red);
     this.recordTurnSnapshot(blue);
-    this.obstacles = generateObstacles(this.roomId, this.turn, red.position, blue.position);
 
     const now = Date.now();
     this.touchActivity(now);

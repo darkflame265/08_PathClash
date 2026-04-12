@@ -533,6 +533,7 @@ class AbilityRoom {
             blue.hidden = true;
             blue.pendingVoidCloak = false;
         }
+        this.obstacles = (0, GameEngine_1.generateObstacles)(this.roomId, this.turn, red.position, blue.position);
         if (red.isBot) {
             this.planBotTurn(red, blue);
         }
@@ -541,7 +542,6 @@ class AbilityRoom {
         }
         this.recordTurnSnapshot(red);
         this.recordTurnSnapshot(blue);
-        this.obstacles = (0, GameEngine_1.generateObstacles)(this.roomId, this.turn, red.position, blue.position);
         const now = Date.now();
         this.touchActivity(now);
         for (const player of this.players.values()) {
