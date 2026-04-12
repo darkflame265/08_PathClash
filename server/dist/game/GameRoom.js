@@ -100,6 +100,11 @@ class GameRoom {
                 disconnectedColor = color;
                 const wasActiveMatch = this.phase === "planning" || this.phase === "moving";
                 if (wasActiveMatch) {
+                    if (p.userId && !p.disconnectLossRecorded) {
+                        p.stats.losses += 1;
+                        p.disconnectLossRecorded = true;
+                        void (0, playerAuth_1.recordMatchmakingLoss)(p.userId);
+                    }
                     p.connected = false;
                     p.pathSubmitted = true;
                     p.plannedPath = [];
@@ -573,26 +578,30 @@ class GameRoom {
             const loser = winner === "red" ? "blue" : "red";
             const winnerUserId = this.players.get(winner)?.userId ?? null;
             const loserUserId = this.players.get(loser)?.userId ?? null;
+            const loserLossAlreadyRecorded = this.players.get(loser)?.disconnectLossRecorded === true;
             if (this.matchType === "random") {
                 this.players.get(winner).stats.wins++;
-                if (loserUserId) {
+                if (!loserLossAlreadyRecorded && loserUserId) {
                     this.players.get(loser).stats.losses++;
+                }
+                if (winnerUserId && loserUserId && !loserLossAlreadyRecorded) {
                     void (0, playerAuth_1.recordMatchmakingResult)(winnerUserId, loserUserId);
                 }
-                else if (winnerUserId) {
-                    void (0, achievementService_1.recordModeWin)({ userId: winnerUserId, mode: "duel" });
-                    void (0, achievementService_1.recordMatchPlayed)({
-                        userIds: [winnerUserId],
-                        matchType: "duel",
-                    });
-                    void (0, playerAuth_1.grantDailyRewardTokens)([winnerUserId], 6);
+                else {
+                    if (winnerUserId) {
+                        void (0, playerAuth_1.recordMatchmakingWin)(winnerUserId);
+                    }
+                    if (loserUserId && !loserLossAlreadyRecorded) {
+                        void (0, playerAuth_1.recordMatchmakingLoss)(loserUserId);
+                    }
                 }
-                if (winnerUserId && loserUserId) {
+                if (winnerUserId) {
                     void (0, achievementService_1.recordModeWin)({ userId: winnerUserId, mode: "duel" });
                 }
-                if (winnerUserId && loserUserId) {
+                const playedUserIds = [winnerUserId, loserUserId].filter((userId) => Boolean(userId));
+                if (playedUserIds.length > 0) {
                     void (0, achievementService_1.recordMatchPlayed)({
-                        userIds: [winnerUserId, loserUserId],
+                        userIds: playedUserIds,
                         matchType: "duel",
                     });
                 }
@@ -683,6 +692,7 @@ class GameRoom {
             p.hp = 3;
             p.plannedPath = [];
             p.pathSubmitted = false;
+            p.disconnectLossRecorded = false;
         }
         this.updateRoles();
         this.readySockets.clear();
@@ -766,6 +776,7 @@ class GameRoom {
             pathSubmitted: false,
             role: color === "red" ? "attacker" : "escaper",
             stats,
+            disconnectLossRecorded: false,
         };
     }
     currentPathPoints() {

@@ -228,6 +228,7 @@ class AbilityRoom {
             pathSubmitted: false,
             role: color === 'red' ? 'attacker' : 'escaper',
             stats,
+            disconnectLossRecorded: false,
             mana: this.trainingMode ? TRAINING_STARTING_MANA : INITIAL_MANA,
             invulnerableSteps: 0,
             pendingManaBonus: 0,
@@ -269,6 +270,7 @@ class AbilityRoom {
             pathSubmitted: false,
             role: color === 'red' ? 'attacker' : 'escaper',
             stats: options?.stats ?? { wins: 0, losses: 0 },
+            disconnectLossRecorded: false,
             mana: this.trainingMode ? TRAINING_STARTING_MANA : INITIAL_MANA,
             invulnerableSteps: 0,
             pendingManaBonus: 0,
@@ -420,6 +422,11 @@ class AbilityRoom {
             disconnectedColor = color;
             const wasActive = this.phase === 'planning' || this.phase === 'moving';
             if (wasActive && !player.isBot) {
+                if (player.userId && !player.disconnectLossRecorded) {
+                    player.stats.losses += 1;
+                    player.disconnectLossRecorded = true;
+                    void (0, playerAuth_1.recordMatchmakingLoss)(player.userId);
+                }
                 player.connected = false;
                 player.pathSubmitted = true;
                 player.plannedPath = [];
@@ -665,12 +672,23 @@ class AbilityRoom {
             if (winner !== 'draw' && !this.rewardsGranted && this.isRewardEligible()) {
                 const loserColor = winner === 'red' ? 'blue' : 'red';
                 const winnerUserId = this.players.get(winner)?.userId ?? null;
+                const loserUserId = this.players.get(loserColor)?.userId ?? null;
+                const loserLossAlreadyRecorded = this.players.get(loserColor)?.disconnectLossRecorded === true;
                 this.players.get(winner).stats.wins += 1;
-                this.players.get(loserColor).stats.losses += 1;
-                void (0, playerAuth_1.recordMatchmakingResult)(winnerUserId, this.players.get(loserColor)?.userId ?? null);
-                void Promise.all([
-                    (0, playerAuth_1.grantDailyRewardTokens)([winnerUserId], 6),
-                ]);
+                if (!loserLossAlreadyRecorded) {
+                    this.players.get(loserColor).stats.losses += 1;
+                }
+                if (winnerUserId && loserUserId && !loserLossAlreadyRecorded) {
+                    void (0, playerAuth_1.recordMatchmakingResult)(winnerUserId, loserUserId);
+                }
+                else {
+                    if (winnerUserId) {
+                        void (0, playerAuth_1.recordMatchmakingWin)(winnerUserId);
+                    }
+                    if (loserUserId && !loserLossAlreadyRecorded) {
+                        void (0, playerAuth_1.recordMatchmakingLoss)(loserUserId);
+                    }
+                }
                 void (0, achievementService_1.recordModeWin)({ userId: winnerUserId, mode: 'ability' });
                 void (0, achievementService_1.recordAbilitySpecialWin)({
                     winnerUserId,
@@ -1074,6 +1092,7 @@ class AbilityRoom {
             player.hidden = false;
             player.timeRewindUsed = false;
             player.turnHistory = [];
+            player.disconnectLossRecorded = false;
         }
     }
     updateRoles() {

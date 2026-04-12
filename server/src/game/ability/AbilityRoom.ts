@@ -10,7 +10,11 @@ import {
 } from '../GameEngine';
 import { createAiPath } from '../AiPlanner';
 import { ServerTimer } from '../ServerTimer';
-import { grantDailyRewardTokens, recordMatchmakingResult } from '../../services/playerAuth';
+import {
+  recordMatchmakingLoss,
+  recordMatchmakingResult,
+  recordMatchmakingWin,
+} from '../../services/playerAuth';
 import {
   recordAbilityBlockEvents,
   recordAbilitySkillFinish,
@@ -320,6 +324,7 @@ export class AbilityRoom {
       pathSubmitted: false,
       role: color === 'red' ? 'attacker' : 'escaper',
       stats,
+      disconnectLossRecorded: false,
       mana: this.trainingMode ? TRAINING_STARTING_MANA : INITIAL_MANA,
       invulnerableSteps: 0,
       pendingManaBonus: 0,
@@ -370,6 +375,7 @@ export class AbilityRoom {
       pathSubmitted: false,
       role: color === 'red' ? 'attacker' : 'escaper',
       stats: options?.stats ?? { wins: 0, losses: 0 },
+      disconnectLossRecorded: false,
       mana: this.trainingMode ? TRAINING_STARTING_MANA : INITIAL_MANA,
       invulnerableSteps: 0,
       pendingManaBonus: 0,
@@ -526,6 +532,11 @@ export class AbilityRoom {
       disconnectedColor = color;
       const wasActive = this.phase === 'planning' || this.phase === 'moving';
       if (wasActive && !player.isBot) {
+        if (player.userId && !player.disconnectLossRecorded) {
+          player.stats.losses += 1;
+          player.disconnectLossRecorded = true;
+          void recordMatchmakingLoss(player.userId);
+        }
         player.connected = false;
         player.pathSubmitted = true;
         player.plannedPath = [];
@@ -796,12 +807,23 @@ export class AbilityRoom {
       if (winner !== 'draw' && !this.rewardsGranted && this.isRewardEligible()) {
         const loserColor: PlayerColor = winner === 'red' ? 'blue' : 'red';
         const winnerUserId = this.players.get(winner)?.userId ?? null;
+        const loserUserId = this.players.get(loserColor)?.userId ?? null;
+        const loserLossAlreadyRecorded =
+          this.players.get(loserColor)?.disconnectLossRecorded === true;
         this.players.get(winner)!.stats.wins += 1;
-        this.players.get(loserColor)!.stats.losses += 1;
-        void recordMatchmakingResult(winnerUserId, this.players.get(loserColor)?.userId ?? null);
-        void Promise.all([
-          grantDailyRewardTokens([winnerUserId], 6),
-        ]);
+        if (!loserLossAlreadyRecorded) {
+          this.players.get(loserColor)!.stats.losses += 1;
+        }
+        if (winnerUserId && loserUserId && !loserLossAlreadyRecorded) {
+          void recordMatchmakingResult(winnerUserId, loserUserId);
+        } else {
+          if (winnerUserId) {
+            void recordMatchmakingWin(winnerUserId);
+          }
+          if (loserUserId && !loserLossAlreadyRecorded) {
+            void recordMatchmakingLoss(loserUserId);
+          }
+        }
         void recordModeWin({ userId: winnerUserId, mode: 'ability' });
         void recordAbilitySpecialWin({
           winnerUserId,
@@ -1255,6 +1277,7 @@ export class AbilityRoom {
       player.hidden = false;
       player.timeRewindUsed = false;
       player.turnHistory = [];
+      player.disconnectLossRecorded = false;
     }
   }
 

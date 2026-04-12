@@ -4,6 +4,8 @@ exports.getUserFromToken = getUserFromToken;
 exports.resolvePlayerProfile = resolvePlayerProfile;
 exports.resolveAccount = resolveAccount;
 exports.recordMatchmakingResult = recordMatchmakingResult;
+exports.recordMatchmakingWin = recordMatchmakingWin;
+exports.recordMatchmakingLoss = recordMatchmakingLoss;
 exports.grantDailyRewardTokens = grantDailyRewardTokens;
 exports.finalizeGoogleUpgrade = finalizeGoogleUpgrade;
 const supabase_1 = require("../lib/supabase");
@@ -247,6 +249,80 @@ async function recordMatchmakingResult(winnerUserId, loserUserId) {
     }
     if (winnerEarnedReward) {
         await (0, achievementService_1.recordDailyRewardGrant)([winnerUserId], 1);
+    }
+}
+async function recordMatchmakingWin(winnerUserId) {
+    if (!supabase_1.supabaseAdmin || !winnerUserId)
+        return;
+    const { data: row, error } = await supabase_1.supabaseAdmin
+        .from('player_stats')
+        .select('user_id, wins, losses, tokens, daily_reward_wins, daily_reward_day')
+        .eq('user_id', winnerUserId)
+        .maybeSingle();
+    if (error) {
+        console.error('[supabase] failed to read player_stats for win', error);
+        return;
+    }
+    const winner = {
+        wins: Number(row?.wins ?? 0),
+        losses: Number(row?.losses ?? 0),
+        tokens: Number(row?.tokens ?? 0),
+        dailyRewardWins: Number(row?.daily_reward_wins ?? 0),
+        dailyRewardDay: row?.daily_reward_day ?? null,
+    };
+    const utcDayKey = getUtcDayKey();
+    const winnerActiveDailyWins = winner.dailyRewardDay === utcDayKey
+        ? Math.min(DAILY_REWARD_MAX_WINS, Math.max(0, winner.dailyRewardWins))
+        : 0;
+    const winnerEarnedReward = winnerActiveDailyWins < DAILY_REWARD_MAX_WINS;
+    const nextWinnerDailyRewardWins = winnerEarnedReward
+        ? winnerActiveDailyWins + 1
+        : winnerActiveDailyWins;
+    const { error: upsertError } = await supabase_1.supabaseAdmin.from('player_stats').upsert({
+        user_id: winnerUserId,
+        wins: winner.wins + 1,
+        losses: winner.losses,
+        tokens: winner.tokens + (winnerEarnedReward ? DAILY_REWARD_TOKENS_PER_WIN : 0),
+        daily_reward_wins: nextWinnerDailyRewardWins,
+        daily_reward_day: utcDayKey,
+    }, { onConflict: 'user_id' });
+    if (upsertError) {
+        console.error('[supabase] failed to upsert player_stats for win', upsertError);
+        return;
+    }
+    if (winnerEarnedReward) {
+        await (0, achievementService_1.recordDailyRewardGrant)([winnerUserId], 1);
+    }
+}
+async function recordMatchmakingLoss(loserUserId) {
+    if (!supabase_1.supabaseAdmin || !loserUserId)
+        return;
+    const { data: row, error } = await supabase_1.supabaseAdmin
+        .from('player_stats')
+        .select('user_id, wins, losses, tokens, daily_reward_wins, daily_reward_day')
+        .eq('user_id', loserUserId)
+        .maybeSingle();
+    if (error) {
+        console.error('[supabase] failed to read player_stats for loss', error);
+        return;
+    }
+    const loser = {
+        wins: Number(row?.wins ?? 0),
+        losses: Number(row?.losses ?? 0),
+        tokens: Number(row?.tokens ?? 0),
+        dailyRewardWins: Number(row?.daily_reward_wins ?? 0),
+        dailyRewardDay: row?.daily_reward_day ?? null,
+    };
+    const { error: upsertError } = await supabase_1.supabaseAdmin.from('player_stats').upsert({
+        user_id: loserUserId,
+        wins: loser.wins,
+        losses: loser.losses + 1,
+        tokens: loser.tokens,
+        daily_reward_wins: loser.dailyRewardWins,
+        daily_reward_day: loser.dailyRewardDay,
+    }, { onConflict: 'user_id' });
+    if (upsertError) {
+        console.error('[supabase] failed to upsert player_stats for loss', upsertError);
     }
 }
 async function grantDailyRewardTokens(userIds, tokenAmount) {

@@ -47,6 +47,7 @@ export interface PlayerState {
   pathSubmitted: boolean;
   role: PlayerRole;
   stats: { wins: number; losses: number };
+  disconnectLossRecorded?: boolean;
 }
 
 export type MatchType = 'friend' | 'random' | 'ai';

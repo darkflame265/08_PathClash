@@ -23,8 +23,9 @@ import {
 import { createAiPath } from "./AiPlanner";
 import { ServerTimer } from "./ServerTimer";
 import {
-  grantDailyRewardTokens,
+  recordMatchmakingLoss,
   recordMatchmakingResult,
+  recordMatchmakingWin,
 } from "../services/playerAuth";
 import {
   markTutorialComplete,
@@ -187,6 +188,11 @@ export class GameRoom {
         const wasActiveMatch =
           this.phase === "planning" || this.phase === "moving";
         if (wasActiveMatch) {
+          if (p.userId && !p.disconnectLossRecorded) {
+            p.stats.losses += 1;
+            p.disconnectLossRecorded = true;
+            void recordMatchmakingLoss(p.userId);
+          }
           p.connected = false;
           p.pathSubmitted = true;
           p.plannedPath = [];
@@ -720,28 +726,35 @@ export class GameRoom {
       const loser: PlayerColor = winner === "red" ? "blue" : "red";
       const winnerUserId = this.players.get(winner)?.userId ?? null;
       const loserUserId = this.players.get(loser)?.userId ?? null;
+      const loserLossAlreadyRecorded =
+        this.players.get(loser)?.disconnectLossRecorded === true;
       if (this.matchType === "random") {
         this.players.get(winner)!.stats.wins++;
-        if (loserUserId) {
+        if (!loserLossAlreadyRecorded && loserUserId) {
           this.players.get(loser)!.stats.losses++;
+        }
+        if (winnerUserId && loserUserId && !loserLossAlreadyRecorded) {
           void recordMatchmakingResult(
             winnerUserId,
             loserUserId,
           );
-        } else if (winnerUserId) {
-          void recordModeWin({ userId: winnerUserId, mode: "duel" });
-          void recordMatchPlayed({
-            userIds: [winnerUserId],
-            matchType: "duel",
-          });
-          void grantDailyRewardTokens([winnerUserId], 6);
+        } else {
+          if (winnerUserId) {
+            void recordMatchmakingWin(winnerUserId);
+          }
+          if (loserUserId && !loserLossAlreadyRecorded) {
+            void recordMatchmakingLoss(loserUserId);
+          }
         }
-        if (winnerUserId && loserUserId) {
+        if (winnerUserId) {
           void recordModeWin({ userId: winnerUserId, mode: "duel" });
         }
-        if (winnerUserId && loserUserId) {
+        const playedUserIds = [winnerUserId, loserUserId].filter(
+          (userId): userId is string => Boolean(userId),
+        );
+        if (playedUserIds.length > 0) {
           void recordMatchPlayed({
-            userIds: [winnerUserId, loserUserId],
+            userIds: playedUserIds,
             matchType: "duel",
           });
         }
@@ -837,6 +850,7 @@ export class GameRoom {
       p.hp = 3;
       p.plannedPath = [];
       p.pathSubmitted = false;
+      p.disconnectLossRecorded = false;
     }
     this.updateRoles();
     this.readySockets.clear();
@@ -933,6 +947,7 @@ export class GameRoom {
       pathSubmitted: false,
       role: color === "red" ? "attacker" : "escaper",
       stats,
+      disconnectLossRecorded: false,
     };
   }
 
