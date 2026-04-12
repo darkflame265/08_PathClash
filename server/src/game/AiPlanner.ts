@@ -7,6 +7,7 @@ const DIRECTIONS: Position[] = [
   { row: 0, col: -1 },
   { row: 0, col: 1 },
 ];
+const RANDOM_PATTERN_CHANCE = 0.5;
 
 export function createAiPath(params: {
   color: PlayerColor;
@@ -39,6 +40,10 @@ export function createAiPath(params: {
 }
 
 function createAttackerPath(selfPosition: Position, targetPosition: Position, pathPoints: number, obstacles: Position[]): Position[] {
+  if (Math.random() < RANDOM_PATTERN_CHANCE) {
+    return createRandomRoamPath(selfPosition, targetPosition, pathPoints, obstacles);
+  }
+
   const predictedEscapePath = predictEscaperPath(
     targetPosition,
     selfPosition,
@@ -83,6 +88,10 @@ function createAttackerPath(selfPosition: Position, targetPosition: Position, pa
 }
 
 function createEscaperPath(selfPosition: Position, threatPosition: Position, pathPoints: number, obstacles: Position[]): Position[] {
+  if (Math.random() < RANDOM_PATTERN_CHANCE) {
+    return createRandomRoamPath(selfPosition, threatPosition, pathPoints, obstacles);
+  }
+
   const maxSpend = Math.max(1, pathPoints);
   const spend = Math.floor(Math.random() * maxSpend) + 1;
   const predictedThreatPath = predictAttackerPath(
@@ -206,6 +215,79 @@ function getNeighbors(position: Position, obstacles: Position[]): Position[] {
       col: position.col + direction.col,
     }))
     .filter((next) => isValidMove(position, next) && !isBlocked(next, obstacles));
+}
+
+function createRandomRoamPath(
+  selfPosition: Position,
+  referencePosition: Position,
+  pathPoints: number,
+  obstacles: Position[],
+): Position[] {
+  const randomTarget = chooseRandomReachableTarget(
+    selfPosition,
+    referencePosition,
+    obstacles,
+  );
+  if (!randomTarget) return [];
+
+  const directPath = buildShortestPath(selfPosition, randomTarget, obstacles).slice(
+    0,
+    pathPoints,
+  );
+  if (directPath.length === pathPoints) return directPath;
+
+  const path = [...directPath];
+  let current = path.length > 0 ? path[path.length - 1] : selfPosition;
+  let previous = path.length > 1 ? path[path.length - 2] : null;
+
+  while (path.length < pathPoints) {
+    const candidates = getNeighbors(current, obstacles).filter(
+      (candidate) => !isSamePosition(candidate, previous),
+    );
+    if (candidates.length === 0) break;
+
+    const shuffled = [...candidates].sort(() => Math.random() - 0.5);
+    const nextMove =
+      shuffled.find((candidate) => !path.some((step) => isSamePosition(step, candidate))) ??
+      shuffled[0];
+
+    if (!nextMove) break;
+    path.push(nextMove);
+    previous = current;
+    current = nextMove;
+  }
+
+  return path;
+}
+
+function chooseRandomReachableTarget(
+  selfPosition: Position,
+  referencePosition: Position,
+  obstacles: Position[],
+): Position | null {
+  const candidates: Position[] = [];
+  for (let row = 0; row <= 4; row++) {
+    for (let col = 0; col <= 4; col++) {
+      const candidate = { row, col };
+      if (isSamePosition(candidate, selfPosition)) continue;
+      if (isBlocked(candidate, obstacles)) continue;
+      const path = buildShortestPath(selfPosition, candidate, obstacles);
+      if (path.length === 0) continue;
+      candidates.push(candidate);
+    }
+  }
+
+  if (candidates.length === 0) return null;
+
+  const shuffled = [...candidates].sort(() => Math.random() - 0.5);
+  const weighted = shuffled.sort(
+    (a, b) =>
+      manhattan(b, referencePosition) -
+      manhattan(a, referencePosition) +
+      (Math.random() - 0.5),
+  );
+
+  return weighted[0] ?? shuffled[0] ?? null;
 }
 
 function predictEscaperPath(
