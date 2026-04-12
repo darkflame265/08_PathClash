@@ -22,7 +22,10 @@ import {
 } from "./GameEngine";
 import { createAiPath } from "./AiPlanner";
 import { ServerTimer } from "./ServerTimer";
-import { recordMatchmakingResult } from "../services/playerAuth";
+import {
+  grantDailyRewardTokens,
+  recordMatchmakingResult,
+} from "../services/playerAuth";
 import {
   markTutorialComplete,
   recordMatchPlayed,
@@ -130,6 +133,7 @@ export class GameRoom {
   addAiPlayer(
     nickname = "AI Bot",
     options?: {
+      displayId?: string;
       userId?: string | null;
       stats?: { wins: number; losses: number };
       pieceSkin?: PieceSkin;
@@ -148,6 +152,9 @@ export class GameRoom {
       options?.pieceSkin ?? "classic",
       options?.boardSkin ?? "classic",
     );
+    if (options?.displayId) {
+      player.id = options.displayId;
+    }
     this.players.set(color, player);
     this.aiColor = color;
     this.touchActivity();
@@ -727,6 +734,7 @@ export class GameRoom {
             userIds: [winnerUserId],
             matchType: "duel",
           });
+          void grantDailyRewardTokens([winnerUserId], 6);
         }
         if (winnerUserId && loserUserId) {
           void recordModeWin({ userId: winnerUserId, mode: "duel" });

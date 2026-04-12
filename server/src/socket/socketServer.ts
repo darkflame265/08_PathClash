@@ -147,7 +147,8 @@ export function initSocketServer(io: Server): void {
     profile: PersistentPlayerProfile,
   ): {
     nickname: string;
-    userId: string;
+    displayId: string;
+    userId: string | null;
     stats: { wins: number; losses: number };
     pieceSkin: PieceSkin;
     boardSkin: BoardSkin;
@@ -156,9 +157,7 @@ export function initSocketServer(io: Server): void {
       fakeRandomNicknames[
         Math.floor(Math.random() * fakeRandomNicknames.length)
       ];
-    const fakeId = `usr_${Math.random().toString(36).slice(2, 10)}${Math.random()
-      .toString(36)
-      .slice(2, 6)}`;
+    const fakeId = `${randomHex(8)}-${randomHex(4)}-${randomHex(4)}-${randomHex(4)}-${randomHex(12)}`;
     const winsBase = Math.max(
       0,
       profile.stats.wins + Math.floor(Math.random() * 101) - 50,
@@ -172,11 +171,20 @@ export function initSocketServer(io: Server): void {
       'classic';
     return {
       nickname,
-      userId: fakeId,
+      displayId: fakeId,
+      userId: null,
       stats: { wins: winsBase, losses: lossesBase },
       pieceSkin,
       boardSkin: 'classic',
     };
+  };
+
+  const randomHex = (length: number) => {
+    let result = '';
+    while (result.length < length) {
+      result += Math.floor(Math.random() * 16).toString(16);
+    }
+    return result.slice(0, length);
   };
 
   const createRandomFallbackMatch = async ({
@@ -213,6 +221,7 @@ export function initSocketServer(io: Server): void {
 
     const fakeProfile = createDisguisedRandomProfile(profile);
     room.addAiPlayer(fakeProfile.nickname, {
+      displayId: fakeProfile.displayId,
       userId: fakeProfile.userId,
       stats: fakeProfile.stats,
       pieceSkin: fakeProfile.pieceSkin,

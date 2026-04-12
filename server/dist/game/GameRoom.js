@@ -72,6 +72,9 @@ class GameRoom {
         const color = this.players.size === 0 ? "red" : "blue";
         const aiId = `ai_${this.roomId}_${color}`;
         const player = this.createPlayerState(color, aiId, nickname, options?.userId ?? null, options?.stats ?? { wins: 0, losses: 0 }, options?.pieceSkin ?? "classic", options?.boardSkin ?? "classic");
+        if (options?.displayId) {
+            player.id = options.displayId;
+        }
         this.players.set(color, player);
         this.aiColor = color;
         this.touchActivity();
@@ -582,6 +585,7 @@ class GameRoom {
                         userIds: [winnerUserId],
                         matchType: "duel",
                     });
+                    void (0, playerAuth_1.grantDailyRewardTokens)([winnerUserId], 6);
                 }
                 if (winnerUserId && loserUserId) {
                     void (0, achievementService_1.recordModeWin)({ userId: winnerUserId, mode: "duel" });
