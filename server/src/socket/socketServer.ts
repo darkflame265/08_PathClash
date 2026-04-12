@@ -304,7 +304,6 @@ export function initSocketServer(io: Server): void {
     });
 
     room.prepareGameStart();
-    room.startGame();
   };
 
   const scheduleAbilityFallback = ({

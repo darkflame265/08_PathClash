@@ -185,7 +185,6 @@ function initSocketServer(io) {
             opponentNickname: opponent.nickname,
         });
         room.prepareGameStart();
-        room.startGame();
     };
     const scheduleAbilityFallback = ({ socket, profile, pieceSkin, boardSkin, equippedSkills, }) => {
         clearAbilityFallback(socket.id);
