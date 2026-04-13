@@ -5,6 +5,7 @@ import {
   calcPathPoints,
   generateObstacles,
   getInitialPositions,
+  isValidMove,
   isValidPath,
   toClientPlayer,
 } from '../GameEngine';
@@ -52,6 +53,36 @@ const ABILITY_STARTING_HP = 5;
 const TRAINING_STARTING_MANA = 10;
 const TRAINING_PATH_POINTS = 10;
 const TRAINING_DUMMY_POSITION: Position = { row: 2, col: 2 };
+const ABILITY_FAKE_AI_DEBUG_LOG = false;
+const ABILITY_FAKE_AI_SKILL_POOL: AbilitySkillId[] = [
+  'classic_guard',
+  'ember_blast',
+  'nova_blast',
+  'inferno_field',
+  'quantum_shift',
+  'cosmic_bigbang',
+  'arc_reactor_field',
+  'electric_blitz',
+  'wizard_magic_mine',
+  'chronos_time_rewind',
+  'atomic_fission',
+  'sun_chariot',
+];
+
+type BotActionCandidate = {
+  path: Position[];
+  skills: AbilitySkillReservation[];
+  score: number;
+  reason: string;
+  selectedSkill: AbilitySkillId | null;
+};
+
+type BotPathModel = {
+  paths: Position[][];
+  heatmap: Map<string, number>;
+  timeHeatmap: Map<string, number>;
+  hotspotCells: Position[];
+};
 
 function collectUtilitySkillUsageByUser(
   players: Map<PlayerColor, AbilityPlayerState>,
@@ -128,6 +159,304 @@ function posEqual(a: Position, b: Position): boolean {
   return a.row === b.row && a.col === b.col;
 }
 
+function toKey(position: Position): string {
+  return `${position.row},${position.col}`;
+}
+
+function inBoard(position: Position): boolean {
+  return (
+    position.row >= 0 &&
+    position.row <= 4 &&
+    position.col >= 0 &&
+    position.col <= 4
+  );
+}
+
+function manhattan(a: Position, b: Position): number {
+  return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
+}
+
+function isObstacle(position: Position, obstacles: Position[]): boolean {
+  return obstacles.some((obstacle) => posEqual(obstacle, position));
+}
+
+function getCardinalNeighbors(position: Position, obstacles: Position[]): Position[] {
+  return [
+    { row: position.row - 1, col: position.col },
+    { row: position.row + 1, col: position.col },
+    { row: position.row, col: position.col - 1 },
+    { row: position.row, col: position.col + 1 },
+  ].filter(
+    (candidate) =>
+      inBoard(candidate) &&
+      isValidMove(position, candidate) &&
+      !isObstacle(candidate, obstacles),
+  );
+}
+
+function getAdjacentBlinkTargets(
+  origin: Position,
+  obstacles: Position[],
+  forbidden?: Position,
+): Position[] {
+  const targets: Position[] = [];
+  for (let rowDelta = -1; rowDelta <= 1; rowDelta += 1) {
+    for (let colDelta = -1; colDelta <= 1; colDelta += 1) {
+      if (rowDelta === 0 && colDelta === 0) continue;
+      const target = { row: origin.row + rowDelta, col: origin.col + colDelta };
+      if (!inBoard(target)) continue;
+      if (isObstacle(target, obstacles)) continue;
+      if (forbidden && posEqual(target, forbidden)) continue;
+      targets.push(target);
+    }
+  }
+  return targets;
+}
+
+function listBoardPositions(): Position[] {
+  const positions: Position[] = [];
+  for (let row = 0; row < 5; row += 1) {
+    for (let col = 0; col < 5; col += 1) {
+      positions.push({ row, col });
+    }
+  }
+  return positions;
+}
+
+function pathKey(path: Position[]): string {
+  return path.map((position) => toKey(position)).join('>');
+}
+
+function buildShortestAbilityPath(
+  from: Position,
+  to: Position,
+  obstacles: Position[],
+): Position[] {
+  if (posEqual(from, to)) return [];
+  const queue: Position[] = [{ ...from }];
+  const visited = new Set<string>([toKey(from)]);
+  const previous = new Map<string, string>();
+  const positionMap = new Map<string, Position>([[toKey(from), { ...from }]]);
+  const targetKey = toKey(to);
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const currentKey = toKey(current);
+    if (currentKey === targetKey) break;
+
+    for (const next of getCardinalNeighbors(current, obstacles)) {
+      const nextKey = toKey(next);
+      if (visited.has(nextKey)) continue;
+      visited.add(nextKey);
+      previous.set(nextKey, currentKey);
+      positionMap.set(nextKey, next);
+      queue.push(next);
+    }
+  }
+
+  if (!visited.has(targetKey)) return [];
+
+  const reversedPath: Position[] = [];
+  let cursor = targetKey;
+  while (cursor !== toKey(from)) {
+    const position = positionMap.get(cursor);
+    if (!position) break;
+    reversedPath.push(position);
+    cursor = previous.get(cursor)!;
+  }
+
+  return reversedPath.reverse();
+}
+
+function getSequencePosition(
+  start: Position,
+  path: Position[],
+  step: number,
+): Position {
+  if (step <= 0) return start;
+  return path[Math.min(step - 1, path.length - 1)] ?? start;
+}
+
+function buildBotPathModel(params: {
+  start: Position;
+  opponent: Position;
+  role: 'attacker' | 'escaper';
+  pathPoints: number;
+  obstacles: Position[];
+}): BotPathModel {
+  const { start, opponent, role, pathPoints, obstacles } = params;
+  const candidates: Array<{ path: Position[]; score: number }> = [];
+  const primary = createAiPath({
+    color: 'red',
+    role,
+    selfPosition: start,
+    opponentPosition: opponent,
+    pathPoints,
+    obstacles,
+  });
+  candidates.push({ path: primary, score: 999 });
+
+  for (const cell of listBoardPositions()) {
+    if (posEqual(cell, start) || isObstacle(cell, obstacles)) continue;
+    const path = buildShortestAbilityPath(start, cell, obstacles).slice(
+      0,
+      pathPoints,
+    );
+    if (path.length === 0 || path.length > pathPoints) continue;
+    const finalPosition = path[path.length - 1] ?? start;
+    const openNeighbors = getCardinalNeighbors(finalPosition, obstacles).length;
+    const heuristic =
+      role === 'attacker'
+        ? Math.max(0, 6 - manhattan(finalPosition, opponent)) * 8 +
+          openNeighbors * 2
+        : manhattan(finalPosition, opponent) * 7 +
+          openNeighbors * 3 -
+          (finalPosition.row === 0 ||
+          finalPosition.row === 4 ||
+          finalPosition.col === 0 ||
+          finalPosition.col === 4
+            ? 2
+            : 0);
+    candidates.push({ path, score: heuristic });
+  }
+
+  const deduped = new Map<string, { path: Position[]; score: number }>();
+  for (const candidate of candidates) {
+    const key = pathKey(candidate.path);
+    const existing = deduped.get(key);
+    if (!existing || candidate.score > existing.score) {
+      deduped.set(key, candidate);
+    }
+  }
+
+  const paths = [...deduped.values()]
+    .sort((left, right) => right.score - left.score)
+    .slice(0, 20)
+    .map((entry) => entry.path);
+
+  const heatmap = new Map<string, number>();
+  const timeHeatmap = new Map<string, number>();
+  for (const path of paths) {
+    const sequence = [start, ...path];
+    for (let index = 0; index < sequence.length; index += 1) {
+      const key = toKey(sequence[index]);
+      heatmap.set(key, (heatmap.get(key) ?? 0) + 1);
+      timeHeatmap.set(`${index}:${key}`, (timeHeatmap.get(`${index}:${key}`) ?? 0) + 1);
+    }
+  }
+
+  const hotspotCells = [...heatmap.entries()]
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, 8)
+    .map(([key]) => {
+      const [row, col] = key.split(',').map(Number);
+      return { row, col };
+    });
+
+  return { paths, heatmap, timeHeatmap, hotspotCells };
+}
+
+function scoreAttackPathAgainstModel(
+  start: Position,
+  path: Position[],
+  opponentStart: Position,
+  enemyModel: BotPathModel,
+  obstacles: Position[],
+): number {
+  const mySequence = [start, ...path];
+  let score = 0;
+
+  for (const enemyPath of enemyModel.paths) {
+    const enemySequence = [opponentStart, ...enemyPath];
+    const maxSteps = Math.max(mySequence.length, enemySequence.length);
+    for (let step = 0; step < maxSteps; step += 1) {
+      const myCurrent = mySequence[Math.min(step, mySequence.length - 1)];
+      const enemyCurrent = enemySequence[Math.min(step, enemySequence.length - 1)];
+      const myPrev = mySequence[Math.max(0, Math.min(step - 1, mySequence.length - 1))];
+      const enemyPrev =
+        enemySequence[Math.max(0, Math.min(step - 1, enemySequence.length - 1))];
+
+      if (posEqual(myCurrent, enemyCurrent)) {
+        score += 240;
+      } else if (posEqual(myCurrent, enemyPrev) && posEqual(enemyCurrent, myPrev)) {
+        score += 200;
+      } else {
+        const distance = manhattan(myCurrent, enemyCurrent);
+        if (distance === 1) score += 24;
+      }
+    }
+  }
+
+  for (const step of mySequence) {
+    score += (enemyModel.heatmap.get(toKey(step)) ?? 0) * 10;
+  }
+  for (let index = 0; index < mySequence.length; index += 1) {
+    score += (enemyModel.timeHeatmap.get(`${index}:${toKey(mySequence[index])}`) ?? 0) * 12;
+  }
+
+  const finalPosition = path[path.length - 1] ?? start;
+  score += getCardinalNeighbors(finalPosition, obstacles).length * 6;
+  return score;
+}
+
+function scoreEscapePathAgainstModel(
+  start: Position,
+  path: Position[],
+  opponentStart: Position,
+  threatModel: BotPathModel,
+  obstacles: Position[],
+): number {
+  const mySequence = [start, ...path];
+  let score = 0;
+
+  for (const enemyPath of threatModel.paths) {
+    const enemySequence = [opponentStart, ...enemyPath];
+    const maxSteps = Math.max(mySequence.length, enemySequence.length);
+    for (let step = 0; step < maxSteps; step += 1) {
+      const myCurrent = mySequence[Math.min(step, mySequence.length - 1)];
+      const enemyCurrent = enemySequence[Math.min(step, enemySequence.length - 1)];
+      const myPrev = mySequence[Math.max(0, Math.min(step - 1, mySequence.length - 1))];
+      const enemyPrev =
+        enemySequence[Math.max(0, Math.min(step - 1, enemySequence.length - 1))];
+
+      if (posEqual(myCurrent, enemyCurrent)) {
+        score -= 260;
+      } else if (posEqual(myCurrent, enemyPrev) && posEqual(enemyCurrent, myPrev)) {
+        score -= 220;
+      } else {
+        const distance = manhattan(myCurrent, enemyCurrent);
+        if (distance === 1) score -= 30;
+      }
+    }
+  }
+
+  for (const step of mySequence) {
+    score -= (threatModel.heatmap.get(toKey(step)) ?? 0) * 12;
+  }
+  for (let index = 0; index < mySequence.length; index += 1) {
+    score -= (threatModel.timeHeatmap.get(`${index}:${toKey(mySequence[index])}`) ?? 0) * 14;
+  }
+
+  const finalPosition = path[path.length - 1] ?? start;
+  const finalMobility = getCardinalNeighbors(finalPosition, obstacles).length;
+  const futureMobility = getCardinalNeighbors(finalPosition, obstacles).reduce(
+    (sum, neighbor) => sum + getCardinalNeighbors(neighbor, obstacles).length,
+    0,
+  );
+  score += manhattan(finalPosition, opponentStart) * 9;
+  score += finalMobility * 16;
+  score += futureMobility * 5;
+  if (
+    finalPosition.row === 0 ||
+    finalPosition.row === 4 ||
+    finalPosition.col === 0 ||
+    finalPosition.col === 4
+  ) {
+    score -= 8;
+  }
+  return score;
+}
+
 function buildBlitzPath(start: Position, target: Position): Position[] {
   const rowDelta = target.row - start.row;
   const colDelta = target.col - start.col;
@@ -145,6 +474,41 @@ function buildBlitzPath(start: Position, target: Position): Position[] {
     col += colStep;
   }
   return path;
+}
+
+function getCrossPositions(origin: Position): Position[] {
+  return [
+    origin,
+    { row: origin.row - 1, col: origin.col },
+    { row: origin.row + 1, col: origin.col },
+    { row: origin.row, col: origin.col - 1 },
+    { row: origin.row, col: origin.col + 1 },
+  ].filter((position) => inBoard(position));
+}
+
+function getNovaPositions(origin: Position): Position[] {
+  const positions: Position[] = [origin];
+  for (const distance of [1, 2]) {
+    positions.push(
+      { row: origin.row - distance, col: origin.col - distance },
+      { row: origin.row - distance, col: origin.col + distance },
+      { row: origin.row + distance, col: origin.col - distance },
+      { row: origin.row + distance, col: origin.col + distance },
+    );
+  }
+  return positions.filter((position) => inBoard(position));
+}
+
+function getSquarePositions(origin: Position, radius = 1): Position[] {
+  const positions: Position[] = [];
+  for (let row = origin.row - radius; row <= origin.row + radius; row += 1) {
+    for (let col = origin.col - radius; col <= origin.col + radius; col += 1) {
+      const position = { row, col };
+      if (!inBoard(position)) continue;
+      positions.push(position);
+    }
+  }
+  return positions;
 }
 
 function getRandomTeleportPosition(
@@ -1111,39 +1475,422 @@ export class AbilityRoom {
     }
 
     const pathPoints = this.currentPathPoints();
-    const withinGuardRange =
-      Math.abs(bot.position.row - opponent.position.row) +
-        Math.abs(bot.position.col - opponent.position.col) <=
-      2;
-    const canUseGuard =
-      bot.role === 'escaper' &&
-      bot.equippedSkills.includes('classic_guard') &&
-      bot.mana >= ABILITY_SKILL_COSTS.classic_guard &&
-      withinGuardRange &&
-      Math.random() < 0.5;
-
-    const requestedPath = canUseGuard
-      ? []
-      : createAiPath({
-          color: bot.color,
-          role: bot.role,
-          selfPosition: bot.position,
-          opponentPosition: opponent.position,
-          pathPoints,
-          obstacles: this.obstacles,
-        });
-    const requestedSkills: AbilitySkillReservation[] = canUseGuard
-      ? [{ skillId: 'classic_guard', step: 0, order: 0 }]
-      : [];
-    const validated =
-      this.validatePlan(bot, requestedPath, requestedSkills) ?? {
-        path: [],
-        skills: [],
-      };
+    const candidate = this.chooseBotAction(bot, opponent, pathPoints);
+    const validated = this.validatePlan(bot, candidate.path, candidate.skills) ?? {
+      path: [],
+      skills: [],
+    };
 
     bot.plannedPath = validated.path;
     bot.plannedSkills = validated.skills;
     bot.pathSubmitted = true;
+
+    if (ABILITY_FAKE_AI_DEBUG_LOG) {
+      console.debug('[ability-fake-ai]', {
+        bot: bot.nickname,
+        role: bot.role,
+        equippedSkills: bot.equippedSkills,
+        mana: bot.mana,
+        selectedSkill:
+          validated.skills[0]?.skillId ?? candidate.selectedSkill ?? null,
+        reason: candidate.reason,
+        path: validated.path,
+        skills: validated.skills,
+      });
+    }
+  }
+
+  private chooseBotAction(
+    bot: AbilityPlayerState,
+    opponent: AbilityPlayerState,
+    pathPoints: number,
+  ): BotActionCandidate {
+    const selfModel = buildBotPathModel({
+      start: bot.position,
+      opponent: opponent.position,
+      role: bot.role === 'attacker' ? 'attacker' : 'escaper',
+      pathPoints,
+      obstacles: this.obstacles,
+    });
+    const opponentModel = buildBotPathModel({
+      start: opponent.position,
+      opponent: bot.position,
+      role: bot.role === 'attacker' ? 'escaper' : 'attacker',
+      pathPoints,
+      obstacles: this.obstacles,
+    });
+
+    const candidates: BotActionCandidate[] = selfModel.paths
+      .slice(0, 5)
+      .map((path, index) => ({
+        path,
+        skills: [],
+        score:
+          bot.role === 'attacker'
+            ? scoreAttackPathAgainstModel(
+                bot.position,
+                path,
+                opponent.position,
+                opponentModel,
+                this.obstacles,
+              )
+            : scoreEscapePathAgainstModel(
+                bot.position,
+                path,
+                opponent.position,
+                opponentModel,
+                this.obstacles,
+              ),
+        reason: index === 0 ? 'base-primary' : 'base-alt',
+        selectedSkill: null,
+      }));
+
+    const activeSkillCandidates = this.buildBotSkillActionCandidates(
+      bot,
+      opponent,
+      pathPoints,
+      selfModel,
+      opponentModel,
+    );
+    candidates.push(...activeSkillCandidates);
+    candidates.sort((left, right) => right.score - left.score);
+    return candidates[0] ?? {
+      path: [],
+      skills: [],
+      score: 0,
+      reason: 'fallback-empty',
+      selectedSkill: null,
+    };
+  }
+
+  private buildBotSkillActionCandidates(
+    bot: AbilityPlayerState,
+    opponent: AbilityPlayerState,
+    pathPoints: number,
+    selfModel: BotPathModel,
+    opponentModel: BotPathModel,
+  ): BotActionCandidate[] {
+    const candidates: BotActionCandidate[] = [];
+    const basePaths = selfModel.paths.slice(0, 5);
+
+    for (const skillId of bot.equippedSkills) {
+      if (!ABILITY_FAKE_AI_SKILL_POOL.includes(skillId)) continue;
+      if (bot.mana < ABILITY_SKILL_COSTS[skillId]) continue;
+      const serverRule = ABILITY_SKILL_SERVER_RULES[skillId];
+      if (
+        (serverRule.roleRestriction === 'attacker' && bot.role !== 'attacker') ||
+        (serverRule.roleRestriction === 'escaper' && bot.role !== 'escaper')
+      ) {
+        continue;
+      }
+      if (skillId === 'chronos_time_rewind') continue;
+
+      if (skillId === 'classic_guard') {
+        const danger = scoreEscapePathAgainstModel(
+          bot.position,
+          [],
+          opponent.position,
+          opponentModel,
+          this.obstacles,
+        );
+        candidates.push({
+          path: [],
+          skills: [{ skillId, step: 0, order: 0 }],
+          score: danger + 140,
+          reason: 'guard-life-saving',
+          selectedSkill: skillId,
+        });
+        continue;
+      }
+
+      if (skillId === 'arc_reactor_field') {
+        const likelyAttackThreat =
+          bot.hp <= 2 || opponent.role === 'attacker' || opponent.mana >= 4;
+        const basePath = basePaths[0] ?? [];
+        candidates.push({
+          path: basePath,
+          skills: [{ skillId, step: 0, order: 0 }],
+          score:
+            scoreEscapePathAgainstModel(
+              bot.position,
+              basePath,
+              opponent.position,
+              opponentModel,
+              this.obstacles,
+            ) + (likelyAttackThreat ? 110 : 24),
+          reason: 'at-field-threat-check',
+          selectedSkill: skillId,
+        });
+        continue;
+      }
+
+      if (skillId === 'quantum_shift') {
+        for (const target of getAdjacentBlinkTargets(
+          bot.position,
+          this.obstacles,
+          opponent.position,
+        )) {
+          const blinkPath = createAiPath({
+            color: bot.color,
+            role: bot.role,
+            selfPosition: target,
+            opponentPosition: opponent.position,
+            pathPoints,
+            obstacles: this.obstacles,
+          });
+          candidates.push(
+            this.scoreBotActionCandidate(bot, opponent, blinkPath, [
+              { skillId, step: 0, order: 0, target },
+            ], opponentModel, `quantum_shift:${target.row},${target.col}`),
+          );
+        }
+        continue;
+      }
+
+      if (skillId === 'electric_blitz') {
+        for (const target of getCardinalNeighbors(bot.position, [])) {
+          const blitzPath = buildBlitzPath(bot.position, target);
+          if (blitzPath.length === 0) continue;
+          candidates.push(
+            this.scoreBotActionCandidate(bot, opponent, blitzPath, [
+              { skillId, step: 0, order: 0, target },
+            ], opponentModel, `electric_blitz:${target.row},${target.col}`),
+          );
+        }
+        continue;
+      }
+
+      if (skillId === 'cosmic_bigbang') {
+        const pressure =
+          opponent.hp <= 2 ? 260 : opponent.hp <= 3 ? 90 : -80;
+        candidates.push({
+          path: [],
+          skills: [{ skillId, step: 0, order: 0 }],
+          score: pressure,
+          reason: 'cosmic_bigbang-finish-check',
+          selectedSkill: skillId,
+        });
+        continue;
+      }
+
+      if (skillId === 'atomic_fission') {
+        if (!bot.previousTurnStart || bot.previousTurnPath.length === 0) continue;
+        const shadowCoverage = this.scorePathCoverageAgainstModel(
+          bot.previousTurnStart,
+          bot.previousTurnPath,
+          opponent.position,
+          opponentModel,
+        );
+        const path = basePaths[0] ?? [];
+        candidates.push({
+          path,
+          skills: [{ skillId, step: 0, order: 0 }],
+          score:
+            this.scorePathCoverageAgainstModel(
+              bot.position,
+              path,
+              opponent.position,
+              opponentModel,
+            ) +
+            shadowCoverage * 0.9 +
+            24,
+          reason: 'atomic_fission-shadow-pressure',
+          selectedSkill: skillId,
+        });
+        continue;
+      }
+
+      if (skillId === 'sun_chariot') {
+        for (const path of basePaths.slice(0, 3)) {
+          const sunCoverage = this.scoreExpandedCoverageAgainstModel(
+            bot.position,
+            path,
+            opponent.position,
+            opponentModel,
+          );
+          candidates.push({
+            path,
+            skills: [{ skillId, step: 0, order: 0 }],
+            score: sunCoverage + 50,
+            reason: 'sun_chariot-area-pressure',
+            selectedSkill: skillId,
+          });
+        }
+        continue;
+      }
+
+      if (skillId === 'wizard_magic_mine') {
+        for (const path of basePaths.slice(0, 3)) {
+          for (let step = 0; step <= path.length; step += 1) {
+            const position = getSequencePosition(bot.position, path, step);
+            const trapValue =
+              (opponentModel.heatmap.get(toKey(position)) ?? 0) * 28 +
+              (opponentModel.timeHeatmap.get(`${step}:${toKey(position)}`) ?? 0) *
+                32;
+            candidates.push({
+              path,
+              skills: [{ skillId, step, order: 0 }],
+              score:
+                this.scorePathCoverageAgainstModel(
+                  bot.position,
+                  path,
+                  opponent.position,
+                  opponentModel,
+                ) +
+                trapValue,
+              reason: `magic_mine:${step}`,
+              selectedSkill: skillId,
+            });
+          }
+        }
+        continue;
+      }
+
+      if (skillId === 'inferno_field') {
+        for (const path of basePaths.slice(0, 3)) {
+          for (const target of opponentModel.hotspotCells.slice(0, 5)) {
+            const origin = getSequencePosition(bot.position, path, 0);
+            if (posEqual(origin, target)) continue;
+            const lavaValue =
+              (opponentModel.heatmap.get(toKey(target)) ?? 0) * 26 +
+              (opponentModel.timeHeatmap.get(`1:${toKey(target)}`) ?? 0) * 18;
+            candidates.push({
+              path,
+              skills: [{ skillId, step: 0, order: 0, target }],
+              score:
+                this.scorePathCoverageAgainstModel(
+                  bot.position,
+                  path,
+                  opponent.position,
+                  opponentModel,
+                ) +
+                lavaValue,
+              reason: `inferno_field:${target.row},${target.col}`,
+              selectedSkill: skillId,
+            });
+          }
+        }
+        continue;
+      }
+
+      if (skillId === 'ember_blast' || skillId === 'nova_blast') {
+        for (const path of basePaths.slice(0, 3)) {
+          for (let step = 0; step <= path.length; step += 1) {
+            const origin = getSequencePosition(bot.position, path, step);
+            const affected =
+              skillId === 'ember_blast'
+                ? getCrossPositions(origin)
+                : getNovaPositions(origin);
+            const aoeScore = this.scoreAreaAgainstModel(
+              affected,
+              opponentModel,
+              step,
+            );
+            candidates.push({
+              path,
+              skills: [{ skillId, step, order: 0 }],
+              score:
+                this.scorePathCoverageAgainstModel(
+                  bot.position,
+                  path,
+                  opponent.position,
+                  opponentModel,
+                ) +
+                aoeScore,
+              reason: `${skillId}:${step}`,
+              selectedSkill: skillId,
+            });
+          }
+        }
+      }
+    }
+
+    return candidates
+      .map((candidate) =>
+        this.validatePlan(bot, candidate.path, candidate.skills)
+          ? candidate
+          : null,
+      )
+      .filter((candidate): candidate is BotActionCandidate => !!candidate)
+      .sort((left, right) => right.score - left.score)
+      .slice(0, 18);
+  }
+
+  private scoreBotActionCandidate(
+    bot: AbilityPlayerState,
+    opponent: AbilityPlayerState,
+    path: Position[],
+    skills: AbilitySkillReservation[],
+    opponentModel: BotPathModel,
+    reason: string,
+  ): BotActionCandidate {
+    const score =
+      bot.role === 'attacker'
+        ? this.scorePathCoverageAgainstModel(
+            bot.position,
+            path,
+            opponent.position,
+            opponentModel,
+          )
+        : scoreEscapePathAgainstModel(
+            bot.position,
+            path,
+            opponent.position,
+            opponentModel,
+            this.obstacles,
+          );
+    return {
+      path,
+      skills,
+      score,
+      reason,
+      selectedSkill: skills[0]?.skillId ?? null,
+    };
+  }
+
+  private scorePathCoverageAgainstModel(
+    start: Position,
+    path: Position[],
+    opponentStart: Position,
+    model: BotPathModel,
+  ): number {
+    return scoreAttackPathAgainstModel(
+      start,
+      path,
+      opponentStart,
+      model,
+      this.obstacles,
+    );
+  }
+
+  private scoreExpandedCoverageAgainstModel(
+    start: Position,
+    path: Position[],
+    opponentStart: Position,
+    model: BotPathModel,
+  ): number {
+    const sequence = [start, ...path];
+    let score = 0;
+    for (let index = 0; index < sequence.length; index += 1) {
+      const covered = getSquarePositions(sequence[index], 1);
+      score += this.scoreAreaAgainstModel(covered, model, index);
+    }
+    score += this.scorePathCoverageAgainstModel(start, path, opponentStart, model);
+    return score;
+  }
+
+  private scoreAreaAgainstModel(
+    positions: Position[],
+    model: BotPathModel,
+    step: number,
+  ): number {
+    return positions.reduce((sum, position) => {
+      return (
+        sum +
+        (model.heatmap.get(toKey(position)) ?? 0) * 22 +
+        (model.timeHeatmap.get(`${step}:${toKey(position)}`) ?? 0) * 26
+      );
+    }, 0);
   }
 
   private recordTurnSnapshot(player: AbilityPlayerState): void {

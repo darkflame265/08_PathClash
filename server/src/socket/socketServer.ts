@@ -54,6 +54,20 @@ export function initSocketServer(io: Server): void {
     string,
     ReturnType<typeof setTimeout>
   >();
+  const ABILITY_FAKE_AI_SKILL_POOL: AbilitySkillId[] = [
+    'classic_guard',
+    'ember_blast',
+    'nova_blast',
+    'inferno_field',
+    'quantum_shift',
+    'cosmic_bigbang',
+    'arc_reactor_field',
+    'electric_blitz',
+    'wizard_magic_mine',
+    'chronos_time_rewind',
+    'atomic_fission',
+    'sun_chariot',
+  ];
   const profileCache = new Map<
     string,
     { expiresAt: number; profile: PersistentPlayerProfile }
@@ -190,6 +204,56 @@ export function initSocketServer(io: Server): void {
     return result.slice(0, length);
   };
 
+  const pickRandomUniqueSkills = (
+    pool: AbilitySkillId[],
+    count: number,
+  ): AbilitySkillId[] => {
+    const bag = [...pool];
+    for (let index = bag.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(Math.random() * (index + 1));
+      [bag[index], bag[swapIndex]] = [bag[swapIndex], bag[index]];
+    }
+    return bag.slice(0, count);
+  };
+
+  const createDisguisedAbilityBotLoadout = (
+    profile: PersistentPlayerProfile,
+  ): {
+    nickname: string;
+    displayId: string;
+    userId: string | null;
+    stats: { wins: number; losses: number };
+    pieceSkin: PieceSkin;
+    boardSkin: BoardSkin;
+    equippedSkills: AbilitySkillId[];
+    beginner: boolean;
+  } => {
+    const beginner = Math.random() < 0.05;
+    if (beginner) {
+      const nickname =
+        FAKE_RANDOM_NICKNAMES[
+          Math.floor(Math.random() * FAKE_RANDOM_NICKNAMES.length)
+        ];
+      return {
+        nickname,
+        displayId: `${randomHex(8)}-${randomHex(4)}-${randomHex(4)}-${randomHex(4)}-${randomHex(12)}`,
+        userId: null,
+        stats: { wins: 0, losses: 0 },
+        pieceSkin: 'classic',
+        boardSkin: 'classic',
+        equippedSkills: ['classic_guard'],
+        beginner: true,
+      };
+    }
+
+    const fakeProfile = createDisguisedRandomProfile(profile);
+    return {
+      ...fakeProfile,
+      equippedSkills: pickRandomUniqueSkills(ABILITY_FAKE_AI_SKILL_POOL, 3),
+      beginner: false,
+    };
+  };
+
   const createRandomFallbackMatch = async ({
     socket,
     profile,
@@ -303,12 +367,12 @@ export function initSocketServer(io: Server): void {
     );
     if (!humanColor) return;
 
-    const fakeProfile = createDisguisedRandomProfile(profile);
+    const fakeProfile = createDisguisedAbilityBotLoadout(profile);
     room.addIdleBot(
       fakeProfile.nickname,
       fakeProfile.pieceSkin,
       fakeProfile.boardSkin,
-      ['classic_guard'],
+      fakeProfile.equippedSkills,
       {
         displayId: fakeProfile.displayId,
         stats: fakeProfile.stats,

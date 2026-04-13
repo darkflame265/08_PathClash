@@ -29,6 +29,20 @@ function initSocketServer(io) {
     const abilityFallbackMatchMs = 7000;
     const randomFallbackTimers = new Map();
     const abilityFallbackTimers = new Map();
+    const ABILITY_FAKE_AI_SKILL_POOL = [
+        'classic_guard',
+        'ember_blast',
+        'nova_blast',
+        'inferno_field',
+        'quantum_shift',
+        'cosmic_bigbang',
+        'arc_reactor_field',
+        'electric_blitz',
+        'wizard_magic_mine',
+        'chronos_time_rewind',
+        'atomic_fission',
+        'sun_chariot',
+    ];
     const profileCache = new Map();
     const unregisterSocketSession = (socketId) => {
         const userId = socketUsers.get(socketId);
@@ -133,6 +147,36 @@ function initSocketServer(io) {
         }
         return result.slice(0, length);
     };
+    const pickRandomUniqueSkills = (pool, count) => {
+        const bag = [...pool];
+        for (let index = bag.length - 1; index > 0; index -= 1) {
+            const swapIndex = Math.floor(Math.random() * (index + 1));
+            [bag[index], bag[swapIndex]] = [bag[swapIndex], bag[index]];
+        }
+        return bag.slice(0, count);
+    };
+    const createDisguisedAbilityBotLoadout = (profile) => {
+        const beginner = Math.random() < 0.05;
+        if (beginner) {
+            const nickname = fakeRandomNicknames_1.FAKE_RANDOM_NICKNAMES[Math.floor(Math.random() * fakeRandomNicknames_1.FAKE_RANDOM_NICKNAMES.length)];
+            return {
+                nickname,
+                displayId: `${randomHex(8)}-${randomHex(4)}-${randomHex(4)}-${randomHex(4)}-${randomHex(12)}`,
+                userId: null,
+                stats: { wins: 0, losses: 0 },
+                pieceSkin: 'classic',
+                boardSkin: 'classic',
+                equippedSkills: ['classic_guard'],
+                beginner: true,
+            };
+        }
+        const fakeProfile = createDisguisedRandomProfile(profile);
+        return {
+            ...fakeProfile,
+            equippedSkills: pickRandomUniqueSkills(ABILITY_FAKE_AI_SKILL_POOL, 3),
+            beginner: false,
+        };
+    };
     const createRandomFallbackMatch = async ({ socket, profile, pieceSkin, boardSkin, }) => {
         clearRandomFallback(socket.id);
         if (!io.sockets.sockets.has(socket.id))
@@ -191,8 +235,8 @@ function initSocketServer(io) {
         const humanColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin, boardSkin, equippedSkills);
         if (!humanColor)
             return;
-        const fakeProfile = createDisguisedRandomProfile(profile);
-        room.addIdleBot(fakeProfile.nickname, fakeProfile.pieceSkin, fakeProfile.boardSkin, ['classic_guard'], {
+        const fakeProfile = createDisguisedAbilityBotLoadout(profile);
+        room.addIdleBot(fakeProfile.nickname, fakeProfile.pieceSkin, fakeProfile.boardSkin, fakeProfile.equippedSkills, {
             displayId: fakeProfile.displayId,
             stats: fakeProfile.stats,
         });
