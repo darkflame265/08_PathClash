@@ -1,4 +1,4 @@
-import { createAiPath } from '../AiPlanner';
+import { createAiPath } from '../LegacyAiPlanner';
 import { calcPathPoints, isValidMove } from '../GameEngine';
 import type { PlayerColor, Position } from '../../types/game.types';
 import type {

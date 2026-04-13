@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GameRoom = void 0;
 const GameEngine_1 = require("./GameEngine");
 const AiPlanner_1 = require("./AiPlanner");
+const LegacyAiPlanner_1 = require("./LegacyAiPlanner");
 const ServerTimer_1 = require("./ServerTimer");
 const playerAuth_1 = require("../services/playerAuth");
 const achievementService_1 = require("../services/achievementService");
@@ -961,7 +962,8 @@ class GameRoom {
             this.touchActivity();
             return;
         }
-        aiPlayer.plannedPath = (0, AiPlanner_1.createAiPath)({
+        const planner = this.matchType === "random" ? AiPlanner_1.createAiPath : LegacyAiPlanner_1.createAiPath;
+        aiPlayer.plannedPath = planner({
             color: aiPlayer.color,
             role: aiPlayer.role,
             selfPosition: aiPlayer.position,

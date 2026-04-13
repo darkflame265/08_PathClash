@@ -7,7 +7,7 @@ exports.createCoopEnemyAttackPath = createCoopEnemyAttackPath;
 exports.resolveCoopMovement = resolveCoopMovement;
 exports.isValidCoopPath = isValidCoopPath;
 exports.portalColorFromHp = portalColorFromHp;
-const AiPlanner_1 = require("../AiPlanner");
+const LegacyAiPlanner_1 = require("../LegacyAiPlanner");
 const GameEngine_1 = require("../GameEngine");
 const GRID_MIN = 0;
 const GRID_MAX = 4;
@@ -55,7 +55,7 @@ function createEnemyPreviews(params) {
         return {
             id: enemy.id,
             start: enemy.position,
-            path: (0, AiPlanner_1.createAiPath)({
+            path: (0, LegacyAiPlanner_1.createAiPath)({
                 color: 'red',
                 role: 'attacker',
                 selfPosition: enemy.position,
@@ -69,7 +69,7 @@ function createEnemyPreviews(params) {
 function createCoopEnemyAttackPath(params) {
     const obstacles = params.obstacles ?? [];
     const target = selectReachableTarget(params.selfPosition, params.redPosition, params.bluePosition, params.redAlive ?? true, params.blueAlive ?? true, obstacles);
-    return (0, AiPlanner_1.createAiPath)({
+    return (0, LegacyAiPlanner_1.createAiPath)({
         color: 'red',
         role: 'attacker',
         selfPosition: params.selfPosition,

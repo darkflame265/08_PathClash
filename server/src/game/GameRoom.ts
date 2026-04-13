@@ -20,7 +20,8 @@ import {
   toClientPlayer,
   generateObstacles,
 } from "./GameEngine";
-import { createAiPath } from "./AiPlanner";
+import { createAiPath as createDisguisedAiPath } from "./AiPlanner";
+import { createAiPath as createLegacyAiPath } from "./LegacyAiPlanner";
 import { ServerTimer } from "./ServerTimer";
 import {
   recordMatchmakingLoss,
@@ -1147,7 +1148,10 @@ export class GameRoom {
       return;
     }
 
-    aiPlayer.plannedPath = createAiPath({
+    const planner =
+      this.matchType === "random" ? createDisguisedAiPath : createLegacyAiPath;
+
+    aiPlayer.plannedPath = planner({
       color: aiPlayer.color,
       role: aiPlayer.role,
       selfPosition: aiPlayer.position,
