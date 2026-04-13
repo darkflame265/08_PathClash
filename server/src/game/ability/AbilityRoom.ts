@@ -1817,12 +1817,13 @@ export class AbilityRoom {
           bot.position,
           opponent.position,
         );
+        // 상대가 같은 행/열에 없으면 벽력일섬 사용 금지
+        if (!directBlitzTarget) continue;
         for (const target of getCardinalNeighbors(bot.position, [])) {
           const blitzPath = buildBlitzPath(bot.position, target);
           if (blitzPath.length === 0) continue;
           const interceptBonus =
             bot.role === 'attacker' &&
-            directBlitzTarget &&
             posEqual(target, directBlitzTarget)
               ? 320
               : 0;
