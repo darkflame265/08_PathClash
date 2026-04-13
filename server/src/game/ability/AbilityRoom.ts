@@ -1922,7 +1922,9 @@ export class AbilityRoom {
         for (const path of basePaths.slice(0, 3)) {
           for (const target of opponentModel.hotspotCells.slice(0, 5)) {
             const origin = getSequencePosition(bot.position, path, 0);
+            // 시전자 현재 위치와 상대방 현재 위치에는 용암 설치 불가
             if (posEqual(origin, target)) continue;
+            if (posEqual(opponent.position, target)) continue;
             const lavaValue =
               (opponentModel.heatmap.get(toKey(target)) ?? 0) * 40 +
               (opponentModel.timeHeatmap.get(`1:${toKey(target)}`) ?? 0) * 28;
@@ -1969,6 +1971,26 @@ export class AbilityRoom {
       }
 
       if (skillId === 'ember_blast' || skillId === 'nova_blast') {
+        // 고비용 공격 스킬(6~10코)이 함께 장착된 경우,
+        // 엠버/노바를 쓰면 마나가 소진되어 해당 스킬을 사용하지 못하게 된다.
+        // 장착된 다른 공격 스킬의 최대 코스트에 비례해 패널티를 부여한다.
+        const otherHighCostAttackSkillMaxCost = bot.equippedSkills
+          .filter((s) => {
+            if (s === skillId) return false;
+            if (s === 'chronos_time_rewind') return false;
+            const rule = ABILITY_SKILL_SERVER_RULES[s];
+            if (rule.roleRestriction === 'escaper') return false;
+            return ABILITY_SKILL_COSTS[s] > ABILITY_SKILL_COSTS[skillId];
+          })
+          .reduce(
+            (max, s) => Math.max(max, ABILITY_SKILL_COSTS[s]),
+            0,
+          );
+        // 최대 코스트가 클수록 패널티 증가 (6→240, 8→360, 10→450)
+        const manaWastePenalty = otherHighCostAttackSkillMaxCost > 0
+          ? Math.round(otherHighCostAttackSkillMaxCost * 45)
+          : 0;
+
         for (const path of basePaths.slice(0, 3)) {
           for (let step = 0; step <= path.length; step += 1) {
             const origin = getSequencePosition(bot.position, path, step);
@@ -1991,7 +2013,8 @@ export class AbilityRoom {
                   opponent.position,
                   opponentModel,
                 ) +
-                aoeScore,
+                aoeScore -
+                manaWastePenalty,
               reason: `${skillId}:${step}`,
               selectedSkill: skillId,
             });
