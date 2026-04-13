@@ -1542,6 +1542,25 @@ export class AbilityRoom {
     const lavaObstacles = this.lavaTiles.map((t) => t.position);
     const effectiveObstacles = [...this.obstacles, ...lavaObstacles];
 
+    // 도망자이고 상대와 겹쳐진 상태일 때:
+    // 점수 계산이 '가만히 있기'를 과대평가하므로 50% 확률로 강제 이동 패턴 적용
+    if (bot.role !== 'attacker' && posEqual(bot.position, opponent.position) && Math.random() < 0.5) {
+      const neighbors = getCardinalNeighbors(bot.position, effectiveObstacles);
+      if (neighbors.length > 0) {
+        const target = neighbors[Math.floor(Math.random() * neighbors.length)]!;
+        const validated = this.validatePlan(bot, [target], []);
+        if (validated) {
+          return {
+            path: validated.path,
+            skills: [],
+            score: 0,
+            reason: 'overlap-escape-forced-move',
+            selectedSkill: null,
+          };
+        }
+      }
+    }
+
     const selfModel = buildBotPathModel({
       start: bot.position,
       opponent: opponent.position,
@@ -1620,6 +1639,62 @@ export class AbilityRoom {
     };
   }
 
+  // 상대방과 일직선(같은 행/열)이 되는 위치까지 이동한 뒤 벽력일섬을 발사하는 후보를 생성한다.
+  // minPrefixSteps: 발사 전 최소 이동 칸 수 (가드=3, AT필드=1)
+  private buildDelayedBlitzCandidate(
+    bot: AbilityPlayerState,
+    opponent: AbilityPlayerState,
+    minPrefixSteps: number,
+  ): BotActionCandidate | null {
+    const pathPoints = this.currentPathPoints();
+    const effectiveObstacles = [
+      ...this.obstacles,
+      ...this.lavaTiles.map((t) => t.position),
+    ];
+
+    const validCandidates: BotActionCandidate[] = [];
+
+    for (const launchPos of listBoardPositions()) {
+      if (posEqual(launchPos, bot.position)) continue;
+      if (isObstacle(launchPos, effectiveObstacles)) continue;
+      // 상대와 같은 행 또는 열이어야 한다
+      if (launchPos.row !== opponent.position.row && launchPos.col !== opponent.position.col) continue;
+
+      // 발사 위치에서 상대 방향의 blitz 방향 구하기
+      const blitzDir = getBlitzDirectionTowardOpponent(launchPos, opponent.position);
+      if (!blitzDir) continue;
+
+      const blitzPath = buildBlitzPath(launchPos, blitzDir);
+      if (blitzPath.length === 0) continue;
+
+      // 현재 위치에서 launchPos까지 최단 경로 (장애물 회피)
+      const prefixPath = buildShortestAbilityPath(bot.position, launchPos, effectiveObstacles);
+      if (prefixPath.length < minPrefixSteps) continue;
+      if (prefixPath.length + blitzPath.length > pathPoints) continue;
+
+      const fullPath = [...prefixPath, ...blitzPath];
+      const skillStep = prefixPath.length;
+
+      const validated = this.validatePlan(
+        bot,
+        fullPath,
+        [{ skillId: 'electric_blitz', step: skillStep, order: 0, target: blitzDir }],
+      );
+      if (!validated) continue;
+
+      validCandidates.push({
+        path: validated.path,
+        skills: validated.skills,
+        score: 999998,
+        reason: 'delayed-electric-blitz',
+        selectedSkill: 'electric_blitz',
+      });
+    }
+
+    if (validCandidates.length === 0) return null;
+    return validCandidates[Math.floor(Math.random() * validCandidates.length)] ?? null;
+  }
+
   private buildForcedBlitzCandidate(
     bot: AbilityPlayerState,
     opponent: AbilityPlayerState,
@@ -1627,6 +1702,16 @@ export class AbilityRoom {
     if (bot.role !== 'attacker') return null;
     if (!bot.equippedSkills.includes('electric_blitz')) return null;
     if (bot.mana < ABILITY_SKILL_COSTS.electric_blitz) return null;
+
+    // 상대가 가드 또는 AT필드 장착 시 50% 확률로 지연 발사 패턴 시도
+    const opponentHasGuard = opponent.equippedSkills.includes('classic_guard');
+    const opponentHasAtField = opponent.equippedSkills.includes('arc_reactor_field');
+    if ((opponentHasGuard || opponentHasAtField) && Math.random() < 0.5) {
+      // 가드: 3칸 이상 이동 후 발사, AT필드: 1칸 이상 이동 후 발사
+      const minPrefixSteps = opponentHasGuard ? 3 : 1;
+      const delayed = this.buildDelayedBlitzCandidate(bot, opponent, minPrefixSteps);
+      if (delayed) return delayed;
+    }
 
     const directionTarget = getBlitzDirectionTowardOpponent(
       bot.position,
