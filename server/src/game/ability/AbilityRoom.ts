@@ -1700,6 +1700,19 @@ export class AbilityRoom {
       if (skillId === 'chronos_time_rewind') continue;
 
       if (skillId === 'classic_guard') {
+        // 사용 조건(AT필드와 동일):
+        //  1) 상대가 벽력일섬을 보유하고 일직선(같은 행/열)에 있을 때
+        //  2) 봇과 상대 거리가 2 이하일 때
+        const guardDist =
+          Math.abs(bot.position.row - opponent.position.row) +
+          Math.abs(bot.position.col - opponent.position.col);
+        const guardInBlitzLineThreat =
+          opponent.equippedSkills.includes('electric_blitz') &&
+          (bot.position.row === opponent.position.row ||
+            bot.position.col === opponent.position.col);
+        const guardCloseRange = guardDist <= 2;
+        if (!guardInBlitzLineThreat && !guardCloseRange) continue;
+
         const danger = scoreEscapePathAgainstModel(
           bot.position,
           [],
@@ -1710,7 +1723,7 @@ export class AbilityRoom {
         candidates.push({
           path: [],
           skills: [{ skillId, step: 0, order: 0 }],
-          score: danger + 140,
+          score: danger + (guardInBlitzLineThreat ? 200 : 140),
           reason: 'guard-life-saving',
           selectedSkill: skillId,
         });
@@ -1718,8 +1731,19 @@ export class AbilityRoom {
       }
 
       if (skillId === 'arc_reactor_field') {
-        const likelyAttackThreat =
-          bot.hp <= 2 || opponent.role === 'attacker' || opponent.mana >= 4;
+        // 사용 조건:
+        //  1) 상대가 벽력일섬을 보유하고 일직선(같은 행/열)에 있을 때
+        //  2) 봇과 상대 거리가 2 이하일 때
+        const dist =
+          Math.abs(bot.position.row - opponent.position.row) +
+          Math.abs(bot.position.col - opponent.position.col);
+        const inBlitzLineThreat =
+          opponent.equippedSkills.includes('electric_blitz') &&
+          (bot.position.row === opponent.position.row ||
+            bot.position.col === opponent.position.col);
+        const closeRange = dist <= 2;
+        if (!inBlitzLineThreat && !closeRange) continue;
+
         const basePath = basePaths[0] ?? [];
         candidates.push({
           path: basePath,
@@ -1731,7 +1755,7 @@ export class AbilityRoom {
               opponent.position,
               opponentModel,
               this.obstacles,
-            ) + (likelyAttackThreat ? 110 : 24),
+            ) + (inBlitzLineThreat ? 200 : 110),
           reason: 'at-field-threat-check',
           selectedSkill: skillId,
         });
