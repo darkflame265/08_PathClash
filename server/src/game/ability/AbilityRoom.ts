@@ -476,6 +476,25 @@ function buildBlitzPath(start: Position, target: Position): Position[] {
   return path;
 }
 
+function getBlitzDirectionTowardOpponent(
+  self: Position,
+  opponent: Position,
+): Position | null {
+  if (self.row === opponent.row) {
+    return {
+      row: self.row,
+      col: self.col + (opponent.col > self.col ? 1 : -1),
+    };
+  }
+  if (self.col === opponent.col) {
+    return {
+      row: self.row + (opponent.row > self.row ? 1 : -1),
+      col: self.col,
+    };
+  }
+  return null;
+}
+
 function getCrossPositions(origin: Position): Position[] {
   return [
     origin,
@@ -1648,13 +1667,32 @@ export class AbilityRoom {
       }
 
       if (skillId === 'electric_blitz') {
+        const directBlitzTarget = getBlitzDirectionTowardOpponent(
+          bot.position,
+          opponent.position,
+        );
         for (const target of getCardinalNeighbors(bot.position, [])) {
           const blitzPath = buildBlitzPath(bot.position, target);
           if (blitzPath.length === 0) continue;
+          const interceptBonus =
+            bot.role === 'attacker' &&
+            directBlitzTarget &&
+            posEqual(target, directBlitzTarget)
+              ? 320
+              : 0;
+          const baseCandidate = this.scoreBotActionCandidate(
+            bot,
+            opponent,
+            blitzPath,
+            [{ skillId, step: 0, order: 0, target }],
+            opponentModel,
+            `electric_blitz:${target.row},${target.col}`,
+          );
           candidates.push(
-            this.scoreBotActionCandidate(bot, opponent, blitzPath, [
-              { skillId, step: 0, order: 0, target },
-            ], opponentModel, `electric_blitz:${target.row},${target.col}`),
+            {
+              ...baseCandidate,
+              score: baseCandidate.score + interceptBonus,
+            },
           );
         }
         continue;
