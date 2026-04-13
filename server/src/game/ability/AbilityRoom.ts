@@ -1582,41 +1582,20 @@ export class AbilityRoom {
         selectedSkill: null,
       }));
 
-    // 고비용 스킬(빅뱅폭발, 매직마인) 장착 시 마나 절약 보너스:
-    // 해당 스킬의 마나 임계값에 가까워질수록 스킬 미사용 후보에 보너스를 부여해
-    // 저렴한 스킬을 남발하지 않고 마나를 모으도록 유도한다.
-    if (bot.role === 'attacker') {
-      const hasBigBang = bot.equippedSkills.includes('cosmic_bigbang');
-      const hasMagicMine = bot.equippedSkills.includes('wizard_magic_mine');
-      let bestSaveBonus = 0;
-
-      if (hasBigBang && bot.mana < 10) {
-        const manaToGo = 10 - bot.mana;
-        const turnsNeeded = Math.ceil(manaToGo / 2);
-        if (turnsNeeded <= 3) {
-          const killPotential =
-            opponent.hp <= 2 ? 2200 : opponent.hp <= 3 ? 700 : 150;
-          bestSaveBonus = Math.max(
-            bestSaveBonus,
-            Math.round((killPotential / turnsNeeded) * 0.45),
-          );
-        }
-      }
-      if (hasMagicMine && bot.mana < 8) {
-        const manaToGo = 8 - bot.mana;
-        const turnsNeeded = Math.ceil(manaToGo / 2);
-        if (turnsNeeded <= 2) {
-          bestSaveBonus = Math.max(
-            bestSaveBonus,
-            Math.round((350 / turnsNeeded) * 0.45),
-          );
-        }
-      }
-
-      if (bestSaveBonus > 0) {
+    // ── 매직마인 마나 절약 (스코어 유도) ────────────────────────────────
+    // 빅뱅 없이 매직마인만 있을 때 소폭 절약 보너스 부여
+    if (
+      bot.role === 'attacker' &&
+      bot.equippedSkills.includes('wizard_magic_mine') &&
+      !bot.equippedSkills.includes('cosmic_bigbang') &&
+      bot.mana < 8
+    ) {
+      const turnsNeeded = Math.ceil((8 - bot.mana) / 2);
+      if (turnsNeeded <= 2) {
+        const saveBonus = Math.round((350 / turnsNeeded) * 0.45);
         for (const candidate of candidates) {
           if (candidate.skills.length === 0) {
-            candidate.score += bestSaveBonus;
+            candidate.score += saveBonus;
           }
         }
       }
@@ -1685,6 +1664,16 @@ export class AbilityRoom {
     opponentModel: BotPathModel,
     effectiveObstacles: Position[],
   ): BotActionCandidate[] {
+    // ── 빅뱅폭발 마나 모으기 하드 규칙 ──────────────────────────────────
+    // 빅뱅 장착 시:
+    //   마나 < 10: 모든 스킬 후보 차단 → 아무것도 쓰지 않고 마나 적립
+    //   마나 = 10 + 에스케이퍼: 마나 낭비 방지를 위해 스킬 후보 차단
+    //   마나 = 10 + 공격자: 정상 진행 → 빅뱅 후보가 압도적 스코어로 승리
+    if (bot.equippedSkills.includes('cosmic_bigbang')) {
+      if (bot.mana < MAX_MANA) return [];
+      if (bot.role !== 'attacker') return [];
+    }
+
     const candidates: BotActionCandidate[] = [];
     const basePaths = selfModel.paths.slice(0, 5);
 
@@ -1844,9 +1833,10 @@ export class AbilityRoom {
           // 상대 HP 5 이상 → 마나 낭비가 크므로 기본 경로가 더 나음
           pressure = -150;
         }
-        // 마나가 꽉 찼을 때 소극적 낭비 방지를 위한 소폭 가산
+        // 마나 10 만충: "모았으면 반드시 쏜다" 패턴
+        // 기본 경로 스코어(~2000)를 압도해 빅뱅을 항상 선택하도록 강제
         if (bot.mana >= MAX_MANA) {
-          pressure += 120;
+          pressure += 2500;
         }
         candidates.push({
           path: [],
