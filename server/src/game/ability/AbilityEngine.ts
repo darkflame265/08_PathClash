@@ -974,6 +974,24 @@ export function resolveAbilityRound(params: {
     blueClonePos = blueCloneNext;
 
     if (
+      redCloneNext &&
+      redCloneStep === step &&
+      attackerColor === 'red' &&
+      samePosition(bluePos, redCloneNext)
+    ) {
+      resolveCollisionHit('red', 'blue', redCloneNext, step);
+    }
+
+    if (
+      blueCloneNext &&
+      blueCloneStep === step &&
+      attackerColor === 'blue' &&
+      samePosition(redPos, blueCloneNext)
+    ) {
+      resolveCollisionHit('blue', 'red', blueCloneNext, step);
+    }
+
+    if (
       redClonePrevForStep &&
       redCloneNext &&
       attackerColor === 'red' &&
