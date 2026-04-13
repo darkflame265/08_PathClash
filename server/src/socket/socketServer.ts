@@ -67,6 +67,7 @@ export function initSocketServer(io: Server): void {
     'chronos_time_rewind',
     'atomic_fission',
     'sun_chariot',
+    'aurora_heal',
   ];
   const profileCache = new Map<
     string,
@@ -247,9 +248,19 @@ export function initSocketServer(io: Server): void {
     }
 
     const fakeProfile = createDisguisedRandomProfile(profile);
+    const equippedSkills = pickRandomUniqueSkills(ABILITY_FAKE_AI_SKILL_POOL, 3);
+    // aurora_heal은 100승 이상 해금 스킬 → 장착 시 승리 수를 100~300으로 표기
+    const stats =
+      equippedSkills.includes('aurora_heal')
+        ? {
+            wins: Math.floor(Math.random() * 201) + 100,
+            losses: fakeProfile.stats.losses,
+          }
+        : fakeProfile.stats;
     return {
       ...fakeProfile,
-      equippedSkills: pickRandomUniqueSkills(ABILITY_FAKE_AI_SKILL_POOL, 3),
+      equippedSkills,
+      stats,
       beginner: false,
     };
   };
