@@ -1752,14 +1752,14 @@ export class AbilityRoom {
     // ── 빅뱅폭발 마나 모으기 하드 규칙 ──────────────────────────────────
     // 빅뱅 장착 시 상대 HP에 따라 마나 적립 패턴 진입 여부를 결정:
     //   HP ≤ 2: 항상 적립 (확정 킬각)
-    //   HP ≤ 4: 50% 확률로 적립 (킬각 준비)
-    //   HP > 4: 적립 안 함, 일반 스킬 허용 (빅뱅 후보는 마나 부족으로 어차피 스킵)
+    //   HP ≤ 5: 50% 확률로 적립 (킬각 준비)
+    //   HP > 5: 적립 안 함, 일반 스킬 허용 (빅뱅 후보는 마나 부족으로 어차피 스킵)
     //   마나 = 10 + 에스케이퍼: 마나 낭비 방지를 위해 스킬 후보 차단
     //   마나 = 10 + 공격자: 정상 진행 → 빅뱅 후보가 압도적 스코어로 승리
     if (bot.equippedSkills.includes('cosmic_bigbang')) {
       if (bot.mana < MAX_MANA) {
         if (opponent.hp <= 2) return [];
-        if (opponent.hp <= 4 && Math.random() < 0.5) return [];
+        if (opponent.hp <= 5 && Math.random() < 0.5) return [];
       }
       if (bot.role !== 'attacker') return [];
     }
