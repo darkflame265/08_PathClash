@@ -921,26 +921,12 @@ export async function initializeGuestAuth(): Promise<AuthStatePayload> {
   return toAuthState(session, snapshot);
 }
 
-export async function refreshAccountSummary(options?: { force?: boolean }): Promise<
-  Pick<
-    AuthStatePayload,
-    | "nickname"
-    | "equippedSkin"
-    | "equippedBoardSkin"
-    | "equippedAbilitySkills"
-    | "ownedSkins"
-    | "ownedBoardSkins"
-    | "wins"
-    | "losses"
-    | "tokens"
-    | "dailyRewardWins"
-    | "dailyRewardTokens"
-    | "achievements"
-  >
-> {
+export async function refreshAccountSummary(options?: { force?: boolean }): Promise<AccountProfile> {
   if (!supabase) {
     return {
-      nickname: null,
+      userId: "",
+      isGuestUser: true,
+      nickname: "",
       equippedSkin: "classic",
       equippedBoardSkin: "classic",
       equippedAbilitySkills: ["classic_guard"],
@@ -958,7 +944,9 @@ export async function refreshAccountSummary(options?: { force?: boolean }): Prom
   const session = await getCurrentSession();
   if (!session?.user) {
     return {
-      nickname: null,
+      userId: "",
+      isGuestUser: true,
+      nickname: "",
       equippedSkin: "classic",
       equippedBoardSkin: "classic",
       equippedAbilitySkills: ["classic_guard"],
@@ -975,7 +963,9 @@ export async function refreshAccountSummary(options?: { force?: boolean }): Prom
 
   const snapshot = await getAccountSnapshot(session.user.id, options);
   return {
-    nickname: snapshot.nickname,
+    userId: session.user.id,
+    isGuestUser: session.user.is_anonymous ?? true,
+    nickname: snapshot.nickname ?? "",
     equippedSkin: snapshot.equippedSkin,
     equippedBoardSkin: snapshot.equippedBoardSkin,
     equippedAbilitySkills: snapshot.equippedAbilitySkills,
