@@ -1569,6 +1569,46 @@ export class AbilityRoom {
         selectedSkill: null,
       }));
 
+    // 고비용 스킬(빅뱅폭발, 매직마인) 장착 시 마나 절약 보너스:
+    // 해당 스킬의 마나 임계값에 가까워질수록 스킬 미사용 후보에 보너스를 부여해
+    // 저렴한 스킬을 남발하지 않고 마나를 모으도록 유도한다.
+    if (bot.role === 'attacker') {
+      const hasBigBang = bot.equippedSkills.includes('cosmic_bigbang');
+      const hasMagicMine = bot.equippedSkills.includes('wizard_magic_mine');
+      let bestSaveBonus = 0;
+
+      if (hasBigBang && bot.mana < 10) {
+        const manaToGo = 10 - bot.mana;
+        const turnsNeeded = Math.ceil(manaToGo / 2);
+        if (turnsNeeded <= 3) {
+          const killPotential =
+            opponent.hp <= 2 ? 2200 : opponent.hp <= 3 ? 700 : 150;
+          bestSaveBonus = Math.max(
+            bestSaveBonus,
+            Math.round((killPotential / turnsNeeded) * 0.45),
+          );
+        }
+      }
+      if (hasMagicMine && bot.mana < 8) {
+        const manaToGo = 8 - bot.mana;
+        const turnsNeeded = Math.ceil(manaToGo / 2);
+        if (turnsNeeded <= 2) {
+          bestSaveBonus = Math.max(
+            bestSaveBonus,
+            Math.round((350 / turnsNeeded) * 0.45),
+          );
+        }
+      }
+
+      if (bestSaveBonus > 0) {
+        for (const candidate of candidates) {
+          if (candidate.skills.length === 0) {
+            candidate.score += bestSaveBonus;
+          }
+        }
+      }
+    }
+
     const activeSkillCandidates = this.buildBotSkillActionCandidates(
       bot,
       opponent,
@@ -1740,8 +1780,26 @@ export class AbilityRoom {
       }
 
       if (skillId === 'cosmic_bigbang') {
-        const pressure =
-          opponent.hp <= 2 ? 260 : opponent.hp <= 3 ? 90 : -80;
+        // 빅뱅폭발은 보드 전체 2피해 → 상대 HP가 낮을수록 킬각이 확실해진다.
+        // 기본 경로 스코어(500~3000)를 이길 수 있도록 충분히 높은 값을 부여한다.
+        let pressure: number;
+        if (opponent.hp <= 2) {
+          // 확정 킬 또는 거의 킬 → 최우선
+          pressure = 4000;
+        } else if (opponent.hp === 3) {
+          // 상대를 HP 1로 만듦 → 매우 강력
+          pressure = 1500;
+        } else if (opponent.hp === 4) {
+          // HP 2로 만듦 → 유용하지만 마나 대비 가치 검토 필요
+          pressure = 350;
+        } else {
+          // 상대 HP 5 이상 → 마나 낭비가 크므로 기본 경로가 더 나음
+          pressure = -150;
+        }
+        // 마나가 꽉 찼을 때 소극적 낭비 방지를 위한 소폭 가산
+        if (bot.mana >= MAX_MANA) {
+          pressure += 120;
+        }
         candidates.push({
           path: [],
           skills: [{ skillId, step: 0, order: 0 }],
@@ -1799,13 +1857,24 @@ export class AbilityRoom {
       }
 
       if (skillId === 'wizard_magic_mine') {
+        // 매직마인: 내 경로 각 step 위치에 함정 설치
+        // 상대 heatmap이 높은 위치일수록 함정 가치가 크다.
+        // 마나 8 고비용 → 기본 경로보다 확실히 이길 수 있도록 가중치를 높게 유지
+        let bestTrapValue = 0;
+        let bestPath: Position[] = basePaths[0] ?? [];
+        let bestStep = 0;
         for (const path of basePaths.slice(0, 3)) {
           for (let step = 0; step <= path.length; step += 1) {
             const position = getSequencePosition(bot.position, path, step);
             const trapValue =
-              (opponentModel.heatmap.get(toKey(position)) ?? 0) * 28 +
+              (opponentModel.heatmap.get(toKey(position)) ?? 0) * 42 +
               (opponentModel.timeHeatmap.get(`${step}:${toKey(position)}`) ?? 0) *
-                32;
+                48;
+            if (trapValue > bestTrapValue) {
+              bestTrapValue = trapValue;
+              bestPath = path;
+              bestStep = step;
+            }
             candidates.push({
               path,
               skills: [{ skillId, step, order: 0 }],
@@ -1822,17 +1891,46 @@ export class AbilityRoom {
             });
           }
         }
+        // 최선의 함정 위치에 추가 보너스(장기 압박 가치 반영)
+        if (bestTrapValue > 0) {
+          candidates.push({
+            path: bestPath,
+            skills: [{ skillId, step: bestStep, order: 0 }],
+            score:
+              this.scorePathCoverageAgainstModel(
+                bot.position,
+                bestPath,
+                opponent.position,
+                opponentModel,
+              ) +
+              bestTrapValue +
+              200,
+            reason: `magic_mine:best:${bestStep}`,
+            selectedSkill: skillId,
+          });
+        }
         continue;
       }
 
       if (skillId === 'inferno_field') {
+        // 용암지대: 상대 핫스팟에 용암을 설치해 2턴간 통행 차단
+        // 상대 heatmap 상위 셀을 타깃으로 하므로 장기 압박 가치가 높다.
+        // 가중치를 충분히 높여 기본 경로보다 우선 선택되도록 한다.
+        let bestLavaValue = 0;
+        let bestLavaPath: Position[] = basePaths[0] ?? [];
+        let bestLavaTarget: Position | null = null;
         for (const path of basePaths.slice(0, 3)) {
           for (const target of opponentModel.hotspotCells.slice(0, 5)) {
             const origin = getSequencePosition(bot.position, path, 0);
             if (posEqual(origin, target)) continue;
             const lavaValue =
-              (opponentModel.heatmap.get(toKey(target)) ?? 0) * 26 +
-              (opponentModel.timeHeatmap.get(`1:${toKey(target)}`) ?? 0) * 18;
+              (opponentModel.heatmap.get(toKey(target)) ?? 0) * 40 +
+              (opponentModel.timeHeatmap.get(`1:${toKey(target)}`) ?? 0) * 28;
+            if (lavaValue > bestLavaValue) {
+              bestLavaValue = lavaValue;
+              bestLavaPath = path;
+              bestLavaTarget = target;
+            }
             candidates.push({
               path,
               skills: [{ skillId, step: 0, order: 0, target }],
@@ -1848,6 +1946,24 @@ export class AbilityRoom {
               selectedSkill: skillId,
             });
           }
+        }
+        // 최선의 용암 위치에 추가 보너스(경로 차단 가치 반영)
+        if (bestLavaTarget && bestLavaValue > 0) {
+          candidates.push({
+            path: bestLavaPath,
+            skills: [{ skillId, step: 0, order: 0, target: bestLavaTarget }],
+            score:
+              this.scorePathCoverageAgainstModel(
+                bot.position,
+                bestLavaPath,
+                opponent.position,
+                opponentModel,
+              ) +
+              bestLavaValue +
+              180,
+            reason: `inferno_field:best:${bestLavaTarget.row},${bestLavaTarget.col}`,
+            selectedSkill: skillId,
+          });
         }
         continue;
       }
