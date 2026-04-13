@@ -2028,101 +2028,18 @@ export function LobbyScreen({
     .filter(Boolean);
 
   const syncAccountSummary = useCallback(() => {
-    return refreshAccountSummary().then(
-      ({
-        nickname,
-
-        equippedSkin,
-
-        equippedBoardSkin,
-
-        ownedSkins,
-        ownedBoardSkins,
-
-        wins,
-
-        losses,
-
-        tokens,
-
-        dailyRewardWins,
-
-        dailyRewardTokens,
-
-        achievements,
-      }) => {
-        setAuthState({
-          ready: true,
-
-          userId: authUserId,
-
-          accessToken: useGameStore.getState().authAccessToken,
-
-          isGuestUser,
-
-          nickname,
-
-          equippedSkin,
-
-          equippedBoardSkin,
-
-          ownedSkins,
-          ownedBoardSkins,
-
-          wins,
-
-          losses,
-
-          tokens,
-
-          dailyRewardWins,
-
-          dailyRewardTokens,
-
-          achievements,
-        });
-
-        lastRewardSyncDayRef.current = getUtcDayKey();
-      },
-    );
-  }, [authUserId, isGuestUser, setAuthState]);
+    return refreshAccountSummary().then((profile) => {
+      applyProfileToStore(profile, setAuthState);
+      lastRewardSyncDayRef.current = getUtcDayKey();
+    });
+  }, [setAuthState]);
 
   const handleOpenSettings = useCallback(() => {
     setIsSettingsOpen(true);
-    void refreshAccountSummary({ force: true }).then(
-      ({
-        nickname,
-        equippedSkin,
-        equippedBoardSkin,
-        ownedSkins,
-        ownedBoardSkins,
-        wins,
-        losses,
-        tokens,
-        dailyRewardWins,
-        dailyRewardTokens,
-        achievements,
-      }) => {
-        setAuthState({
-          ready: true,
-          userId: authUserId,
-          accessToken: useGameStore.getState().authAccessToken,
-          isGuestUser,
-          nickname,
-          equippedSkin,
-          equippedBoardSkin,
-          ownedSkins,
-          ownedBoardSkins,
-          wins,
-          losses,
-          tokens,
-          dailyRewardWins,
-          dailyRewardTokens,
-          achievements,
-        });
-      },
-    );
-  }, [authUserId, isGuestUser, setAuthState]);
+    void refreshAccountSummary({ force: true }).then((profile) => {
+      applyProfileToStore(profile, setAuthState);
+    });
+  }, [setAuthState]);
 
   const handleClaimAchievement = useCallback(
     async (achievementId: string) => {
@@ -2800,18 +2717,28 @@ export function LobbyScreen({
     return socket;
   };
 
-  const buildPlayerPayload = async () => ({
-    nickname: getNick(),
+  const ensureMatchmakingProfile = useCallback(async () => {
+    const profile = await refreshAccountSummary({ force: true });
+    applyProfileToStore(profile, setAuthState);
+    return profile;
+  }, [setAuthState]);
+
+  const buildPlayerPayloadFromProfile = async (profile?: AccountProfile) => ({
+    nickname: profile?.nickname ?? getNick(),
 
     auth: await getSocketAuthPayload(),
 
-    pieceSkin: useGameStore.getState().pieceSkin,
-    boardSkin: useGameStore.getState().boardSkin,
+    pieceSkin: profile?.equippedSkin ?? useGameStore.getState().pieceSkin,
+    boardSkin: profile?.equippedBoardSkin ?? useGameStore.getState().boardSkin,
   });
 
-  const buildAbilityPlayerPayload = async () => ({
-    ...(await buildPlayerPayload()),
-    equippedSkills: useGameStore.getState().abilityLoadout,
+  const buildAbilityPlayerPayloadFromProfile = async (
+    profile?: AccountProfile,
+  ) => ({
+    ...(await buildPlayerPayloadFromProfile(profile)),
+    equippedSkills:
+      profile?.equippedAbilitySkills ??
+      useGameStore.getState().abilityLoadout,
   });
 
   const handleCreateRoom = async () => {
@@ -2820,9 +2747,18 @@ export function LobbyScreen({
 
     setMatchType("friend");
 
-    const socket = startSocket();
-
-    socket.emit("create_room", await buildPlayerPayload());
+    try {
+      const profile = await ensureMatchmakingProfile();
+      const socket = startSocket();
+      socket.emit("create_room", await buildPlayerPayloadFromProfile(profile));
+    } catch {
+      setIsMatchmaking(false);
+      setError(
+        lang === "en"
+          ? "Unable to load account data. Please try again."
+          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    }
   };
 
   const handleCreateAbilityRoom = async () => {
@@ -2831,9 +2767,21 @@ export function LobbyScreen({
 
     setMatchType("friend");
 
-    const socket = startSocket();
-
-    socket.emit("create_ability_room", await buildAbilityPlayerPayload());
+    try {
+      const profile = await ensureMatchmakingProfile();
+      const socket = startSocket();
+      socket.emit(
+        "create_ability_room",
+        await buildAbilityPlayerPayloadFromProfile(profile),
+      );
+    } catch {
+      setIsMatchmaking(false);
+      setError(
+        lang === "en"
+          ? "Unable to load account data. Please try again."
+          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    }
   };
 
   const handleJoinRoom = async () => {
@@ -2850,13 +2798,21 @@ export function LobbyScreen({
 
     setMatchType("friend");
 
-    const socket = startSocket();
-
-    socket.emit("join_room", {
-      code: normalizedJoinCode,
-
-      ...(await buildPlayerPayload()),
-    });
+    try {
+      const profile = await ensureMatchmakingProfile();
+      const socket = startSocket();
+      socket.emit("join_room", {
+        code: normalizedJoinCode,
+        ...(await buildPlayerPayloadFromProfile(profile)),
+      });
+    } catch {
+      setIsMatchmaking(false);
+      setError(
+        lang === "en"
+          ? "Unable to load account data. Please try again."
+          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    }
   };
 
   const handleJoinAbilityRoom = async () => {
@@ -2873,13 +2829,21 @@ export function LobbyScreen({
 
     setMatchType("friend");
 
-    const socket = startSocket();
-
-    socket.emit("join_ability_room", {
-      code: normalizedJoinCode,
-
-      ...(await buildAbilityPlayerPayload()),
-    });
+    try {
+      const profile = await ensureMatchmakingProfile();
+      const socket = startSocket();
+      socket.emit("join_ability_room", {
+        code: normalizedJoinCode,
+        ...(await buildAbilityPlayerPayloadFromProfile(profile)),
+      });
+    } catch {
+      setIsMatchmaking(false);
+      setError(
+        lang === "en"
+          ? "Unable to load account data. Please try again."
+          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    }
   };
 
   const handleFriendBattleModeChange = (nextMode: FriendBattleMode) => {
@@ -2915,9 +2879,19 @@ export function LobbyScreen({
 
     setMatchType("random");
 
-    const socket = startSocket();
-
-    socket.emit("join_random", await buildPlayerPayload());
+    try {
+      const profile = await ensureMatchmakingProfile();
+      const socket = startSocket();
+      socket.emit("join_random", await buildPlayerPayloadFromProfile(profile));
+    } catch {
+      setIsMatchmaking(false);
+      setMatchType(null);
+      setError(
+        lang === "en"
+          ? "Unable to load account data. Please try again."
+          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    }
   };
 
   const handleCancelRandom = () => {
@@ -3043,13 +3017,23 @@ export function LobbyScreen({
 
     setMatchType("ai");
 
-    const socket = startSocket();
-
-    socket.emit("join_ai", {
-      ...(await buildPlayerPayload()),
-
-      tutorialPending,
-    });
+    try {
+      const profile = await ensureMatchmakingProfile();
+      const socket = startSocket();
+      socket.emit("join_ai", {
+        ...(await buildPlayerPayloadFromProfile(profile)),
+        tutorialPending,
+      });
+    } catch {
+      setIsAiTutorialQueueing(false);
+      setIsMatchmaking(false);
+      setMatchType(null);
+      setError(
+        lang === "en"
+          ? "Unable to load account data. Please try again."
+          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    }
   };
 
   const handleCancelAi = () => {
@@ -3108,9 +3092,19 @@ export function LobbyScreen({
 
     setMatchType("coop");
 
-    const socket = startSocket();
-
-    socket.emit("join_coop", await buildPlayerPayload());
+    try {
+      const profile = await ensureMatchmakingProfile();
+      const socket = startSocket();
+      socket.emit("join_coop", await buildPlayerPayloadFromProfile(profile));
+    } catch {
+      setIsMatchmaking(false);
+      setMatchType(null);
+      setError(
+        lang === "en"
+          ? "Unable to load account data. Please try again."
+          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    }
   };
 
   const handleTwoVsTwoMatch = async () => {
@@ -3119,9 +3113,19 @@ export function LobbyScreen({
 
     setMatchType("2v2");
 
-    const socket = startSocket();
-
-    socket.emit("join_2v2", await buildPlayerPayload());
+    try {
+      const profile = await ensureMatchmakingProfile();
+      const socket = startSocket();
+      socket.emit("join_2v2", await buildPlayerPayloadFromProfile(profile));
+    } catch {
+      setIsMatchmaking(false);
+      setMatchType(null);
+      setError(
+        lang === "en"
+          ? "Unable to load account data. Please try again."
+          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    }
   };
 
   const handleAbilityMatch = async () => {
@@ -3132,13 +3136,25 @@ export function LobbyScreen({
     setIsMatchmaking(true);
     setIsAbilityTrainingQueueing(false);
 
-    const socket = startSocket();
-
-    socket.emit("join_ability", {
-      ...(await buildPlayerPayload()),
-
-      equippedSkills: abilityLoadout,
-    });
+    try {
+      const profile = await ensureMatchmakingProfile();
+      const socket = startSocket();
+      socket.emit("join_ability", {
+        ...(await buildPlayerPayloadFromProfile(profile)),
+        equippedSkills:
+          profile.equippedAbilitySkills ??
+          useGameStore.getState().abilityLoadout,
+      });
+    } catch {
+      setIsMatchmaking(false);
+      setIsAbilityTrainingQueueing(false);
+      setMatchType(null);
+      setError(
+        lang === "en"
+          ? "Unable to load account data. Please try again."
+          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    }
   };
 
   const handleAbilityTraining = async () => {
@@ -3149,14 +3165,26 @@ export function LobbyScreen({
     setIsMatchmaking(true);
     setIsAbilityTrainingQueueing(true);
 
-    const socket = startSocket();
-
-    socket.emit("join_ability", {
-      ...(await buildPlayerPayload()),
-
-      equippedSkills: abilityLoadout,
-      training: true,
-    });
+    try {
+      const profile = await ensureMatchmakingProfile();
+      const socket = startSocket();
+      socket.emit("join_ability", {
+        ...(await buildPlayerPayloadFromProfile(profile)),
+        equippedSkills:
+          profile.equippedAbilitySkills ??
+          useGameStore.getState().abilityLoadout,
+        training: true,
+      });
+    } catch {
+      setIsMatchmaking(false);
+      setIsAbilityTrainingQueueing(false);
+      setMatchType(null);
+      setError(
+        lang === "en"
+          ? "Unable to load account data. Please try again."
+          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+      );
+    }
   };
 
   const handleCancelAbility = () => {
