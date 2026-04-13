@@ -1725,6 +1725,19 @@ export class AbilityRoom {
       }
 
       if (skillId === 'quantum_shift') {
+        // 고비용 공격/방어 스킬이 함께 장착된 경우 마나낭비 패널티 부여
+        const quantumHighCostMax = bot.equippedSkills
+          .filter((s) => {
+            if (s === skillId) return false;
+            if (s === 'chronos_time_rewind') return false;
+            return ABILITY_SKILL_COSTS[s] > ABILITY_SKILL_COSTS[skillId];
+          })
+          .reduce((max, s) => Math.max(max, ABILITY_SKILL_COSTS[s]), 0);
+        // 6코→270, 8코→360, 10코→450
+        const quantumManaWastePenalty = quantumHighCostMax > 0
+          ? Math.round(quantumHighCostMax * 45)
+          : 0;
+
         for (const target of getAdjacentBlinkTargets(
           bot.position,
           this.obstacles,
@@ -1738,11 +1751,13 @@ export class AbilityRoom {
             pathPoints,
             obstacles: this.obstacles,
           });
-          candidates.push(
-            this.scoreBotActionCandidate(bot, opponent, blinkPath, [
-              { skillId, step: 0, order: 0, target },
-            ], opponentModel, `quantum_shift:${target.row},${target.col}`),
-          );
+          const base = this.scoreBotActionCandidate(bot, opponent, blinkPath, [
+            { skillId, step: 0, order: 0, target },
+          ], opponentModel, `quantum_shift:${target.row},${target.col}`);
+          candidates.push({
+            ...base,
+            score: base.score - quantumManaWastePenalty,
+          });
         }
         continue;
       }
