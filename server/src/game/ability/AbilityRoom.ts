@@ -1766,19 +1766,23 @@ export class AbilityRoom {
     }
 
     // ── 오로라힐 마나 모으기 하드 규칙 ──────────────────────────────────
-    // aurora_heal은 HP를 최대 3까지 회복 → HP≤2일 때만 효과가 있음
+    // aurora_heal은 HP를 최대 5(플레이어 최대 HP)까지 1 회복
     // 자신 HP에 따라 마나 적립 패턴 진입 여부를 결정:
     //   HP = 1: 항상 적립 (생존 최우선)
-    //   HP = 2: 70% 확률로 적립
-    //   HP ≥ 3: 적립 안 함 (힐 효과 없음)
+    //   HP = 2: 80% 확률로 적립
+    //   HP = 3: 55% 확률로 적립
+    //   HP = 4: 25% 확률로 적립
+    //   HP = 5: 적립 안 함 (이미 만피)
     if (
       bot.equippedSkills.includes('aurora_heal') &&
       !bot.equippedSkills.includes('cosmic_bigbang') &&
       bot.mana < ABILITY_SKILL_COSTS.aurora_heal &&
-      bot.hp <= 2
+      bot.hp < ABILITY_STARTING_HP
     ) {
       if (bot.hp <= 1) return [];
-      if (Math.random() < 0.7) return [];
+      if (bot.hp === 2 && Math.random() < 0.8) return [];
+      if (bot.hp === 3 && Math.random() < 0.55) return [];
+      if (bot.hp === 4 && Math.random() < 0.25) return [];
     }
 
     const candidates: BotActionCandidate[] = [];
@@ -1807,10 +1811,10 @@ export class AbilityRoom {
       if (skillId === 'chronos_time_rewind') continue;
 
       if (skillId === 'aurora_heal') {
-        // aurora_heal은 HP를 최대 3까지만 회복 → HP≤2일 때만 의미 있음
-        if (bot.hp > 2) continue;
+        // aurora_heal은 HP를 1 회복 (최대 5) → 만피면 사용 불필요
+        if (bot.hp >= ABILITY_STARTING_HP) continue;
         // HP가 낮을수록 높은 보너스 점수 (생존 가치)
-        const healBonus = bot.hp <= 1 ? 600 : 300;
+        const healBonus = bot.hp <= 1 ? 700 : bot.hp === 2 ? 450 : bot.hp === 3 ? 250 : 100;
         for (const path of basePaths) {
           const base = this.scoreBotActionCandidate(
             bot,

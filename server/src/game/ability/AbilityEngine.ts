@@ -554,11 +554,11 @@ export function resolveAbilityRound(params: {
       const heals: AbilityHealEvent[] = [];
       if (color === 'red') {
         redMana = spendMana(casterMana, reservation.skillId);
-        redHp = Math.min(3, redHp + 1);
+        redHp = Math.min(5, redHp + 1);
         heals.push({ color: 'red', newHp: redHp, position: { ...currentPos } });
       } else {
         blueMana = spendMana(casterMana, reservation.skillId);
-        blueHp = Math.min(3, blueHp + 1);
+        blueHp = Math.min(5, blueHp + 1);
         heals.push({ color: 'blue', newHp: blueHp, position: { ...currentPos } });
       }
       applyDamages(
