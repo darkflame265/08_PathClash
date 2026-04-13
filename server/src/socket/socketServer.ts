@@ -143,6 +143,27 @@ export function initSocketServer(io: Server): void {
     pieceSkin: PieceSkin;
     boardSkin: BoardSkin;
   } => {
+    const commonSkins: PieceSkin[] = [
+      'classic',
+      'plasma',
+      'gold_core',
+      'neon_pulse',
+      'inferno',
+      'quantum',
+      'cosmic',
+      'arc_reactor',
+      'electric_core',
+    ];
+    const legendarySkins: PieceSkin[] = [
+      'atomic',
+      'chronos',
+      'wizard',
+      'sun',
+    ];
+    const useLegendarySkin = Math.random() < 0.1;
+    const skinPool = useLegendarySkin ? legendarySkins : commonSkins;
+    const pieceSkin =
+      skinPool[Math.floor(Math.random() * skinPool.length)] ?? 'classic';
     const nickname =
       FAKE_RANDOM_NICKNAMES[
         Math.floor(Math.random() * FAKE_RANDOM_NICKNAMES.length)
@@ -156,7 +177,7 @@ export function initSocketServer(io: Server): void {
         wins: Math.floor(Math.random() * 21),
         losses: Math.floor(Math.random() * 21),
       },
-      pieceSkin: 'classic',
+      pieceSkin,
       boardSkin: 'classic',
     };
   };

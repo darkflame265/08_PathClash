@@ -92,6 +92,26 @@ function initSocketServer(io) {
         }
     };
     const createDisguisedRandomProfile = (profile) => {
+        const commonSkins = [
+            'classic',
+            'plasma',
+            'gold_core',
+            'neon_pulse',
+            'inferno',
+            'quantum',
+            'cosmic',
+            'arc_reactor',
+            'electric_core',
+        ];
+        const legendarySkins = [
+            'atomic',
+            'chronos',
+            'wizard',
+            'sun',
+        ];
+        const useLegendarySkin = Math.random() < 0.1;
+        const skinPool = useLegendarySkin ? legendarySkins : commonSkins;
+        const pieceSkin = skinPool[Math.floor(Math.random() * skinPool.length)] ?? 'classic';
         const nickname = fakeRandomNicknames_1.FAKE_RANDOM_NICKNAMES[Math.floor(Math.random() * fakeRandomNicknames_1.FAKE_RANDOM_NICKNAMES.length)];
         const fakeId = `${randomHex(8)}-${randomHex(4)}-${randomHex(4)}-${randomHex(4)}-${randomHex(12)}`;
         return {
@@ -102,7 +122,7 @@ function initSocketServer(io) {
                 wins: Math.floor(Math.random() * 21),
                 losses: Math.floor(Math.random() * 21),
             },
-            pieceSkin: 'classic',
+            pieceSkin,
             boardSkin: 'classic',
         };
     };

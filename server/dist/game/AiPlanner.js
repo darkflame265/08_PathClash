@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getLastAiAttackDebug = getLastAiAttackDebug;
 exports.createAiPath = createAiPath;
 const GameEngine_1 = require("./GameEngine");
 const DIRECTIONS = [
@@ -9,43 +10,327 @@ const DIRECTIONS = [
     { row: 0, col: 1 },
 ];
 const RANDOM_PATTERN_CHANCE = 0.5;
-const DUAL_ESCAPE_PRESSURE_FORCE_CHANCE = 0.7;
+const ATTACK_ENEMY_PATH_DEPTH_CAP = 7;
+const ATTACK_ENEMY_BEAM_WIDTH = 40;
+const ATTACK_ENEMY_CANDIDATE_LIMIT = 60;
+const ATTACK_AI_PATH_DEPTH_CAP = 7;
+const ATTACK_AI_BEAM_WIDTH = 56;
+const ATTACK_AI_CANDIDATE_LIMIT = 96;
+const ATTACK_DEBUG_TOP_CANDIDATES = 5;
+const AI_ATTACK_DEBUG_LOG = false;
+const ATTACK_SCORE_WEIGHTS = {
+    exactCollision: 240,
+    crossingCollision: 210,
+    adjacentPressure: 28,
+    sameTileDifferentTime: 18,
+    hotspotCoverage: 12,
+    timedHotspotCoverage: 14,
+    bottleneckCoverage: 30,
+    currentEscapeLanePressure: 40,
+    currentPositionPressure: 18,
+    centerControl: 10,
+    finalMobility: 9,
+    selfTrapPenalty: 30,
+    lowThreatPenalty: 120,
+    distanceMissPenalty: 6,
+    longDetourPenalty: 2,
+};
+let lastAiAttackDebug = null;
+function getLastAiAttackDebug() {
+    return lastAiAttackDebug;
+}
 function createAiPath(params) {
     const { role } = params;
     const rawPath = role === 'attacker'
-        ? createAttackerPath(params.selfPosition, params.opponentPosition, params.pathPoints, params.obstacles)
+        ? buildAttackPath(params.selfPosition, params.opponentPosition, params.pathPoints, params.obstacles)
         : createEscaperPath(params.selfPosition, params.opponentPosition, params.pathPoints, params.obstacles);
     return collapseImmediateBacktracks(params.selfPosition, rawPath).slice(0, params.pathPoints);
 }
-function createAttackerPath(selfPosition, targetPosition, pathPoints, obstacles) {
-    const openNeighbors = getOpenNeighbors(targetPosition, obstacles);
-    const onlyEscapeTile = openNeighbors.length === 1 ? openNeighbors[0] : null;
-    const escapeBlockPath = onlyEscapeTile
-        ? buildShortestPath(selfPosition, onlyEscapeTile, obstacles)
-        : [];
-    const dualEscapePressurePath = openNeighbors.length === 2
-        ? findPathCoveringTargets(selfPosition, openNeighbors, pathPoints, obstacles)
-        : null;
-    const canForceEscapeBlock = !!onlyEscapeTile &&
-        escapeBlockPath.length > 0 &&
-        escapeBlockPath.length <= pathPoints;
-    const canForceDualEscapePressure = !!dualEscapePressurePath && dualEscapePressurePath.length <= pathPoints;
-    const shouldForceDualEscapePressure = canForceDualEscapePressure &&
-        Math.random() < DUAL_ESCAPE_PRESSURE_FORCE_CHANCE;
-    const canForceHitThisTurn = canForceEscapeBlock || shouldForceDualEscapePressure;
-    if (!canForceHitThisTurn && Math.random() < RANDOM_PATTERN_CHANCE) {
-        return createRandomRoamPath(selfPosition, targetPosition, pathPoints, obstacles);
+function buildAttackPath(selfPosition, targetPosition, pathPoints, obstacles) {
+    const enemyCandidates = buildEnemyEscapeCandidates(targetPosition, selfPosition, pathPoints, obstacles);
+    const attackCandidates = buildAttackPathCandidates(selfPosition, targetPosition, pathPoints, obstacles);
+    const scoredCandidates = attackCandidates
+        .map((candidate) => scoreAttackPathAgainstEnemyCandidates(selfPosition, targetPosition, candidate, enemyCandidates, obstacles))
+        .sort((left, right) => right.score - left.score);
+    const chosen = scoredCandidates[0];
+    const chosenPath = chosen
+        ? extendAttackPathToFullPoints(selfPosition, chosen.path, targetPosition, pathPoints, obstacles, enemyCandidates)
+        : buildShortestPath(selfPosition, targetPosition, obstacles).slice(0, pathPoints);
+    lastAiAttackDebug = {
+        enemyCandidatePathCount: enemyCandidates.candidates.length,
+        aiCandidatePathCount: attackCandidates.length,
+        chosenPath,
+        chosenPathScore: chosen?.score ?? 0,
+        topCandidates: scoredCandidates.slice(0, ATTACK_DEBUG_TOP_CANDIDATES).map((entry) => ({
+            path: entry.path,
+            score: entry.score,
+            exactHitCandidateCount: entry.exactHitCandidateCount,
+            crossingCandidateCount: entry.crossingCandidateCount,
+            hotspotCoverage: entry.hotspotCoverage,
+            timedHotspotCoverage: entry.timedHotspotCoverage,
+            bottleneckCoverage: entry.bottleneckCoverage,
+            finalMobility: entry.finalMobility,
+        })),
+        highPriorityCells: enemyCandidates.highPriorityCells,
+    };
+    if (AI_ATTACK_DEBUG_LOG) {
+        console.debug('[ai-attack-debug]', lastAiAttackDebug);
     }
-    if (canForceEscapeBlock && onlyEscapeTile) {
-        return extendAttackerPathFromBase(selfPosition, escapeBlockPath, onlyEscapeTile, pathPoints, obstacles);
+    return chosenPath;
+}
+function buildEnemyEscapeCandidates(escaperPosition, attackerPosition, pathPoints, obstacles) {
+    const maxDepth = Math.min(pathPoints, ATTACK_ENEMY_PATH_DEPTH_CAP);
+    const seed = {
+        current: escaperPosition,
+        previous: null,
+        path: [],
+        visited: new Set([toKey(escaperPosition)]),
+        heuristic: scoreEnemyEscapeState(escaperPosition, attackerPosition, 0, obstacles),
+    };
+    let frontier = [seed];
+    const rawCandidates = [
+        {
+            path: [],
+            heuristic: seed.heuristic,
+            weight: 1,
+        },
+    ];
+    for (let depth = 1; depth <= maxDepth; depth++) {
+        const nextStates = [];
+        for (const state of frontier) {
+            const neighbors = getNeighbors(state.current, obstacles)
+                .filter((candidate) => !isSamePosition(candidate, state.previous))
+                .filter((candidate) => !state.visited.has(toKey(candidate)));
+            for (const neighbor of neighbors) {
+                const path = [...state.path, neighbor];
+                const visited = new Set(state.visited);
+                visited.add(toKey(neighbor));
+                const heuristic = scoreEnemyEscapeState(neighbor, attackerPosition, depth, obstacles) +
+                    path.length * 1.6;
+                const nextState = {
+                    current: neighbor,
+                    previous: state.current,
+                    path,
+                    visited,
+                    heuristic,
+                };
+                nextStates.push(nextState);
+                rawCandidates.push({
+                    path,
+                    heuristic,
+                    weight: 1,
+                });
+            }
+        }
+        frontier = nextStates
+            .sort((left, right) => right.heuristic - left.heuristic)
+            .slice(0, ATTACK_ENEMY_BEAM_WIDTH);
+        if (frontier.length === 0)
+            break;
     }
-    if (shouldForceDualEscapePressure && dualEscapePressurePath) {
-        return extendAttackerPathFromBase(selfPosition, dualEscapePressurePath, targetPosition, pathPoints, obstacles);
+    const deduped = dedupeWeightedCandidates(rawCandidates).sort((left, right) => right.heuristic - left.heuristic);
+    const candidates = deduped.slice(0, ATTACK_ENEMY_CANDIDATE_LIMIT).map((candidate, index) => ({
+        ...candidate,
+        weight: 1 + Math.max(0, ATTACK_ENEMY_CANDIDATE_LIMIT - index) * 0.04,
+    }));
+    const heatmap = new Map();
+    const timeHeatmap = new Map();
+    const bottleneckHeatmap = new Map();
+    for (const candidate of candidates) {
+        const sequence = [escaperPosition, ...candidate.path];
+        for (let step = 0; step < sequence.length; step++) {
+            const key = toKey(sequence[step]);
+            heatmap.set(key, (heatmap.get(key) ?? 0) + candidate.weight);
+            timeHeatmap.set(`${step}:${key}`, (timeHeatmap.get(`${step}:${key}`) ?? 0) + candidate.weight);
+            if (countOpenNeighbors(sequence[step], obstacles) <= 2) {
+                bottleneckHeatmap.set(key, (bottleneckHeatmap.get(key) ?? 0) + candidate.weight);
+            }
+        }
     }
-    const predictedEscapePath = predictEscaperPath(targetPosition, selfPosition, pathPoints, obstacles);
-    const predictedTargets = buildInterceptTargets(targetPosition, predictedEscapePath, obstacles);
-    const attackTarget = chooseBestInterceptTarget(selfPosition, predictedTargets, targetPosition, pathPoints, obstacles) ?? targetPosition;
-    return extendAttackerPathToFullPoints(selfPosition, attackTarget, pathPoints, obstacles);
+    const currentEscapeNeighbors = getOpenNeighbors(escaperPosition, obstacles);
+    const highPriorityCells = [...heatmap.entries()]
+        .sort((left, right) => right[1] - left[1])
+        .slice(0, 8)
+        .map(([key, count]) => ({ key, count: Number(count.toFixed(2)) }));
+    return {
+        candidates,
+        heatmap,
+        timeHeatmap,
+        bottleneckHeatmap,
+        currentEscapeNeighbors,
+        highPriorityCells,
+    };
+}
+function buildAttackPathCandidates(start, target, pathPoints, obstacles) {
+    const maxDepth = Math.min(pathPoints, ATTACK_AI_PATH_DEPTH_CAP);
+    const directPath = buildShortestPath(start, target, obstacles).slice(0, maxDepth);
+    const rawCandidates = [directPath];
+    let frontier = [
+        {
+            current: start,
+            previous: null,
+            path: [],
+            visited: new Set([toKey(start)]),
+            heuristic: 0,
+        },
+    ];
+    for (let depth = 1; depth <= maxDepth; depth++) {
+        const nextStates = [];
+        for (const state of frontier) {
+            const neighbors = getNeighbors(state.current, obstacles)
+                .filter((candidate) => !isSamePosition(candidate, state.previous))
+                .filter((candidate) => !state.visited.has(toKey(candidate)));
+            for (const neighbor of neighbors) {
+                const path = [...state.path, neighbor];
+                const visited = new Set(state.visited);
+                visited.add(toKey(neighbor));
+                const heuristic = state.heuristic +
+                    scoreAttackExpansionHeuristic(neighbor, target, depth, obstacles);
+                const nextState = {
+                    current: neighbor,
+                    previous: state.current,
+                    path,
+                    visited,
+                    heuristic,
+                };
+                nextStates.push(nextState);
+                rawCandidates.push(path);
+            }
+        }
+        frontier = nextStates
+            .sort((left, right) => right.heuristic - left.heuristic)
+            .slice(0, ATTACK_AI_BEAM_WIDTH);
+        if (frontier.length === 0)
+            break;
+    }
+    const deduped = new Map();
+    for (const candidate of rawCandidates) {
+        const normalized = collapseImmediateBacktracks(start, candidate);
+        if (normalized.length === 0)
+            continue;
+        const key = pathToKey(normalized);
+        if (!deduped.has(key)) {
+            deduped.set(key, normalized);
+        }
+    }
+    return [...deduped.values()].slice(0, ATTACK_AI_CANDIDATE_LIMIT);
+}
+function scoreAttackPathAgainstEnemyCandidates(start, targetPosition, candidatePath, enemyCandidates, obstacles) {
+    const aiSequence = [start, ...candidatePath];
+    const uniqueAiKeys = new Set(aiSequence.map((step) => toKey(step)));
+    let score = 0;
+    let exactHitCandidateCount = 0;
+    let crossingCandidateCount = 0;
+    for (const enemyCandidate of enemyCandidates.candidates) {
+        const enemySequence = [targetPosition, ...enemyCandidate.path];
+        let candidateThreatScore = 0;
+        let exactHit = false;
+        let crossingHit = false;
+        const maxSteps = Math.max(aiSequence.length, enemySequence.length);
+        for (let step = 0; step < maxSteps; step++) {
+            const aiCurrent = aiSequence[Math.min(step, aiSequence.length - 1)];
+            const aiPrev = step > 0 ? aiSequence[Math.min(step - 1, aiSequence.length - 1)] : aiSequence[0];
+            const enemyCurrent = enemySequence[Math.min(step, enemySequence.length - 1)];
+            const enemyPrev = step > 0
+                ? enemySequence[Math.min(step - 1, enemySequence.length - 1)]
+                : enemySequence[0];
+            if (sameCell(aiCurrent, enemyCurrent)) {
+                candidateThreatScore += ATTACK_SCORE_WEIGHTS.exactCollision;
+                exactHit = true;
+            }
+            else if (sameCell(aiPrev, enemyCurrent) && sameCell(aiCurrent, enemyPrev)) {
+                candidateThreatScore += ATTACK_SCORE_WEIGHTS.crossingCollision;
+                crossingHit = true;
+            }
+            else {
+                const distance = manhattan(aiCurrent, enemyCurrent);
+                if (distance === 1) {
+                    candidateThreatScore += ATTACK_SCORE_WEIGHTS.adjacentPressure;
+                }
+                else if (sameCell(aiCurrent, enemyPrev) || sameCell(aiPrev, enemyCurrent)) {
+                    candidateThreatScore += ATTACK_SCORE_WEIGHTS.sameTileDifferentTime;
+                }
+            }
+            const currentKey = toKey(aiCurrent);
+            candidateThreatScore +=
+                (enemyCandidates.timeHeatmap.get(`${step}:${currentKey}`) ?? 0) *
+                    ATTACK_SCORE_WEIGHTS.timedHotspotCoverage;
+        }
+        if (exactHit)
+            exactHitCandidateCount += 1;
+        if (crossingHit)
+            crossingCandidateCount += 1;
+        score += candidateThreatScore * enemyCandidate.weight;
+    }
+    const hotspotCoverage = sumHeat(uniqueAiKeys, enemyCandidates.heatmap);
+    const timedHotspotCoverage = aiSequence.reduce((sum, position, step) => {
+        return sum + (enemyCandidates.timeHeatmap.get(`${step}:${toKey(position)}`) ?? 0);
+    }, 0);
+    const bottleneckCoverage = sumHeat(uniqueAiKeys, enemyCandidates.bottleneckHeatmap);
+    const currentEscapeLanePressure = enemyCandidates.currentEscapeNeighbors.reduce((sum, neighbor) => sum + (uniqueAiKeys.has(toKey(neighbor)) ? 1 : 0), 0);
+    const currentPositionPressure = candidatePath.some((step) => manhattan(step, targetPosition) <= 1)
+        ? 1
+        : 0;
+    const finalPosition = candidatePath[candidatePath.length - 1] ?? start;
+    const finalMobility = countOpenNeighbors(finalPosition, obstacles);
+    const selfTrapPenalty = finalMobility <= 1 ? 1 : 0;
+    const centerControl = isEdge(finalPosition) ? 0 : 1;
+    const noThreatPenalty = exactHitCandidateCount === 0 &&
+        crossingCandidateCount === 0 &&
+        hotspotCoverage < 2
+        ? 1
+        : 0;
+    const distanceMissPenalty = Math.max(0, getMinDistanceToPath(finalPosition, enemyCandidates.candidates.flatMap((candidate) => candidate.path)) - 1);
+    score += hotspotCoverage * ATTACK_SCORE_WEIGHTS.hotspotCoverage;
+    score += timedHotspotCoverage * ATTACK_SCORE_WEIGHTS.timedHotspotCoverage;
+    score += bottleneckCoverage * ATTACK_SCORE_WEIGHTS.bottleneckCoverage;
+    score += currentEscapeLanePressure * ATTACK_SCORE_WEIGHTS.currentEscapeLanePressure;
+    score += currentPositionPressure * ATTACK_SCORE_WEIGHTS.currentPositionPressure;
+    score += centerControl * ATTACK_SCORE_WEIGHTS.centerControl;
+    score += finalMobility * ATTACK_SCORE_WEIGHTS.finalMobility;
+    score -= selfTrapPenalty * ATTACK_SCORE_WEIGHTS.selfTrapPenalty;
+    score -= noThreatPenalty * ATTACK_SCORE_WEIGHTS.lowThreatPenalty;
+    score -= distanceMissPenalty * ATTACK_SCORE_WEIGHTS.distanceMissPenalty;
+    score -= Math.max(0, candidatePath.length - 5) * ATTACK_SCORE_WEIGHTS.longDetourPenalty;
+    return {
+        path: candidatePath,
+        score,
+        exactHitCandidateCount,
+        crossingCandidateCount,
+        hotspotCoverage,
+        timedHotspotCoverage,
+        bottleneckCoverage,
+        finalMobility,
+    };
+}
+function extendAttackPathToFullPoints(start, basePath, target, pathPoints, obstacles, enemyCandidates) {
+    const path = [...basePath].slice(0, pathPoints);
+    if (path.length >= pathPoints)
+        return path;
+    let current = path[path.length - 1] ?? start;
+    let previous = path.length > 1 ? path[path.length - 2] : null;
+    while (path.length < pathPoints) {
+        const candidates = getNeighbors(current, obstacles)
+            .filter((candidate) => !isSamePosition(candidate, previous))
+            .filter((candidate) => !path.some((step) => sameCell(step, candidate)));
+        if (candidates.length === 0)
+            break;
+        const nextMove = candidates
+            .map((candidate) => ({
+            candidate,
+            score: (enemyCandidates.heatmap.get(toKey(candidate)) ?? 0) * 5 +
+                (enemyCandidates.bottleneckHeatmap.get(toKey(candidate)) ?? 0) * 8 -
+                manhattan(candidate, target) * 0.8 +
+                countOpenNeighbors(candidate, obstacles) * 1.4,
+        }))
+            .sort((left, right) => right.score - left.score)[0]?.candidate;
+        if (!nextMove)
+            break;
+        path.push(nextMove);
+        previous = current;
+        current = nextMove;
+    }
+    return path;
 }
 function createEscaperPath(selfPosition, threatPosition, pathPoints, obstacles) {
     if (Math.random() < RANDOM_PATTERN_CHANCE) {
@@ -130,35 +415,6 @@ function buildShortestPath(from, to, obstacles) {
     }
     return reversedPath.reverse();
 }
-function chooseAttackerExtension(current, previous, target, obstacles) {
-    const candidates = getNeighbors(current, obstacles).filter((candidate) => !isSamePosition(candidate, previous));
-    if (candidates.length === 0)
-        return null;
-    candidates.sort((a, b) => manhattan(a, target) - manhattan(b, target));
-    const bestDistance = manhattan(candidates[0], target);
-    const bestMoves = candidates.filter((candidate) => manhattan(candidate, target) === bestDistance);
-    return bestMoves[Math.floor(Math.random() * bestMoves.length)] ?? null;
-}
-function extendAttackerPathToFullPoints(start, target, pathPoints, obstacles) {
-    const path = buildShortestPath(start, target, obstacles).slice(0, pathPoints);
-    return extendAttackerPathFromBase(start, path, target, pathPoints, obstacles);
-}
-function extendAttackerPathFromBase(start, basePath, target, pathPoints, obstacles) {
-    const path = [...basePath].slice(0, pathPoints);
-    if (path.length === pathPoints)
-        return path;
-    let current = path.length > 0 ? path[path.length - 1] : start;
-    let previous = path.length > 1 ? path[path.length - 2] : null;
-    while (path.length < pathPoints) {
-        const nextMove = chooseAttackerExtension(current, previous, target, obstacles);
-        if (!nextMove)
-            break;
-        path.push(nextMove);
-        previous = current;
-        current = nextMove;
-    }
-    return path;
-}
 function getNeighbors(position, obstacles) {
     return DIRECTIONS
         .map((direction) => ({
@@ -166,51 +422,6 @@ function getNeighbors(position, obstacles) {
         col: position.col + direction.col,
     }))
         .filter((next) => (0, GameEngine_1.isValidMove)(position, next) && !isBlocked(next, obstacles));
-}
-function getOpenNeighbors(position, obstacles) {
-    return getNeighbors(position, obstacles);
-}
-function findPathCoveringTargets(start, targets, pathPoints, obstacles) {
-    const targetKeys = new Set(targets.map((target) => toKey(target)));
-    let bestPath = null;
-    const dfs = (current, previous, remaining, path, covered, visited) => {
-        if (covered.size === targetKeys.size) {
-            if (!bestPath || path.length < bestPath.length) {
-                bestPath = [...path];
-            }
-            return;
-        }
-        if (remaining === 0)
-            return;
-        if (bestPath && path.length >= bestPath.length)
-            return;
-        const candidates = getNeighbors(current, obstacles)
-            .filter((candidate) => !isSamePosition(candidate, previous))
-            .sort((a, b) => {
-            const aScore = targets.reduce((sum, target) => sum + manhattan(a, target), 0);
-            const bScore = targets.reduce((sum, target) => sum + manhattan(b, target), 0);
-            return aScore - bScore;
-        });
-        for (const candidate of candidates) {
-            const key = toKey(candidate);
-            if (visited.has(key))
-                continue;
-            const nextCovered = new Set(covered);
-            if (targetKeys.has(key))
-                nextCovered.add(key);
-            const nextVisited = new Set(visited);
-            nextVisited.add(key);
-            path.push(candidate);
-            dfs(candidate, current, remaining - 1, path, nextCovered, nextVisited);
-            path.pop();
-        }
-    };
-    const initialCovered = new Set();
-    const startKey = toKey(start);
-    if (targetKeys.has(startKey))
-        initialCovered.add(startKey);
-    dfs(start, null, pathPoints, [], initialCovered, new Set([startKey]));
-    return bestPath;
 }
 function createRandomRoamPath(selfPosition, referencePosition, pathPoints, obstacles) {
     const randomTarget = chooseRandomReachableTarget(selfPosition, referencePosition, obstacles);
@@ -260,77 +471,39 @@ function chooseRandomReachableTarget(selfPosition, referencePosition, obstacles)
         (Math.random() - 0.5));
     return weighted[0] ?? shuffled[0] ?? null;
 }
-function predictEscaperPath(escaperPosition, attackerPosition, pathPoints, obstacles) {
-    const path = [];
-    let current = escaperPosition;
-    let previous = null;
-    for (let step = 0; step < pathPoints; step++) {
-        const candidates = getNeighbors(current, obstacles).filter((candidate) => !isSamePosition(candidate, previous));
-        if (candidates.length === 0)
-            break;
-        const best = candidates
-            .map((candidate) => ({
-            candidate,
-            score: manhattan(candidate, attackerPosition) * 10 +
-                countOpenNeighbors(candidate, obstacles) * 1.2 +
-                (isEdge(candidate) ? -0.5 : 0.35),
-        }))
-            .sort((a, b) => b.score - a.score)[0]?.candidate;
-        if (!best)
-            break;
-        path.push(best);
-        previous = current;
-        current = best;
-    }
-    return path;
-}
 function predictAttackerPath(attackerPosition, targetPosition, pathPoints, obstacles) {
-    const directPath = buildShortestPath(attackerPosition, targetPosition, obstacles).slice(0, pathPoints);
-    if (directPath.length === pathPoints)
-        return directPath;
-    const path = [...directPath];
-    let current = path.length > 0 ? path[path.length - 1] : attackerPosition;
-    let previous = path.length > 1 ? path[path.length - 2] : null;
-    while (path.length < pathPoints) {
-        const next = chooseAttackerExtension(current, previous, targetPosition, obstacles);
-        if (!next)
-            break;
-        path.push(next);
-        previous = current;
-        current = next;
-    }
-    return path;
+    return buildAttackPath(attackerPosition, targetPosition, pathPoints, obstacles).slice(0, pathPoints);
 }
-function buildInterceptTargets(currentTarget, predictedEscapePath, obstacles) {
-    const ordered = [currentTarget, ...predictedEscapePath];
-    const extras = predictedEscapePath.flatMap((position) => getNeighbors(position, obstacles));
-    const unique = new Map();
-    for (const position of [...ordered, ...extras]) {
-        unique.set(toKey(position), position);
-    }
-    return [...unique.values()];
+function scoreEnemyEscapeState(candidate, attackerPosition, depth, obstacles) {
+    return (manhattan(candidate, attackerPosition) * 10 +
+        countOpenNeighbors(candidate, obstacles) * 4.5 +
+        (isEdge(candidate) ? -1.2 : 1.8) -
+        depth * 0.35 +
+        Math.random() * 0.25);
 }
-function chooseBestInterceptTarget(selfPosition, targets, fallbackTarget, pathPoints, obstacles) {
-    const scoredTargets = targets
-        .map((target, index) => {
-        const path = buildShortestPath(selfPosition, target, obstacles);
-        if (path.length === 0 && !isSamePosition(selfPosition, target))
-            return null;
-        const reachableNow = path.length > 0 && path.length <= pathPoints;
-        const distance = path.length === 0 ? 0 : path.length;
-        const futureBias = index > 0 ? 1.8 : 0;
-        const fallbackDistance = manhattan(target, fallbackTarget);
-        return {
-            target,
-            score: (reachableNow ? 40 : 0) +
-                futureBias * 10 -
-                distance * 2.2 -
-                fallbackDistance * 0.9,
-        };
-    })
-        .filter((entry) => !!entry)
-        .sort((a, b) => b.score - a.score);
-    return scoredTargets[0]?.target ?? null;
+function scoreAttackExpansionHeuristic(candidate, targetPosition, depth, obstacles) {
+    return (countOpenNeighbors(candidate, obstacles) * 2.4 +
+        (isEdge(candidate) ? -0.4 : 0.9) -
+        manhattan(candidate, targetPosition) * 1.2 -
+        depth * 0.15);
+}
+function dedupeWeightedCandidates(candidates) {
+    const byKey = new Map();
+    for (const candidate of candidates) {
+        const key = pathToKey(candidate.path);
+        const existing = byKey.get(key);
+        if (!existing || candidate.heuristic > existing.heuristic) {
+            byKey.set(key, candidate);
+        }
+    }
+    return [...byKey.values()];
+}
+function sumHeat(keys, heatmap) {
+    let total = 0;
+    for (const key of keys) {
+        total += heatmap.get(key) ?? 0;
+    }
+    return total;
 }
 function getMinDistanceToPath(position, path) {
     if (path.length === 0)
@@ -338,7 +511,10 @@ function getMinDistanceToPath(position, path) {
     return Math.min(...path.map((step) => manhattan(position, step)));
 }
 function countOpenNeighbors(position, obstacles) {
-    return getOpenNeighbors(position, obstacles).length;
+    return getNeighbors(position, obstacles).length;
+}
+function getOpenNeighbors(position, obstacles) {
+    return getNeighbors(position, obstacles);
 }
 function manhattan(a, b) {
     return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
@@ -349,11 +525,17 @@ function isEdge(position) {
 function isSamePosition(a, b) {
     return !!b && a.row === b.row && a.col === b.col;
 }
+function sameCell(a, b) {
+    return a.row === b.row && a.col === b.col;
+}
 function isBlocked(position, obstacles) {
     return obstacles.some((obstacle) => isSamePosition(position, obstacle));
 }
 function toKey(position) {
     return `${position.row},${position.col}`;
+}
+function pathToKey(path) {
+    return path.map((position) => toKey(position)).join('>');
 }
 function collapseImmediateBacktracks(start, path) {
     const normalized = [];

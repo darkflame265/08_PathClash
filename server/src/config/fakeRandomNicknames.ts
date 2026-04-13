@@ -660,6 +660,8 @@ export const FAKE_RANDOM_NICKNAMES = [
   "지킬게있고하이드게있지",
   "매트릭스3단",
   "난여자친구가없다",
+  "뭐함ㅋ",
+  "교회는영어로처치",
 ] as const;
 
 export type FakeRandomNickname = (typeof FAKE_RANDOM_NICKNAMES)[number];
