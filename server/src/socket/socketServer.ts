@@ -174,8 +174,8 @@ export function initSocketServer(io: Server): void {
       displayId: fakeId,
       userId: null,
       stats: {
-        wins: Math.floor(Math.random() * 21),
-        losses: Math.floor(Math.random() * 21),
+        wins: Math.floor(Math.random() * 101),
+        losses: Math.floor(Math.random() * 101),
       },
       pieceSkin,
       boardSkin: 'classic',
