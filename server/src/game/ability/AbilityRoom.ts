@@ -1688,9 +1688,9 @@ export class AbilityRoom {
     const candidates: BotActionCandidate[] = [];
     const basePaths = selfModel.paths.slice(0, 5);
 
-    // 4코 스킬 연속 사용 여부 체크
-    const usedFourCostLastTurn =
-      (this.botLastFourCostSkillTurn.get(bot.color) ?? -1) === this.turn - 1;
+    // 4코 스킬 최근 4턴 이내 사용 여부 체크 (쿨다운 4턴)
+    const lastFourCostTurn = this.botLastFourCostSkillTurn.get(bot.color) ?? -99;
+    const usedFourCostLastTurn = this.turn - lastFourCostTurn <= 4;
 
     // 양자도약 예외: 상대가 벽력일섬 보유 + 같은 행/열이면 연속 사용 허용
     const opponentHasBlitz = opponent.equippedSkills.includes('electric_blitz');
