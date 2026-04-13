@@ -36,6 +36,7 @@ import {
   purchaseSkinWithTokens,
   purchaseBoardSkinWithTokens,
   refreshAccountSummary,
+  syncEquippedAbilitySkills,
   syncNickname,
   type PlayerAchievementState,
   resolveUpgradeFlowAfterRedirect,
@@ -2718,6 +2719,9 @@ export function LobbyScreen({
   };
 
   const ensureMatchmakingProfile = useCallback(async () => {
+    // 스킬 변경 사항이 DB에 반영되기 전에 매칭 버튼을 눌렀을 때를 대비해
+    // 현재 인메모리 로드아웃을 먼저 flush한 뒤 프로필을 가져온다.
+    await syncEquippedAbilitySkills(useGameStore.getState().abilityLoadout);
     const profile = await refreshAccountSummary({ force: true });
     applyProfileToStore(profile, setAuthState);
     return profile;
