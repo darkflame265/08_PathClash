@@ -8,7 +8,6 @@ const DIRECTIONS: Position[] = [
   { row: 0, col: 1 },
 ];
 
-const RANDOM_PATTERN_CHANCE = 0.5;
 const ATTACK_ENEMY_PATH_DEPTH_CAP = 7;
 const ATTACK_ENEMY_BEAM_WIDTH = 40;
 const ATTACK_ENEMY_CANDIDATE_LIMIT = 60;
@@ -16,7 +15,12 @@ const ATTACK_AI_PATH_DEPTH_CAP = 7;
 const ATTACK_AI_BEAM_WIDTH = 56;
 const ATTACK_AI_CANDIDATE_LIMIT = 96;
 const ATTACK_DEBUG_TOP_CANDIDATES = 5;
+const ESCAPE_PATH_DEPTH_CAP = 7;
+const ESCAPE_BEAM_WIDTH = 56;
+const ESCAPE_CANDIDATE_LIMIT = 96;
+const ESCAPE_DEBUG_TOP_CANDIDATES = 5;
 const AI_ATTACK_DEBUG_LOG = false;
+const AI_ESCAPE_DEBUG_LOG = false;
 
 const ATTACK_SCORE_WEIGHTS = {
   exactCollision: 240,
@@ -34,6 +38,26 @@ const ATTACK_SCORE_WEIGHTS = {
   lowThreatPenalty: 120,
   distanceMissPenalty: 6,
   longDetourPenalty: 2,
+} as const;
+
+const ESCAPE_SCORE_WEIGHTS = {
+  exactCollisionDanger: 260,
+  crossingCollisionDanger: 230,
+  adjacentDanger: 32,
+  sameTileDifferentTimeDanger: 22,
+  dangerHeat: 11,
+  timedDangerHeat: 15,
+  bottleneckDanger: 24,
+  threatLaneDanger: 36,
+  finalMobility: 16,
+  futureMobility: 9,
+  distanceFromThreat: 8,
+  centerFlexibility: 10,
+  cornerTrapPenalty: 26,
+  edgeTrapPenalty: 9,
+  bottleneckTrapPenalty: 22,
+  lowMobilityPenalty: 26,
+  directLinePenalty: 8,
 } as const;
 
 type CandidateState = {
@@ -61,6 +85,17 @@ type AttackPathScore = {
   finalMobility: number;
 };
 
+type EscapePathScore = {
+  path: Position[];
+  score: number;
+  exactDangerCount: number;
+  crossingDangerCount: number;
+  dangerExposure: number;
+  timedDangerExposure: number;
+  finalMobility: number;
+  futureMobility: number;
+};
+
 export interface AiAttackDebugData {
   enemyCandidatePathCount: number;
   aiCandidatePathCount: number;
@@ -79,10 +114,33 @@ export interface AiAttackDebugData {
   highPriorityCells: Array<{ key: string; count: number }>;
 }
 
+export interface AiEscapeDebugData {
+  escapeCandidatePathCount: number;
+  enemyAttackCandidateCount: number;
+  chosenPath: Position[];
+  chosenPathScore: number;
+  topCandidates: Array<{
+    path: Position[];
+    score: number;
+    exactDangerCount: number;
+    crossingDangerCount: number;
+    dangerExposure: number;
+    timedDangerExposure: number;
+    finalMobility: number;
+    futureMobility: number;
+  }>;
+  highDangerCells: Array<{ key: string; count: number }>;
+}
+
 let lastAiAttackDebug: AiAttackDebugData | null = null;
+let lastAiEscapeDebug: AiEscapeDebugData | null = null;
 
 export function getLastAiAttackDebug(): AiAttackDebugData | null {
   return lastAiAttackDebug;
+}
+
+export function getLastAiEscapeDebug(): AiEscapeDebugData | null {
+  return lastAiEscapeDebug;
 }
 
 export function createAiPath(params: {
@@ -523,77 +581,380 @@ function extendAttackPathToFullPoints(
 }
 
 function createEscaperPath(selfPosition: Position, threatPosition: Position, pathPoints: number, obstacles: Position[]): Position[] {
-  if (Math.random() < RANDOM_PATTERN_CHANCE) {
-    return createRandomRoamPath(selfPosition, threatPosition, pathPoints, obstacles);
-  }
-
-  const maxSpend = Math.max(1, pathPoints);
-  const spend = Math.floor(Math.random() * maxSpend) + 1;
-  const predictedThreatPath = predictAttackerPath(
+  const threatCandidates = buildThreatAttackCandidates(
     threatPosition,
     selfPosition,
     pathPoints,
     obstacles,
   );
-  const path: Position[] = [];
+  const escapeCandidates = buildEscapePathCandidates(
+    selfPosition,
+    threatPosition,
+    pathPoints,
+    obstacles,
+  );
+  const futureThreatCache = new Map<string, ReturnType<typeof buildThreatAttackCandidates>>();
 
-  let current = selfPosition;
-  let previous: Position | null = null;
-
-  for (let step = 0; step < spend; step++) {
-    const candidates = getNeighbors(current, obstacles).filter((candidate) => !isSamePosition(candidate, previous));
-    if (candidates.length === 0) break;
-
-    const scored = candidates
-      .map((candidate) => ({
+  const scoredCandidates = escapeCandidates
+    .map((candidate) =>
+      scoreEscapePathAgainstEnemyAttackCandidates(
+        selfPosition,
+        threatPosition,
         candidate,
-        score: scoreEscaperMove(
-          candidate,
-          threatPosition,
-          previous,
-          predictedThreatPath,
-          obstacles,
-        ),
-      }))
-      .sort((a, b) => b.score - a.score);
+        threatCandidates,
+        obstacles,
+        pathPoints,
+        futureThreatCache,
+      ),
+    )
+    .sort((left, right) => right.score - left.score);
 
-    const topScore = scored[0]?.score ?? 0;
-    const topMoves = scored.filter((item) => item.score >= topScore - 1.5);
-    const choice = topMoves[Math.floor(Math.random() * topMoves.length)]?.candidate;
-    if (!choice) break;
+  const topScore = scoredCandidates[0]?.score ?? 0;
+  const safePool = scoredCandidates
+    .filter((candidate) => candidate.score >= topScore - 10)
+    .slice(0, 5);
+  const chosen = chooseSafeEscapeCandidate(safePool) ?? scoredCandidates[0];
+  const chosenPath = chosen?.path ?? [];
 
-    path.push(choice);
-    previous = current;
-    current = choice;
+  lastAiEscapeDebug = {
+    escapeCandidatePathCount: escapeCandidates.length,
+    enemyAttackCandidateCount: threatCandidates.candidates.length,
+    chosenPath,
+    chosenPathScore: chosen?.score ?? 0,
+    topCandidates: scoredCandidates.slice(0, ESCAPE_DEBUG_TOP_CANDIDATES).map((entry) => ({
+      path: entry.path,
+      score: entry.score,
+      exactDangerCount: entry.exactDangerCount,
+      crossingDangerCount: entry.crossingDangerCount,
+      dangerExposure: entry.dangerExposure,
+      timedDangerExposure: entry.timedDangerExposure,
+      finalMobility: entry.finalMobility,
+      futureMobility: entry.futureMobility,
+    })),
+    highDangerCells: threatCandidates.highDangerCells,
+  };
+
+  if (AI_ESCAPE_DEBUG_LOG) {
+    console.debug('[ai-escape-debug]', lastAiEscapeDebug);
   }
 
-  return path;
+  return chosenPath;
 }
 
-function scoreEscaperMove(
-  candidate: Position,
-  threat: Position,
-  previous: Position | null,
-  predictedThreatPath: Position[],
+function buildThreatAttackCandidates(
+  attackerPosition: Position,
+  targetPosition: Position,
+  pathPoints: number,
   obstacles: Position[],
-): number {
-  const distance = manhattan(candidate, threat);
-  const edgePenalty = isEdge(candidate) ? 0.5 : 0;
-  const centerBias = isEdge(candidate) ? 0 : 0.35;
-  const predictedThreatDistance = getMinDistanceToPath(candidate, predictedThreatPath);
-  const mobility = countOpenNeighbors(candidate, obstacles);
-  const lineTrapPenalty = predictedThreatDistance <= 1 ? 7 : 0;
-  const revisitPenalty = isSamePosition(candidate, previous) ? 100 : 0;
-  return (
-    distance * 8 +
-    predictedThreatDistance * 11 +
-    mobility * 1.6 -
-    edgePenalty +
-    centerBias -
-    lineTrapPenalty -
-    revisitPenalty +
-    Math.random()
+): {
+  candidates: WeightedPathCandidate[];
+  heatmap: Map<string, number>;
+  timeHeatmap: Map<string, number>;
+  bottleneckHeatmap: Map<string, number>;
+  highDangerCells: Array<{ key: string; count: number }>;
+} {
+  const attackTargets = buildThreatAttackTargets(
+    attackerPosition,
+    targetPosition,
+    obstacles,
   );
+  const weightedCandidates: WeightedPathCandidate[] = [];
+
+  for (const anchor of attackTargets) {
+    const attackCandidates = buildAttackPathCandidates(
+      attackerPosition,
+      anchor.target,
+      pathPoints,
+      obstacles,
+    );
+
+    for (const path of attackCandidates) {
+      const sequence = [attackerPosition, ...path];
+      const finalPosition = sequence[sequence.length - 1] ?? attackerPosition;
+      const minDistanceToTarget = Math.min(
+        ...sequence.map((step) => manhattan(step, targetPosition)),
+      );
+      const minDistanceToAnchor = Math.min(
+        ...sequence.map((step) => manhattan(step, anchor.target)),
+      );
+      const finalDistance = manhattan(finalPosition, targetPosition);
+      const pressure =
+        Math.max(0, 5 - minDistanceToTarget) * 2.8 +
+        Math.max(0, 5 - minDistanceToAnchor) * 1.9 +
+        Math.max(0, 5 - finalDistance) * 1.7 +
+        countOpenNeighbors(finalPosition, obstacles) * 0.45 +
+        anchor.priority;
+
+      weightedCandidates.push({
+        path,
+        heuristic: pressure,
+        weight: 1 + pressure,
+      });
+    }
+  }
+
+  const candidates = dedupeWeightedCandidates(weightedCandidates)
+    .sort((left, right) => right.heuristic - left.heuristic)
+    .slice(0, ATTACK_AI_CANDIDATE_LIMIT);
+
+  const heatmap = new Map<string, number>();
+  const timeHeatmap = new Map<string, number>();
+  const bottleneckHeatmap = new Map<string, number>();
+
+  for (const candidate of candidates) {
+    const sequence = [attackerPosition, ...candidate.path];
+    for (let step = 0; step < sequence.length; step++) {
+      const key = toKey(sequence[step]);
+      heatmap.set(key, (heatmap.get(key) ?? 0) + candidate.weight);
+      timeHeatmap.set(
+        `${step}:${key}`,
+        (timeHeatmap.get(`${step}:${key}`) ?? 0) + candidate.weight,
+      );
+      if (countOpenNeighbors(sequence[step], obstacles) <= 2) {
+        bottleneckHeatmap.set(
+          key,
+          (bottleneckHeatmap.get(key) ?? 0) + candidate.weight,
+        );
+      }
+    }
+  }
+
+  const highDangerCells = [...heatmap.entries()]
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, 8)
+    .map(([key, count]) => ({ key, count: Number(count.toFixed(2)) }));
+
+  return {
+    candidates,
+    heatmap,
+    timeHeatmap,
+    bottleneckHeatmap,
+    highDangerCells,
+  };
+}
+
+function buildEscapePathCandidates(
+  start: Position,
+  threat: Position,
+  pathPoints: number,
+  obstacles: Position[],
+): Position[][] {
+  const maxDepth = Math.min(pathPoints, ESCAPE_PATH_DEPTH_CAP);
+  const rawCandidates: Position[][] = [[]];
+  let frontier: CandidateState[] = [
+    {
+      current: start,
+      previous: null,
+      path: [],
+      visited: new Set<string>([toKey(start)]),
+      heuristic: scoreEscapeExpansionHeuristic(start, threat, 0, obstacles),
+    },
+  ];
+
+  for (let depth = 1; depth <= maxDepth; depth++) {
+    const nextStates: CandidateState[] = [];
+
+    for (const state of frontier) {
+      const neighbors = getNeighbors(state.current, obstacles)
+        .filter((candidate) => !isSamePosition(candidate, state.previous))
+        .filter((candidate) => !state.visited.has(toKey(candidate)));
+
+      for (const neighbor of neighbors) {
+        const path = [...state.path, neighbor];
+        const visited = new Set(state.visited);
+        visited.add(toKey(neighbor));
+        const heuristic =
+          state.heuristic +
+          scoreEscapeExpansionHeuristic(neighbor, threat, depth, obstacles);
+        const nextState: CandidateState = {
+          current: neighbor,
+          previous: state.current,
+          path,
+          visited,
+          heuristic,
+        };
+        nextStates.push(nextState);
+        rawCandidates.push(path);
+      }
+    }
+
+    frontier = nextStates
+      .sort((left, right) => right.heuristic - left.heuristic)
+      .slice(0, ESCAPE_BEAM_WIDTH);
+
+    if (frontier.length === 0) break;
+  }
+
+  for (const boardTarget of listBoardPositions().filter(
+    (candidate) =>
+      !isBlocked(candidate, obstacles) && !sameCell(candidate, start),
+  )) {
+    const shortestPath = buildShortestPath(start, boardTarget, obstacles).slice(
+      0,
+      maxDepth,
+    );
+    if (shortestPath.length > 0) {
+      rawCandidates.push(shortestPath);
+    }
+  }
+
+  const deduped = new Map<string, Position[]>();
+  for (const candidate of rawCandidates) {
+    const normalized = collapseImmediateBacktracks(start, candidate);
+    const key = pathToKey(normalized);
+    if (!deduped.has(key)) {
+      deduped.set(key, normalized);
+    }
+  }
+
+  return [...deduped.values()].slice(0, ESCAPE_CANDIDATE_LIMIT);
+}
+
+function scoreEscapePathAgainstEnemyAttackCandidates(
+  start: Position,
+  threatPosition: Position,
+  candidatePath: Position[],
+  threatCandidates: {
+    candidates: WeightedPathCandidate[];
+    heatmap: Map<string, number>;
+    timeHeatmap: Map<string, number>;
+    bottleneckHeatmap: Map<string, number>;
+  },
+  obstacles: Position[],
+  pathPoints: number,
+  futureThreatCache: Map<string, ReturnType<typeof buildThreatAttackCandidates>>,
+): EscapePathScore {
+  const escapeSequence = [start, ...candidatePath];
+  const uniqueEscapeKeys = new Set(escapeSequence.map((step) => toKey(step)));
+  let score = 0;
+  let exactDangerCount = 0;
+  let crossingDangerCount = 0;
+
+  for (const threatCandidate of threatCandidates.candidates) {
+    const attackSequence = [threatPosition, ...threatCandidate.path];
+    let candidateDanger = 0;
+    let exactDanger = false;
+    let crossingDanger = false;
+
+    const maxSteps = Math.max(escapeSequence.length, attackSequence.length);
+    for (let step = 0; step < maxSteps; step++) {
+      const escapeCurrent =
+        escapeSequence[Math.min(step, escapeSequence.length - 1)];
+      const escapePrev =
+        step > 0
+          ? escapeSequence[Math.min(step - 1, escapeSequence.length - 1)]
+          : escapeSequence[0];
+      const attackCurrent =
+        attackSequence[Math.min(step, attackSequence.length - 1)];
+      const attackPrev =
+        step > 0
+          ? attackSequence[Math.min(step - 1, attackSequence.length - 1)]
+          : attackSequence[0];
+
+      if (sameCell(escapeCurrent, attackCurrent)) {
+        candidateDanger += ESCAPE_SCORE_WEIGHTS.exactCollisionDanger;
+        exactDanger = true;
+      } else if (
+        sameCell(escapePrev, attackCurrent) &&
+        sameCell(escapeCurrent, attackPrev)
+      ) {
+        candidateDanger += ESCAPE_SCORE_WEIGHTS.crossingCollisionDanger;
+        crossingDanger = true;
+      } else {
+        const distance = manhattan(escapeCurrent, attackCurrent);
+        if (distance === 1) {
+          candidateDanger += ESCAPE_SCORE_WEIGHTS.adjacentDanger;
+        } else if (
+          sameCell(escapeCurrent, attackPrev) ||
+          sameCell(escapePrev, attackCurrent)
+        ) {
+          candidateDanger += ESCAPE_SCORE_WEIGHTS.sameTileDifferentTimeDanger;
+        }
+      }
+    }
+
+    if (exactDanger) exactDangerCount += 1;
+    if (crossingDanger) crossingDangerCount += 1;
+    score -= candidateDanger * threatCandidate.weight;
+  }
+
+  const dangerExposure = sumHeat(uniqueEscapeKeys, threatCandidates.heatmap);
+  const timedDangerExposure = escapeSequence.reduce((sum, position, step) => {
+    return (
+      sum + (threatCandidates.timeHeatmap.get(`${step}:${toKey(position)}`) ?? 0)
+    );
+  }, 0);
+  const bottleneckDanger = sumHeat(
+    uniqueEscapeKeys,
+    threatCandidates.bottleneckHeatmap,
+  );
+  const finalPosition = candidatePath[candidatePath.length - 1] ?? start;
+  const finalMobility = countOpenNeighbors(finalPosition, obstacles);
+  const futureMobility = getNeighbors(finalPosition, obstacles).reduce(
+    (sum, neighbor) => sum + countOpenNeighbors(neighbor, obstacles),
+    0,
+  );
+  const distanceFromThreat = manhattan(finalPosition, threatPosition);
+  const centerFlexibility = isEdge(finalPosition) ? 0 : 1;
+  const cornerTrapPenalty = isCorner(finalPosition) ? 1 : 0;
+  const edgeTrapPenalty = isEdge(finalPosition) ? 1 : 0;
+  const bottleneckTrapPenalty = finalMobility <= 2 ? 1 : 0;
+  const lowMobilityPenalty = finalMobility <= 1 ? 1 : 0;
+  const directLinePenalty = isDirectRetreatLine(
+    start,
+    finalPosition,
+    threatPosition,
+  )
+    ? 1
+    : 0;
+  const futureThreat = getFutureThreatModel(
+    threatPosition,
+    finalPosition,
+    pathPoints,
+    obstacles,
+    futureThreatCache,
+  );
+  const finalRegionKeys = new Set([
+    toKey(finalPosition),
+    ...getNeighbors(finalPosition, obstacles).map((neighbor) => toKey(neighbor)),
+  ]);
+  const futureDangerExposure = sumHeat(finalRegionKeys, futureThreat.heatmap);
+  const futureBottleneckDanger = sumHeat(
+    finalRegionKeys,
+    futureThreat.bottleneckHeatmap,
+  );
+  const safeExitCount = getNeighbors(finalPosition, obstacles).filter(
+    (neighbor) =>
+      (futureThreat.heatmap.get(toKey(neighbor)) ?? 0) <=
+      (futureThreat.heatmap.get(toKey(finalPosition)) ?? 0),
+  ).length;
+
+  score -= dangerExposure * ESCAPE_SCORE_WEIGHTS.dangerHeat;
+  score -= timedDangerExposure * ESCAPE_SCORE_WEIGHTS.timedDangerHeat;
+  score -= bottleneckDanger * ESCAPE_SCORE_WEIGHTS.bottleneckDanger;
+  score += finalMobility * ESCAPE_SCORE_WEIGHTS.finalMobility;
+  score += futureMobility * ESCAPE_SCORE_WEIGHTS.futureMobility;
+  score += distanceFromThreat * ESCAPE_SCORE_WEIGHTS.distanceFromThreat;
+  score += centerFlexibility * ESCAPE_SCORE_WEIGHTS.centerFlexibility;
+  score += safeExitCount * (ESCAPE_SCORE_WEIGHTS.futureMobility + 2);
+  score -= cornerTrapPenalty * ESCAPE_SCORE_WEIGHTS.cornerTrapPenalty;
+  score -= edgeTrapPenalty * ESCAPE_SCORE_WEIGHTS.edgeTrapPenalty;
+  score -= bottleneckTrapPenalty * ESCAPE_SCORE_WEIGHTS.bottleneckTrapPenalty;
+  score -= lowMobilityPenalty * ESCAPE_SCORE_WEIGHTS.lowMobilityPenalty;
+  score -= directLinePenalty * ESCAPE_SCORE_WEIGHTS.directLinePenalty;
+  score -= futureDangerExposure * (ESCAPE_SCORE_WEIGHTS.dangerHeat * 0.7);
+  score -= futureBottleneckDanger * (ESCAPE_SCORE_WEIGHTS.bottleneckDanger * 0.7);
+
+  return {
+    path: candidatePath,
+    score,
+    exactDangerCount,
+    crossingDangerCount,
+    dangerExposure,
+    timedDangerExposure,
+    finalMobility,
+    futureMobility,
+  };
 }
 
 function buildShortestPath(from: Position, to: Position, obstacles: Position[]): Position[] {
@@ -642,91 +1003,22 @@ function getNeighbors(position: Position, obstacles: Position[]): Position[] {
     .filter((next) => isValidMove(position, next) && !isBlocked(next, obstacles));
 }
 
-function createRandomRoamPath(
-  selfPosition: Position,
-  referencePosition: Position,
-  pathPoints: number,
+function scoreEscapeExpansionHeuristic(
+  candidate: Position,
+  threatPosition: Position,
+  depth: number,
   obstacles: Position[],
-): Position[] {
-  const randomTarget = chooseRandomReachableTarget(
-    selfPosition,
-    referencePosition,
-    obstacles,
+): number {
+  return (
+    countOpenNeighbors(candidate, obstacles) * 6.1 +
+    getNeighbors(candidate, obstacles).reduce(
+      (sum, neighbor) => sum + countOpenNeighbors(neighbor, obstacles),
+      0,
+    ) * 0.9 +
+    manhattan(candidate, threatPosition) * 5.8 +
+    (isCorner(candidate) ? -7.5 : isEdge(candidate) ? -2.4 : 2.6) -
+    depth * 0.18
   );
-  if (!randomTarget) return [];
-
-  const directPath = buildShortestPath(selfPosition, randomTarget, obstacles).slice(
-    0,
-    pathPoints,
-  );
-  if (directPath.length === pathPoints) return directPath;
-
-  const path = [...directPath];
-  let current = path.length > 0 ? path[path.length - 1] : selfPosition;
-  let previous = path.length > 1 ? path[path.length - 2] : null;
-
-  while (path.length < pathPoints) {
-    const candidates = getNeighbors(current, obstacles).filter(
-      (candidate) => !isSamePosition(candidate, previous),
-    );
-    if (candidates.length === 0) break;
-
-    const shuffled = [...candidates].sort(() => Math.random() - 0.5);
-    const nextMove =
-      shuffled.find((candidate) => !path.some((step) => isSamePosition(step, candidate))) ??
-      shuffled[0];
-
-    if (!nextMove) break;
-    path.push(nextMove);
-    previous = current;
-    current = nextMove;
-  }
-
-  return path;
-}
-
-function chooseRandomReachableTarget(
-  selfPosition: Position,
-  referencePosition: Position,
-  obstacles: Position[],
-): Position | null {
-  const candidates: Position[] = [];
-  for (let row = 0; row <= 4; row++) {
-    for (let col = 0; col <= 4; col++) {
-      const candidate = { row, col };
-      if (isSamePosition(candidate, selfPosition)) continue;
-      if (isBlocked(candidate, obstacles)) continue;
-      const path = buildShortestPath(selfPosition, candidate, obstacles);
-      if (path.length === 0) continue;
-      candidates.push(candidate);
-    }
-  }
-
-  if (candidates.length === 0) return null;
-
-  const shuffled = [...candidates].sort(() => Math.random() - 0.5);
-  const weighted = shuffled.sort(
-    (a, b) =>
-      manhattan(b, referencePosition) -
-      manhattan(a, referencePosition) +
-      (Math.random() - 0.5),
-  );
-
-  return weighted[0] ?? shuffled[0] ?? null;
-}
-
-function predictAttackerPath(
-  attackerPosition: Position,
-  targetPosition: Position,
-  pathPoints: number,
-  obstacles: Position[],
-): Position[] {
-  return buildAttackPath(
-    attackerPosition,
-    targetPosition,
-    pathPoints,
-    obstacles,
-  ).slice(0, pathPoints);
 }
 
 function scoreEnemyEscapeState(
@@ -772,6 +1064,89 @@ function dedupeWeightedCandidates(
   return [...byKey.values()];
 }
 
+function buildThreatAttackTargets(
+  attackerPosition: Position,
+  targetPosition: Position,
+  obstacles: Position[],
+): Array<{ target: Position; priority: number }> {
+  const byKey = new Map<string, { target: Position; priority: number }>();
+  const register = (target: Position, priority: number) => {
+    const key = toKey(target);
+    const existing = byKey.get(key);
+    if (!existing || priority > existing.priority) {
+      byKey.set(key, { target, priority });
+    }
+  };
+
+  register(targetPosition, 28);
+  for (const neighbor of getNeighbors(targetPosition, obstacles)) {
+    register(
+      neighbor,
+      22 + Math.max(0, 4 - manhattan(neighbor, attackerPosition)) * 2,
+    );
+  }
+
+  for (const cell of listBoardPositions()) {
+    if (isBlocked(cell, obstacles) || sameCell(cell, targetPosition)) continue;
+    const distanceToTarget = manhattan(cell, targetPosition);
+    if (distanceToTarget > 3) continue;
+    const mobility = countOpenNeighbors(cell, obstacles);
+    const priority =
+      Math.max(0, 5 - distanceToTarget) * 3 +
+      (isEdge(cell) ? 0.5 : 2.4) +
+      mobility * 0.8;
+    register(cell, priority);
+  }
+
+  return [...byKey.values()]
+    .sort((left, right) => right.priority - left.priority)
+    .slice(0, 8);
+}
+
+function getFutureThreatModel(
+  threatPosition: Position,
+  targetPosition: Position,
+  pathPoints: number,
+  obstacles: Position[],
+  cache: Map<string, ReturnType<typeof buildThreatAttackCandidates>>,
+) {
+  const key = toKey(targetPosition);
+  const cached = cache.get(key);
+  if (cached) return cached;
+
+  const created = buildThreatAttackCandidates(
+    threatPosition,
+    targetPosition,
+    pathPoints,
+    obstacles,
+  );
+  cache.set(key, created);
+  return created;
+}
+
+function chooseSafeEscapeCandidate(
+  candidates: EscapePathScore[],
+): EscapePathScore | null {
+  if (candidates.length === 0) return null;
+
+  const floor = candidates[candidates.length - 1]?.score ?? 0;
+  const weighted = candidates.map((candidate, index) => ({
+    candidate,
+    weight: Math.max(1, candidate.score - floor + 4) + (candidates.length - index),
+  }));
+  const totalWeight = weighted.reduce((sum, entry) => sum + entry.weight, 0);
+  let roll = Math.random() * totalWeight;
+
+  for (const entry of weighted) {
+    roll -= entry.weight;
+    if (roll <= 0) {
+      return entry.candidate;
+    }
+  }
+
+  return candidates[0];
+}
+
 function sumHeat(keys: Set<string>, heatmap: Map<string, number>): number {
   let total = 0;
   for (const key of keys) {
@@ -793,6 +1168,16 @@ function getOpenNeighbors(position: Position, obstacles: Position[]): Position[]
   return getNeighbors(position, obstacles);
 }
 
+function listBoardPositions(): Position[] {
+  const positions: Position[] = [];
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 5; col++) {
+      positions.push({ row, col });
+    }
+  }
+  return positions;
+}
+
 function manhattan(a: Position, b: Position): number {
   return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
 }
@@ -801,12 +1186,28 @@ function isEdge(position: Position): boolean {
   return position.row === 0 || position.row === 4 || position.col === 0 || position.col === 4;
 }
 
+function isCorner(position: Position): boolean {
+  const topOrBottom = position.row === 0 || position.row === 4;
+  const leftOrRight = position.col === 0 || position.col === 4;
+  return topOrBottom && leftOrRight;
+}
+
 function isSamePosition(a: Position, b: Position | null): boolean {
   return !!b && a.row === b.row && a.col === b.col;
 }
 
 function sameCell(a: Position, b: Position): boolean {
   return a.row === b.row && a.col === b.col;
+}
+
+function isDirectRetreatLine(
+  start: Position,
+  end: Position,
+  threat: Position,
+): boolean {
+  const startDistance = manhattan(start, threat);
+  const endDistance = manhattan(end, threat);
+  return endDistance > startDistance && (start.row === end.row || start.col === end.col);
 }
 
 function isBlocked(position: Position, obstacles: Position[]): boolean {
