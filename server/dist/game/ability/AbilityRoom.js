@@ -1276,6 +1276,10 @@ class AbilityRoom {
         }
     }
     chooseBotAction(bot, opponent, pathPoints) {
+        const forcedBlitzCandidate = this.buildForcedBlitzCandidate(bot, opponent);
+        if (forcedBlitzCandidate) {
+            return forcedBlitzCandidate;
+        }
         const selfModel = buildBotPathModel({
             start: bot.position,
             opponent: opponent.position,
@@ -1310,6 +1314,31 @@ class AbilityRoom {
             score: 0,
             reason: 'fallback-empty',
             selectedSkill: null,
+        };
+    }
+    buildForcedBlitzCandidate(bot, opponent) {
+        if (bot.role !== 'attacker')
+            return null;
+        if (!bot.equippedSkills.includes('electric_blitz'))
+            return null;
+        if (bot.mana < AbilityTypes_1.ABILITY_SKILL_COSTS.electric_blitz)
+            return null;
+        const directionTarget = getBlitzDirectionTowardOpponent(bot.position, opponent.position);
+        if (!directionTarget)
+            return null;
+        const blitzPath = buildBlitzPath(bot.position, directionTarget);
+        if (blitzPath.length === 0)
+            return null;
+        const forced = this.validatePlan(bot, blitzPath, [{ skillId: 'electric_blitz', step: 0, order: 0, target: directionTarget }]);
+        if (!forced) {
+            return null;
+        }
+        return {
+            path: forced.path,
+            skills: forced.skills,
+            score: 999999,
+            reason: 'forced-electric-blitz-straight-line',
+            selectedSkill: 'electric_blitz',
         };
     }
     buildBotSkillActionCandidates(bot, opponent, pathPoints, selfModel, opponentModel) {
