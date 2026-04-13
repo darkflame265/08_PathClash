@@ -839,6 +839,7 @@ export function resolveAbilityRound(params: {
     }
   };
 
+  const lavaDamagedThisRound = new Set<PlayerColor>();
   for (let step = 0; step <= maxStep; step++) {
     redBlitzDamagedThisStep = false;
     blueBlitzDamagedThisStep = false;
@@ -1018,6 +1019,7 @@ export function resolveAbilityRound(params: {
       protectedByGuard: boolean,
     ) => {
       if (protectedByGuard) return;
+      if (lavaDamagedThisRound.has(color)) return;
       for (const lavaTile of activeLavaTiles) {
         if (!isAffectedByLava(prevPos, nextPos, lavaTile.position)) continue;
         if (color === 'red') {
@@ -1037,6 +1039,8 @@ export function resolveAbilityRound(params: {
             newHp: blueHp,
           });
         }
+        lavaDamagedThisRound.add(color);
+        break;
       }
     };
 
