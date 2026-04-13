@@ -188,17 +188,29 @@ function initSocketServer(io) {
         const code = store.generateCode();
         const room = new GameRoom_1.GameRoom(roomId, code, io, 'random');
         store.add(room);
+        const fakeProfile = createDisguisedRandomProfile(profile);
+        const humanFirst = Math.random() < 0.5;
+        if (!humanFirst) {
+            room.addAiPlayer(fakeProfile.nickname, {
+                displayId: fakeProfile.displayId,
+                userId: fakeProfile.userId,
+                stats: fakeProfile.stats,
+                pieceSkin: fakeProfile.pieceSkin,
+                boardSkin: fakeProfile.boardSkin,
+            });
+        }
         const humanColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin, boardSkin);
         if (!humanColor)
             return;
-        const fakeProfile = createDisguisedRandomProfile(profile);
-        room.addAiPlayer(fakeProfile.nickname, {
-            displayId: fakeProfile.displayId,
-            userId: fakeProfile.userId,
-            stats: fakeProfile.stats,
-            pieceSkin: fakeProfile.pieceSkin,
-            boardSkin: fakeProfile.boardSkin,
-        });
+        if (humanFirst) {
+            room.addAiPlayer(fakeProfile.nickname, {
+                displayId: fakeProfile.displayId,
+                userId: fakeProfile.userId,
+                stats: fakeProfile.stats,
+                pieceSkin: fakeProfile.pieceSkin,
+                boardSkin: fakeProfile.boardSkin,
+            });
+        }
         store.registerSocket(socket.id, roomId);
         const opponentColor = humanColor === 'red' ? 'blue' : 'red';
         const opponent = room.toClientState().players[opponentColor];
@@ -232,14 +244,23 @@ function initSocketServer(io) {
         const roomId = abilityStore.generateRoomId();
         const room = new AbilityRoom_1.AbilityRoom(roomId, roomId, io);
         abilityStore.add(room);
+        const fakeProfile = createDisguisedAbilityBotLoadout(profile);
+        const humanFirst = Math.random() < 0.5;
+        if (!humanFirst) {
+            room.addIdleBot(fakeProfile.nickname, fakeProfile.pieceSkin, fakeProfile.boardSkin, fakeProfile.equippedSkills, {
+                displayId: fakeProfile.displayId,
+                stats: fakeProfile.stats,
+            });
+        }
         const humanColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin, boardSkin, equippedSkills);
         if (!humanColor)
             return;
-        const fakeProfile = createDisguisedAbilityBotLoadout(profile);
-        room.addIdleBot(fakeProfile.nickname, fakeProfile.pieceSkin, fakeProfile.boardSkin, fakeProfile.equippedSkills, {
-            displayId: fakeProfile.displayId,
-            stats: fakeProfile.stats,
-        });
+        if (humanFirst) {
+            room.addIdleBot(fakeProfile.nickname, fakeProfile.pieceSkin, fakeProfile.boardSkin, fakeProfile.equippedSkills, {
+                displayId: fakeProfile.displayId,
+                stats: fakeProfile.stats,
+            });
+        }
         abilityStore.registerSocket(socket.id, roomId);
         const opponentColor = humanColor === 'red' ? 'blue' : 'red';
         const opponent = room.toClientState(humanColor).players[opponentColor];
