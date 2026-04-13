@@ -621,6 +621,8 @@ export class AbilityRoom {
   private obstacles: Position[] = [];
   private lavaTiles: AbilityLavaTile[] = [];
   private trapTiles: AbilityTrapTile[] = [];
+  // 4코 스킬 연속 사용 방지: 마지막으로 4코 스킬을 사용한 턴 번호 추적
+  private botLastFourCostSkillTurn: Map<PlayerColor, number> = new Map();
   private readySockets = new Set<string>();
   private pendingStart = false;
   private pendingStartPaused = false;
@@ -807,6 +809,7 @@ export class AbilityRoom {
     this.turn = 1;
     this.attackerColor = 'red';
     this.rewardsGranted = false;
+    this.botLastFourCostSkillTurn.clear();
     this.resetPlayers();
     this.updateRoles();
     this.touchActivity();
@@ -1504,6 +1507,12 @@ export class AbilityRoom {
     bot.plannedSkills = validated.skills;
     bot.pathSubmitted = true;
 
+    // 4코 스킬 연속 사용 방지를 위해 사용 턴 기록
+    const usedSkillId = validated.skills[0]?.skillId ?? null;
+    if (usedSkillId && ABILITY_SKILL_COSTS[usedSkillId] === 4) {
+      this.botLastFourCostSkillTurn.set(bot.color, this.turn);
+    }
+
     if (ABILITY_FAKE_AI_DEBUG_LOG) {
       console.debug('[ability-fake-ai]', {
         bot: bot.nickname,
@@ -1529,19 +1538,23 @@ export class AbilityRoom {
       return forcedBlitzCandidate;
     }
 
+    // 용암 타일을 장애물로 추가해 경로 계산 시 용암을 피하도록 한다.
+    const lavaObstacles = this.lavaTiles.map((t) => t.position);
+    const effectiveObstacles = [...this.obstacles, ...lavaObstacles];
+
     const selfModel = buildBotPathModel({
       start: bot.position,
       opponent: opponent.position,
       role: bot.role === 'attacker' ? 'attacker' : 'escaper',
       pathPoints,
-      obstacles: this.obstacles,
+      obstacles: effectiveObstacles,
     });
     const opponentModel = buildBotPathModel({
       start: opponent.position,
       opponent: bot.position,
       role: bot.role === 'attacker' ? 'escaper' : 'attacker',
       pathPoints,
-      obstacles: this.obstacles,
+      obstacles: effectiveObstacles,
     });
 
     const candidates: BotActionCandidate[] = selfModel.paths
@@ -1556,14 +1569,14 @@ export class AbilityRoom {
                 path,
                 opponent.position,
                 opponentModel,
-                this.obstacles,
+                effectiveObstacles,
               )
             : scoreEscapePathAgainstModel(
                 bot.position,
                 path,
                 opponent.position,
                 opponentModel,
-                this.obstacles,
+                effectiveObstacles,
               ),
         reason: index === 0 ? 'base-primary' : 'base-alt',
         selectedSkill: null,
@@ -1615,6 +1628,7 @@ export class AbilityRoom {
       pathPoints,
       selfModel,
       opponentModel,
+      effectiveObstacles,
     );
     candidates.push(...activeSkillCandidates);
     candidates.sort((left, right) => right.score - left.score);
@@ -1669,9 +1683,20 @@ export class AbilityRoom {
     pathPoints: number,
     selfModel: BotPathModel,
     opponentModel: BotPathModel,
+    effectiveObstacles: Position[],
   ): BotActionCandidate[] {
     const candidates: BotActionCandidate[] = [];
     const basePaths = selfModel.paths.slice(0, 5);
+
+    // 4코 스킬 연속 사용 여부 체크
+    const usedFourCostLastTurn =
+      (this.botLastFourCostSkillTurn.get(bot.color) ?? -1) === this.turn - 1;
+
+    // 양자도약 예외: 상대가 벽력일섬 보유 + 같은 행/열이면 연속 사용 허용
+    const opponentHasBlitz = opponent.equippedSkills.includes('electric_blitz');
+    const botInBlitzLine =
+      bot.position.row === opponent.position.row ||
+      bot.position.col === opponent.position.col;
 
     for (const skillId of bot.equippedSkills) {
       if (!ABILITY_FAKE_AI_SKILL_POOL.includes(skillId)) continue;
@@ -1725,6 +1750,13 @@ export class AbilityRoom {
       }
 
       if (skillId === 'quantum_shift') {
+        // 연속 사용 제한: 직전 턴에 4코 스킬 사용 시 건너뜀
+        // 예외: 상대가 벽력일섬 보유 + 같은 행/열(일직선)이면 회피 목적으로 허용
+        if (usedFourCostLastTurn) {
+          const allowedForBlitzEvasion = opponentHasBlitz && botInBlitzLine;
+          if (!allowedForBlitzEvasion) continue;
+        }
+
         // 고비용 공격/방어 스킬이 함께 장착된 경우 마나낭비 패널티 부여
         const quantumHighCostMax = bot.equippedSkills
           .filter((s) => {
@@ -1740,7 +1772,7 @@ export class AbilityRoom {
 
         for (const target of getAdjacentBlinkTargets(
           bot.position,
-          this.obstacles,
+          effectiveObstacles,
           opponent.position,
         )) {
           const blinkPath = createAiPath({
@@ -1749,11 +1781,11 @@ export class AbilityRoom {
             selfPosition: target,
             opponentPosition: opponent.position,
             pathPoints,
-            obstacles: this.obstacles,
+            obstacles: effectiveObstacles,
           });
           const base = this.scoreBotActionCandidate(bot, opponent, blinkPath, [
             { skillId, step: 0, order: 0, target },
-          ], opponentModel, `quantum_shift:${target.row},${target.col}`);
+          ], opponentModel, `quantum_shift:${target.row},${target.col}`, effectiveObstacles);
           candidates.push({
             ...base,
             score: base.score - quantumManaWastePenalty,
@@ -1783,6 +1815,7 @@ export class AbilityRoom {
             [{ skillId, step: 0, order: 0, target }],
             opponentModel,
             `electric_blitz:${target.row},${target.col}`,
+            effectiveObstacles,
           );
           candidates.push(
             {
@@ -1832,6 +1865,7 @@ export class AbilityRoom {
           bot.previousTurnPath,
           opponent.position,
           opponentModel,
+          effectiveObstacles,
         );
         const path = basePaths[0] ?? [];
         candidates.push({
@@ -1843,6 +1877,7 @@ export class AbilityRoom {
               path,
               opponent.position,
               opponentModel,
+              effectiveObstacles,
             ) +
             shadowCoverage * 0.9 +
             24,
@@ -1859,6 +1894,7 @@ export class AbilityRoom {
             path,
             opponent.position,
             opponentModel,
+            effectiveObstacles,
           );
           candidates.push({
             path,
@@ -1899,6 +1935,7 @@ export class AbilityRoom {
                   path,
                   opponent.position,
                   opponentModel,
+                  effectiveObstacles,
                 ) +
                 trapValue,
               reason: `magic_mine:${step}`,
@@ -1917,6 +1954,7 @@ export class AbilityRoom {
                 bestPath,
                 opponent.position,
                 opponentModel,
+                effectiveObstacles,
               ) +
               bestTrapValue +
               200,
@@ -1957,6 +1995,7 @@ export class AbilityRoom {
                   path,
                   opponent.position,
                   opponentModel,
+                  effectiveObstacles,
                 ) +
                 lavaValue,
               reason: `inferno_field:${target.row},${target.col}`,
@@ -1975,6 +2014,7 @@ export class AbilityRoom {
                 bestLavaPath,
                 opponent.position,
                 opponentModel,
+                effectiveObstacles,
               ) +
               bestLavaValue +
               180,
@@ -1986,6 +2026,22 @@ export class AbilityRoom {
       }
 
       if (skillId === 'ember_blast' || skillId === 'nova_blast') {
+        // 연속 사용 제한: 직전 턴에 4코 스킬 사용 시 건너뜀
+        // 예외: 상대방이 현재 AoE 범위 안에 있으면(100% 명중 가능) 허용
+        if (usedFourCostLastTurn) {
+          const opponentInAoeNow = basePaths.slice(0, 3).some((path) => {
+            const sequence = [bot.position, ...path];
+            return sequence.some((pos) => {
+              const affected =
+                skillId === 'ember_blast'
+                  ? getCrossPositions(pos)
+                  : getNovaPositions(pos);
+              return affected.some((cell) => posEqual(cell, opponent.position));
+            });
+          });
+          if (!opponentInAoeNow) continue;
+        }
+
         // 고비용 공격 스킬(6~10코)이 함께 장착된 경우,
         // 엠버/노바를 쓰면 마나가 소진되어 해당 스킬을 사용하지 못하게 된다.
         // 장착된 다른 공격 스킬의 최대 코스트에 비례해 패널티를 부여한다.
@@ -2001,7 +2057,7 @@ export class AbilityRoom {
             (max, s) => Math.max(max, ABILITY_SKILL_COSTS[s]),
             0,
           );
-        // 최대 코스트가 클수록 패널티 증가 (6→240, 8→360, 10→450)
+        // 최대 코스트가 클수록 패널티 증가 (6→270, 8→360, 10→450)
         const manaWastePenalty = otherHighCostAttackSkillMaxCost > 0
           ? Math.round(otherHighCostAttackSkillMaxCost * 45)
           : 0;
@@ -2027,6 +2083,7 @@ export class AbilityRoom {
                   path,
                   opponent.position,
                   opponentModel,
+                  effectiveObstacles,
                 ) +
                 aoeScore -
                 manaWastePenalty,
@@ -2056,21 +2113,23 @@ export class AbilityRoom {
     skills: AbilitySkillReservation[],
     opponentModel: BotPathModel,
     reason: string,
+    obstacles: Position[] = this.obstacles,
   ): BotActionCandidate {
     const score =
       bot.role === 'attacker'
-        ? this.scorePathCoverageAgainstModel(
+        ? scoreAttackPathAgainstModel(
             bot.position,
             path,
             opponent.position,
             opponentModel,
+            obstacles,
           )
         : scoreEscapePathAgainstModel(
             bot.position,
             path,
             opponent.position,
             opponentModel,
-            this.obstacles,
+            obstacles,
           );
     return {
       path,
@@ -2086,13 +2145,14 @@ export class AbilityRoom {
     path: Position[],
     opponentStart: Position,
     model: BotPathModel,
+    obstacles: Position[] = this.obstacles,
   ): number {
     return scoreAttackPathAgainstModel(
       start,
       path,
       opponentStart,
       model,
-      this.obstacles,
+      obstacles,
     );
   }
 
@@ -2101,6 +2161,7 @@ export class AbilityRoom {
     path: Position[],
     opponentStart: Position,
     model: BotPathModel,
+    obstacles: Position[] = this.obstacles,
   ): number {
     const sequence = [start, ...path];
     let score = 0;
@@ -2108,7 +2169,7 @@ export class AbilityRoom {
       const covered = getSquarePositions(sequence[index], 1);
       score += this.scoreAreaAgainstModel(covered, model, index);
     }
-    score += this.scorePathCoverageAgainstModel(start, path, opponentStart, model);
+    score += this.scorePathCoverageAgainstModel(start, path, opponentStart, model, obstacles);
     return score;
   }
 
