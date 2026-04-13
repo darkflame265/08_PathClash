@@ -1968,6 +1968,8 @@ export class AbilityRoom {
             // 시전자 현재 위치와 상대방 현재 위치에는 용암 설치 불가
             if (posEqual(origin, target)) continue;
             if (posEqual(opponent.position, target)) continue;
+            // 봇 자신이 이동할 경로가 설치한 용암 위치를 경유하면 자기 피해 → 건너뜀
+            if (path.some((pos) => posEqual(pos, target))) continue;
             const lavaValue =
               (opponentModel.heatmap.get(toKey(target)) ?? 0) * 40 +
               (opponentModel.timeHeatmap.get(`1:${toKey(target)}`) ?? 0) * 28;
