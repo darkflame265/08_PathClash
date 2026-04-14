@@ -327,8 +327,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
       kr: '이동 가능 · 조합 가능',
     },
     loadoutDescription: {
-      en: 'Turn a chosen tile into lava for 2 turns. Anyone touching it takes damage.',
-      kr: '선택한 1칸을 2턴 동안 용암지대로 만들고, 밟거나 지나가면 피해를 줍니다.',
+      en: 'Turn a chosen tile into lava for 4 turns. Anyone touching it takes damage.',
+      kr: '선택한 1칸을 4턴 동안 용암지대로 만들고, 밟거나 지나가면 피해를 줍니다.',
     },
     manaCost: ABILITY_SKILL_COSTS.inferno_field,
     category: 'attack',

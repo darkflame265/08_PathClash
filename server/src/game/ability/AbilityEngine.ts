@@ -727,7 +727,7 @@ export function resolveAbilityRound(params: {
       } else {
         blueMana = spendMana(casterMana, reservation.skillId);
       }
-      updateLavaTile(activeLavaTiles, reservation.target, 2);
+      updateLavaTile(activeLavaTiles, reservation.target, 4);
       skillEvents.push({
         step: reservation.step,
         order: reservation.order,
