@@ -1,9 +1,7 @@
 {
-    "android":  {
-                    "appId":  "com.pathclash.game",
-                    "versionCode":  26,
-                    "versionName":  "1.0.26",
-                    "latestVersionCode":  26,
-                    "minSupportedVersionCode":  25
-                }
+    "android": {
+        "appId": "com.pathclash.game",
+        "versionCode": 27,
+        "versionName": "1.0.27"
+    }
 }
