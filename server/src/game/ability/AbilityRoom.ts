@@ -1908,6 +1908,9 @@ export class AbilityRoom {
       }
 
       if (skillId === 'quantum_shift') {
+        // 도망 역할일 때만 위기 탈출 목적으로 사용 (공격 역할에서는 사용 금지)
+        if (bot.role !== 'escaper') continue;
+
         // 연속 사용 제한: 직전 턴에 4코 스킬 사용 시 건너뜀
         // 예외: 특정 스킬 위협(벽력일섬/노바폭발/엠버폭발)이 있으면 회피 목적으로 허용
         if (usedFourCostLastTurn) {
