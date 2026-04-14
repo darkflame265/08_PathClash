@@ -350,7 +350,8 @@
 .ability-grid.is-time-rewinding .ability-charge-effect,
 .ability-grid.is-time-rewinding .ability-heal-effect,
 .ability-grid.is-time-rewinding .ability-overdrive-effect,
-.ability-grid.is-time-rewinding .ability-guard-ring,
+.ability-grid.is-time-rewinding .piece-guard-barrier,
+.ability-grid.is-time-rewinding .piece-at-field,
 .ability-grid.is-time-rewinding .ability-blitz-line,
 .ability-grid.is-time-rewinding .collision-effect {
   filter: grayscale(1) saturate(0.06) brightness(0.88);
@@ -715,16 +716,6 @@
   gap: calc(0.22rem * var(--gs-scale, 1));
 }
 
-.ability-guard-ring {
-  position: absolute;
-  z-index: 3;
-  border-radius: 50%;
-  border: 2px solid rgba(250, 204, 21, 0.9);
-  box-shadow:
-    0 0 0 2px rgba(250, 204, 21, 0.15),
-    0 0 18px rgba(250, 204, 21, 0.35);
-  pointer-events: none;
-}
 
 .ability-teleport-target {
   position: absolute;

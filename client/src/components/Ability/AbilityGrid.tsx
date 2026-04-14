@@ -1021,30 +1021,6 @@ export function AbilityGrid({
           </div>
         )}
 
-        {activeGuards.red && (
-          <div
-            className="ability-guard-ring"
-            style={{
-              left: displayPositions.red.col * responsiveCellSize + responsiveCellSize / 2,
-              top: displayPositions.red.row * responsiveCellSize + responsiveCellSize / 2,
-              width: Math.max(42, responsiveCellSize * 0.82),
-              height: Math.max(42, responsiveCellSize * 0.82),
-              transform: 'translate(-50%, -50%)',
-            }}
-          />
-        )}
-        {activeGuards.blue && (
-          <div
-            className="ability-guard-ring"
-            style={{
-              left: displayPositions.blue.col * responsiveCellSize + responsiveCellSize / 2,
-              top: displayPositions.blue.row * responsiveCellSize + responsiveCellSize / 2,
-              width: Math.max(42, responsiveCellSize * 0.82),
-              height: Math.max(42, responsiveCellSize * 0.82),
-              transform: 'translate(-50%, -50%)',
-            }}
-          />
-        )}
 
         {redVisible &&
         (state.players.red.hp > 0 ||
@@ -1061,6 +1037,7 @@ export function AbilityGrid({
               isExploding={explodingFlags.red}
               isMe={currentColor === 'red'}
               isHidden={state.players.red.hidden && currentColor === 'red' && state.phase === 'planning'}
+              isGuard={activeGuards.red}
               isAtField={activeAtFields.red && state.phase === 'moving'}
               isPhased={activePhaseShifts.red && state.phase === 'moving'}
               isOverloaded={
@@ -1092,6 +1069,7 @@ export function AbilityGrid({
               isExploding={explodingFlags.blue}
               isMe={currentColor === 'blue'}
               isHidden={state.players.blue.hidden && currentColor === 'blue' && state.phase === 'planning'}
+              isGuard={activeGuards.blue}
               isAtField={activeAtFields.blue && state.phase === 'moving'}
               isPhased={activePhaseShifts.blue && state.phase === 'moving'}
               isOverloaded={

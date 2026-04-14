@@ -24,6 +24,7 @@ interface Props {
   isMe: boolean;
   isHidden?: boolean;
   isPhased?: boolean;
+  isGuard?: boolean;
   isAtField?: boolean;
   isOverloaded?: boolean;
   isBlitzing?: boolean;
@@ -70,6 +71,7 @@ export function PlayerPiece({
   isMe,
   isHidden = false,
   isPhased = false,
+  isGuard = false,
   isAtField = false,
   isOverloaded = false,
   isBlitzing = false,
@@ -143,17 +145,22 @@ export function PlayerPiece({
         ['--wizard-scale' as string]: `${wizardScale}`,
       }}
     >
+      {isGuard && (
+        <div className="piece-guard-barrier" aria-hidden="true">
+          <span className="piece-guard-barrier-dome" />
+          <span className="piece-guard-barrier-base" />
+          <span className="piece-guard-barrier-cell piece-guard-barrier-cell-a" />
+          <span className="piece-guard-barrier-cell piece-guard-barrier-cell-b" />
+          <span className="piece-guard-barrier-cell piece-guard-barrier-cell-c" />
+          <span className="piece-guard-barrier-cell piece-guard-barrier-cell-d" />
+          <span className="piece-guard-barrier-cell piece-guard-barrier-cell-e" />
+          <span className="piece-guard-barrier-cell piece-guard-barrier-cell-f" />
+          <span className="piece-guard-barrier-cell piece-guard-barrier-cell-g" />
+        </div>
+      )}
       {isAtField && (
         <div className="piece-at-field" aria-hidden="true">
-          <span className="piece-at-field-dome" />
-          <span className="piece-at-field-base" />
-          <span className="piece-at-field-cell piece-at-field-cell-a" />
-          <span className="piece-at-field-cell piece-at-field-cell-b" />
-          <span className="piece-at-field-cell piece-at-field-cell-c" />
-          <span className="piece-at-field-cell piece-at-field-cell-d" />
-          <span className="piece-at-field-cell piece-at-field-cell-e" />
-          <span className="piece-at-field-cell piece-at-field-cell-f" />
-          <span className="piece-at-field-cell piece-at-field-cell-g" />
+          <img src="/ui/ability/at_field.svg" className="piece-at-field-svg" alt="" />
         </div>
       )}
       <div className={`piece-visual${entranceAnimation ? ` roll-in-${entranceAnimation}` : ""}`}>
