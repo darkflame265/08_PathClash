@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon --exec ts-node src/index.ts",
     "build": "tsc",
+    "prestart": "tsc",
     "start": "node dist/index.js",
     "load:test": "ts-node src/tools/loadTest.ts"
   },
