@@ -1,4 +1,11 @@
-import { useRef, useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import {
+  useRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+} from "react";
 import { useGameStore } from "../../store/gameStore";
 import type { BoardSkin, Position } from "../../types/game.types";
 import {
@@ -81,11 +88,9 @@ export function GameGrid({
   const pathPoints = gameState?.pathPoints ?? 5;
   const obstacles = gameState?.obstacles ?? roundInfo?.obstacles ?? [];
   const redPieceSkin =
-    playerPieceSkins?.red ??
-    (myColor === "red" ? pieceSkin : "classic");
+    playerPieceSkins?.red ?? (myColor === "red" ? pieceSkin : "classic");
   const bluePieceSkin =
-    playerPieceSkins?.blue ??
-    (myColor === "blue" ? pieceSkin : "classic");
+    playerPieceSkins?.blue ?? (myColor === "blue" ? pieceSkin : "classic");
   const resolvedBoardSkin: BoardSkin = (() => {
     if (gameState?.tutorialActive) return "classic";
     const redBoardSkin = gameState?.players.red.boardSkin;
@@ -101,8 +106,12 @@ export function GameGrid({
         ? "board-skin-pharaoh"
         : resolvedBoardSkin === "magic"
           ? "board-skin-magic"
-        : "";
-  const getCellStyle = (row: number, col: number, blocked: boolean): React.CSSProperties => {
+          : "";
+  const getCellStyle = (
+    row: number,
+    col: number,
+    blocked: boolean,
+  ): React.CSSProperties => {
     const baseStyle: React.CSSProperties = {
       left: col * responsiveCellSize,
       top: row * responsiveCellSize,
@@ -171,9 +180,9 @@ export function GameGrid({
           : null
       : myColor === "red"
         ? redDisplayPos
-      : myColor === "blue"
-        ? blueDisplayPos
-        : null);
+        : myColor === "blue"
+          ? blueDisplayPos
+          : null);
   const tutorialGuideSvgPath = useMemo(() => {
     if (!tutorialGuidePath || tutorialGuidePath.length < 2) return null;
     return tutorialGuidePath
@@ -274,7 +283,13 @@ export function GameGrid({
         emitPathUpdate(nextPath);
       }
     }
-  }, [emitPathUpdate, playPathStepSfx, roundInfo?.timeLimit, setMyPath, tutorialAutoSubmit]);
+  }, [
+    emitPathUpdate,
+    playPathStepSfx,
+    roundInfo?.timeLimit,
+    setMyPath,
+    tutorialAutoSubmit,
+  ]);
 
   // Pointer handlers cover mouse and touch input with one path.
   const handlePointerDown = useCallback(
@@ -390,7 +405,14 @@ export function GameGrid({
         window.setTimeout(() => submitCurrentPath(), 0);
       }
     },
-    [gameState, isPlanning, myColor, roundInfo, submitCurrentPath, tutorialAutoSubmit],
+    [
+      gameState,
+      isPlanning,
+      myColor,
+      roundInfo,
+      submitCurrentPath,
+      tutorialAutoSubmit,
+    ],
   );
 
   // Keyboard handler
@@ -516,7 +538,8 @@ export function GameGrid({
 
   const opponentColor = myColor === "red" ? "blue" : "red";
   const animation = useGameStore.getState().animation;
-  const isPlaybackPhase = gameState?.phase === "moving" || gameState?.phase === "gameover";
+  const isPlaybackPhase =
+    gameState?.phase === "moving" || gameState?.phase === "gameover";
   const fullRedPath = isPlaybackPhase
     ? (animation?.redPath ?? [])
     : myColor === "red"
@@ -536,7 +559,9 @@ export function GameGrid({
     if (!animation || !myColor) return;
 
     const opponentFullPath =
-      opponentColor === "red" ? animation.redPath ?? [] : animation.bluePath ?? [];
+      opponentColor === "red"
+        ? (animation.redPath ?? [])
+        : (animation.bluePath ?? []);
     if (opponentFullPath.length === 0) return;
 
     setOpponentRevealToken((prev) => prev + 1);
@@ -561,9 +586,15 @@ export function GameGrid({
           <div
             key={`${row}-${col}`}
             className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? "obstacle" : ""} ${
-              hoveredCell?.row === row && hoveredCell?.col === col ? "is-hovered" : ""
+              hoveredCell?.row === row && hoveredCell?.col === col
+                ? "is-hovered"
+                : ""
             }`}
-            style={getCellStyle(row, col, isBlockedCell({ row, col }, obstacles))}
+            style={getCellStyle(
+              row,
+              col,
+              isBlockedCell({ row, col }, obstacles),
+            )}
           >
             {isBlockedCell({ row, col }, obstacles) && (
               <div className="obstacle-mark" />
@@ -606,7 +637,13 @@ export function GameGrid({
           }
           color="red"
           path={revealedRedPath}
-          startPos={isPlaybackPhase ? (animation?.redStart ?? gameState?.players.red.position ?? redDisplayPos) : (gameState?.players.red.position ?? redDisplayPos)}
+          startPos={
+            isPlaybackPhase
+              ? (animation?.redStart ??
+                gameState?.players.red.position ??
+                redDisplayPos)
+              : (gameState?.players.red.position ?? redDisplayPos)
+          }
           cellSize={responsiveCellSize}
           isPlanning={isPlanning}
           animateReveal={isPlaybackPhase && myColor === "blue"}
@@ -619,7 +656,13 @@ export function GameGrid({
           }
           color="blue"
           path={revealedBluePath}
-          startPos={isPlaybackPhase ? (animation?.blueStart ?? gameState?.players.blue.position ?? blueDisplayPos) : (gameState?.players.blue.position ?? blueDisplayPos)}
+          startPos={
+            isPlaybackPhase
+              ? (animation?.blueStart ??
+                gameState?.players.blue.position ??
+                blueDisplayPos)
+              : (gameState?.players.blue.position ?? blueDisplayPos)
+          }
           cellSize={responsiveCellSize}
           isPlanning={isPlanning}
           animateReveal={isPlaybackPhase && myColor === "red"}
@@ -646,7 +689,9 @@ export function GameGrid({
             isHit={hitEffect.red}
             isExploding={explosionEffect === "red"}
             isMe={myColor === "red"}
-            isOverloaded={myColor !== "red" && gameState?.players.red.connected === false}
+            isOverloaded={
+              myColor !== "red" && gameState?.players.red.connected === false
+            }
             entranceAnimation={entranceAnimation ? "left" : null}
             skin={redPieceSkin}
           />
@@ -662,7 +707,9 @@ export function GameGrid({
             isHit={hitEffect.blue}
             isExploding={explosionEffect === "blue"}
             isMe={myColor === "blue"}
-            isOverloaded={myColor !== "blue" && gameState?.players.blue.connected === false}
+            isOverloaded={
+              myColor !== "blue" && gameState?.players.blue.connected === false
+            }
             entranceAnimation={entranceAnimation ? "right" : null}
             skin={bluePieceSkin}
           />
@@ -673,8 +720,13 @@ export function GameGrid({
             className="ai-tutorial-hint in-grid no-arrow"
             style={{
               left: boardSize / 2,
-              top: tutorialHintBottom ? boardSize - responsiveCellSize * 0.75 : boardSize / 2,
+              top: tutorialHintBottom
+                ? boardSize - responsiveCellSize * 0.75
+                : boardSize / 4,
               transform: "translate(-50%, -50%)",
+              animation: tutorialHintBottom
+                ? "tutorial-hint-in-for-ten 0.22s ease-out"
+                : undefined,
             }}
           >
             {tutorialHint}
@@ -692,14 +744,20 @@ export function GameGrid({
                 tutorialAnchorPos.row * responsiveCellSize +
                 (tutorialHintAbove ? -12 : responsiveCellSize + 12),
               transform: tutorialHintAbove
-                ? `translateX(${tutorialHintTarget === "opponent" ? "-80%" : "-20%"}) translateY(-100%)`
+                ? `translateX(${tutorialHintTarget === "opponent" ? "-95%" : "-5%"}) translateY(-100%)`
                 : undefined,
-              ["--tutorial-arrow-left" as string]:
-                tutorialHintAbove
-                  ? tutorialHintTarget === "opponent"
-                    ? "80%"
-                    : "20%"
-                  : undefined,
+              ["--tutorial-arrow-left" as string]: tutorialHintAbove
+                ? tutorialHintTarget === "opponent"
+                  ? "95%"
+                  : "5%"
+                : undefined,
+              // animation: tutorialHintBottom
+              //   ? "tutorial-hint-in-for-ten 0.22s ease-out"
+              //   : undefined,
+              animation: tutorialHintAbove
+                ? "tutorial-hint-in-for-nine 0.22s ease-out"
+                : undefined,
+              // animation: "tutorial-hint-in-for-ten 0.22s ease-out",
             }}
           >
             {tutorialHint}

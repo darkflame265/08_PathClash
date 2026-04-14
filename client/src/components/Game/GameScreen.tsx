@@ -1,4 +1,10 @@
-﻿import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+﻿import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { getSocket } from "../../socket/socketClient";
 import { registerSocketHandlers } from "../../socket/socketHandlers";
 import { useGameStore } from "../../store/gameStore";
@@ -24,7 +30,22 @@ const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
-type TutorialStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14;
+type TutorialStep =
+  | 0
+  | 1
+  | 2
+  | 3
+  | 4
+  | 5
+  | 6
+  | 7
+  | 8
+  | 9
+  | 10
+  | 11
+  | 12
+  | 13
+  | 14;
 
 function buildTutorialGuidePath(
   start: Position,
@@ -289,7 +310,11 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   }, [tutorialStep]);
 
   useEffect(() => {
-    if (currentMatchType !== "ai" || tutorialStep !== 7 || tutorialStartedRef.current) {
+    if (
+      currentMatchType !== "ai" ||
+      tutorialStep !== 7 ||
+      tutorialStartedRef.current
+    ) {
       return;
     }
     tutorialStartedRef.current = true;
@@ -325,25 +350,27 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       setTutorialStep(13);
       return;
     }
-    if (roundInfo.tutorialScenario === "freeplay" && tutorialStep !== 0 && tutorialStep < 14) {
+    if (
+      roundInfo.tutorialScenario === "freeplay" &&
+      tutorialStep !== 0 &&
+      tutorialStep < 14
+    ) {
       setTutorialStep(14);
       return;
     }
-    if (
-      roundInfo.tutorialScenario === "chain_attack" &&
-      tutorialStep === 14
-    ) {
+    if (roundInfo.tutorialScenario === "chain_attack" && tutorialStep === 14) {
       setTutorialStep(13);
+      return;
+    }
+    if (roundInfo.tutorialScenario === "freeplay" && tutorialStep === 13) {
+      setTutorialStep(14);
       return;
     }
     if (
       roundInfo.tutorialScenario === "freeplay" &&
-      tutorialStep === 13
+      tutorialStep !== 0 &&
+      tutorialStep < 14
     ) {
-      setTutorialStep(14);
-      return;
-    }
-    if (roundInfo.tutorialScenario === "freeplay" && tutorialStep !== 0 && tutorialStep < 14) {
       setTutorialStep(14);
       return;
     }
@@ -354,10 +381,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       setTutorialStep(10);
       return;
     }
-    if (
-      roundInfo.tutorialScenario === "predict_wall" &&
-      tutorialStep === 12
-    ) {
+    if (roundInfo.tutorialScenario === "predict_wall" && tutorialStep === 12) {
       setTutorialStep(11);
       return;
     }
@@ -493,7 +517,16 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       myPath[myPath.length - 1]?.col === end.col;
     if (alreadyReached) return null;
     return buildTutorialGuidePath(start, end, gameState.obstacles);
-  }, [gameState.obstacles, gameState.phase, gameState.players, me, myColor, myPath, opponentColor, tutorialStep]);
+  }, [
+    gameState.obstacles,
+    gameState.phase,
+    gameState.players,
+    me,
+    myColor,
+    myPath,
+    opponentColor,
+    tutorialStep,
+  ]);
   const dailyRewardRemaining = Math.max(0, 120 - accountDailyRewardTokens);
   const winRewardTokens =
     winner && myColor && winner === myColor && currentMatchType === "random"
@@ -527,12 +560,14 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     >
       <div className="gs-utility-bar">
         <div className="gs-timer-slot">
-          {gameState.phase === "planning" && roundInfo && !tutorialInProgress && (
-            <TimerBar
-              duration={roundInfo.timeLimit}
-              roundEndsAt={roundInfo.roundEndsAt}
-            />
-          )}
+          {gameState.phase === "planning" &&
+            roundInfo &&
+            !tutorialInProgress && (
+              <TimerBar
+                duration={roundInfo.timeLimit}
+                roundEndsAt={roundInfo.roundEndsAt}
+              />
+            )}
           {gameState.phase === "moving" && (
             <div className="gs-phase-moving">
               <span className="gs-moving-pip" />
@@ -578,11 +613,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
               rewardTokens={winRewardTokens}
               allowRematch={tutorialRematchAllowed}
               actionLabel={
-                useLobbyResultAction
-                  ? lang === "en"
-                    ? "LOBBY"
-                    : "로비"
-                  : null
+                useLobbyResultAction ? (lang === "en" ? "LOBBY" : "로비") : null
               }
               onAction={useLobbyResultAction ? onLeaveToLobby : null}
               alignActionRight={useLobbyResultAction}
@@ -593,36 +624,41 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         )}
 
         <div className="gs-grid-area" ref={gridAreaRef}>
-        <GameGrid
-          entranceAnimation={showEntranceAnimation}
-          cellSize={cellSize}
-          tutorialHint={
+          <GameGrid
+            entranceAnimation={showEntranceAnimation}
+            cellSize={cellSize}
+            tutorialHint={
               tutorialStep === 3
                 ? t.attackCollisionTutorialHint
                 : tutorialStep === 4
                   ? t.escapePredictionTutorialHint
                   : tutorialStep === 7
-                  ? t.dragPathTutorial
-                  : tutorialStep === 8
-                  ? t.escapeRoleDragTutorial
-                  : tutorialStep === 9
-                  ? t.predictPathTutorial
-                  : tutorialStep === 10
-                  ? t.predictObstacleTutorial
-                  : tutorialStep === 11
-                  ? t.predictPathTutorial
-                  : tutorialStep === 12
-                  ? t.overlapEscapeTutorial
-                  : tutorialStep === 13
-                  ? t.chainAttackTutorial ??
-                    "잘했습니다!\n이번엔 마지막 상황입니다!\npathclash에서는 경로가 겹칠 경우, 연속 충돌 판정이 일어납니다.\n당신의 역할은 공격입니다.\n상대의 경로를 예측하여, 상대에게 3 이상의 연속피해를 입히세요!"
-                  : null
+                    ? t.dragPathTutorial
+                    : tutorialStep === 8
+                      ? t.escapeRoleDragTutorial
+                      : tutorialStep === 9
+                        ? t.predictPathTutorial
+                        : tutorialStep === 10
+                          ? t.predictObstacleTutorial
+                          : tutorialStep === 11
+                            ? t.predictPathTutorial
+                            : tutorialStep === 12
+                              ? t.predictObstacleTutorial
+                              : tutorialStep === 13
+                                ? (t.chainAttackTutorial ??
+                                  "잘했습니다! 이번엔 마지막 상황입니다!\npathclash에서는 경로가 겹칠 경우, 연속 충돌 판정이 일어납니다.\n당신의 역할은 공격입니다.\n상대의 경로를 예측하여, 상대에게 3 이상의 연속피해를 입히세요!")
+                                : null
             }
             tutorialHintTarget={tutorialStep === 4 ? "opponent" : "self"}
             tutorialHintAnchor={tutorialHintAnchor}
-            tutorialHintCentered={tutorialStep === 12 || tutorialStep === 13}
-            tutorialHintBottom={tutorialStep === 13}
-            tutorialHintAbove={tutorialStep === 9 || tutorialStep === 11}
+            tutorialHintCentered={
+              tutorialStep === 10 ||
+              tutorialStep === 11 ||
+              tutorialStep === 12 ||
+              tutorialStep === 13
+            }
+            tutorialHintBottom={tutorialStep === 10 || tutorialStep === 13}
+            tutorialHintAbove={tutorialStep === 9}
             tutorialGuidePath={tutorialGuidePath}
             tutorialAutoSubmit={tutorialInProgress}
           />
@@ -670,6 +706,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
             left: "50%",
             top: "42%",
             transform: "translate(-50%, -50%)",
+            animation: "tutorial-hint-in-center 0.22s ease-out",
           }}
         >
           {t.introTutorialHint}
@@ -682,6 +719,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
             left: roleTutorialPos.left,
             top: roleTutorialPos.top,
             transform: "translate(0, -100%)",
+            animation: "tutorial-hint-in-for-two 0.22s ease-out",
           }}
         >
           {t.roleTutorialHint}
@@ -746,4 +784,3 @@ function PathProgressBar({
     </div>
   );
 }
-
