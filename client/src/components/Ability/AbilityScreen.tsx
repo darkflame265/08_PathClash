@@ -256,6 +256,19 @@ function renderSkillIcon(skillId: AbilitySkillId) {
       </span>
     );
   }
+  if (skillId === "wizard_magic_mine") {
+    return (
+      <span
+        className="ability-skill-icon-custom ability-skill-icon-magic-mine"
+        aria-hidden="true"
+      >
+        <span className="ability-skill-icon-mine-ring ability-skill-icon-mine-ring-outer" />
+        <span className="ability-skill-icon-mine-ring ability-skill-icon-mine-ring-inner" />
+        <span className="ability-skill-icon-mine-rune" />
+        <span className="ability-skill-icon-mine-orb" />
+      </span>
+    );
+  }
   const icon = skillId === "electric_blitz" ? "⚡︎" : skill.icon;
   return (
     <span

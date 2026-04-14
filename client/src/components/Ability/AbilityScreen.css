@@ -219,6 +219,85 @@
   filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.28));
 }
 
+/* ── Magic Mine icon ── */
+.ability-skill-icon-magic-mine {
+  color: #a855f7;
+}
+
+.ability-skill-icon-mine-ring,
+.ability-skill-icon-mine-rune,
+.ability-skill-icon-mine-orb {
+  position: absolute;
+}
+
+.ability-skill-icon-mine-ring {
+  border-radius: 999px;
+  border: 1.5px solid rgba(168, 85, 247, 0.85);
+  box-shadow: 0 0 6px rgba(168, 85, 247, 0.45);
+}
+
+.ability-skill-icon-mine-ring-outer {
+  width: 1.0em;
+  height: 1.0em;
+  background: radial-gradient(
+    circle,
+    rgba(88, 28, 135, 0.18) 0%,
+    rgba(168, 85, 247, 0.06) 60%,
+    transparent 100%
+  );
+  border-style: dashed;
+  border-color: rgba(192, 132, 252, 0.7);
+  animation: mine-spin 4s linear infinite;
+}
+
+.ability-skill-icon-mine-ring-inner {
+  width: 0.62em;
+  height: 0.62em;
+  border-color: rgba(216, 180, 254, 0.88);
+  animation: mine-spin 2.5s linear infinite reverse;
+}
+
+/* 6-pointed rune star (두 삼각형 교차) */
+.ability-skill-icon-mine-rune {
+  width: 0.54em;
+  height: 0.54em;
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent 0deg 24deg,
+      rgba(216, 180, 254, 0.72) 24deg 36deg,
+      transparent 36deg 84deg,
+      rgba(216, 180, 254, 0.72) 84deg 96deg,
+      transparent 96deg 144deg,
+      rgba(216, 180, 254, 0.72) 144deg 156deg,
+      transparent 156deg 204deg,
+      rgba(216, 180, 254, 0.72) 204deg 216deg,
+      transparent 216deg 264deg,
+      rgba(216, 180, 254, 0.72) 264deg 276deg,
+      transparent 276deg 324deg,
+      rgba(216, 180, 254, 0.72) 324deg 336deg,
+      transparent 336deg 360deg
+    );
+  -webkit-mask: radial-gradient(circle, #000 0 46%, transparent 48%);
+  mask: radial-gradient(circle, #000 0 46%, transparent 48%);
+  filter: drop-shadow(0 0 3px rgba(168, 85, 247, 0.6));
+}
+
+.ability-skill-icon-mine-orb {
+  width: 0.2em;
+  height: 0.2em;
+  border-radius: 999px;
+  background: radial-gradient(circle, #e9d5ff 0%, #a855f7 60%, #7e22ce 100%);
+  box-shadow:
+    0 0 6px rgba(168, 85, 247, 0.9),
+    0 0 12px rgba(168, 85, 247, 0.5);
+}
+
+@keyframes mine-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 .ability-skill-icon-glyph.is-electric-blitz {
   font-family:
     "Segoe UI Symbol", "Noto Sans Symbols 2", "Apple Symbols", sans-serif;
