@@ -1658,6 +1658,14 @@
   }
 }
 
+/* Allow HP bars to remain visible when pieces are near the board edge */
+.game-grid-shell.ability-grid-shell {
+  overflow: visible;
+}
+.game-grid.ability-grid {
+  overflow: visible;
+}
+
 @keyframes wizardMineBurstRing {
   0% {
     transform: scale(1) rotate(0deg);

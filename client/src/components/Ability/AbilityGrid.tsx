@@ -497,7 +497,7 @@ export function AbilityGrid({
   };
 
   return (
-    <div ref={shellRef} className="game-grid-shell">
+    <div ref={shellRef} className="game-grid-shell ability-grid-shell">
       <div
         ref={gridRef}
         className={`game-grid ability-grid ${boardSkinClass}${timeRewindActive ? ' is-time-rewinding' : ''}${timeRewindFocusColor ? ` rewind-focus-${timeRewindFocusColor}` : ''}`}
