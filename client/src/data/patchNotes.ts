@@ -11,8 +11,8 @@ export type PatchNoteSection = {
   lines: PatchNoteLine[];
 };
 
-export const PATCH_NOTES_VERSION = "2026-04-14-v14";
-const PATCH_NOTES_APP_VERSION = "1.0.27";
+export const PATCH_NOTES_VERSION = "2026-04-14-v15";
+const PATCH_NOTES_APP_VERSION = "1.0.28";
 
 export function getPatchNotesVersionLabel(lang: "en" | "kr"): string {
   return lang === "en"
@@ -37,6 +37,9 @@ export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
           {
             text: "Fixed a bug on Android where the in-game background music would reset every 32 seconds.",
           },
+          {
+            text: "Fixed a bug in Ability Battle where one HP bar would be clipped and hidden when both pieces were overlapping near the bottom of the board.",
+          },
         ],
       },
     ];
@@ -56,6 +59,9 @@ export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
       lines: [
         {
           text: "앱에서 인게임 배경음악이 32초마다 초기화되던 버그를 수정했습니다.",
+        },
+        {
+          text: "능력대전에서 두 말이 보드 하단에서 겹쳐 있을 때 체력바 하나가 보드 영역 밖으로 잘려 보이지 않던 버그를 수정했습니다.",
         },
       ],
     },
