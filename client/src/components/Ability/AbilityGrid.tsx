@@ -530,7 +530,14 @@ export function AbilityGrid({
               width: responsiveCellSize,
               height: responsiveCellSize,
             }}
-          />
+          >
+            <img
+              src="/ui/ability/lava_domain.svg"
+              alt=""
+              className="ability-lava-tile__img"
+              draggable={false}
+            />
+          </div>
         ))}
 
         {trapTiles.map((trap) => (
