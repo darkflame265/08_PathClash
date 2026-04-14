@@ -1798,6 +1798,20 @@ export class AbilityRoom {
       bot.position.row === opponent.position.row ||
       bot.position.col === opponent.position.col;
 
+    // 양자도약 스킬 위협 탐지용 사전 계산
+    const opponentHasNova = opponent.equippedSkills.includes('nova_blast');
+    const opponentHasEmber = opponent.equippedSkills.includes('ember_blast');
+    const qRowDelta = Math.abs(bot.position.row - opponent.position.row);
+    const qColDelta = Math.abs(bot.position.col - opponent.position.col);
+    // 엠버폭발: 십자형(맨해튼 거리 1 이하) 범위
+    const botInEmberRange = opponentHasEmber && (qRowDelta + qColDelta <= 1);
+    // 노바폭발: 대각선 거리 1~2 범위 (rowDelta === colDelta, 최대 2)
+    const botInNovaRange = opponentHasNova && (qRowDelta === qColDelta && qRowDelta <= 2);
+    // 벽력일섬 위협: 상대가 보유 + 같은 행/열
+    const blitzSkillThreat = opponentHasBlitz && botInBlitzLine;
+    // 특정 스킬 위협 종합 (양자도약으로 즉시 회피할 이유가 있는 상황)
+    const isUnderSkillThreat = blitzSkillThreat || botInEmberRange || botInNovaRange;
+
     for (const skillId of bot.equippedSkills) {
       if (!ABILITY_FAKE_AI_SKILL_POOL.includes(skillId)) continue;
       if (bot.mana < ABILITY_SKILL_COSTS[skillId]) continue;
@@ -1895,10 +1909,9 @@ export class AbilityRoom {
 
       if (skillId === 'quantum_shift') {
         // 연속 사용 제한: 직전 턴에 4코 스킬 사용 시 건너뜀
-        // 예외: 상대가 벽력일섬 보유 + 같은 행/열(일직선)이면 회피 목적으로 허용
+        // 예외: 특정 스킬 위협(벽력일섬/노바폭발/엠버폭발)이 있으면 회피 목적으로 허용
         if (usedFourCostLastTurn) {
-          const allowedForBlitzEvasion = opponentHasBlitz && botInBlitzLine;
-          if (!allowedForBlitzEvasion) continue;
+          if (!isUnderSkillThreat) continue;
         }
 
         // 고비용 공격/방어 스킬이 함께 장착된 경우 마나낭비 패널티 부여
@@ -1914,11 +1927,14 @@ export class AbilityRoom {
           ? Math.round(quantumHighCostMax * 45)
           : 0;
 
-        for (const target of getAdjacentBlinkTargets(
+        // 모든 인접 목표지에 대해 양자도약 후보 생성
+        const quantumTargets = getAdjacentBlinkTargets(
           bot.position,
           effectiveObstacles,
           opponent.position,
-        )) {
+        );
+        const quantumScoredList: Array<{ target: Position; score: number; blinkPath: Position[] }> = [];
+        for (const target of quantumTargets) {
           const blinkPath = createAiPath({
             color: bot.color,
             role: bot.role,
@@ -1930,9 +1946,46 @@ export class AbilityRoom {
           const base = this.scoreBotActionCandidate(bot, opponent, blinkPath, [
             { skillId, step: 0, order: 0, target },
           ], opponentModel, `quantum_shift:${target.row},${target.col}`, effectiveObstacles);
-          candidates.push({
-            ...base,
+          quantumScoredList.push({
+            target,
+            blinkPath,
             score: base.score - quantumManaWastePenalty,
+          });
+        }
+        // 안전도 기준 내림차순 정렬 → 가장 안전한 목적지 우선
+        quantumScoredList.sort((a, b) => b.score - a.score);
+
+        // ── 위협 조건 감지 → 70% 확률로 강제 회피 ──────────────────────────
+        // 기준1: 상대가 벽력일섬 보유 + 같은 행/열 일직선
+        // 기준2: 상대가 노바폭발/엠버폭발 보유 + 사정거리 이내
+        let quantumBonus = 0;
+        if (isUnderSkillThreat && Math.random() < 0.70) {
+          // 강제 회피: 일반 경로 후보를 압도할 수 있도록 높은 보너스 부여
+          quantumBonus = 1800;
+        } else {
+          // ── 일반 위기 감지 → 확률적 탈출 ───────────────────────────────
+          // 현재 위치에서 상대 경로 모델과 충돌 위험이 심각할 때 탈출 유도
+          const currentPosDanger = scoreEscapePathAgainstModel(
+            bot.position,
+            [],
+            opponent.position,
+            opponentModel,
+            effectiveObstacles,
+          );
+          if (currentPosDanger < -300 && Math.random() < 0.50) {
+            quantumBonus = 900;
+          } else if (currentPosDanger < -150 && Math.random() < 0.30) {
+            quantumBonus = 450;
+          }
+        }
+
+        for (const entry of quantumScoredList) {
+          candidates.push({
+            path: entry.blinkPath,
+            skills: [{ skillId, step: 0, order: 0, target: entry.target }],
+            score: entry.score + quantumBonus,
+            reason: `quantum_shift:${entry.target.row},${entry.target.col}`,
+            selectedSkill: skillId,
           });
         }
         continue;
