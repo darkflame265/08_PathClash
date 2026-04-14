@@ -770,9 +770,11 @@ function App() {
 
     otherBgm.pause();
     otherBgm.currentTime = 0;
-    void targetBgm.play().catch(() => {
-      // Autoplay can fail until the user interacts with the screen.
-    });
+    if (targetBgm.paused) {
+      void targetBgm.play().catch(() => {
+        // Autoplay can fail until the user interacts with the screen.
+      });
+    }
   }, [isMusicMuted, matchResultAudioKind, view]);
 
   useEffect(() => {
