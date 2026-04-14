@@ -415,10 +415,10 @@ export function AbilityGrid({
 
   const blitzTargets = blitzTargetsVisible
     ? [
-        { row: blitzOrigin.row - 1, col: blitzOrigin.col, icon: '↑' },
-        { row: blitzOrigin.row + 1, col: blitzOrigin.col, icon: '↓' },
-        { row: blitzOrigin.row, col: blitzOrigin.col - 1, icon: '←' },
-        { row: blitzOrigin.row, col: blitzOrigin.col + 1, icon: '→' },
+        { row: blitzOrigin.row - 1, col: blitzOrigin.col, rotation: 0 },
+        { row: blitzOrigin.row + 1, col: blitzOrigin.col, rotation: 180 },
+        { row: blitzOrigin.row, col: blitzOrigin.col - 1, rotation: -90 },
+        { row: blitzOrigin.row, col: blitzOrigin.col + 1, rotation: 90 },
       ].filter(
         (position) =>
           position.row >= 0 &&
@@ -666,7 +666,12 @@ export function AbilityGrid({
             }}
             onClick={() => onBlitzTargetSelect(target)}
           >
-            {target.icon}
+            <img
+              src="/ui/ability/skill_arrow_icon.svg"
+              alt=""
+              className="ability-blitz-target-arrow"
+              style={{ transform: `rotate(${target.rotation}deg)` }}
+            />
           </button>
         ))}
 

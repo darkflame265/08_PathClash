@@ -672,6 +672,16 @@
   box-shadow:
     0 0 16px rgba(59, 130, 246, 0.42),
     0 0 28px rgba(125, 211, 252, 0.16);
+  padding: 0;
+  overflow: hidden;
+}
+
+.ability-blitz-target-arrow {
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
 }
 
 .ability-inferno-target {
