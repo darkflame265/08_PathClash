@@ -700,10 +700,54 @@
     0 0 28px rgba(125, 211, 252, 0.16);
 }
 
+@keyframes lava-tile-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 8px 2px rgba(249, 115, 22, 0.45),
+      0 0 20px 4px rgba(239, 68, 68, 0.22);
+  }
+  50% {
+    box-shadow:
+      0 0 16px 5px rgba(249, 115, 22, 0.75),
+      0 0 32px 10px rgba(239, 68, 68, 0.42),
+      0 0 44px 12px rgba(153, 27, 27, 0.2);
+  }
+}
+
+@keyframes lava-tile-brightness {
+  0%, 100% {
+    filter: brightness(0.92) drop-shadow(0 0 3px rgba(249, 115, 22, 0.55));
+  }
+  50% {
+    filter: brightness(1.2) drop-shadow(0 0 7px rgba(249, 115, 22, 0.88)) drop-shadow(0 0 13px rgba(239, 68, 68, 0.48));
+  }
+}
+
+@keyframes lava-overlay-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.85; }
+}
+
 .ability-lava-tile {
   position: absolute;
   z-index: 1;
   pointer-events: none;
+  animation: lava-tile-glow 1.9s ease-in-out infinite;
+}
+
+.ability-lava-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 65%,
+    rgba(255, 175, 50, 0.18) 0%,
+    rgba(249, 115, 22, 0.1) 40%,
+    transparent 70%
+  );
+  animation: lava-overlay-pulse 1.9s ease-in-out infinite;
 }
 
 .ability-lava-tile__img {
@@ -716,6 +760,14 @@
   object-fit: cover;
   user-select: none;
   -webkit-user-drag: none;
+  animation: lava-tile-brightness 1.9s ease-in-out infinite;
+  animation-delay: -0.45s;
+}
+
+.ability-grid.is-time-rewinding .ability-lava-tile,
+.ability-grid.is-time-rewinding .ability-lava-tile::before,
+.ability-grid.is-time-rewinding .ability-lava-tile__img {
+  animation-play-state: paused;
 }
 
 .ability-inferno-marker {
