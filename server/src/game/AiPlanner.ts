@@ -204,7 +204,7 @@ function buildAttackPath(
     )
     .sort((left, right) => right.score - left.score);
 
-  const chosen = scoredCandidates[0];
+  const chosen = pickWeightedTopThree(scoredCandidates);
   const chosenPath = chosen
     ? extendAttackPathToFullPoints(
         selfPosition,
@@ -609,11 +609,7 @@ function createEscaperPath(selfPosition: Position, threatPosition: Position, pat
     )
     .sort((left, right) => right.score - left.score);
 
-  const topScore = scoredCandidates[0]?.score ?? 0;
-  const safePool = scoredCandidates
-    .filter((candidate) => candidate.score >= topScore - 10)
-    .slice(0, 5);
-  const chosen = chooseSafeEscapeCandidate(safePool) ?? scoredCandidates[0];
+  const chosen = pickWeightedTopThree(scoredCandidates);
   const chosenPath = chosen?.path ?? [];
 
   lastAiEscapeDebug = {
@@ -1122,6 +1118,14 @@ function getFutureThreatModel(
   );
   cache.set(key, created);
   return created;
+}
+
+function pickWeightedTopThree<T>(candidates: T[]): T | undefined {
+  if (candidates.length === 0) return undefined;
+  const roll = Math.random();
+  if (roll < 0.6 || candidates.length === 1) return candidates[0];
+  if (roll < 0.9 || candidates.length === 2) return candidates[1];
+  return candidates[2] ?? candidates[1] ?? candidates[0];
 }
 
 function chooseSafeEscapeCandidate(
