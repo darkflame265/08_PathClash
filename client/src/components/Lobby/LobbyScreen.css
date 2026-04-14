@@ -333,6 +333,18 @@
   min-height: 14rem;
 }
 
+.mode-content-card.is-db-loading h2::after {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--tile-border, #3a444d);
+  border-top-color: var(--primary, #386641);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
 .account-card {
   gap: 0.625rem;
 }

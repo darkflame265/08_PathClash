@@ -3834,7 +3834,9 @@ export function LobbyScreen({
         </div>
       </div>
 
-      <div className="lobby-card mode-content-card">{renderSelectedModeContent()}</div>
+      <div className={`lobby-card mode-content-card${accountSummaryLoading ? " is-db-loading" : ""}`}>
+        {renderSelectedModeContent()}
+      </div>
 
       {upgradeFlowLoading && !pendingUpgradeSwitchProfile && !showUpgradeNotice && (
         <div className="upgrade-flow-overlay" role="status" aria-live="polite">
