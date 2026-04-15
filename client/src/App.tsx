@@ -849,7 +849,11 @@ function App() {
   }, [tryStartBgm]);
 
   if (!authReady || !legalConsentResolved) {
-    return <div className="app app-loading">Connecting guest session...</div>;
+    return (
+      <div className="app-outer app-outer--lobby">
+        <div className="app-inner app-loading">Connecting guest session...</div>
+      </div>
+    );
   }
 
   const legalConsentTitle =
@@ -885,8 +889,9 @@ function App() {
     openLegalDocument === "terms" ? legalConsentTermsPath : legalConsentPolicyPath;
 
   return (
-    <div className={`app ${view === "lobby" ? "app-lobby" : "app-game"}`}>
-      <Suspense fallback={<div className="app app-loading">Loading...</div>}>
+    <div className={`app-outer ${view === "lobby" ? "app-outer--lobby" : "app-outer--game"}`}>
+      <div className="app-inner">
+      <Suspense fallback={<div className="loading">Loading...</div>}>
         {view === "lobby" && (
           <LobbyScreen
             onGameStart={() => setView("game")}
@@ -1054,8 +1059,9 @@ function App() {
           </div>
         </div>
       )}
-    </div>
-  );
+    </div>{/* app-inner */}
+  </div>
+);
 }
 
 export default App;
