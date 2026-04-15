@@ -192,8 +192,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 1.75em;
-  height: 1.75em;
+  width: 1.75rem;
+  height: 1.75rem;
   border-radius: 50%;
   background: rgba(56, 102, 65, 0.2);
   border: 1px solid rgba(56, 102, 65, 0.4);
@@ -336,8 +336,8 @@
 .mode-content-card.is-db-loading h2::after {
   content: "";
   display: inline-block;
-  width: 0.875em;
-  height: 0.875em;
+  width: 0.875rem;
+  height: 0.875rem;
   border: 2px solid var(--tile-border, #3a444d);
   border-top-color: var(--primary, #386641);
   border-radius: 50%;
@@ -383,8 +383,8 @@
 }
 
 .spinner.account-sync-spinner {
-  width: 1.25em;
-  height: 1.25em;
+  width: 1.25rem;
+  height: 1.25rem;
   margin: 0;
   border-width: 1.75px;
   flex-shrink: 0;
