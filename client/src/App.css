@@ -44,10 +44,14 @@ body {
   overflow: hidden;
 }
 
-/* Tablet: letterbox at 520px */
+/* Tablet: lobby 520px, game 430px (phone-like width to prevent HUD oversizing) */
 @media (min-width: 768px) and (max-width: 1024px) {
   .app-inner {
     max-width: 520px;
+  }
+
+  .app-outer--game .app-inner {
+    max-width: 430px;
   }
 }
 

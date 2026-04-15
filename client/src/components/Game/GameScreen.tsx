@@ -32,8 +32,8 @@ const MAX_CELL = 160;
 // 태블릿 letterbox 컨테이너(520px)에서 폰과 동일한 체감 스케일 유지
 // 430px(iPhone Pro Max)에서의 scale≈0.85를 상한으로 설정
 const MAX_SCALE = 0.85;
-// app-inner max-width와 맞춤 — window.innerWidth 대신 이 값으로 초기값 계산
-const CONTAINER_MAX_WIDTH = 520;
+// 태블릿 game 모드 app-inner max-width와 맞춤 — window.innerWidth 대신 이 값으로 초기값 계산
+const CONTAINER_MAX_WIDTH = 430;
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
 type TutorialStep =
   | 0
