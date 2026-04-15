@@ -44,14 +44,10 @@ body {
   overflow: hidden;
 }
 
-/* Tablet: lobby 520px, game 430px (phone-like width to prevent HUD oversizing) */
+/* Tablet: letterbox at 520px */
 @media (min-width: 768px) and (max-width: 1024px) {
   .app-inner {
     max-width: 520px;
-  }
-
-  .app-outer--game .app-inner {
-    max-width: 430px;
   }
 }
 
@@ -59,6 +55,16 @@ body {
 @media (min-width: 1025px) {
   .app-inner {
     max-width: 600px;
+  }
+}
+
+/* Game mode: phone-like column width for ALL non-mobile screens.
+   Prevents HUD oversizing regardless of viewport/DPR/zoom level.
+   Tablet uses 768-1024px breakpoint (CSS px), but tablets with DPR=2
+   may report viewport >1024px (desktop range) — this rule covers both. */
+@media (min-width: 768px) {
+  .app-outer--game .app-inner {
+    max-width: 430px;
   }
 }
 
