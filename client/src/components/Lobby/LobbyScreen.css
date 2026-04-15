@@ -692,8 +692,8 @@
 }
 
 .ability-skill-icon-mine-ring-outer {
-  width: 1.0em;
-  height: 1.0em;
+  width: 1em;
+  height: 1em;
   background: radial-gradient(
     circle,
     rgba(88, 28, 135, 0.18) 0%,
@@ -715,23 +715,22 @@
 .ability-skill-icon-mine-rune {
   width: 0.54em;
   height: 0.54em;
-  background:
-    conic-gradient(
-      from 0deg,
-      transparent 0deg 24deg,
-      rgba(216, 180, 254, 0.72) 24deg 36deg,
-      transparent 36deg 84deg,
-      rgba(216, 180, 254, 0.72) 84deg 96deg,
-      transparent 96deg 144deg,
-      rgba(216, 180, 254, 0.72) 144deg 156deg,
-      transparent 156deg 204deg,
-      rgba(216, 180, 254, 0.72) 204deg 216deg,
-      transparent 216deg 264deg,
-      rgba(216, 180, 254, 0.72) 264deg 276deg,
-      transparent 276deg 324deg,
-      rgba(216, 180, 254, 0.72) 324deg 336deg,
-      transparent 336deg 360deg
-    );
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 24deg,
+    rgba(216, 180, 254, 0.72) 24deg 36deg,
+    transparent 36deg 84deg,
+    rgba(216, 180, 254, 0.72) 84deg 96deg,
+    transparent 96deg 144deg,
+    rgba(216, 180, 254, 0.72) 144deg 156deg,
+    transparent 156deg 204deg,
+    rgba(216, 180, 254, 0.72) 204deg 216deg,
+    transparent 216deg 264deg,
+    rgba(216, 180, 254, 0.72) 264deg 276deg,
+    transparent 276deg 324deg,
+    rgba(216, 180, 254, 0.72) 324deg 336deg,
+    transparent 336deg 360deg
+  );
   -webkit-mask: radial-gradient(circle, #000 0 46%, transparent 48%);
   mask: radial-gradient(circle, #000 0 46%, transparent 48%);
   filter: drop-shadow(0 0 3px rgba(168, 85, 247, 0.6));
@@ -748,8 +747,12 @@
 }
 
 @keyframes mine-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .ability-skill-icon-glyph.is-electric-blitz {

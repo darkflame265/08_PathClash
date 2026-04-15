@@ -45,7 +45,8 @@ body {
   background: var(--bg, #12181b);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* Tablet: letterbox at 520px */
