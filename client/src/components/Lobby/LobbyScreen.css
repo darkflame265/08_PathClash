@@ -2201,8 +2201,7 @@
 }
 
 .achievements-scroll-body {
-  max-height: min(60vh, 31rem);
-  overflow-y: auto;
+  overflow-y: visible;
   padding-right: 0.2rem;
 }
 
@@ -2338,8 +2337,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-  overflow-y: auto;
-  max-height: calc(100dvh - 12.5rem);
+  overflow-y: visible;
   padding-right: 0.2rem;
 }
 
