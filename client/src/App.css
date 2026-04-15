@@ -7,23 +7,43 @@ body {
   user-select: none;
 }
 
-.app {
-  width: 100vw;
-  min-height: 100vh;
-  display: flex;
-}
-
-.app-lobby {
-  align-items: center;
-  justify-content: center;
-}
-
-.app-game {
-  align-items: flex-start;
-  justify-content: center;
-  height: 100dvh;
+/* ── Outer: full-screen shell, black letterbox bg ─────────────── */
+.app-outer {
+  width: 100%;
+  height: 100%;
   min-height: 100dvh;
+  background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.app-outer--lobby {
+  align-items: center;
+}
+
+/* ── Inner: the actual game column ──────────────────────────────── */
+.app-inner {
+  width: 100%;
+  min-height: 100dvh;
+  background: var(--bg, #12181B);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+}
+
+/* Tablet: letterbox at 520px */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .app-inner {
+    max-width: 520px;
+  }
+}
+
+/* Desktop: up to 600px */
+@media (min-width: 1025px) {
+  .app-inner {
+    max-width: 600px;
+  }
 }
 
 .app-loading {
