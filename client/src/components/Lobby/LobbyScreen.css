@@ -1230,8 +1230,8 @@
 
 .skin-modal {
   max-width: 28rem;
-  max-height: min(46rem, calc(100dvh - 2rem));
-  overflow: hidden;
+  max-height: min(46rem, 85dvh);
+  overflow-y: auto;
 }
 
 .skin-modal-head {
@@ -1313,8 +1313,8 @@
 
 .token-shop-modal {
   width: min(100%, 42rem);
-  max-height: min(48rem, calc(100dvh - 2rem));
-  overflow: hidden;
+  max-height: min(48rem, 85dvh);
+  overflow-y: auto;
 }
 
 .token-shop-head {
@@ -2159,8 +2159,8 @@
 
 .achievements-modal {
   width: min(100%, 40rem);
-  max-height: min(48rem, calc(100dvh - 2rem));
-  overflow: hidden;
+  max-height: min(48rem, 85dvh);
+  overflow-y: auto;
 }
 
 .achievements-head {
@@ -2330,8 +2330,8 @@
 
 .settings-modal {
   width: min(100%, 24rem);
-  max-height: min(46rem, calc(100dvh - 2rem));
-  overflow: hidden;
+  max-height: min(46rem, 85dvh);
+  overflow-y: auto;
 }
 
 .settings-scroll-body {
@@ -2484,8 +2484,8 @@
 
 .skin-detail-modal {
   width: min(100%, 30rem);
-  max-height: min(52rem, calc(100dvh - 2rem));
-  overflow: hidden;
+  max-height: min(52rem, 85dvh);
+  overflow-y: auto;
   gap: 0.9rem;
 }
 
