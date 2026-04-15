@@ -33,7 +33,6 @@ html {
 
 body {
   margin: 0;
-  height: 100%;
   min-height: 100vh;
   scrollbar-width: none;
 }
@@ -63,5 +62,5 @@ button::-moz-focus-inner {
 input  { font-family: inherit; color: inherit; }
 
 #root {
-  height: 100%;
+  min-height: 100%;
 }
