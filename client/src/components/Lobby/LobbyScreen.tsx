@@ -852,6 +852,7 @@ export function LobbyScreen({
   const [atomicPreviewReady, setAtomicPreviewReady] = useState(false);
 
   const dailyResetTimeoutRef = useRef<number | null>(null);
+  const prevAuthUserIdRef = useRef<string | null>(authUserId);
 
   const lastRewardSyncDayRef = useRef<string>(getUtcDayKey());
 
@@ -2196,6 +2197,44 @@ export function LobbyScreen({
       active = false;
     };
   }, [setAuthState]);
+
+  // 모바일(Capacitor) 전용: 페이지 리로드 없이 OAuth가 완료되면 authUserId가 변경됨.
+  // null → 유저ID 전환(웹 리다이렉트 초기화)은 위 effect가 처리하므로,
+  // 비null 유저ID → 다른 유저ID로의 변경(게스트 → Google 계정)일 때만 finalize 실행.
+  useEffect(() => {
+    const prevUserId = prevAuthUserIdRef.current;
+    prevAuthUserIdRef.current = authUserId;
+
+    if (prevUserId === null || prevUserId === authUserId) return;
+    if (!hasPendingGoogleUpgradeContext()) return;
+
+    let active = true;
+    void resolveUpgradeFlowAfterRedirect().then((result) => {
+      if (!active) return;
+      setUpgradeFlowLoading(false);
+      if (result.kind === "none") return;
+
+      if (result.kind === "switch_confirm_required") {
+        setPendingUpgradeSwitchProfile(result.profile);
+        return;
+      }
+
+      if (result.kind === "upgrade_ok" || result.kind === "switch_ok") {
+        applyProfileToStore(result.profile, setAuthState);
+        setUpgradeResult(result);
+        if (result.kind === "switch_ok") {
+          setShowUpgradeNotice(true);
+        }
+        return;
+      }
+
+      setUpgradeResult(result);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [authUserId, setAuthState]);
 
   const handleCancelUpgradeSwitch = async () => {
     setIsResolvingUpgradeDecision(true);
