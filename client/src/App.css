@@ -1,9 +1,13 @@
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 body {
-  background: var(--bg, #12181B);
-  color: var(--text, #F0F4F8);
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  background: var(--bg, #12181b);
+  color: var(--text, #f0f4f8);
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
   user-select: none;
 }
 
@@ -38,7 +42,7 @@ body {
 .app-inner {
   width: 100%;
   min-height: 100dvh;
-  background: var(--bg, #12181B);
+  background: var(--bg, #12181b);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -46,13 +50,6 @@ body {
 
 /* Tablet: letterbox at 520px */
 @media (min-width: 768px) and (max-width: 1024px) {
-  .app-inner {
-    max-width: 520px;
-  }
-}
-
-/* Desktop: up to 600px */
-@media (min-width: 1025px) {
   .app-inner {
     max-width: 600px;
   }
@@ -64,21 +61,28 @@ body {
    may report viewport >1024px (desktop range) — this rule covers both. */
 @media (min-width: 768px) {
   .app-outer--game .app-inner {
-    max-width: 430px;
+    max-width: 600px;
+  }
+}
+
+/* Desktop: up to 600px */
+@media (min-width: 1025px) {
+  .app-inner {
+    max-width: 600px;
   }
 }
 
 .app-loading {
   align-items: center;
   justify-content: center;
-  color: var(--text-muted, #9AA4AE);
+  color: var(--text-muted, #9aa4ae);
   font-size: 1.1rem;
   font-weight: 500;
   letter-spacing: 0.05em;
 }
 
 .loading {
-  color: var(--text-muted, #9AA4AE);
+  color: var(--text-muted, #9aa4ae);
   font-size: 1.1rem;
   font-weight: 500;
   letter-spacing: 0.05em;
@@ -103,8 +107,11 @@ body {
   padding: 1.2rem;
   border-radius: 1rem;
   border: 1px solid rgba(90, 104, 118, 0.45);
-  background:
-    linear-gradient(180deg, rgba(33, 40, 47, 0.97), rgba(26, 32, 38, 0.98));
+  background: linear-gradient(
+    180deg,
+    rgba(33, 40, 47, 0.97),
+    rgba(26, 32, 38, 0.98)
+  );
   box-shadow:
     0 24px 60px rgba(0, 0, 0, 0.42),
     inset 0 0 0 1px rgba(255, 255, 255, 0.03);
@@ -197,7 +204,10 @@ body {
   text-decoration: none;
   text-align: left;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .app-legal-link:hover {
@@ -245,7 +255,11 @@ body {
   flex-direction: column;
   border-radius: 1.15rem;
   border: 1px solid rgba(90, 104, 118, 0.42);
-  background: linear-gradient(180deg, rgba(25, 32, 38, 0.985), rgba(18, 24, 29, 0.995));
+  background: linear-gradient(
+    180deg,
+    rgba(25, 32, 38, 0.985),
+    rgba(18, 24, 29, 0.995)
+  );
   box-shadow:
     0 28px 70px rgba(0, 0, 0, 0.48),
     inset 0 0 0 1px rgba(255, 255, 255, 0.03);
@@ -282,7 +296,10 @@ body {
   font-size: 1.3rem;
   line-height: 1;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .app-legal-doc-close:hover {
