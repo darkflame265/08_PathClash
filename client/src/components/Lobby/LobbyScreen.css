@@ -2996,7 +2996,7 @@
 @media (max-width: 640px) {
   .skin-detail-modal {
     width: min(100%, 24rem);
-    max-height: calc(100dvh - 1.7rem);
+    max-height: 92dvh;
     padding: 1rem;
   }
 
