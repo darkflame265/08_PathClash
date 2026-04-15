@@ -22,6 +22,9 @@ body {
   align-items: center;
 }
 
+/* game: align-items stays flex-start (from base .app-outer) — no override needed */
+.app-outer--game {}
+
 /* ── Inner: the actual game column ──────────────────────────────── */
 .app-inner {
   width: 100%;

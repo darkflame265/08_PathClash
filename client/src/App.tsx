@@ -891,7 +891,7 @@ function App() {
   return (
     <div className={`app-outer ${view === "lobby" ? "app-outer--lobby" : "app-outer--game"}`}>
       <div className="app-inner">
-      <Suspense fallback={<div className="loading">Loading...</div>}>
+        <Suspense fallback={<div className="loading">Loading...</div>}>
         {view === "lobby" && (
           <LobbyScreen
             onGameStart={() => setView("game")}
