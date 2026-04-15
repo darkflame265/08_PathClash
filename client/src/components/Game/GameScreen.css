@@ -19,8 +19,7 @@
   padding-bottom: calc(
     calc(0.75rem * var(--gs-scale, 1)) + env(safe-area-inset-bottom, 0px)
   );
-  height: 100svh; /* fixed height → grid-area가 flex:1로 정확한 공간을 받음 */
-  height: 100dvh;
+  height: 100%; /* 부모 컨테이너(app-inner) 기준 — viewport 단위 사용 안 함 */
   overflow: visible; /* profile 드롭다운이 카드 바깥으로 나와도 보임 */
   width: 100%;
   max-width: 600px;
@@ -66,7 +65,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100svh;
+  min-height: 100%;
   color: var(--text-muted);
   font-size: 0.875rem;
   letter-spacing: 0.12em;

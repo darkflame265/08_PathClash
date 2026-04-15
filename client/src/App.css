@@ -22,8 +22,17 @@ body {
   align-items: center;
 }
 
-/* game: align-items stays flex-start (from base .app-outer) — no override needed */
-.app-outer--game {}
+/* game: fixed viewport height — prevents real-device dvh overflow issues */
+.app-outer--game {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* game-inner: fill outer exactly (no min-height growth) */
+.app-outer--game .app-inner {
+  height: 100%;
+  min-height: 0;
+}
 
 /* ── Inner: the actual game column ──────────────────────────────── */
 .app-inner {
