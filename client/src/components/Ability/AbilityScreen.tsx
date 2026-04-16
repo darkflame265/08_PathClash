@@ -3156,7 +3156,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             const atomicUnavailable =
               skillId === "atomic_fission" &&
               (!me.previousTurnStart || me.previousTurnPath.length === 0);
-            const blitzBlocked = !overdriveTurn && blitzReserved && !reserved;
+            const blitzBlocked =
+              blitzReserved &&
+              !reserved &&
+              (skillId === "cosmic_bigbang" || !overdriveTurn);
             const bigBangBlocked =
               !overdriveTurn && bigBangReserved && !reserved;
             const disabled =
