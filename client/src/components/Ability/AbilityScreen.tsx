@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, type CSSProperties } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { getSocket } from "../../socket/socketClient";
 import { syncServerTime, getEstimatedServerNow } from "../../socket/timeSync";
 import { useLang } from "../../hooks/useLang";
@@ -51,7 +51,6 @@ interface Props {
   onLeaveToLobby: () => void;
 }
 
-const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
 const STEP_DURATION_MS = 200;
@@ -431,7 +430,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const submitTimeoutIdsRef = useRef<number[]>([]);
   const gridAreaRef = useRef<HTMLDivElement>(null);
   const cellSize = useAdaptiveCellSize(gridAreaRef);
-  const scale = cellSize / DEFAULT_CELL;
   const currentColor = myColor ?? "red";
   const opponentColor: PlayerColor = currentColor === "red" ? "blue" : "red";
   const planningSunChariots: BoolByColor = {
@@ -2877,7 +2875,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   return (
     <div
       className={`game-screen ability-screen ${screenBoardClass}`}
-      style={{ "--gs-scale": scale } as CSSProperties}
     >
       <div className="gs-utility-bar">
         <div className="gs-timer-slot">
