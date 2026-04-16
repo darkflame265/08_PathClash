@@ -439,16 +439,16 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "plasma_charge",
     name: { en: "Charge", kr: "충전" },
     description: {
-      en: "Become unable to move this turn. Gain +4 mana at the start of your next turn. Defense skills can still be used.",
-      kr: "이번 턴에는 이동할 수 없습니다. 대신 다음 턴 시작 시 마나를 +4 얻습니다. 방어 스킬은 함께 사용할 수 있습니다.",
+      en: "This turn, you gain 1 Pass Point. Gain +4 mana at the start of your next turn. Defense skills can still be used.",
+      kr: "이번 턴에 패스 포인트가 1이 됩니다. 대신 다음 턴 시작 시 마나를 +4 얻습니다. 방어 스킬은 함께 사용할 수 있습니다.",
     },
     loadoutTags: {
-      en: "Move Locked · Combo OK",
-      kr: "이동 불가 · 조합 가능",
+      en: "Move OK · Combo OK",
+      kr: "이동 가능 · 조합 가능",
     },
     loadoutDescription: {
-      en: "Skip movement this turn and gain a large mana bonus next turn.",
-      kr: "이번 턴 이동하지 않고, 다음 턴 마나를 크게 회복합니다.",
+      en: "This turn, you gain 1 Pass Point. Gain +4 mana at the start of your next turn. Defense skills can still be used.",
+      kr: "이번 턴에 패스 포인트가 1이 됩니다. 대신 다음 턴 시작 시 마나를 +4 얻습니다. 방어 스킬은 함께 사용할 수 있습니다.",
     },
     manaCost: ABILITY_SKILL_COSTS.plasma_charge,
     category: "utility",
