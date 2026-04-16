@@ -278,6 +278,54 @@ function getSequencePosition(
   return path[Math.min(step - 1, path.length - 1)] ?? start;
 }
 
+// targetPos에서 출발해 loopStart 방향으로 역행하지 않고 targetPos로 돌아오는
+// 최단 복귀 사이클을 BFS로 탐색한다.
+// 반환값: [첫 이동 셀, ..., targetPos] 형태의 루프 세그먼트 (접근 경로 이후 반복 삽입용)
+function findShortestReturnCycle(
+  targetPos: Position,
+  loopStart: Position,
+  obstacles: Position[],
+  maxLen: number,
+): Position[] | null {
+  if (maxLen < 4) return null; // 역행 없는 최소 루프는 4스텝(사각형)
+
+  type State = { pos: Position; prev: Position; path: Position[] };
+  const visited = new Set<string>();
+  const queue: State[] = [];
+
+  // 첫 스텝: loopStart 방향 역행 금지
+  for (const neighbor of getCardinalNeighbors(targetPos, obstacles)) {
+    if (posEqual(neighbor, loopStart)) continue;
+    const key = `${toKey(neighbor)}|${toKey(targetPos)}`;
+    if (!visited.has(key)) {
+      visited.add(key);
+      queue.push({ pos: neighbor, prev: targetPos, path: [neighbor] });
+    }
+  }
+
+  while (queue.length > 0) {
+    const state = queue.shift()!;
+    if (state.path.length >= maxLen) continue;
+
+    for (const neighbor of getCardinalNeighbors(state.pos, obstacles)) {
+      if (posEqual(neighbor, state.prev)) continue; // 직전 타일 역행 금지
+
+      // targetPos로 복귀 성공 → 루프 세그먼트 반환
+      if (posEqual(neighbor, targetPos)) {
+        return [...state.path, targetPos];
+      }
+
+      const key = `${toKey(neighbor)}|${toKey(state.pos)}`;
+      if (!visited.has(key)) {
+        visited.add(key);
+        queue.push({ pos: neighbor, prev: state.pos, path: [...state.path, neighbor] });
+      }
+    }
+  }
+
+  return null;
+}
+
 function buildBotPathModel(params: {
   start: Position;
   opponent: Position;
@@ -1654,14 +1702,13 @@ export class AbilityRoom {
   // minPrefixSteps: 발사 전 최소 이동 칸 수 (가드=3, AT필드=1)
   // 무력화 적 섬멸 패턴:
   // 상대가 gold_overdrive의 부작용으로 reboundLocked(흑백 + 이동 불가) 상태일 때,
-  // 공격자가 상대 위치를 여러 번 경유하는 사각형 경로를 생성하고,
-  // 경로 마지막 부분에 공격 스킬을 사용해 해당 턴 최대 피해를 입힌다.
+  // 공격자가 상대 위치를 여러 번 경유하는 경로를 생성하고,
+  // 적에게 명중하는 타이밍에 공격 스킬을 사용해 해당 턴 최대 피해를 입힌다.
   //
-  // [사각형 패턴]:
-  //   loopStart(AI)와 targetPos(상대)가 인접할 때,
-  //   corner1/corner2는 두 셀이 이루는 2×2 정사각형의 나머지 꼭짓점.
-  //   1루프 = [targetPos, corner1, corner2, loopStart] = 4스텝, 1충돌.
-  //   이전 타일 역행 없이 반복 가능.
+  // 경로 우선순위:
+  //   1) 사각형 패턴 (2×2, 4스텝 루프)
+  //   2) BFS로 찾은 최단 복귀 사이클 (장애물로 사각형 불가 시)
+  //   3) 단일 접근 (사이클 자체가 불가능한 경우 최소 1회 충돌 보장)
   private buildAnnihilationCandidates(
     bot: AbilityPlayerState,
     opponent: AbilityPlayerState,
@@ -1676,7 +1723,6 @@ export class AbilityRoom {
 
     // 상대 위치까지 최단 접근 경로 (마지막 셀 = targetPos)
     const approachPath = buildShortestAbilityPath(bot.position, targetPos, effectiveObstacles);
-    // 접근 불가 또는 이미 같은 위치이면 패턴 불가
     if (approachPath.length === 0) return [];
 
     // loopStart: 접근 경로에서 targetPos 바로 이전 셀
@@ -1684,88 +1730,86 @@ export class AbilityRoom {
       ? approachPath[approachPath.length - 2]!
       : bot.position;
 
-    // 사각형 코너 탐색: loopStart-targetPos 엣지와 수직인 방향으로 2×2 구성
-    const dr = targetPos.row - loopStart.row; // ±1 또는 0
-    const dc = targetPos.col - loopStart.col; // ±1 또는 0
+    // ── 1단계: 사각형 코너 탐색 ─────────────────────────────────────────
+    const dr = targetPos.row - loopStart.row;
+    const dc = targetPos.col - loopStart.col;
     let corner1: Position | null = null;
     let corner2: Position | null = null;
 
     if (dr === 0) {
-      // 수평 엣지 → 위/아래로 코너 탐색
       for (const perpDr of [-1, 1]) {
         const c1 = { row: targetPos.row + perpDr, col: targetPos.col };
         const c2 = { row: loopStart.row + perpDr, col: loopStart.col };
         if (
           inBoard(c1) && !isObstacle(c1, effectiveObstacles) &&
           inBoard(c2) && !isObstacle(c2, effectiveObstacles)
-        ) {
-          corner1 = c1;
-          corner2 = c2;
-          break;
-        }
+        ) { corner1 = c1; corner2 = c2; break; }
       }
     } else {
-      // 수직 엣지 → 좌/우로 코너 탐색
       for (const perpDc of [-1, 1]) {
         const c1 = { row: targetPos.row, col: targetPos.col + perpDc };
         const c2 = { row: loopStart.row, col: loopStart.col + perpDc };
         if (
           inBoard(c1) && !isObstacle(c1, effectiveObstacles) &&
           inBoard(c2) && !isObstacle(c2, effectiveObstacles)
-        ) {
-          corner1 = c1;
-          corner2 = c2;
-          break;
-        }
+        ) { corner1 = c1; corner2 = c2; break; }
       }
     }
 
-    // 사각형 코너를 찾지 못하면 패턴 불가
-    if (!corner1 || !corner2) return [];
+    // ── 2단계: 루프 세그먼트 결정 ────────────────────────────────────────
+    let loopSegment: Position[] | null = null;
 
-    // 사각형 경로 생성:
-    //   접근 경로(마지막이 targetPos) + [corner1, corner2, loopStart, targetPos] 반복
-    const squarePath: Position[] = [...approachPath];
-    const loopSegment: Position[] = [corner1, corner2, loopStart, targetPos];
-    while (squarePath.length + loopSegment.length <= pathPoints) {
-      squarePath.push(...loopSegment);
+    if (corner1 && corner2) {
+      // 사각형 패턴: [corner1, corner2, loopStart, targetPos]
+      loopSegment = [corner1, corner2, loopStart, targetPos];
+    } else {
+      // BFS로 최단 복귀 사이클 탐색 (역행 없이 targetPos→...→targetPos)
+      const maxCycleLen = pathPoints - approachPath.length;
+      if (maxCycleLen >= 2) {
+        loopSegment = findShortestReturnCycle(targetPos, loopStart, effectiveObstacles, maxCycleLen);
+      }
     }
-    squarePath.splice(pathPoints);
+
+    // ── 3단계: 최종 경로 조합 ─────────────────────────────────────────────
+    // 루프가 있으면 반복 삽입, 없으면 단순 접근 경로만 사용 (1회 충돌 보장)
+    const hitPath: Position[] = [...approachPath];
+    if (loopSegment) {
+      while (hitPath.length + loopSegment.length <= pathPoints) {
+        hitPath.push(...loopSegment);
+      }
+    }
+    hitPath.splice(pathPoints);
 
     const BASE_SCORE = 999990;
     const SKILL_BONUS = 8;
     const candidates: BotActionCandidate[] = [];
 
-    // 기본 사각형 경로 후보 (스킬 없음)
-    const baseValidated = this.validatePlan(bot, squarePath, []);
+    // 기본 경로 후보 (스킬 없음)
+    const baseValidated = this.validatePlan(bot, hitPath, []);
     if (baseValidated) {
       candidates.push({
         path: baseValidated.path,
         skills: [],
         score: BASE_SCORE,
-        reason: 'annihilation-square-base',
+        reason: loopSegment ? 'annihilation-loop-base' : 'annihilation-single-hit-base',
         selectedSkill: null,
       });
     }
 
-    // 경로에서 targetPos에 도달하는 마지막 step 탐색 (스킬 사용 시점)
-    const findLastTargetStep = (): number => {
-      let last = -1;
-      for (let s = 0; s <= squarePath.length; s++) {
-        if (posEqual(getSequencePosition(bot.position, squarePath, s), targetPos)) {
-          last = s;
-        }
+    // 경로에서 targetPos에 도달하는 step 목록 수집
+    const targetSteps: number[] = [];
+    for (let s = 0; s <= hitPath.length; s++) {
+      if (posEqual(getSequencePosition(bot.position, hitPath, s), targetPos)) {
+        targetSteps.push(s);
       }
-      return last;
-    };
+    }
 
-    // 공격 스킬별 후보 생성
+    // 공격 스킬별 후보: 적을 명중할 수 있는 타이밍에 사용
     for (const skillId of bot.equippedSkills) {
       if (!ABILITY_FAKE_AI_SKILL_POOL.includes(skillId)) continue;
       if (bot.mana < ABILITY_SKILL_COSTS[skillId]) continue;
       const serverRule = ABILITY_SKILL_SERVER_RULES[skillId];
       if (serverRule.roleRestriction === 'escaper') continue;
-      // 방어/유틸/미사용 스킬 제외
       if (
         skillId === 'chronos_time_rewind' ||
         skillId === 'classic_guard' ||
@@ -1773,13 +1817,12 @@ export class AbilityRoom {
         skillId === 'aurora_heal' ||
         skillId === 'quantum_shift' ||
         skillId === 'gold_overdrive' ||
-        skillId === 'sun_chariot' ||    // 사용 안 함
-        skillId === 'atomic_fission' || // 사용 안 함
-        skillId === 'inferno_field'     // 사용 안 함
+        skillId === 'sun_chariot' ||
+        skillId === 'atomic_fission' ||
+        skillId === 'inferno_field'
       ) continue;
 
       if (skillId === 'cosmic_bigbang') {
-        // 빅뱅: 보드 전체 2피해, 이동 불가 상대에게 확정 2딜
         const validated = this.validatePlan(bot, [], [{ skillId, step: 0, order: 0 }]);
         if (validated) {
           candidates.push({
@@ -1794,26 +1837,24 @@ export class AbilityRoom {
       }
 
       if (skillId === 'electric_blitz') {
-        // 경로 후반부, loopStart에 위치할 때 상대 방향으로 발사
-        // → 접근 경로 + 반복 루프를 최대한 쌓은 뒤 마지막으로 loopStart에서 발사
-        let lastLoopStartStep = -1;
-        for (let s = 0; s <= squarePath.length; s++) {
-          if (posEqual(getSequencePosition(bot.position, squarePath, s), loopStart)) {
-            lastLoopStartStep = s;
-          }
+        // 경로 후반부, loopStart 또는 targetPos와 같은 행/열 위치에서 마지막 발사
+        let lastBlitzStep = -1;
+        let lastBlitzDir: Position | null = null;
+        for (let s = 0; s <= hitPath.length; s++) {
+          const pos = getSequencePosition(bot.position, hitPath, s);
+          const dir = getBlitzDirectionTowardOpponent(pos, targetPos);
+          if (dir) { lastBlitzStep = s; lastBlitzDir = dir; }
         }
-        if (lastLoopStartStep < 0) continue;
+        if (lastBlitzStep < 0 || !lastBlitzDir) continue;
 
-        const blitzOrigin = getSequencePosition(bot.position, squarePath, lastLoopStartStep);
-        const blitzDir = getBlitzDirectionTowardOpponent(blitzOrigin, targetPos);
-        if (!blitzDir) continue;
-        const blitzSuffix = buildBlitzPath(blitzOrigin, blitzDir);
+        const blitzOrigin = getSequencePosition(bot.position, hitPath, lastBlitzStep);
+        const blitzSuffix = buildBlitzPath(blitzOrigin, lastBlitzDir);
         if (blitzSuffix.length === 0) continue;
 
-        const prefix = squarePath.slice(0, lastLoopStartStep);
+        const prefix = hitPath.slice(0, lastBlitzStep);
         const fullPath = [...prefix, ...blitzSuffix];
         const validated = this.validatePlan(bot, fullPath, [
-          { skillId, step: lastLoopStartStep, order: 0, target: blitzDir },
+          { skillId, step: lastBlitzStep, order: 0, target: lastBlitzDir },
         ]);
         if (validated) {
           candidates.push({
@@ -1827,22 +1868,37 @@ export class AbilityRoom {
         continue;
       }
 
-      // 일반 경로 호환 스킬: 경로 마지막 targetPos 도달 시점에 사용
+      // 경로 내 적을 명중할 수 있는 첫 타이밍을 찾아 스킬 사용
       let skillReservation: AbilitySkillReservation | null = null;
 
-      if (skillId === 'ember_blast' || skillId === 'nova_blast') {
-        const lastStep = findLastTargetStep();
-        if (lastStep < 0) continue;
-        skillReservation = { skillId, step: lastStep, order: 0 };
+      if (skillId === 'ember_blast') {
+        // 십자 범위(자신 + 상하좌우)에 targetPos가 포함되는 첫 step
+        for (let s = 0; s <= hitPath.length; s++) {
+          const pos = getSequencePosition(bot.position, hitPath, s);
+          if (getCrossPositions(pos).some((p) => posEqual(p, targetPos))) {
+            skillReservation = { skillId, step: s, order: 0 };
+            break;
+          }
+        }
+      } else if (skillId === 'nova_blast') {
+        // X자 대각 범위에 targetPos가 포함되는 첫 step
+        for (let s = 0; s <= hitPath.length; s++) {
+          const pos = getSequencePosition(bot.position, hitPath, s);
+          if (getNovaPositions(pos).some((p) => posEqual(p, targetPos))) {
+            skillReservation = { skillId, step: s, order: 0 };
+            break;
+          }
+        }
       } else if (skillId === 'wizard_magic_mine') {
-        // 경로 마지막 targetPos 위치에 함정 설치 → 상대가 이동 불가이므로 확정 피해
-        const lastStep = findLastTargetStep();
-        if (lastStep < 0) continue;
-        skillReservation = { skillId, step: lastStep, order: 0 };
+        // 첫 번째 targetPos 도달 시점에 함정 설치 → 즉시 피해
+        const firstTargetStep = targetSteps[0] ?? -1;
+        if (firstTargetStep >= 0) {
+          skillReservation = { skillId, step: firstTargetStep, order: 0 };
+        }
       }
 
       if (!skillReservation) continue;
-      const validated = this.validatePlan(bot, squarePath, [skillReservation]);
+      const validated = this.validatePlan(bot, hitPath, [skillReservation]);
       if (validated) {
         candidates.push({
           path: validated.path,
