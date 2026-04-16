@@ -131,7 +131,6 @@ export const ABILITY_SKILL_SERVER_RULES: Record<
     roleRestriction: 'any',
     stepRule: 'zero_only',
     targetRule: 'none',
-    requiresEmptyPathWhenNotOverdrive: true,
   },
   void_cloak: {
     roleRestriction: 'any',

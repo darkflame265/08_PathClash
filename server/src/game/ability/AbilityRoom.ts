@@ -1391,7 +1391,7 @@ export class AbilityRoom {
         const suffixPath = path.slice(teleport.step);
         if (!isValidPath(player.position, prefixPath, hasGuard ? 0 : pathPoints, validationObstacles)) return null;
         if (!isValidPath(teleport.target!, suffixPath, hasGuard ? 0 : pathPoints, validationObstacles)) return null;
-      } else if (!isValidPath(player.position, path, hasGuard ? 0 : pathPoints, validationObstacles)) {
+      } else if (!isValidPath(player.position, path, hasGuard ? 0 : hasCharge ? 1 : pathPoints, validationObstacles)) {
         return null;
       }
 

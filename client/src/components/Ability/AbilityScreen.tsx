@@ -2814,7 +2814,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         ? "board-bg-magic-screen"
         : "";
   const overdriveTurn = me.overdriveActive;
-  const effectivePathPoints = me.reboundLocked ? 0 : state.pathPoints;
+  const chargeReservedNonOverdrive = !overdriveTurn && skillReservations.some(e => e.skillId === "plasma_charge");
+  const effectivePathPoints = me.reboundLocked ? 0 : chargeReservedNonOverdrive ? 1 : state.pathPoints;
   const isTrainingMatch = opponent.nickname === "Training Dummy";
   const rewardTokens =
     winner &&
@@ -2844,7 +2845,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       !skillReservations.some(
         (reservation) =>
           reservation.skillId === "classic_guard" ||
-          reservation.skillId === "plasma_charge" ||
           reservation.skillId === "electric_blitz" ||
           reservation.skillId === "cosmic_bigbang",
       ));
