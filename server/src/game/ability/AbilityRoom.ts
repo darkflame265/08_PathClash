@@ -1630,6 +1630,16 @@ export class AbilityRoom {
       effectiveObstacles,
     );
     candidates.push(...activeSkillCandidates);
+
+    // 무력화 적 섬멸 패턴: 상대가 오버드라이브 부작용으로 이동 불가 상태일 때
+    const annihilationCandidates = this.buildAnnihilationCandidates(
+      bot,
+      opponent,
+      pathPoints,
+      effectiveObstacles,
+    );
+    candidates.push(...annihilationCandidates);
+
     candidates.sort((left, right) => right.score - left.score);
     return candidates[0] ?? {
       path: [],
@@ -1642,6 +1652,162 @@ export class AbilityRoom {
 
   // 상대방과 일직선(같은 행/열)이 되는 위치까지 이동한 뒤 벽력일섬을 발사하는 후보를 생성한다.
   // minPrefixSteps: 발사 전 최소 이동 칸 수 (가드=3, AT필드=1)
+  // 무력화 적 섬멸 패턴:
+  // 상대가 gold_overdrive의 부작용으로 reboundLocked(흑백 + 이동 불가) 상태일 때,
+  // 공격자가 상대 위치로 여러 번 충돌하는 바운싱 경로를 생성하고,
+  // 보유한 공격 스킬을 추가해 해당 턴 최대 피해를 입힌다.
+  private buildAnnihilationCandidates(
+    bot: AbilityPlayerState,
+    opponent: AbilityPlayerState,
+    pathPoints: number,
+    effectiveObstacles: Position[],
+  ): BotActionCandidate[] {
+    if (bot.role !== 'attacker') return [];
+    if (!opponent.reboundLocked) return [];
+    if (!opponent.equippedSkills.includes('gold_overdrive')) return [];
+
+    const targetPos = opponent.position;
+    const approachPath = buildShortestAbilityPath(bot.position, targetPos, effectiveObstacles);
+    if (approachPath.length === 0 && !posEqual(bot.position, targetPos)) return [];
+
+    // 바운스용 피벗 셀: 접근 직전 셀 우선, 없으면 인접 셀 중 가장 가까운 것
+    const lastApproachCell = approachPath.length >= 2
+      ? approachPath[approachPath.length - 2]!
+      : bot.position;
+    const pivotNeighbors = getCardinalNeighbors(targetPos, effectiveObstacles);
+    const pivot = pivotNeighbors.find((n) => posEqual(n, lastApproachCell))
+      ?? pivotNeighbors.sort((a, b) => manhattan(a, bot.position) - manhattan(b, bot.position))[0]
+      ?? null;
+
+    // 바운싱 경로: 접근 경로 + [pivot, targetPos, pivot, targetPos, ...]
+    const bouncePath: Position[] = [...approachPath];
+    if (pivot) {
+      let toggleToPivot = true;
+      while (bouncePath.length < pathPoints) {
+        bouncePath.push(toggleToPivot ? pivot : targetPos);
+        toggleToPivot = !toggleToPivot;
+      }
+    }
+    bouncePath.splice(pathPoints);
+
+    const BASE_SCORE = 999990;
+    const SKILL_BONUS = 8;
+    const candidates: BotActionCandidate[] = [];
+
+    // 기본 바운싱 경로 (스킬 없음)
+    const baseValidated = this.validatePlan(bot, bouncePath, []);
+    if (baseValidated) {
+      candidates.push({
+        path: baseValidated.path,
+        skills: [],
+        score: BASE_SCORE,
+        reason: 'annihilation-bounce-base',
+        selectedSkill: null,
+      });
+    }
+
+    // 공격 스킬별 후보 생성
+    for (const skillId of bot.equippedSkills) {
+      if (!ABILITY_FAKE_AI_SKILL_POOL.includes(skillId)) continue;
+      if (bot.mana < ABILITY_SKILL_COSTS[skillId]) continue;
+      const serverRule = ABILITY_SKILL_SERVER_RULES[skillId];
+      if (serverRule.roleRestriction === 'escaper') continue;
+      if (
+        skillId === 'chronos_time_rewind' ||
+        skillId === 'classic_guard' ||
+        skillId === 'arc_reactor_field' ||
+        skillId === 'aurora_heal' ||
+        skillId === 'quantum_shift' ||
+        skillId === 'gold_overdrive'
+      ) continue;
+
+      if (skillId === 'cosmic_bigbang') {
+        // 빅뱅: 이동 없이 보드 전체 2피해 → 이동 불가 상대에게 확정 2딜
+        const validated = this.validatePlan(bot, [], [{ skillId, step: 0, order: 0 }]);
+        if (validated) {
+          candidates.push({
+            path: [],
+            skills: validated.skills,
+            score: BASE_SCORE + SKILL_BONUS,
+            reason: 'annihilation-bigbang',
+            selectedSkill: skillId,
+          });
+        }
+        continue;
+      }
+
+      if (skillId === 'electric_blitz') {
+        // 벽력일섬: 같은 행/열이면 직선 타격
+        const blitzDir = getBlitzDirectionTowardOpponent(bot.position, targetPos);
+        if (!blitzDir) continue;
+        const blitzPath = buildBlitzPath(bot.position, blitzDir);
+        if (blitzPath.length === 0) continue;
+        const validated = this.validatePlan(bot, blitzPath, [{ skillId, step: 0, order: 0, target: blitzDir }]);
+        if (validated) {
+          candidates.push({
+            path: validated.path,
+            skills: validated.skills,
+            score: BASE_SCORE + SKILL_BONUS,
+            reason: 'annihilation-electric-blitz',
+            selectedSkill: skillId,
+          });
+        }
+        continue;
+      }
+
+      // 일반 경로와 호환되는 스킬
+      let skillReservation: AbilitySkillReservation | null = null;
+
+      if (skillId === 'ember_blast' || skillId === 'nova_blast') {
+        // 상대 위치에 도달하는 첫 step에 시전 → 최대 AoE 피해
+        let castStep = 0;
+        for (let s = 0; s <= bouncePath.length; s++) {
+          if (posEqual(getSequencePosition(bot.position, bouncePath, s), targetPos)) {
+            castStep = s;
+            break;
+          }
+        }
+        skillReservation = { skillId, step: castStep, order: 0 };
+      } else if (skillId === 'atomic_fission') {
+        if (!bot.previousTurnStart || bot.previousTurnPath.length === 0) continue;
+        skillReservation = { skillId, step: 0, order: 0 };
+      } else if (skillId === 'sun_chariot') {
+        skillReservation = { skillId, step: 0, order: 0 };
+      } else if (skillId === 'inferno_field') {
+        // 상대 주변에 용암 설치 (이동 불가 상태이므로 반드시 피해)
+        const lavaTarget = getCardinalNeighbors(targetPos, effectiveObstacles)
+          .filter((n) => !posEqual(n, bot.position) && !bouncePath.some((p) => posEqual(p, n)))[0]
+          ?? null;
+        if (!lavaTarget) continue;
+        skillReservation = { skillId, step: 0, order: 0, target: lavaTarget };
+      } else if (skillId === 'wizard_magic_mine') {
+        // 상대 위치에 도달하는 step에 함정 설치
+        let mineStep = 0;
+        for (let s = 0; s <= bouncePath.length; s++) {
+          if (posEqual(getSequencePosition(bot.position, bouncePath, s), targetPos)) {
+            mineStep = s;
+            break;
+          }
+        }
+        skillReservation = { skillId, step: mineStep, order: 0 };
+      }
+
+      if (!skillReservation) continue;
+      const validated = this.validatePlan(bot, bouncePath, [skillReservation]);
+      if (validated) {
+        candidates.push({
+          path: validated.path,
+          skills: validated.skills,
+          score: BASE_SCORE + SKILL_BONUS,
+          reason: `annihilation-${skillId}`,
+          selectedSkill: skillId,
+        });
+      }
+    }
+
+    return candidates;
+  }
+
   private buildDelayedBlitzCandidate(
     bot: AbilityPlayerState,
     opponent: AbilityPlayerState,
