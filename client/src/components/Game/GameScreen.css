@@ -1,6 +1,5 @@
 /* ============================================================
-   GAME SCREEN — Tactical Command Interface  (adaptive scaling)
-   --gs-scale: 0.54–1.25 (JS로 주입, 기본값 1)
+   GAME SCREEN — Tactical Command Interface
    ============================================================ */
 
 /* ── 루트 컨테이너 ─────────────────────────────────────────── */
@@ -9,18 +8,13 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  /* gap/padding은 --gs-scale에 비례 */
-  gap: calc(0.5rem * var(--gs-scale, 1));
-  padding-top: calc(
-    calc(0.75rem * var(--gs-scale, 1)) + env(safe-area-inset-top, 0px)
-  );
-  padding-right: calc(0.75rem * var(--gs-scale, 1));
-  padding-left: calc(0.75rem * var(--gs-scale, 1));
-  padding-bottom: calc(
-    calc(0.75rem * var(--gs-scale, 1)) + env(safe-area-inset-bottom, 0px)
-  );
-  height: 100%; /* 부모 컨테이너(app-inner) 기준 — viewport 단위 사용 안 함 */
-  overflow: visible; /* profile 드롭다운이 카드 바깥으로 나와도 보임 */
+  gap: 0.5rem;
+  padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  height: 100%;
+  overflow: visible;
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
@@ -76,7 +70,7 @@
 .gs-utility-bar {
   display: flex;
   align-items: center;
-  gap: calc(0.625rem * var(--gs-scale, 1));
+  gap: 0.625rem;
   width: 100%;
   flex-shrink: 0;
 }
@@ -97,7 +91,7 @@
 .gs-lobby-btn {
   background: var(--tile);
   border: 1px solid var(--tile-border);
-  border-radius: calc(0.5rem * var(--gs-scale, 1));
+  border-radius: 0.5rem;
   color: var(--text-muted);
   cursor: pointer;
   font-family: "Plus Jakarta Sans", sans-serif;
@@ -112,13 +106,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: calc(0.4rem * var(--gs-scale, 1)) calc(0.8rem * var(--gs-scale, 1));
-  font-size: clamp(0.9rem, calc(1.08rem * var(--gs-scale, 1)), 1.2rem);
+  padding: 0.4rem 0.8rem;
+  font-size: 1.08rem;
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  min-width: calc(5.8rem * var(--gs-scale, 1));
-  height: calc(2.2rem * var(--gs-scale, 1));
+  min-width: 5.8rem;
+  height: 2.2rem;
 }
 
 .gs-lobby-btn:hover {
@@ -133,7 +127,7 @@
   align-items: center;
   gap: 0.5rem;
   font-family: var(--mono);
-  font-size: clamp(0.6rem, calc(0.75rem * var(--gs-scale, 1)), 0.9rem);
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -141,8 +135,8 @@
 }
 
 .gs-moving-pip {
-  width: calc(6px * var(--gs-scale, 1));
-  height: calc(6px * var(--gs-scale, 1));
+  width: 0.375rem;
+  height: 0.375rem;
   border-radius: 50%;
   background: var(--blue);
   flex-shrink: 0;
@@ -165,12 +159,11 @@
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: calc(0.75rem * var(--gs-scale, 1));
-  padding: calc(0.55rem * var(--gs-scale, 1))
-    calc(0.875rem * var(--gs-scale, 1));
+  gap: 0.75rem;
+  padding: 0.55rem 0.875rem;
   background: var(--panel);
   border: 1px solid var(--tile-border);
-  border-radius: calc(0.875rem * var(--gs-scale, 1));
+  border-radius: 0.875rem;
   position: relative;
   overflow: visible;
   flex-shrink: 0;
@@ -184,11 +177,11 @@
   position: absolute;
   top: 0;
   right: 0;
-  width: calc(16px * var(--gs-scale, 1));
-  height: calc(16px * var(--gs-scale, 1));
+  width: 1rem;
+  height: 1rem;
   border-top: 2px solid var(--corner-color);
   border-right: 2px solid var(--corner-color);
-  border-radius: 0 calc(0.875rem * var(--gs-scale, 1)) 0 0;
+  border-radius: 0 0.875rem 0 0;
   opacity: 0.45;
   pointer-events: none;
 }
@@ -220,12 +213,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: calc(0.15rem * var(--gs-scale, 1));
-  padding: calc(0.45rem * var(--gs-scale, 1)) calc(0.55rem * var(--gs-scale, 1));
+  gap: 0.15rem;
+  padding: 0.45rem 0.55rem;
   background: var(--tile);
   border: 1px solid var(--tile-border);
-  border-radius: calc(0.625rem * var(--gs-scale, 1));
-  min-width: calc(50px * var(--gs-scale, 1));
+  border-radius: 0.625rem;
+  min-width: 3.125rem;
   flex-shrink: 0;
 }
 
@@ -235,13 +228,12 @@
 }
 
 .gs-role-icon {
-  /* scale: 96→120px: 1.4–1.75rem / 52px: ~0.8rem — clamp for readability */
-  font-size: clamp(0.9rem, calc(1.4rem * var(--gs-scale, 1)), 1.8rem);
+  font-size: 1.4rem;
   line-height: 1;
 }
 
 .gs-role-label {
-  font-size: clamp(0.55rem, calc(0.62rem * var(--gs-scale, 1)), 0.75rem);
+  font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -291,7 +283,7 @@
     rgba(185, 28, 28, 0.1) 100%
   );
   border-color: rgba(239, 68, 68, 0.6);
-  border-radius: calc(0.35rem * var(--gs-scale, 1));
+  border-radius: 0.35rem;
   box-shadow:
     0 0 14px rgba(239, 68, 68, 0.22),
     0 0 0 1px rgba(239, 68, 68, 0.12) inset;
@@ -380,7 +372,7 @@
     rgba(20, 184, 166, 0.07) 100%
   );
   border-color: rgba(6, 182, 212, 0.55);
-  border-radius: calc(1rem * var(--gs-scale, 1));
+  border-radius: 1rem;
   box-shadow:
     0 0 14px rgba(6, 182, 212, 0.18),
     0 0 0 1px rgba(6, 182, 212, 0.1) inset;
@@ -437,13 +429,13 @@
 .gs-player-mid {
   display: flex;
   flex-direction: column;
-  gap: calc(0.2rem * var(--gs-scale, 1));
+  gap: 0.2rem;
   min-width: 0;
 }
 
 .gs-color-tag {
   font-family: var(--mono);
-  font-size: clamp(0.5rem, calc(0.58rem * var(--gs-scale, 1)), 0.7rem);
+  font-size: 0.58rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--text-muted);
@@ -459,8 +451,8 @@
 
 /* ── 그리드 영역 ───────────────────────────────────────────── */
 .gs-grid-area {
-  flex: 1; /* 나머지 공간을 모두 차지 */
-  min-height: 0; /* flex child가 줄어들 수 있도록 */
+  flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -470,14 +462,13 @@
 /* ── 경로 포인트 게이지 ────────────────────────────────────── */
 .gs-path-bar {
   width: 100%;
-  padding: calc(0.55rem * var(--gs-scale, 1))
-    calc(0.875rem * var(--gs-scale, 1));
+  padding: 0.55rem 0.875rem;
   background: var(--panel);
   border: 1px solid var(--tile-border);
-  border-radius: calc(0.875rem * var(--gs-scale, 1));
+  border-radius: 0.875rem;
   display: flex;
   flex-direction: column;
-  gap: calc(0.45rem * var(--gs-scale, 1));
+  gap: 0.45rem;
   transition:
     border-color 0.25s,
     box-shadow 0.25s;
@@ -491,11 +482,11 @@
   position: absolute;
   top: 0;
   right: 0;
-  width: calc(14px * var(--gs-scale, 1));
-  height: calc(14px * var(--gs-scale, 1));
+  width: 0.875rem;
+  height: 0.875rem;
   border-top: 2px solid var(--tile-border);
   border-right: 2px solid var(--tile-border);
-  border-radius: 0 calc(0.875rem * var(--gs-scale, 1)) 0 0;
+  border-radius: 0 0.875rem 0 0;
   opacity: 0.35;
   pointer-events: none;
 }
@@ -522,7 +513,7 @@
 }
 
 .gs-path-label {
-  font-size: clamp(0.6rem, calc(0.7rem * var(--gs-scale, 1)), 0.85rem);
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -531,13 +522,13 @@
 
 .gs-path-count {
   font-family: var(--mono);
-  font-size: clamp(0.65rem, calc(0.8rem * var(--gs-scale, 1)), 0.95rem);
+  font-size: 0.8rem;
   color: var(--text-muted);
   line-height: 1;
 }
 
 .gs-path-current {
-  font-size: clamp(0.8rem, calc(1rem * var(--gs-scale, 1)), 1.2rem);
+  font-size: 1rem;
   font-weight: 700;
   color: #22c55e;
   transition: color 0.2s;
@@ -558,15 +549,15 @@
 /* ── 세그먼트 게이지 (가우지) ──────────────────────────────── */
 .gs-path-gauge {
   display: flex;
-  gap: calc(4px * var(--gs-scale, 1));
+  gap: 0.25rem;
 }
 
 .gs-path-seg {
   flex: 1;
-  height: clamp(7px, calc(10px * var(--gs-scale, 1)), 14px);
+  height: 0.625rem;
   background: var(--tile);
   border: 1px solid var(--tile-border);
-  border-radius: calc(3px * var(--gs-scale, 1));
+  border-radius: 0.1875rem;
   transition:
     background 0.2s ease,
     border-color 0.2s ease,
@@ -621,7 +612,7 @@
 .gs-result-slot {
   position: relative;
   z-index: 5;
-  margin-bottom: calc(0.5rem * var(--gs-scale, 1));
+  margin-bottom: 0.5rem;
 }
 
 .gs-board-stage {
@@ -641,10 +632,10 @@
 .gs-board-stage .gs-result-slot {
   position: absolute;
   top: auto;
-  bottom: calc(0.5rem * var(--gs-scale, 1));
+  bottom: 0.5rem;
   left: 50%;
   transform: translateX(-50%);
-  width: min(100%, calc(26rem * var(--gs-scale, 1)));
+  width: min(100%, 26rem);
   margin-bottom: 0;
   pointer-events: none;
 }
@@ -661,13 +652,13 @@
 /* ── 높이 부족 환경 (태블릿 가로, 13인치 노트북 등) ─────────── */
 @media (max-height: 820px) {
   .gs-player-card {
-    padding: calc(0.3rem * var(--gs-scale, 1)) calc(0.7rem * var(--gs-scale, 1));
-    gap: calc(0.5rem * var(--gs-scale, 1));
+    padding: 0.3rem 0.7rem;
+    gap: 0.5rem;
   }
 
   .gs-path-bar {
-    padding: calc(0.3rem * var(--gs-scale, 1)) calc(0.7rem * var(--gs-scale, 1));
-    gap: calc(0.25rem * var(--gs-scale, 1));
+    padding: 0.3rem 0.7rem;
+    gap: 0.25rem;
   }
 }
 
@@ -681,14 +672,10 @@
 /* ── 매우 좁은 너비 (작은 폰 세로) ─────────────────────────── */
 @media (max-width: 360px) {
   .game-screen {
-    padding-top: calc(
-      calc(0.375rem * var(--gs-scale, 1)) + env(safe-area-inset-top, 0px)
-    );
-    padding-right: calc(0.375rem * var(--gs-scale, 1));
-    padding-left: calc(0.375rem * var(--gs-scale, 1));
-    padding-bottom: calc(
-      calc(0.375rem * var(--gs-scale, 1)) + env(safe-area-inset-bottom, 0px)
-    );
-    gap: calc(0.25rem * var(--gs-scale, 1));
+    padding-top: calc(0.375rem + env(safe-area-inset-top, 0px));
+    padding-right: 0.375rem;
+    padding-left: 0.375rem;
+    padding-bottom: calc(0.375rem + env(safe-area-inset-bottom, 0px));
+    gap: 0.25rem;
   }
 }
