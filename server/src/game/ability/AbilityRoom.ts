@@ -1654,8 +1654,14 @@ export class AbilityRoom {
   // minPrefixSteps: 발사 전 최소 이동 칸 수 (가드=3, AT필드=1)
   // 무력화 적 섬멸 패턴:
   // 상대가 gold_overdrive의 부작용으로 reboundLocked(흑백 + 이동 불가) 상태일 때,
-  // 공격자가 상대 위치로 여러 번 충돌하는 바운싱 경로를 생성하고,
-  // 보유한 공격 스킬을 추가해 해당 턴 최대 피해를 입힌다.
+  // 공격자가 상대 위치를 여러 번 경유하는 사각형 경로를 생성하고,
+  // 경로 마지막 부분에 공격 스킬을 사용해 해당 턴 최대 피해를 입힌다.
+  //
+  // [사각형 패턴]:
+  //   loopStart(AI)와 targetPos(상대)가 인접할 때,
+  //   corner1/corner2는 두 셀이 이루는 2×2 정사각형의 나머지 꼭짓점.
+  //   1루프 = [targetPos, corner1, corner2, loopStart] = 4스텝, 1충돌.
+  //   이전 타일 역행 없이 반복 가능.
   private buildAnnihilationCandidates(
     bot: AbilityPlayerState,
     opponent: AbilityPlayerState,
@@ -1667,44 +1673,91 @@ export class AbilityRoom {
     if (!opponent.equippedSkills.includes('gold_overdrive')) return [];
 
     const targetPos = opponent.position;
-    const approachPath = buildShortestAbilityPath(bot.position, targetPos, effectiveObstacles);
-    if (approachPath.length === 0 && !posEqual(bot.position, targetPos)) return [];
 
-    // 바운스용 피벗 셀: 접근 직전 셀 우선, 없으면 인접 셀 중 가장 가까운 것
-    const lastApproachCell = approachPath.length >= 2
+    // 상대 위치까지 최단 접근 경로 (마지막 셀 = targetPos)
+    const approachPath = buildShortestAbilityPath(bot.position, targetPos, effectiveObstacles);
+    // 접근 불가 또는 이미 같은 위치이면 패턴 불가
+    if (approachPath.length === 0) return [];
+
+    // loopStart: 접근 경로에서 targetPos 바로 이전 셀
+    const loopStart = approachPath.length >= 2
       ? approachPath[approachPath.length - 2]!
       : bot.position;
-    const pivotNeighbors = getCardinalNeighbors(targetPos, effectiveObstacles);
-    const pivot = pivotNeighbors.find((n) => posEqual(n, lastApproachCell))
-      ?? pivotNeighbors.sort((a, b) => manhattan(a, bot.position) - manhattan(b, bot.position))[0]
-      ?? null;
 
-    // 바운싱 경로: 접근 경로 + [pivot, targetPos, pivot, targetPos, ...]
-    const bouncePath: Position[] = [...approachPath];
-    if (pivot) {
-      let toggleToPivot = true;
-      while (bouncePath.length < pathPoints) {
-        bouncePath.push(toggleToPivot ? pivot : targetPos);
-        toggleToPivot = !toggleToPivot;
+    // 사각형 코너 탐색: loopStart-targetPos 엣지와 수직인 방향으로 2×2 구성
+    const dr = targetPos.row - loopStart.row; // ±1 또는 0
+    const dc = targetPos.col - loopStart.col; // ±1 또는 0
+    let corner1: Position | null = null;
+    let corner2: Position | null = null;
+
+    if (dr === 0) {
+      // 수평 엣지 → 위/아래로 코너 탐색
+      for (const perpDr of [-1, 1]) {
+        const c1 = { row: targetPos.row + perpDr, col: targetPos.col };
+        const c2 = { row: loopStart.row + perpDr, col: loopStart.col };
+        if (
+          inBoard(c1) && !isObstacle(c1, effectiveObstacles) &&
+          inBoard(c2) && !isObstacle(c2, effectiveObstacles)
+        ) {
+          corner1 = c1;
+          corner2 = c2;
+          break;
+        }
+      }
+    } else {
+      // 수직 엣지 → 좌/우로 코너 탐색
+      for (const perpDc of [-1, 1]) {
+        const c1 = { row: targetPos.row, col: targetPos.col + perpDc };
+        const c2 = { row: loopStart.row, col: loopStart.col + perpDc };
+        if (
+          inBoard(c1) && !isObstacle(c1, effectiveObstacles) &&
+          inBoard(c2) && !isObstacle(c2, effectiveObstacles)
+        ) {
+          corner1 = c1;
+          corner2 = c2;
+          break;
+        }
       }
     }
-    bouncePath.splice(pathPoints);
+
+    // 사각형 코너를 찾지 못하면 패턴 불가
+    if (!corner1 || !corner2) return [];
+
+    // 사각형 경로 생성:
+    //   접근 경로(마지막이 targetPos) + [corner1, corner2, loopStart, targetPos] 반복
+    const squarePath: Position[] = [...approachPath];
+    const loopSegment: Position[] = [corner1, corner2, loopStart, targetPos];
+    while (squarePath.length + loopSegment.length <= pathPoints) {
+      squarePath.push(...loopSegment);
+    }
+    squarePath.splice(pathPoints);
 
     const BASE_SCORE = 999990;
     const SKILL_BONUS = 8;
     const candidates: BotActionCandidate[] = [];
 
-    // 기본 바운싱 경로 (스킬 없음)
-    const baseValidated = this.validatePlan(bot, bouncePath, []);
+    // 기본 사각형 경로 후보 (스킬 없음)
+    const baseValidated = this.validatePlan(bot, squarePath, []);
     if (baseValidated) {
       candidates.push({
         path: baseValidated.path,
         skills: [],
         score: BASE_SCORE,
-        reason: 'annihilation-bounce-base',
+        reason: 'annihilation-square-base',
         selectedSkill: null,
       });
     }
+
+    // 경로에서 targetPos에 도달하는 마지막 step 탐색 (스킬 사용 시점)
+    const findLastTargetStep = (): number => {
+      let last = -1;
+      for (let s = 0; s <= squarePath.length; s++) {
+        if (posEqual(getSequencePosition(bot.position, squarePath, s), targetPos)) {
+          last = s;
+        }
+      }
+      return last;
+    };
 
     // 공격 스킬별 후보 생성
     for (const skillId of bot.equippedSkills) {
@@ -1712,17 +1765,21 @@ export class AbilityRoom {
       if (bot.mana < ABILITY_SKILL_COSTS[skillId]) continue;
       const serverRule = ABILITY_SKILL_SERVER_RULES[skillId];
       if (serverRule.roleRestriction === 'escaper') continue;
+      // 방어/유틸/미사용 스킬 제외
       if (
         skillId === 'chronos_time_rewind' ||
         skillId === 'classic_guard' ||
         skillId === 'arc_reactor_field' ||
         skillId === 'aurora_heal' ||
         skillId === 'quantum_shift' ||
-        skillId === 'gold_overdrive'
+        skillId === 'gold_overdrive' ||
+        skillId === 'sun_chariot' ||    // 사용 안 함
+        skillId === 'atomic_fission' || // 사용 안 함
+        skillId === 'inferno_field'     // 사용 안 함
       ) continue;
 
       if (skillId === 'cosmic_bigbang') {
-        // 빅뱅: 이동 없이 보드 전체 2피해 → 이동 불가 상대에게 확정 2딜
+        // 빅뱅: 보드 전체 2피해, 이동 불가 상대에게 확정 2딜
         const validated = this.validatePlan(bot, [], [{ skillId, step: 0, order: 0 }]);
         if (validated) {
           candidates.push({
@@ -1737,63 +1794,55 @@ export class AbilityRoom {
       }
 
       if (skillId === 'electric_blitz') {
-        // 벽력일섬: 같은 행/열이면 직선 타격
-        const blitzDir = getBlitzDirectionTowardOpponent(bot.position, targetPos);
+        // 경로 후반부, loopStart에 위치할 때 상대 방향으로 발사
+        // → 접근 경로 + 반복 루프를 최대한 쌓은 뒤 마지막으로 loopStart에서 발사
+        let lastLoopStartStep = -1;
+        for (let s = 0; s <= squarePath.length; s++) {
+          if (posEqual(getSequencePosition(bot.position, squarePath, s), loopStart)) {
+            lastLoopStartStep = s;
+          }
+        }
+        if (lastLoopStartStep < 0) continue;
+
+        const blitzOrigin = getSequencePosition(bot.position, squarePath, lastLoopStartStep);
+        const blitzDir = getBlitzDirectionTowardOpponent(blitzOrigin, targetPos);
         if (!blitzDir) continue;
-        const blitzPath = buildBlitzPath(bot.position, blitzDir);
-        if (blitzPath.length === 0) continue;
-        const validated = this.validatePlan(bot, blitzPath, [{ skillId, step: 0, order: 0, target: blitzDir }]);
+        const blitzSuffix = buildBlitzPath(blitzOrigin, blitzDir);
+        if (blitzSuffix.length === 0) continue;
+
+        const prefix = squarePath.slice(0, lastLoopStartStep);
+        const fullPath = [...prefix, ...blitzSuffix];
+        const validated = this.validatePlan(bot, fullPath, [
+          { skillId, step: lastLoopStartStep, order: 0, target: blitzDir },
+        ]);
         if (validated) {
           candidates.push({
             path: validated.path,
             skills: validated.skills,
             score: BASE_SCORE + SKILL_BONUS,
-            reason: 'annihilation-electric-blitz',
+            reason: 'annihilation-electric-blitz-end',
             selectedSkill: skillId,
           });
         }
         continue;
       }
 
-      // 일반 경로와 호환되는 스킬
+      // 일반 경로 호환 스킬: 경로 마지막 targetPos 도달 시점에 사용
       let skillReservation: AbilitySkillReservation | null = null;
 
       if (skillId === 'ember_blast' || skillId === 'nova_blast') {
-        // 상대 위치에 도달하는 첫 step에 시전 → 최대 AoE 피해
-        let castStep = 0;
-        for (let s = 0; s <= bouncePath.length; s++) {
-          if (posEqual(getSequencePosition(bot.position, bouncePath, s), targetPos)) {
-            castStep = s;
-            break;
-          }
-        }
-        skillReservation = { skillId, step: castStep, order: 0 };
-      } else if (skillId === 'atomic_fission') {
-        if (!bot.previousTurnStart || bot.previousTurnPath.length === 0) continue;
-        skillReservation = { skillId, step: 0, order: 0 };
-      } else if (skillId === 'sun_chariot') {
-        skillReservation = { skillId, step: 0, order: 0 };
-      } else if (skillId === 'inferno_field') {
-        // 상대 주변에 용암 설치 (이동 불가 상태이므로 반드시 피해)
-        const lavaTarget = getCardinalNeighbors(targetPos, effectiveObstacles)
-          .filter((n) => !posEqual(n, bot.position) && !bouncePath.some((p) => posEqual(p, n)))[0]
-          ?? null;
-        if (!lavaTarget) continue;
-        skillReservation = { skillId, step: 0, order: 0, target: lavaTarget };
+        const lastStep = findLastTargetStep();
+        if (lastStep < 0) continue;
+        skillReservation = { skillId, step: lastStep, order: 0 };
       } else if (skillId === 'wizard_magic_mine') {
-        // 상대 위치에 도달하는 step에 함정 설치
-        let mineStep = 0;
-        for (let s = 0; s <= bouncePath.length; s++) {
-          if (posEqual(getSequencePosition(bot.position, bouncePath, s), targetPos)) {
-            mineStep = s;
-            break;
-          }
-        }
-        skillReservation = { skillId, step: mineStep, order: 0 };
+        // 경로 마지막 targetPos 위치에 함정 설치 → 상대가 이동 불가이므로 확정 피해
+        const lastStep = findLastTargetStep();
+        if (lastStep < 0) continue;
+        skillReservation = { skillId, step: lastStep, order: 0 };
       }
 
       if (!skillReservation) continue;
-      const validated = this.validatePlan(bot, bouncePath, [skillReservation]);
+      const validated = this.validatePlan(bot, squarePath, [skillReservation]);
       if (validated) {
         candidates.push({
           path: validated.path,
