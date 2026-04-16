@@ -25,7 +25,6 @@ interface Props {
   onLeaveToLobby: () => void;
 }
 
-const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
 // 태블릿 game 모드 app-inner max-width와 맞춤 — window.innerWidth 대신 이 값으로 초기값 계산
