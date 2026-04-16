@@ -1582,14 +1582,31 @@ export class AbilityRoom {
     opponent: AbilityPlayerState,
     pathPoints: number,
   ): BotActionCandidate {
+    // 용암 타일을 장애물로 추가해 경로 계산 시 용암을 피하도록 한다.
+    const lavaObstacles = this.lavaTiles.map((t) => t.position);
+    const effectiveObstacles = [...this.obstacles, ...lavaObstacles];
+
+    // ── 무력화 적 섬멸 패턴 최우선 처리 ──────────────────────────────────
+    // 상대가 오버드라이브 부작용으로 이동 불가 상태일 때 강제 진입.
+    // forced blitz 등 다른 모든 패턴보다 먼저 체크해야 한다.
+    if (bot.role === 'attacker' && opponent.reboundLocked && opponent.equippedSkills.includes('gold_overdrive')) {
+      const annihilationCandidates = this.buildAnnihilationCandidates(
+        bot,
+        opponent,
+        pathPoints,
+        effectiveObstacles,
+      );
+      if (annihilationCandidates.length > 0) {
+        annihilationCandidates.sort((a, b) => b.score - a.score);
+        return annihilationCandidates[0]!;
+      }
+    }
+
+    // ── 벽력일섬 강제 발사 패턴 ──────────────────────────────────────────
     const forcedBlitzCandidate = this.buildForcedBlitzCandidate(bot, opponent);
     if (forcedBlitzCandidate) {
       return forcedBlitzCandidate;
     }
-
-    // 용암 타일을 장애물로 추가해 경로 계산 시 용암을 피하도록 한다.
-    const lavaObstacles = this.lavaTiles.map((t) => t.position);
-    const effectiveObstacles = [...this.obstacles, ...lavaObstacles];
 
     // 도망자이고 상대와 겹쳐진 상태일 때:
     // 점수 계산이 '가만히 있기'를 과대평가하므로 50% 확률로 강제 이동 패턴 적용
@@ -1678,15 +1695,6 @@ export class AbilityRoom {
       effectiveObstacles,
     );
     candidates.push(...activeSkillCandidates);
-
-    // 무력화 적 섬멸 패턴: 상대가 오버드라이브 부작용으로 이동 불가 상태일 때
-    const annihilationCandidates = this.buildAnnihilationCandidates(
-      bot,
-      opponent,
-      pathPoints,
-      effectiveObstacles,
-    );
-    candidates.push(...annihilationCandidates);
 
     candidates.sort((left, right) => right.score - left.score);
     return candidates[0] ?? {
@@ -1974,6 +1982,9 @@ export class AbilityRoom {
     if (bot.role !== 'attacker') return null;
     if (!bot.equippedSkills.includes('electric_blitz')) return null;
     if (bot.mana < ABILITY_SKILL_COSTS.electric_blitz) return null;
+    // 무력화 적 섬멸 패턴이 활성화되는 조건이면 즉시 발사 금지
+    // → annihilation 패턴이 경로 마지막 부근에서 벽력일섬을 사용하도록 위임
+    if (opponent.reboundLocked && opponent.equippedSkills.includes('gold_overdrive')) return null;
 
     // 상대가 가드 또는 AT필드 장착 시 50% 확률로 지연 발사 패턴 시도
     const opponentHasGuard = opponent.equippedSkills.includes('classic_guard');
