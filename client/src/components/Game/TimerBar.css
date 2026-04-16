@@ -3,7 +3,7 @@
 .timer-container {
   position: relative;
   width: 100%;
-  height: 22px;
+  height: 1.375rem;
   background: var(--tile, #2A3137);
   border-radius: 999px;
   border: 1px solid var(--tile-border, #3A444D);
