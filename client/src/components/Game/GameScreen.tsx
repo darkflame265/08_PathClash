@@ -3,7 +3,6 @@
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
 } from "react";
 import { getSocket } from "../../socket/socketClient";
 import { registerSocketHandlers } from "../../socket/socketHandlers";
@@ -29,9 +28,6 @@ interface Props {
 const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
 const MAX_CELL = 160;
-// 태블릿 letterbox 컨테이너(520px)에서 폰과 동일한 체감 스케일 유지
-// 430px(iPhone Pro Max)에서의 scale≈0.85를 상한으로 설정
-const MAX_SCALE = 0.85;
 // 태블릿 game 모드 app-inner max-width와 맞춤 — window.innerWidth 대신 이 값으로 초기값 계산
 const CONTAINER_MAX_WIDTH = 600;
 const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
@@ -158,9 +154,6 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   const selfRoleBadgeRef = useRef<HTMLDivElement>(null);
   const pathBarRef = useRef<HTMLDivElement>(null);
   const cellSize = useAdaptiveCellSize(gridAreaRef);
-  // 보드 크기(cellSize)는 컨테이너 너비에 맞게 자유롭게 커지되,
-  // HUD/UI에 적용되는 scale은 폰 최대(iPhone Pro Max)와 동일한 수준으로 제한
-  const scale = Math.min(cellSize / DEFAULT_CELL, MAX_SCALE);
   const [tutorialStep, setTutorialStep] = useState<TutorialStep>(0);
   const [roleTutorialPos, setRoleTutorialPos] = useState<{
     left: number;
@@ -565,7 +558,6 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   return (
     <div
       className={`game-screen ${screenBoardClass}`}
-      style={{ "--gs-scale": scale } as CSSProperties}
       ref={screenRef}
     >
       <div className="gs-utility-bar">
