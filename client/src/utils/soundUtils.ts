@@ -2,6 +2,8 @@
 // Keep file paths, gain values, and preload behavior in one place so
 // new skills can be added without scattering audio metadata across the codebase.
 
+import { Howl, Howler } from "howler";
+
 let audioCtx: AudioContext | null = null;
 
 function getCtx(): AudioContext {
@@ -124,16 +126,146 @@ const UI_SFX: Record<UiSfxId, AbilitySfxConfig> = {
 };
 
 export type MatchResultAudioKind = "victory" | "defeat";
+export type BgmTrackId = "lobby" | "ingame" | "victory" | "defeat";
 
 const MATCH_RESULT_AUDIO_EVENT = "pathclash:match-result-audio";
 const STOP_MATCH_RESULT_AUDIO_EVENT = "pathclash:stop-match-result-audio";
 
+const BGM_CONFIG: Record<BgmTrackId, { src: string; gain: number }> = {
+  lobby: {
+    src: "/music/Lobby_bgm_3.mp3",
+    gain: 1,
+  },
+  ingame: {
+    src: "/music/InGame_bgm_3.mp3",
+    gain: 1,
+  },
+  victory: {
+    src: "/music/victory_bgm.mp3",
+    gain: 1,
+  },
+  defeat: {
+    src: "/music/defeat_bgm.mp3",
+    gain: 1,
+  },
+};
+
 const audioCache: Partial<Record<AbilitySfxId, HTMLAudioElement>> = {};
 const uiAudioCache: Partial<Record<UiSfxId, HTMLAudioElement>> = {};
+const bgmCache: Partial<
+  Record<BgmTrackId, { howl: Howl; soundId: number | null }>
+> = {};
 const segmentedLoopHandlers = new WeakMap<
   HTMLAudioElement,
   { timeupdate: () => void; ended: () => void }
 >();
+let activeBgmTrackId: BgmTrackId | null = null;
+let bgmVolume = 0.15;
+let bgmMuted = false;
+
+Howler.autoUnlock = true;
+Howler.autoSuspend = false;
+
+function getBgm(trackId: BgmTrackId): {
+  howl: Howl;
+  soundId: number | null;
+} {
+  if (!bgmCache[trackId]) {
+    const config = BGM_CONFIG[trackId];
+    bgmCache[trackId] = {
+      howl: new Howl({
+        src: [config.src],
+        loop: true,
+        preload: true,
+        html5: false,
+        volume: bgmVolume * config.gain,
+      }),
+      soundId: null,
+    };
+  }
+
+  return bgmCache[trackId];
+}
+
+function setBgmTrackVolume(trackId: BgmTrackId): void {
+  const bgm = bgmCache[trackId];
+  if (!bgm) return;
+  bgm.howl.volume(
+    Math.max(0, Math.min(1, bgmVolume * BGM_CONFIG[trackId].gain)),
+  );
+}
+
+export function setBgmVolume(volume: number): void {
+  bgmVolume = Math.max(0, Math.min(1, volume));
+  (Object.keys(BGM_CONFIG) as BgmTrackId[]).forEach(setBgmTrackVolume);
+}
+
+export function setBgmMuted(muted: boolean): void {
+  bgmMuted = muted;
+  if (muted) {
+    pauseAllBgm();
+  }
+}
+
+export function playBgmTrack(trackId: BgmTrackId): void {
+  if (bgmMuted) {
+    pauseAllBgm();
+    return;
+  }
+
+  const target = getBgm(trackId);
+  setBgmTrackVolume(trackId);
+
+  if (activeBgmTrackId !== trackId) {
+    (Object.keys(BGM_CONFIG) as BgmTrackId[]).forEach((otherTrackId) => {
+      if (otherTrackId === trackId) return;
+      const other = bgmCache[otherTrackId];
+      if (!other) return;
+      other.howl.stop();
+      other.soundId = null;
+    });
+
+    if (target.soundId !== null) {
+      target.howl.stop(target.soundId);
+    }
+    target.soundId = target.howl.play();
+    activeBgmTrackId = trackId;
+    return;
+  }
+
+  if (target.soundId !== null && target.howl.playing(target.soundId)) {
+    return;
+  }
+
+  target.soundId =
+    target.soundId !== null ? target.howl.play(target.soundId) : target.howl.play();
+}
+
+export function pauseAllBgm(): void {
+  (Object.keys(BGM_CONFIG) as BgmTrackId[]).forEach((trackId) => {
+    const bgm = bgmCache[trackId];
+    if (!bgm || bgm.soundId === null || !bgm.howl.playing(bgm.soundId)) return;
+    bgm.howl.pause(bgm.soundId);
+  });
+}
+
+export function stopAllBgm(): void {
+  (Object.keys(BGM_CONFIG) as BgmTrackId[]).forEach((trackId) => {
+    const bgm = bgmCache[trackId];
+    if (!bgm) return;
+    bgm.howl.stop();
+    bgm.soundId = null;
+  });
+  activeBgmTrackId = null;
+}
+
+export function unloadBgm(): void {
+  stopAllBgm();
+  (Object.keys(BGM_CONFIG) as BgmTrackId[]).forEach((trackId) => {
+    bgmCache[trackId]?.howl.unload();
+    delete bgmCache[trackId];
+  });
+}
 
 function getAbilityAudio(id: AbilitySfxId): HTMLAudioElement | null {
   try {

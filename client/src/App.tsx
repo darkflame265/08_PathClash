@@ -21,6 +21,12 @@ import { useLang } from "./hooks/useLang";
 import { useGameStore } from "./store/gameStore";
 import {
   getMatchResultAudioEvents,
+  pauseAllBgm,
+  playBgmTrack,
+  setBgmMuted,
+  setBgmVolume,
+  unloadBgm,
+  type BgmTrackId,
   type MatchResultAudioKind,
 } from "./utils/soundUtils";
 import "./App.css";
@@ -70,7 +76,6 @@ type StoredLegalConsent = {
 
 type LegalDocumentType = "terms" | "privacy";
 type RoomClosedReason = "turn_limit" | "waiting_timeout" | "empty";
-type BgmTrackId = "lobby" | "ingame" | "victory" | "defeat";
 
 const LEGAL_CONSENT_VERSION = "2026-04-01-v1";
 const LEGAL_CONSENT_STORAGE_KEY = "pathclash.legalConsent.v1";
@@ -78,10 +83,6 @@ const TERMS_PATH_KR = "/terms.html";
 const TERMS_PATH_EN = "/terms-en.html";
 const POLICY_PATH_KR = "/privacy.html";
 const POLICY_PATH_EN = "/privacy-en.html";
-const LOBBY_BGM_SRC = "/music/Lobby_bgm_3.mp3";
-const IN_GAME_BGM_SRC = "/music/InGame_bgm_3.mp3";
-const VICTORY_BGM_SRC = "/music/victory_bgm.mp3";
-const DEFEAT_BGM_SRC = "/music/defeat_bgm.mp3";
 
 function readStoredLegalConsent(): StoredLegalConsent | null {
   const raw = window.localStorage.getItem(LEGAL_CONSENT_STORAGE_KEY);
@@ -96,13 +97,6 @@ function readStoredLegalConsent(): StoredLegalConsent | null {
 
 function writeStoredLegalConsent(record: StoredLegalConsent) {
   window.localStorage.setItem(LEGAL_CONSENT_STORAGE_KEY, JSON.stringify(record));
-}
-
-function pauseBgm(audio: HTMLAudioElement, reset = false) {
-  audio.pause();
-  if (reset && audio.currentTime !== 0) {
-    audio.currentTime = 0;
-  }
 }
 
 function App() {
@@ -140,11 +134,6 @@ function App() {
     sfxVolume,
   } = useGameStore();
   const { lang } = useLang();
-  const lobbyBgmRef = useRef<HTMLAudioElement | null>(null);
-  const inGameBgmRef = useRef<HTMLAudioElement | null>(null);
-  const victoryBgmRef = useRef<HTMLAudioElement | null>(null);
-  const defeatBgmRef = useRef<HTMLAudioElement | null>(null);
-  const activeBgmRef = useRef<BgmTrackId | null>(null);
   const achievementRefreshTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -204,54 +193,15 @@ function App() {
     [],
   );
 
-  useEffect(() => {
-    const lobbyBgm = new Audio(LOBBY_BGM_SRC);
-    lobbyBgm.loop = true;
-    lobbyBgm.preload = "auto";
-    lobbyBgm.volume = musicVolume;
-
-    const inGameBgm = new Audio(IN_GAME_BGM_SRC);
-    inGameBgm.loop = true;
-    inGameBgm.preload = "auto";
-    inGameBgm.volume = musicVolume;
-    const victoryBgm = new Audio(VICTORY_BGM_SRC);
-    victoryBgm.loop = true;
-    victoryBgm.preload = "auto";
-    victoryBgm.volume = musicVolume;
-    const defeatBgm = new Audio(DEFEAT_BGM_SRC);
-    defeatBgm.loop = true;
-    defeatBgm.preload = "auto";
-    defeatBgm.volume = musicVolume;
-
-    lobbyBgmRef.current = lobbyBgm;
-    inGameBgmRef.current = inGameBgm;
-    victoryBgmRef.current = victoryBgm;
-    defeatBgmRef.current = defeatBgm;
-
-    return () => {
-      lobbyBgm.pause();
-      inGameBgm.pause();
-      victoryBgm.pause();
-      defeatBgm.pause();
-      lobbyBgmRef.current = null;
-      inGameBgmRef.current = null;
-      victoryBgmRef.current = null;
-      defeatBgmRef.current = null;
-      activeBgmRef.current = null;
-    };
-  }, []);
+  useEffect(() => () => unloadBgm(), []);
 
   useEffect(() => {
-    const lobbyBgm = lobbyBgmRef.current;
-    const inGameBgm = inGameBgmRef.current;
-    const victoryBgm = victoryBgmRef.current;
-    const defeatBgm = defeatBgmRef.current;
-    if (!lobbyBgm || !inGameBgm || !victoryBgm || !defeatBgm) return;
-    lobbyBgm.volume = musicVolume;
-    inGameBgm.volume = musicVolume;
-    victoryBgm.volume = musicVolume;
-    defeatBgm.volume = musicVolume;
+    setBgmVolume(musicVolume);
   }, [musicVolume]);
+
+  useEffect(() => {
+    setBgmMuted(isMusicMuted);
+  }, [isMusicMuted]);
 
   useEffect(() => {
     const { start, stop } = getMatchResultAudioEvents();
@@ -742,21 +692,9 @@ function App() {
   }, [authUserId]);
 
   const tryStartBgm = useCallback(() => {
-    const lobbyBgm = lobbyBgmRef.current;
-    const inGameBgm = inGameBgmRef.current;
-    const victoryBgm = victoryBgmRef.current;
-    const defeatBgm = defeatBgmRef.current;
-    if (!lobbyBgm || !inGameBgm || !victoryBgm || !defeatBgm) return;
-    const tracks: Record<BgmTrackId, HTMLAudioElement> = {
-      lobby: lobbyBgm,
-      ingame: inGameBgm,
-      victory: victoryBgm,
-      defeat: defeatBgm,
-    };
-
+    setBgmVolume(musicVolume);
+    setBgmMuted(isMusicMuted);
     if (isMusicMuted) {
-      Object.values(tracks).forEach((audio) => pauseBgm(audio));
-      activeBgmRef.current = null;
       return;
     }
 
@@ -768,25 +706,8 @@ function App() {
       targetTrackId = isBattleView ? "ingame" : "lobby";
     }
 
-    const previousTrackId = activeBgmRef.current;
-    const isTrackSwitch = previousTrackId !== targetTrackId;
-    for (const [trackId, audio] of Object.entries(tracks) as [BgmTrackId, HTMLAudioElement][]) {
-      if (trackId !== targetTrackId) {
-        pauseBgm(audio, isTrackSwitch);
-      }
-    }
-
-    const targetBgm = tracks[targetTrackId];
-    if (isTrackSwitch && previousTrackId !== null && targetBgm.currentTime !== 0) {
-      targetBgm.currentTime = 0;
-    }
-    if (targetBgm.paused) {
-      void targetBgm.play().catch(() => {
-        // Autoplay can fail until the user interacts with the screen.
-      });
-    }
-    activeBgmRef.current = targetTrackId;
-  }, [isMusicMuted, matchResultAudioKind, view]);
+    playBgmTrack(targetTrackId);
+  }, [isMusicMuted, matchResultAudioKind, musicVolume, view]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -837,17 +758,8 @@ function App() {
     let cleanup = () => {};
 
     void CapacitorApp.addListener("appStateChange", ({ isActive }) => {
-      const lobbyBgm = lobbyBgmRef.current;
-      const inGameBgm = inGameBgmRef.current;
-      const victoryBgm = victoryBgmRef.current;
-      const defeatBgm = defeatBgmRef.current;
-      if (!lobbyBgm || !inGameBgm || !victoryBgm || !defeatBgm) return;
-
       if (!isActive) {
-        pauseBgm(lobbyBgm);
-        pauseBgm(inGameBgm);
-        pauseBgm(victoryBgm);
-        pauseBgm(defeatBgm);
+        pauseAllBgm();
         return;
       }
 
