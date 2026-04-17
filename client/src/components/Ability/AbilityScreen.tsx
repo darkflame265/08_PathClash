@@ -2788,7 +2788,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         : "";
   const overdriveTurn = me.overdriveActive;
   const chargeReservedNonOverdrive = !overdriveTurn && skillReservations.some(e => e.skillId === "plasma_charge");
-  const effectivePathPoints = me.reboundLocked ? 0 : chargeReservedNonOverdrive ? 1 : state.pathPoints;
+  const bigBangReservation = !overdriveTurn ? skillReservations.find(e => e.skillId === "cosmic_bigbang") : undefined;
+  const effectivePathPoints = me.reboundLocked ? 0 : bigBangReservation ? bigBangReservation.step : chargeReservedNonOverdrive ? 1 : state.pathPoints;
   const isTrainingMatch = opponent.nickname === "Training Dummy";
   const rewardTokens =
     winner &&
