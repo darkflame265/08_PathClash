@@ -2150,11 +2150,17 @@
 .achievements-modal {
   width: min(100%, 40rem);
   max-height: min(48rem, 85dvh);
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .achievements-head {
   align-items: flex-start;
+  flex-shrink: 0;
+}
+
+.achievements-modal > .upgrade-modal-actions,
+.settings-modal > .upgrade-modal-actions {
+  flex-shrink: 0;
 }
 
 .achievements-head > div:first-child {
@@ -2191,7 +2197,9 @@
 }
 
 .achievements-scroll-body {
-  overflow-y: visible;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   padding-right: 0.2rem;
 }
 
@@ -2320,14 +2328,20 @@
 .settings-modal {
   width: min(100%, 24rem);
   max-height: min(46rem, 85dvh);
-  overflow-y: auto;
+  overflow: hidden;
+}
+
+.settings-modal > .skin-modal-head {
+  flex-shrink: 0;
 }
 
 .settings-scroll-body {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   gap: 0.9rem;
-  overflow-y: visible;
+  overflow-y: auto;
   padding-right: 0.2rem;
 }
 
