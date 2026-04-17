@@ -66,7 +66,7 @@ const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
   },
   electric_blitz: {
     path: "/sfx/ability/electric_blitz.mp3",
-    gain: 0.6,
+    gain: 0.85,
   },
   cosmic_bigbang: {
     path: "/sfx/ability/cosmic_bigbang.mp3",
@@ -130,6 +130,7 @@ export type BgmTrackId = "lobby" | "ingame" | "victory" | "defeat";
 
 const MATCH_RESULT_AUDIO_EVENT = "pathclash:match-result-audio";
 const STOP_MATCH_RESULT_AUDIO_EVENT = "pathclash:stop-match-result-audio";
+const BGM_FADE_IN_MS = 280;
 
 const BGM_CONFIG: Record<BgmTrackId, { src: string; gain: number }> = {
   lobby: {
@@ -152,6 +153,8 @@ const BGM_CONFIG: Record<BgmTrackId, { src: string; gain: number }> = {
 
 const audioCache: Partial<Record<AbilitySfxId, HTMLAudioElement>> = {};
 const uiAudioCache: Partial<Record<UiSfxId, HTMLAudioElement>> = {};
+const abilityHowlCache: Partial<Record<AbilitySfxId, Howl>> = {};
+const uiHowlCache: Partial<Record<UiSfxId, Howl>> = {};
 const bgmCache: Partial<
   Record<BgmTrackId, { howl: Howl; soundId: number | null }>
 > = {};
@@ -160,6 +163,7 @@ const segmentedLoopHandlers = new WeakMap<
   { timeupdate: () => void; ended: () => void }
 >();
 let activeBgmTrackId: BgmTrackId | null = null;
+let goldOverdriveSoundId: number | null = null;
 let bgmVolume = 0.15;
 let bgmMuted = false;
 
@@ -195,6 +199,10 @@ function setBgmTrackVolume(trackId: BgmTrackId): void {
   );
 }
 
+function getBgmTrackVolume(trackId: BgmTrackId): number {
+  return Math.max(0, Math.min(1, bgmVolume * BGM_CONFIG[trackId].gain));
+}
+
 export function setBgmVolume(volume: number): void {
   bgmVolume = Math.max(0, Math.min(1, volume));
   (Object.keys(BGM_CONFIG) as BgmTrackId[]).forEach(setBgmTrackVolume);
@@ -228,7 +236,10 @@ export function playBgmTrack(trackId: BgmTrackId): void {
     if (target.soundId !== null) {
       target.howl.stop(target.soundId);
     }
+    const targetVolume = getBgmTrackVolume(trackId);
+    target.howl.volume(0);
     target.soundId = target.howl.play();
+    target.howl.fade(0, targetVolume, BGM_FADE_IN_MS, target.soundId);
     activeBgmTrackId = trackId;
     return;
   }
@@ -237,8 +248,11 @@ export function playBgmTrack(trackId: BgmTrackId): void {
     return;
   }
 
+  const targetVolume = getBgmTrackVolume(trackId);
+  target.howl.volume(0);
   target.soundId =
     target.soundId !== null ? target.howl.play(target.soundId) : target.howl.play();
+  target.howl.fade(0, targetVolume, BGM_FADE_IN_MS, target.soundId);
 }
 
 export function pauseAllBgm(): void {
@@ -277,6 +291,28 @@ function getAbilityAudio(id: AbilitySfxId): HTMLAudioElement | null {
       audioCache[id] = audio;
     }
     return audioCache[id] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function shouldUseHtmlAbilityAudio(id: AbilitySfxId): boolean {
+  return id === "chronos_rewind_loop";
+}
+
+function getAbilityHowl(id: AbilitySfxId): Howl | null {
+  try {
+    if (!abilityHowlCache[id]) {
+      const config = ABILITY_SFX[id];
+      abilityHowlCache[id] = new Howl({
+        src: [config.path],
+        loop: !!config.loop,
+        preload: true,
+        html5: false,
+        volume: Math.max(0, Math.min(1, config.gain)),
+      });
+    }
+    return abilityHowlCache[id] ?? null;
   } catch {
     return null;
   }
@@ -333,11 +369,23 @@ function attachSegmentedLoop(
 
 function playAbilitySfx(id: AbilitySfxId, volume = 0.55): void {
   try {
+    const normalizedVolume = Math.max(
+      0,
+      Math.min(1, volume * ABILITY_SFX[id].gain),
+    );
+    if (!shouldUseHtmlAbilityAudio(id)) {
+      const howl = getAbilityHowl(id);
+      if (!howl) return;
+      const soundId = howl.play();
+      howl.volume(normalizedVolume, soundId);
+      return;
+    }
+
     const baseAudio = getAbilityAudio(id);
     if (!baseAudio) return;
     const audio = baseAudio.cloneNode(true) as HTMLAudioElement;
     audio.loop = false;
-    audio.volume = Math.max(0, Math.min(1, volume * ABILITY_SFX[id].gain));
+    audio.volume = normalizedVolume;
     void audio.play().catch(() => {
       // Playback can fail if browser blocks audio; ignore.
     });
@@ -361,8 +409,33 @@ function getUiAudio(id: UiSfxId): HTMLAudioElement | null {
   }
 }
 
+function getUiHowl(id: UiSfxId): Howl | null {
+  try {
+    if (!uiHowlCache[id]) {
+      const config = UI_SFX[id];
+      uiHowlCache[id] = new Howl({
+        src: [config.path],
+        loop: false,
+        preload: true,
+        html5: false,
+        volume: Math.max(0, Math.min(1, config.gain)),
+      });
+    }
+    return uiHowlCache[id] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function playUiSfx(id: UiSfxId, volume = 0.55): void {
   try {
+    const howl = getUiHowl(id);
+    if (howl) {
+      const soundId = howl.play();
+      howl.volume(Math.max(0, Math.min(1, volume * UI_SFX[id].gain)), soundId);
+      return;
+    }
+
     const baseAudio = getUiAudio(id);
     if (!baseAudio) return;
     const audio = baseAudio.cloneNode(true) as HTMLAudioElement;
@@ -378,6 +451,11 @@ function playUiSfx(id: UiSfxId, volume = 0.55): void {
 
 export function preloadAbilitySfxAssets(): void {
   for (const id of Object.keys(ABILITY_SFX) as AbilitySfxId[]) {
+    if (!shouldUseHtmlAbilityAudio(id)) {
+      getAbilityHowl(id);
+      continue;
+    }
+
     const audio = getAbilityAudio(id);
     if (!audio) continue;
     try {
@@ -385,6 +463,10 @@ export function preloadAbilitySfxAssets(): void {
     } catch {
       // Ignore browsers that reject manual load hints.
     }
+  }
+
+  for (const id of Object.keys(UI_SFX) as UiSfxId[]) {
+    getUiHowl(id);
   }
 }
 
@@ -527,30 +609,31 @@ export function stopChronosRewindLoop(): void {
 
 export function startOverdriveLoop(volume = 0.55): void {
   try {
-    const audio = getAbilityAudio("gold_overdrive_loop");
-    if (!audio) return;
-    audio.volume = Math.max(
+    const howl = getAbilityHowl("gold_overdrive_loop");
+    if (!howl) return;
+    const normalizedVolume = Math.max(
       0,
       Math.min(1, volume * ABILITY_SFX.gold_overdrive_loop.gain),
     );
-    if (audio.paused) {
-      audio.currentTime = 0;
-      void audio.play().catch(() => {
-        // Playback can fail if browser blocks audio; ignore.
-      });
+    if (
+      goldOverdriveSoundId === null ||
+      !howl.playing(goldOverdriveSoundId)
+    ) {
+      goldOverdriveSoundId = howl.play();
     }
+    howl.volume(normalizedVolume, goldOverdriveSoundId);
   } catch {
-    // Audio element not available
+    // Audio engine not available
   }
 }
 
 export function stopOverdriveLoop(): void {
   try {
-    const audio = audioCache.gold_overdrive_loop;
-    if (!audio) return;
-    audio.pause();
-    audio.currentTime = 0;
+    const howl = abilityHowlCache.gold_overdrive_loop;
+    if (!howl || goldOverdriveSoundId === null) return;
+    howl.stop(goldOverdriveSoundId);
+    goldOverdriveSoundId = null;
   } catch {
-    // Audio element not available
+    // Audio engine not available
   }
 }
