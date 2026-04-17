@@ -11,8 +11,8 @@ export type PatchNoteSection = {
   lines: PatchNoteLine[];
 };
 
-export const PATCH_NOTES_VERSION = "2026-04-17-v17";
-const PATCH_NOTES_APP_VERSION = "1.0.29";
+export const PATCH_NOTES_VERSION = "2026-04-17-v18";
+const PATCH_NOTES_APP_VERSION = "1.0.30";
 
 export function getPatchNotesVersionLabel(lang: "en" | "kr"): string {
   return lang === "en"
@@ -35,6 +35,9 @@ export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
       {
         heading: "Bug fixes",
         lines: [
+          {
+            text: "Locked Android phone screens to portrait orientation while keeping tablet landscape and portrait support.",
+          },
           {
             text: "Fixed an Android app issue where lobby and in-game BGM could stop early and restart from the beginning.",
           },
@@ -59,6 +62,9 @@ export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
     {
       heading: "버그 수정",
       lines: [
+        {
+          text: "Android 휴대폰에서는 화면이 가로로 회전되지 않도록 고정하고, 태블릿에서는 가로/세로 모드를 계속 지원하도록 수정했습니다.",
+        },
         {
           text: "Android 앱에서 로비 및 인게임 BGM이 중간에 끊긴 뒤 처음부터 다시 재생되던 문제를 수정했습니다.",
         },
