@@ -2349,11 +2349,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     ) => {
       for (const event of events) {
         if (event.skillId === "classic_guard" && event.invulnerableSteps) {
-          // +1 so the visual persists one extra step after the last protected
-          // step, fading at step 3 instead of immediately after the block.
           guardCounters[event.color] = Math.max(
             guardCounters[event.color],
-            event.invulnerableSteps + 1,
+            event.invulnerableSteps,
           );
         }
         if (event.skillId === "arc_reactor_field") {
