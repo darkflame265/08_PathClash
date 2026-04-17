@@ -903,9 +903,6 @@ export function resolveAbilityRound(params: {
       ) {
         resolveCollisionHit(attackerColor, escapeeColor, redPos, step);
       }
-
-      if (redInv > 0) redInv -= 1;
-      if (blueInv > 0) blueInv -= 1;
     }
 
     const stepReservations = sortStepReservations([
@@ -919,6 +916,13 @@ export function resolveAbilityRound(params: {
 
     for (const { color, reservation } of stepReservations) {
       processSkill(color, reservation);
+    }
+
+    // Decrement invulnerability counters after skills are processed so that
+    // attack skills at the same step as the last guard step are blocked too.
+    if (step > 0) {
+      if (redInv > 0) redInv -= 1;
+      if (blueInv > 0) blueInv -= 1;
     }
 
     const overlappingAfterSkillBlitz =
