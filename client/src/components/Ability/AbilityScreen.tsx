@@ -3110,9 +3110,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             const blitzReserved = skillReservations.some(
               (entry) => entry.skillId === "electric_blitz",
             );
-            const bigBangReserved = skillReservations.some(
-              (entry) => entry.skillId === "cosmic_bigbang",
-            );
+
             const roleBlocked =
               ((skillId === "classic_guard" ||
                 skillId === "gold_overdrive" ||
