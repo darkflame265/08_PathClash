@@ -13,6 +13,9 @@ def androidVersionConfig = appVersionConfig.android
 android {
     namespace = "com.pathclash.game"
     compileSdk = rootProject.ext.compileSdkVersion
+    androidResources {
+        noCompress += ['mp3', 'ogg', 'wav']
+    }
     defaultConfig {
         applicationId androidVersionConfig.appId
         minSdkVersion rootProject.ext.minSdkVersion
