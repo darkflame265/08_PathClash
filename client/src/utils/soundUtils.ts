@@ -133,11 +133,11 @@ const STOP_MATCH_RESULT_AUDIO_EVENT = "pathclash:stop-match-result-audio";
 
 const BGM_CONFIG: Record<BgmTrackId, { src: string; gain: number }> = {
   lobby: {
-    src: "/music/Lobby_bgm_3.mp3",
+    src: "/music/Lobby_bgm_3.ogg",
     gain: 1,
   },
   ingame: {
-    src: "/music/InGame_bgm_3.mp3",
+    src: "/music/InGame_bgm_3.ogg",
     gain: 1,
   },
   victory: {
