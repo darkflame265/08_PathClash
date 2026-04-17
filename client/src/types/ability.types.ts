@@ -536,16 +536,16 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "cosmic_bigbang",
     name: { en: "Big Bang Burst", kr: "빅뱅폭발" },
     description: {
-      en: "Deal 2 damage to the whole board. Blocked by guard. You cannot move this turn.",
-      kr: "보드 전체에 2 피해를 줍니다. 가드에 막히며, 이번 턴에는 이동할 수 없습니다.",
+      en: "Deal 2 damage to the whole board. Blocked by guard. Set timing at steps 0–3. Can move before and after.",
+      kr: "보드 전체에 2 피해를 줍니다. 가드에 막힙니다. 발동 타이밍을 0~3칸 사이에서 자유롭게 설정하며, 이동 전후로 움직일 수 있습니다.",
     },
     loadoutTags: {
-      en: "Move Locked · Combo Locked",
-      kr: "이동 불가 · 조합 불가능",
+      en: "Timing: 0–3 · Moveable · Combinable",
+      kr: "타이밍: 0~3칸 · 이동 가능 · 조합 가능",
     },
     loadoutDescription: {
-      en: "Deal 2 damage to the whole board. Blocked by invulnerability.",
-      kr: "보드 전체에 2 피해를 줍니다. 무적에 막힙니다.",
+      en: "Deal 2 damage to the whole board. Blocked by invulnerability. Set activation timing freely at steps 0–3.",
+      kr: "보드 전체에 2 피해를 줍니다. 무적에 막힙니다. 발동 타이밍을 0~3칸 사이에서 자유롭게 설정할 수 있습니다.",
     },
     manaCost: ABILITY_SKILL_COSTS.cosmic_bigbang,
     category: "attack",

@@ -636,6 +636,7 @@ function validateCommonSkillReservations(
     if (skill.step < 0 || skill.step > pathLength) return false;
     if (rule.targetRule === 'position' && !skill.target) return false;
     if (rule.stepRule === 'zero_only' && skill.step !== 0) return false;
+    if (!isOverdriveTurn && rule.maxStep !== undefined && skill.step > rule.maxStep) return false;
 
     if (
       !isOverdriveTurn &&
@@ -1334,15 +1335,6 @@ export class AbilityRoom {
     if (player.reboundLocked && path.length > 0) return null;
 
     if (!isOverdriveTurn) {
-      if (hasBigBang) {
-        if (!bigBang) return null;
-        if (uniqueSkills.length !== 1) return null;
-        return {
-          path: [],
-          skills: uniqueSkills,
-        };
-      }
-
       if (hasBlitz) {
         if (!blitz || !blitz.target) return null;
         if (blitz.step < 0 || blitz.step > path.length) return null;

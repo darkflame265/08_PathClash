@@ -38,6 +38,7 @@ export interface AbilitySkillServerRule {
   requiresEmptyPathWhenNotOverdrive?: boolean;
   exclusiveWhenNotOverdrive?: boolean;
   requiresPreviousTurnPath?: boolean;
+  maxStep?: number;
 }
 
 // Single source of truth for server-side mana costs.
@@ -145,10 +146,9 @@ export const ABILITY_SKILL_SERVER_RULES: Record<
   },
   cosmic_bigbang: {
     roleRestriction: 'attacker',
-    stepRule: 'zero_only',
+    stepRule: 'any',
     targetRule: 'none',
-    requiresEmptyPathWhenNotOverdrive: true,
-    exclusiveWhenNotOverdrive: true,
+    maxStep: 3,
   },
   wizard_magic_mine: {
     roleRestriction: 'attacker',

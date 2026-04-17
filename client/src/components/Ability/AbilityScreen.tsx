@@ -899,17 +899,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       return;
     }
 
-    if (skillId === "cosmic_bigbang") {
-      if (overdriveTurn) {
-        updateSkillReservations(nextReservations);
-        return;
-      }
-      setMyPath(previousBigBangPathRef.current);
-      setSkillReservations(nextReservations);
-      syncMyPlan(previousBigBangPathRef.current, nextReservations);
-      return;
-    }
-
     updateSkillReservations(nextReservations);
   };
 
@@ -1377,38 +1366,22 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }
     if (getMyRole() !== "attacker") return;
     if (getRemainingMana() < getSkillCost("cosmic_bigbang")) return;
-    if (isOverdriveTurn()) {
-      const nextReservations: AbilitySkillReservation[] = [
-        ...skillReservations.filter(
-          (entry) => entry.skillId !== "cosmic_bigbang",
-        ),
-        {
-          skillId: "cosmic_bigbang",
-          step: getCurrentSkillStep(),
-          order: reservationOrderRef.current++,
-        },
-      ];
-      setSkillReservations(nextReservations);
-      setSelectedSkillId(null);
-      setPendingTeleport(false);
-      setPendingBlitz(false);
-      syncMyPlan(myPath, nextReservations);
-      return;
-    }
-    previousBigBangPathRef.current = myPath;
+    if (!isOverdriveTurn() && myPath.length >= 4) return;
     const nextReservations: AbilitySkillReservation[] = [
+      ...skillReservations.filter(
+        (entry) => entry.skillId !== "cosmic_bigbang",
+      ),
       {
         skillId: "cosmic_bigbang",
-        step: 0,
+        step: getCurrentSkillStep(),
         order: reservationOrderRef.current++,
       },
     ];
-    setMyPath([]);
     setSkillReservations(nextReservations);
     setSelectedSkillId(null);
     setPendingTeleport(false);
     setPendingBlitz(false);
-    syncMyPlan([], nextReservations);
+    syncMyPlan(myPath, nextReservations);
   };
 
   const handleSkillClick = (skillId: AbilitySkillId) => {
@@ -3161,7 +3134,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               !reserved &&
               (skillId === "cosmic_bigbang" || !overdriveTurn);
             const bigBangBlocked =
-              !overdriveTurn && bigBangReserved && !reserved;
+              skillId === "cosmic_bigbang" &&
+              !reserved &&
+              !overdriveTurn &&
+              myPath.length >= 4;
             const disabled =
               !isPlanning ||
               mySubmitted ||
