@@ -232,38 +232,31 @@ export function playBgmTrack(trackId: BgmTrackId): void {
     return;
   }
 
+  // Always stop every other track first so only one BGM plays at a time.
+  (Object.keys(BGM_CONFIG) as BgmTrackId[]).forEach((otherTrackId) => {
+    if (otherTrackId === trackId) return;
+    const other = bgmCache[otherTrackId];
+    if (!other) return;
+    other.howl.stop();
+    other.soundId = null;
+  });
+
   const target = getBgm(trackId);
   setBgmTrackVolume(trackId);
 
-  if (activeBgmTrackId !== trackId) {
-    (Object.keys(BGM_CONFIG) as BgmTrackId[]).forEach((otherTrackId) => {
-      if (otherTrackId === trackId) return;
-      const other = bgmCache[otherTrackId];
-      if (!other) return;
-      other.howl.stop();
-      other.soundId = null;
-    });
-
-    if (target.soundId !== null) {
-      target.howl.stop(target.soundId);
-    }
-    const targetVolume = getBgmTrackVolume(trackId);
-    target.howl.volume(0);
-    target.soundId = target.howl.play();
-    target.howl.fade(0, targetVolume, BGM_FADE_IN_MS, target.soundId);
+  if (target.soundId !== null && target.howl.playing(target.soundId)) {
     activeBgmTrackId = trackId;
     return;
   }
 
-  if (target.soundId !== null && target.howl.playing(target.soundId)) {
-    return;
+  if (target.soundId !== null) {
+    target.howl.stop(target.soundId);
   }
-
   const targetVolume = getBgmTrackVolume(trackId);
   target.howl.volume(0);
-  target.soundId =
-    target.soundId !== null ? target.howl.play(target.soundId) : target.howl.play();
+  target.soundId = target.howl.play();
   target.howl.fade(0, targetVolume, BGM_FADE_IN_MS, target.soundId);
+  activeBgmTrackId = trackId;
 }
 
 export function pauseAllBgm(): void {
