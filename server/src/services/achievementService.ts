@@ -24,6 +24,19 @@ interface AchievementRow {
   claimed_at: string | null;
 }
 
+type AchievementUpdate = {
+  achievementId: string;
+  progress: number;
+  completed: boolean;
+  claimed?: boolean;
+  completedAt?: string | null;
+  claimedAt?: string | null;
+};
+
+type AchievementCounterSpec =
+  | { kind: 'single'; achievementId: string; amount?: number }
+  | { kind: 'series'; prefix: string; milestones: readonly number[]; amount?: number };
+
 const WIN_SERIES = [1, 3, 5, 10, 30, 50, 100, 500, 1000, 10000] as const;
 const TOTAL_WIN_SERIES = [10, 50, 100, 500, 1000, 10000] as const;
 const GAMES_PLAYED_SERIES = [10, 50, 100, 500, 1000] as const;
@@ -89,14 +102,7 @@ async function readRows(userId: string, achievementIds?: string[]): Promise<Map<
 
 async function upsertRows(
   userId: string,
-  entries: Array<{
-    achievementId: string;
-    progress: number;
-    completed: boolean;
-    claimed?: boolean;
-    completedAt?: string | null;
-    claimedAt?: string | null;
-  }>,
+  entries: AchievementUpdate[],
 ): Promise<void> {
   if (!supabaseAdmin || entries.length === 0) return;
 
@@ -120,21 +126,36 @@ async function upsertRows(
   }
 }
 
+function hasMeaningfulAchievementChange(
+  current: PlayerAchievementState | undefined,
+  next: AchievementUpdate,
+) {
+  if (!current) return true;
+  return (
+    current.progress !== next.progress ||
+    current.completed !== next.completed ||
+    current.claimed !== Boolean(next.claimed) ||
+    current.completedAt !== (next.completedAt ?? null) ||
+    current.claimedAt !== (next.claimedAt ?? null)
+  );
+}
+
 async function applySeriesAbsolute(
   userId: string,
   prefix: string,
   milestones: readonly number[],
   progress: number,
+  existingRows?: Map<string, PlayerAchievementState>,
 ): Promise<void> {
   const ids = milestones.map((goal) => `${prefix}${goal}`);
-  const existing = await readRows(userId, ids);
+  const existing = existingRows ?? await readRows(userId, ids);
   const nowIso = new Date().toISOString();
-  const updates = milestones.map((goal) => {
+  const updates = milestones.flatMap((goal) => {
     const achievementId = `${prefix}${goal}`;
     const current = existing.get(achievementId);
     const nextProgress = Math.max(current?.progress ?? 0, progress);
     const completed = nextProgress >= goal;
-    return {
+    const next = {
       achievementId,
       progress: nextProgress,
       completed,
@@ -142,6 +163,7 @@ async function applySeriesAbsolute(
       completedAt: completed ? current?.completedAt ?? nowIso : current?.completedAt ?? null,
       claimedAt: current?.claimedAt ?? null,
     };
+    return hasMeaningfulAchievementChange(current, next) ? [next] : [];
   });
 
   await upsertRows(userId, updates);
@@ -156,7 +178,7 @@ async function incrementSeries(
   const ids = milestones.map((goal) => `${prefix}${goal}`);
   const existing = await readRows(userId, ids);
   const currentProgress = ids.reduce((max, id) => Math.max(max, existing.get(id)?.progress ?? 0), 0);
-  await applySeriesAbsolute(userId, prefix, milestones, currentProgress + amount);
+  await applySeriesAbsolute(userId, prefix, milestones, currentProgress + amount, existing);
 }
 
 async function setSingleProgressAbsolute(userId: string, achievementId: string, progress: number): Promise<void> {
@@ -167,14 +189,16 @@ async function setSingleProgressAbsolute(userId: string, achievementId: string, 
   const nowIso = new Date().toISOString();
   const nextProgress = Math.max(current?.progress ?? 0, progress);
   const completed = nextProgress >= catalog.goal;
-  await upsertRows(userId, [{
+  const next = {
     achievementId,
     progress: nextProgress,
     completed,
     claimed: current?.claimed ?? false,
     completedAt: completed ? current?.completedAt ?? nowIso : current?.completedAt ?? null,
     claimedAt: current?.claimedAt ?? null,
-  }]);
+  };
+  if (!hasMeaningfulAchievementChange(current, next)) return;
+  await upsertRows(userId, [next]);
 }
 
 async function incrementSingle(userId: string, achievementId: string, amount = 1): Promise<void> {
@@ -193,6 +217,76 @@ async function incrementSingle(userId: string, achievementId: string, amount = 1
     completedAt: completed ? current?.completedAt ?? nowIso : current?.completedAt ?? null,
     claimedAt: current?.claimedAt ?? null,
   }]);
+}
+
+async function incrementAchievementCounters(
+  userId: string,
+  specs: AchievementCounterSpec[],
+): Promise<void> {
+  if (specs.length === 0) return;
+
+  const ids = [
+    ...new Set(
+      specs.flatMap((spec) =>
+        spec.kind === 'single'
+          ? [spec.achievementId]
+          : spec.milestones.map((goal) => `${spec.prefix}${goal}`),
+      ),
+    ),
+  ];
+  const existing = await readRows(userId, ids);
+  const nowIso = new Date().toISOString();
+  const updates: AchievementUpdate[] = [];
+
+  for (const spec of specs) {
+    const amount = spec.amount ?? 1;
+    if (spec.kind === 'single') {
+      const catalog = ACHIEVEMENT_CATALOG_BY_ID.get(spec.achievementId);
+      if (!catalog) continue;
+      const current = existing.get(spec.achievementId);
+      const nextProgress = (current?.progress ?? 0) + amount;
+      const completed = nextProgress >= catalog.goal;
+      const next = {
+        achievementId: spec.achievementId,
+        progress: nextProgress,
+        completed,
+        claimed: current?.claimed ?? false,
+        completedAt: completed ? current?.completedAt ?? nowIso : current?.completedAt ?? null,
+        claimedAt: current?.claimedAt ?? null,
+      };
+      if (hasMeaningfulAchievementChange(current, next)) {
+        updates.push(next);
+      }
+      continue;
+    }
+
+    const seriesIds = spec.milestones.map((goal) => `${spec.prefix}${goal}`);
+    const currentProgress = seriesIds.reduce(
+      (max, id) => Math.max(max, existing.get(id)?.progress ?? 0),
+      0,
+    );
+    const nextSeriesProgress = currentProgress + amount;
+
+    for (const goal of spec.milestones) {
+      const achievementId = `${spec.prefix}${goal}`;
+      const current = existing.get(achievementId);
+      const nextProgress = Math.max(current?.progress ?? 0, nextSeriesProgress);
+      const completed = nextProgress >= goal;
+      const next = {
+        achievementId,
+        progress: nextProgress,
+        completed,
+        claimed: current?.claimed ?? false,
+        completedAt: completed ? current?.completedAt ?? nowIso : current?.completedAt ?? null,
+        claimedAt: current?.claimedAt ?? null,
+      };
+      if (hasMeaningfulAchievementChange(current, next)) {
+        updates.push(next);
+      }
+    }
+  }
+
+  await upsertRows(userId, updates);
 }
 
 async function addTokens(userId: string, tokenAmount: number): Promise<void> {
@@ -274,10 +368,12 @@ export async function recordMatchPlayed(args: {
 }): Promise<void> {
   const userIds = [...new Set(args.userIds.filter((value): value is string => Boolean(value)))];
   await Promise.all(
-    userIds.map(async (userId) => {
-      await incrementSingle(userId, 'first_match_played', 1);
-      await incrementSeries(userId, 'games_played_', GAMES_PLAYED_SERIES, 1);
-    }),
+    userIds.map((userId) =>
+      incrementAchievementCounters(userId, [
+        { kind: 'single', achievementId: 'first_match_played' },
+        { kind: 'series', prefix: 'games_played_', milestones: GAMES_PLAYED_SERIES },
+      ]),
+    ),
   );
 }
 
@@ -287,8 +383,6 @@ export async function recordModeWin(args: {
 }): Promise<void> {
   const userId = args.userId;
   if (!userId) return;
-  await incrementSingle(userId, 'first_win', 1);
-  await incrementSeries(userId, 'wins_total_', TOTAL_WIN_SERIES, 1);
 
   const prefixByMode = {
     ai: 'ai_win_',
@@ -298,7 +392,11 @@ export async function recordModeWin(args: {
     coop: 'coop_clear_',
   } as const;
 
-  await incrementSeries(userId, prefixByMode[args.mode], WIN_SERIES, 1);
+  await incrementAchievementCounters(userId, [
+    { kind: 'single', achievementId: 'first_win' },
+    { kind: 'series', prefix: 'wins_total_', milestones: TOTAL_WIN_SERIES },
+    { kind: 'series', prefix: prefixByMode[args.mode], milestones: WIN_SERIES },
+  ]);
 }
 
 export async function recordDailyRewardGrant(userIds: Array<string | null | undefined>, rewardWins: number): Promise<void> {
