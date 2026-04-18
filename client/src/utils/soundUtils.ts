@@ -241,7 +241,9 @@ function getBgmTrackVolume(trackId: BgmTrackId): number {
 }
 
 export function setBgmVolume(volume: number): void {
-  bgmVolume = Math.max(0, Math.min(1, volume));
+  const newVolume = Math.max(0, Math.min(1, volume));
+  if (newVolume === bgmVolume) return;
+  bgmVolume = newVolume;
   (Object.keys(BGM_CONFIG) as BgmTrackId[]).forEach(setBgmTrackVolume);
 }
 
@@ -277,7 +279,6 @@ export function playBgmTrack(trackId: BgmTrackId): void {
   });
 
   const target = getBgm(trackId);
-  setBgmTrackVolume(trackId);
 
   if (target.soundId !== null && target.howl.playing(target.soundId)) {
     return;
