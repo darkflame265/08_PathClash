@@ -1476,7 +1476,7 @@ export async function cancelPendingGoogleUpgradeSwitch(): Promise<AuthStatePaylo
   return logoutToGuestMode();
 }
 
-async function getClientAuthMetadata() {
+export async function getClientAuthMetadata() {
   if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
     const info = await CapacitorApp.getInfo();
     const parsedBuild = Number(info.build ?? '');

@@ -9,15 +9,15 @@ const app_version_json_1 = __importDefault(require("./app-version.json"));
 const DEFAULT_ANDROID_APP_ID = 'com.pathclash.game';
 const androidVersionConfig = app_version_json_1.default.android;
 const parsedLatestVersionCode = Number(process.env.ANDROID_LATEST_VERSION_CODE?.trim() ??
-    String(androidVersionConfig.latestVersionCode));
+    String(androidVersionConfig.versionCode));
 const latestVersionCode = Number.isFinite(parsedLatestVersionCode)
     ? Math.max(1, Math.trunc(parsedLatestVersionCode))
-    : androidVersionConfig.latestVersionCode;
+    : androidVersionConfig.versionCode;
 const parsedMinSupportedVersionCode = Number(process.env.ANDROID_MIN_SUPPORTED_VERSION_CODE?.trim() ??
-    String(androidVersionConfig.minSupportedVersionCode));
+    String(androidVersionConfig.versionCode));
 const minSupportedVersionCode = Number.isFinite(parsedMinSupportedVersionCode)
     ? Math.max(1, Math.trunc(parsedMinSupportedVersionCode))
-    : androidVersionConfig.minSupportedVersionCode;
+    : androidVersionConfig.versionCode;
 const androidAppId = process.env.ANDROID_APP_ID?.trim() ||
     androidVersionConfig.appId ||
     DEFAULT_ANDROID_APP_ID;

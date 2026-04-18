@@ -7,6 +7,7 @@ import { supabaseAdmin } from "./lib/supabase";
 import { verifyGooglePlayProductPurchase } from "./services/googlePlayVerifier";
 import { initSocketServer } from "./socket/socketServer";
 import { getAndroidVersionStatus } from "./config/appVersion";
+import { getUserFromToken } from "./services/playerAuth";
 
 const app = express();
 const httpServer = createServer(app);
@@ -178,12 +179,11 @@ app.post("/payments/google-play/token-grant", async (req, res) => {
     purchaseTokenPrefix: purchaseToken.slice(0, 12),
   });
 
-  const { data, error } = await supabaseAdmin.auth.getUser(accessToken);
-  if (error || !data.user) {
+  const user = await getUserFromToken(accessToken);
+  if (!user) {
     console.warn("[google-play] token grant auth invalid", {
       packId,
       productId,
-      error: error?.message,
     });
     res.status(401).json({ error: "auth_invalid" });
     return;
@@ -198,7 +198,7 @@ app.post("/payments/google-play/token-grant", async (req, res) => {
       packId,
       productId,
       reason: verification.reason,
-      userId: data.user.id,
+      userId: user.id,
     });
     const statusCode =
       verification.reason === "config_missing" ||
@@ -214,7 +214,7 @@ app.post("/payments/google-play/token-grant", async (req, res) => {
     "grant_tokens_from_google_purchase",
     {
       p_purchase_token: purchaseToken,
-      p_user_id: data.user.id,
+      p_user_id: user.id,
       p_pack_id: packId,
       p_product_id: productId,
       p_tokens: pack.tokens,

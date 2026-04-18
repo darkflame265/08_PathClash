@@ -39,6 +39,22 @@ function normalizeAbilityLoadout(value) {
 }
 const DAILY_REWARD_TOKENS_PER_WIN = 6;
 const DAILY_REWARD_MAX_WINS = 20;
+const VERIFIED_USER_CACHE_TTL_MS = 60 * 1000;
+const VERIFIED_USER_CACHE_MAX_ENTRIES = 500;
+const verifiedUserCache = new Map();
+function pruneVerifiedUserCache(now = Date.now()) {
+    for (const [token, cached] of verifiedUserCache) {
+        if (cached.expiresAt <= now) {
+            verifiedUserCache.delete(token);
+        }
+    }
+    while (verifiedUserCache.size > VERIFIED_USER_CACHE_MAX_ENTRIES) {
+        const oldestToken = verifiedUserCache.keys().next().value;
+        if (!oldestToken)
+            break;
+        verifiedUserCache.delete(oldestToken);
+    }
+}
 function normalizeNicknameCandidate(value) {
     const trimmed = value?.trim();
     if (!trimmed)
@@ -79,11 +95,25 @@ function getActiveDailyRewardWins(stats, utcDayKey = getUtcDayKey()) {
     return Math.min(DAILY_REWARD_MAX_WINS, Math.max(0, Number(stats.daily_reward_wins ?? 0)));
 }
 async function getUserFromToken(accessToken) {
-    if (!supabase_1.supabaseAdmin || !accessToken)
+    const normalizedToken = accessToken?.trim();
+    if (!supabase_1.supabaseAdmin || !normalizedToken)
         return null;
-    const { data, error } = await supabase_1.supabaseAdmin.auth.getUser(accessToken);
+    const now = Date.now();
+    const cached = verifiedUserCache.get(normalizedToken);
+    if (cached && cached.expiresAt > now) {
+        return cached.user;
+    }
+    if (cached) {
+        verifiedUserCache.delete(normalizedToken);
+    }
+    const { data, error } = await supabase_1.supabaseAdmin.auth.getUser(normalizedToken);
     if (error || !data.user)
         return null;
+    verifiedUserCache.set(normalizedToken, {
+        expiresAt: now + VERIFIED_USER_CACHE_TTL_MS,
+        user: data.user,
+    });
+    pruneVerifiedUserCache(now);
     return data.user;
 }
 async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUser = false) {
@@ -152,16 +182,16 @@ async function resolvePlayerProfile(auth, fallbackNickname) {
             stats: { wins: 0, losses: 0 },
         };
     }
-    const { data: userData, error: userError } = await supabase_1.supabaseAdmin.auth.getUser(auth.accessToken);
-    if (userError || !userData.user) {
+    const user = await getUserFromToken(auth.accessToken);
+    if (!user) {
         return {
             userId: null,
             nickname: normalizedFallback,
             stats: { wins: 0, losses: 0 },
         };
     }
-    const userId = userData.user.id;
-    const profile = await readAccountProfile(userId, normalizedFallback, userData.user.is_anonymous ?? false);
+    const userId = user.id;
+    const profile = await readAccountProfile(userId, normalizedFallback, user.is_anonymous ?? false);
     return {
         userId,
         nickname: profile.nickname,

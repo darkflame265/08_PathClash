@@ -427,12 +427,12 @@ function resolveAbilityRound(params) {
             const heals = [];
             if (color === 'red') {
                 redMana = spendMana(casterMana, reservation.skillId);
-                redHp = Math.min(3, redHp + 1);
+                redHp = Math.min(5, redHp + 1);
                 heals.push({ color: 'red', newHp: redHp, position: { ...currentPos } });
             }
             else {
                 blueMana = spendMana(casterMana, reservation.skillId);
-                blueHp = Math.min(3, blueHp + 1);
+                blueHp = Math.min(5, blueHp + 1);
                 heals.push({ color: 'blue', newHp: blueHp, position: { ...currentPos } });
             }
             applyDamages(color, [], heals, reservation.skillId, reservation.step, reservation.order, [{ ...currentPos }]);
@@ -566,7 +566,7 @@ function resolveAbilityRound(params) {
             else {
                 blueMana = spendMana(casterMana, reservation.skillId);
             }
-            updateLavaTile(activeLavaTiles, reservation.target, 2);
+            updateLavaTile(activeLavaTiles, reservation.target, 4);
             skillEvents.push({
                 step: reservation.step,
                 order: reservation.order,
@@ -655,6 +655,7 @@ function resolveAbilityRound(params) {
             });
         }
     };
+    const lavaDamagedThisRound = new Set();
     for (let step = 0; step <= maxStep; step++) {
         redBlitzDamagedThisStep = false;
         blueBlitzDamagedThisStep = false;
@@ -703,10 +704,6 @@ function resolveAbilityRound(params) {
                 positionsTouch(redPos, redPrev, bluePos, bluePrev)) {
                 resolveCollisionHit(attackerColor, escapeeColor, redPos, step);
             }
-            if (redInv > 0)
-                redInv -= 1;
-            if (blueInv > 0)
-                blueInv -= 1;
         }
         const stepReservations = sortStepReservations([
             ...redReservations
@@ -718,6 +715,14 @@ function resolveAbilityRound(params) {
         ]);
         for (const { color, reservation } of stepReservations) {
             processSkill(color, reservation);
+        }
+        // Decrement invulnerability counters after skills are processed so that
+        // attack skills at the same step as the last guard step are blocked too.
+        if (step > 0) {
+            if (redInv > 0)
+                redInv -= 1;
+            if (blueInv > 0)
+                blueInv -= 1;
         }
         const overlappingAfterSkillBlitz = (redBlitz || blueBlitz) && samePosition(redPos, bluePos);
         if (overlappingAfterSkillBlitz &&
@@ -778,6 +783,8 @@ function resolveAbilityRound(params) {
         const applyLavaDamage = (color, prevPos, nextPos, protectedByGuard) => {
             if (protectedByGuard)
                 return;
+            if (lavaDamagedThisRound.has(color))
+                return;
             for (const lavaTile of activeLavaTiles) {
                 if (!isAffectedByLava(prevPos, nextPos, lavaTile.position))
                     continue;
@@ -799,6 +806,8 @@ function resolveAbilityRound(params) {
                         newHp: blueHp,
                     });
                 }
+                lavaDamagedThisRound.add(color);
+                break;
             }
         };
         applyLavaDamage('red', redPrevForStep, redPos, isProtectedByCollision('red'));

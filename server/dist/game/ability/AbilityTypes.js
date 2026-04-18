@@ -88,7 +88,6 @@ exports.ABILITY_SKILL_SERVER_RULES = {
         roleRestriction: 'any',
         stepRule: 'zero_only',
         targetRule: 'none',
-        requiresEmptyPathWhenNotOverdrive: true,
     },
     void_cloak: {
         roleRestriction: 'any',
@@ -103,10 +102,9 @@ exports.ABILITY_SKILL_SERVER_RULES = {
     },
     cosmic_bigbang: {
         roleRestriction: 'attacker',
-        stepRule: 'zero_only',
+        stepRule: 'any',
         targetRule: 'none',
-        requiresEmptyPathWhenNotOverdrive: true,
-        exclusiveWhenNotOverdrive: true,
+        maxStep: 3,
     },
     wizard_magic_mine: {
         roleRestriction: 'attacker',

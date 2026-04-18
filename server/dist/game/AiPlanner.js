@@ -80,7 +80,7 @@ function buildAttackPath(selfPosition, targetPosition, pathPoints, obstacles) {
     const scoredCandidates = attackCandidates
         .map((candidate) => scoreAttackPathAgainstEnemyCandidates(selfPosition, targetPosition, candidate, enemyCandidates, obstacles))
         .sort((left, right) => right.score - left.score);
-    const chosen = scoredCandidates[0];
+    const chosen = pickWeightedTopThree(scoredCandidates);
     const chosenPath = chosen
         ? extendAttackPathToFullPoints(selfPosition, chosen.path, targetPosition, pathPoints, obstacles, enemyCandidates)
         : buildShortestPath(selfPosition, targetPosition, obstacles).slice(0, pathPoints);
@@ -367,11 +367,7 @@ function createEscaperPath(selfPosition, threatPosition, pathPoints, obstacles) 
     const scoredCandidates = escapeCandidates
         .map((candidate) => scoreEscapePathAgainstEnemyAttackCandidates(selfPosition, threatPosition, candidate, threatCandidates, obstacles, pathPoints, futureThreatCache))
         .sort((left, right) => right.score - left.score);
-    const topScore = scoredCandidates[0]?.score ?? 0;
-    const safePool = scoredCandidates
-        .filter((candidate) => candidate.score >= topScore - 10)
-        .slice(0, 5);
-    const chosen = chooseSafeEscapeCandidate(safePool) ?? scoredCandidates[0];
+    const chosen = pickWeightedTopThree(scoredCandidates);
     const chosenPath = chosen?.path ?? [];
     lastAiEscapeDebug = {
         escapeCandidatePathCount: escapeCandidates.length,
@@ -714,6 +710,16 @@ function getFutureThreatModel(threatPosition, targetPosition, pathPoints, obstac
     const created = buildThreatAttackCandidates(threatPosition, targetPosition, pathPoints, obstacles);
     cache.set(key, created);
     return created;
+}
+function pickWeightedTopThree(candidates) {
+    if (candidates.length === 0)
+        return undefined;
+    const roll = Math.random();
+    if (roll < 0.6 || candidates.length === 1)
+        return candidates[0];
+    if (roll < 0.9 || candidates.length === 2)
+        return candidates[1];
+    return candidates[2] ?? candidates[1] ?? candidates[0];
 }
 function chooseSafeEscapeCandidate(candidates) {
     if (candidates.length === 0)

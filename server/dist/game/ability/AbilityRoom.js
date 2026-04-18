@@ -36,6 +36,7 @@ const ABILITY_FAKE_AI_SKILL_POOL = [
     'chronos_time_rewind',
     'atomic_fission',
     'sun_chariot',
+    'aurora_heal',
 ];
 function collectUtilitySkillUsageByUser(players, skillEvents) {
     const usage = new Map();
@@ -188,6 +189,44 @@ function getSequencePosition(start, path, step) {
     if (step <= 0)
         return start;
     return path[Math.min(step - 1, path.length - 1)] ?? start;
+}
+// targetPos에서 출발해 loopStart 방향으로 역행하지 않고 targetPos로 돌아오는
+// 최단 복귀 사이클을 BFS로 탐색한다.
+// 반환값: [첫 이동 셀, ..., targetPos] 형태의 루프 세그먼트 (접근 경로 이후 반복 삽입용)
+function findShortestReturnCycle(targetPos, loopStart, obstacles, maxLen) {
+    if (maxLen < 4)
+        return null; // 역행 없는 최소 루프는 4스텝(사각형)
+    const visited = new Set();
+    const queue = [];
+    // 첫 스텝: loopStart 방향 역행 금지
+    for (const neighbor of getCardinalNeighbors(targetPos, obstacles)) {
+        if (posEqual(neighbor, loopStart))
+            continue;
+        const key = `${toKey(neighbor)}|${toKey(targetPos)}`;
+        if (!visited.has(key)) {
+            visited.add(key);
+            queue.push({ pos: neighbor, prev: targetPos, path: [neighbor] });
+        }
+    }
+    while (queue.length > 0) {
+        const state = queue.shift();
+        if (state.path.length >= maxLen)
+            continue;
+        for (const neighbor of getCardinalNeighbors(state.pos, obstacles)) {
+            if (posEqual(neighbor, state.prev))
+                continue; // 직전 타일 역행 금지
+            // targetPos로 복귀 성공 → 루프 세그먼트 반환
+            if (posEqual(neighbor, targetPos)) {
+                return [...state.path, targetPos];
+            }
+            const key = `${toKey(neighbor)}|${toKey(state.pos)}`;
+            if (!visited.has(key)) {
+                visited.add(key);
+                queue.push({ pos: neighbor, prev: state.pos, path: [...state.path, neighbor] });
+            }
+        }
+    }
+    return null;
 }
 function buildBotPathModel(params) {
     const { start, opponent, role, pathPoints, obstacles } = params;
@@ -433,6 +472,8 @@ function validateCommonSkillReservations(player, skills, path, isOverdriveTurn) 
             return false;
         if (rule.stepRule === 'zero_only' && skill.step !== 0)
             return false;
+        if (!isOverdriveTurn && rule.maxStep !== undefined && skill.step > rule.maxStep)
+            return false;
         if (!isOverdriveTurn &&
             rule.requiresEmptyPathWhenNotOverdrive &&
             pathLength > 0) {
@@ -457,6 +498,8 @@ class AbilityRoom {
         this.obstacles = [];
         this.lavaTiles = [];
         this.trapTiles = [];
+        // 4코 스킬 연속 사용 방지: 마지막으로 4코 스킬을 사용한 턴 번호 추적
+        this.botLastFourCostSkillTurn = new Map();
         this.readySockets = new Set();
         this.pendingStart = false;
         this.pendingStartPaused = false;
@@ -614,6 +657,7 @@ class AbilityRoom {
         this.turn = 1;
         this.attackerColor = 'red';
         this.rewardsGranted = false;
+        this.botLastFourCostSkillTurn.clear();
         this.resetPlayers();
         this.updateRoles();
         this.touchActivity();
@@ -1050,16 +1094,6 @@ class AbilityRoom {
         if (player.reboundLocked && path.length > 0)
             return null;
         if (!isOverdriveTurn) {
-            if (hasBigBang) {
-                if (!bigBang)
-                    return null;
-                if (uniqueSkills.length !== 1)
-                    return null;
-                return {
-                    path: [],
-                    skills: uniqueSkills,
-                };
-            }
             if (hasBlitz) {
                 if (!blitz || !blitz.target)
                     return null;
@@ -1113,7 +1147,7 @@ class AbilityRoom {
                 if (!(0, GameEngine_1.isValidPath)(teleport.target, suffixPath, hasGuard ? 0 : pathPoints, validationObstacles))
                     return null;
             }
-            else if (!(0, GameEngine_1.isValidPath)(player.position, path, hasGuard ? 0 : pathPoints, validationObstacles)) {
+            else if (!(0, GameEngine_1.isValidPath)(player.position, path, hasGuard ? 0 : hasCharge ? 1 : pathPoints, validationObstacles)) {
                 return null;
             }
             for (const skill of uniqueSkills) {
@@ -1262,6 +1296,11 @@ class AbilityRoom {
         bot.plannedPath = validated.path;
         bot.plannedSkills = validated.skills;
         bot.pathSubmitted = true;
+        // 4코 스킬 연속 사용 방지를 위해 사용 턴 기록
+        const usedSkillId = validated.skills[0]?.skillId ?? null;
+        if (usedSkillId && AbilityTypes_1.ABILITY_SKILL_COSTS[usedSkillId] === 4) {
+            this.botLastFourCostSkillTurn.set(bot.color, this.turn);
+        }
         if (ABILITY_FAKE_AI_DEBUG_LOG) {
             console.debug('[ability-fake-ai]', {
                 bot: bot.nickname,
@@ -1276,23 +1315,55 @@ class AbilityRoom {
         }
     }
     chooseBotAction(bot, opponent, pathPoints) {
+        // 용암 타일을 장애물로 추가해 경로 계산 시 용암을 피하도록 한다.
+        const lavaObstacles = this.lavaTiles.map((t) => t.position);
+        const effectiveObstacles = [...this.obstacles, ...lavaObstacles];
+        // ── 무력화 적 섬멸 패턴 최우선 처리 ──────────────────────────────────
+        // 상대가 오버드라이브 부작용으로 이동 불가 상태일 때 강제 진입.
+        // forced blitz 등 다른 모든 패턴보다 먼저 체크해야 한다.
+        if (bot.role === 'attacker' && opponent.reboundLocked && opponent.equippedSkills.includes('gold_overdrive')) {
+            const annihilationCandidates = this.buildAnnihilationCandidates(bot, opponent, pathPoints, effectiveObstacles);
+            if (annihilationCandidates.length > 0) {
+                annihilationCandidates.sort((a, b) => b.score - a.score);
+                return annihilationCandidates[0];
+            }
+        }
+        // ── 벽력일섬 강제 발사 패턴 ──────────────────────────────────────────
         const forcedBlitzCandidate = this.buildForcedBlitzCandidate(bot, opponent);
         if (forcedBlitzCandidate) {
             return forcedBlitzCandidate;
+        }
+        // 도망자이고 상대와 겹쳐진 상태일 때:
+        // 점수 계산이 '가만히 있기'를 과대평가하므로 50% 확률로 강제 이동 패턴 적용
+        if (bot.role !== 'attacker' && posEqual(bot.position, opponent.position) && Math.random() < 0.5) {
+            const neighbors = getCardinalNeighbors(bot.position, effectiveObstacles);
+            if (neighbors.length > 0) {
+                const target = neighbors[Math.floor(Math.random() * neighbors.length)];
+                const validated = this.validatePlan(bot, [target], []);
+                if (validated) {
+                    return {
+                        path: validated.path,
+                        skills: [],
+                        score: 0,
+                        reason: 'overlap-escape-forced-move',
+                        selectedSkill: null,
+                    };
+                }
+            }
         }
         const selfModel = buildBotPathModel({
             start: bot.position,
             opponent: opponent.position,
             role: bot.role === 'attacker' ? 'attacker' : 'escaper',
             pathPoints,
-            obstacles: this.obstacles,
+            obstacles: effectiveObstacles,
         });
         const opponentModel = buildBotPathModel({
             start: opponent.position,
             opponent: bot.position,
             role: bot.role === 'attacker' ? 'escaper' : 'attacker',
             pathPoints,
-            obstacles: this.obstacles,
+            obstacles: effectiveObstacles,
         });
         const candidates = selfModel.paths
             .slice(0, 5)
@@ -1300,12 +1371,28 @@ class AbilityRoom {
             path,
             skills: [],
             score: bot.role === 'attacker'
-                ? scoreAttackPathAgainstModel(bot.position, path, opponent.position, opponentModel, this.obstacles)
-                : scoreEscapePathAgainstModel(bot.position, path, opponent.position, opponentModel, this.obstacles),
+                ? scoreAttackPathAgainstModel(bot.position, path, opponent.position, opponentModel, effectiveObstacles)
+                : scoreEscapePathAgainstModel(bot.position, path, opponent.position, opponentModel, effectiveObstacles),
             reason: index === 0 ? 'base-primary' : 'base-alt',
             selectedSkill: null,
         }));
-        const activeSkillCandidates = this.buildBotSkillActionCandidates(bot, opponent, pathPoints, selfModel, opponentModel);
+        // ── 매직마인 마나 절약 (스코어 유도) ────────────────────────────────
+        // 빅뱅 없이 매직마인만 있을 때 소폭 절약 보너스 부여
+        if (bot.role === 'attacker' &&
+            bot.equippedSkills.includes('wizard_magic_mine') &&
+            !bot.equippedSkills.includes('cosmic_bigbang') &&
+            bot.mana < 8) {
+            const turnsNeeded = Math.ceil((8 - bot.mana) / 2);
+            if (turnsNeeded <= 2) {
+                const saveBonus = Math.round((350 / turnsNeeded) * 0.45);
+                for (const candidate of candidates) {
+                    if (candidate.skills.length === 0) {
+                        candidate.score += saveBonus;
+                    }
+                }
+            }
+        }
+        const activeSkillCandidates = this.buildBotSkillActionCandidates(bot, opponent, pathPoints, selfModel, opponentModel, effectiveObstacles);
         candidates.push(...activeSkillCandidates);
         candidates.sort((left, right) => right.score - left.score);
         return candidates[0] ?? {
@@ -1316,6 +1403,260 @@ class AbilityRoom {
             selectedSkill: null,
         };
     }
+    // 상대방과 일직선(같은 행/열)이 되는 위치까지 이동한 뒤 벽력일섬을 발사하는 후보를 생성한다.
+    // minPrefixSteps: 발사 전 최소 이동 칸 수 (가드=3, AT필드=1)
+    // 무력화 적 섬멸 패턴:
+    // 상대가 gold_overdrive의 부작용으로 reboundLocked(흑백 + 이동 불가) 상태일 때,
+    // 공격자가 상대 위치를 여러 번 경유하는 경로를 생성하고,
+    // 적에게 명중하는 타이밍에 공격 스킬을 사용해 해당 턴 최대 피해를 입힌다.
+    //
+    // 경로 우선순위:
+    //   1) 사각형 패턴 (2×2, 4스텝 루프)
+    //   2) BFS로 찾은 최단 복귀 사이클 (장애물로 사각형 불가 시)
+    //   3) 단일 접근 (사이클 자체가 불가능한 경우 최소 1회 충돌 보장)
+    buildAnnihilationCandidates(bot, opponent, pathPoints, effectiveObstacles) {
+        if (bot.role !== 'attacker')
+            return [];
+        if (!opponent.reboundLocked)
+            return [];
+        if (!opponent.equippedSkills.includes('gold_overdrive'))
+            return [];
+        const targetPos = opponent.position;
+        // 상대 위치까지 최단 접근 경로 (마지막 셀 = targetPos)
+        const approachPath = buildShortestAbilityPath(bot.position, targetPos, effectiveObstacles);
+        if (approachPath.length === 0)
+            return [];
+        // loopStart: 접근 경로에서 targetPos 바로 이전 셀
+        const loopStart = approachPath.length >= 2
+            ? approachPath[approachPath.length - 2]
+            : bot.position;
+        // ── 1단계: 사각형 코너 탐색 ─────────────────────────────────────────
+        const dr = targetPos.row - loopStart.row;
+        const dc = targetPos.col - loopStart.col;
+        let corner1 = null;
+        let corner2 = null;
+        if (dr === 0) {
+            for (const perpDr of [-1, 1]) {
+                const c1 = { row: targetPos.row + perpDr, col: targetPos.col };
+                const c2 = { row: loopStart.row + perpDr, col: loopStart.col };
+                if (inBoard(c1) && !isObstacle(c1, effectiveObstacles) &&
+                    inBoard(c2) && !isObstacle(c2, effectiveObstacles)) {
+                    corner1 = c1;
+                    corner2 = c2;
+                    break;
+                }
+            }
+        }
+        else {
+            for (const perpDc of [-1, 1]) {
+                const c1 = { row: targetPos.row, col: targetPos.col + perpDc };
+                const c2 = { row: loopStart.row, col: loopStart.col + perpDc };
+                if (inBoard(c1) && !isObstacle(c1, effectiveObstacles) &&
+                    inBoard(c2) && !isObstacle(c2, effectiveObstacles)) {
+                    corner1 = c1;
+                    corner2 = c2;
+                    break;
+                }
+            }
+        }
+        // ── 2단계: 루프 세그먼트 결정 ────────────────────────────────────────
+        let loopSegment = null;
+        if (corner1 && corner2) {
+            // 사각형 패턴: [corner1, corner2, loopStart, targetPos]
+            loopSegment = [corner1, corner2, loopStart, targetPos];
+        }
+        else {
+            // BFS로 최단 복귀 사이클 탐색 (역행 없이 targetPos→...→targetPos)
+            const maxCycleLen = pathPoints - approachPath.length;
+            if (maxCycleLen >= 2) {
+                loopSegment = findShortestReturnCycle(targetPos, loopStart, effectiveObstacles, maxCycleLen);
+            }
+        }
+        // ── 3단계: 최종 경로 조합 ─────────────────────────────────────────────
+        // 루프가 있으면 반복 삽입, 없으면 단순 접근 경로만 사용 (1회 충돌 보장)
+        const hitPath = [...approachPath];
+        if (loopSegment) {
+            while (hitPath.length + loopSegment.length <= pathPoints) {
+                hitPath.push(...loopSegment);
+            }
+        }
+        hitPath.splice(pathPoints);
+        const BASE_SCORE = 999990;
+        const SKILL_BONUS = 8;
+        const candidates = [];
+        // 기본 경로 후보 (스킬 없음)
+        const baseValidated = this.validatePlan(bot, hitPath, []);
+        if (baseValidated) {
+            candidates.push({
+                path: baseValidated.path,
+                skills: [],
+                score: BASE_SCORE,
+                reason: loopSegment ? 'annihilation-loop-base' : 'annihilation-single-hit-base',
+                selectedSkill: null,
+            });
+        }
+        // 경로에서 targetPos에 도달하는 step 목록 수집
+        const targetSteps = [];
+        for (let s = 0; s <= hitPath.length; s++) {
+            if (posEqual(getSequencePosition(bot.position, hitPath, s), targetPos)) {
+                targetSteps.push(s);
+            }
+        }
+        // 공격 스킬별 후보: 적을 명중할 수 있는 타이밍에 사용
+        for (const skillId of bot.equippedSkills) {
+            if (!ABILITY_FAKE_AI_SKILL_POOL.includes(skillId))
+                continue;
+            if (bot.mana < AbilityTypes_1.ABILITY_SKILL_COSTS[skillId])
+                continue;
+            const serverRule = AbilityTypes_1.ABILITY_SKILL_SERVER_RULES[skillId];
+            if (serverRule.roleRestriction === 'escaper')
+                continue;
+            if (skillId === 'chronos_time_rewind' ||
+                skillId === 'classic_guard' ||
+                skillId === 'arc_reactor_field' ||
+                skillId === 'aurora_heal' ||
+                skillId === 'quantum_shift' ||
+                skillId === 'gold_overdrive' ||
+                skillId === 'sun_chariot' ||
+                skillId === 'atomic_fission' ||
+                skillId === 'inferno_field')
+                continue;
+            if (skillId === 'cosmic_bigbang') {
+                const validated = this.validatePlan(bot, [], [{ skillId, step: 0, order: 0 }]);
+                if (validated) {
+                    candidates.push({
+                        path: [],
+                        skills: validated.skills,
+                        score: BASE_SCORE + SKILL_BONUS,
+                        reason: 'annihilation-bigbang',
+                        selectedSkill: skillId,
+                    });
+                }
+                continue;
+            }
+            if (skillId === 'electric_blitz') {
+                // 경로 후반부, loopStart 또는 targetPos와 같은 행/열 위치에서 마지막 발사
+                let lastBlitzStep = -1;
+                let lastBlitzDir = null;
+                for (let s = 0; s <= hitPath.length; s++) {
+                    const pos = getSequencePosition(bot.position, hitPath, s);
+                    const dir = getBlitzDirectionTowardOpponent(pos, targetPos);
+                    if (dir) {
+                        lastBlitzStep = s;
+                        lastBlitzDir = dir;
+                    }
+                }
+                if (lastBlitzStep < 0 || !lastBlitzDir)
+                    continue;
+                const blitzOrigin = getSequencePosition(bot.position, hitPath, lastBlitzStep);
+                const blitzSuffix = buildBlitzPath(blitzOrigin, lastBlitzDir);
+                if (blitzSuffix.length === 0)
+                    continue;
+                const prefix = hitPath.slice(0, lastBlitzStep);
+                const fullPath = [...prefix, ...blitzSuffix];
+                const validated = this.validatePlan(bot, fullPath, [
+                    { skillId, step: lastBlitzStep, order: 0, target: lastBlitzDir },
+                ]);
+                if (validated) {
+                    candidates.push({
+                        path: validated.path,
+                        skills: validated.skills,
+                        score: BASE_SCORE + SKILL_BONUS,
+                        reason: 'annihilation-electric-blitz-end',
+                        selectedSkill: skillId,
+                    });
+                }
+                continue;
+            }
+            // 경로 내 적을 명중할 수 있는 첫 타이밍을 찾아 스킬 사용
+            let skillReservation = null;
+            if (skillId === 'ember_blast') {
+                // 십자 범위(자신 + 상하좌우)에 targetPos가 포함되는 첫 step
+                for (let s = 0; s <= hitPath.length; s++) {
+                    const pos = getSequencePosition(bot.position, hitPath, s);
+                    if (getCrossPositions(pos).some((p) => posEqual(p, targetPos))) {
+                        skillReservation = { skillId, step: s, order: 0 };
+                        break;
+                    }
+                }
+            }
+            else if (skillId === 'nova_blast') {
+                // X자 대각 범위에 targetPos가 포함되는 첫 step
+                for (let s = 0; s <= hitPath.length; s++) {
+                    const pos = getSequencePosition(bot.position, hitPath, s);
+                    if (getNovaPositions(pos).some((p) => posEqual(p, targetPos))) {
+                        skillReservation = { skillId, step: s, order: 0 };
+                        break;
+                    }
+                }
+            }
+            else if (skillId === 'wizard_magic_mine') {
+                // 첫 번째 targetPos 도달 시점에 함정 설치 → 즉시 피해
+                const firstTargetStep = targetSteps[0] ?? -1;
+                if (firstTargetStep >= 0) {
+                    skillReservation = { skillId, step: firstTargetStep, order: 0 };
+                }
+            }
+            if (!skillReservation)
+                continue;
+            const validated = this.validatePlan(bot, hitPath, [skillReservation]);
+            if (validated) {
+                candidates.push({
+                    path: validated.path,
+                    skills: validated.skills,
+                    score: BASE_SCORE + SKILL_BONUS,
+                    reason: `annihilation-${skillId}`,
+                    selectedSkill: skillId,
+                });
+            }
+        }
+        return candidates;
+    }
+    buildDelayedBlitzCandidate(bot, opponent, minPrefixSteps) {
+        const pathPoints = this.currentPathPoints();
+        const effectiveObstacles = [
+            ...this.obstacles,
+            ...this.lavaTiles.map((t) => t.position),
+        ];
+        const validCandidates = [];
+        for (const launchPos of listBoardPositions()) {
+            if (posEqual(launchPos, bot.position))
+                continue;
+            if (isObstacle(launchPos, effectiveObstacles))
+                continue;
+            // 상대와 같은 행 또는 열이어야 한다
+            if (launchPos.row !== opponent.position.row && launchPos.col !== opponent.position.col)
+                continue;
+            // 발사 위치에서 상대 방향의 blitz 방향 구하기
+            const blitzDir = getBlitzDirectionTowardOpponent(launchPos, opponent.position);
+            if (!blitzDir)
+                continue;
+            const blitzPath = buildBlitzPath(launchPos, blitzDir);
+            if (blitzPath.length === 0)
+                continue;
+            // 현재 위치에서 launchPos까지 최단 경로 (장애물 회피)
+            const prefixPath = buildShortestAbilityPath(bot.position, launchPos, effectiveObstacles);
+            if (prefixPath.length < minPrefixSteps)
+                continue;
+            if (prefixPath.length + blitzPath.length > pathPoints)
+                continue;
+            const fullPath = [...prefixPath, ...blitzPath];
+            const skillStep = prefixPath.length;
+            const validated = this.validatePlan(bot, fullPath, [{ skillId: 'electric_blitz', step: skillStep, order: 0, target: blitzDir }]);
+            if (!validated)
+                continue;
+            validCandidates.push({
+                path: validated.path,
+                skills: validated.skills,
+                score: 999998,
+                reason: 'delayed-electric-blitz',
+                selectedSkill: 'electric_blitz',
+            });
+        }
+        if (validCandidates.length === 0)
+            return null;
+        return validCandidates[Math.floor(Math.random() * validCandidates.length)] ?? null;
+    }
     buildForcedBlitzCandidate(bot, opponent) {
         if (bot.role !== 'attacker')
             return null;
@@ -1323,6 +1664,20 @@ class AbilityRoom {
             return null;
         if (bot.mana < AbilityTypes_1.ABILITY_SKILL_COSTS.electric_blitz)
             return null;
+        // 무력화 적 섬멸 패턴이 활성화되는 조건이면 즉시 발사 금지
+        // → annihilation 패턴이 경로 마지막 부근에서 벽력일섬을 사용하도록 위임
+        if (opponent.reboundLocked && opponent.equippedSkills.includes('gold_overdrive'))
+            return null;
+        // 상대가 가드 또는 AT필드 장착 시 50% 확률로 지연 발사 패턴 시도
+        const opponentHasGuard = opponent.equippedSkills.includes('classic_guard');
+        const opponentHasAtField = opponent.equippedSkills.includes('arc_reactor_field');
+        if ((opponentHasGuard || opponentHasAtField) && Math.random() < 0.5) {
+            // 가드: 3칸 이상 이동 후 발사, AT필드: 1칸 이상 이동 후 발사
+            const minPrefixSteps = opponentHasGuard ? 3 : 1;
+            const delayed = this.buildDelayedBlitzCandidate(bot, opponent, minPrefixSteps);
+            if (delayed)
+                return delayed;
+        }
         const directionTarget = getBlitzDirectionTowardOpponent(bot.position, opponent.position);
         if (!directionTarget)
             return null;
@@ -1341,9 +1696,67 @@ class AbilityRoom {
             selectedSkill: 'electric_blitz',
         };
     }
-    buildBotSkillActionCandidates(bot, opponent, pathPoints, selfModel, opponentModel) {
+    buildBotSkillActionCandidates(bot, opponent, pathPoints, selfModel, opponentModel, effectiveObstacles) {
+        // ── 빅뱅폭발 마나 모으기 하드 규칙 ──────────────────────────────────
+        // 빅뱅 장착 시 상대 HP에 따라 마나 적립 패턴 진입 여부를 결정:
+        //   HP ≤ 2: 항상 적립 (확정 킬각)
+        //   HP ≤ 5: 50% 확률로 적립 (킬각 준비)
+        //   HP > 5: 적립 안 함, 일반 스킬 허용 (빅뱅 후보는 마나 부족으로 어차피 스킵)
+        //   마나 = 10 + 에스케이퍼: 마나 낭비 방지를 위해 스킬 후보 차단
+        //   마나 = 10 + 공격자: 정상 진행 → 빅뱅 후보가 압도적 스코어로 승리
+        if (bot.equippedSkills.includes('cosmic_bigbang')) {
+            if (bot.mana < MAX_MANA) {
+                if (opponent.hp <= 2)
+                    return [];
+                if (opponent.hp <= 5 && Math.random() < 0.5)
+                    return [];
+            }
+            if (bot.role !== 'attacker')
+                return [];
+        }
+        // ── 오로라힐 마나 모으기 하드 규칙 ──────────────────────────────────
+        // aurora_heal은 HP를 최대 5(플레이어 최대 HP)까지 1 회복
+        // 자신 HP에 따라 마나 적립 패턴 진입 여부를 결정:
+        //   HP = 1: 항상 적립 (생존 최우선)
+        //   HP = 2: 80% 확률로 적립
+        //   HP = 3: 55% 확률로 적립
+        //   HP = 4: 25% 확률로 적립
+        //   HP = 5: 적립 안 함 (이미 만피)
+        if (bot.equippedSkills.includes('aurora_heal') &&
+            !bot.equippedSkills.includes('cosmic_bigbang') &&
+            bot.mana < AbilityTypes_1.ABILITY_SKILL_COSTS.aurora_heal &&
+            bot.hp < ABILITY_STARTING_HP) {
+            if (bot.hp <= 1)
+                return [];
+            if (bot.hp === 2 && Math.random() < 0.8)
+                return [];
+            if (bot.hp === 3 && Math.random() < 0.55)
+                return [];
+            if (bot.hp === 4 && Math.random() < 0.25)
+                return [];
+        }
         const candidates = [];
         const basePaths = selfModel.paths.slice(0, 5);
+        // 4코 스킬 최근 4턴 이내 사용 여부 체크 (쿨다운 4턴)
+        const lastFourCostTurn = this.botLastFourCostSkillTurn.get(bot.color) ?? -99;
+        const usedFourCostLastTurn = this.turn - lastFourCostTurn <= 4;
+        // 양자도약 예외: 상대가 벽력일섬 보유 + 같은 행/열이면 연속 사용 허용
+        const opponentHasBlitz = opponent.equippedSkills.includes('electric_blitz');
+        const botInBlitzLine = bot.position.row === opponent.position.row ||
+            bot.position.col === opponent.position.col;
+        // 양자도약 스킬 위협 탐지용 사전 계산
+        const opponentHasNova = opponent.equippedSkills.includes('nova_blast');
+        const opponentHasEmber = opponent.equippedSkills.includes('ember_blast');
+        const qRowDelta = Math.abs(bot.position.row - opponent.position.row);
+        const qColDelta = Math.abs(bot.position.col - opponent.position.col);
+        // 엠버폭발: 십자형(맨해튼 거리 1 이하) 범위
+        const botInEmberRange = opponentHasEmber && (qRowDelta + qColDelta <= 1);
+        // 노바폭발: 대각선 거리 1~2 범위 (rowDelta === colDelta, 최대 2)
+        const botInNovaRange = opponentHasNova && (qRowDelta === qColDelta && qRowDelta <= 2);
+        // 벽력일섬 위협: 상대가 보유 + 같은 행/열
+        const blitzSkillThreat = opponentHasBlitz && botInBlitzLine;
+        // 특정 스킬 위협 종합 (양자도약으로 즉시 회피할 이유가 있는 상황)
+        const isUnderSkillThreat = blitzSkillThreat || botInEmberRange || botInNovaRange;
         for (const skillId of bot.equippedSkills) {
             if (!ABILITY_FAKE_AI_SKILL_POOL.includes(skillId))
                 continue;
@@ -1356,57 +1769,153 @@ class AbilityRoom {
             }
             if (skillId === 'chronos_time_rewind')
                 continue;
+            if (skillId === 'aurora_heal') {
+                // aurora_heal은 HP를 1 회복 (최대 5) → 만피면 사용 불필요
+                if (bot.hp >= ABILITY_STARTING_HP)
+                    continue;
+                // HP가 낮을수록 높은 보너스 점수 (생존 가치)
+                const healBonus = bot.hp <= 1 ? 700 : bot.hp === 2 ? 450 : bot.hp === 3 ? 250 : 100;
+                for (const path of basePaths) {
+                    const base = this.scoreBotActionCandidate(bot, opponent, path, [{ skillId: 'aurora_heal', step: 0, order: 0 }], opponentModel, 'aurora-heal', effectiveObstacles);
+                    candidates.push({ ...base, score: base.score + healBonus });
+                }
+                continue;
+            }
             if (skillId === 'classic_guard') {
+                // 사용 조건(AT필드와 동일):
+                //  1) 상대가 벽력일섬을 보유하고 일직선(같은 행/열)에 있을 때
+                //  2) 봇과 상대 거리가 2 이하일 때
+                const guardDist = Math.abs(bot.position.row - opponent.position.row) +
+                    Math.abs(bot.position.col - opponent.position.col);
+                const guardInBlitzLineThreat = opponent.equippedSkills.includes('electric_blitz') &&
+                    (bot.position.row === opponent.position.row ||
+                        bot.position.col === opponent.position.col);
+                const guardCloseRange = guardDist <= 2;
+                if (!guardInBlitzLineThreat && !guardCloseRange)
+                    continue;
                 const danger = scoreEscapePathAgainstModel(bot.position, [], opponent.position, opponentModel, this.obstacles);
                 candidates.push({
                     path: [],
                     skills: [{ skillId, step: 0, order: 0 }],
-                    score: danger + 140,
+                    score: danger + (guardInBlitzLineThreat ? 200 : 140),
                     reason: 'guard-life-saving',
                     selectedSkill: skillId,
                 });
                 continue;
             }
             if (skillId === 'arc_reactor_field') {
-                const likelyAttackThreat = bot.hp <= 2 || opponent.role === 'attacker' || opponent.mana >= 4;
+                // 사용 조건:
+                //  1) 상대가 벽력일섬을 보유하고 일직선(같은 행/열)에 있을 때
+                //  2) 봇과 상대 거리가 2 이하일 때
+                const dist = Math.abs(bot.position.row - opponent.position.row) +
+                    Math.abs(bot.position.col - opponent.position.col);
+                const inBlitzLineThreat = opponent.equippedSkills.includes('electric_blitz') &&
+                    (bot.position.row === opponent.position.row ||
+                        bot.position.col === opponent.position.col);
+                const closeRange = dist <= 2;
+                if (!inBlitzLineThreat && !closeRange)
+                    continue;
                 const basePath = basePaths[0] ?? [];
                 candidates.push({
                     path: basePath,
                     skills: [{ skillId, step: 0, order: 0 }],
-                    score: scoreEscapePathAgainstModel(bot.position, basePath, opponent.position, opponentModel, this.obstacles) + (likelyAttackThreat ? 110 : 24),
+                    score: scoreEscapePathAgainstModel(bot.position, basePath, opponent.position, opponentModel, this.obstacles) + (inBlitzLineThreat ? 200 : 110),
                     reason: 'at-field-threat-check',
                     selectedSkill: skillId,
                 });
                 continue;
             }
             if (skillId === 'quantum_shift') {
-                for (const target of getAdjacentBlinkTargets(bot.position, this.obstacles, opponent.position)) {
+                // 도망 역할일 때만 위기 탈출 목적으로 사용 (공격 역할에서는 사용 금지)
+                if (bot.role !== 'escaper')
+                    continue;
+                // 연속 사용 제한: 직전 턴에 4코 스킬 사용 시 건너뜀
+                // 예외: 특정 스킬 위협(벽력일섬/노바폭발/엠버폭발)이 있으면 회피 목적으로 허용
+                if (usedFourCostLastTurn) {
+                    if (!isUnderSkillThreat)
+                        continue;
+                }
+                // 고비용 공격/방어 스킬이 함께 장착된 경우 마나낭비 패널티 부여
+                const quantumHighCostMax = bot.equippedSkills
+                    .filter((s) => {
+                    if (s === skillId)
+                        return false;
+                    if (s === 'chronos_time_rewind')
+                        return false;
+                    return AbilityTypes_1.ABILITY_SKILL_COSTS[s] > AbilityTypes_1.ABILITY_SKILL_COSTS[skillId];
+                })
+                    .reduce((max, s) => Math.max(max, AbilityTypes_1.ABILITY_SKILL_COSTS[s]), 0);
+                // 6코→270, 8코→360, 10코→450
+                const quantumManaWastePenalty = quantumHighCostMax > 0
+                    ? Math.round(quantumHighCostMax * 45)
+                    : 0;
+                // 모든 인접 목표지에 대해 양자도약 후보 생성
+                const quantumTargets = getAdjacentBlinkTargets(bot.position, effectiveObstacles, opponent.position);
+                const quantumScoredList = [];
+                for (const target of quantumTargets) {
                     const blinkPath = (0, AiPlanner_1.createAiPath)({
                         color: bot.color,
                         role: bot.role,
                         selfPosition: target,
                         opponentPosition: opponent.position,
                         pathPoints,
-                        obstacles: this.obstacles,
+                        obstacles: effectiveObstacles,
                     });
-                    candidates.push(this.scoreBotActionCandidate(bot, opponent, blinkPath, [
+                    const base = this.scoreBotActionCandidate(bot, opponent, blinkPath, [
                         { skillId, step: 0, order: 0, target },
-                    ], opponentModel, `quantum_shift:${target.row},${target.col}`));
+                    ], opponentModel, `quantum_shift:${target.row},${target.col}`, effectiveObstacles);
+                    quantumScoredList.push({
+                        target,
+                        blinkPath,
+                        score: base.score - quantumManaWastePenalty,
+                    });
+                }
+                // 안전도 기준 내림차순 정렬 → 가장 안전한 목적지 우선
+                quantumScoredList.sort((a, b) => b.score - a.score);
+                // ── 위협 조건 감지 → 70% 확률로 강제 회피 ──────────────────────────
+                // 기준1: 상대가 벽력일섬 보유 + 같은 행/열 일직선
+                // 기준2: 상대가 노바폭발/엠버폭발 보유 + 사정거리 이내
+                let quantumBonus = 0;
+                if (isUnderSkillThreat && Math.random() < 0.70) {
+                    // 강제 회피: 일반 경로 후보를 압도할 수 있도록 높은 보너스 부여
+                    quantumBonus = 1800;
+                }
+                else {
+                    // ── 일반 위기 감지 → 확률적 탈출 ───────────────────────────────
+                    // 현재 위치에서 상대 경로 모델과 충돌 위험이 심각할 때 탈출 유도
+                    const currentPosDanger = scoreEscapePathAgainstModel(bot.position, [], opponent.position, opponentModel, effectiveObstacles);
+                    if (currentPosDanger < -300 && Math.random() < 0.50) {
+                        quantumBonus = 900;
+                    }
+                    else if (currentPosDanger < -150 && Math.random() < 0.30) {
+                        quantumBonus = 450;
+                    }
+                }
+                for (const entry of quantumScoredList) {
+                    candidates.push({
+                        path: entry.blinkPath,
+                        skills: [{ skillId, step: 0, order: 0, target: entry.target }],
+                        score: entry.score + quantumBonus,
+                        reason: `quantum_shift:${entry.target.row},${entry.target.col}`,
+                        selectedSkill: skillId,
+                    });
                 }
                 continue;
             }
             if (skillId === 'electric_blitz') {
                 const directBlitzTarget = getBlitzDirectionTowardOpponent(bot.position, opponent.position);
+                // 상대가 같은 행/열에 없으면 벽력일섬 사용 금지
+                if (!directBlitzTarget)
+                    continue;
                 for (const target of getCardinalNeighbors(bot.position, [])) {
                     const blitzPath = buildBlitzPath(bot.position, target);
                     if (blitzPath.length === 0)
                         continue;
                     const interceptBonus = bot.role === 'attacker' &&
-                        directBlitzTarget &&
                         posEqual(target, directBlitzTarget)
                         ? 320
                         : 0;
-                    const baseCandidate = this.scoreBotActionCandidate(bot, opponent, blitzPath, [{ skillId, step: 0, order: 0, target }], opponentModel, `electric_blitz:${target.row},${target.col}`);
+                    const baseCandidate = this.scoreBotActionCandidate(bot, opponent, blitzPath, [{ skillId, step: 0, order: 0, target }], opponentModel, `electric_blitz:${target.row},${target.col}`, effectiveObstacles);
                     candidates.push({
                         ...baseCandidate,
                         score: baseCandidate.score + interceptBonus,
@@ -1415,7 +1924,30 @@ class AbilityRoom {
                 continue;
             }
             if (skillId === 'cosmic_bigbang') {
-                const pressure = opponent.hp <= 2 ? 260 : opponent.hp <= 3 ? 90 : -80;
+                // 빅뱅폭발은 보드 전체 2피해 → 상대 HP가 낮을수록 킬각이 확실해진다.
+                // 기본 경로 스코어(500~3000)를 이길 수 있도록 충분히 높은 값을 부여한다.
+                let pressure;
+                if (opponent.hp <= 2) {
+                    // 확정 킬 또는 거의 킬 → 최우선
+                    pressure = 4000;
+                }
+                else if (opponent.hp === 3) {
+                    // 상대를 HP 1로 만듦 → 매우 강력
+                    pressure = 1500;
+                }
+                else if (opponent.hp === 4) {
+                    // HP 2로 만듦 → 마나 적립 패턴에서 왔으므로 반드시 발동
+                    pressure = 1500;
+                }
+                else {
+                    // 상대 HP 5 이상 → 마나 낭비가 크므로 기본 경로가 더 나음
+                    pressure = -150;
+                }
+                // 마나 10 만충: "모았으면 반드시 쏜다" 패턴
+                // 기본 경로 스코어(~2000)를 압도해 빅뱅을 항상 선택하도록 강제
+                if (bot.mana >= MAX_MANA) {
+                    pressure += 2500;
+                }
                 candidates.push({
                     path: [],
                     skills: [{ skillId, step: 0, order: 0 }],
@@ -1428,12 +1960,12 @@ class AbilityRoom {
             if (skillId === 'atomic_fission') {
                 if (!bot.previousTurnStart || bot.previousTurnPath.length === 0)
                     continue;
-                const shadowCoverage = this.scorePathCoverageAgainstModel(bot.previousTurnStart, bot.previousTurnPath, opponent.position, opponentModel);
+                const shadowCoverage = this.scorePathCoverageAgainstModel(bot.previousTurnStart, bot.previousTurnPath, opponent.position, opponentModel, effectiveObstacles);
                 const path = basePaths[0] ?? [];
                 candidates.push({
                     path,
                     skills: [{ skillId, step: 0, order: 0 }],
-                    score: this.scorePathCoverageAgainstModel(bot.position, path, opponent.position, opponentModel) +
+                    score: this.scorePathCoverageAgainstModel(bot.position, path, opponent.position, opponentModel, effectiveObstacles) +
                         shadowCoverage * 0.9 +
                         24,
                     reason: 'atomic_fission-shadow-pressure',
@@ -1443,7 +1975,7 @@ class AbilityRoom {
             }
             if (skillId === 'sun_chariot') {
                 for (const path of basePaths.slice(0, 3)) {
-                    const sunCoverage = this.scoreExpandedCoverageAgainstModel(bot.position, path, opponent.position, opponentModel);
+                    const sunCoverage = this.scoreExpandedCoverageAgainstModel(bot.position, path, opponent.position, opponentModel, effectiveObstacles);
                     candidates.push({
                         path,
                         skills: [{ skillId, step: 0, order: 0 }],
@@ -1455,45 +1987,131 @@ class AbilityRoom {
                 continue;
             }
             if (skillId === 'wizard_magic_mine') {
+                // 매직마인: 내 경로 각 step 위치에 함정 설치
+                // 상대 heatmap이 높은 위치일수록 함정 가치가 크다.
+                // 마나 8 고비용 → 기본 경로보다 확실히 이길 수 있도록 가중치를 높게 유지
+                let bestTrapValue = 0;
+                let bestPath = basePaths[0] ?? [];
+                let bestStep = 0;
                 for (const path of basePaths.slice(0, 3)) {
                     for (let step = 0; step <= path.length; step += 1) {
                         const position = getSequencePosition(bot.position, path, step);
-                        const trapValue = (opponentModel.heatmap.get(toKey(position)) ?? 0) * 28 +
+                        const trapValue = (opponentModel.heatmap.get(toKey(position)) ?? 0) * 42 +
                             (opponentModel.timeHeatmap.get(`${step}:${toKey(position)}`) ?? 0) *
-                                32;
+                                48;
+                        if (trapValue > bestTrapValue) {
+                            bestTrapValue = trapValue;
+                            bestPath = path;
+                            bestStep = step;
+                        }
                         candidates.push({
                             path,
                             skills: [{ skillId, step, order: 0 }],
-                            score: this.scorePathCoverageAgainstModel(bot.position, path, opponent.position, opponentModel) +
+                            score: this.scorePathCoverageAgainstModel(bot.position, path, opponent.position, opponentModel, effectiveObstacles) +
                                 trapValue,
                             reason: `magic_mine:${step}`,
                             selectedSkill: skillId,
                         });
                     }
                 }
+                // 최선의 함정 위치에 추가 보너스(장기 압박 가치 반영)
+                if (bestTrapValue > 0) {
+                    candidates.push({
+                        path: bestPath,
+                        skills: [{ skillId, step: bestStep, order: 0 }],
+                        score: this.scorePathCoverageAgainstModel(bot.position, bestPath, opponent.position, opponentModel, effectiveObstacles) +
+                            bestTrapValue +
+                            200,
+                        reason: `magic_mine:best:${bestStep}`,
+                        selectedSkill: skillId,
+                    });
+                }
                 continue;
             }
             if (skillId === 'inferno_field') {
+                // 용암지대: 상대 핫스팟에 용암을 설치해 2턴간 통행 차단
+                // 상대 heatmap 상위 셀을 타깃으로 하므로 장기 압박 가치가 높다.
+                // 가중치를 충분히 높여 기본 경로보다 우선 선택되도록 한다.
+                let bestLavaValue = 0;
+                let bestLavaPath = basePaths[0] ?? [];
+                let bestLavaTarget = null;
                 for (const path of basePaths.slice(0, 3)) {
                     for (const target of opponentModel.hotspotCells.slice(0, 5)) {
                         const origin = getSequencePosition(bot.position, path, 0);
+                        // 시전자 현재 위치와 상대방 현재 위치에는 용암 설치 불가
                         if (posEqual(origin, target))
                             continue;
-                        const lavaValue = (opponentModel.heatmap.get(toKey(target)) ?? 0) * 26 +
-                            (opponentModel.timeHeatmap.get(`1:${toKey(target)}`) ?? 0) * 18;
+                        if (posEqual(opponent.position, target))
+                            continue;
+                        // 봇 자신이 이동할 경로가 설치한 용암 위치를 경유하면 자기 피해 → 건너뜀
+                        if (path.some((pos) => posEqual(pos, target)))
+                            continue;
+                        const lavaValue = (opponentModel.heatmap.get(toKey(target)) ?? 0) * 40 +
+                            (opponentModel.timeHeatmap.get(`1:${toKey(target)}`) ?? 0) * 28;
+                        if (lavaValue > bestLavaValue) {
+                            bestLavaValue = lavaValue;
+                            bestLavaPath = path;
+                            bestLavaTarget = target;
+                        }
                         candidates.push({
                             path,
                             skills: [{ skillId, step: 0, order: 0, target }],
-                            score: this.scorePathCoverageAgainstModel(bot.position, path, opponent.position, opponentModel) +
+                            score: this.scorePathCoverageAgainstModel(bot.position, path, opponent.position, opponentModel, effectiveObstacles) +
                                 lavaValue,
                             reason: `inferno_field:${target.row},${target.col}`,
                             selectedSkill: skillId,
                         });
                     }
                 }
+                // 최선의 용암 위치에 추가 보너스(경로 차단 가치 반영)
+                if (bestLavaTarget && bestLavaValue > 0) {
+                    candidates.push({
+                        path: bestLavaPath,
+                        skills: [{ skillId, step: 0, order: 0, target: bestLavaTarget }],
+                        score: this.scorePathCoverageAgainstModel(bot.position, bestLavaPath, opponent.position, opponentModel, effectiveObstacles) +
+                            bestLavaValue +
+                            180,
+                        reason: `inferno_field:best:${bestLavaTarget.row},${bestLavaTarget.col}`,
+                        selectedSkill: skillId,
+                    });
+                }
                 continue;
             }
             if (skillId === 'ember_blast' || skillId === 'nova_blast') {
+                // 연속 사용 제한: 직전 턴에 4코 스킬 사용 시 건너뜀
+                // 예외: 상대방이 현재 AoE 범위 안에 있으면(100% 명중 가능) 허용
+                if (usedFourCostLastTurn) {
+                    const opponentInAoeNow = basePaths.slice(0, 3).some((path) => {
+                        const sequence = [bot.position, ...path];
+                        return sequence.some((pos) => {
+                            const affected = skillId === 'ember_blast'
+                                ? getCrossPositions(pos)
+                                : getNovaPositions(pos);
+                            return affected.some((cell) => posEqual(cell, opponent.position));
+                        });
+                    });
+                    if (!opponentInAoeNow)
+                        continue;
+                }
+                // 고비용 공격 스킬(6~10코)이 함께 장착된 경우,
+                // 엠버/노바를 쓰면 마나가 소진되어 해당 스킬을 사용하지 못하게 된다.
+                // 장착된 다른 공격 스킬의 최대 코스트에 비례해 패널티를 부여한다.
+                const otherHighCostAttackSkillMaxCost = bot.equippedSkills
+                    .filter((s) => {
+                    if (s === skillId)
+                        return false;
+                    if (s === 'chronos_time_rewind')
+                        return false;
+                    const rule = AbilityTypes_1.ABILITY_SKILL_SERVER_RULES[s];
+                    if (rule.roleRestriction === 'escaper')
+                        return false;
+                    return AbilityTypes_1.ABILITY_SKILL_COSTS[s] > AbilityTypes_1.ABILITY_SKILL_COSTS[skillId];
+                })
+                    .reduce((max, s) => Math.max(max, AbilityTypes_1.ABILITY_SKILL_COSTS[s]), 0);
+                // 최대 코스트가 클수록 패널티 증가 (6→270, 8→360, 10→450)
+                const manaWastePenalty = otherHighCostAttackSkillMaxCost > 0
+                    ? Math.round(otherHighCostAttackSkillMaxCost * 45)
+                    : 0;
                 for (const path of basePaths.slice(0, 3)) {
                     for (let step = 0; step <= path.length; step += 1) {
                         const origin = getSequencePosition(bot.position, path, step);
@@ -1504,8 +2122,9 @@ class AbilityRoom {
                         candidates.push({
                             path,
                             skills: [{ skillId, step, order: 0 }],
-                            score: this.scorePathCoverageAgainstModel(bot.position, path, opponent.position, opponentModel) +
-                                aoeScore,
+                            score: this.scorePathCoverageAgainstModel(bot.position, path, opponent.position, opponentModel, effectiveObstacles) +
+                                aoeScore -
+                                manaWastePenalty,
                             reason: `${skillId}:${step}`,
                             selectedSkill: skillId,
                         });
@@ -1521,10 +2140,10 @@ class AbilityRoom {
             .sort((left, right) => right.score - left.score)
             .slice(0, 18);
     }
-    scoreBotActionCandidate(bot, opponent, path, skills, opponentModel, reason) {
+    scoreBotActionCandidate(bot, opponent, path, skills, opponentModel, reason, obstacles = this.obstacles) {
         const score = bot.role === 'attacker'
-            ? this.scorePathCoverageAgainstModel(bot.position, path, opponent.position, opponentModel)
-            : scoreEscapePathAgainstModel(bot.position, path, opponent.position, opponentModel, this.obstacles);
+            ? scoreAttackPathAgainstModel(bot.position, path, opponent.position, opponentModel, obstacles)
+            : scoreEscapePathAgainstModel(bot.position, path, opponent.position, opponentModel, obstacles);
         return {
             path,
             skills,
@@ -1533,17 +2152,17 @@ class AbilityRoom {
             selectedSkill: skills[0]?.skillId ?? null,
         };
     }
-    scorePathCoverageAgainstModel(start, path, opponentStart, model) {
-        return scoreAttackPathAgainstModel(start, path, opponentStart, model, this.obstacles);
+    scorePathCoverageAgainstModel(start, path, opponentStart, model, obstacles = this.obstacles) {
+        return scoreAttackPathAgainstModel(start, path, opponentStart, model, obstacles);
     }
-    scoreExpandedCoverageAgainstModel(start, path, opponentStart, model) {
+    scoreExpandedCoverageAgainstModel(start, path, opponentStart, model, obstacles = this.obstacles) {
         const sequence = [start, ...path];
         let score = 0;
         for (let index = 0; index < sequence.length; index += 1) {
             const covered = getSquarePositions(sequence[index], 1);
             score += this.scoreAreaAgainstModel(covered, model, index);
         }
-        score += this.scorePathCoverageAgainstModel(start, path, opponentStart, model);
+        score += this.scorePathCoverageAgainstModel(start, path, opponentStart, model, obstacles);
         return score;
     }
     scoreAreaAgainstModel(positions, model, step) {
