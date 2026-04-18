@@ -19,6 +19,7 @@ declare module "howler" {
     pause(id?: number): this;
     stop(id?: number): this;
     unload(): null;
+    volume(): number;
     volume(volume: number, id?: number): this;
     fade(from: number, to: number, duration: number, id?: number): this;
     playing(id?: number): boolean;

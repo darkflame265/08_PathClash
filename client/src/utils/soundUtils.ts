@@ -231,9 +231,13 @@ function getBgm(trackId: BgmTrackId): {
 function setBgmTrackVolume(trackId: BgmTrackId): void {
   const bgm = bgmCache[trackId];
   if (!bgm) return;
-  bgm.howl.volume(
-    Math.max(0, Math.min(1, bgmVolume * BGM_CONFIG[trackId].gain)),
-  );
+  const targetVolume = Math.max(0, Math.min(1, bgmVolume * BGM_CONFIG[trackId].gain));
+  if (bgm.soundId !== null && bgm.howl.playing(bgm.soundId)) {
+    const currentVolume = bgm.howl.volume();
+    bgm.howl.fade(currentVolume, targetVolume, 50, bgm.soundId);
+  } else {
+    bgm.howl.volume(targetVolume);
+  }
 }
 
 function getBgmTrackVolume(trackId: BgmTrackId): number {
@@ -423,8 +427,8 @@ function playAbilitySfx(id: AbilitySfxId, volume = 0.55): void {
     if (!shouldUseHtmlAbilityAudio(id)) {
       const howl = getAbilityHowl(id);
       if (!howl) return;
-      const soundId = howl.play();
-      howl.volume(normalizedVolume, soundId);
+      howl.volume(normalizedVolume);
+      howl.play();
       return;
     }
 
@@ -479,8 +483,8 @@ function playUiSfx(id: UiSfxId, volume = 0.55): void {
   try {
     const howl = getUiHowl(id);
     if (howl) {
-      const soundId = howl.play();
-      howl.volume(Math.max(0, Math.min(1, volume * UI_SFX[id].gain)), soundId);
+      howl.volume(Math.max(0, Math.min(1, volume * UI_SFX[id].gain)));
+      howl.play();
       return;
     }
 
@@ -663,10 +667,10 @@ export function startOverdriveLoop(volume = 0.55): void {
       0,
       Math.min(1, volume * ABILITY_SFX.gold_overdrive_loop.gain),
     );
+    howl.volume(normalizedVolume);
     if (goldOverdriveSoundId === null || !howl.playing(goldOverdriveSoundId)) {
       goldOverdriveSoundId = howl.play();
     }
-    howl.volume(normalizedVolume, goldOverdriveSoundId);
   } catch {
     // Audio engine not available
   }

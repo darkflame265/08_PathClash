@@ -1,10 +1,76 @@
-지금 내 게임이 컴퓨터, 태블릿에선 문제없는데, 저가형 모바일 스피커에서는 음악, sfx가 꺠지는 문제가 있어.
+# Audio click noise fix request (WebAudio / Howler / NativeAudio)
 
-근데 이 저가형 폰에서 클래시로얄 게임 플레이 해도 소리는 전혀 꺠지지 않거든.
-이러면 휴대폰 문제는 아니잖아.
+## Problem
 
-내 휴대폰에서 해당 프로젝트 게임을 해도 소리가 깨지지 않도록 해줘.
+When changing volume (BGM or SFX) during runtime, a short "click" / "static" noise occurs.
 
-다만 덕킹을 추가하거나, 기존 게임 소리 재생 규칙을 바꿔서는 안 돼.
+This happens especially when:
 
-즉, 기존에 비해 소리가 어색해져는 안 돼.
+- volume parameter is updated instantly (e.g. mute toggle, slider change)
+- rapid volume changes (0 ↔ 1, or large delta)
+
+## Root Cause
+
+This is caused by **discontinuous gain changes** in the audio signal.
+
+Instant volume assignment like:
+
+```js
+audio.volume = target;
+```
+
+creates a discontinuity in the waveform, resulting in audible click noise.
+
+## Required Fix
+
+All volume changes must be **smoothed using ramping**, NOT instant assignment.
+
+### If using Web Audio API
+
+Replace direct gain changes with:
+
+```js
+gainNode.gain.cancelScheduledValues(audioContext.currentTime);
+gainNode.gain.linearRampToValueAtTime(
+  targetVolume,
+  audioContext.currentTime + 0.03, // 30ms smoothing
+);
+```
+
+### If using Howler.js
+
+Replace:
+
+```js
+sound.volume(target);
+```
+
+With:
+
+```js
+sound.fade(currentVolume, targetVolume, 50); // 50ms fade
+```
+
+### If using NativeAudio
+
+Implement manual smoothing:
+
+- interpolate volume over 30~50ms
+- avoid abrupt jumps
+
+## Additional Constraints
+
+- All BGM and SFX volume updates must use smoothing
+- Mute/unmute must also use fade (not instant 0/1 switch)
+- Avoid creating new AudioContext per sound
+- Ensure only one global AudioContext is used
+
+## Expected Result
+
+- No click / static noise when adjusting volume
+- Smooth transitions for BGM and SFX
+- Stable audio on low-end Android devices
+
+## Priority
+
+High (affects user experience significantly)
