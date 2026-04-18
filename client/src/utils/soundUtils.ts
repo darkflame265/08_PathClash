@@ -130,7 +130,8 @@ export type BgmTrackId = "lobby" | "ingame" | "victory" | "defeat";
 
 const MATCH_RESULT_AUDIO_EVENT = "pathclash:match-result-audio";
 const STOP_MATCH_RESULT_AUDIO_EVENT = "pathclash:stop-match-result-audio";
-const BGM_FADE_IN_MS = 280;
+const BGM_FADE_IN_MS = 700;
+const BGM_FADE_OUT_MS = 500;
 
 const BGM_CONFIG: Record<BgmTrackId, { src: string; gain: number }> = {
   lobby: {
@@ -232,13 +233,22 @@ export function playBgmTrack(trackId: BgmTrackId): void {
     return;
   }
 
-  // Always stop every other track first so only one BGM plays at a time.
+  // Fade out every other track, then stop it once the fade completes.
   (Object.keys(BGM_CONFIG) as BgmTrackId[]).forEach((otherTrackId) => {
     if (otherTrackId === trackId) return;
     const other = bgmCache[otherTrackId];
     if (!other) return;
-    other.howl.stop();
-    other.soundId = null;
+    if (other.soundId !== null && other.howl.playing(other.soundId)) {
+      const fadingSoundId = other.soundId;
+      other.soundId = null;
+      other.howl.fade(getBgmTrackVolume(otherTrackId), 0, BGM_FADE_OUT_MS, fadingSoundId);
+      other.howl.once("fade", () => {
+        other.howl.stop(fadingSoundId);
+      }, fadingSoundId);
+    } else {
+      other.howl.stop();
+      other.soundId = null;
+    }
   });
 
   const target = getBgm(trackId);
