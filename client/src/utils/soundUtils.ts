@@ -137,15 +137,15 @@ const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
 const UI_SFX: Record<UiSfxId, AbilitySfxConfig> = {
   lobby_click: {
     path: "/sfx/ui/lobby_click.mp3",
-    gain: 0.75,
+    gain: 0.9,
   },
   victory_result: {
     path: "/sfx/ui/victory_result.mp3",
-    gain: 0.75,
+    gain: 0.9,
   },
   defeat_result: {
     path: "/sfx/ui/defeat_result.mp3",
-    gain: 0.75,
+    gain: 0.9,
   },
 };
 
@@ -268,10 +268,19 @@ export function playBgmTrack(trackId: BgmTrackId): void {
     if (other.soundId !== null && other.howl.playing(other.soundId)) {
       const fadingSoundId = other.soundId;
       other.soundId = null;
-      other.howl.fade(getBgmTrackVolume(otherTrackId), 0, BGM_FADE_OUT_MS, fadingSoundId);
-      other.howl.once("fade", () => {
-        other.howl.stop(fadingSoundId);
-      }, fadingSoundId);
+      other.howl.fade(
+        getBgmTrackVolume(otherTrackId),
+        0,
+        BGM_FADE_OUT_MS,
+        fadingSoundId,
+      );
+      other.howl.once(
+        "fade",
+        () => {
+          other.howl.stop(fadingSoundId);
+        },
+        fadingSoundId,
+      );
     } else {
       other.howl.stop();
       other.soundId = null;
