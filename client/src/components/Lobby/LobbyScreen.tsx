@@ -4358,7 +4358,7 @@ export function LobbyScreen({
           onClick={() => setIsAbilityLoadoutOpen(false)}
         >
           <div
-            className="upgrade-modal skin-modal"
+            className="upgrade-modal skin-modal ability-loadout-modal"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="skin-modal-head">

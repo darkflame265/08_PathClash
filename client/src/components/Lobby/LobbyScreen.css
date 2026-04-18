@@ -1574,6 +1574,12 @@
   box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.18);
 }
 
+.ability-loadout-modal .skin-option-card.is-selected {
+  border: 2.5px solid #4ade80;
+  background: rgba(74, 222, 128, 0.08);
+  box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.22);
+}
+
 .skin-option-card.is-locked {
   cursor: not-allowed;
   opacity: 0.72;
