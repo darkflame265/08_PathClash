@@ -194,8 +194,8 @@ function getStoredAudioPrefs() {
     return {
       isSfxMuted: false,
       isMusicMuted: false,
-      musicVolume: 0.15,
-      sfxVolume: 0.55,
+      musicVolume: 0.5,
+      sfxVolume: 0.5,
     };
   }
 
@@ -212,18 +212,18 @@ function getStoredAudioPrefs() {
       musicVolume:
         typeof parsed.musicVolume === 'number'
           ? Math.max(0, Math.min(1, parsed.musicVolume))
-          : 0.15,
+          : 0.5,
       sfxVolume:
         typeof parsed.sfxVolume === 'number'
           ? Math.max(0, Math.min(1, parsed.sfxVolume))
-          : 0.55,
+          : 0.5,
     };
   } catch {
     return {
       isSfxMuted: false,
       isMusicMuted: false,
-      musicVolume: 0.15,
-      sfxVolume: 0.55,
+      musicVolume: 0.5,
+      sfxVolume: 0.5,
     };
   }
 }
