@@ -3,6 +3,7 @@ package com.pathclash.game;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.webkit.WebSettings;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
@@ -16,6 +17,8 @@ public class MainActivity extends BridgeActivity {
         applyDeviceOrientationPolicy();
         super.onCreate(savedInstanceState);
         applyImmersiveMode();
+        WebSettings webSettings = this.getBridge().getWebView().getSettings();
+        webSettings.setMediaPlaybackRequiresUserGesture(false);
     }
 
     @Override

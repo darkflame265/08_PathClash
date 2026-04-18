@@ -23,6 +23,7 @@ import {
   getMatchResultAudioEvents,
   pauseAllBgm,
   playBgmTrack,
+  resumeAudioContext,
   setBgmMuted,
   setBgmVolume,
   unloadBgm,
@@ -194,6 +195,10 @@ function App() {
   );
 
   useEffect(() => () => unloadBgm(), []);
+
+  useEffect(() => {
+    resumeAudioContext();
+  }, []);
 
   useEffect(() => {
     setBgmVolume(musicVolume);

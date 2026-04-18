@@ -170,6 +170,17 @@ let bgmMuted = false;
 Howler.autoUnlock = true;
 Howler.autoSuspend = false;
 
+export function resumeAudioContext(): void {
+  try {
+    const ctx = Howler.ctx as AudioContext | undefined;
+    if (ctx && ctx.state === "suspended") {
+      void ctx.resume();
+    }
+  } catch {
+    // AudioContext not available
+  }
+}
+
 function getBgm(trackId: BgmTrackId): {
   howl: Howl;
   soundId: number | null;
