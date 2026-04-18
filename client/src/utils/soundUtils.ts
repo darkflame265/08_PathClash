@@ -163,7 +163,6 @@ const segmentedLoopHandlers = new WeakMap<
   HTMLAudioElement,
   { timeupdate: () => void; ended: () => void }
 >();
-let activeBgmTrackId: BgmTrackId | null = null;
 let goldOverdriveSoundId: number | null = null;
 let bgmVolume = 0.15;
 let bgmMuted = false;
@@ -173,7 +172,7 @@ Howler.autoSuspend = false;
 
 export function resumeAudioContext(): void {
   try {
-    const ctx = Howler.ctx as AudioContext | undefined;
+    const ctx = Howler.ctx;
     if (ctx && ctx.state === "suspended") {
       void ctx.resume();
     }
@@ -255,7 +254,6 @@ export function playBgmTrack(trackId: BgmTrackId): void {
   setBgmTrackVolume(trackId);
 
   if (target.soundId !== null && target.howl.playing(target.soundId)) {
-    activeBgmTrackId = trackId;
     return;
   }
 
@@ -266,7 +264,6 @@ export function playBgmTrack(trackId: BgmTrackId): void {
   target.howl.volume(0);
   target.soundId = target.howl.play();
   target.howl.fade(0, targetVolume, BGM_FADE_IN_MS, target.soundId);
-  activeBgmTrackId = trackId;
 }
 
 export function pauseAllBgm(): void {
@@ -284,7 +281,6 @@ export function stopAllBgm(): void {
     bgm.howl.stop();
     bgm.soundId = null;
   });
-  activeBgmTrackId = null;
 }
 
 export function unloadBgm(): void {

@@ -2,6 +2,7 @@ declare module "howler" {
   export const Howler: {
     autoUnlock: boolean;
     autoSuspend: boolean;
+    ctx: AudioContext | undefined;
   };
 
   export class Howl {
@@ -20,5 +21,8 @@ declare module "howler" {
     volume(volume: number, id?: number): this;
     fade(from: number, to: number, duration: number, id?: number): this;
     playing(id?: number): boolean;
+    on(event: string, fn: () => void, id?: number): this;
+    once(event: string, fn: () => void, id?: number): this;
+    off(event: string, fn?: () => void, id?: number): this;
   }
 }
