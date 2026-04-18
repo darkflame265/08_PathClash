@@ -1210,9 +1210,9 @@ export async function syncAchievementSettings(args: {
   isSfxMuted: boolean;
   musicVolume: number;
   sfxVolume: number;
-}): Promise<AccountProfile | null> {
-  const response = await emitSocketAck<
-    | { ok: true; status: "ACCOUNT_OK"; profile: AccountProfile }
+}): Promise<void> {
+  await emitSocketAck<
+    | { ok: true; status: "ACCOUNT_OK" }
     | { ok: true; status: "AUTH_REQUIRED" | "AUTH_INVALID" | "UPDATE_REQUIRED" }
   >("achievements_sync_settings", {
     auth: await getSocketAuthPayload(),
@@ -1221,8 +1221,6 @@ export async function syncAchievementSettings(args: {
     musicVolumePercent: Math.round(args.musicVolume * 100),
     sfxVolumePercent: Math.round(args.sfxVolume * 100),
   });
-
-  return response.status === "ACCOUNT_OK" ? response.profile : null;
 }
 
 export async function fetchLegalConsentRecord(): Promise<LegalConsentRecord | null> {

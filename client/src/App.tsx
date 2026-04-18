@@ -338,32 +338,26 @@ function App() {
 
   useEffect(() => {
     if (!authReady || !authAccessToken) return;
+    const musicVolumePercent = Math.round(musicVolume * 100);
+    const sfxVolumePercent = Math.round(sfxVolume * 100);
+    const shouldSyncSettingsAchievement =
+      (isMusicMuted &&
+        isSfxMuted &&
+        musicVolumePercent === 0 &&
+        sfxVolumePercent === 0) ||
+      (!isMusicMuted &&
+        !isSfxMuted &&
+        musicVolumePercent === 100 &&
+        sfxVolumePercent === 100);
+
+    if (!shouldSyncSettingsAchievement) return;
+
     const timeoutId = window.setTimeout(() => {
       void syncAchievementSettings({
         isMusicMuted,
         isSfxMuted,
         musicVolume,
         sfxVolume,
-      }).then((profile) => {
-        if (!profile) return;
-        setAuthState({
-          ready: true,
-          userId: profile.userId,
-          accessToken: useGameStore.getState().authAccessToken,
-          isGuestUser: profile.isGuestUser,
-          nickname: profile.nickname,
-          equippedSkin: profile.equippedSkin,
-          equippedBoardSkin: profile.equippedBoardSkin,
-          equippedAbilitySkills: profile.equippedAbilitySkills,
-          ownedSkins: profile.ownedSkins,
-          ownedBoardSkins: profile.ownedBoardSkins,
-          wins: profile.wins,
-          losses: profile.losses,
-          tokens: profile.tokens,
-          dailyRewardWins: profile.dailyRewardWins,
-          dailyRewardTokens: profile.dailyRewardTokens,
-          achievements: profile.achievements,
-        });
       });
     }, 250);
 

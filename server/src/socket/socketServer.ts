@@ -1086,7 +1086,7 @@ export function initSocketServer(io: Server): void {
         },
         ack?: (
           response:
-            | { ok: true; status: 'ACCOUNT_OK'; profile: AccountProfile }
+            | { ok: true; status: 'ACCOUNT_OK' }
             | { ok: true; status: 'AUTH_REQUIRED' | 'AUTH_INVALID' | 'UPDATE_REQUIRED' },
         ) => void,
       ) => {
@@ -1106,12 +1106,7 @@ export function initSocketServer(io: Server): void {
             sfxVolumePercent,
           });
         }
-        const account = await resolveAccount(auth);
-        if (account.status === 'ACCOUNT_OK') {
-          ack?.({ ok: true, status: 'ACCOUNT_OK', profile: account.profile });
-          return;
-        }
-        ack?.({ ok: true, status: account.status });
+        ack?.({ ok: true, status: userId ? 'ACCOUNT_OK' : 'AUTH_INVALID' });
       },
     );
 

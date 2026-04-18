@@ -749,12 +749,7 @@ function initSocketServer(io) {
                     sfxVolumePercent,
                 });
             }
-            const account = await (0, playerAuth_1.resolveAccount)(auth);
-            if (account.status === 'ACCOUNT_OK') {
-                ack?.({ ok: true, status: 'ACCOUNT_OK', profile: account.profile });
-                return;
-            }
-            ack?.({ ok: true, status: account.status });
+            ack?.({ ok: true, status: userId ? 'ACCOUNT_OK' : 'AUTH_INVALID' });
         });
         socket.on('finalize_google_upgrade', async ({ auth, guestAuth, guestProfile, flowStartedAt, allowExistingSwitch, }, ack) => {
             await registerSocketSession(socket, auth, { forceRevalidate: true });
