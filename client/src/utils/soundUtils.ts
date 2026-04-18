@@ -5,10 +5,34 @@
 import { Howl, Howler } from "howler";
 
 let audioCtx: AudioContext | null = null;
+let masterCompressor: DynamicsCompressorNode | null = null;
 
 function getCtx(): AudioContext {
+  const howlerCtx = Howler.ctx;
+  if (howlerCtx) return howlerCtx;
   if (!audioCtx) audioCtx = new AudioContext();
   return audioCtx;
+}
+
+function ensureMasterCompressor(): void {
+  if (masterCompressor) return;
+  const ctx = Howler.ctx;
+  const masterGain = Howler.masterGain;
+  if (!ctx || !masterGain) return;
+  try {
+    const compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.value = -3;
+    compressor.knee.value = 3;
+    compressor.ratio.value = 20;
+    compressor.attack.value = 0.001;
+    compressor.release.value = 0.1;
+    masterGain.disconnect();
+    masterGain.connect(compressor);
+    compressor.connect(ctx.destination);
+    masterCompressor = compressor;
+  } catch {
+    // DynamicsCompressor not supported
+  }
 }
 
 type AbilitySfxId =
@@ -176,6 +200,7 @@ export function resumeAudioContext(): void {
     if (ctx && ctx.state === "suspended") {
       void ctx.resume();
     }
+    ensureMasterCompressor();
   } catch {
     // AudioContext not available
   }
@@ -197,6 +222,7 @@ function getBgm(trackId: BgmTrackId): {
       }),
       soundId: null,
     };
+    ensureMasterCompressor();
   }
 
   return bgmCache[trackId];
@@ -321,6 +347,7 @@ function getAbilityHowl(id: AbilitySfxId): Howl | null {
         html5: false,
         volume: Math.max(0, Math.min(1, config.gain)),
       });
+      ensureMasterCompressor();
     }
     return abilityHowlCache[id] ?? null;
   } catch {
@@ -430,6 +457,7 @@ function getUiHowl(id: UiSfxId): Howl | null {
         html5: false,
         volume: Math.max(0, Math.min(1, config.gain)),
       });
+      ensureMasterCompressor();
     }
     return uiHowlCache[id] ?? null;
   } catch {

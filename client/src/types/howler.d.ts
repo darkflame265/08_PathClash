@@ -3,6 +3,7 @@ declare module "howler" {
     autoUnlock: boolean;
     autoSuspend: boolean;
     ctx: AudioContext | undefined;
+    masterGain: GainNode | undefined;
   };
 
   export class Howl {
