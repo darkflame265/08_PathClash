@@ -21,8 +21,10 @@ function ensureMasterCompressor(): void {
   if (!ctx || !masterGain) return;
   try {
     const compressor = ctx.createDynamicsCompressor();
-    compressor.threshold.value = -3;
-    compressor.knee.value = 3;
+    // threshold=0: only activates when combined signals actually exceed 1.0 (true clipping).
+    // Prevents pumping from BGM+SFX coexistence since typical combined levels stay below 1.0.
+    compressor.threshold.value = 0;
+    compressor.knee.value = 0;
     compressor.ratio.value = 20;
     compressor.attack.value = 0.001;
     compressor.release.value = 0.1;
@@ -475,16 +477,21 @@ function playAbilitySfx(id: AbilitySfxId, volume = 0.55): void {
     if (!shouldUseHtmlAbilityAudio(id)) {
       const howl = getAbilityHowl(id);
       if (!howl) return;
-      // Set internal volume directly to avoid triggering setValueAtTime on other active instances
+      // Start at 0 so Howler schedules setValueAtTime(0) on the new sound,
+      // then ramp up on that specific sound's gain node to avoid click noise.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (howl as any)._volume = 0;
+      const sfxSoundId = howl.play();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (howl as any)._volume = normalizedVolume;
-      const sfxSoundId = howl.play();
       const sfxCtx = Howler.ctx;
       const sfxGain = sfxCtx ? getSoundGainNode(howl, sfxSoundId) : null;
       if (sfxGain && sfxCtx) {
-        sfxGain.gain.cancelScheduledValues(sfxCtx.currentTime);
-        sfxGain.gain.setValueAtTime(0, sfxCtx.currentTime);
-        sfxGain.gain.linearRampToValueAtTime(normalizedVolume, sfxCtx.currentTime + 0.005);
+        const t = sfxCtx.currentTime;
+        sfxGain.gain.setValueAtTime(0, t);
+        sfxGain.gain.linearRampToValueAtTime(normalizedVolume, t + 0.005);
+      } else {
+        howl.volume(normalizedVolume, sfxSoundId);
       }
       return;
     }
@@ -541,16 +548,21 @@ function playUiSfx(id: UiSfxId, volume = 0.55): void {
     const howl = getUiHowl(id);
     if (howl) {
       const targetVol = Math.max(0, Math.min(1, volume * UI_SFX[id].gain));
-      // Set internal volume directly to avoid triggering setValueAtTime on other active instances
+      // Start at 0 so Howler schedules setValueAtTime(0) on the new sound,
+      // then ramp up on that specific sound's gain node to avoid click noise.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (howl as any)._volume = 0;
+      const uiSoundId = howl.play();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (howl as any)._volume = targetVol;
-      const uiSoundId = howl.play();
       const uiCtx = Howler.ctx;
       const uiGain = uiCtx ? getSoundGainNode(howl, uiSoundId) : null;
       if (uiGain && uiCtx) {
-        uiGain.gain.cancelScheduledValues(uiCtx.currentTime);
-        uiGain.gain.setValueAtTime(0, uiCtx.currentTime);
-        uiGain.gain.linearRampToValueAtTime(targetVol, uiCtx.currentTime + 0.005);
+        const t = uiCtx.currentTime;
+        uiGain.gain.setValueAtTime(0, t);
+        uiGain.gain.linearRampToValueAtTime(targetVol, t + 0.005);
+      } else {
+        howl.volume(targetVol, uiSoundId);
       }
       return;
     }
