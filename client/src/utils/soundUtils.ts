@@ -113,7 +113,7 @@ const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
 const UI_SFX: Record<UiSfxId, AbilitySfxConfig> = {
   lobby_click: {
     path: "/sfx/ui/lobby_click.mp3",
-    gain: 0.55,
+    gain: 0.75,
   },
   victory_result: {
     path: "/sfx/ui/victory_result.mp3",
@@ -619,10 +619,7 @@ export function startOverdriveLoop(volume = 0.55): void {
       0,
       Math.min(1, volume * ABILITY_SFX.gold_overdrive_loop.gain),
     );
-    if (
-      goldOverdriveSoundId === null ||
-      !howl.playing(goldOverdriveSoundId)
-    ) {
+    if (goldOverdriveSoundId === null || !howl.playing(goldOverdriveSoundId)) {
       goldOverdriveSoundId = howl.play();
     }
     howl.volume(normalizedVolume, goldOverdriveSoundId);
