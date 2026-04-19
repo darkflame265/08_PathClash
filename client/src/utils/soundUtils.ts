@@ -65,9 +65,9 @@ type AbilitySfxConfig = {
   loopWindowEndOffset?: number;
 };
 
-const ABILITY_SFX_OUTPUT_GAIN = 1.35;
-const UI_SFX_OUTPUT_GAIN = 1.45;
-const HIT_SFX_OUTPUT_GAIN = 1.35;
+const ABILITY_SFX_OUTPUT_GAIN = 2;
+const UI_SFX_OUTPUT_GAIN = 2.2;
+const HIT_SFX_OUTPUT_GAIN = 2.5;
 
 const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
   guard: {
@@ -164,19 +164,19 @@ const STOP_MATCH_RESULT_AUDIO_EVENT = "pathclash:stop-match-result-audio";
 const BGM_CONFIG: Record<BgmTrackId, { src: string; gain: number }> = {
   lobby: {
     src: "/music/Lobby_bgm_3.ogg",
-    gain: 0.86,
+    gain: 1,
   },
   ingame: {
     src: "/music/InGame_bgm_3.ogg",
-    gain: 0.86,
+    gain: 1,
   },
   victory: {
     src: "/music/victory_bgm.mp3",
-    gain: 0.86,
+    gain: 1,
   },
   defeat: {
     src: "/music/defeat_bgm.mp3",
-    gain: 0.86,
+    gain: 1,
   },
 };
 

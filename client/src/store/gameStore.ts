@@ -186,44 +186,62 @@ interface GameStore {
 const INITIAL_RED: Position = { row: 2, col: 0 };
 const INITIAL_BLUE: Position = { row: 2, col: 4 };
 const AUDIO_PREFS_KEY = 'audioPrefs';
+const AUDIO_PREFS_VERSION = 2;
+const DEFAULT_MUSIC_VOLUME = 0.85;
+const DEFAULT_SFX_VOLUME = 0.85;
 const PIECE_SKIN_KEY = 'pieceSkin';
 const BOARD_SKIN_KEY = 'boardSkin';
+
+function normalizeStoredAudioVolume(
+  value: unknown,
+  fallback: number,
+  shouldBoostLegacyValue: boolean,
+) {
+  const normalized =
+    typeof value === 'number' ? Math.max(0, Math.min(1, value)) : fallback;
+  return shouldBoostLegacyValue ? Math.max(normalized, fallback) : normalized;
+}
+
 function getStoredAudioPrefs() {
   const raw = localStorage.getItem(AUDIO_PREFS_KEY);
   if (!raw) {
     return {
       isSfxMuted: false,
       isMusicMuted: false,
-      musicVolume: 0.5,
-      sfxVolume: 0.5,
+      musicVolume: DEFAULT_MUSIC_VOLUME,
+      sfxVolume: DEFAULT_SFX_VOLUME,
     };
   }
 
   try {
     const parsed = JSON.parse(raw) as {
+      version?: number;
       isSfxMuted?: boolean;
       isMusicMuted?: boolean;
       musicVolume?: number;
       sfxVolume?: number;
     };
+    const shouldBoostLegacyValue = parsed.version !== AUDIO_PREFS_VERSION;
     return {
       isSfxMuted: Boolean(parsed.isSfxMuted),
       isMusicMuted: Boolean(parsed.isMusicMuted),
-      musicVolume:
-        typeof parsed.musicVolume === 'number'
-          ? Math.max(0, Math.min(1, parsed.musicVolume))
-          : 0.5,
-      sfxVolume:
-        typeof parsed.sfxVolume === 'number'
-          ? Math.max(0, Math.min(1, parsed.sfxVolume))
-          : 0.5,
+      musicVolume: normalizeStoredAudioVolume(
+        parsed.musicVolume,
+        DEFAULT_MUSIC_VOLUME,
+        shouldBoostLegacyValue,
+      ),
+      sfxVolume: normalizeStoredAudioVolume(
+        parsed.sfxVolume,
+        DEFAULT_SFX_VOLUME,
+        shouldBoostLegacyValue,
+      ),
     };
   } catch {
     return {
       isSfxMuted: false,
       isMusicMuted: false,
-      musicVolume: 0.5,
-      sfxVolume: 0.5,
+      musicVolume: DEFAULT_MUSIC_VOLUME,
+      sfxVolume: DEFAULT_SFX_VOLUME,
     };
   }
 }
@@ -234,7 +252,10 @@ function saveAudioPrefs(prefs: {
   musicVolume: number;
   sfxVolume: number;
 }) {
-  localStorage.setItem(AUDIO_PREFS_KEY, JSON.stringify(prefs));
+  localStorage.setItem(
+    AUDIO_PREFS_KEY,
+    JSON.stringify({ version: AUDIO_PREFS_VERSION, ...prefs }),
+  );
 }
 
 const initialAudioPrefs = getStoredAudioPrefs();
