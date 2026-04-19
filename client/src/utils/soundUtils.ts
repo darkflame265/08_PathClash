@@ -138,7 +138,7 @@ const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
 
 const UI_SFX: Record<UiSfxId, AbilitySfxConfig> = {
   lobby_click: {
-    path: "/sfx/ui/lobby_click.mp3",
+    path: "/sfx/ui/button_click.wav",
     gain: 0.9,
   },
   victory_result: {
