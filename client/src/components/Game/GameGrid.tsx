@@ -23,7 +23,6 @@ import "./GameGrid.css";
 
 const DEFAULT_CELL_SIZE = 96;
 const GRID_SIZE = 5;
-const PATH_UPDATE_THROTTLE_MS = 150;
 
 interface GridProps {
   cellSize?: number;
@@ -74,9 +73,6 @@ export function GameGrid({
   const [hoveredCell, setHoveredCell] = useState<Position | null>(null);
   const [opponentRevealToken, setOpponentRevealToken] = useState(0);
   const previousPhaseRef = useRef(gameState?.phase ?? null);
-  const lastPathUpdateAtRef = useRef(0);
-  const pendingPathUpdateRef = useRef<number | null>(null);
-  const pendingPathRef = useRef<Position[]>([]);
   const dragState = useRef<{
     active: boolean;
     fromPiece: boolean;
@@ -194,19 +190,6 @@ export function GameGrid({
       .join(" ");
   }, [responsiveCellSize, tutorialGuidePath]);
 
-  const emitPathUpdate = useCallback((path: Position[]) => {
-    getSocket().emit("path_update", { path });
-    lastPathUpdateAtRef.current = Date.now();
-  }, []);
-
-  const flushPendingPathUpdate = useCallback(() => {
-    if (pendingPathUpdateRef.current !== null) {
-      window.clearTimeout(pendingPathUpdateRef.current);
-      pendingPathUpdateRef.current = null;
-    }
-    emitPathUpdate(pendingPathRef.current);
-  }, [emitPathUpdate]);
-
   const playPathStepSfx = useCallback(() => {
     if (isSfxMuted) return;
     playLobbyClick(sfxVolume);
@@ -219,7 +202,6 @@ export function GameGrid({
     if (!latestGameState || latestGameState.phase !== "planning") return;
     if (latestGameState.players[myColor].pathSubmitted) return;
 
-    flushPendingPathUpdate();
     getSocket().emit(
       "submit_path",
       { path: state.myPath },
@@ -243,7 +225,7 @@ export function GameGrid({
         });
       },
     );
-  }, [flushPendingPathUpdate, myColor]);
+  }, [myColor]);
 
   const addToPath = useCallback(
     (cell: Position) => {
@@ -256,20 +238,14 @@ export function GameGrid({
         const nextPath = [...current, cell];
         playPathStepSfx();
         setMyPath(nextPath);
-        if (tutorialAutoSubmit && roundInfo?.timeLimit === 0) {
-          emitPathUpdate(nextPath);
-        }
       }
     },
     [
-      emitPathUpdate,
       isPlanning,
       myPos,
       obstacles,
       pathPoints,
-      roundInfo?.timeLimit,
       setMyPath,
-      tutorialAutoSubmit,
     ],
   );
 
@@ -279,16 +255,10 @@ export function GameGrid({
       const nextPath = current.slice(0, -1);
       playPathStepSfx();
       setMyPath(nextPath);
-      if (tutorialAutoSubmit && roundInfo?.timeLimit === 0) {
-        emitPathUpdate(nextPath);
-      }
     }
   }, [
-    emitPathUpdate,
     playPathStepSfx,
-    roundInfo?.timeLimit,
     setMyPath,
-    tutorialAutoSubmit,
   ]);
 
   // Pointer handlers cover mouse and touch input with one path.
@@ -360,9 +330,6 @@ export function GameGrid({
           const nextPath = [...current, cell];
           playPathStepSfx();
           setMyPath(nextPath);
-          if (tutorialAutoSubmit && roundInfo?.timeLimit === 0) {
-            emitPathUpdate(nextPath);
-          }
         }
       } else if (dragState.current.fromPiece) {
         // Add mode
@@ -370,7 +337,6 @@ export function GameGrid({
       }
     },
     [
-      emitPathUpdate,
       isPlanning,
       myPos,
       responsiveCellSize,
@@ -379,9 +345,7 @@ export function GameGrid({
       obstacles,
       pathPoints,
       playPathStepSfx,
-      roundInfo?.timeLimit,
       setMyPath,
-      tutorialAutoSubmit,
     ],
   );
 
@@ -455,63 +419,19 @@ export function GameGrid({
         const nextPath = [...current, next];
         playPathStepSfx();
         setMyPath(nextPath);
-        if (tutorialAutoSubmit && roundInfo?.timeLimit === 0) {
-          emitPathUpdate(nextPath);
-        }
       }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [
-    emitPathUpdate,
     isPlanning,
     myPos,
     obstacles,
     pathPoints,
     playPathStepSfx,
     removeFromPath,
-    roundInfo?.timeLimit,
     setMyPath,
-    tutorialAutoSubmit,
   ]);
-
-  useEffect(() => {
-    pendingPathRef.current = myPath;
-    if (!isPlanning || !myColor || !gameState) return;
-    if (gameState.players[myColor].pathSubmitted) return;
-    if (tutorialAutoSubmit && roundInfo?.timeLimit === 0) return;
-
-    const elapsed = Date.now() - lastPathUpdateAtRef.current;
-    if (elapsed >= PATH_UPDATE_THROTTLE_MS) {
-      emitPathUpdate(myPath);
-      return;
-    }
-
-    if (pendingPathUpdateRef.current !== null) {
-      window.clearTimeout(pendingPathUpdateRef.current);
-    }
-
-    pendingPathUpdateRef.current = window.setTimeout(() => {
-      pendingPathUpdateRef.current = null;
-      emitPathUpdate(pendingPathRef.current);
-    }, PATH_UPDATE_THROTTLE_MS - elapsed);
-  }, [
-    emitPathUpdate,
-    gameState,
-    isPlanning,
-    myColor,
-    myPath,
-    roundInfo?.timeLimit,
-    tutorialAutoSubmit,
-  ]);
-
-  useEffect(() => {
-    return () => {
-      if (pendingPathUpdateRef.current !== null) {
-        window.clearTimeout(pendingPathUpdateRef.current);
-      }
-    };
-  }, []);
 
   // Submit once when the planning timer ends, even if the path is partial.
   useEffect(() => {

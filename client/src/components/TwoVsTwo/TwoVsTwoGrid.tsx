@@ -24,7 +24,6 @@ import './TwoVsTwoScreen.css';
 const DEFAULT_CELL_SIZE = 96;
 const GRID_SIZE = 5;
 const PRE_SUBMIT_LEAD_MS = 250;
-const PATH_UPDATE_THROTTLE_MS = 150;
 
 type DisplayPositions = Record<TwoVsTwoSlot, Position>;
 
@@ -59,8 +58,6 @@ export function TwoVsTwoGrid({
   const gridRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState(DEFAULT_CELL_SIZE * GRID_SIZE);
   const [hoveredCell, setHoveredCell] = useState<Position | null>(null);
-  const lastPathUpdateAtRef = useRef(0);
-  const pendingPathUpdateRef = useRef<number | null>(null);
   const pendingPathRef = useRef<Position[]>([]);
   const dragState = useRef<{ active: boolean; fromPiece: boolean; fromEnd: boolean }>({
     active: false,
@@ -111,19 +108,6 @@ export function TwoVsTwoGrid({
     const rect = gridRef.current?.getBoundingClientRect();
     return rect ? { x: rect.left, y: rect.top } : { x: 0, y: 0 };
   };
-
-  const emitPathUpdate = useCallback((path: Position[]) => {
-    getSocket().emit('twovtwo_path_update', { path });
-    lastPathUpdateAtRef.current = Date.now();
-  }, []);
-
-  const flushPendingPathUpdate = useCallback(() => {
-    if (pendingPathUpdateRef.current !== null) {
-      window.clearTimeout(pendingPathUpdateRef.current);
-      pendingPathUpdateRef.current = null;
-    }
-    emitPathUpdate(pendingPathRef.current);
-  }, [emitPathUpdate]);
 
   const playPathStepSfx = useCallback(() => {
     if (isSfxMuted) return;
@@ -231,38 +215,13 @@ export function TwoVsTwoGrid({
 
   useEffect(() => {
     pendingPathRef.current = myPath;
-    if (!isPlanning || me.hp <= 0 || me.pathSubmitted) return;
-
-    const elapsed = Date.now() - lastPathUpdateAtRef.current;
-    if (elapsed >= PATH_UPDATE_THROTTLE_MS) {
-      emitPathUpdate(myPath);
-      return;
-    }
-
-    if (pendingPathUpdateRef.current !== null) {
-      window.clearTimeout(pendingPathUpdateRef.current);
-    }
-
-    pendingPathUpdateRef.current = window.setTimeout(() => {
-      pendingPathUpdateRef.current = null;
-      emitPathUpdate(pendingPathRef.current);
-    }, PATH_UPDATE_THROTTLE_MS - elapsed);
-  }, [emitPathUpdate, isPlanning, me.hp, me.pathSubmitted, myPath]);
-
-  useEffect(() => {
-    return () => {
-      if (pendingPathUpdateRef.current !== null) {
-        window.clearTimeout(pendingPathUpdateRef.current);
-      }
-    };
-  }, []);
+  }, [myPath]);
 
   useEffect(() => {
     if (!isPlanning || !roundInfo || me.hp <= 0 || me.pathSubmitted) return;
     const submitAtMs = roundInfo.roundEndsAt;
     const submitCurrentPath = () => {
       if (state.phase !== 'planning' || state.players[currentSlot].pathSubmitted) return;
-      flushPendingPathUpdate();
       getSocket().emit(
         'twovtwo_submit_path',
         { path: pendingPathRef.current },
@@ -286,7 +245,7 @@ export function TwoVsTwoGrid({
       window.clearTimeout(preSubmitTimeoutId);
       window.clearTimeout(finalSubmitTimeoutId);
     };
-  }, [currentSlot, flushPendingPathUpdate, isPlanning, me.hp, me.pathSubmitted, roundInfo, setMyPath, setMySubmitted, state]);
+  }, [currentSlot, isPlanning, me.hp, me.pathSubmitted, roundInfo, setMyPath, setMySubmitted, state]);
 
   const cells = Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, i) => ({
     row: Math.floor(i / GRID_SIZE),
