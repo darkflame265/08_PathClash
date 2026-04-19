@@ -286,7 +286,7 @@ export function playBgmTrack(trackId: BgmTrackId): void {
     return;
   }
 
-  // Fade out every other track, then stop it once the fade completes.
+  // Fade out every other track using Web Audio API scheduling (no setInterval zipper noise).
   (Object.keys(BGM_CONFIG) as BgmTrackId[]).forEach((otherTrackId) => {
     if (otherTrackId === trackId) return;
     const other = bgmCache[otherTrackId];
@@ -294,19 +294,18 @@ export function playBgmTrack(trackId: BgmTrackId): void {
     if (other.soundId !== null && other.howl.playing(other.soundId)) {
       const fadingSoundId = other.soundId;
       other.soundId = null;
-      other.howl.fade(
-        getBgmTrackVolume(otherTrackId),
-        0,
-        BGM_FADE_OUT_MS,
-        fadingSoundId,
-      );
-      other.howl.once(
-        "fade",
-        () => {
-          other.howl.stop(fadingSoundId);
-        },
-        fadingSoundId,
-      );
+      const fadeOutCtx = Howler.ctx;
+      const fadeOutGain = fadeOutCtx ? getSoundGainNode(other.howl, fadingSoundId) : null;
+      if (fadeOutGain && fadeOutCtx) {
+        const t = fadeOutCtx.currentTime;
+        fadeOutGain.gain.cancelScheduledValues(t);
+        fadeOutGain.gain.setValueAtTime(fadeOutGain.gain.value, t);
+        fadeOutGain.gain.linearRampToValueAtTime(0, t + BGM_FADE_OUT_MS / 1000);
+        window.setTimeout(() => other.howl.stop(fadingSoundId), BGM_FADE_OUT_MS + 30);
+      } else {
+        // AudioContext not ready — stop immediately rather than use setInterval fade.
+        other.howl.stop(fadingSoundId);
+      }
     } else {
       other.howl.stop();
       other.soundId = null;
@@ -332,18 +331,23 @@ export function playBgmTrack(trackId: BgmTrackId): void {
   const targetVolume = getBgmTrackVolume(trackId);
   target.howl.volume(0);
   target.soundId = target.howl.play();
-  const fadeCtx = Howler.ctx;
-  const fadeGainNode = fadeCtx ? getSoundGainNode(target.howl, target.soundId) : null;
-  if (fadeGainNode && fadeCtx) {
-    fadeGainNode.gain.cancelScheduledValues(fadeCtx.currentTime);
-    fadeGainNode.gain.setValueAtTime(0, fadeCtx.currentTime);
-    fadeGainNode.gain.linearRampToValueAtTime(
-      targetVolume,
-      fadeCtx.currentTime + BGM_FADE_IN_MS / 1000,
-    );
-  } else {
-    target.howl.fade(0, targetVolume, BGM_FADE_IN_MS, target.soundId);
-  }
+  const capturedSoundId = target.soundId;
+  const tryBgmFadeIn = (attempt: number) => {
+    const ctx = Howler.ctx;
+    const gainNode = ctx ? getSoundGainNode(target.howl, capturedSoundId) : null;
+    if (gainNode && ctx) {
+      gainNode.gain.cancelScheduledValues(ctx.currentTime);
+      gainNode.gain.setValueAtTime(0, ctx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(targetVolume, ctx.currentTime + BGM_FADE_IN_MS / 1000);
+    } else if (attempt < 8) {
+      // AudioContext not ready yet — retry next frame (unlocks after first user gesture).
+      requestAnimationFrame(() => tryBgmFadeIn(attempt + 1));
+    } else {
+      // Still no context after retries — set volume directly (one click, but no zipper).
+      target.howl.volume(targetVolume, capturedSoundId);
+    }
+  };
+  tryBgmFadeIn(0);
 }
 
 export function pauseAllBgm(): void {
@@ -484,15 +488,20 @@ function playAbilitySfx(id: AbilitySfxId, volume = 0.55): void {
       const sfxSoundId = howl.play();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (howl as any)._volume = normalizedVolume;
-      const sfxCtx = Howler.ctx;
-      const sfxGain = sfxCtx ? getSoundGainNode(howl, sfxSoundId) : null;
-      if (sfxGain && sfxCtx) {
-        const t = sfxCtx.currentTime;
-        sfxGain.gain.setValueAtTime(0, t);
-        sfxGain.gain.linearRampToValueAtTime(normalizedVolume, t + 0.005);
-      } else {
-        howl.volume(normalizedVolume, sfxSoundId);
-      }
+      const tryAbilitySfxRamp = (attempt: number) => {
+        const sfxCtx = Howler.ctx;
+        const sfxGain = sfxCtx ? getSoundGainNode(howl, sfxSoundId) : null;
+        if (sfxGain && sfxCtx) {
+          const t = sfxCtx.currentTime;
+          sfxGain.gain.setValueAtTime(0, t);
+          sfxGain.gain.linearRampToValueAtTime(normalizedVolume, t + 0.005);
+        } else if (attempt < 5) {
+          requestAnimationFrame(() => tryAbilitySfxRamp(attempt + 1));
+        } else {
+          howl.volume(normalizedVolume, sfxSoundId);
+        }
+      };
+      tryAbilitySfxRamp(0);
       return;
     }
 
@@ -555,15 +564,20 @@ function playUiSfx(id: UiSfxId, volume = 0.55): void {
       const uiSoundId = howl.play();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (howl as any)._volume = targetVol;
-      const uiCtx = Howler.ctx;
-      const uiGain = uiCtx ? getSoundGainNode(howl, uiSoundId) : null;
-      if (uiGain && uiCtx) {
-        const t = uiCtx.currentTime;
-        uiGain.gain.setValueAtTime(0, t);
-        uiGain.gain.linearRampToValueAtTime(targetVol, t + 0.005);
-      } else {
-        howl.volume(targetVol, uiSoundId);
-      }
+      const tryUiSfxRamp = (attempt: number) => {
+        const uiCtx = Howler.ctx;
+        const uiGain = uiCtx ? getSoundGainNode(howl, uiSoundId) : null;
+        if (uiGain && uiCtx) {
+          const t = uiCtx.currentTime;
+          uiGain.gain.setValueAtTime(0, t);
+          uiGain.gain.linearRampToValueAtTime(targetVol, t + 0.005);
+        } else if (attempt < 5) {
+          requestAnimationFrame(() => tryUiSfxRamp(attempt + 1));
+        } else {
+          howl.volume(targetVol, uiSoundId);
+        }
+      };
+      tryUiSfxRamp(0);
       return;
     }
 
@@ -746,9 +760,28 @@ export function startOverdriveLoop(volume = 0.55): void {
       0,
       Math.min(1, volume * ABILITY_SFX.gold_overdrive_loop.gain),
     );
-    howl.volume(normalizedVolume);
     if (goldOverdriveSoundId === null || !howl.playing(goldOverdriveSoundId)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (howl as any)._volume = 0;
       goldOverdriveSoundId = howl.play();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (howl as any)._volume = normalizedVolume;
+      const ctx = Howler.ctx;
+      const gain = ctx ? getSoundGainNode(howl, goldOverdriveSoundId) : null;
+      if (gain && ctx) {
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(normalizedVolume, ctx.currentTime + 0.02);
+      }
+    } else {
+      // Already playing — update volume smoothly via setTargetAtTime.
+      const ctx = Howler.ctx;
+      const gain = ctx ? getSoundGainNode(howl, goldOverdriveSoundId) : null;
+      if (gain && ctx) {
+        gain.gain.cancelScheduledValues(ctx.currentTime);
+        gain.gain.setTargetAtTime(normalizedVolume, ctx.currentTime, 0.015);
+      } else {
+        howl.volume(normalizedVolume, goldOverdriveSoundId);
+      }
     }
   } catch {
     // Audio engine not available
