@@ -11,13 +11,13 @@ export type PatchNoteSection = {
   lines: PatchNoteLine[];
 };
 
-export const PATCH_NOTES_VERSION = "2026-04-17-v19";
-const PATCH_NOTES_APP_VERSION = "1.0.31";
+export const PATCH_NOTES_VERSION = "2026-04-19-v20";
+const PATCH_NOTES_APP_VERSION = "1.0.32";
 
 export function getPatchNotesVersionLabel(lang: "en" | "kr"): string {
   return lang === "en"
-    ? `${PATCH_NOTES_APP_VERSION} Version 2026.04.17`
-    : `${PATCH_NOTES_APP_VERSION}버전 2026.04.17`;
+    ? `${PATCH_NOTES_APP_VERSION} Version 2026.04.19`
+    : `${PATCH_NOTES_APP_VERSION}버전 2026.04.19`;
 }
 
 export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
@@ -43,6 +43,12 @@ export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
           },
           {
             text: "Fixed an Android app issue where lobby and in-game BGM could stop early and restart from the beginning.",
+          },
+          {
+            text: "Improved Android audio playback stability to reduce crackling, adjusted BGM/SFX routing, and boosted SFX volume on phone speakers.",
+          },
+          {
+            text: "Added click sounds to Ability Battle target selection buttons.",
           },
           {
             text: "Redesigned the layout to properly support tablet screen sizes.",
@@ -73,6 +79,12 @@ export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
         },
         {
           text: "Android 앱에서 로비 및 인게임 BGM이 중간에 끊긴 뒤 처음부터 다시 재생되던 문제를 수정했습니다.",
+        },
+        {
+          text: "Android 앱의 오디오 재생 안정성을 개선해 지지직거리는 현상을 줄이고, BGM/SFX 재생 경로와 휴대폰 스피커용 효과음 볼륨을 조정했습니다.",
+        },
+        {
+          text: "어빌리티 배틀에서 스킬 대상 선택 버튼을 누를 때 클릭음이 재생되도록 수정했습니다.",
         },
         {
           text: "태블릿 화면 크기를 지원하도록 레이아웃을 재설계했습니다.",

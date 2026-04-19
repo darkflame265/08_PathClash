@@ -3,7 +3,7 @@ import type { BoardSkin, PlayerColor, Position } from '../../types/game.types';
 import type { AbilityBattleState, AbilitySkillReservation, AbilityTrapTile } from '../../types/ability.types';
 import { useGameStore } from '../../store/gameStore';
 import { pixelToCell, isBlockedCell, isValidMove, posEqual } from '../../utils/pathUtils';
-import { playPathStepClick } from '../../utils/soundUtils';
+import { playLobbyClick, playPathStepClick } from '../../utils/soundUtils';
 import { PlayerPiece } from '../Game/PlayerPiece';
 import { PathLine } from '../Game/PathLine';
 import { CollisionEffect } from '../Effects/CollisionEffect';
@@ -292,6 +292,11 @@ export function AbilityGrid({
   const playPathStepSfx = useCallback(() => {
     if (isSfxMuted) return;
     playPathStepClick(sfxVolume);
+  }, [isSfxMuted, sfxVolume]);
+
+  const playTargetSelectSfx = useCallback(() => {
+    if (isSfxMuted) return;
+    playLobbyClick(sfxVolume);
   }, [isSfxMuted, sfxVolume]);
 
   const removeFromPath = useCallback(() => {
@@ -655,7 +660,10 @@ export function AbilityGrid({
               height: Math.max(32, responsiveCellSize * 0.5),
               transform: 'translate(-50%, -50%)',
             }}
-            onClick={() => onTeleportTargetSelect(target)}
+            onClick={() => {
+              playTargetSelectSfx();
+              onTeleportTargetSelect(target);
+            }}
           />
         ))}
 
@@ -671,7 +679,10 @@ export function AbilityGrid({
               height: Math.max(32, responsiveCellSize * 0.5),
               transform: 'translate(-50%, -50%)',
             }}
-            onClick={() => onBlitzTargetSelect(target)}
+            onClick={() => {
+              playTargetSelectSfx();
+              onBlitzTargetSelect(target);
+            }}
           >
             <img
               src="/ui/ability/skill_arrow_icon.svg"
@@ -694,7 +705,10 @@ export function AbilityGrid({
               height: Math.max(32, responsiveCellSize * 0.5),
               transform: 'translate(-50%, -50%)',
             }}
-            onClick={() => onInfernoTargetSelect(target)}
+            onClick={() => {
+              playTargetSelectSfx();
+              onInfernoTargetSelect(target);
+            }}
           />
         ))}
 
