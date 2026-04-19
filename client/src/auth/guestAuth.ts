@@ -234,6 +234,12 @@ const UPGRADE_CONTEXT_KEY = "pathclash.pendingUpgrade";
 const GUEST_SESSION_KEY = "pathclash.guestSession";
 const RECONNECT_SESSION_KEY = "pathclash.reconnectSession";
 const CLIENT_INSTANCE_ID_KEY = "pathclash.clientInstanceId";
+const ACCOUNT_SNAPSHOT_STORAGE_PREFIX = "pathclash.accountSnapshot.";
+const ACCOUNT_SNAPSHOT_STORAGE_TTL_MS = 10 * 60 * 1000;
+
+let cachedClientAuthMetadata:
+  | { clientPlatform: 'android' | 'web'; appVersionCode?: number }
+  | null = null;
 
 function getClientInstanceId(): string {
   const existing = window.sessionStorage.getItem(CLIENT_INSTANCE_ID_KEY);
@@ -509,16 +515,43 @@ async function ensureProfile(userId: string): Promise<void> {
 
 function readCachedAccountSnapshot(userId: string): AccountSnapshot | null {
   const cached = accountSnapshotCache.get(userId);
-  if (!cached) return null;
-  if (Date.now() - cached.fetchedAt > ACCOUNT_SNAPSHOT_CACHE_TTL_MS) {
+  if (cached) {
+    if (Date.now() - cached.fetchedAt <= ACCOUNT_SNAPSHOT_CACHE_TTL_MS) {
+      return cached.snapshot;
+    }
     accountSnapshotCache.delete(userId);
+  }
+
+  try {
+    const raw = window.localStorage.getItem(`${ACCOUNT_SNAPSHOT_STORAGE_PREFIX}${userId}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { fetchedAt?: number; snapshot?: AccountSnapshot };
+    if (
+      typeof parsed.fetchedAt !== "number" ||
+      Date.now() - parsed.fetchedAt > ACCOUNT_SNAPSHOT_STORAGE_TTL_MS ||
+      !parsed.snapshot
+    ) {
+      window.localStorage.removeItem(`${ACCOUNT_SNAPSHOT_STORAGE_PREFIX}${userId}`);
+      return null;
+    }
+    cacheAccountSnapshot(userId, parsed.snapshot);
+    return parsed.snapshot;
+  } catch {
     return null;
   }
-  return cached.snapshot;
 }
 
 function cacheAccountSnapshot(userId: string, snapshot: AccountSnapshot) {
-  accountSnapshotCache.set(userId, { snapshot, fetchedAt: Date.now() });
+  const fetchedAt = Date.now();
+  accountSnapshotCache.set(userId, { snapshot, fetchedAt });
+  try {
+    window.localStorage.setItem(
+      `${ACCOUNT_SNAPSHOT_STORAGE_PREFIX}${userId}`,
+      JSON.stringify({ fetchedAt, snapshot }),
+    );
+  } catch {
+    // Ignore storage quota/private mode failures; the in-memory cache still works.
+  }
   knownProfileUsers.add(userId);
   const current = lastSyncedProfileState.get(userId) ?? {};
   lastSyncedProfileState.set(userId, {
@@ -532,6 +565,7 @@ function cacheAccountSnapshot(userId: string, snapshot: AccountSnapshot) {
 
 function invalidateAccountSnapshot(userId: string) {
   accountSnapshotCache.delete(userId);
+  window.localStorage.removeItem(`${ACCOUNT_SNAPSHOT_STORAGE_PREFIX}${userId}`);
 }
 
 function normalizeAccountSnapshot(
@@ -809,7 +843,7 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
     });
 
     if (!error && data.session?.user) {
-      const snapshot = await getAccountSnapshot(data.session.user.id, { force: true });
+      const snapshot = readCachedAccountSnapshot(data.session.user.id) ?? undefined;
       logAuthDebug("restoreGuestSessionOrCreate:restored reconnect session", {
         userId: data.session.user.id,
         isGuestUser: data.session.user.is_anonymous ?? false,
@@ -836,7 +870,7 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
     });
 
     if (!error && data.session?.user?.is_anonymous) {
-      const snapshot = await getAccountSnapshot(data.session.user.id, { force: true });
+      const snapshot = readCachedAccountSnapshot(data.session.user.id) ?? undefined;
       logAuthDebug("restoreGuestSessionOrCreate:restored guest session", {
         userId: data.session.user.id,
       });
@@ -1475,19 +1509,23 @@ export async function cancelPendingGoogleUpgradeSwitch(): Promise<AuthStatePaylo
 }
 
 export async function getClientAuthMetadata() {
+  if (cachedClientAuthMetadata) return cachedClientAuthMetadata;
+
   if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
     const info = await CapacitorApp.getInfo();
     const parsedBuild = Number(info.build ?? '');
-    return {
+    cachedClientAuthMetadata = {
       clientPlatform: 'android' as const,
       appVersionCode: Number.isFinite(parsedBuild) ? Math.trunc(parsedBuild) : undefined,
     };
+    return cachedClientAuthMetadata;
   }
 
-  return {
+  cachedClientAuthMetadata = {
     clientPlatform: 'web' as const,
     appVersionCode: undefined,
   };
+  return cachedClientAuthMetadata;
 }
 
 export function getSocketAuthPayload() {

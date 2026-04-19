@@ -136,6 +136,7 @@ function App() {
   } = useGameStore();
   const { lang } = useLang();
   const achievementRefreshTimeoutRef = useRef<number | null>(null);
+  const accountSummaryRefreshTimeoutRef = useRef<number | null>(null);
   const lastAccountSummaryRefreshAuthKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -149,12 +150,6 @@ function App() {
         if (!active) return;
         setHasLegalConsent(true);
         setLegalConsentResolved(true);
-        if (authUserId) {
-          void syncLegalConsent({
-            version: storedConsent.version,
-            consentedAt: storedConsent.consentedAt,
-          });
-        }
         return;
       }
 
@@ -250,28 +245,14 @@ function App() {
       }
       lastAccountSummaryRefreshAuthKeyRef.current = authKey;
       setAccountSummaryLoading(true);
-      void refreshAccountSummary({ force: true })
-        .then(
-          ({
-            nickname,
-            equippedSkin,
-            equippedBoardSkin,
-            equippedAbilitySkills,
-            ownedSkins,
-            ownedBoardSkins,
-            wins,
-            losses,
-            tokens,
-            dailyRewardWins,
-            dailyRewardTokens,
-            achievements,
-          }) => {
-            if (!active) return;
-            setAuthState({
-              ready: true,
-              userId: payload.userId,
-              accessToken: useGameStore.getState().authAccessToken ?? payload.accessToken,
-              isGuestUser: useGameStore.getState().isGuestUser,
+      if (accountSummaryRefreshTimeoutRef.current !== null) {
+        window.clearTimeout(accountSummaryRefreshTimeoutRef.current);
+      }
+      accountSummaryRefreshTimeoutRef.current = window.setTimeout(() => {
+        accountSummaryRefreshTimeoutRef.current = null;
+        void refreshAccountSummary({ force: true })
+          .then(
+            ({
               nickname,
               equippedSkin,
               equippedBoardSkin,
@@ -284,18 +265,38 @@ function App() {
               dailyRewardWins,
               dailyRewardTokens,
               achievements,
-            });
-          },
-        )
-        .catch((error) => {
-          if (!active) return;
-          lastAccountSummaryRefreshAuthKeyRef.current = null;
-          console.warn("[session-debug] failed to refresh account summary", error);
-        })
-        .finally(() => {
-          if (!active) return;
-          setAccountSummaryLoading(false);
-        });
+            }) => {
+              if (!active) return;
+              setAuthState({
+                ready: true,
+                userId: payload.userId,
+                accessToken: useGameStore.getState().authAccessToken ?? payload.accessToken,
+                isGuestUser: useGameStore.getState().isGuestUser,
+                nickname,
+                equippedSkin,
+                equippedBoardSkin,
+                equippedAbilitySkills,
+                ownedSkins,
+                ownedBoardSkins,
+                wins,
+                losses,
+                tokens,
+                dailyRewardWins,
+                dailyRewardTokens,
+                achievements,
+              });
+            },
+          )
+          .catch((error) => {
+            if (!active) return;
+            lastAccountSummaryRefreshAuthKeyRef.current = null;
+            console.warn("[session-debug] failed to refresh account summary", error);
+          })
+          .finally(() => {
+            if (!active) return;
+            setAccountSummaryLoading(false);
+          });
+      }, 80);
     };
 
     void (async () => {
@@ -316,6 +317,10 @@ function App() {
 
     return () => {
       active = false;
+      if (accountSummaryRefreshTimeoutRef.current !== null) {
+        window.clearTimeout(accountSummaryRefreshTimeoutRef.current);
+        accountSummaryRefreshTimeoutRef.current = null;
+      }
       cleanupNativeAuth();
       unsubscribe();
     };
@@ -530,39 +535,6 @@ function App() {
       }
     };
   }, [authAccessToken, authReady, authUserId, isGuestUser, setAuthState]);
-
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== "android") {
-      return;
-    }
-
-    let active = true;
-
-    void (async () => {
-      try {
-        const info = await CapacitorApp.getInfo();
-        const parsedVersionCode = Number(info.build ?? "");
-        const versionCode = Number.isFinite(parsedVersionCode)
-          ? Math.trunc(parsedVersionCode)
-          : null;
-        const query = versionCode !== null ? `?versionCode=${versionCode}` : "";
-        const response = await fetch(
-          `${import.meta.env.VITE_SERVER_URL}/app-version/android${query}`,
-        );
-        if (!response.ok) return;
-        const payload = (await response.json()) as UpdateRequiredPayload;
-        if (active) {
-          applyUpdateRequired(payload);
-        }
-      } catch {
-        // Ignore transient network/version check failures.
-      }
-    })();
-
-    return () => {
-      active = false;
-    };
-  }, [applyUpdateRequired]);
 
   const handleReturnToLobby = useCallback(() => {
     disconnectSocket();
