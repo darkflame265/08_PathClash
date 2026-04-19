@@ -18,7 +18,7 @@ import { PlayerPiece } from "./PlayerPiece";
 import { PathLine } from "./PathLine";
 import { CollisionEffect } from "../Effects/CollisionEffect";
 import { getSocket } from "../../socket/socketClient";
-import { playLobbyClick } from "../../utils/soundUtils";
+import { playPathStepClick } from "../../utils/soundUtils";
 import "./GameGrid.css";
 
 const DEFAULT_CELL_SIZE = 96;
@@ -192,7 +192,7 @@ export function GameGrid({
 
   const playPathStepSfx = useCallback(() => {
     if (isSfxMuted) return;
-    playLobbyClick(sfxVolume);
+    playPathStepClick(sfxVolume);
   }, [isSfxMuted, sfxVolume]);
 
   const submitCurrentPath = useCallback(() => {

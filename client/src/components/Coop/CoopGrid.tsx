@@ -8,7 +8,7 @@ import { isBlockedCell, isValidMove, pixelToCell, posEqual } from "../../utils/p
 import { PlayerPiece } from "../Game/PlayerPiece";
 import { PathLine } from "../Game/PathLine";
 import { CollisionEffect } from "../Effects/CollisionEffect";
-import { playLobbyClick } from "../../utils/soundUtils";
+import { playPathStepClick } from "../../utils/soundUtils";
 import "../Game/GameGrid.css";
 import "./CoopScreen.css";
 
@@ -130,7 +130,7 @@ export function CoopGrid({
 
   const playPathStepSfx = useCallback(() => {
     if (isSfxMuted) return;
-    playLobbyClick(sfxVolume);
+    playPathStepClick(sfxVolume);
   }, [isSfxMuted, sfxVolume]);
 
   const addToPath = useCallback(

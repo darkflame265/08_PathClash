@@ -18,7 +18,7 @@ import {
   pixelToCell,
   posEqual,
 } from '../../utils/pathUtils';
-import { playLobbyClick } from '../../utils/soundUtils';
+import { playPathStepClick } from '../../utils/soundUtils';
 import './TwoVsTwoScreen.css';
 
 const DEFAULT_CELL_SIZE = 96;
@@ -111,7 +111,7 @@ export function TwoVsTwoGrid({
 
   const playPathStepSfx = useCallback(() => {
     if (isSfxMuted) return;
-    playLobbyClick(sfxVolume);
+    playPathStepClick(sfxVolume);
   }, [isSfxMuted, sfxVolume]);
 
   const addToPath = useCallback(

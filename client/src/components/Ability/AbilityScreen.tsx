@@ -819,14 +819,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       })),
   ];
 
-  const syncMyPlan = (
-    path: Position[],
-    reservations: AbilitySkillReservation[],
-  ) => {
-    const socket = getSocket();
-    socket.emit("ability_plan_update", { path, skills: reservations });
-  };
-
   const updateMyPath = (nextPath: Position[]) => {
     const nextReservations = skillReservations.filter(
       (reservation) => reservation.step <= nextPath.length,
@@ -835,14 +827,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     if (nextReservations !== skillReservations) {
       setSkillReservations(nextReservations);
     }
-    syncMyPlan(nextPath, nextReservations);
   };
 
   const updateSkillReservations = (
     nextReservations: AbilitySkillReservation[],
   ) => {
     setSkillReservations(nextReservations);
-    syncMyPlan(myPath, nextReservations);
   };
 
   const removeReservation = (skillId: AbilitySkillId) => {
@@ -866,7 +856,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       const restorePath = chargeReserved ? [] : previousGuardPathRef.current;
       setMyPath(restorePath);
       setSkillReservations(nextReservations);
-      syncMyPlan(restorePath, nextReservations);
       return;
     }
 
@@ -881,21 +870,18 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       const restorePath = guardReserved ? [] : previousChargePathRef.current;
       setMyPath(restorePath);
       setSkillReservations(nextReservations);
-      syncMyPlan(restorePath, nextReservations);
       return;
     }
 
     if (skillId === "quantum_shift") {
       setMyPath(previousTeleportPathRef.current);
       setSkillReservations(nextReservations);
-      syncMyPlan(previousTeleportPathRef.current, nextReservations);
       return;
     }
 
     if (skillId === "electric_blitz") {
       setMyPath(previousBlitzPathRef.current);
       setSkillReservations(nextReservations);
-      syncMyPlan(previousBlitzPathRef.current, nextReservations);
       return;
     }
 
@@ -925,7 +911,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       ];
       setSkillReservations(nextReservations);
       setSelectedSkillId(null);
-      syncMyPlan(myPath, nextReservations);
       return;
     }
     previousGuardPathRef.current = myPath;
@@ -940,7 +925,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setMyPath([]);
     setSkillReservations(nextReservations);
     setSelectedSkillId(null);
-    syncMyPlan([], nextReservations);
   };
 
   const togglePhaseShiftSkill = () => {
@@ -963,7 +947,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     ];
     setSkillReservations(nextReservations);
     setSelectedSkillId(null);
-    syncMyPlan(myPath, nextReservations);
   };
 
   const toggleAtFieldSkill = () => {
@@ -988,7 +971,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     ];
     setSkillReservations(nextReservations);
     setSelectedSkillId(null);
-    syncMyPlan(myPath, nextReservations);
   };
 
   const beginExplosionStepPick = () => {
@@ -1216,7 +1198,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setSkillReservations(nextReservations);
     setSelectedSkillId(null);
     setPendingInferno(false);
-    syncMyPlan(myPath, nextReservations);
   };
 
   const beginTeleportPick = () => {
@@ -1253,7 +1234,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setSkillReservations(nextReservations);
     setSelectedSkillId(null);
     setPendingTeleport(false);
-    syncMyPlan(myPath, nextReservations);
   };
 
   const handleTeleportCancel = () => {
@@ -1309,7 +1289,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setSelectedSkillId(null);
     setPendingTeleport(false);
     setPendingBlitz(false);
-    syncMyPlan(nextPath, nextReservations);
   };
 
   const togglePlasmaCharge = () => {
@@ -1336,7 +1315,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       setSelectedSkillId(null);
       setPendingTeleport(false);
       setPendingBlitz(false);
-      syncMyPlan(myPath, nextReservations);
       return;
     }
     previousChargePathRef.current = myPath;
@@ -1353,7 +1331,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setSelectedSkillId(null);
     setPendingTeleport(false);
     setPendingBlitz(false);
-    syncMyPlan([], nextReservations);
   };
 
   const toggleCosmicBigBang = () => {
@@ -1381,7 +1358,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setSelectedSkillId(null);
     setPendingTeleport(false);
     setPendingBlitz(false);
-    syncMyPlan(myPath, nextReservations);
   };
 
   const handleSkillClick = (skillId: AbilitySkillId) => {

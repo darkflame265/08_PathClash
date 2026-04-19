@@ -182,6 +182,7 @@ const audioCache: Partial<Record<AbilitySfxId, HTMLAudioElement>> = {};
 const uiAudioCache: Partial<Record<UiSfxId, HTMLAudioElement>> = {};
 const abilityHowlCache: Partial<Record<AbilitySfxId, Howl>> = {};
 const uiHowlCache: Partial<Record<UiSfxId, Howl>> = {};
+const activeUiSfxIds: Partial<Record<UiSfxId, number>> = {};
 const bgmCache: Partial<
   Record<BgmTrackId, { howl: Howl; soundId: number | null }>
 > = {};
@@ -192,6 +193,7 @@ const segmentedLoopHandlers = new WeakMap<
 let goldOverdriveSoundId: number | null = null;
 let bgmVolume = 0.15;
 let bgmMuted = false;
+let lastPathStepSfxAt = 0;
 
 Howler.autoUnlock = true;
 Howler.autoSuspend = false;
@@ -552,16 +554,25 @@ function getUiHowl(id: UiSfxId): Howl | null {
   }
 }
 
-function playUiSfx(id: UiSfxId, volume = 0.55): void {
+function playUiSfx(
+  id: UiSfxId,
+  volume = 0.55,
+  options?: { stopPrevious?: boolean },
+): void {
   try {
     const howl = getUiHowl(id);
     if (howl) {
       const targetVol = Math.max(0, Math.min(1, volume * UI_SFX[id].gain));
+      if (options?.stopPrevious && activeUiSfxIds[id] !== undefined) {
+        howl.stop(activeUiSfxIds[id]);
+        activeUiSfxIds[id] = undefined;
+      }
       // Start at 0 so Howler schedules setValueAtTime(0) on the new sound,
       // then ramp up on that specific sound's gain node to avoid click noise.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (howl as any)._volume = 0;
       const uiSoundId = howl.play();
+      activeUiSfxIds[id] = uiSoundId;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (howl as any)._volume = targetVol;
       const tryUiSfxRamp = (attempt: number) => {
@@ -617,6 +628,13 @@ export function preloadAbilitySfxAssets(): void {
 
 export function playLobbyClick(volume = 0.55): void {
   playUiSfx("lobby_click", volume);
+}
+
+export function playPathStepClick(volume = 0.55): void {
+  const now = performance.now();
+  if (now - lastPathStepSfxAt < 45) return;
+  lastPathStepSfxAt = now;
+  playUiSfx("lobby_click", volume, { stopPrevious: true });
 }
 
 export function playMatchResultSfx(

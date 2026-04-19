@@ -3,7 +3,7 @@ import type { BoardSkin, PlayerColor, Position } from '../../types/game.types';
 import type { AbilityBattleState, AbilitySkillReservation, AbilityTrapTile } from '../../types/ability.types';
 import { useGameStore } from '../../store/gameStore';
 import { pixelToCell, isBlockedCell, isValidMove, posEqual } from '../../utils/pathUtils';
-import { playLobbyClick } from '../../utils/soundUtils';
+import { playPathStepClick } from '../../utils/soundUtils';
 import { PlayerPiece } from '../Game/PlayerPiece';
 import { PathLine } from '../Game/PathLine';
 import { CollisionEffect } from '../Effects/CollisionEffect';
@@ -291,7 +291,7 @@ export function AbilityGrid({
 
   const playPathStepSfx = useCallback(() => {
     if (isSfxMuted) return;
-    playLobbyClick(sfxVolume);
+    playPathStepClick(sfxVolume);
   }, [isSfxMuted, sfxVolume]);
 
   const removeFromPath = useCallback(() => {
