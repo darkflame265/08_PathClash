@@ -103,7 +103,7 @@ export const translations: Record<Lang, Translations> = {
     aiBtn: "Start AI Match",
     aiTutorialBtn: "Tutorial",
 
-    friendTitle: "Friend Match",
+    friendTitle: "Friendly Match",
     createRoomBtn: "Create Room",
     enterCodeBtn: "Enter Code",
 

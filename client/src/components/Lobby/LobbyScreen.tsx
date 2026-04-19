@@ -981,7 +981,7 @@ export function LobbyScreen({
 
   const randomDesc =
     lang === "en"
-      ? "Find another player online and start a ranked duel match."
+      ? "FInd another player online and start a match."
       : "온라인 상태의 다른 플레이어를 찾아 바로 대결전에 입장합니다.";
 
   const twoVsTwoDesc =
