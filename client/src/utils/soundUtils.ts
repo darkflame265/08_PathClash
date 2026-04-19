@@ -65,9 +65,9 @@ type AbilitySfxConfig = {
   loopWindowEndOffset?: number;
 };
 
-const ABILITY_SFX_OUTPUT_GAIN = 2;
-const UI_SFX_OUTPUT_GAIN = 2.2;
-const HIT_SFX_OUTPUT_GAIN = 2.5;
+const ABILITY_SFX_OUTPUT_GAIN = 1;
+const UI_SFX_OUTPUT_GAIN = 1;
+const HIT_SFX_OUTPUT_GAIN = 1;
 
 const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
   guard: {
