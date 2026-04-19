@@ -156,35 +156,32 @@ export type BgmTrackId = "lobby" | "ingame" | "victory" | "defeat";
 
 const MATCH_RESULT_AUDIO_EVENT = "pathclash:match-result-audio";
 const STOP_MATCH_RESULT_AUDIO_EVENT = "pathclash:stop-match-result-audio";
-const BGM_FADE_IN_MS = 700;
-const BGM_FADE_OUT_MS = 500;
 
 const BGM_CONFIG: Record<BgmTrackId, { src: string; gain: number }> = {
   lobby: {
     src: "/music/Lobby_bgm_3.ogg",
-    gain: 1,
+    gain: 0.86,
   },
   ingame: {
     src: "/music/InGame_bgm_3.ogg",
-    gain: 1,
+    gain: 0.86,
   },
   victory: {
     src: "/music/victory_bgm.mp3",
-    gain: 1,
+    gain: 0.86,
   },
   defeat: {
     src: "/music/defeat_bgm.mp3",
-    gain: 1,
+    gain: 0.86,
   },
 };
 
 const audioCache: Partial<Record<AbilitySfxId, HTMLAudioElement>> = {};
 const uiAudioCache: Partial<Record<UiSfxId, HTMLAudioElement>> = {};
+const activeUiAudioCache: Partial<Record<UiSfxId, HTMLAudioElement>> = {};
 const abilityHowlCache: Partial<Record<AbilitySfxId, Howl>> = {};
-const uiHowlCache: Partial<Record<UiSfxId, Howl>> = {};
-const activeUiSfxIds: Partial<Record<UiSfxId, number>> = {};
 const bgmCache: Partial<
-  Record<BgmTrackId, { howl: Howl; soundId: number | null }>
+  Record<BgmTrackId, { audio: HTMLAudioElement }>
 > = {};
 const segmentedLoopHandlers = new WeakMap<
   HTMLAudioElement,
@@ -210,26 +207,20 @@ export function resumeAudioContext(): void {
   }
 }
 
-function getBgm(trackId: BgmTrackId): {
-  howl: Howl;
-  soundId: number | null;
-} {
+function getBgm(trackId: BgmTrackId): { audio: HTMLAudioElement } | null {
   if (!bgmCache[trackId]) {
     const config = BGM_CONFIG[trackId];
+    const audio = new Audio(config.src);
+    audio.loop = true;
+    audio.preload = "auto";
+    audio.volume = getBgmTrackVolume(trackId);
+    audio.setAttribute("playsinline", "true");
     bgmCache[trackId] = {
-      howl: new Howl({
-        src: [config.src],
-        loop: true,
-        preload: true,
-        html5: false,
-        volume: bgmVolume * config.gain,
-      }),
-      soundId: null,
+      audio,
     };
-    ensureMasterCompressor();
   }
 
-  return bgmCache[trackId];
+  return bgmCache[trackId] ?? null;
 }
 
 function getSoundGainNode(howl: Howl, soundId: number): GainNode | null {
@@ -248,20 +239,7 @@ function getSoundGainNode(howl: Howl, soundId: number): GainNode | null {
 function setBgmTrackVolume(trackId: BgmTrackId): void {
   const bgm = bgmCache[trackId];
   if (!bgm) return;
-  const targetVolume = Math.max(0, Math.min(1, bgmVolume * BGM_CONFIG[trackId].gain));
-  if (bgm.soundId !== null && bgm.howl.playing(bgm.soundId)) {
-    const ctx = Howler.ctx;
-    const gainNode = ctx ? getSoundGainNode(bgm.howl, bgm.soundId) : null;
-    if (gainNode && ctx) {
-      // setTargetAtTime: 오디오 스레드 수준 지수 보간 → zipper noise 없음
-      gainNode.gain.cancelScheduledValues(ctx.currentTime);
-      gainNode.gain.setTargetAtTime(targetVolume, ctx.currentTime, 0.015);
-    } else {
-      bgm.howl.volume(targetVolume);
-    }
-  } else {
-    bgm.howl.volume(targetVolume);
-  }
+  bgm.audio.volume = getBgmTrackVolume(trackId);
 }
 
 function getBgmTrackVolume(trackId: BgmTrackId): number {
@@ -288,85 +266,32 @@ export function playBgmTrack(trackId: BgmTrackId): void {
     return;
   }
 
-  // Fade out every other track using Web Audio API scheduling (no setInterval zipper noise).
   (Object.keys(BGM_CONFIG) as BgmTrackId[]).forEach((otherTrackId) => {
     if (otherTrackId === trackId) return;
     const other = bgmCache[otherTrackId];
     if (!other) return;
-    if (other.soundId !== null && other.howl.playing(other.soundId)) {
-      const fadingSoundId = other.soundId;
-      other.soundId = null;
-      const fadeOutCtx = Howler.ctx;
-      const fadeOutGain = fadeOutCtx ? getSoundGainNode(other.howl, fadingSoundId) : null;
-      if (fadeOutGain && fadeOutCtx) {
-        const t = fadeOutCtx.currentTime;
-        fadeOutGain.gain.cancelScheduledValues(t);
-        fadeOutGain.gain.setValueAtTime(fadeOutGain.gain.value, t);
-        fadeOutGain.gain.linearRampToValueAtTime(0, t + BGM_FADE_OUT_MS / 1000);
-        window.setTimeout(() => other.howl.stop(fadingSoundId), BGM_FADE_OUT_MS + 30);
-      } else {
-        // AudioContext not ready — stop immediately rather than use setInterval fade.
-        other.howl.stop(fadingSoundId);
-      }
-    } else {
-      other.howl.stop();
-      other.soundId = null;
-    }
+    other.audio.pause();
+    other.audio.currentTime = 0;
   });
 
   const target = getBgm(trackId);
+  if (!target) return;
+  target.audio.volume = getBgmTrackVolume(trackId);
 
-  if (target.soundId !== null && target.howl.playing(target.soundId)) {
-    // Cancel any pending pause fade-out and restore volume (e.g. app returning to foreground)
-    const resumeCtx = Howler.ctx;
-    const resumeGain = resumeCtx ? getSoundGainNode(target.howl, target.soundId) : null;
-    if (resumeGain && resumeCtx) {
-      resumeGain.gain.cancelScheduledValues(resumeCtx.currentTime);
-      resumeGain.gain.setTargetAtTime(getBgmTrackVolume(trackId), resumeCtx.currentTime, 0.015);
-    }
+  if (!target.audio.paused) {
     return;
   }
 
-  if (target.soundId !== null) {
-    target.howl.stop(target.soundId);
-  }
-  const targetVolume = getBgmTrackVolume(trackId);
-  target.howl.volume(0);
-  target.soundId = target.howl.play();
-  const capturedSoundId = target.soundId;
-  const tryBgmFadeIn = (attempt: number) => {
-    const ctx = Howler.ctx;
-    const gainNode = ctx ? getSoundGainNode(target.howl, capturedSoundId) : null;
-    if (gainNode && ctx) {
-      gainNode.gain.cancelScheduledValues(ctx.currentTime);
-      gainNode.gain.setValueAtTime(0, ctx.currentTime);
-      gainNode.gain.linearRampToValueAtTime(targetVolume, ctx.currentTime + BGM_FADE_IN_MS / 1000);
-    } else if (attempt < 8) {
-      // AudioContext not ready yet — retry next frame (unlocks after first user gesture).
-      requestAnimationFrame(() => tryBgmFadeIn(attempt + 1));
-    } else {
-      // Still no context after retries — set volume directly (one click, but no zipper).
-      target.howl.volume(targetVolume, capturedSoundId);
-    }
-  };
-  tryBgmFadeIn(0);
+  void target.audio.play().catch(() => {
+    // Mobile WebView may require the first user gesture before BGM can start.
+  });
 }
 
 export function pauseAllBgm(): void {
   (Object.keys(BGM_CONFIG) as BgmTrackId[]).forEach((trackId) => {
     const bgm = bgmCache[trackId];
-    if (!bgm || bgm.soundId === null || !bgm.howl.playing(bgm.soundId)) return;
-    const soundId = bgm.soundId;
-    const ctx = Howler.ctx;
-    const gainNode = ctx ? getSoundGainNode(bgm.howl, soundId) : null;
-    if (gainNode && ctx) {
-      // Ramp to 0 before pausing to prevent click noise at abrupt cutoff
-      gainNode.gain.cancelScheduledValues(ctx.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.02);
-      window.setTimeout(() => bgm.howl.pause(soundId), 25);
-    } else {
-      bgm.howl.pause(soundId);
-    }
+    if (!bgm) return;
+    bgm.audio.pause();
   });
 }
 
@@ -374,15 +299,19 @@ export function stopAllBgm(): void {
   (Object.keys(BGM_CONFIG) as BgmTrackId[]).forEach((trackId) => {
     const bgm = bgmCache[trackId];
     if (!bgm) return;
-    bgm.howl.stop();
-    bgm.soundId = null;
+    bgm.audio.pause();
+    bgm.audio.currentTime = 0;
   });
 }
 
 export function unloadBgm(): void {
   stopAllBgm();
   (Object.keys(BGM_CONFIG) as BgmTrackId[]).forEach((trackId) => {
-    bgmCache[trackId]?.howl.unload();
+    const bgm = bgmCache[trackId];
+    if (bgm) {
+      bgm.audio.removeAttribute("src");
+      bgm.audio.load();
+    }
     delete bgmCache[trackId];
   });
 }
@@ -535,68 +464,31 @@ function getUiAudio(id: UiSfxId): HTMLAudioElement | null {
   }
 }
 
-function getUiHowl(id: UiSfxId): Howl | null {
-  try {
-    if (!uiHowlCache[id]) {
-      const config = UI_SFX[id];
-      uiHowlCache[id] = new Howl({
-        src: [config.path],
-        loop: false,
-        preload: true,
-        html5: false,
-        volume: Math.max(0, Math.min(1, config.gain)),
-      });
-      ensureMasterCompressor();
-    }
-    return uiHowlCache[id] ?? null;
-  } catch {
-    return null;
-  }
-}
-
 function playUiSfx(
   id: UiSfxId,
   volume = 0.55,
   options?: { stopPrevious?: boolean },
 ): void {
   try {
-    const howl = getUiHowl(id);
-    if (howl) {
-      const targetVol = Math.max(0, Math.min(1, volume * UI_SFX[id].gain));
-      if (options?.stopPrevious && activeUiSfxIds[id] !== undefined) {
-        howl.stop(activeUiSfxIds[id]);
-        activeUiSfxIds[id] = undefined;
-      }
-      // Start at 0 so Howler schedules setValueAtTime(0) on the new sound,
-      // then ramp up on that specific sound's gain node to avoid click noise.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (howl as any)._volume = 0;
-      const uiSoundId = howl.play();
-      activeUiSfxIds[id] = uiSoundId;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (howl as any)._volume = targetVol;
-      const tryUiSfxRamp = (attempt: number) => {
-        const uiCtx = Howler.ctx;
-        const uiGain = uiCtx ? getSoundGainNode(howl, uiSoundId) : null;
-        if (uiGain && uiCtx) {
-          const t = uiCtx.currentTime;
-          uiGain.gain.setValueAtTime(0, t);
-          uiGain.gain.linearRampToValueAtTime(targetVol, t + 0.005);
-        } else if (attempt < 5) {
-          requestAnimationFrame(() => tryUiSfxRamp(attempt + 1));
-        } else {
-          howl.volume(targetVol, uiSoundId);
-        }
-      };
-      tryUiSfxRamp(0);
-      return;
-    }
-
     const baseAudio = getUiAudio(id);
     if (!baseAudio) return;
+    if (options?.stopPrevious) {
+      activeUiAudioCache[id]?.pause();
+      activeUiAudioCache[id] = undefined;
+    }
     const audio = baseAudio.cloneNode(true) as HTMLAudioElement;
     audio.loop = false;
     audio.volume = Math.max(0, Math.min(1, volume * UI_SFX[id].gain));
+    activeUiAudioCache[id] = audio;
+    audio.addEventListener(
+      "ended",
+      () => {
+        if (activeUiAudioCache[id] === audio) {
+          activeUiAudioCache[id] = undefined;
+        }
+      },
+      { once: true },
+    );
     void audio.play().catch(() => {
       // Playback can fail if browser blocks audio; ignore.
     });
@@ -622,7 +514,13 @@ export function preloadAbilitySfxAssets(): void {
   }
 
   for (const id of Object.keys(UI_SFX) as UiSfxId[]) {
-    getUiHowl(id);
+    const audio = getUiAudio(id);
+    if (!audio) continue;
+    try {
+      audio.load();
+    } catch {
+      // Ignore browsers that reject manual load hints.
+    }
   }
 }
 
