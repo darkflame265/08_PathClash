@@ -80,7 +80,10 @@ import type {
   RoundStartPayload,
 } from "../../types/game.types";
 
-import { ABILITY_SKILLS, type AbilitySkillId } from "../../types/ability.types";
+import {
+  ABILITY_SKILLS,
+  type AbilitySkillId,
+} from "../../types/ability.types_bak";
 
 import "./LobbyScreen.css";
 
@@ -771,22 +774,24 @@ export function LobbyScreen({
   const termsUrl = lang === "en" ? TERMS_URL_EN : TERMS_URL_KR;
 
   const [view, setView] = useState<LobbyView>("main");
-  const [selectedLobbyMode, setSelectedLobbyMode] = useState<LobbyModeKey>(() => {
-    if (typeof window === "undefined") return "ai";
-    const saved = window.localStorage.getItem(LAST_LOBBY_MODE_KEY);
-    const nextMode =
-      saved === "ai" ||
-      saved === "friend" ||
-      saved === "random" ||
-      saved === "coop" ||
-      saved === "2v2" ||
-      saved === "ability" ||
-      saved === "classic_ranked" ||
-      saved === "skill_ranked"
-      ? saved
-      : "ai";
-    return DISABLED_LOBBY_MODES.has(nextMode) ? "ai" : nextMode;
-  });
+  const [selectedLobbyMode, setSelectedLobbyMode] = useState<LobbyModeKey>(
+    () => {
+      if (typeof window === "undefined") return "ai";
+      const saved = window.localStorage.getItem(LAST_LOBBY_MODE_KEY);
+      const nextMode =
+        saved === "ai" ||
+        saved === "friend" ||
+        saved === "random" ||
+        saved === "coop" ||
+        saved === "2v2" ||
+        saved === "ability" ||
+        saved === "classic_ranked" ||
+        saved === "skill_ranked"
+          ? saved
+          : "ai";
+      return DISABLED_LOBBY_MODES.has(nextMode) ? "ai" : nextMode;
+    },
+  );
 
   const [joinCode, setJoinCode] = useState("");
   const [friendBattleMode, setFriendBattleMode] =
@@ -958,10 +963,8 @@ export function LobbyScreen({
 
   const twoVsTwoTitle = "2v2";
 
-  const friendClassicTabLabel =
-    lang === "en" ? "Classic" : "클래식";
-  const friendAbilityTabLabel =
-    lang === "en" ? "Ability Battle" : "능력대전";
+  const friendClassicTabLabel = lang === "en" ? "Classic" : "클래식";
+  const friendAbilityTabLabel = lang === "en" ? "Ability Battle" : "능력대전";
   const friendModeToggleLabel =
     friendBattleMode === "classic"
       ? friendAbilityTabLabel
@@ -992,8 +995,7 @@ export function LobbyScreen({
   const twoVsTwoStartLabel = lang === "en" ? "Start Match" : "매칭 시작";
 
   const abilityBattleTitle = lang === "en" ? "Ability Battle" : "능력 대전";
-  const classicRankedTitle =
-    lang === "en" ? "Classic Ranked" : "클래식 랭크전";
+  const classicRankedTitle = lang === "en" ? "Classic Ranked" : "클래식 랭크전";
   const skillRankedTitle = lang === "en" ? "Skill Ranked" : "스킬 랭크전";
   const rankedComingSoonDesc =
     lang === "en" ? "Coming soon." : "아직 준비중입니다.";
@@ -1141,8 +1143,7 @@ export function LobbyScreen({
       : "게임을 시작하기 전에 사용할 닉네임을 정해주세요. 처음 한 번은 무료로 설정할 수 있습니다.";
   const initialNicknamePlaceholder =
     lang === "en" ? "Enter your nickname" : "닉네임을 입력하세요";
-  const initialNicknameConfirmLabel =
-    lang === "en" ? "Confirm" : "확인";
+  const initialNicknameConfirmLabel = lang === "en" ? "Confirm" : "확인";
 
   const audioModalTitle = lang === "en" ? "Audio Settings" : "오디오 설정";
 
@@ -1267,7 +1268,6 @@ export function LobbyScreen({
         lang === "en"
           ? "A small boost to start saving toward token skins"
           : "토큰 스킨 구매를 위한 첫 저축용 구성",
-
     },
 
     {
@@ -1283,7 +1283,6 @@ export function LobbyScreen({
         lang === "en"
           ? "A light pack for your first token skin"
           : "첫 토큰 스킨 구매에 맞는 가벼운 구성",
-
     },
 
     {
@@ -1299,7 +1298,6 @@ export function LobbyScreen({
         lang === "en"
           ? "A solid bundle for expanding your collection"
           : "수집 범위를 넓히기 좋은 실속형 구성",
-
     },
 
     {
@@ -1315,7 +1313,6 @@ export function LobbyScreen({
         lang === "en"
           ? "Built for picking up higher-tier token skins"
           : "상위 토큰 스킨 확보에 좋은 구성",
-
     },
 
     {
@@ -1331,7 +1328,6 @@ export function LobbyScreen({
         lang === "en"
           ? "The premium bundle for legendary skins and boards"
           : "레전더리 스킨과 보드까지 노릴 수 있는 최상위 구성",
-
     },
   ];
 
@@ -1553,7 +1549,10 @@ export function LobbyScreen({
 
       name: lang === "en" ? "Hexagon" : "헥사곤",
 
-      desc: lang === "en" ? "Hexagonal reactor core with layered rotating rings." : "육각형 리액터 코어와 다층 회전 링.",
+      desc:
+        lang === "en"
+          ? "Hexagonal reactor core with layered rotating rings."
+          : "육각형 리액터 코어와 다층 회전 링.",
 
       requiredWins: null,
 
@@ -1994,7 +1993,7 @@ export function LobbyScreen({
 
   const hasAbilitySkinUnlocked = (skinId: PieceSkin) => {
     if (skinId === "classic") return true;
-        
+
     if (skinId === "ember") return accountWins >= 10;
 
     if (skinId === "nova") return accountWins >= 50;
@@ -2794,8 +2793,7 @@ export function LobbyScreen({
   ) => ({
     ...(await buildPlayerPayloadFromProfile(profile)),
     equippedSkills:
-      profile?.equippedAbilitySkills ??
-      useGameStore.getState().abilityLoadout,
+      profile?.equippedAbilitySkills ?? useGameStore.getState().abilityLoadout,
   });
 
   const handleCreateRoom = async () => {
@@ -3491,7 +3489,11 @@ export function LobbyScreen({
       choice.tokenPrice !== undefined &&
       !isOwned &&
       accountTokens < choice.tokenPrice;
-    const applied = await handleBoardSkinSelect(choice, lockedByTokens, isOwned);
+    const applied = await handleBoardSkinSelect(
+      choice,
+      lockedByTokens,
+      isOwned,
+    );
     if (applied) {
       setSkinDetail(null);
     }
@@ -3887,22 +3889,32 @@ export function LobbyScreen({
         </div>
       </div>
 
-      <div className={`lobby-card mode-content-card${accountSummaryLoading ? " is-db-loading" : ""}`}>
+      <div
+        className={`lobby-card mode-content-card${accountSummaryLoading ? " is-db-loading" : ""}`}
+      >
         {renderSelectedModeContent()}
       </div>
 
-      {upgradeFlowLoading && !pendingUpgradeSwitchProfile && !showUpgradeNotice && (
-        <div className="upgrade-flow-overlay" role="status" aria-live="polite">
-          <div className="upgrade-flow-panel">
-            <div className="spinner upgrade-flow-spinner" />
-            <p>{upgradeFlowLoadingLabel}</p>
+      {upgradeFlowLoading &&
+        !pendingUpgradeSwitchProfile &&
+        !showUpgradeNotice && (
+          <div
+            className="upgrade-flow-overlay"
+            role="status"
+            aria-live="polite"
+          >
+            <div className="upgrade-flow-panel">
+              <div className="spinner upgrade-flow-spinner" />
+              <p>{upgradeFlowLoadingLabel}</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {pendingUpgradeSwitchProfile && (
         <UpgradeSwitchConfirmDialog
-          message={buildExistingAccountSwitchPrompt(pendingUpgradeSwitchProfile)}
+          message={buildExistingAccountSwitchPrompt(
+            pendingUpgradeSwitchProfile,
+          )}
           isSubmitting={isResolvingUpgradeDecision}
           onConfirm={() => void handleConfirmUpgradeSwitch()}
           onCancel={() => void handleCancelUpgradeSwitch()}
@@ -3958,7 +3970,11 @@ export function LobbyScreen({
 
             <p>{skinModalDesc}</p>
 
-            <div className="skin-picker-tabs" role="tablist" aria-label={skinModalTitle}>
+            <div
+              className="skin-picker-tabs"
+              role="tablist"
+              aria-label={skinModalTitle}
+            >
               <button
                 className={`skin-picker-tab ${skinPickerTab === "piece" ? "is-active" : ""}`}
                 onClick={() => setSkinPickerTab("piece")}
@@ -4042,7 +4058,8 @@ export function LobbyScreen({
                 {boardSkinChoices.map((choice) => {
                   const isOwned = isBoardSkinUnlocked(choice);
                   const isVisualUnlocked =
-                    choice.id === "classic" || ownedBoardSkins.includes(choice.id);
+                    choice.id === "classic" ||
+                    ownedBoardSkins.includes(choice.id);
 
                   return (
                     <button
@@ -4105,9 +4122,7 @@ export function LobbyScreen({
             </div>
 
             <div className="skin-detail-body">
-              <h3 className="skin-detail-title">
-                {skinDetail.choice.name}
-              </h3>
+              <h3 className="skin-detail-title">{skinDetail.choice.name}</h3>
 
               {skinDetail.tab === "piece" ? (
                 (() => {
@@ -4207,7 +4222,9 @@ export function LobbyScreen({
                             choice.tokenPrice !== undefined &&
                             !isOwned &&
                             accountTokens < choice.tokenPrice;
-                          return lockedByWins || lockedByPlays || lockedByTokens;
+                          return (
+                            lockedByWins || lockedByPlays || lockedByTokens
+                          );
                         })()
                       : (() => {
                           const choice = skinDetail.choice;
@@ -4695,7 +4712,9 @@ export function LobbyScreen({
                 <div className="settings-row">
                   <span className="settings-label">{accountTypeLabel}</span>
                   <div className="settings-inline-action">
-                    <strong className="settings-value">{accountTypeValue}</strong>
+                    <strong className="settings-value">
+                      {accountTypeValue}
+                    </strong>
                     <button
                       className="settings-copy-btn"
                       type="button"
@@ -5126,4 +5145,3 @@ function UpgradeSwitchConfirmDialog({
     </div>
   );
 }
-

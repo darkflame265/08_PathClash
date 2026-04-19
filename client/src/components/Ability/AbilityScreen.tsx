@@ -40,7 +40,7 @@ import {
   type AbilitySkillId,
   type AbilitySkillReservation,
   type AbilityTrapTile,
-} from "../../types/ability.types";
+} from "../../types/ability.types_bak";
 import { AbilityGrid } from "./AbilityGrid";
 import "../Game/GameScreen.css";
 import "../Game/GameGrid.css";
@@ -286,7 +286,7 @@ function getSkillPriority(skillId: AbilitySkillId): number {
       ? 1
       : ABILITY_SKILLS[skillId].category === "passive"
         ? 3
-      : 2;
+        : 2;
 }
 
 function useAdaptiveCellSize(
@@ -1839,10 +1839,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         ].filter((position, index, array) => {
           if (index === 0) return true;
           const prev = array[index - 1];
-          return !(
-            prev.row === position.row &&
-            prev.col === position.col
-          );
+          return !(prev.row === position.row && prev.col === position.col);
         });
         const movementTrail = trail.slice(1);
         setTimeRewindFocusColor(event.color);
@@ -1892,65 +1889,72 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           }
 
           for (let index = 0; index < totalTicks; index += 1) {
-            queueAnimationTimeout(() => {
-              const nextPos =
-                movementTrail[index] ??
-                movementTrail[movementTrail.length - 1] ??
-                rewindTarget;
+            queueAnimationTimeout(
+              () => {
+                const nextPos =
+                  movementTrail[index] ??
+                  movementTrail[movementTrail.length - 1] ??
+                  rewindTarget;
 
+                setState((prev) => {
+                  if (!prev) return prev;
+                  const nextHp = Math.min(
+                    rewindHp,
+                    prev.players[event.color].hp +
+                      (index < rewindHp - currentHp ? 1 : 0),
+                  );
+                  return {
+                    ...prev,
+                    players: {
+                      ...prev.players,
+                      [event.color]: {
+                        ...prev.players[event.color],
+                        position: nextPos,
+                        hp: nextHp,
+                      },
+                    },
+                  };
+                });
+
+                if (event.color === "red") {
+                  setRedDisplayPos(nextPos);
+                } else {
+                  setBlueDisplayPos(nextPos);
+                }
+              },
+              (index + 1) * TIME_REWIND_HP_STEP_MS,
+            );
+          }
+
+          queueAnimationTimeout(
+            () => {
+              stopChronosRewindLoop();
               setState((prev) => {
                 if (!prev) return prev;
-                const nextHp = Math.min(
-                  rewindHp,
-                  prev.players[event.color].hp + (index < rewindHp - currentHp ? 1 : 0),
-                );
                 return {
                   ...prev,
                   players: {
                     ...prev.players,
                     [event.color]: {
                       ...prev.players[event.color],
-                      position: nextPos,
-                      hp: nextHp,
+                      position: rewindTarget,
+                      hp: rewindHp,
                     },
                   },
                 };
               });
-
               if (event.color === "red") {
-                setRedDisplayPos(nextPos);
+                setRedDisplayPos(rewindTarget);
               } else {
-                setBlueDisplayPos(nextPos);
+                setBlueDisplayPos(rewindTarget);
               }
-            }, (index + 1) * TIME_REWIND_HP_STEP_MS);
-          }
-
-          queueAnimationTimeout(() => {
-            stopChronosRewindLoop();
-            setState((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                players: {
-                  ...prev.players,
-                  [event.color]: {
-                    ...prev.players[event.color],
-                    position: rewindTarget,
-                    hp: rewindHp,
-                  },
-                },
-              };
-            });
-            if (event.color === "red") {
-              setRedDisplayPos(rewindTarget);
-            } else {
-              setBlueDisplayPos(rewindTarget);
-            }
-            setRewindingPieceColor(null);
-            setTimeRewindFocusColor(null);
-            setAbilityBanner(null);
-            done();
-          }, totalTicks * TIME_REWIND_HP_STEP_MS + 40);
+              setRewindingPieceColor(null);
+              setTimeRewindFocusColor(null);
+              setAbilityBanner(null);
+              done();
+            },
+            totalTicks * TIME_REWIND_HP_STEP_MS + 40,
+          );
         }, TIME_REWIND_FREEZE_MS);
         return;
       }
@@ -2763,10 +2767,24 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         ? "board-bg-magic-screen"
         : "";
   const overdriveTurn = me.overdriveActive;
-  const chargeReservedNonOverdrive = !overdriveTurn && skillReservations.some(e => e.skillId === "plasma_charge");
-  const bigBangReservation = !overdriveTurn ? skillReservations.find(e => e.skillId === "cosmic_bigbang") : undefined;
-  const guardReserved = !overdriveTurn && skillReservations.some(e => e.skillId === "classic_guard");
-  const effectivePathPoints = me.reboundLocked ? 0 : bigBangReservation ? bigBangReservation.step : chargeReservedNonOverdrive ? 1 : guardReserved ? 0 : state.pathPoints;
+  const chargeReservedNonOverdrive =
+    !overdriveTurn &&
+    skillReservations.some((e) => e.skillId === "plasma_charge");
+  const bigBangReservation = !overdriveTurn
+    ? skillReservations.find((e) => e.skillId === "cosmic_bigbang")
+    : undefined;
+  const guardReserved =
+    !overdriveTurn &&
+    skillReservations.some((e) => e.skillId === "classic_guard");
+  const effectivePathPoints = me.reboundLocked
+    ? 0
+    : bigBangReservation
+      ? bigBangReservation.step
+      : chargeReservedNonOverdrive
+        ? 1
+        : guardReserved
+          ? 0
+          : state.pathPoints;
   const isTrainingMatch = opponent.nickname === "Training Dummy";
   const rewardTokens =
     winner &&
@@ -2824,9 +2842,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   };
 
   return (
-    <div
-      className={`game-screen ability-screen ${screenBoardClass}`}
-    >
+    <div className={`game-screen ability-screen ${screenBoardClass}`}>
       <div className="gs-utility-bar">
         <div className="gs-timer-slot">
           {state.phase === "planning" && roundInfo && (

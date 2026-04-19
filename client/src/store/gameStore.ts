@@ -1,31 +1,37 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 import type {
-  ClientGameState, PlayerColor, Position,
-  CollisionEvent, ChatMessage, PathsRevealPayload,
-  RoundStartPayload, PieceSkin, BoardSkin,
-} from '../types/game.types';
+  ClientGameState,
+  PlayerColor,
+  Position,
+  CollisionEvent,
+  ChatMessage,
+  PathsRevealPayload,
+  RoundStartPayload,
+  PieceSkin,
+  BoardSkin,
+} from "../types/game.types";
 import type {
   TwoVsTwoResolutionPayload,
   TwoVsTwoSlot,
-} from '../types/twovtwo.types';
+} from "../types/twovtwo.types";
 import {
   normalizeAbilityLoadout,
   type AbilitySkillId,
-} from '../types/ability.types';
-import { type Lang } from '../i18n/translations';
+} from "../types/ability.types_bak";
+import { type Lang } from "../i18n/translations";
 
 function resolveInitialLang(): Lang {
-  const stored = localStorage.getItem('lang');
-  if (stored === 'en' || stored === 'kr') {
+  const stored = localStorage.getItem("lang");
+  if (stored === "en" || stored === "kr") {
     return stored;
   }
 
   const locale =
     (Array.isArray(navigator.languages) && navigator.languages[0]) ||
     navigator.language ||
-    'en';
+    "en";
 
-  return locale.toLowerCase().startsWith('ko') ? 'kr' : 'en';
+  return locale.toLowerCase().startsWith("ko") ? "kr" : "en";
 }
 
 export interface AnimationState {
@@ -71,7 +77,14 @@ interface GameStore {
     completedAt: string | null;
     claimedAt: string | null;
   }>;
-  currentMatchType: "friend" | "random" | "ai" | "coop" | "2v2" | "ability" | null;
+  currentMatchType:
+    | "friend"
+    | "random"
+    | "ai"
+    | "coop"
+    | "2v2"
+    | "ability"
+    | null;
   twoVsTwoSlot: "red_top" | "red_bottom" | "blue_top" | "blue_bottom" | null;
   abilityLoadout: AbilitySkillId[];
 
@@ -148,8 +161,12 @@ interface GameStore {
   setAccountSummaryLoading: (loading: boolean) => void;
   setMyColor: (c: PlayerColor) => void;
   setRoomCode: (c: string) => void;
-  setMatchType: (matchType: "friend" | "random" | "ai" | "coop" | "2v2" | "ability" | null) => void;
-  setTwoVsTwoSlot: (slot: "red_top" | "red_bottom" | "blue_top" | "blue_bottom" | null) => void;
+  setMatchType: (
+    matchType: "friend" | "random" | "ai" | "coop" | "2v2" | "ability" | null,
+  ) => void;
+  setTwoVsTwoSlot: (
+    slot: "red_top" | "red_bottom" | "blue_top" | "blue_bottom" | null,
+  ) => void;
   setAbilityLoadout: (skills: AbilitySkillId[]) => void;
   setGameState: (gs: ClientGameState) => void;
   setRoundInfo: (r: RoundStartPayload) => void;
@@ -161,7 +178,9 @@ interface GameStore {
   startTwoVsTwoAnimation: (payload: TwoVsTwoResolutionPayload) => void;
   advanceTwoVsTwoStep: () => void;
   finishTwoVsTwoAnimation: () => void;
-  setTwoVsTwoDisplayPositions: (positions: Record<TwoVsTwoSlot, Position> | null) => void;
+  setTwoVsTwoDisplayPositions: (
+    positions: Record<TwoVsTwoSlot, Position> | null,
+  ) => void;
   triggerHit: (color: PlayerColor) => void;
   triggerHeartShake: (color: PlayerColor, hpIndex: number) => void;
   triggerCollisionEffect: (pos: Position) => void;
@@ -185,12 +204,12 @@ interface GameStore {
 
 const INITIAL_RED: Position = { row: 2, col: 0 };
 const INITIAL_BLUE: Position = { row: 2, col: 4 };
-const AUDIO_PREFS_KEY = 'audioPrefs';
+const AUDIO_PREFS_KEY = "audioPrefs";
 const AUDIO_PREFS_VERSION = 2;
 const DEFAULT_MUSIC_VOLUME = 0.85;
 const DEFAULT_SFX_VOLUME = 0.85;
-const PIECE_SKIN_KEY = 'pieceSkin';
-const BOARD_SKIN_KEY = 'boardSkin';
+const PIECE_SKIN_KEY = "pieceSkin";
+const BOARD_SKIN_KEY = "boardSkin";
 
 function normalizeStoredAudioVolume(
   value: unknown,
@@ -198,7 +217,7 @@ function normalizeStoredAudioVolume(
   shouldBoostLegacyValue: boolean,
 ) {
   const normalized =
-    typeof value === 'number' ? Math.max(0, Math.min(1, value)) : fallback;
+    typeof value === "number" ? Math.max(0, Math.min(1, value)) : fallback;
   return shouldBoostLegacyValue ? Math.max(normalized, fallback) : normalized;
 }
 
@@ -263,42 +282,42 @@ const hitTimeouts: Partial<Record<PlayerColor, number>> = {};
 const heartShakeTimeouts: Partial<Record<PlayerColor, number>> = {};
 const initialPieceSkin = (() => {
   const stored = localStorage.getItem(PIECE_SKIN_KEY);
-  return stored === 'ember' ||
-    stored === 'nova' ||
-    stored === 'aurora' ||
-    stored === 'void' ||
-    stored === 'plasma' ||
-    stored === 'gold_core' ||
-    stored === 'neon_pulse' ||
-    stored === 'cosmic' ||
-    stored === 'inferno' ||
-    stored === 'arc_reactor' ||
-    stored === 'electric_core' ||
-    stored === 'quantum' ||
-    stored === 'atomic' ||
-    stored === 'chronos' ||
-    stored === 'wizard' ||
-    stored === 'sun' ||
-    stored === 'flag_kr' ||
-    stored === 'flag_jp' ||
-    stored === 'flag_cn' ||
-    stored === 'flag_us' ||
-    stored === 'flag_uk'
+  return stored === "ember" ||
+    stored === "nova" ||
+    stored === "aurora" ||
+    stored === "void" ||
+    stored === "plasma" ||
+    stored === "gold_core" ||
+    stored === "neon_pulse" ||
+    stored === "cosmic" ||
+    stored === "inferno" ||
+    stored === "arc_reactor" ||
+    stored === "electric_core" ||
+    stored === "quantum" ||
+    stored === "atomic" ||
+    stored === "chronos" ||
+    stored === "wizard" ||
+    stored === "sun" ||
+    stored === "flag_kr" ||
+    stored === "flag_jp" ||
+    stored === "flag_cn" ||
+    stored === "flag_us" ||
+    stored === "flag_uk"
     ? stored
-    : 'classic';
+    : "classic";
 })();
 const initialBoardSkin = (() => {
   const stored = localStorage.getItem(BOARD_SKIN_KEY);
-  return stored === 'blue_gray' || stored === 'pharaoh' || stored === 'magic'
+  return stored === "blue_gray" || stored === "pharaoh" || stored === "magic"
     ? stored
-    : 'classic';
+    : "classic";
 })();
-const initialAbilityLoadout = ['classic_guard'] as AbilitySkillId[];
+const initialAbilityLoadout = ["classic_guard"] as AbilitySkillId[];
 
 export const useGameStore = create<GameStore>((set, get) => ({
-  myNickname: '',
+  myNickname: "",
   myColor: null,
-  roomCode: '',
+  roomCode: "",
   authReady: false,
   accountSummaryLoading: false,
   authUserId: null,
@@ -342,12 +361,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   playerPieceSkins: null,
   lang: resolveInitialLang(),
   setLang: (lang: Lang) => {
-    localStorage.setItem('lang', lang);
+    localStorage.setItem("lang", lang);
     set({ lang });
   },
 
   setNickname: (n) => set({ myNickname: n }),
-  setAccountSummaryLoading: (loading) => set({ accountSummaryLoading: loading }),
+  setAccountSummaryLoading: (loading) =>
+    set({ accountSummaryLoading: loading }),
   setAuthState: ({
     ready,
     userId,
@@ -428,42 +448,58 @@ export const useGameStore = create<GameStore>((set, get) => ({
       opponentSubmitted: false,
     })),
 
-  setRoundInfo: (r) => set({
-    roundInfo: r,
-    myPath: [],
-    opponentSubmitted: false,
-    gameState: get().gameState ? {
-      ...get().gameState!,
-      turn: r.turn,
-      phase: 'planning',
-      pathPoints: r.pathPoints,
-      obstacles: r.obstacles,
-      attackerColor: r.attackerColor,
-      players: {
-        ...get().gameState!.players,
-        red: { ...get().gameState!.players.red, position: r.redPosition, role: r.attackerColor === 'red' ? 'attacker' : 'escaper', pathSubmitted: false },
-        blue: { ...get().gameState!.players.blue, position: r.bluePosition, role: r.attackerColor === 'blue' ? 'attacker' : 'escaper', pathSubmitted: false },
-      },
-    } : null,
-    redDisplayPos: r.redPosition,
-    blueDisplayPos: r.bluePosition,
-  }),
+  setRoundInfo: (r) =>
+    set({
+      roundInfo: r,
+      myPath: [],
+      opponentSubmitted: false,
+      gameState: get().gameState
+        ? {
+            ...get().gameState!,
+            turn: r.turn,
+            phase: "planning",
+            pathPoints: r.pathPoints,
+            obstacles: r.obstacles,
+            attackerColor: r.attackerColor,
+            players: {
+              ...get().gameState!.players,
+              red: {
+                ...get().gameState!.players.red,
+                position: r.redPosition,
+                role: r.attackerColor === "red" ? "attacker" : "escaper",
+                pathSubmitted: false,
+              },
+              blue: {
+                ...get().gameState!.players.blue,
+                position: r.bluePosition,
+                role: r.attackerColor === "blue" ? "attacker" : "escaper",
+                pathSubmitted: false,
+              },
+            },
+          }
+        : null,
+      redDisplayPos: r.redPosition,
+      blueDisplayPos: r.bluePosition,
+    }),
 
   setMyPath: (p) => set({ myPath: p }),
   setOpponentSubmitted: (v) => set({ opponentSubmitted: v }),
 
-  startAnimation: (payload) => set({
-    animation: {
-      isAnimating: true,
-      redPath: payload.redPath,
-      bluePath: payload.bluePath,
-      redStart: payload.redStart,
-      blueStart: payload.blueStart,
-      collisions: payload.collisions,
-      currentStep: 0,
-    },
-    gameState: get().gameState ? { ...get().gameState!, phase: 'moving' } : null,
-  }),
+  startAnimation: (payload) =>
+    set({
+      animation: {
+        isAnimating: true,
+        redPath: payload.redPath,
+        bluePath: payload.bluePath,
+        redStart: payload.redStart,
+        blueStart: payload.blueStart,
+        collisions: payload.collisions,
+        currentStep: 0,
+      },
+      gameState: get().gameState
+        ? { ...get().gameState!, phase: "moving" }
+        : null,
+    }),
 
   advanceStep: () => {
     const anim = get().animation;
@@ -487,15 +523,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
         : null,
     })),
 
-  startTwoVsTwoAnimation: (payload) => set({
-    twoVsTwoAnimation: {
-      isAnimating: true,
-      paths: payload.paths,
-      starts: payload.starts,
-      currentStep: 0,
-    },
-    twoVsTwoDisplayPositions: payload.starts,
-  }),
+  startTwoVsTwoAnimation: (payload) =>
+    set({
+      twoVsTwoAnimation: {
+        isAnimating: true,
+        paths: payload.paths,
+        starts: payload.starts,
+        currentStep: 0,
+      },
+      twoVsTwoDisplayPositions: payload.starts,
+    }),
 
   advanceTwoVsTwoStep: () => {
     const anim = get().twoVsTwoAnimation;
@@ -513,11 +550,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
 
-  finishTwoVsTwoAnimation: () => set({
-    twoVsTwoAnimation: null,
-  }),
+  finishTwoVsTwoAnimation: () =>
+    set({
+      twoVsTwoAnimation: null,
+    }),
 
-  setTwoVsTwoDisplayPositions: (positions) => set({ twoVsTwoDisplayPositions: positions }),
+  setTwoVsTwoDisplayPositions: (positions) =>
+    set({ twoVsTwoDisplayPositions: positions }),
 
   triggerHit: (color) => {
     const prevTimeout = hitTimeouts[color];
@@ -545,8 +584,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   triggerCollisionEffect: (pos) => {
     const id = Date.now();
-    set({ collisionEffects: [...get().collisionEffects, { id, position: pos }] });
-    setTimeout(() => set({ collisionEffects: get().collisionEffects.filter(e => e.id !== id) }), 600);
+    set({
+      collisionEffects: [...get().collisionEffects, { id, position: pos }],
+    });
+    setTimeout(
+      () =>
+        set({
+          collisionEffects: get().collisionEffects.filter((e) => e.id !== id),
+        }),
+      600,
+    );
   },
 
   triggerExplosion: (color) => {
@@ -627,51 +674,52 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setPlayerPieceSkin: (color, skin) =>
     set((state) => ({
       playerPieceSkins: {
-        red: state.playerPieceSkins?.red ?? 'classic',
-        blue: state.playerPieceSkins?.blue ?? 'classic',
+        red: state.playerPieceSkins?.red ?? "classic",
+        blue: state.playerPieceSkins?.blue ?? "classic",
         [color]: skin,
       },
     })),
 
-  resetGame: () => set({
-    authReady: get().authReady,
-    authUserId: get().authUserId,
-    authAccessToken: get().authAccessToken,
-    isGuestUser: get().isGuestUser,
-    accountWins: get().accountWins,
-    accountLosses: get().accountLosses,
-    accountTokens: get().accountTokens,
-    accountAchievements: get().accountAchievements,
-    myNickname: get().myNickname,
-    pieceSkin: get().pieceSkin,
-    boardSkin: get().boardSkin,
-    playerPieceSkins: null,
-    myColor: null,
-    roomCode: '',
-    currentMatchType: null,
-    twoVsTwoSlot: null,
-    abilityLoadout: get().abilityLoadout,
-    gameState: null,
-    myPath: [],
-    opponentSubmitted: false,
-    roundInfo: null,
-    animation: null,
-    twoVsTwoAnimation: null,
-    redDisplayPos: INITIAL_RED,
-    blueDisplayPos: INITIAL_BLUE,
-    twoVsTwoDisplayPositions: null,
-    hitEffect: { red: false, blue: false },
-    heartShake: { red: -1, blue: -1 },
-    collisionEffects: [],
-    explosionEffect: null,
-    winner: null,
-    gameOverMessage: null,
-    rematchRequested: false,
-    rematchRequestSent: false,
-    messages: [],
-    isSfxMuted: get().isSfxMuted,
-    isMusicMuted: get().isMusicMuted,
-    musicVolume: get().musicVolume,
-    sfxVolume: get().sfxVolume,
-  }),
+  resetGame: () =>
+    set({
+      authReady: get().authReady,
+      authUserId: get().authUserId,
+      authAccessToken: get().authAccessToken,
+      isGuestUser: get().isGuestUser,
+      accountWins: get().accountWins,
+      accountLosses: get().accountLosses,
+      accountTokens: get().accountTokens,
+      accountAchievements: get().accountAchievements,
+      myNickname: get().myNickname,
+      pieceSkin: get().pieceSkin,
+      boardSkin: get().boardSkin,
+      playerPieceSkins: null,
+      myColor: null,
+      roomCode: "",
+      currentMatchType: null,
+      twoVsTwoSlot: null,
+      abilityLoadout: get().abilityLoadout,
+      gameState: null,
+      myPath: [],
+      opponentSubmitted: false,
+      roundInfo: null,
+      animation: null,
+      twoVsTwoAnimation: null,
+      redDisplayPos: INITIAL_RED,
+      blueDisplayPos: INITIAL_BLUE,
+      twoVsTwoDisplayPositions: null,
+      hitEffect: { red: false, blue: false },
+      heartShake: { red: -1, blue: -1 },
+      collisionEffects: [],
+      explosionEffect: null,
+      winner: null,
+      gameOverMessage: null,
+      rematchRequested: false,
+      rematchRequestSent: false,
+      messages: [],
+      isSfxMuted: get().isSfxMuted,
+      isMusicMuted: get().isMusicMuted,
+      musicVolume: get().musicVolume,
+      sfxVolume: get().sfxVolume,
+    }),
 }));

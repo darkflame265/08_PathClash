@@ -1,12 +1,21 @@
-﻿import { useRef, useCallback, useEffect, useState } from 'react';
-import type { BoardSkin, PlayerColor, Position } from '../../types/game.types';
-import type { AbilityBattleState, AbilitySkillReservation, AbilityTrapTile } from '../../types/ability.types';
-import { useGameStore } from '../../store/gameStore';
-import { pixelToCell, isBlockedCell, isValidMove, posEqual } from '../../utils/pathUtils';
-import { playLobbyClick, playPathStepClick } from '../../utils/soundUtils';
-import { PlayerPiece } from '../Game/PlayerPiece';
-import { PathLine } from '../Game/PathLine';
-import { CollisionEffect } from '../Effects/CollisionEffect';
+﻿import { useRef, useCallback, useEffect, useState } from "react";
+import type { BoardSkin, PlayerColor, Position } from "../../types/game.types";
+import type {
+  AbilityBattleState,
+  AbilitySkillReservation,
+  AbilityTrapTile,
+} from "../../types/ability.types_bak";
+import { useGameStore } from "../../store/gameStore";
+import {
+  pixelToCell,
+  isBlockedCell,
+  isValidMove,
+  posEqual,
+} from "../../utils/pathUtils";
+import { playLobbyClick, playPathStepClick } from "../../utils/soundUtils";
+import { PlayerPiece } from "../Game/PlayerPiece";
+import { PathLine } from "../Game/PathLine";
+import { CollisionEffect } from "../Effects/CollisionEffect";
 
 interface Props {
   state: AbilityBattleState;
@@ -54,8 +63,18 @@ interface Props {
   movingBlitzSteps: { red: number | null; blue: number | null };
   activeSunChariots: { red: boolean; blue: boolean };
   movingAtomicClones: {
-    red: { start: Position | null; path: Position[]; step: number | null; position: Position | null };
-    blue: { start: Position | null; path: Position[]; step: number | null; position: Position | null };
+    red: {
+      start: Position | null;
+      path: Position[];
+      step: number | null;
+      position: Position | null;
+    };
+    blue: {
+      start: Position | null;
+      path: Position[];
+      step: number | null;
+      position: Position | null;
+    };
   };
   movingPaths: { red: Position[]; blue: Position[] };
   movingStarts: { red: Position; blue: Position } | null;
@@ -108,7 +127,7 @@ function buildBlitzBoltPoints(
       const direction = (index + phase) % 2 === 0 ? 1 : -1;
       return `${x + nx * amplitude * direction},${y + ny * amplitude * direction}`;
     })
-    .join(' ');
+    .join(" ");
 }
 
 export function AbilityGrid({
@@ -162,14 +181,19 @@ export function AbilityGrid({
   const boardSkin = useGameStore((store) => store.boardSkin);
   const shellRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const [boardSize, setBoardSize] = useState(cellSize * GRID_SIZE || DEFAULT_CELL_SIZE * GRID_SIZE);
+  const [boardSize, setBoardSize] = useState(
+    cellSize * GRID_SIZE || DEFAULT_CELL_SIZE * GRID_SIZE,
+  );
   const [hoveredCell, setHoveredCell] = useState<Position | null>(null);
-  const dragState = useRef<{ active: boolean; fromStart: boolean; fromEnd: boolean }>({
+  const dragState = useRef<{
+    active: boolean;
+    fromStart: boolean;
+    fromEnd: boolean;
+  }>({
     active: false,
     fromStart: false,
     fromEnd: false,
   });
-
 
   useEffect(() => {
     const element = shellRef.current;
@@ -202,45 +226,53 @@ export function AbilityGrid({
   };
 
   const teleportStep =
-    teleportReservation?.skillId === 'quantum_shift' ? teleportReservation.step : null;
+    teleportReservation?.skillId === "quantum_shift"
+      ? teleportReservation.step
+      : null;
   const teleportTarget =
-    teleportReservation?.skillId === 'quantum_shift' ? teleportReservation.target ?? null : null;
+    teleportReservation?.skillId === "quantum_shift"
+      ? (teleportReservation.target ?? null)
+      : null;
   const baseStart = state.players[currentColor].position;
   const myStart = previewStart;
   const obstacles = state.obstacles;
   const redSkin = state.players.red.pieceSkin;
   const blueSkin = state.players.blue.pieceSkin;
   const resolvedBoardSkin: BoardSkin =
-    state.players.red.boardSkin !== 'classic'
+    state.players.red.boardSkin !== "classic"
       ? state.players.red.boardSkin
-      : state.players.blue.boardSkin !== 'classic'
+      : state.players.blue.boardSkin !== "classic"
         ? state.players.blue.boardSkin
         : boardSkin;
   const boardSkinClass =
-    resolvedBoardSkin === 'blue_gray'
-      ? 'board-skin-blue-gray'
-      : resolvedBoardSkin === 'pharaoh'
-        ? 'board-skin-pharaoh'
-        : resolvedBoardSkin === 'magic'
-          ? 'board-skin-magic'
-        : '';
-  const getCellStyle = (row: number, col: number, blocked: boolean): React.CSSProperties => {
+    resolvedBoardSkin === "blue_gray"
+      ? "board-skin-blue-gray"
+      : resolvedBoardSkin === "pharaoh"
+        ? "board-skin-pharaoh"
+        : resolvedBoardSkin === "magic"
+          ? "board-skin-magic"
+          : "";
+  const getCellStyle = (
+    row: number,
+    col: number,
+    blocked: boolean,
+  ): React.CSSProperties => {
     const baseStyle: React.CSSProperties = {
       left: col * responsiveCellSize,
       top: row * responsiveCellSize,
       width: responsiveCellSize,
       height: responsiveCellSize,
-      ['--cell-size' as string]: `${responsiveCellSize}px`,
-      ['--magic-row' as string]: row,
-      ['--magic-col' as string]: col,
+      ["--cell-size" as string]: `${responsiveCellSize}px`,
+      ["--magic-row" as string]: row,
+      ["--magic-col" as string]: col,
     };
 
-    if (resolvedBoardSkin !== 'magic' && resolvedBoardSkin !== 'pharaoh') {
+    if (resolvedBoardSkin !== "magic" && resolvedBoardSkin !== "pharaoh") {
       return baseStyle;
     }
 
     const cellUrl =
-      resolvedBoardSkin === 'magic'
+      resolvedBoardSkin === "magic"
         ? `/board/magic-cells/magic-cell-${row}-${col}.svg`
         : `/board/pharaoh-cells/pharaoh-cell-${row}-${col}.svg`;
     return {
@@ -248,21 +280,27 @@ export function AbilityGrid({
       backgroundImage: blocked
         ? `linear-gradient(135deg, rgba(239, 68, 68, 0.16), rgba(248, 113, 113, 0.06)), url("${cellUrl}")`
         : `url("${cellUrl}")`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
     };
   };
   const redVisible =
-    !state.players.red.hidden || currentColor === 'red' || state.phase !== 'planning';
+    !state.players.red.hidden ||
+    currentColor === "red" ||
+    state.phase !== "planning";
   const blueVisible =
-    !state.players.blue.hidden || currentColor === 'blue' || state.phase !== 'planning';
+    !state.players.blue.hidden ||
+    currentColor === "blue" ||
+    state.phase !== "planning";
   const piecesOverlapped =
     redVisible &&
     blueVisible &&
     displayPositions.red.row === displayPositions.blue.row &&
     displayPositions.red.col === displayPositions.blue.col;
-  const redHpOffsetY = piecesOverlapped ? Math.max(18, Math.round(responsiveCellSize * 0.26)) : 0;
+  const redHpOffsetY = piecesOverlapped
+    ? Math.max(18, Math.round(responsiveCellSize * 0.26))
+    : 0;
 
   const getPlanningTailPosition = useCallback(
     (path: Position[]) => {
@@ -281,7 +319,11 @@ export function AbilityGrid({
   const getPlanningSecondLastPosition = useCallback(
     (path: Position[]) => {
       if (path.length < 2) return myStart;
-      if (teleportTarget && teleportStep !== null && path.length - 1 === teleportStep) {
+      if (
+        teleportTarget &&
+        teleportStep !== null &&
+        path.length - 1 === teleportStep
+      ) {
         return teleportTarget;
       }
       return path[path.length - 2];
@@ -309,11 +351,20 @@ export function AbilityGrid({
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (!canEditPath || !gridRef.current) return;
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
-      const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      const cell = pixelToCell(
+        e.clientX,
+        e.clientY,
+        responsiveCellSize,
+        getGridOffset(),
+      );
       if (!cell) return;
       setHoveredCell(cell);
-      if (teleportTargetsVisible || blitzTargetsVisible || infernoTargetsVisible) {
+      if (
+        teleportTargetsVisible ||
+        blitzTargetsVisible ||
+        infernoTargetsVisible
+      ) {
         const currentPos = state.players[currentColor].position;
         if (!posEqual(cell, currentPos)) return;
         if (teleportTargetsVisible) onTeleportCancel();
@@ -340,12 +391,29 @@ export function AbilityGrid({
       e.preventDefault();
       e.currentTarget.setPointerCapture(e.pointerId);
     },
-    [blitzTargetsVisible, canEditPath, currentColor, getPlanningTailPosition, infernoTargetsVisible, myPath, myStart, onTeleportCancel, responsiveCellSize, state.players, teleportTargetsVisible],
+    [
+      blitzTargetsVisible,
+      canEditPath,
+      currentColor,
+      getPlanningTailPosition,
+      infernoTargetsVisible,
+      myPath,
+      myStart,
+      onTeleportCancel,
+      responsiveCellSize,
+      state.players,
+      teleportTargetsVisible,
+    ],
   );
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      const cell = pixelToCell(e.clientX, e.clientY, responsiveCellSize, getGridOffset());
+      const cell = pixelToCell(
+        e.clientX,
+        e.clientY,
+        responsiveCellSize,
+        getGridOffset(),
+      );
       setHoveredCell(cell);
       if (!dragState.current.active || !canEditPath || !cell) return;
       const current = myPath;
@@ -361,22 +429,41 @@ export function AbilityGrid({
 
       if (dragState.current.fromStart || dragState.current.fromEnd) {
         const lastPos = getPlanningTailPosition(current);
-        if (!posEqual(cell, lastPos) && !isBlockedCell(cell, obstacles) && isValidMove(lastPos, cell) && current.length < pathPoints) {
+        if (
+          !posEqual(cell, lastPos) &&
+          !isBlockedCell(cell, obstacles) &&
+          isValidMove(lastPos, cell) &&
+          current.length < pathPoints
+        ) {
           playPathStepSfx();
           setMyPath([...current, cell]);
         }
       }
     },
-    [canEditPath, getPlanningSecondLastPosition, getPlanningTailPosition, myPath, obstacles, pathPoints, playPathStepSfx, removeFromPath, responsiveCellSize, setMyPath],
+    [
+      canEditPath,
+      getPlanningSecondLastPosition,
+      getPlanningTailPosition,
+      myPath,
+      obstacles,
+      pathPoints,
+      playPathStepSfx,
+      removeFromPath,
+      responsiveCellSize,
+      setMyPath,
+    ],
   );
 
-  const handlePointerEnd = useCallback((e?: React.PointerEvent<HTMLDivElement>) => {
-    if (e?.currentTarget.hasPointerCapture(e.pointerId)) {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    }
-    setHoveredCell(null);
-    dragState.current = { active: false, fromStart: false, fromEnd: false };
-  }, []);
+  const handlePointerEnd = useCallback(
+    (e?: React.PointerEvent<HTMLDivElement>) => {
+      if (e?.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+      setHoveredCell(null);
+      dragState.current = { active: false, fromStart: false, fromEnd: false };
+    },
+    [],
+  );
 
   const cells = Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, index) => ({
     row: Math.floor(index / GRID_SIZE),
@@ -384,24 +471,29 @@ export function AbilityGrid({
   }));
 
   const redPath =
-    state.phase === 'moving' || state.phase === 'gameover'
+    state.phase === "moving" || state.phase === "gameover"
       ? movingPaths.red
-      : currentColor === 'red'
+      : currentColor === "red"
         ? myPath
         : [];
   const bluePath =
-    state.phase === 'moving' || state.phase === 'gameover'
+    state.phase === "moving" || state.phase === "gameover"
       ? movingPaths.blue
-      : currentColor === 'blue'
+      : currentColor === "blue"
         ? myPath
         : [];
-  const isPlaybackPhase = state.phase === 'moving' || state.phase === 'gameover';
+  const isPlaybackPhase =
+    state.phase === "moving" || state.phase === "gameover";
 
   const teleportOrigin =
-    myPath.length > 0 ? myPath[myPath.length - 1] : state.players[currentColor].position;
+    myPath.length > 0
+      ? myPath[myPath.length - 1]
+      : state.players[currentColor].position;
 
   const blitzOrigin =
-    myPath.length > 0 ? myPath[myPath.length - 1] : state.players[currentColor].position;
+    myPath.length > 0
+      ? myPath[myPath.length - 1]
+      : state.players[currentColor].position;
 
   const teleportTargets = teleportTargetsVisible
     ? Array.from({ length: 9 }, (_, index) => ({
@@ -409,7 +501,10 @@ export function AbilityGrid({
         col: teleportOrigin.col + (index % 3) - 1,
       })).filter(
         (position) =>
-          !(position.row === teleportOrigin.row && position.col === teleportOrigin.col) &&
+          !(
+            position.row === teleportOrigin.row &&
+            position.col === teleportOrigin.col
+          ) &&
           position.row >= 0 &&
           position.row < GRID_SIZE &&
           position.col >= 0 &&
@@ -450,9 +545,11 @@ export function AbilityGrid({
   ) => {
     const effectiveStartStep = Math.max(0, startStep ?? 0);
     const pathStart =
-      effectiveStartStep > 0 ? path[effectiveStartStep - 1] ?? start : start;
-    const visiblePath = path
-      .slice(effectiveStartStep, effectiveStartStep + Math.max(0, progress));
+      effectiveStartStep > 0 ? (path[effectiveStartStep - 1] ?? start) : start;
+    const visiblePath = path.slice(
+      effectiveStartStep,
+      effectiveStartStep + Math.max(0, progress),
+    );
     if (visiblePath.length === 0) return null;
     const allPositions = [pathStart, ...visiblePath];
     const mainPoints = allPositions
@@ -460,7 +557,7 @@ export function AbilityGrid({
         const { x, y } = toGridPixel(position, responsiveCellSize);
         return `${x},${y}`;
       })
-      .join(' ');
+      .join(" ");
     const branchA = buildBlitzBoltPoints(
       allPositions,
       responsiveCellSize,
@@ -484,18 +581,43 @@ export function AbilityGrid({
         viewBox={`0 0 ${boardSize} ${boardSize}`}
       >
         <g className="ability-blitz-beam">
-          <polyline className="ability-blitz-glow" points={mainPoints} fill="none" />
-          <polyline className="ability-blitz-branch ability-blitz-branch-a" points={branchA} fill="none" />
-          <polyline className="ability-blitz-branch ability-blitz-branch-b" points={branchB} fill="none" />
-          <polyline className="ability-blitz-core" points={branchA} fill="none" />
+          <polyline
+            className="ability-blitz-glow"
+            points={mainPoints}
+            fill="none"
+          />
+          <polyline
+            className="ability-blitz-branch ability-blitz-branch-a"
+            points={branchA}
+            fill="none"
+          />
+          <polyline
+            className="ability-blitz-branch ability-blitz-branch-b"
+            points={branchB}
+            fill="none"
+          />
+          <polyline
+            className="ability-blitz-core"
+            points={branchA}
+            fill="none"
+          />
         </g>
         <g
           className="ability-blitz-impact"
           transform={`translate(${endPixel.x} ${endPixel.y})`}
         >
-          <circle className="ability-blitz-impact-ring ability-blitz-impact-ring-outer" r={Math.max(10, responsiveCellSize * 0.3)} />
-          <circle className="ability-blitz-impact-ring ability-blitz-impact-ring-inner" r={Math.max(5, responsiveCellSize * 0.14)} />
-          <circle className="ability-blitz-impact-core" r={Math.max(5, responsiveCellSize * 0.1)} />
+          <circle
+            className="ability-blitz-impact-ring ability-blitz-impact-ring-outer"
+            r={Math.max(10, responsiveCellSize * 0.3)}
+          />
+          <circle
+            className="ability-blitz-impact-ring ability-blitz-impact-ring-inner"
+            r={Math.max(5, responsiveCellSize * 0.14)}
+          />
+          <circle
+            className="ability-blitz-impact-core"
+            r={Math.max(5, responsiveCellSize * 0.1)}
+          />
         </g>
       </svg>
     );
@@ -505,7 +627,7 @@ export function AbilityGrid({
     <div ref={shellRef} className="game-grid-shell ability-grid-shell">
       <div
         ref={gridRef}
-        className={`game-grid ability-grid ${boardSkinClass}${timeRewindActive ? ' is-time-rewinding' : ''}${timeRewindFocusColor ? ` rewind-focus-${timeRewindFocusColor}` : ''}`}
+        className={`game-grid ability-grid ${boardSkinClass}${timeRewindActive ? " is-time-rewinding" : ""}${timeRewindFocusColor ? ` rewind-focus-${timeRewindFocusColor}` : ""}`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
@@ -516,12 +638,20 @@ export function AbilityGrid({
         {cells.map(({ row, col }) => (
           <div
             key={`${row}-${col}`}
-            className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? 'obstacle' : ''} ${
-              hoveredCell?.row === row && hoveredCell?.col === col ? 'is-hovered' : ''
+            className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? "obstacle" : ""} ${
+              hoveredCell?.row === row && hoveredCell?.col === col
+                ? "is-hovered"
+                : ""
             }`}
-            style={getCellStyle(row, col, isBlockedCell({ row, col }, obstacles))}
+            style={getCellStyle(
+              row,
+              col,
+              isBlockedCell({ row, col }, obstacles),
+            )}
           >
-            {isBlockedCell({ row, col }, obstacles) && <div className="obstacle-mark" />}
+            {isBlockedCell({ row, col }, obstacles) && (
+              <div className="obstacle-mark" />
+            )}
           </div>
         ))}
 
@@ -550,72 +680,162 @@ export function AbilityGrid({
             key={`mine-${trap.position.row}-${trap.position.col}`}
             className="ability-wizard-mine"
             style={{
-              left: trap.position.col * responsiveCellSize + responsiveCellSize / 2,
-              top: trap.position.row * responsiveCellSize + responsiveCellSize / 2,
+              left:
+                trap.position.col * responsiveCellSize + responsiveCellSize / 2,
+              top:
+                trap.position.row * responsiveCellSize + responsiveCellSize / 2,
               width: responsiveCellSize * 0.85,
               height: responsiveCellSize * 0.85,
             }}
           >
-            <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+            <svg
+              viewBox="0 0 100 100"
+              style={{ width: "100%", height: "100%", overflow: "visible" }}
+            >
               {/* Outer ring — rotates CW slowly */}
               <g className="mine-g-outer">
-                <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(200,80,255,0.38)" strokeWidth="0.8"/>
-                <circle cx="50" cy="50" r="39" fill="none" stroke="rgba(180,60,255,0.25)" strokeWidth="0.55" strokeDasharray="3.5 4.5"/>
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="46"
+                  fill="none"
+                  stroke="rgba(200,80,255,0.38)"
+                  strokeWidth="0.8"
+                />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="39"
+                  fill="none"
+                  stroke="rgba(180,60,255,0.25)"
+                  strokeWidth="0.55"
+                  strokeDasharray="3.5 4.5"
+                />
                 {Array.from({ length: 12 }).map((_, i) => {
-                  const a = (i * 30 - 90) * Math.PI / 180;
+                  const a = ((i * 30 - 90) * Math.PI) / 180;
                   const major = i % 3 === 0;
                   const r1 = major ? 40 : 43;
                   return (
-                    <line key={i}
-                      x1={50 + r1 * Math.cos(a)} y1={50 + r1 * Math.sin(a)}
-                      x2={50 + 47 * Math.cos(a)} y2={50 + 47 * Math.sin(a)}
-                      stroke={major ? "rgba(230,110,255,0.82)" : "rgba(200,80,255,0.5)"}
+                    <line
+                      key={i}
+                      x1={50 + r1 * Math.cos(a)}
+                      y1={50 + r1 * Math.sin(a)}
+                      x2={50 + 47 * Math.cos(a)}
+                      y2={50 + 47 * Math.sin(a)}
+                      stroke={
+                        major
+                          ? "rgba(230,110,255,0.82)"
+                          : "rgba(200,80,255,0.5)"
+                      }
                       strokeWidth={major ? "1.4" : "0.7"}
                     />
                   );
                 })}
                 {Array.from({ length: 8 }).map((_, i) => {
-                  const a = (i * 45 - 90) * Math.PI / 180;
-                  return <circle key={i} cx={50 + 43 * Math.cos(a)} cy={50 + 43 * Math.sin(a)} r="1.8" fill="rgba(230,110,255,0.9)"/>;
+                  const a = ((i * 45 - 90) * Math.PI) / 180;
+                  return (
+                    <circle
+                      key={i}
+                      cx={50 + 43 * Math.cos(a)}
+                      cy={50 + 43 * Math.sin(a)}
+                      r="1.8"
+                      fill="rgba(230,110,255,0.9)"
+                    />
+                  );
                 })}
               </g>
 
               {/* Hexagram — rotates CCW */}
               <g className="mine-g-hex">
-                <polygon points="50,7 87,72 13,72" fill="rgba(150,30,255,0.05)" stroke="rgba(205,85,255,0.72)" strokeWidth="1.3"/>
-                <polygon points="50,93 87,28 13,28" fill="none" stroke="rgba(220,110,255,0.58)" strokeWidth="1.1"/>
+                <polygon
+                  points="50,7 87,72 13,72"
+                  fill="rgba(150,30,255,0.05)"
+                  stroke="rgba(205,85,255,0.72)"
+                  strokeWidth="1.3"
+                />
+                <polygon
+                  points="50,93 87,28 13,28"
+                  fill="none"
+                  stroke="rgba(220,110,255,0.58)"
+                  strokeWidth="1.1"
+                />
                 {[
-                  { x: 50, y: 7 }, { x: 87, y: 72 }, { x: 13, y: 72 },
-                  { x: 50, y: 93 }, { x: 87, y: 28 }, { x: 13, y: 28 },
+                  { x: 50, y: 7 },
+                  { x: 87, y: 72 },
+                  { x: 13, y: 72 },
+                  { x: 50, y: 93 },
+                  { x: 87, y: 28 },
+                  { x: 13, y: 28 },
                 ].map((p, i) => (
-                  <circle key={i} cx={p.x} cy={p.y} r="2.5"
-                    fill="rgba(235,115,255,0.85)" stroke="rgba(255,180,255,0.45)" strokeWidth="0.5"/>
+                  <circle
+                    key={i}
+                    cx={p.x}
+                    cy={p.y}
+                    r="2.5"
+                    fill="rgba(235,115,255,0.85)"
+                    stroke="rgba(255,180,255,0.45)"
+                    strokeWidth="0.5"
+                  />
                 ))}
               </g>
 
               {/* Inner ring — rotates CW faster */}
               <g className="mine-g-inner">
-                <circle cx="50" cy="50" r="22" fill="rgba(140,20,255,0.06)" stroke="rgba(195,75,255,0.58)" strokeWidth="0.9"/>
-                <circle cx="50" cy="50" r="14" fill="none" stroke="rgba(185,65,255,0.3)" strokeWidth="0.6" strokeDasharray="2.5 3.2"/>
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="22"
+                  fill="rgba(140,20,255,0.06)"
+                  stroke="rgba(195,75,255,0.58)"
+                  strokeWidth="0.9"
+                />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="14"
+                  fill="none"
+                  stroke="rgba(185,65,255,0.3)"
+                  strokeWidth="0.6"
+                  strokeDasharray="2.5 3.2"
+                />
                 {Array.from({ length: 6 }).map((_, i) => {
-                  const a = (i * 60 - 90) * Math.PI / 180;
+                  const a = ((i * 60 - 90) * Math.PI) / 180;
                   return (
-                    <line key={i}
-                      x1={50 + 14 * Math.cos(a)} y1={50 + 14 * Math.sin(a)}
-                      x2={50 + 22 * Math.cos(a)} y2={50 + 22 * Math.sin(a)}
-                      stroke="rgba(205,85,255,0.55)" strokeWidth="0.8"
+                    <line
+                      key={i}
+                      x1={50 + 14 * Math.cos(a)}
+                      y1={50 + 14 * Math.sin(a)}
+                      x2={50 + 22 * Math.cos(a)}
+                      y2={50 + 22 * Math.sin(a)}
+                      stroke="rgba(205,85,255,0.55)"
+                      strokeWidth="0.8"
                     />
                   );
                 })}
                 {Array.from({ length: 6 }).map((_, i) => {
-                  const a = (i * 60 - 60) * Math.PI / 180;
-                  return <circle key={i} cx={50 + 22 * Math.cos(a)} cy={50 + 22 * Math.sin(a)} r="1.4" fill="rgba(215,95,255,0.75)"/>;
+                  const a = ((i * 60 - 60) * Math.PI) / 180;
+                  return (
+                    <circle
+                      key={i}
+                      cx={50 + 22 * Math.cos(a)}
+                      cy={50 + 22 * Math.sin(a)}
+                      r="1.4"
+                      fill="rgba(215,95,255,0.75)"
+                    />
+                  );
                 })}
               </g>
 
               {/* Center orb */}
-              <circle cx="50" cy="50" r="5.5" fill="rgba(185,55,255,0.18)" stroke="rgba(235,125,255,0.65)" strokeWidth="0.9"/>
-              <circle cx="50" cy="50" r="2.8" fill="rgba(255,215,255,0.95)"/>
+              <circle
+                cx="50"
+                cy="50"
+                r="5.5"
+                fill="rgba(185,55,255,0.18)"
+                stroke="rgba(235,125,255,0.65)"
+                strokeWidth="0.9"
+              />
+              <circle cx="50" cy="50" r="2.8" fill="rgba(255,215,255,0.95)" />
             </svg>
           </div>
         ))}
@@ -625,8 +845,12 @@ export function AbilityGrid({
             key={`mine-trigger-${entry.id}`}
             className="ability-wizard-mine-trigger"
             style={{
-              left: entry.position.col * responsiveCellSize + responsiveCellSize / 2,
-              top: entry.position.row * responsiveCellSize + responsiveCellSize / 2,
+              left:
+                entry.position.col * responsiveCellSize +
+                responsiveCellSize / 2,
+              top:
+                entry.position.row * responsiveCellSize +
+                responsiveCellSize / 2,
               width: responsiveCellSize,
               height: responsiveCellSize,
             }}
@@ -637,11 +861,13 @@ export function AbilityGrid({
           <div
             className="ability-inferno-marker"
             style={{
-              left: infernoMarker.col * responsiveCellSize + responsiveCellSize / 2,
-              top: infernoMarker.row * responsiveCellSize + responsiveCellSize / 2,
+              left:
+                infernoMarker.col * responsiveCellSize + responsiveCellSize / 2,
+              top:
+                infernoMarker.row * responsiveCellSize + responsiveCellSize / 2,
               width: Math.max(32, responsiveCellSize * 0.5),
               height: Math.max(32, responsiveCellSize * 0.5),
-              transform: 'translate(-50%, -50%)',
+              transform: "translate(-50%, -50%)",
             }}
           >
             🔥
@@ -658,7 +884,7 @@ export function AbilityGrid({
               top: target.row * responsiveCellSize + responsiveCellSize / 2,
               width: Math.max(32, responsiveCellSize * 0.5),
               height: Math.max(32, responsiveCellSize * 0.5),
-              transform: 'translate(-50%, -50%)',
+              transform: "translate(-50%, -50%)",
             }}
             onClick={() => {
               playTargetSelectSfx();
@@ -677,7 +903,7 @@ export function AbilityGrid({
               top: target.row * responsiveCellSize + responsiveCellSize / 2,
               width: Math.max(32, responsiveCellSize * 0.5),
               height: Math.max(32, responsiveCellSize * 0.5),
-              transform: 'translate(-50%, -50%)',
+              transform: "translate(-50%, -50%)",
             }}
             onClick={() => {
               playTargetSelectSfx();
@@ -703,7 +929,7 @@ export function AbilityGrid({
               top: target.row * responsiveCellSize + responsiveCellSize / 2,
               width: Math.max(32, responsiveCellSize * 0.5),
               height: Math.max(32, responsiveCellSize * 0.5),
-              transform: 'translate(-50%, -50%)',
+              transform: "translate(-50%, -50%)",
             }}
             onClick={() => {
               playTargetSelectSfx();
@@ -739,11 +965,15 @@ export function AbilityGrid({
               isPlanning={false}
             />
           )
-        ) : currentColor !== 'red' || !teleportTarget || teleportStep === null ? (
+        ) : currentColor !== "red" ||
+          !teleportTarget ||
+          teleportStep === null ? (
           <PathLine
             color="red"
             path={redPath}
-            startPos={currentColor === 'red' ? myStart : state.players.red.position}
+            startPos={
+              currentColor === "red" ? myStart : state.players.red.position
+            }
             cellSize={responsiveCellSize}
             isPlanning
           />
@@ -767,7 +997,7 @@ export function AbilityGrid({
         )}
         {movingBlitzColors.red &&
           renderBlitzEffect(
-            'red',
+            "red",
             movingStarts?.red ?? state.players.red.position,
             movingPaths.red,
             movingBlitzSteps.red,
@@ -800,11 +1030,15 @@ export function AbilityGrid({
               isPlanning={false}
             />
           )
-        ) : currentColor !== 'blue' || !teleportTarget || teleportStep === null ? (
+        ) : currentColor !== "blue" ||
+          !teleportTarget ||
+          teleportStep === null ? (
           <PathLine
             color="blue"
             path={bluePath}
-            startPos={currentColor === 'blue' ? myStart : state.players.blue.position}
+            startPos={
+              currentColor === "blue" ? myStart : state.players.blue.position
+            }
             cellSize={responsiveCellSize}
             isPlanning
           />
@@ -828,7 +1062,7 @@ export function AbilityGrid({
         )}
         {movingBlitzColors.blue &&
           renderBlitzEffect(
-            'blue',
+            "blue",
             movingStarts?.blue ?? state.players.blue.position,
             movingPaths.blue,
             movingBlitzSteps.blue,
@@ -854,14 +1088,15 @@ export function AbilityGrid({
               isMe={currentColor === previewAtomicClone.color}
               isRewinding={false}
               isClone
-              skin={previewAtomicClone.color === 'red' ? redSkin : blueSkin}
+              skin={previewAtomicClone.color === "red" ? redSkin : blueSkin}
             />
           </>
         )}
 
-        {(['red', 'blue'] as const).map((color) => {
+        {(["red", "blue"] as const).map((color) => {
           const clone = movingAtomicClones[color];
-          if (!clone.start || clone.path.length === 0 || !clone.position) return null;
+          if (!clone.start || clone.path.length === 0 || !clone.position)
+            return null;
           return (
             <div key={`atomic-clone-${color}`}>
               <PathLine
@@ -881,7 +1116,7 @@ export function AbilityGrid({
                 isMe={currentColor === color}
                 isRewinding={false}
                 isClone
-                skin={color === 'red' ? redSkin : blueSkin}
+                skin={color === "red" ? redSkin : blueSkin}
               />
             </div>
           );
@@ -891,11 +1126,15 @@ export function AbilityGrid({
           <div
             className="ability-teleport-marker"
             style={{
-              left: teleportMarker.col * responsiveCellSize + responsiveCellSize / 2,
-              top: teleportMarker.row * responsiveCellSize + responsiveCellSize / 2,
+              left:
+                teleportMarker.col * responsiveCellSize +
+                responsiveCellSize / 2,
+              top:
+                teleportMarker.row * responsiveCellSize +
+                responsiveCellSize / 2,
               width: Math.max(24, responsiveCellSize * 0.34),
               height: Math.max(24, responsiveCellSize * 0.34),
-              transform: 'translate(-50%, -50%)',
+              transform: "translate(-50%, -50%)",
             }}
           >
             ✦
@@ -903,7 +1142,7 @@ export function AbilityGrid({
         )}
 
         {isPlaybackPhase &&
-          (['red', 'blue'] as const).map((color) => {
+          (["red", "blue"] as const).map((color) => {
             const marker = movingTeleportMarkers[color];
             if (!marker) return null;
             return (
@@ -911,11 +1150,12 @@ export function AbilityGrid({
                 key={`moving-teleport-${color}`}
                 className="ability-teleport-marker"
                 style={{
-                  left: marker.col * responsiveCellSize + responsiveCellSize / 2,
+                  left:
+                    marker.col * responsiveCellSize + responsiveCellSize / 2,
                   top: marker.row * responsiveCellSize + responsiveCellSize / 2,
                   width: Math.max(24, responsiveCellSize * 0.34),
                   height: Math.max(24, responsiveCellSize * 0.34),
-                  transform: 'translate(-50%, -50%)',
+                  transform: "translate(-50%, -50%)",
                 }}
               >
                 ✦
@@ -924,7 +1164,11 @@ export function AbilityGrid({
           })}
 
         {collisionEffects.map(({ id, position }) => (
-          <CollisionEffect key={id} position={position} cellSize={responsiveCellSize} />
+          <CollisionEffect
+            key={id}
+            position={position}
+            cellSize={responsiveCellSize}
+          />
         ))}
 
         {teleportEffects.map((effect) => (
@@ -932,11 +1176,13 @@ export function AbilityGrid({
             <div
               className={`ability-teleport-burst ability-teleport-burst-depart ability-teleport-burst-${effect.color}`}
               style={{
-                left: effect.from.col * responsiveCellSize + responsiveCellSize / 2,
-                top: effect.from.row * responsiveCellSize + responsiveCellSize / 2,
+                left:
+                  effect.from.col * responsiveCellSize + responsiveCellSize / 2,
+                top:
+                  effect.from.row * responsiveCellSize + responsiveCellSize / 2,
                 width: Math.max(34, responsiveCellSize * 0.72),
                 height: Math.max(34, responsiveCellSize * 0.72),
-                transform: 'translate(-50%, -50%)',
+                transform: "translate(-50%, -50%)",
               }}
             >
               <span className="ability-teleport-ring ability-teleport-ring-outer" />
@@ -949,11 +1195,13 @@ export function AbilityGrid({
             <div
               className={`ability-teleport-burst ability-teleport-burst-arrive ability-teleport-burst-${effect.color}`}
               style={{
-                left: effect.to.col * responsiveCellSize + responsiveCellSize / 2,
-                top: effect.to.row * responsiveCellSize + responsiveCellSize / 2,
+                left:
+                  effect.to.col * responsiveCellSize + responsiveCellSize / 2,
+                top:
+                  effect.to.row * responsiveCellSize + responsiveCellSize / 2,
                 width: Math.max(38, responsiveCellSize * 0.8),
                 height: Math.max(38, responsiveCellSize * 0.8),
-                transform: 'translate(-50%, -50%)',
+                transform: "translate(-50%, -50%)",
               }}
             >
               <span className="ability-teleport-ring ability-teleport-ring-outer" />
@@ -971,9 +1219,13 @@ export function AbilityGrid({
             key={`charge-${effect.id}`}
             className={`ability-charge-effect ability-charge-effect-${effect.color}`}
             style={{
-              left: effect.position.col * responsiveCellSize + responsiveCellSize / 2,
-              top: effect.position.row * responsiveCellSize + responsiveCellSize / 2,
-              transform: 'translate(-50%, -50%)',
+              left:
+                effect.position.col * responsiveCellSize +
+                responsiveCellSize / 2,
+              top:
+                effect.position.row * responsiveCellSize +
+                responsiveCellSize / 2,
+              transform: "translate(-50%, -50%)",
             }}
           >
             <span className="ability-charge-wave ability-charge-wave-a" />
@@ -990,9 +1242,13 @@ export function AbilityGrid({
             key={`heal-${effect.id}`}
             className={`ability-heal-effect ability-heal-effect-${effect.color}`}
             style={{
-              left: effect.position.col * responsiveCellSize + responsiveCellSize / 2,
-              top: effect.position.row * responsiveCellSize + responsiveCellSize / 2,
-              transform: 'translate(-50%, -50%)',
+              left:
+                effect.position.col * responsiveCellSize +
+                responsiveCellSize / 2,
+              top:
+                effect.position.row * responsiveCellSize +
+                responsiveCellSize / 2,
+              transform: "translate(-50%, -50%)",
             }}
           >
             <span className="ability-heal-wave ability-heal-wave-a" />
@@ -1009,9 +1265,13 @@ export function AbilityGrid({
           <div
             className="ability-overdrive-effect ability-overdrive-effect-red"
             style={{
-              left: displayPositions.red.col * responsiveCellSize + responsiveCellSize / 2,
-              top: displayPositions.red.row * responsiveCellSize + responsiveCellSize / 2,
-              transform: 'translate(-50%, -50%)',
+              left:
+                displayPositions.red.col * responsiveCellSize +
+                responsiveCellSize / 2,
+              top:
+                displayPositions.red.row * responsiveCellSize +
+                responsiveCellSize / 2,
+              transform: "translate(-50%, -50%)",
             }}
           >
             <span className="ability-overdrive-wave ability-overdrive-wave-a" />
@@ -1024,9 +1284,13 @@ export function AbilityGrid({
           <div
             className="ability-overdrive-effect ability-overdrive-effect-blue"
             style={{
-              left: displayPositions.blue.col * responsiveCellSize + responsiveCellSize / 2,
-              top: displayPositions.blue.row * responsiveCellSize + responsiveCellSize / 2,
-              transform: 'translate(-50%, -50%)',
+              left:
+                displayPositions.blue.col * responsiveCellSize +
+                responsiveCellSize / 2,
+              top:
+                displayPositions.blue.row * responsiveCellSize +
+                responsiveCellSize / 2,
+              transform: "translate(-50%, -50%)",
             }}
           >
             <span className="ability-overdrive-wave ability-overdrive-wave-a" />
@@ -1035,73 +1299,80 @@ export function AbilityGrid({
           </div>
         )}
 
-
         {redVisible &&
         (state.players.red.hp > 0 ||
           hitFlags.red ||
           explodingFlags.red ||
-          rewindingPieceColor === 'red') ? (
+          rewindingPieceColor === "red") ? (
           <>
             <PlayerPiece
               color="red"
               position={displayPositions.red}
               cellSize={responsiveCellSize}
-              isAttacker={state.attackerColor === 'red'}
+              isAttacker={state.attackerColor === "red"}
               isHit={hitFlags.red}
               isExploding={explodingFlags.red}
-              isMe={currentColor === 'red'}
-              isHidden={state.players.red.hidden && currentColor === 'red' && state.phase === 'planning'}
+              isMe={currentColor === "red"}
+              isHidden={
+                state.players.red.hidden &&
+                currentColor === "red" &&
+                state.phase === "planning"
+              }
               isGuard={activeGuards.red}
-              isAtField={activeAtFields.red && state.phase === 'moving'}
-              isPhased={activePhaseShifts.red && state.phase === 'moving'}
+              isAtField={activeAtFields.red && state.phase === "moving"}
+              isPhased={activePhaseShifts.red && state.phase === "moving"}
               isOverloaded={
                 state.players.red.reboundLocked ||
-                (currentColor !== 'red' && state.players.red.connected === false)
+                (currentColor !== "red" &&
+                  state.players.red.connected === false)
               }
               isBlitzing={movingBlitzProgress.red > 0}
               isSunChariotActive={activeSunChariots.red}
-              isRewinding={rewindingPieceColor === 'red'}
+              isRewinding={rewindingPieceColor === "red"}
               hp={state.players.red.hp}
               maxHp={5}
               hpOffsetY={redHpOffsetY}
               skin={redSkin}
-          />
+            />
           </>
         ) : null}
         {blueVisible &&
         (state.players.blue.hp > 0 ||
           hitFlags.blue ||
           explodingFlags.blue ||
-          rewindingPieceColor === 'blue') ? (
+          rewindingPieceColor === "blue") ? (
           <>
             <PlayerPiece
               color="blue"
               position={displayPositions.blue}
               cellSize={responsiveCellSize}
-              isAttacker={state.attackerColor === 'blue'}
+              isAttacker={state.attackerColor === "blue"}
               isHit={hitFlags.blue}
               isExploding={explodingFlags.blue}
-              isMe={currentColor === 'blue'}
-              isHidden={state.players.blue.hidden && currentColor === 'blue' && state.phase === 'planning'}
+              isMe={currentColor === "blue"}
+              isHidden={
+                state.players.blue.hidden &&
+                currentColor === "blue" &&
+                state.phase === "planning"
+              }
               isGuard={activeGuards.blue}
-              isAtField={activeAtFields.blue && state.phase === 'moving'}
-              isPhased={activePhaseShifts.blue && state.phase === 'moving'}
+              isAtField={activeAtFields.blue && state.phase === "moving"}
+              isPhased={activePhaseShifts.blue && state.phase === "moving"}
               isOverloaded={
                 state.players.blue.reboundLocked ||
-                (currentColor !== 'blue' && state.players.blue.connected === false)
+                (currentColor !== "blue" &&
+                  state.players.blue.connected === false)
               }
               isBlitzing={movingBlitzProgress.blue > 0}
               isSunChariotActive={activeSunChariots.blue}
-              isRewinding={rewindingPieceColor === 'blue'}
+              isRewinding={rewindingPieceColor === "blue"}
               hp={state.players.blue.hp}
               maxHp={5}
               skin={blueSkin}
-          />
+            />
           </>
         ) : null}
       </div>
     </div>
   );
 }
-
-

@@ -7,7 +7,7 @@ import type { BoardSkin, PieceSkin } from "../types/game.types";
 import {
   normalizeAbilityLoadout,
   type AbilitySkillId,
-} from "../types/ability.types";
+} from "../types/ability.types_bak";
 
 export interface AuthStatePayload {
   ready: boolean;
@@ -214,7 +214,10 @@ function getActiveDailyRewardWins(
   stats: Pick<StatsRow, "daily_reward_wins" | "daily_reward_day"> | undefined,
 ): number {
   if (!stats || stats.daily_reward_day !== getUtcDayKey()) return 0;
-  return Math.min(DAILY_REWARD_MAX_WINS, Math.max(0, Number(stats.daily_reward_wins ?? 0)));
+  return Math.min(
+    DAILY_REWARD_MAX_WINS,
+    Math.max(0, Number(stats.daily_reward_wins ?? 0)),
+  );
 }
 
 interface StoredGuestSession {
@@ -237,9 +240,10 @@ const CLIENT_INSTANCE_ID_KEY = "pathclash.clientInstanceId";
 const ACCOUNT_SNAPSHOT_STORAGE_PREFIX = "pathclash.accountSnapshot.";
 const ACCOUNT_SNAPSHOT_STORAGE_TTL_MS = 10 * 60 * 1000;
 
-let cachedClientAuthMetadata:
-  | { clientPlatform: 'android' | 'web'; appVersionCode?: number }
-  | null = null;
+let cachedClientAuthMetadata: {
+  clientPlatform: "android" | "web";
+  appVersionCode?: number;
+} | null = null;
 
 function getClientInstanceId(): string {
   const existing = window.sessionStorage.getItem(CLIENT_INSTANCE_ID_KEY);
@@ -259,7 +263,10 @@ function logAuthDebug(message: string, details?: Record<string, unknown>) {
 }
 
 function getNativeRedirectUrl() {
-  return import.meta.env.VITE_NATIVE_REDIRECT_URL?.trim() || "com.pathclash.game://auth/callback";
+  return (
+    import.meta.env.VITE_NATIVE_REDIRECT_URL?.trim() ||
+    "com.pathclash.game://auth/callback"
+  );
 }
 
 function getConfiguredAppUrl(): string | null {
@@ -284,7 +291,9 @@ function buildRedirectUrl() {
 
 function parseUrlSession(rawUrl: string) {
   const url = new URL(rawUrl);
-  const hashParams = new URLSearchParams(url.hash.startsWith("#") ? url.hash.slice(1) : url.hash);
+  const hashParams = new URLSearchParams(
+    url.hash.startsWith("#") ? url.hash.slice(1) : url.hash,
+  );
   const queryParams = new URLSearchParams(url.search);
 
   const accessToken = hashParams.get("access_token");
@@ -324,16 +333,22 @@ export async function installNativeAuthCallbackHandler(): Promise<() => void> {
     await applyAuthCallbackUrl(launch.url);
   }
 
-  const listener: PluginListenerHandle = await CapacitorApp.addListener("appUrlOpen", (event) => {
-    void applyAuthCallbackUrl(event.url);
-  });
+  const listener: PluginListenerHandle = await CapacitorApp.addListener(
+    "appUrlOpen",
+    (event) => {
+      void applyAuthCallbackUrl(event.url);
+    },
+  );
 
   return () => {
     void listener.remove();
   };
 }
 
-function toAuthState(session: Session | null, snapshot?: AccountSnapshot): AuthStatePayload {
+function toAuthState(
+  session: Session | null,
+  snapshot?: AccountSnapshot,
+): AuthStatePayload {
   return {
     ready: true,
     userId: session?.user.id ?? null,
@@ -472,7 +487,9 @@ async function ensureProfile(userId: string): Promise<void> {
 
   const { data: existing } = await supabase
     .from("profiles")
-    .select("nickname, equipped_skin, equipped_board_skin, equipped_ability_skills")
+    .select(
+      "nickname, equipped_skin, equipped_board_skin, equipped_ability_skills",
+    )
     .eq("id", userId)
     .maybeSingle<ProfileRow>();
 
@@ -523,15 +540,22 @@ function readCachedAccountSnapshot(userId: string): AccountSnapshot | null {
   }
 
   try {
-    const raw = window.localStorage.getItem(`${ACCOUNT_SNAPSHOT_STORAGE_PREFIX}${userId}`);
+    const raw = window.localStorage.getItem(
+      `${ACCOUNT_SNAPSHOT_STORAGE_PREFIX}${userId}`,
+    );
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as { fetchedAt?: number; snapshot?: AccountSnapshot };
+    const parsed = JSON.parse(raw) as {
+      fetchedAt?: number;
+      snapshot?: AccountSnapshot;
+    };
     if (
       typeof parsed.fetchedAt !== "number" ||
       Date.now() - parsed.fetchedAt > ACCOUNT_SNAPSHOT_STORAGE_TTL_MS ||
       !parsed.snapshot
     ) {
-      window.localStorage.removeItem(`${ACCOUNT_SNAPSHOT_STORAGE_PREFIX}${userId}`);
+      window.localStorage.removeItem(
+        `${ACCOUNT_SNAPSHOT_STORAGE_PREFIX}${userId}`,
+      );
       return null;
     }
     cacheAccountSnapshot(userId, parsed.snapshot);
@@ -578,8 +602,8 @@ function normalizeAccountSnapshot(
     equippedAbilitySkills: normalizeAbilityLoadout(
       source?.equippedAbilitySkills ?? [],
     ),
-    ownedSkins: (source?.ownedSkins ?? []).filter(
-      (skin): skin is PieceSkin => Boolean(skin),
+    ownedSkins: (source?.ownedSkins ?? []).filter((skin): skin is PieceSkin =>
+      Boolean(skin),
     ),
     ownedBoardSkins: (source?.ownedBoardSkins ?? []).filter(
       (skin): skin is BoardSkin =>
@@ -604,7 +628,10 @@ function normalizeAccountSnapshot(
   };
 }
 
-async function getAccountSnapshot(userId: string, options?: { force?: boolean }): Promise<AccountSnapshot> {
+async function getAccountSnapshot(
+  userId: string,
+  options?: { force?: boolean },
+): Promise<AccountSnapshot> {
   if (!supabase) {
     return {
       nickname: null,
@@ -622,7 +649,9 @@ async function getAccountSnapshot(userId: string, options?: { force?: boolean })
     };
   }
 
-  const cachedSnapshot = options?.force ? null : readCachedAccountSnapshot(userId);
+  const cachedSnapshot = options?.force
+    ? null
+    : readCachedAccountSnapshot(userId);
   if (cachedSnapshot) {
     return cachedSnapshot;
   }
@@ -631,7 +660,9 @@ async function getAccountSnapshot(userId: string, options?: { force?: boolean })
     invalidateAccountSnapshot(userId);
   }
 
-  const existingInFlight = options?.force ? undefined : accountSnapshotInFlight.get(userId);
+  const existingInFlight = options?.force
+    ? undefined
+    : accountSnapshotInFlight.get(userId);
   if (existingInFlight) {
     return existingInFlight;
   }
@@ -655,7 +686,9 @@ async function getAccountSnapshot(userId: string, options?: { force?: boolean })
     let [profileResult, statsResult, achievementsResult] = await Promise.all([
       supabase
         .from("profiles")
-        .select("nickname, equipped_skin, equipped_board_skin, equipped_ability_skills")
+        .select(
+          "nickname, equipped_skin, equipped_board_skin, equipped_ability_skills",
+        )
         .eq("id", userId)
         .maybeSingle<ProfileRow>(),
       supabase
@@ -665,7 +698,9 @@ async function getAccountSnapshot(userId: string, options?: { force?: boolean })
         .maybeSingle<StatsRow>(),
       supabase
         .from("player_achievements")
-        .select("achievement_id, progress, completed, claimed, completed_at, claimed_at")
+        .select(
+          "achievement_id, progress, completed, claimed, completed_at, claimed_at",
+        )
         .eq("user_id", userId)
         .returns<PlayerAchievementRow[]>(),
     ]);
@@ -684,12 +719,16 @@ async function getAccountSnapshot(userId: string, options?: { force?: boolean })
       await ensureProfile(userId);
       profileResult = await supabase
         .from("profiles")
-        .select("nickname, equipped_skin, equipped_board_skin, equipped_ability_skills")
+        .select(
+          "nickname, equipped_skin, equipped_board_skin, equipped_ability_skills",
+        )
         .eq("id", userId)
         .maybeSingle<ProfileRow>();
     }
 
-    const dailyRewardWins = getActiveDailyRewardWins(statsResult.data ?? undefined);
+    const dailyRewardWins = getActiveDailyRewardWins(
+      statsResult.data ?? undefined,
+    );
 
     const snapshot = {
       nickname: profileResult.data?.nickname ?? null,
@@ -819,7 +858,10 @@ async function emitSocketAck<T>(event: string, payload: unknown): Promise<T> {
 }
 
 async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
-  logAuthDebug("restoreGuestSessionOrCreate:start", getStoredIdentityDebugSnapshot());
+  logAuthDebug(
+    "restoreGuestSessionOrCreate:start",
+    getStoredIdentityDebugSnapshot(),
+  );
   if (!supabase) {
     return {
       ready: true,
@@ -843,7 +885,8 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
     });
 
     if (!error && data.session?.user) {
-      const snapshot = readCachedAccountSnapshot(data.session.user.id) ?? undefined;
+      const snapshot =
+        readCachedAccountSnapshot(data.session.user.id) ?? undefined;
       logAuthDebug("restoreGuestSessionOrCreate:restored reconnect session", {
         userId: data.session.user.id,
         isGuestUser: data.session.user.is_anonymous ?? false,
@@ -870,7 +913,8 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
     });
 
     if (!error && data.session?.user?.is_anonymous) {
-      const snapshot = readCachedAccountSnapshot(data.session.user.id) ?? undefined;
+      const snapshot =
+        readCachedAccountSnapshot(data.session.user.id) ?? undefined;
       logAuthDebug("restoreGuestSessionOrCreate:restored guest session", {
         userId: data.session.user.id,
       });
@@ -899,7 +943,10 @@ async function restoreGuestSessionOrCreate(): Promise<AuthStatePayload> {
   );
   const { data, error } = await supabase.auth.signInAnonymously();
   if (error || !data.session) {
-    console.error("[supabase] failed to create guest session after logout", error);
+    console.error(
+      "[supabase] failed to create guest session after logout",
+      error,
+    );
     return {
       ready: true,
       userId: null,
@@ -938,7 +985,9 @@ export async function initializeGuestAuth(): Promise<AuthStatePayload> {
   const session = await getCurrentSession();
 
   if (!session) {
-    logAuthDebug("initializeGuestAuth:no current session; attempting restore flow");
+    logAuthDebug(
+      "initializeGuestAuth:no current session; attempting restore flow",
+    );
     return restoreGuestSessionOrCreate();
   }
 
@@ -955,7 +1004,9 @@ export async function initializeGuestAuth(): Promise<AuthStatePayload> {
   return toAuthState(session, snapshot);
 }
 
-export async function refreshAccountSummary(options?: { force?: boolean }): Promise<AccountProfile> {
+export async function refreshAccountSummary(options?: {
+  force?: boolean;
+}): Promise<AccountProfile> {
   if (!supabase) {
     return {
       userId: "",
@@ -1048,7 +1099,14 @@ export async function syncNickname(nickname: string): Promise<void> {
 
 export async function changeNicknameWithTokens(
   nickname: string,
-): Promise<"updated" | "no_change" | "invalid_nickname" | "insufficient_tokens" | "auth_required" | "failed"> {
+): Promise<
+  | "updated"
+  | "no_change"
+  | "invalid_nickname"
+  | "insufficient_tokens"
+  | "auth_required"
+  | "failed"
+> {
   if (!supabase) return "failed";
 
   const trimmed = nickname.trim().slice(0, 16);
@@ -1115,7 +1173,9 @@ export async function syncEquippedSkin(equippedSkin: PieceSkin): Promise<void> {
   knownProfileUsers.add(userId);
 }
 
-export async function syncEquippedBoardSkin(equippedBoardSkin: BoardSkin): Promise<void> {
+export async function syncEquippedBoardSkin(
+  equippedBoardSkin: BoardSkin,
+): Promise<void> {
   if (!supabase) return;
   const session = await getCurrentSession();
 
@@ -1153,7 +1213,8 @@ export async function syncEquippedAbilitySkills(
   const userId = session.user.id;
   const normalized = normalizeAbilityLoadout(equippedAbilitySkills);
   const current = lastSyncedProfileState.get(userId);
-  if (areAbilityLoadoutsEqual(current?.equippedAbilitySkills, normalized)) return;
+  if (areAbilityLoadoutsEqual(current?.equippedAbilitySkills, normalized))
+    return;
 
   const { error } = await supabase.from("profiles").upsert({
     id: userId,
@@ -1176,7 +1237,13 @@ export async function syncEquippedAbilitySkills(
 
 export async function purchaseSkinWithTokens(
   skinId: PieceSkin,
-): Promise<"purchased" | "already_owned" | "insufficient_tokens" | "auth_required" | "failed"> {
+): Promise<
+  | "purchased"
+  | "already_owned"
+  | "insufficient_tokens"
+  | "auth_required"
+  | "failed"
+> {
   if (!supabase) return "failed";
 
   const { data, error } = await supabase.rpc("purchase_skin_with_tokens", {
@@ -1197,12 +1264,21 @@ export async function purchaseSkinWithTokens(
 
 export async function purchaseBoardSkinWithTokens(
   boardSkinId: BoardSkin,
-): Promise<"purchased" | "already_owned" | "insufficient_tokens" | "auth_required" | "failed"> {
+): Promise<
+  | "purchased"
+  | "already_owned"
+  | "insufficient_tokens"
+  | "auth_required"
+  | "failed"
+> {
   if (!supabase) return "failed";
 
-  const { data, error } = await supabase.rpc("purchase_board_skin_with_tokens", {
-    p_board_skin_id: boardSkinId,
-  });
+  const { data, error } = await supabase.rpc(
+    "purchase_board_skin_with_tokens",
+    {
+      p_board_skin_id: boardSkinId,
+    },
+  );
 
   if (error) {
     console.error("[supabase] failed to purchase board skin", error);
@@ -1219,10 +1295,13 @@ export async function purchaseBoardSkinWithTokens(
 export async function claimAchievementReward(
   achievementId: string,
 ): Promise<AccountProfile | null> {
-  const response = await emitSocketAck<ServerAccountResponse>("achievements_claim", {
-    auth: await getSocketAuthPayload(),
-    achievementId,
-  });
+  const response = await emitSocketAck<ServerAccountResponse>(
+    "achievements_claim",
+    {
+      auth: await getSocketAuthPayload(),
+      achievementId,
+    },
+  );
 
   return response.status === "ACCOUNT_OK" && response.profile
     ? response.profile
@@ -1230,9 +1309,12 @@ export async function claimAchievementReward(
 }
 
 export async function claimAllAchievementRewards(): Promise<AccountProfile | null> {
-  const response = await emitSocketAck<ServerAccountResponse>("achievements_claim_all", {
-    auth: await getSocketAuthPayload(),
-  });
+  const response = await emitSocketAck<ServerAccountResponse>(
+    "achievements_claim_all",
+    {
+      auth: await getSocketAuthPayload(),
+    },
+  );
 
   return response.status === "ACCOUNT_OK" && response.profile
     ? response.profile
@@ -1345,7 +1427,9 @@ export async function linkGoogleAccount(): Promise<void> {
         nickname: snapshot.nickname ?? null,
         equippedSkin: snapshot.equippedSkin ?? "classic",
         equippedBoardSkin: snapshot.equippedBoardSkin ?? "classic",
-        equippedAbilitySkills: snapshot.equippedAbilitySkills ?? ["classic_guard"],
+        equippedAbilitySkills: snapshot.equippedAbilitySkills ?? [
+          "classic_guard",
+        ],
         wins: snapshot.wins ?? 0,
         losses: snapshot.losses ?? 0,
         tokens: snapshot.tokens ?? 0,
@@ -1421,7 +1505,10 @@ export async function logoutLocalSession(): Promise<AuthStatePayload> {
 }
 
 export async function reconnectStoredAccount(): Promise<AuthStatePayload> {
-  logAuthDebug("reconnectStoredAccount:start", getStoredIdentityDebugSnapshot());
+  logAuthDebug(
+    "reconnectStoredAccount:start",
+    getStoredIdentityDebugSnapshot(),
+  );
   return initializeGuestAuth();
 }
 
@@ -1440,12 +1527,15 @@ export async function resolveUpgradeFlowAfterRedirect(): Promise<UpgradeResoluti
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
-      finalizeResult = await emitSocketAck<ServerFinalizeUpgradeResponse>("finalize_google_upgrade", {
-        auth: await getSocketAuthPayload(),
-        guestAuth: pending.guestAuth,
-        guestProfile: pending.guestProfile,
-        flowStartedAt: pending.flowStartedAt,
-      });
+      finalizeResult = await emitSocketAck<ServerFinalizeUpgradeResponse>(
+        "finalize_google_upgrade",
+        {
+          auth: await getSocketAuthPayload(),
+          guestAuth: pending.guestAuth,
+          guestProfile: pending.guestProfile,
+          flowStartedAt: pending.flowStartedAt,
+        },
+      );
       break;
     } catch (error) {
       console.warn("[auth] finalize_google_upgrade failed", {
@@ -1462,7 +1552,10 @@ export async function resolveUpgradeFlowAfterRedirect(): Promise<UpgradeResoluti
     return { kind: "none" };
   }
 
-  if (finalizeResult.status === "SWITCH_CONFIRM_REQUIRED" && finalizeResult.profile) {
+  if (
+    finalizeResult.status === "SWITCH_CONFIRM_REQUIRED" &&
+    finalizeResult.profile
+  ) {
     clearUpgradeQueryFromUrl();
     return { kind: "switch_confirm_required", profile: finalizeResult.profile };
   }
@@ -1470,7 +1563,11 @@ export async function resolveUpgradeFlowAfterRedirect(): Promise<UpgradeResoluti
   clearPendingUpgradeContext();
   clearUpgradeQueryFromUrl();
 
-  if ((finalizeResult.status !== "UPGRADE_OK" && finalizeResult.status !== "SWITCH_OK") || !finalizeResult.profile) {
+  if (
+    (finalizeResult.status !== "UPGRADE_OK" &&
+      finalizeResult.status !== "SWITCH_OK") ||
+    !finalizeResult.profile
+  ) {
     return { kind: "auth_error" };
   }
 
@@ -1485,13 +1582,16 @@ export async function confirmPendingGoogleUpgradeSwitch(): Promise<UpgradeResolu
   const pending = getPendingUpgradeContext();
   if (!pending) return { kind: "auth_error" };
 
-  const finalizeResult = await emitSocketAck<ServerFinalizeUpgradeResponse>("finalize_google_upgrade", {
-    auth: await getSocketAuthPayload(),
-    guestAuth: pending.guestAuth,
-    guestProfile: pending.guestProfile,
-    flowStartedAt: pending.flowStartedAt,
-    allowExistingSwitch: true,
-  });
+  const finalizeResult = await emitSocketAck<ServerFinalizeUpgradeResponse>(
+    "finalize_google_upgrade",
+    {
+      auth: await getSocketAuthPayload(),
+      guestAuth: pending.guestAuth,
+      guestProfile: pending.guestProfile,
+      flowStartedAt: pending.flowStartedAt,
+      allowExistingSwitch: true,
+    },
+  );
 
   clearPendingUpgradeContext();
   clearUpgradeQueryFromUrl();
@@ -1511,18 +1611,20 @@ export async function cancelPendingGoogleUpgradeSwitch(): Promise<AuthStatePaylo
 export async function getClientAuthMetadata() {
   if (cachedClientAuthMetadata) return cachedClientAuthMetadata;
 
-  if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+  if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android") {
     const info = await CapacitorApp.getInfo();
-    const parsedBuild = Number(info.build ?? '');
+    const parsedBuild = Number(info.build ?? "");
     cachedClientAuthMetadata = {
-      clientPlatform: 'android' as const,
-      appVersionCode: Number.isFinite(parsedBuild) ? Math.trunc(parsedBuild) : undefined,
+      clientPlatform: "android" as const,
+      appVersionCode: Number.isFinite(parsedBuild)
+        ? Math.trunc(parsedBuild)
+        : undefined,
     };
     return cachedClientAuthMetadata;
   }
 
   cachedClientAuthMetadata = {
-    clientPlatform: 'web' as const,
+    clientPlatform: "web" as const,
     appVersionCode: undefined,
   };
   return cachedClientAuthMetadata;
@@ -1540,7 +1642,9 @@ export function getSocketAuthPayload() {
   );
 }
 
-export function onAuthStateChanged(callback: (payload: AuthStatePayload) => void): () => void {
+export function onAuthStateChanged(
+  callback: (payload: AuthStatePayload) => void,
+): () => void {
   if (!supabase) {
     callback({
       ready: true,
