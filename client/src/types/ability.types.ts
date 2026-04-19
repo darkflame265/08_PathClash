@@ -234,8 +234,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "arc_reactor_field",
     name: { en: "AT Field", kr: "AT 필드" },
     loadoutTags: {
-      en: "Move OK · Combo OK",
-      kr: "이동 가능 · 조합 가능",
+      en: "Move OK",
+      kr: "이동 가능",
     },
     loadoutDescription: {
       en: "For 1 tile interval, nullify 1 incoming attack skill and reflect it.",
@@ -250,8 +250,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "phase_shift",
     name: { en: "Phase Shift", kr: "페이즈 시프트" },
     loadoutTags: {
-      en: "Move OK · Combo OK",
-      kr: "이동 가능 · 조합 가능",
+      en: "Move OK",
+      kr: "이동 가능",
     },
     loadoutDescription: {
       en: "Become completely invulnerable for this turn, ignoring collisions and attack skills.",
@@ -266,8 +266,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "ember_blast",
     name: { en: "Ember Blast", kr: "엠버 폭발" },
     loadoutTags: {
-      en: "Move OK · Combo OK",
-      kr: "이동 가능 · 조합 가능",
+      en: "Move OK",
+      kr: "이동 가능",
     },
     loadoutDescription: {
       en: "Deal explosion damage in a 1-tile cross.",
@@ -282,8 +282,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "atomic_fission",
     name: { en: "Atomic Fission", kr: "원자분열" },
     loadoutTags: {
-      en: "Move OK · Combo OK",
-      kr: "이동 가능 · 조합 가능",
+      en: "Move OK",
+      kr: "이동 가능",
     },
     loadoutDescription: {
       en: "Create an attacking clone that follows your previous turn's path.",
@@ -298,8 +298,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "inferno_field",
     name: { en: "Lava Zone", kr: "용암지대" },
     loadoutTags: {
-      en: "Move OK · Combo OK",
-      kr: "이동 가능 · 조합 가능",
+      en: "Move OK",
+      kr: "이동 가능",
     },
     loadoutDescription: {
       en: "Ignite a chosen tile for 4 turns. Any player crossing or standing on it takes 1 damage.",
@@ -314,8 +314,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "nova_blast",
     name: { en: "Nova Burst", kr: "노바 폭발" },
     loadoutTags: {
-      en: "Move OK · Combo OK",
-      kr: "이동 가능 · 조합 가능",
+      en: "Move OK",
+      kr: "이동 가능",
     },
     loadoutDescription: {
       en: "Deal explosion damage in an X-shaped area up to 2 tiles away.",
@@ -330,8 +330,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "sun_chariot",
     name: { en: "Sun Chariot", kr: "태양전차" },
     loadoutTags: {
-      en: "Move OK · Combo OK",
-      kr: "이동 가능 · 조합 가능",
+      en: "Move OK",
+      kr: "이동 가능",
     },
     loadoutDescription: {
       en: "While moving, your collision area becomes 3x3. You can only hit the opponent once.",
@@ -346,8 +346,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "aurora_heal",
     name: { en: "Healing", kr: "힐링" },
     loadoutTags: {
-      en: "Move OK · Combo OK",
-      kr: "이동 가능 · 조합 가능",
+      en: "Move OK",
+      kr: "이동 가능",
     },
     loadoutDescription: {
       en: "Restore 1 HP.",
@@ -362,8 +362,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "gold_overdrive",
     name: { en: "Overdrive", kr: "오버드라이브" },
     loadoutTags: {
-      en: "Move OK · Combo OK",
-      kr: "이동 가능 · 조합 가능",
+      en: "Move OK",
+      kr: "이동 가능",
     },
     loadoutDescription: {
       en: "Nothing happens this turn, but on your next turn, you get 20 mana. On the turn after that, mana becomes 0 and you cannot move.",
@@ -378,8 +378,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "quantum_shift",
     name: { en: "Quantum Shift", kr: "양자 도약" },
     loadoutTags: {
-      en: "Move OK · Combo OK",
-      kr: "이동 가능 · 조합 가능",
+      en: "Move OK",
+      kr: "이동 가능",
     },
     loadoutDescription: {
       en: "Teleport 1 tile away in any of the 8 directions.",
@@ -394,8 +394,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "plasma_charge",
     name: { en: "Charge", kr: "충전" },
     loadoutTags: {
-      en: "Move OK · Combo OK",
-      kr: "이동 가능 · 조합 가능",
+      en: "Move OK",
+      kr: "이동 가능",
     },
     loadoutDescription: {
       en: "Gain 1 path point this turn. Gain 4 mana at the start of your next turn.",
@@ -410,8 +410,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "void_cloak",
     name: { en: "Invisibility", kr: "투명화" },
     loadoutTags: {
-      en: "Move OK · Combo OK",
-      kr: "이동 가능 · 조합 가능",
+      en: "Move OK",
+      kr: "이동 가능",
     },
     loadoutDescription: {
       en: "On the next turn, move to a random position and stay hidden until movement begins.",
@@ -426,8 +426,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "electric_blitz",
     name: { en: "Lightning Flash", kr: "벽력일섬" },
     loadoutTags: {
-      en: "Skill Move · Combo Locked",
-      kr: "스킬 이동 · 조합 불가능",
+      en: "Skill Move · No Move After",
+      kr: "스킬 이동 · 발동 후 이동 불가",
     },
     loadoutDescription: {
       en: "Dash in a straight line, ignoring obstacles, and strike enemies on the path.",
@@ -441,7 +441,7 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
   wizard_magic_mine: {
     id: "wizard_magic_mine",
     name: { en: "Magic Mine", kr: "매직마인" },
-    loadoutTags: { en: "Move OK · Combo OK", kr: "이동 가능 · 조합 가능" },
+    loadoutTags: { en: "Move OK", kr: "이동 가능" },
     loadoutDescription: {
       en: "Place an invisible trap that lasts for 5 turns. The trap disappears after activation.",
       kr: "5턴 동안 지속되는 보이지 않는 함정을 설치합니다. 함정은 발동 후 사라집니다.",
