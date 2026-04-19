@@ -10,29 +10,28 @@
 .skin-preview-sun-surface {
   position: absolute;
   display: block;
-  inset: 50%;
-  width: 150%;
-  height: 150%;
+  inset: -35%;
+  width: 200%;
+  height: 200%;
   border-radius: 50%;
   background: url("./sun_cdn.jpg") center center / cover no-repeat;
   background-position: center center;
   box-shadow: 1px 1px 30px 5px #fc9328;
-  transform: translate(-50%, -50%);
-  transform-origin: center;
+  transform-origin: 47% 53%;
   animation: sun-preview-pole-rotate 90s linear infinite;
 }
 
 @keyframes sun-preview-pole-rotate {
   0% {
-    transform: translate(-50%, -50%) rotate(0deg);
+    transform: rotate(0deg);
     background-position: center center;
   }
   50% {
-    transform: translate(-50%, -50%) rotate(180deg);
+    transform: rotate(180deg);
     background-position: 50% 40%;
   }
   100% {
-    transform: translate(-50%, -50%) rotate(360deg);
+    transform: rotate(360deg);
     background-position: center center;
   }
 }
