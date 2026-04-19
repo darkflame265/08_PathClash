@@ -40,7 +40,7 @@ import {
   type AbilitySkillId,
   type AbilitySkillReservation,
   type AbilityTrapTile,
-} from "../../types/ability.types_bak";
+} from "../../types/ability.types";
 import { AbilityGrid } from "./AbilityGrid";
 import "../Game/GameScreen.css";
 import "../Game/GameGrid.css";
@@ -3085,8 +3085,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             </strong>
             <span>
               {lang === "en"
-                ? ABILITY_SKILLS[mySkillInfo].description.en
-                : ABILITY_SKILLS[mySkillInfo].description.kr}
+                ? ABILITY_SKILLS[mySkillInfo].loadoutDescription.en
+                : ABILITY_SKILLS[mySkillInfo].loadoutDescription.kr}
             </span>
           </div>
         )}

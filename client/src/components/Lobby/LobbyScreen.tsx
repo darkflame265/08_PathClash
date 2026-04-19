@@ -83,7 +83,7 @@ import type {
 import {
   ABILITY_SKILLS,
   type AbilitySkillId,
-} from "../../types/ability.types_bak";
+} from "../../types/ability.types";
 
 import "./LobbyScreen.css";
 

@@ -4,7 +4,7 @@ import type {
   AbilityBattleState,
   AbilitySkillReservation,
   AbilityTrapTile,
-} from "../../types/ability.types_bak";
+} from "../../types/ability.types";
 import { useGameStore } from "../../store/gameStore";
 import {
   pixelToCell,

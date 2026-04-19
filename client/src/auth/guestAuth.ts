@@ -7,7 +7,7 @@ import type { BoardSkin, PieceSkin } from "../types/game.types";
 import {
   normalizeAbilityLoadout,
   type AbilitySkillId,
-} from "../types/ability.types_bak";
+} from "../types/ability.types";
 
 export interface AuthStatePayload {
   ready: boolean;

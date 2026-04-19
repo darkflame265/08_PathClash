@@ -17,7 +17,7 @@ import type {
 import {
   normalizeAbilityLoadout,
   type AbilitySkillId,
-} from "../types/ability.types_bak";
+} from "../types/ability.types";
 import { type Lang } from "../i18n/translations";
 
 function resolveInitialLang(): Lang {
