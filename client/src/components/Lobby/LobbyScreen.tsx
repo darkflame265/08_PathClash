@@ -80,10 +80,7 @@ import type {
   RoundStartPayload,
 } from "../../types/game.types";
 
-import {
-  ABILITY_SKILLS,
-  type AbilitySkillId,
-} from "../../types/ability.types";
+import { ABILITY_SKILLS, type AbilitySkillId } from "../../types/ability.types";
 
 import "./LobbyScreen.css";
 
@@ -1184,8 +1181,8 @@ export function LobbyScreen({
 
   const tokenShopDesc =
     lang === "en"
-      ? "Choose a token pack that matches how you want to unlock skins."
-      : "스킨 해금 속도에 맞는 토큰 팩을 선택하세요.";
+      ? "Choose a token pack. Tokens are used to unlock skins and boards."
+      : "토큰 팩을 선택하세요. 토큰은 스킨과 보드를 잠금 해제하는 데 사용됩니다.";
 
   const tokenShopCta = lang === "en" ? "Buy" : "구매";
 
@@ -1281,8 +1278,8 @@ export function LobbyScreen({
 
       blurb:
         lang === "en"
-          ? "A light pack for your first token skin"
-          : "첫 토큰 스킨 구매에 맞는 가벼운 구성",
+          ? "A light pack for your first skin"
+          : "첫 스킨 구매에 맞는 가벼운 구성",
     },
 
     {
@@ -1296,7 +1293,7 @@ export function LobbyScreen({
 
       blurb:
         lang === "en"
-          ? "A solid bundle for expanding your collection"
+          ? "A solid bundle for expand your collection"
           : "수집 범위를 넓히기 좋은 실속형 구성",
     },
 
@@ -1311,8 +1308,8 @@ export function LobbyScreen({
 
       blurb:
         lang === "en"
-          ? "Built for picking up higher-tier token skins"
-          : "상위 토큰 스킨 확보에 좋은 구성",
+          ? "A bundle for the higher-tier skins"
+          : "상위 스킨 확보에 좋은 구성",
     },
 
     {
@@ -1326,7 +1323,7 @@ export function LobbyScreen({
 
       blurb:
         lang === "en"
-          ? "The premium bundle for legendary skins and boards"
+          ? "A premium bundle for legendary skins and boards"
           : "레전더리 스킨과 보드까지 노릴 수 있는 최상위 구성",
     },
   ];
