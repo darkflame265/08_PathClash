@@ -236,6 +236,11 @@ export function AbilityGrid({
   const baseStart = state.players[currentColor].position;
   const myStart = previewStart;
   const obstacles = state.obstacles;
+  const opponentColor = currentColor === "red" ? "blue" : "red";
+  const teleportBlockedPositions = [
+    ...obstacles,
+    state.players[opponentColor].position,
+  ];
   const redSkin = state.players.red.pieceSkin;
   const blueSkin = state.players.blue.pieceSkin;
   const resolvedBoardSkin: BoardSkin =
@@ -509,7 +514,7 @@ export function AbilityGrid({
           position.row < GRID_SIZE &&
           position.col >= 0 &&
           position.col < GRID_SIZE &&
-          !isBlockedCell(position, obstacles),
+          !isBlockedCell(position, teleportBlockedPositions),
       )
     : [];
 

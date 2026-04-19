@@ -42,6 +42,7 @@ import {
   type AbilityTrapTile,
 } from "../../types/ability.types";
 import { AbilityGrid } from "./AbilityGrid";
+import { isBlockedCell, posEqual } from "../../utils/pathUtils";
 import "../Game/GameScreen.css";
 import "../Game/GameGrid.css";
 import "../Game/GameOverOverlay.css";
@@ -1221,6 +1222,16 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   };
 
   const handleTeleportTargetSelect = (target: Position) => {
+    if (!state) return;
+    const opponentColor = currentColor === "red" ? "blue" : "red";
+    const opponentPosition = state.players[opponentColor].position;
+    if (
+      posEqual(target, opponentPosition) ||
+      isBlockedCell(target, state.obstacles)
+    ) {
+      return;
+    }
+
     const teleportStep = myPath.length;
     const nextReservations: AbilitySkillReservation[] = [
       ...skillReservations.filter((entry) => entry.skillId !== "quantum_shift"),
