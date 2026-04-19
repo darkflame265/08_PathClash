@@ -65,34 +65,38 @@ type AbilitySfxConfig = {
   loopWindowEndOffset?: number;
 };
 
+const ABILITY_SFX_OUTPUT_GAIN = 1.35;
+const UI_SFX_OUTPUT_GAIN = 1.45;
+const HIT_SFX_OUTPUT_GAIN = 1.35;
+
 const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
   guard: {
     path: "/sfx/ability/guard.mp3",
-    gain: 0.55,
+    gain: 0.9,
   },
   shield_block: {
     path: "/sfx/ability/shield_block.mp3",
-    gain: 0.6,
+    gain: 0.9,
   },
   atomic_fission: {
     path: "/sfx/ability/atomic_fission.wav",
-    gain: 0.6,
+    gain: 0.9,
   },
   charge: {
     path: "/sfx/ability/charge.mp3",
-    gain: 0.4,
+    gain: 0.9,
   },
   quantum: {
     path: "/sfx/ability/quantum.mp3",
-    gain: 0.65,
+    gain: 0.9,
   },
   ember_blast: {
     path: "/sfx/ability/ember_blast.mp3",
-    gain: 0.3,
+    gain: 0.9,
   },
   electric_blitz: {
     path: "/sfx/ability/electric_blitz.mp3",
-    gain: 0.85,
+    gain: 0.9,
   },
   cosmic_bigbang: {
     path: "/sfx/ability/cosmic_bigbang.mp3",
@@ -100,38 +104,38 @@ const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
   },
   healing: {
     path: "/sfx/ability/healing_skill.mp3",
-    gain: 0.65,
+    gain: 0.9,
   },
   inferno_field: {
     path: "/sfx/ability/inferno_field.mp3",
-    gain: 0.6,
+    gain: 0.9,
   },
   phase_shift: {
     path: "/sfx/ability/phase_shift.mp3",
-    gain: 0.6,
+    gain: 0.9,
   },
   arc_reactor_field: {
     path: "/sfx/ability/arc_reactor_field.mp3",
-    gain: 0.6,
+    gain: 0.9,
   },
   void_cloak: {
     path: "/sfx/ability/void_cloak.mp3",
-    gain: 0.6,
+    gain: 0.9,
   },
   chronos_tick_tock: {
     path: "/sfx/ability/chronos_tick_tock.mp3",
-    gain: 0.72,
+    gain: 0.9,
   },
   chronos_rewind_loop: {
     path: "/sfx/ability/chronos_rewind_loop.mp3",
-    gain: 0.62,
+    gain: 0.9,
     loop: true,
     loopWindowStart: 0.48,
     loopWindowEndOffset: 0.05,
   },
   gold_overdrive_loop: {
     path: "/sfx/ability/gold_overdrive_loop.mp3",
-    gain: 0.4,
+    gain: 0.9,
     loop: true,
   },
 };
@@ -407,7 +411,7 @@ function playAbilitySfx(id: AbilitySfxId, volume = 0.55): void {
   try {
     const normalizedVolume = Math.max(
       0,
-      Math.min(1, volume * ABILITY_SFX[id].gain),
+      Math.min(1, volume * ABILITY_SFX[id].gain * ABILITY_SFX_OUTPUT_GAIN),
     );
     if (!shouldUseHtmlAbilityAudio(id)) {
       const howl = getAbilityHowl(id);
@@ -478,7 +482,10 @@ function playUiSfx(
     }
     const audio = baseAudio.cloneNode(true) as HTMLAudioElement;
     audio.loop = false;
-    audio.volume = Math.max(0, Math.min(1, volume * UI_SFX[id].gain));
+    audio.volume = Math.max(
+      0,
+      Math.min(1, volume * UI_SFX[id].gain * UI_SFX_OUTPUT_GAIN),
+    );
     activeUiAudioCache[id] = audio;
     audio.addEventListener(
       "ended",
@@ -572,7 +579,10 @@ export function playHit(volume = 0.55): void {
     osc.frequency.setValueAtTime(220, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.15);
     const normalized = Math.max(0, Math.min(1, volume));
-    gain.gain.setValueAtTime(0.4 * normalized, ctx.currentTime);
+    gain.gain.setValueAtTime(
+      Math.min(1, 0.4 * normalized * HIT_SFX_OUTPUT_GAIN),
+      ctx.currentTime,
+    );
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.15);
@@ -644,7 +654,10 @@ export function startChronosRewindLoop(volume = 0.55): void {
     const config = ABILITY_SFX.chronos_rewind_loop;
     audio.loop = false;
     attachSegmentedLoop(audio, config);
-    audio.volume = Math.max(0, Math.min(1, volume * config.gain));
+    audio.volume = Math.max(
+      0,
+      Math.min(1, volume * config.gain * ABILITY_SFX_OUTPUT_GAIN),
+    );
     if (audio.paused) {
       audio.currentTime = 0;
       void audio.play().catch(() => {
@@ -674,7 +687,10 @@ export function startOverdriveLoop(volume = 0.55): void {
     if (!howl) return;
     const normalizedVolume = Math.max(
       0,
-      Math.min(1, volume * ABILITY_SFX.gold_overdrive_loop.gain),
+      Math.min(
+        1,
+        volume * ABILITY_SFX.gold_overdrive_loop.gain * ABILITY_SFX_OUTPUT_GAIN,
+      ),
     );
     if (goldOverdriveSoundId === null || !howl.playing(goldOverdriveSoundId)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
