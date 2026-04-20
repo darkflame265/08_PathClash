@@ -8,6 +8,7 @@ import { PlayerInfo } from "../Game/PlayerInfo";
 import {
   playBigBang,
   playBlitz,
+  playSunChariot,
   playCharge,
   playEmber,
   playHealing,
@@ -1673,6 +1674,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         event.skillId === "sun_chariot" &&
         (!event.damages || event.damages.length === 0)
       ) {
+        if (!isSfxMuted) {
+          playSunChariot(sfxVolume);
+        }
         setAbilityBanner(null);
         done();
         return;

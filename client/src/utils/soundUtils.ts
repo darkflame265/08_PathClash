@@ -45,6 +45,7 @@ type AbilitySfxId =
   | "quantum"
   | "ember_blast"
   | "electric_blitz"
+  | "sun_chariot"
   | "cosmic_bigbang"
   | "healing"
   | "inferno_field"
@@ -96,6 +97,10 @@ const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
   },
   electric_blitz: {
     path: "/sfx/ability/electric_blitz.mp3",
+    gain: 0.9,
+  },
+  sun_chariot: {
+    path: "/sfx/ability/sun_chariot.m4a",
     gain: 0.9,
   },
   cosmic_bigbang: {
@@ -617,6 +622,10 @@ export function playEmber(volume = 0.55): void {
 
 export function playBlitz(volume = 0.55): void {
   playAbilitySfx("electric_blitz", volume);
+}
+
+export function playSunChariot(volume = 0.55): void {
+  playAbilitySfx("sun_chariot", volume);
 }
 
 export function playBigBang(volume = 0.55): void {
