@@ -677,6 +677,7 @@ export class AbilityRoom {
   private pendingStart = false;
   private pendingStartPaused = false;
   private trainingMode = false;
+  private trainingSkillSelectionPending = false;
   private privateMatch = false;
   private rematchSet = new Set<string>();
   private planningGraceTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -727,6 +728,7 @@ export class AbilityRoom {
       console.warn('[AbilityRoom] waitForSkillSelection: red player not found');
       return;
     }
+    this.trainingSkillSelectionPending = true;
     this.io.to(player.socketId).emit('ability_training_skill_select');
   }
 
@@ -741,6 +743,7 @@ export class AbilityRoom {
     // equippedSkills must be set before prepareGameStart/startGame because
     // resetPlayers() does not restore equippedSkills — it must survive the reset.
     player.equippedSkills = sanitized;
+    this.trainingSkillSelectionPending = false;
     this.prepareGameStart();
     this.markClientReady(socketId);
   }
@@ -859,6 +862,13 @@ export class AbilityRoom {
   }
 
   markClientReady(socketId: string): boolean {
+    if (!this.pendingStart && this.trainingMode && this.trainingSkillSelectionPending) {
+      const player = this.getPlayerBySocket(socketId);
+      if (!player || player.isBot) return false;
+      this.io.to(socketId).emit('ability_training_skill_select');
+      this.touchActivity();
+      return true;
+    }
     if (!this.pendingStart) return false;
     const player = this.getPlayerBySocket(socketId);
     if (!player) return false;
