@@ -1,4 +1,5 @@
 ﻿import { useEffect, useRef, useState } from "react";
+import ReactDOM from "react-dom";
 import { getSocket } from "../../socket/socketClient";
 import { syncServerTime, getEstimatedServerNow } from "../../socket/timeSync";
 import { useLang } from "../../hooks/useLang";
@@ -2879,7 +2880,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       </div>
 
       <div className="gs-board-stage">
-        {showTrainingSkillSelect && (
+        {showTrainingSkillSelect &&
+          ReactDOM.createPortal(
           <div
             className="upgrade-modal-backdrop"
             style={{ zIndex: 200 }}
@@ -2969,7 +2971,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
         {winner && (
           <div className="gs-result-slot">
