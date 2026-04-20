@@ -218,12 +218,12 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "classic_guard",
     name: { en: "Guard", kr: "가드" },
     loadoutTags: {
-      en: "Move Locked",
-      kr: "이동 불가",
+      en: "Timing: 0 · No Move After",
+      kr: "타이밍: 0칸 · 발동 후 이동 불가",
     },
     loadoutDescription: {
-      en: "Become invulnerable for 2 tile intervals. No movement allowed on use.",
-      kr: "2칸 시간 동안 무적이 됩니다. 사용 시 이동할 수 없습니다.",
+      en: "Become invulnerable for 2 tile intervals.",
+      kr: "2칸 시간 동안 무적이 됩니다.",
     },
     manaCost: ABILITY_SKILL_COSTS.classic_guard,
     category: "defense",
