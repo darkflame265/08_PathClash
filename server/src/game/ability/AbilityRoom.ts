@@ -723,14 +723,24 @@ export class AbilityRoom {
 
   waitForSkillSelection(): void {
     const player = this.players.get('red');
-    if (!player) return;
+    if (!player) {
+      console.warn('[AbilityRoom] waitForSkillSelection: red player not found');
+      return;
+    }
     this.io.to(player.socketId).emit('ability_training_skill_select');
   }
 
   confirmTrainingSkills(socketId: string, skills: AbilitySkillId[]): void {
+    if (!this.trainingMode) return;
+    const validSkillIds = new Set(Object.keys(ABILITY_SKILL_COSTS));
+    const sanitized = skills
+      .filter((id) => validSkillIds.has(id))
+      .slice(0, 3);
     const player = [...this.players.values()].find((p) => p.socketId === socketId);
     if (!player) return;
-    player.equippedSkills = skills;
+    // equippedSkills must be set before prepareGameStart/startGame because
+    // resetPlayers() does not restore equippedSkills — it must survive the reset.
+    player.equippedSkills = sanitized;
     this.prepareGameStart();
     this.markClientReady(socketId);
   }
