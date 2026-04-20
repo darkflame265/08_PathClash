@@ -1315,7 +1315,6 @@ export class AbilityRoom {
     const hasOverdrive = uniqueSkills.some((skill) => skill.skillId === 'gold_overdrive');
     const teleport = uniqueSkills.find((skill) => skill.skillId === 'quantum_shift') ?? null;
     const hasBlitz = uniqueSkills.some((skill) => skill.skillId === 'electric_blitz');
-    const blitz = uniqueSkills.find((skill) => skill.skillId === 'electric_blitz') ?? null;
     const hasAttackSkill = uniqueSkills.some(
       (skill) =>
         skill.skillId === 'ember_blast' ||
@@ -1331,38 +1330,16 @@ export class AbilityRoom {
     const bigBang = uniqueSkills.find((skill) => skill.skillId === 'cosmic_bigbang') ?? null;
     const hasCharge = uniqueSkills.some((skill) => skill.skillId === 'plasma_charge');
     const hasAtomic = uniqueSkills.some((skill) => skill.skillId === 'atomic_fission');
+    const movementSkills = uniqueSkills
+      .filter((skill) => skill.skillId === 'quantum_shift' || skill.skillId === 'electric_blitz')
+      .sort((left, right) => {
+        if (left.step !== right.step) return left.step - right.step;
+        return left.order - right.order;
+      });
 
     if (player.reboundLocked && path.length > 0) return null;
 
-    if (!isOverdriveTurn) {
-      if (hasBlitz) {
-        if (!blitz || !blitz.target) return null;
-        if (blitz.step < 0 || blitz.step > path.length) return null;
-
-        const prefixPath = path.slice(0, blitz.step);
-        if (!isValidPath(player.position, prefixPath, pathPoints, this.obstacles)) {
-          return null;
-        }
-
-        const blitzOrigin =
-          blitz.step === 0 ? player.position : prefixPath[prefixPath.length - 1];
-        if (!blitzOrigin) return null;
-
-        const blitzPath = buildBlitzPath(blitzOrigin, blitz.target);
-        if (blitzPath.length === 0) return null;
-
-        const expectedPath = [...prefixPath, ...blitzPath];
-        if (path.length !== expectedPath.length) return null;
-        for (let index = 0; index < expectedPath.length; index++) {
-          if (!posEqual(path[index], expectedPath[index])) return null;
-        }
-
-        return {
-          path: expectedPath,
-          skills: uniqueSkills,
-        };
-      }
-
+    if (!isOverdriveTurn && !hasBlitz) {
       const validationObstacles = hasPhaseShift ? [] : this.obstacles;
 
       if (teleport) {
@@ -1412,13 +1389,6 @@ export class AbilityRoom {
         skills: uniqueSkills,
       };
     }
-
-    const movementSkills = uniqueSkills
-      .filter((skill) => skill.skillId === 'quantum_shift' || skill.skillId === 'electric_blitz')
-      .sort((left, right) => {
-        if (left.step !== right.step) return left.step - right.step;
-        return left.order - right.order;
-      });
 
     let cursor = 0;
     let segmentStart = player.position;

@@ -98,7 +98,6 @@ exports.ABILITY_SKILL_SERVER_RULES = {
         roleRestriction: 'attacker',
         stepRule: 'any',
         targetRule: 'position',
-        exclusiveWhenNotOverdrive: true,
     },
     cosmic_bigbang: {
         roleRestriction: 'attacker',

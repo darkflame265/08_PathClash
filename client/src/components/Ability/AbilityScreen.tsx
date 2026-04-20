@@ -728,18 +728,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     );
   const getRemainingMana = () => Math.max(0, getMyMana() - getReservedMana());
   const getCurrentSkillStep = () => {
-    const blitzReservation = skillReservations.find(
-      (entry) => entry.skillId === "electric_blitz" && entry.target,
-    );
-    if (!blitzReservation?.target) return myPath.length;
-    const blitzOrigin =
-      blitzReservation.step > 0
-        ? myPath[blitzReservation.step - 1]
-        : (state?.players[currentColor].position ?? { row: 2, col: 0 });
-    if (!blitzOrigin) return myPath.length;
-    const blitzPath = buildBlitzPath(blitzOrigin, blitzReservation.target);
-    if (blitzPath.length === 0) return myPath.length;
-    return Math.max(0, myPath.length - blitzPath.length);
+    return myPath.length;
   };
 
   const getPreviewPositionAtStep = (step: number): Position => {
@@ -1283,11 +1272,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     const nextPath = [...prefixPath, ...blitzPath];
     if (nextPath.length === 0) return;
     const nextReservations: AbilitySkillReservation[] = [
-      ...(isOverdriveTurn()
-        ? skillReservations.filter(
-            (entry) => entry.skillId !== "electric_blitz",
-          )
-        : []),
+      ...skillReservations.filter((entry) => entry.skillId !== "electric_blitz"),
       {
         skillId: "electric_blitz",
         step: prefixPath.length,
@@ -3110,10 +3095,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             const isTimeRewindSpent =
               skillId === "chronos_time_rewind" && me.timeRewindUsed;
             const passiveSkill = skill.category === "passive";
-            const blitzReserved = skillReservations.some(
-              (entry) => entry.skillId === "electric_blitz",
-            );
-
             const roleBlocked =
               ((skillId === "classic_guard" ||
                 skillId === "gold_overdrive" ||
@@ -3132,10 +3113,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             const atomicUnavailable =
               skillId === "atomic_fission" &&
               (!me.previousTurnStart || me.previousTurnPath.length === 0);
-            const blitzBlocked =
-              blitzReserved &&
-              !reserved &&
-              (skillId === "cosmic_bigbang" || !overdriveTurn);
             const bigBangBlocked =
               skillId === "cosmic_bigbang" &&
               !reserved &&
@@ -3147,7 +3124,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               passiveSkill ||
               roleBlocked ||
               atomicUnavailable ||
-              blitzBlocked ||
               bigBangBlocked ||
               (getRemainingMana() < skill.manaCost && !reserved);
             return (
