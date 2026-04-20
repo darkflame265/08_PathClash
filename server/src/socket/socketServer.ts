@@ -1210,8 +1210,9 @@ export function initSocketServer(io: Server): void {
             roomId,
             color: 'red',
             opponentNickname: 'Training Dummy',
+            training: true,
           });
-          room.prepareGameStart();
+          room.waitForSkillSelection();
           return;
         }
         const queued = abilityStore.dequeue();
@@ -1330,6 +1331,14 @@ export function initSocketServer(io: Server): void {
       const room = abilityStore.getBySocket(socket.id);
       room?.markClientReady(socket.id);
     });
+
+    socket.on(
+      'training_skills_confirmed',
+      ({ skills }: { skills: AbilitySkillId[] }) => {
+        const room = abilityStore.getBySocket(socket.id);
+        room?.confirmTrainingSkills(socket.id, skills);
+      },
+    );
 
     socket.on('twovtwo_path_update', ({ path }: { path: Position[] }) => {
       const room = twoVsTwoStore.getBySocket(socket.id);
