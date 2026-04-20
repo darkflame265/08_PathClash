@@ -365,8 +365,8 @@ function AchievementModal({
 
             <p className="achievements-desc">
               {lang === "en"
-                ? "Complete goals, then claim your token rewards here."
-                : "조건을 달성한 뒤 여기서 토큰 보상을 획득하세요."}
+                ? "Complete goals, then claim your diamond rewards here."
+                : "조건을 달성한 뒤 여기서 다이아몬드 보상을 획득하세요."}
             </p>
 
             <p className="achievement-collection-summary">
@@ -908,7 +908,7 @@ export function LobbyScreen({
 
         `Record: ${profile.wins}W ${profile.losses}L`,
 
-        `Tokens: ${profile.tokens}`,
+        `Diamonds: ${profile.tokens}`,
 
         "",
 
@@ -929,7 +929,7 @@ export function LobbyScreen({
 
       `전적: ${profile.wins}승 ${profile.losses}패`,
 
-      `토큰: ${profile.tokens}`,
+      `다이아몬드: ${profile.tokens}`,
 
       "",
 
@@ -1073,19 +1073,21 @@ export function LobbyScreen({
 
   const dailyRewardGuideMax =
     lang === "en"
-      ? "You can earn up to 120 tokens per day."
-      : "하루 최대 120 토큰까지 획득할 수 있습니다.";
+      ? "You can earn up to 120 diamonds per day."
+      : "하루 최대 120 다이아몬드를 획득할 수 있습니다.";
 
   const dailyRewardGuideDuel =
     lang === "en"
-      ? "Duel / Ability Battle / 2v2 Victory: +6 tokens"
-      : "대결전 / 능력대전 / 2v2 대전 승리: +6 토큰";
+      ? "Duel / Ability Battle / 2v2 Victory: +6 diamonds"
+      : "대결전 / 능력대전 / 2v2 대전 승리: +6 다이아몬드";
 
   const dailyRewardGuideCoop =
-    lang === "en" ? "Co-op Victory: +12 tokens" : "협동전 승리: +12 토큰";
+    lang === "en"
+      ? "Co-op Victory: +12 diamonds"
+      : "협동전 승리: +12 다이아몬드";
 
   const dailyRewardGuideAi =
-    lang === "en" ? "AI Match: no tokens" : "AI 대전: 토큰 없음";
+    lang === "en" ? "AI Match: no diamonds" : "AI 대전: 다이아몬드 없음";
 
   const dailyRewardGuideReset =
     lang === "en"
@@ -1177,39 +1179,41 @@ export function LobbyScreen({
         ? "Login"
         : "로그인";
 
-  const tokenShopTitle = lang === "en" ? "Token Shop" : "토큰 샵";
+  const tokenShopTitle = lang === "en" ? "Diamond Shop" : "다이아몬드 샵";
 
   const tokenShopDesc =
     lang === "en"
-      ? "Choose a token pack. Tokens are used to unlock skins and boards."
-      : "토큰 팩을 선택하세요. 토큰은 스킨과 보드를 잠금 해제하는 데 사용됩니다.";
+      ? "Pick a diamond pack. Diamonds are used to unlock skins and boards."
+      : "다이아몬드 팩을 선택하세요. 다이아몬드는 스킨과 보드를 잠금 해제하는데 사용됩니다.";
 
   const tokenShopCta = lang === "en" ? "Buy" : "구매";
 
   const tokenShopUnavailableMsg =
     lang === "en"
-      ? "Token packs are available in the Android app only."
-      : "토큰 팩은 안드로이드 앱에서만 구매할 수 있습니다.";
+      ? "Diamonds packs are available in the Android app only."
+      : "다이아몬드 팩은 안드로이드 앱에서만 구매할 수 있습니다.";
 
   const tokenShopFailedMsg =
-    lang === "en" ? "Token purchase failed." : "토큰 구매에 실패했습니다.";
+    lang === "en"
+      ? "Diamonds purchase failed."
+      : "다이아몬드 구매에 실패했습니다.";
 
   const tokenShopCancelledMsg =
     lang === "en"
-      ? "Token purchase was cancelled."
-      : "토큰 구매가 취소되었습니다.";
+      ? "Diamonds purchase was cancelled."
+      : "다이아몬드 구매가 취소되었습니다.";
 
   const tokenShopSuccessMsg = (tokens: number) =>
     lang === "en"
-      ? `${tokens} tokens were added to your account.`
-      : `${tokens}토큰이 계정에 추가되었습니다.`;
+      ? `${tokens} diamonds were added to your account.`
+      : `${tokens} 다이아몬드가 계정에 추가되었습니다.`;
 
   const nicknameChangeCost = 500;
   const changeNameTitle = lang === "en" ? "Change Name" : "이름 변경";
   const changeNameDesc =
     lang === "en"
-      ? `Spend ${nicknameChangeCost} tokens to change your player name.`
-      : `${nicknameChangeCost}토큰을 사용해 플레이어 이름을 변경할 수 있습니다.`;
+      ? `Spend ${nicknameChangeCost} diamonds to change your player name.`
+      : `${nicknameChangeCost}다이아몬드를 사용해 플레이어 이름을 변경할 수 있습니다.`;
   const changeNamePlaceholder =
     lang === "en" ? "Enter a new name" : "새 이름을 입력하세요";
   const changeNameInvalidMsg =
@@ -1219,7 +1223,7 @@ export function LobbyScreen({
   const changeNameNoChangeMsg =
     lang === "en" ? "That name is already in use." : "현재와 같은 이름입니다.";
   const changeNameInsufficientMsg =
-    lang === "en" ? "Not enough tokens." : "토큰이 부족합니다.";
+    lang === "en" ? "Not enough diamonds." : "다이아몬드가 부족합니다.";
   const changeNameFailedMsg =
     lang === "en" ? "Failed to change name." : "이름 변경에 실패했습니다.";
   const changeNameSuccessMsg =
@@ -1239,7 +1243,7 @@ export function LobbyScreen({
     lang === "en" ? "Skin purchase failed." : "스킨 구매에 실패했습니다.";
 
   const skinPurchaseInsufficientMsg =
-    lang === "en" ? "Not enough tokens." : "토큰이 부족합니다.";
+    lang === "en" ? "Not enough diamonds." : "다이아몬드가 부족합니다.";
 
   const tokenPacks: Array<{
     id: TokenPackId;
@@ -2098,8 +2102,8 @@ export function LobbyScreen({
 
         window.alert(
           lang === "en"
-            ? `Claimed ${claimableAchievements.length} achievement rewards and received ${rewardSum} tokens.`
-            : `${claimableAchievements.length}개의 업적 보상을 획득했고, ${rewardSum}토큰을 받았습니다.`,
+            ? `Claimed ${claimableAchievements.length} achievement rewards and received ${rewardSum} diamonds.`
+            : `${claimableAchievements.length}개의 업적 보상을 획득했고, ${rewardSum}다이아몬드를 받았습니다.`,
         );
       }
     } finally {
