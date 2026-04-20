@@ -218,8 +218,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "classic_guard",
     name: { en: "Guard", kr: "가드" },
     loadoutTags: {
-      en: "Move Locked · Combo OK",
-      kr: "이동 불가 · 조합 가능",
+      en: "Move Locked",
+      kr: "이동 불가",
     },
     loadoutDescription: {
       en: "Become invulnerable for 2 tile intervals. No movement allowed on use.",
