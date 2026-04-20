@@ -794,8 +794,9 @@ function initSocketServer(io) {
                     roomId,
                     color: 'red',
                     opponentNickname: 'Training Dummy',
+                    training: true,
                 });
-                room.prepareGameStart();
+                room.waitForSkillSelection();
                 return;
             }
             const queued = abilityStore.dequeue();
@@ -862,6 +863,10 @@ function initSocketServer(io) {
         socket.on('ability_client_ready', () => {
             const room = abilityStore.getBySocket(socket.id);
             room?.markClientReady(socket.id);
+        });
+        socket.on('training_skills_confirmed', ({ skills }) => {
+            const room = abilityStore.getBySocket(socket.id);
+            room?.confirmTrainingSkills(socket.id, skills);
         });
         socket.on('twovtwo_path_update', ({ path }) => {
             const room = twoVsTwoStore.getBySocket(socket.id);

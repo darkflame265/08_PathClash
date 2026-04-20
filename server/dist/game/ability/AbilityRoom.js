@@ -538,6 +538,30 @@ class AbilityRoom {
     enableTrainingMode() {
         this.trainingMode = true;
     }
+    waitForSkillSelection() {
+        const player = this.players.get('red');
+        if (!player) {
+            console.warn('[AbilityRoom] waitForSkillSelection: red player not found');
+            return;
+        }
+        this.io.to(player.socketId).emit('ability_training_skill_select');
+    }
+    confirmTrainingSkills(socketId, skills) {
+        if (!this.trainingMode)
+            return;
+        const validSkillIds = new Set(Object.keys(AbilityTypes_1.ABILITY_SKILL_COSTS));
+        const sanitized = skills
+            .filter((id) => validSkillIds.has(id))
+            .slice(0, 3);
+        const player = [...this.players.values()].find((p) => p.socketId === socketId);
+        if (!player)
+            return;
+        // equippedSkills must be set before prepareGameStart/startGame because
+        // resetPlayers() does not restore equippedSkills — it must survive the reset.
+        player.equippedSkills = sanitized;
+        this.prepareGameStart();
+        this.markClientReady(socketId);
+    }
     enablePrivateMatch() {
         this.privateMatch = true;
     }
