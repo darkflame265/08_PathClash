@@ -721,6 +721,20 @@ export class AbilityRoom {
     this.trainingMode = true;
   }
 
+  waitForSkillSelection(): void {
+    const player = this.players.get('red');
+    if (!player) return;
+    this.io.to(player.socketId).emit('ability_training_skill_select');
+  }
+
+  confirmTrainingSkills(socketId: string, skills: AbilitySkillId[]): void {
+    const player = [...this.players.values()].find((p) => p.socketId === socketId);
+    if (!player) return;
+    player.equippedSkills = skills;
+    this.prepareGameStart();
+    this.markClientReady(socketId);
+  }
+
   enablePrivateMatch(): void {
     this.privateMatch = true;
   }
