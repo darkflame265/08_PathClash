@@ -48,6 +48,7 @@ import "../Game/GameScreen.css";
 import "../Game/GameGrid.css";
 import "../Game/GameOverOverlay.css";
 import "./AbilityScreen.css";
+import "../Lobby/LobbyScreen.css";
 
 interface Props {
   onLeaveToLobby: () => void;
@@ -328,9 +329,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     sfxVolume,
     triggerHeartShake,
     boardSkin,
+    abilityLoadout,
   } = useGameStore();
 
   const [state, setState] = useState<AbilityBattleState | null>(null);
+  const [showTrainingSkillSelect, setShowTrainingSkillSelect] = useState(false);
+  const [trainingLoadout, setTrainingLoadout] = useState<AbilitySkillId[]>([]);
   const [roundInfo, setRoundInfo] = useState<AbilityRoundStartPayload | null>(
     null,
   );
@@ -2518,6 +2522,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }: {
       roomId: string;
       color: PlayerColor;
+      training?: boolean;
     }) => {
       setMyColor(color);
       setRoomCode(roomId);
@@ -2663,9 +2668,15 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       setRematchRequested(true);
     };
 
+    const onTrainingSkillSelect = () => {
+      setTrainingLoadout(abilityLoadout);
+      setShowTrainingSkillSelect(true);
+    };
+
     socket.on("ability_game_start", onGameStart);
     socket.on("ability_round_start", onRoundStart);
     socket.on("ability_room_joined", onRoomJoined);
+    socket.on("ability_training_skill_select", onTrainingSkillSelect);
     socket.on("ability_plan_updated", onPlanUpdated);
     socket.on("ability_opponent_submitted", onOpponentSubmitted);
     socket.on("ability_player_submitted", onPlayerSubmitted);
@@ -2681,6 +2692,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       socket.off("ability_game_start", onGameStart);
       socket.off("ability_round_start", onRoundStart);
       socket.off("ability_room_joined", onRoomJoined);
+      socket.off("ability_training_skill_select", onTrainingSkillSelect);
       socket.off("ability_plan_updated", onPlanUpdated);
       socket.off("ability_opponent_submitted", onOpponentSubmitted);
       socket.off("ability_player_submitted", onPlayerSubmitted);
@@ -2690,6 +2702,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       socket.off("rematch_requested", onRematchRequested);
     };
   }, [
+    abilityLoadout,
     currentColor,
     isSfxMuted,
     lang,
@@ -2866,6 +2879,98 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       </div>
 
       <div className="gs-board-stage">
+        {showTrainingSkillSelect && (
+          <div
+            className="upgrade-modal-backdrop"
+            style={{ zIndex: 200 }}
+          >
+            <div
+              className="upgrade-modal skin-modal ability-loadout-modal"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="skin-modal-head">
+                <h3>{lang === "en" ? "Equipped Skills" : "장착 스킬"}</h3>
+                <div className="skin-token-badge" aria-label="Ability loadout count">
+                  <span className="skin-token-badge-main">
+                    <span>{trainingLoadout.length} / 3</span>
+                    <span>{lang === "en" ? "equipped" : "장착 중"}</span>
+                  </span>
+                </div>
+              </div>
+              <p>
+                {lang === "en"
+                  ? "Select up to 3 skills. All skills are available in training."
+                  : "훈련장에서는 모든 스킬을 사용할 수 있습니다. 최대 3개를 선택하세요."}
+              </p>
+              <div className="skin-option-list">
+                {Object.values(ABILITY_SKILLS).map((skill) => {
+                  const equipped = trainingLoadout.includes(skill.id);
+                  const skillSummary =
+                    lang === "en"
+                      ? { tags: skill.loadoutTags.en, desc: skill.loadoutDescription.en }
+                      : { tags: skill.loadoutTags.kr, desc: skill.loadoutDescription.kr };
+                  return (
+                    <button
+                      key={skill.id}
+                      className={`skin-option-card ${equipped ? "is-selected" : ""}`}
+                      type="button"
+                      onClick={() => {
+                        if (equipped) {
+                          setTrainingLoadout(trainingLoadout.filter((id) => id !== skill.id));
+                          return;
+                        }
+                        if (trainingLoadout.length >= 3) {
+                          window.alert(
+                            lang === "en"
+                              ? "You can equip up to 3 skills."
+                              : "스킬은 최대 3개까지 장착할 수 있습니다.",
+                          );
+                          return;
+                        }
+                        setTrainingLoadout([...trainingLoadout, skill.id]);
+                      }}
+                    >
+                      <span className="skin-preview ability-skill-preview">
+                        {renderSkillIcon(skill.id)}
+                      </span>
+                      <span className="skin-option-copy">
+                        <strong>{lang === "en" ? skill.name.en : skill.name.kr}</strong>
+                        <span>
+                          {skillSummary.tags}
+                          <br />
+                          {skillSummary.desc}
+                        </span>
+                      </span>
+                      <span className="skin-lock-meta ability-skill-meta">
+                        <span className="skin-lock-icon" aria-hidden="true">✨</span>
+                        <span>
+                          {skill.category === "passive"
+                            ? lang === "en" ? "Passive · Auto" : "패시브 · 자동"
+                            : lang === "en"
+                              ? `${skill.manaCost} mana · ${skill.category}`
+                              : `마나 ${skill.manaCost} · ${skill.category === "attack" ? "공격" : skill.category === "defense" ? "방어" : "유틸"}`}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="upgrade-modal-actions">
+                <button
+                  className="lobby-btn primary"
+                  type="button"
+                  onClick={() => {
+                    const socket = getSocket();
+                    socket.emit("training_skills_confirmed", { skills: trainingLoadout });
+                    setShowTrainingSkillSelect(false);
+                  }}
+                >
+                  {lang === "en" ? "Confirm" : "확인"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {winner && (
           <div className="gs-result-slot">
             <div className="gameover-overlay">
