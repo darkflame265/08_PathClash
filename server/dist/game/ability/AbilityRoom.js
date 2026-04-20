@@ -1553,6 +1553,7 @@ class AbilityRoom {
             return [];
         const BASE_SCORE = 999990;
         const SKILL_BONUS = 8;
+        const minAttackSkillStep = Math.min(5, hitPath.length);
         const candidates = [];
         // 기본 경로 후보 (스킬 없음)
         const baseValidated = this.validatePlan(bot, hitPath, []);
@@ -1596,23 +1597,13 @@ class AbilityRoom {
                 skillId === 'inferno_field')
                 continue;
             if (skillId === 'cosmic_bigbang') {
-                const validated = this.validatePlan(bot, [], [{ skillId, step: 0, order: 0 }]);
-                if (validated) {
-                    candidates.push({
-                        path: [],
-                        skills: validated.skills,
-                        score: BASE_SCORE + SKILL_BONUS,
-                        reason: 'annihilation-bigbang',
-                        selectedSkill: skillId,
-                    });
-                }
                 continue;
             }
             if (skillId === 'electric_blitz') {
                 // 경로 후반부, loopStart 또는 targetPos와 같은 행/열 위치에서 마지막 발사
                 let lastBlitzStep = -1;
                 let lastBlitzDir = null;
-                for (let s = 0; s <= hitPath.length; s++) {
+                for (let s = minAttackSkillStep; s <= hitPath.length; s++) {
                     const pos = getSequencePosition(bot.position, hitPath, s);
                     const dir = getBlitzDirectionTowardOpponent(pos, targetPos);
                     if (dir) {
@@ -1646,7 +1637,7 @@ class AbilityRoom {
             let skillReservation = null;
             if (skillId === 'ember_blast') {
                 // 십자 범위(자신 + 상하좌우)에 targetPos가 포함되는 첫 step
-                for (let s = 0; s <= hitPath.length; s++) {
+                for (let s = minAttackSkillStep; s <= hitPath.length; s++) {
                     const pos = getSequencePosition(bot.position, hitPath, s);
                     if (getCrossPositions(pos).some((p) => posEqual(p, targetPos))) {
                         skillReservation = { skillId, step: s, order: 0 };
@@ -1656,7 +1647,7 @@ class AbilityRoom {
             }
             else if (skillId === 'nova_blast') {
                 // X자 대각 범위에 targetPos가 포함되는 첫 step
-                for (let s = 0; s <= hitPath.length; s++) {
+                for (let s = minAttackSkillStep; s <= hitPath.length; s++) {
                     const pos = getSequencePosition(bot.position, hitPath, s);
                     if (getNovaPositions(pos).some((p) => posEqual(p, targetPos))) {
                         skillReservation = { skillId, step: s, order: 0 };
@@ -1666,7 +1657,7 @@ class AbilityRoom {
             }
             else if (skillId === 'wizard_magic_mine') {
                 // 첫 번째 targetPos 도달 시점에 함정 설치 → 즉시 피해
-                const firstTargetStep = targetSteps[0] ?? -1;
+                const firstTargetStep = targetSteps.find((step) => step >= minAttackSkillStep) ?? -1;
                 if (firstTargetStep >= 0) {
                     skillReservation = { skillId, step: firstTargetStep, order: 0 };
                 }
