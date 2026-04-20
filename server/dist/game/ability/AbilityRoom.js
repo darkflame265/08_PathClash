@@ -1328,8 +1328,20 @@ class AbilityRoom {
         // ── 무력화 적 섬멸 패턴 최우선 처리 ──────────────────────────────────
         // 상대가 오버드라이브 부작용으로 이동 불가 상태일 때 강제 진입.
         // forced blitz 등 다른 모든 패턴보다 먼저 체크해야 한다.
-        if (bot.role === 'attacker' && opponent.reboundLocked && opponent.equippedSkills.includes('gold_overdrive')) {
-            const annihilationCandidates = this.buildAnnihilationCandidates(bot, opponent, pathPoints, effectiveObstacles);
+        const distanceToOpponent = manhattan(bot.position, opponent.position);
+        const guardAnnihilationChance = posEqual(bot.position, opponent.position)
+            ? 0.7
+            : distanceToOpponent <= 2
+                ? 0.5
+                : 0;
+        const shouldUseGuardAnnihilation = bot.role === 'attacker' &&
+            opponent.equippedSkills.includes('classic_guard') &&
+            guardAnnihilationChance > 0 &&
+            Math.random() < guardAnnihilationChance;
+        if (bot.role === 'attacker' &&
+            ((opponent.reboundLocked && opponent.equippedSkills.includes('gold_overdrive')) ||
+                shouldUseGuardAnnihilation)) {
+            const annihilationCandidates = this.buildAnnihilationCandidates(bot, opponent, pathPoints, effectiveObstacles, { allowGuardTarget: shouldUseGuardAnnihilation });
             if (annihilationCandidates.length > 0) {
                 annihilationCandidates.sort((a, b) => b.score - a.score);
                 return annihilationCandidates[0];
@@ -1421,12 +1433,12 @@ class AbilityRoom {
     //   1) 사각형 패턴 (2×2, 4스텝 루프)
     //   2) BFS로 찾은 최단 복귀 사이클 (장애물로 사각형 불가 시)
     //   3) 단일 접근 (사이클 자체가 불가능한 경우 최소 1회 충돌 보장)
-    buildAnnihilationCandidates(bot, opponent, pathPoints, effectiveObstacles) {
+    buildAnnihilationCandidates(bot, opponent, pathPoints, effectiveObstacles, options = {}) {
         if (bot.role !== 'attacker')
             return [];
-        if (!opponent.reboundLocked)
-            return [];
-        if (!opponent.equippedSkills.includes('gold_overdrive'))
+        const isOverdriveLockedTarget = opponent.reboundLocked && opponent.equippedSkills.includes('gold_overdrive');
+        const isGuardTarget = !!options.allowGuardTarget && opponent.equippedSkills.includes('classic_guard');
+        if (!isOverdriveLockedTarget && !isGuardTarget)
             return [];
         const targetPos = opponent.position;
         // 상대 위치까지 최단 접근 경로 (마지막 셀 = targetPos)
@@ -1498,7 +1510,13 @@ class AbilityRoom {
                 path: baseValidated.path,
                 skills: [],
                 score: BASE_SCORE,
-                reason: loopSegment ? 'annihilation-loop-base' : 'annihilation-single-hit-base',
+                reason: isGuardTarget
+                    ? loopSegment
+                        ? 'guard-annihilation-loop-base'
+                        : 'guard-annihilation-single-hit-base'
+                    : loopSegment
+                        ? 'annihilation-loop-base'
+                        : 'annihilation-single-hit-base',
                 selectedSkill: null,
             });
         }
