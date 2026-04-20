@@ -2689,7 +2689,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     socket.on("ability_game_over", onGameOver);
     socket.on("opponent_disconnected", onOpponentDisconnected);
     socket.on("rematch_requested", onRematchRequested);
-    socket.emit("ability_client_ready");
 
     return () => {
       clearAnimationTimeouts();
