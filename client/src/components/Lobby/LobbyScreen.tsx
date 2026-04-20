@@ -1263,8 +1263,8 @@ export function LobbyScreen({
 
       blurb:
         lang === "en"
-          ? "A small boost to start saving toward token skins"
-          : "토큰 스킨 구매를 위한 첫 저축용 구성",
+          ? "A small boost to start saving toward skins"
+          : "스킨 구매를 위한 첫 저축용 구성",
     },
 
     {
