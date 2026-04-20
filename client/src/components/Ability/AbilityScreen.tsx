@@ -335,6 +335,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const [state, setState] = useState<AbilityBattleState | null>(null);
   const [showTrainingSkillSelect, setShowTrainingSkillSelect] = useState(false);
+  const [trainingSkillError, setTrainingSkillError] = useState<string | null>(null);
   const [trainingLoadout, setTrainingLoadout] = useState<AbilitySkillId[]>([]);
   const [roundInfo, setRoundInfo] = useState<AbilityRoundStartPayload | null>(
     null,
@@ -2520,6 +2521,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     const onRoomJoined = ({
       roomId,
       color,
+      training,
     }: {
       roomId: string;
       color: PlayerColor;
@@ -2527,7 +2529,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     }) => {
       setMyColor(color);
       setRoomCode(roomId);
-      socket.emit("ability_client_ready");
+      if (!training) {
+        socket.emit("ability_client_ready");
+      }
     };
 
     const onPlanUpdated = ({
@@ -2879,9 +2883,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         </div>
       </div>
 
-      <div className="gs-board-stage">
-        {showTrainingSkillSelect &&
-          ReactDOM.createPortal(
+      {showTrainingSkillSelect &&
+        ReactDOM.createPortal(
           <div
             className="upgrade-modal-backdrop"
             style={{ zIndex: 200 }}
@@ -2904,6 +2907,11 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                   ? "Select up to 3 skills. All skills are available in training."
                   : "훈련장에서는 모든 스킬을 사용할 수 있습니다. 최대 3개를 선택하세요."}
               </p>
+              {trainingSkillError && (
+                <p style={{ color: "var(--red, #EF4444)", margin: "0 0 8px", fontSize: "0.85em" }}>
+                  {trainingSkillError}
+                </p>
+              )}
               <div className="skin-option-list">
                 {Object.values(ABILITY_SKILLS).map((skill) => {
                   const equipped = trainingLoadout.includes(skill.id);
@@ -2919,16 +2927,18 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                       onClick={() => {
                         if (equipped) {
                           setTrainingLoadout(trainingLoadout.filter((id) => id !== skill.id));
+                          setTrainingSkillError(null);
                           return;
                         }
                         if (trainingLoadout.length >= 3) {
-                          window.alert(
+                          setTrainingSkillError(
                             lang === "en"
                               ? "You can equip up to 3 skills."
                               : "스킬은 최대 3개까지 장착할 수 있습니다.",
                           );
                           return;
                         }
+                        setTrainingSkillError(null);
                         setTrainingLoadout([...trainingLoadout, skill.id]);
                       }}
                     >
@@ -2969,11 +2979,23 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 >
                   {lang === "en" ? "Confirm" : "확인"}
                 </button>
+                <button
+                  className="lobby-btn"
+                  type="button"
+                  onClick={() => {
+                    setShowTrainingSkillSelect(false);
+                    onLeaveToLobby();
+                  }}
+                >
+                  {lang === "en" ? "Back to Lobby" : "로비로 돌아가기"}
+                </button>
               </div>
             </div>
           </div>,
           document.body
         )}
+
+      <div className="gs-board-stage">
         {winner && (
           <div className="gs-result-slot">
             <div className="gameover-overlay">
