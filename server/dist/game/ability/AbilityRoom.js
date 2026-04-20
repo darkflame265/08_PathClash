@@ -228,6 +228,52 @@ function findShortestReturnCycle(targetPos, loopStart, obstacles, maxLen) {
     }
     return null;
 }
+function buildNoBacktrackTargetHitPath(start, targetPos, pathPoints, obstacles) {
+    if (pathPoints <= 0)
+        return [];
+    let bestPath = [];
+    let bestScore = -Infinity;
+    const startsOnTarget = posEqual(start, targetPos);
+    const scorePath = (path) => {
+        const targetSteps = path
+            .map((position, index) => (posEqual(position, targetPos) ? index + 1 : -1))
+            .filter((step) => step >= 0);
+        const damagingTargetSteps = targetSteps.filter((step) => step > 2);
+        const requiredTargetVisits = startsOnTarget ? 1 : 2;
+        if (targetSteps.length < requiredTargetVisits)
+            return -Infinity;
+        if (damagingTargetSteps.length === 0)
+            return -Infinity;
+        const lateHitScore = damagingTargetSteps.reduce((sum, step) => sum + Math.max(0, pathPoints - step + 1), 0);
+        const finalPosition = path[path.length - 1] ?? start;
+        return (damagingTargetSteps.length * 10000 +
+            targetSteps.length * 1000 +
+            lateHitScore * 10 +
+            path.length +
+            Math.max(0, 4 - manhattan(finalPosition, targetPos)));
+    };
+    const visit = (current, previous, path) => {
+        const score = scorePath(path);
+        if (score > bestScore) {
+            bestScore = score;
+            bestPath = [...path];
+        }
+        if (path.length >= pathPoints)
+            return;
+        for (const neighbor of getCardinalNeighbors(current, obstacles)) {
+            if (previous && posEqual(neighbor, previous))
+                continue;
+            path.push(neighbor);
+            visit(neighbor, current, path);
+            path.pop();
+        }
+    };
+    visit(start, null, []);
+    if (bestScore === -Infinity) {
+        return [];
+    }
+    return bestPath;
+}
 function buildBotPathModel(params) {
     const { start, opponent, role, pathPoints, obstacles } = params;
     const candidates = [];
@@ -1443,8 +1489,9 @@ class AbilityRoom {
         const targetPos = opponent.position;
         // 상대 위치까지 최단 접근 경로 (마지막 셀 = targetPos)
         const approachPath = buildShortestAbilityPath(bot.position, targetPos, effectiveObstacles);
-        if (approachPath.length === 0)
+        if (approachPath.length === 0 && !(isGuardTarget && posEqual(bot.position, targetPos))) {
             return [];
+        }
         // loopStart: 접근 경로에서 targetPos 바로 이전 셀
         const loopStart = approachPath.length >= 2
             ? approachPath[approachPath.length - 2]
@@ -1493,13 +1540,17 @@ class AbilityRoom {
         }
         // ── 3단계: 최종 경로 조합 ─────────────────────────────────────────────
         // 루프가 있으면 반복 삽입, 없으면 단순 접근 경로만 사용 (1회 충돌 보장)
-        const hitPath = [...approachPath];
-        if (loopSegment) {
+        const hitPath = isGuardTarget
+            ? buildNoBacktrackTargetHitPath(bot.position, targetPos, pathPoints, effectiveObstacles)
+            : [...approachPath];
+        if (!isGuardTarget && loopSegment) {
             while (hitPath.length + loopSegment.length <= pathPoints) {
                 hitPath.push(...loopSegment);
             }
         }
         hitPath.splice(pathPoints);
+        if (hitPath.length === 0)
+            return [];
         const BASE_SCORE = 999990;
         const SKILL_BONUS = 8;
         const candidates = [];
@@ -1511,9 +1562,7 @@ class AbilityRoom {
                 skills: [],
                 score: BASE_SCORE,
                 reason: isGuardTarget
-                    ? loopSegment
-                        ? 'guard-annihilation-loop-base'
-                        : 'guard-annihilation-single-hit-base'
+                    ? 'guard-annihilation-no-backtrack'
                     : loopSegment
                         ? 'annihilation-loop-base'
                         : 'annihilation-single-hit-base',
