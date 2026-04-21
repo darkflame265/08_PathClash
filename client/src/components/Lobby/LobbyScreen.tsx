@@ -70,13 +70,7 @@ import { useGameStore } from "../../store/gameStore";
 import { useLang } from "../../hooks/useLang";
 
 import { playLobbyClick } from "../../utils/soundUtils";
-import {
-  CONTROLS_SETTINGS_CHANGED_EVENT,
-  getKeyboardCodeLabel,
-  loadKeyboardControlsSettings,
-  saveKeyboardControlsSettings,
-  type AbilitySkillSlotKey,
-} from "../../settings/controls";
+import { getKeyboardCodeLabel } from "../../settings/controls";
 
 import type { Translations } from "../../i18n/translations";
 
@@ -88,6 +82,9 @@ import type {
 } from "../../types/game.types";
 
 import { ABILITY_SKILLS, type AbilitySkillId } from "../../types/ability.types";
+
+import { useKeyboardControlsSettings } from "./useKeyboardControlsSettings";
+import { useLobbyKeyboardNavigation } from "./useLobbyKeyboardNavigation";
 
 import "./LobbyScreen.css";
 
@@ -823,14 +820,12 @@ export function LobbyScreen({
   const [isControlsSettingsOpen, setIsControlsSettingsOpen] = useState(false);
   const [controlsSettingsTab, setControlsSettingsTab] =
     useState<ControlsSettingsTab>("keyboard");
-  const [keyboardControls, setKeyboardControls] = useState(
-    loadKeyboardControlsSettings,
-  );
-  const [capturingControlKey, setCapturingControlKey] = useState<
-    AbilitySkillSlotKey | "gameAction" | null
-  >(null);
-  const keyboardNavElementRef = useRef<HTMLElement | null>(null);
-  const keyboardNavSelectionStackRef = useRef<HTMLElement[]>([]);
+  const {
+    capturingControlKey,
+    keyboardControls,
+    setCapturingControlKey,
+    updateKeyboardControls,
+  } = useKeyboardControlsSettings();
   const [isNameChangeOpen, setIsNameChangeOpen] = useState(false);
 
   const [isAbilityLoadoutOpen, setIsAbilityLoadoutOpen] = useState(false);
@@ -942,64 +937,6 @@ export function LobbyScreen({
     [isSfxMuted, sfxVolume],
   );
 
-  const updateKeyboardControls = useCallback(
-    (
-      updater:
-        | typeof keyboardControls
-        | ((current: typeof keyboardControls) => typeof keyboardControls),
-    ) => {
-      setKeyboardControls((current) => {
-        const next = typeof updater === "function" ? updater(current) : updater;
-        saveKeyboardControlsSettings(next);
-        return next;
-      });
-    },
-    [],
-  );
-
-  useEffect(() => {
-    if (!capturingControlKey) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      if (event.code === "Escape") {
-        setCapturingControlKey(null);
-        return;
-      }
-
-      updateKeyboardControls((current) => ({
-        ...current,
-        ...(capturingControlKey === "gameAction"
-          ? { gameActionKey: event.code }
-          : {
-              abilitySkillKeys: {
-                ...current.abilitySkillKeys,
-                [capturingControlKey]: event.code,
-              },
-            }),
-      }));
-      setCapturingControlKey(null);
-    };
-
-    window.addEventListener("keydown", handleKeyDown, true);
-    return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [capturingControlKey, updateKeyboardControls]);
-
-  useEffect(() => {
-    const syncControls = () => {
-      setKeyboardControls(loadKeyboardControlsSettings());
-    };
-
-    window.addEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
-    window.addEventListener("storage", syncControls);
-    return () => {
-      window.removeEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
-      window.removeEventListener("storage", syncControls);
-    };
-  }, []);
-
   const closeTopLobbyModal = useCallback(() => {
     if (capturingControlKey) {
       setCapturingControlKey(null);
@@ -1067,418 +1004,17 @@ export function LobbyScreen({
     isSettingsOpen,
     isSkinPickerOpen,
     isTokenShopOpen,
+    setCapturingControlKey,
     skinDetail,
   ]);
 
-  useEffect(() => {
-    const clearSelectedElement = () => {
-      keyboardNavElementRef.current?.classList.remove(
-        "keyboard-nav-selected",
-      );
-      keyboardNavElementRef.current = null;
-    };
-
-    if (
-      (!keyboardControls.keyboardEnabled && !isControlsSettingsOpen) ||
-      capturingControlKey
-    ) {
-      keyboardNavSelectionStackRef.current = [];
-      clearSelectedElement();
-      return;
-    }
-
-    const isUsableNavElement = (element: Element): element is HTMLElement => {
-      if (!(element instanceof HTMLElement)) return false;
-      if (element.closest("[aria-hidden='true']")) return false;
-      if (element instanceof HTMLButtonElement && element.disabled) return false;
-      if (element.getAttribute("aria-disabled") === "true") return false;
-      const rect = element.getBoundingClientRect();
-      if (rect.width <= 0 || rect.height <= 0) return false;
-      const style = window.getComputedStyle(element);
-      return style.visibility !== "hidden" && style.display !== "none";
-    };
-
-    const getModalRoots = () =>
-      Array.from(
-        document.querySelectorAll<HTMLElement>(".upgrade-modal"),
-      ).filter(isUsableNavElement);
-
-    const getModalRoot = () => {
-      const modalRoots = getModalRoots();
-      return modalRoots[modalRoots.length - 1] ?? null;
-    };
-
-    const getModalNavElements = (root: HTMLElement) =>
-      Array.from(
-        root.querySelectorAll<HTMLElement>("button, a[href]"),
-      ).filter(isUsableNavElement);
-
-    const lobbyNavLayers = [
-      "daily",
-      "mode",
-      "mini",
-      "primary",
-      "bottom",
-      "lang",
-    ];
-
-    const getLayerElements = (layer: string) =>
-      Array.from(
-        document.querySelectorAll<HTMLElement>(
-          `[data-keyboard-nav-layer="${layer}"]`,
-        ),
-      ).filter(isUsableNavElement);
-
-    const getCurrentLayerIndex = () => {
-      const currentLayer =
-        keyboardNavElementRef.current?.dataset.keyboardNavLayer ?? null;
-      const index = currentLayer ? lobbyNavLayers.indexOf(currentLayer) : -1;
-      return index >= 0 ? index : 0;
-    };
-
-    const getModalLayers = (root: HTMLElement) => {
-      const layerNames = Array.from(
-        new Set(
-          Array.from(
-            root.querySelectorAll<HTMLElement>("[data-keyboard-modal-layer]"),
-          )
-            .filter(isUsableNavElement)
-            .map((element) => element.dataset.keyboardModalLayer)
-            .filter((layer): layer is string => Boolean(layer)),
-        ),
-      );
-
-      if (root.classList.contains("skin-picker-modal")) {
-        return layerNames.sort((a, b) => {
-          const order = (layer: string) => {
-            if (layer === "token") return 0;
-            if (layer === "tabs") return 1;
-            if (layer.startsWith("skin-row-")) {
-              return 2 + Number(layer.replace("skin-row-", ""));
-            }
-            if (layer === "close") return 1000;
-            return 900;
-          };
-          return order(a) - order(b);
-        });
-      }
-
-      return layerNames;
-    };
-
-    const getModalLayerElements = (root: HTMLElement, layer: string) =>
-      Array.from(
-        root.querySelectorAll<HTMLElement>(
-          `[data-keyboard-modal-layer="${layer}"]`,
-        ),
-      ).filter(isUsableNavElement);
-
-    const getCurrentModalLayerIndex = (
-      root: HTMLElement,
-      modalLayers: string[],
-    ) => {
-      const current = keyboardNavElementRef.current;
-      if (!current || !root.contains(current)) return 0;
-      const layer = current.dataset.keyboardModalLayer ?? null;
-      const index = layer ? modalLayers.indexOf(layer) : -1;
-      return index >= 0 ? index : 0;
-    };
-
-    const getNearestLayerIndex = (fromIndex: number, direction: 1 | -1) => {
-      for (
-        let index = fromIndex + direction;
-        index >= 0 && index < lobbyNavLayers.length;
-        index += direction
-      ) {
-        if (getLayerElements(lobbyNavLayers[index]).length > 0) {
-          return index;
-        }
-      }
-      return fromIndex;
-    };
-
-    const setSelectedElement = (element: HTMLElement | null) => {
-      keyboardNavElementRef.current?.classList.remove(
-        "keyboard-nav-selected",
-      );
-      keyboardNavElementRef.current = element;
-      element?.classList.add("keyboard-nav-selected");
-      element?.scrollIntoView({
-        block: "nearest",
-        inline: "nearest",
-        behavior: "smooth",
-      });
-    };
-
-    const restorePreviousSelection = () => {
-      while (keyboardNavSelectionStackRef.current.length > 0) {
-        const previous = keyboardNavSelectionStackRef.current.pop() ?? null;
-        if (previous && previous.isConnected && isUsableNavElement(previous)) {
-          setSelectedElement(previous);
-          return true;
-        }
-      }
-
-      if (
-        keyboardNavElementRef.current &&
-        !keyboardNavElementRef.current.isConnected
-      ) {
-        clearSelectedElement();
-      }
-
-      return false;
-    };
-
-    const getCenter = (element: HTMLElement) => {
-      const rect = element.getBoundingClientRect();
-      return {
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2,
-      };
-    };
-
-    const pickClosestByX = (elements: HTMLElement[], from: HTMLElement) => {
-      const origin = getCenter(from);
-      let best = elements[0] ?? null;
-      let bestDistance = Number.POSITIVE_INFINITY;
-      for (const element of elements) {
-        const center = getCenter(element);
-        const distance = Math.abs(center.x - origin.x);
-        if (distance < bestDistance) {
-          best = element;
-          bestDistance = distance;
-        }
-      }
-      return best;
-    };
-
-    const pickNextElement = (
-      current: HTMLElement,
-      elements: HTMLElement[],
-      key: string,
-    ) => {
-      const origin = getCenter(current);
-      const vertical = key === "ArrowUp" || key === "ArrowDown";
-      const direction = key === "ArrowUp" || key === "ArrowLeft" ? -1 : 1;
-      let best: { element: HTMLElement; score: number } | null = null;
-
-      for (const element of elements) {
-        if (element === current) continue;
-        const center = getCenter(element);
-        const primary = vertical
-          ? (center.y - origin.y) * direction
-          : (center.x - origin.x) * direction;
-        if (primary <= 4) continue;
-        const secondary = vertical
-          ? Math.abs(center.x - origin.x)
-          : Math.abs(center.y - origin.y);
-        const score = primary * 1000 + secondary;
-        if (!best || score < best.score) {
-          best = { element, score };
-        }
-      }
-
-      return best?.element ?? current;
-    };
-
-    const pickNextLayeredElement = (
-      current: HTMLElement,
-      layerElements: HTMLElement[],
-      key: string,
-    ) => {
-      const currentIndex = layerElements.indexOf(current);
-      if (currentIndex < 0) return layerElements[0] ?? current;
-      const direction = key === "ArrowLeft" ? -1 : 1;
-      const nextIndex =
-        (currentIndex + direction + layerElements.length) %
-        layerElements.length;
-      return layerElements[nextIndex];
-    };
-
-    const adjustRangeInput = (
-      element: HTMLElement,
-      direction: 1 | -1,
-    ): boolean => {
-      if (!(element instanceof HTMLInputElement)) return false;
-      if (element.type !== "range") return false;
-
-      if (direction > 0) {
-        element.stepUp();
-      } else {
-        element.stepDown();
-      }
-
-      element.dispatchEvent(new Event("input", { bubbles: true }));
-      element.dispatchEvent(new Event("change", { bubbles: true }));
-      return true;
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
-        target?.tagName === "SELECT" ||
-        target?.isContentEditable
-      ) {
-        return;
-      }
-
-      const modalRoot = getModalRoot();
-      const modalElements = modalRoot ? getModalNavElements(modalRoot) : [];
-      const firstLayerElements = getLayerElements(lobbyNavLayers[0]);
-
-      if (event.code === keyboardControls.gameActionKey) {
-        const previousModalCount = getModalRoots().length;
-        if (closeTopLobbyModal()) {
-          event.preventDefault();
-          window.requestAnimationFrame(() => {
-            if (getModalRoots().length < previousModalCount) {
-              restorePreviousSelection();
-            }
-          });
-        }
-        return;
-      }
-
-      if (!modalRoot && firstLayerElements.length === 0) {
-        clearSelectedElement();
-        return;
-      }
-
-      if (
-        event.key === "ArrowUp" ||
-        event.key === "ArrowDown" ||
-        event.key === "ArrowLeft" ||
-        event.key === "ArrowRight"
-      ) {
-        event.preventDefault();
-        if (modalRoot) {
-          const modalLayers = getModalLayers(modalRoot);
-          if (modalLayers.length > 0) {
-            const currentLayerIndex = getCurrentModalLayerIndex(
-              modalRoot,
-              modalLayers,
-            );
-            const currentLayer = modalLayers[currentLayerIndex];
-            const currentLayerElements = getModalLayerElements(
-              modalRoot,
-              currentLayer,
-            );
-            const current = currentLayerElements.includes(
-              keyboardNavElementRef.current!,
-            )
-              ? keyboardNavElementRef.current!
-              : currentLayerElements[0];
-
-            if (!current) return;
-
-            if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-              if (
-                adjustRangeInput(
-                  current,
-                  event.key === "ArrowRight" ? 1 : -1,
-                )
-              ) {
-                return;
-              }
-
-              setSelectedElement(
-                pickNextLayeredElement(current, currentLayerElements, event.key),
-              );
-              return;
-            }
-
-            const direction = event.key === "ArrowDown" ? 1 : -1;
-            const nextLayerIndex = Math.min(
-              Math.max(currentLayerIndex + direction, 0),
-              modalLayers.length - 1,
-            );
-            const nextLayerElements = getModalLayerElements(
-              modalRoot,
-              modalLayers[nextLayerIndex],
-            );
-            setSelectedElement(pickClosestByX(nextLayerElements, current));
-            return;
-          }
-
-          const current = modalElements.includes(keyboardNavElementRef.current!)
-            ? keyboardNavElementRef.current!
-            : modalElements[0];
-          setSelectedElement(
-            keyboardNavElementRef.current
-              ? pickNextElement(current, modalElements, event.key)
-              : current,
-          );
-          return;
-        }
-
-        if (!keyboardNavElementRef.current) {
-          setSelectedElement(firstLayerElements[0]);
-          return;
-        }
-
-        const currentLayerIndex = getCurrentLayerIndex();
-        const currentLayer = lobbyNavLayers[currentLayerIndex];
-        const currentLayerElements = getLayerElements(currentLayer);
-        const current = currentLayerElements.includes(
-          keyboardNavElementRef.current,
-        )
-          ? keyboardNavElementRef.current
-          : (currentLayerElements[0] ?? firstLayerElements[0]);
-
-        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-          setSelectedElement(
-            pickNextLayeredElement(current, currentLayerElements, event.key),
-          );
-          return;
-        }
-
-        const nextLayerIndex = getNearestLayerIndex(
-          currentLayerIndex,
-          event.key === "ArrowDown" ? 1 : -1,
-        );
-        const nextLayerElements = getLayerElements(lobbyNavLayers[nextLayerIndex]);
-        setSelectedElement(pickClosestByX(nextLayerElements, current));
-        return;
-      }
-
-      if (event.code === "Space" && keyboardNavElementRef.current) {
-        const selected = keyboardNavElementRef.current;
-        const previousModalCount = getModalRoots().length;
-        event.preventDefault();
-        selected.click();
-
-        window.requestAnimationFrame(() => {
-          const nextModalCount = getModalRoots().length;
-
-          if (
-            nextModalCount > previousModalCount &&
-            selected.isConnected &&
-            isUsableNavElement(selected)
-          ) {
-            keyboardNavSelectionStackRef.current.push(selected);
-            return;
-          }
-
-          if (nextModalCount < previousModalCount) {
-            restorePreviousSelection();
-          }
-        });
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [
+  useLobbyKeyboardNavigation({
+    actionKey: keyboardControls.gameActionKey,
     capturingControlKey,
     closeTopLobbyModal,
     isControlsSettingsOpen,
-    keyboardControls.gameActionKey,
-    keyboardControls.keyboardEnabled,
-  ]);
+    keyboardEnabled: keyboardControls.keyboardEnabled,
+  });
 
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * 4) + 1;
