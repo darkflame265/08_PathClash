@@ -609,7 +609,20 @@ function createEscaperPath(selfPosition: Position, threatPosition: Position, pat
     )
     .sort((left, right) => right.score - left.score);
 
-  const chosen = pickWeightedTopThree(scoredCandidates);
+  // 30% 확률로 "등잔 밑" 패턴: 상대방 쪽으로 첫 이동하는 예측 불가 경로 선택
+  let chosen: EscapePathScore | null | undefined;
+  if (Math.random() < 0.3) {
+    const boldCandidates = scoredCandidates.filter((candidate) => {
+      if (candidate.path.length === 0) return false;
+      const firstStep = candidate.path[0];
+      return manhattan(firstStep, threatPosition) < manhattan(selfPosition, threatPosition);
+    });
+    chosen = boldCandidates.length > 0
+      ? boldCandidates[Math.floor(Math.random() * Math.min(3, boldCandidates.length))]
+      : pickWeightedTopThree(scoredCandidates);
+  } else {
+    chosen = pickWeightedTopThree(scoredCandidates);
+  }
   const chosenPath = chosen?.path ?? [];
 
   lastAiEscapeDebug = {
