@@ -1255,8 +1255,15 @@ export async function purchaseSkinWithTokens(
     return "failed";
   }
 
-  if (data === "PURCHASED") return "purchased";
-  if (data === "ALREADY_OWNED") return "already_owned";
+  if (data === "PURCHASED" || data === "ALREADY_OWNED") {
+    const session = await getCurrentSession();
+    const userId = session?.user?.id ?? null;
+    if (userId) {
+      invalidateAccountSnapshot(userId);
+    }
+    return data === "PURCHASED" ? "purchased" : "already_owned";
+  }
+
   if (data === "INSUFFICIENT_TOKENS") return "insufficient_tokens";
   if (data === "AUTH_REQUIRED") return "auth_required";
   return "failed";
@@ -1285,8 +1292,15 @@ export async function purchaseBoardSkinWithTokens(
     return "failed";
   }
 
-  if (data === "PURCHASED") return "purchased";
-  if (data === "ALREADY_OWNED") return "already_owned";
+  if (data === "PURCHASED" || data === "ALREADY_OWNED") {
+    const session = await getCurrentSession();
+    const userId = session?.user?.id ?? null;
+    if (userId) {
+      invalidateAccountSnapshot(userId);
+    }
+    return data === "PURCHASED" ? "purchased" : "already_owned";
+  }
+
   if (data === "INSUFFICIENT_TOKENS") return "insufficient_tokens";
   if (data === "AUTH_REQUIRED") return "auth_required";
   return "failed";
@@ -1303,9 +1317,12 @@ export async function claimAchievementReward(
     },
   );
 
-  return response.status === "ACCOUNT_OK" && response.profile
-    ? response.profile
-    : null;
+  if (response.status === "ACCOUNT_OK" && response.profile) {
+    invalidateAccountSnapshot(response.profile.userId);
+    return response.profile;
+  }
+
+  return null;
 }
 
 export async function claimAllAchievementRewards(): Promise<AccountProfile | null> {
@@ -1316,9 +1333,12 @@ export async function claimAllAchievementRewards(): Promise<AccountProfile | nul
     },
   );
 
-  return response.status === "ACCOUNT_OK" && response.profile
-    ? response.profile
-    : null;
+  if (response.status === "ACCOUNT_OK" && response.profile) {
+    invalidateAccountSnapshot(response.profile.userId);
+    return response.profile;
+  }
+
+  return null;
 }
 
 export async function syncAchievementSettings(args: {

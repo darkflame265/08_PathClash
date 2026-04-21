@@ -2071,8 +2071,8 @@ export function LobbyScreen({
 
     .filter(Boolean);
 
-  const syncAccountSummary = useCallback(() => {
-    return refreshAccountSummary().then((profile) => {
+  const syncAccountSummary = useCallback((options?: { force?: boolean }) => {
+    return refreshAccountSummary(options).then((profile) => {
       applyProfileToStore(profile, setAuthState);
       lastRewardSyncDayRef.current = getUtcDayKey();
     });
@@ -3453,7 +3453,7 @@ export function LobbyScreen({
       const result = await purchaseSkinWithTokens(choice.id);
 
       if (result === "purchased" || result === "already_owned") {
-        await syncAccountSummary();
+        await syncAccountSummary({ force: true });
 
         setPieceSkin(choice.id);
 
@@ -3498,7 +3498,7 @@ export function LobbyScreen({
       const result = await purchaseBoardSkinWithTokens(choice.id);
 
       if (result === "purchased" || result === "already_owned") {
-        await syncAccountSummary();
+        await syncAccountSummary({ force: true });
         setBoardSkin(choice.id);
         setSkinPurchaseNoticeMessage(skinPurchaseSuccessMsg(choice.name));
         return true;
