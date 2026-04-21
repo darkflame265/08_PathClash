@@ -1600,6 +1600,12 @@
   margin-top: -0.15rem;
 }
 
+.ability-loadout-modal .skin-option-card.is-selected {
+  border: 2.5px solid #7dd3fc;
+  background: rgba(125, 211, 252, 0.1);
+  box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.28);
+}
+
 .ability-loadout-chip {
   display: inline-flex;
   align-items: center;
