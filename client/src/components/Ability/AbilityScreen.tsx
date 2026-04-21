@@ -875,13 +875,21 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         : [...tiles, pendingTile],
     baseTrapTiles,
   );
+  // 이동 중 페이즈: 함정은 설치자 말이 해당 칸 위에 있을 때만 표시
+  const isMovingPhase = state?.phase === "moving";
+  const filteredOwnerTrapTiles = isMovingPhase
+    ? ownerVisibleTrapTiles.filter((trap) => {
+        const piecePos = trap.owner === "red" ? redDisplayPos : blueDisplayPos;
+        return posEqual(piecePos, trap.position);
+      })
+    : ownerVisibleTrapTiles;
   // 상대방 눈에 노출된 함정도 포함 (중복 제거)
   const visibleTrapTiles = [
-    ...ownerVisibleTrapTiles,
+    ...filteredOwnerTrapTiles,
     ...mineRevealedPositions
       .filter(
         (rev) =>
-          !ownerVisibleTrapTiles.some(
+          !filteredOwnerTrapTiles.some(
             (t) =>
               t.position.row === rev.position.row &&
               t.position.col === rev.position.col,
