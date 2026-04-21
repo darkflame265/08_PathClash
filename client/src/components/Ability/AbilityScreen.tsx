@@ -1591,8 +1591,33 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         ArrowRight: { row: 0, col: 1 },
       };
       const dir = dirs[event.key];
+      const slotEntries = [
+        ["slot1", 0],
+        ["slot2", 1],
+        ["slot3", 2],
+      ] as const;
+      const matchedSlot = slotEntries.find(
+        ([slot]) => keyboardControls.abilitySkillKeys[slot] === event.code,
+      );
 
       if (keyboardTargetMode) {
+        if (matchedSlot) {
+          const skillId = getAvailableSkills()[matchedSlot[1]];
+          const pendingSkillId =
+            keyboardTargetMode === "teleport"
+              ? "quantum_shift"
+              : keyboardTargetMode === "blitz"
+                ? "electric_blitz"
+                : "inferno_field";
+
+          if (skillId === pendingSkillId) {
+            event.preventDefault();
+            if (!isSfxMuted) playLobbyClick(sfxVolume);
+            handleSkillClick(skillId);
+            return;
+          }
+        }
+
         if (dir) {
           event.preventDefault();
           setKeyboardTarget((current) => {
@@ -1642,14 +1667,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         return;
       }
 
-      const slotEntries = [
-        ["slot1", 0],
-        ["slot2", 1],
-        ["slot3", 2],
-      ] as const;
-      const matchedSlot = slotEntries.find(
-        ([slot]) => keyboardControls.abilitySkillKeys[slot] === event.code,
-      );
       if (matchedSlot) {
         const skillId = getAvailableSkills()[matchedSlot[1]];
         if (!skillId) return;
