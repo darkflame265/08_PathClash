@@ -1014,6 +1014,7 @@ export function LobbyScreen({
     closeTopLobbyModal,
     isControlsSettingsOpen,
     keyboardEnabled: keyboardControls.keyboardEnabled,
+    selectKey: keyboardControls.selectActionKey,
   });
 
   useEffect(() => {
@@ -1281,10 +1282,11 @@ export function LobbyScreen({
   const inGameMappingTitle = lang === "en" ? "In-Game" : "인게임";
   const keyboardMappingDesc =
     lang === "en"
-      ? "Use arrow keys to draw paths. Press Space to confirm targeted skills."
-      : "화살표 방향키로 경로를 작성하고, 위치 지정 스킬은 스페이스바로 확정합니다.";
+      ? "Use arrow keys to draw paths. Use Select to confirm targeted skills."
+      : "화살표 방향키로 경로를 작성하고, 위치 지정 스킬은 선택 키로 확정합니다.";
   const gameActionKeyLabel =
     lang === "en" ? "Exit / Rematch" : "나가기/재시작";
+  const selectActionKeyLabel = lang === "en" ? "Select" : "선택";
   const controllerComingSoonLabel =
     lang === "en" ? "Still in development." : "아직 개발 중입니다.";
   const skillSlotLabels =
@@ -5335,6 +5337,22 @@ export function LobbyScreen({
                           ? keyCaptureLabel
                           : getKeyboardCodeLabel(
                               keyboardControls.gameActionKey,
+                            )}
+                      </button>
+                    </div>
+
+                    <div className="controls-keymap-row">
+                      <span>{selectActionKeyLabel}</span>
+                      <button
+                        className={`controls-keymap-button ${capturingControlKey === "selectAction" ? "is-capturing" : ""}`}
+                        data-keyboard-modal-layer="controls-select-action"
+                        type="button"
+                        onClick={() => setCapturingControlKey("selectAction")}
+                      >
+                        {capturingControlKey === "selectAction"
+                          ? keyCaptureLabel
+                          : getKeyboardCodeLabel(
+                              keyboardControls.selectActionKey,
                             )}
                       </button>
                     </div>

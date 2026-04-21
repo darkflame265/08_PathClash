@@ -1583,6 +1583,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     closeTopLobbyModal: closeTrainingSkillSelect,
     isControlsSettingsOpen: false,
     keyboardEnabled: keyboardControls.keyboardEnabled && showTrainingSkillSelect,
+    selectKey: keyboardControls.selectActionKey,
   });
 
   useEffect(() => {
@@ -1676,7 +1677,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           return;
         }
 
-        if (event.code === "Space") {
+        if (event.code === keyboardControls.selectActionKey) {
           event.preventDefault();
           if (!keyboardTarget) return;
           if (!isSfxMuted) playLobbyClick(sfxVolume);

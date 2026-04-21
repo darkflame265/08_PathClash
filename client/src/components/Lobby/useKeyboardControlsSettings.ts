@@ -8,7 +8,11 @@ import {
   type KeyboardControlsSettings,
 } from "../../settings/controls";
 
-export type CapturingControlKey = AbilitySkillSlotKey | "gameAction" | null;
+export type CapturingControlKey =
+  | AbilitySkillSlotKey
+  | "gameAction"
+  | "selectAction"
+  | null;
 
 type KeyboardControlsUpdater =
   | KeyboardControlsSettings
@@ -48,12 +52,14 @@ export function useKeyboardControlsSettings() {
         ...current,
         ...(capturingControlKey === "gameAction"
           ? { gameActionKey: event.code }
-          : {
-              abilitySkillKeys: {
-                ...current.abilitySkillKeys,
-                [capturingControlKey]: event.code,
-              },
-            }),
+          : capturingControlKey === "selectAction"
+            ? { selectActionKey: event.code }
+            : {
+                abilitySkillKeys: {
+                  ...current.abilitySkillKeys,
+                  [capturingControlKey]: event.code,
+                },
+              }),
       }));
       setCapturingControlKey(null);
     };

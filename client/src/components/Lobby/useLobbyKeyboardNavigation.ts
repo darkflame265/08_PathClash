@@ -6,6 +6,7 @@ type UseLobbyKeyboardNavigationArgs = {
   closeTopLobbyModal: () => boolean;
   isControlsSettingsOpen: boolean;
   keyboardEnabled: boolean;
+  selectKey: string;
 };
 
 const LOBBY_NAV_LAYERS = [
@@ -30,6 +31,7 @@ export function useLobbyKeyboardNavigation({
   closeTopLobbyModal,
   isControlsSettingsOpen,
   keyboardEnabled,
+  selectKey,
 }: UseLobbyKeyboardNavigationArgs) {
   const selectedElementRef = useRef<HTMLElement | null>(null);
   const selectionStackRef = useRef<HTMLElement[]>([]);
@@ -390,7 +392,7 @@ export function useLobbyKeyboardNavigation({
         return;
       }
 
-      if (event.code === "Space" && selectedElementRef.current) {
+      if (event.code === selectKey && selectedElementRef.current) {
         const selected = selectedElementRef.current;
         const previousModalCount = getModalRoots().length;
         event.preventDefault();
@@ -425,5 +427,6 @@ export function useLobbyKeyboardNavigation({
     closeTopLobbyModal,
     isControlsSettingsOpen,
     keyboardEnabled,
+    selectKey,
   ]);
 }
