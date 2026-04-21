@@ -3209,7 +3209,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                   <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
                   <span>
                     {lang === "en"
-                      ? `step ${reservation.step}`
+                      ? `tile ${reservation.step}`
                       : `${reservation.step}칸`}
                   </span>
                 </button>
