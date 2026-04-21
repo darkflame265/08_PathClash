@@ -26,6 +26,7 @@ import {
   playMagicMine,
   playVoidCloak,
   playChronosTickTock,
+  playPathStepClick,
   startChronosRewindLoop,
   stopChronosRewindLoop,
   playMatchResultSfx,
@@ -50,7 +51,11 @@ import {
   type AbilityTrapTile,
 } from "../../types/ability.types";
 import { AbilityGrid } from "./AbilityGrid";
-import { isBlockedCell, posEqual } from "../../utils/pathUtils";
+import { isBlockedCell, isValidMove, posEqual } from "../../utils/pathUtils";
+import {
+  CONTROLS_SETTINGS_CHANGED_EVENT,
+  loadKeyboardControlsSettings,
+} from "../../settings/controls";
 import "../Game/GameScreen.css";
 import "../Game/GameGrid.css";
 import "../Game/GameOverOverlay.css";
@@ -411,6 +416,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [pendingTeleport, setPendingTeleport] = useState(false);
   const [pendingBlitz, setPendingBlitz] = useState(false);
   const [pendingInferno, setPendingInferno] = useState(false);
+  const [keyboardControls, setKeyboardControls] = useState(
+    loadKeyboardControlsSettings,
+  );
+  const [keyboardTarget, setKeyboardTarget] = useState<Position | null>(null);
   const [redDisplayPos, setRedDisplayPos] = useState<Position>({
     row: 2,
     col: 0,
@@ -1258,6 +1267,13 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   };
 
   const handleInfernoTargetSelect = (target: Position) => {
+    if (!state) return;
+    if (
+      posEqual(target, state.players.red.position) ||
+      posEqual(target, state.players.blue.position)
+    ) {
+      return;
+    }
     const nextReservations: AbilitySkillReservation[] = [
       ...skillReservations.filter((entry) => entry.skillId !== "inferno_field"),
       {
@@ -1296,7 +1312,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     if (!state) return;
     const opponentColor = currentColor === "red" ? "blue" : "red";
     const opponentPosition = state.players[opponentColor].position;
+    const teleportOrigin =
+      myPath.length > 0 ? myPath[myPath.length - 1] : state.players[currentColor].position;
+    const rowDistance = Math.abs(target.row - teleportOrigin.row);
+    const colDistance = Math.abs(target.col - teleportOrigin.col);
     if (
+      (rowDistance === 0 && colDistance === 0) ||
+      rowDistance > 1 ||
+      colDistance > 1 ||
       posEqual(target, opponentPosition) ||
       isBlockedCell(target, state.obstacles)
     ) {
@@ -1510,6 +1533,221 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       toggleCosmicBigBang();
     }
   };
+
+  const keyboardTargetMode = pendingTeleport
+    ? "teleport"
+    : pendingBlitz
+      ? "blitz"
+      : pendingInferno && selectedSkillId === "inferno_field"
+        ? "inferno"
+        : null;
+
+  useEffect(() => {
+    const syncControls = () => {
+      setKeyboardControls(loadKeyboardControlsSettings());
+    };
+
+    window.addEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
+    window.addEventListener("storage", syncControls);
+    return () => {
+      window.removeEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
+      window.removeEventListener("storage", syncControls);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!keyboardTargetMode || !state) {
+      setKeyboardTarget(null);
+      return;
+    }
+
+    setKeyboardTarget((current) => {
+      if (current) return current;
+      return myPath.length > 0
+        ? myPath[myPath.length - 1]
+        : state.players[currentColor].position;
+    });
+  }, [currentColor, keyboardTargetMode, myPath, state]);
+
+  useEffect(() => {
+    if (!keyboardControls.keyboardEnabled || !state) return;
+    if (state.phase !== "planning" || mySubmitted) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.tagName === "SELECT" ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+
+      const dirs: Record<string, Position> = {
+        ArrowUp: { row: -1, col: 0 },
+        ArrowDown: { row: 1, col: 0 },
+        ArrowLeft: { row: 0, col: -1 },
+        ArrowRight: { row: 0, col: 1 },
+      };
+      const dir = dirs[event.key];
+
+      if (keyboardTargetMode) {
+        if (dir) {
+          event.preventDefault();
+          setKeyboardTarget((current) => {
+            const origin =
+              current ??
+              (myPath.length > 0
+                ? myPath[myPath.length - 1]
+                : state.players[currentColor].position);
+            const next = {
+              row: origin.row + dir.row,
+              col: origin.col + dir.col,
+            };
+            if (
+              next.row < 0 ||
+              next.row > 4 ||
+              next.col < 0 ||
+              next.col > 4
+            ) {
+              return origin;
+            }
+            return next;
+          });
+          return;
+        }
+
+        if (event.code === "Space") {
+          event.preventDefault();
+          if (!keyboardTarget) return;
+          if (!isSfxMuted) playLobbyClick(sfxVolume);
+          if (keyboardTargetMode === "teleport") {
+            handleTeleportTargetSelect(keyboardTarget);
+          } else if (keyboardTargetMode === "blitz") {
+            handleBlitzTargetSelect(keyboardTarget);
+          } else {
+            handleInfernoTargetSelect(keyboardTarget);
+          }
+          return;
+        }
+
+        if (event.code === "Escape") {
+          event.preventDefault();
+          setSelectedSkillId(null);
+          setPendingTeleport(false);
+          setPendingBlitz(false);
+          setPendingInferno(false);
+        }
+        return;
+      }
+
+      const slotEntries = [
+        ["slot1", 0],
+        ["slot2", 1],
+        ["slot3", 2],
+      ] as const;
+      const matchedSlot = slotEntries.find(
+        ([slot]) => keyboardControls.abilitySkillKeys[slot] === event.code,
+      );
+      if (matchedSlot) {
+        const skillId = getAvailableSkills()[matchedSlot[1]];
+        if (!skillId) return;
+        if (ABILITY_SKILLS[skillId].category === "passive") return;
+        event.preventDefault();
+        if (!isSfxMuted) playLobbyClick(sfxVolume);
+        setMySkillInfo(null);
+        handleSkillClick(skillId);
+        return;
+      }
+
+      if (!dir) return;
+
+      const me = state.players[currentColor];
+      const chargeReservedNonOverdrive = skillReservations.some(
+        (entry) => entry.skillId === "plasma_charge",
+      );
+      const bigBangReservation = skillReservations.find(
+        (entry) => entry.skillId === "cosmic_bigbang",
+      );
+      const guardReserved = skillReservations.some(
+        (entry) => entry.skillId === "classic_guard",
+      );
+      const effectivePathPoints = me.reboundLocked
+        ? 0
+        : bigBangReservation
+          ? bigBangReservation.step
+          : chargeReservedNonOverdrive
+            ? 1
+            : guardReserved
+              ? 0
+              : state.pathPoints;
+      const canDrawPath =
+        effectivePathPoints > 0 &&
+        !skillReservations.some(
+          (reservation) =>
+            reservation.skillId === "classic_guard" ||
+            reservation.skillId === "electric_blitz" ||
+            reservation.skillId === "cosmic_bigbang",
+        );
+
+      if (!canDrawPath) return;
+
+      event.preventDefault();
+      const teleportStep = teleportReservation?.step ?? null;
+      const teleportTarget = teleportReservation?.target ?? null;
+      const start = getPreviewStart();
+      const current = myPath;
+      const lastPos =
+        current.length === 0
+          ? start
+          : teleportTarget && current.length === teleportStep
+            ? teleportTarget
+            : current[current.length - 1];
+      const next: Position = {
+        row: lastPos.row + dir.row,
+        col: lastPos.col + dir.col,
+      };
+
+      if (next.row < 0 || next.row > 4 || next.col < 0 || next.col > 4) return;
+      if (isBlockedCell(next, state.obstacles)) return;
+
+      if (current.length > 0) {
+        const secondLast =
+          current.length < 2
+            ? start
+            : teleportTarget && current.length - 1 === teleportStep
+              ? teleportTarget
+              : current[current.length - 2];
+        if (posEqual(next, secondLast)) {
+          if (!isSfxMuted) playPathStepClick(sfxVolume);
+          updateMyPath(current.slice(0, -1));
+          return;
+        }
+      }
+
+      if (current.length >= effectivePathPoints) return;
+      if (isValidMove(lastPos, next)) {
+        if (!isSfxMuted) playPathStepClick(sfxVolume);
+        updateMyPath([...current, next]);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    currentColor,
+    isSfxMuted,
+    keyboardControls,
+    keyboardTarget,
+    keyboardTargetMode,
+    myPath,
+    mySubmitted,
+    sfxVolume,
+    skillReservations,
+    state,
+    teleportReservation,
+  ]);
 
   const triggerLocalHit = (
     color: PlayerColor,
@@ -3290,6 +3528,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             infernoTargetsVisible={
               pendingInferno && selectedSkillId === "inferno_field"
             }
+            keyboardTarget={keyboardTarget}
             onTeleportTargetSelect={handleTeleportTargetSelect}
             onBlitzTargetSelect={handleBlitzTargetSelect}
             onInfernoTargetSelect={handleInfernoTargetSelect}

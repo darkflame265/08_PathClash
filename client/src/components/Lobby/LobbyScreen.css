@@ -2561,6 +2561,144 @@
   width: min(100%, 24rem);
 }
 
+.controls-settings-modal {
+  width: min(100%, 27rem);
+}
+
+.controls-settings-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  padding: 0.25rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.controls-settings-tab {
+  min-height: 2.55rem;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: #a8b4c5;
+  font-weight: 800;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.12s ease;
+}
+
+.controls-settings-tab.is-active {
+  border-color: rgba(74, 222, 128, 0.46);
+  background: rgba(34, 197, 94, 0.16);
+  color: #dcfce7;
+}
+
+.controls-settings-tab:active {
+  transform: translateY(1px);
+}
+
+.controls-settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.controls-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(154, 164, 174, 0.14);
+  background: rgba(42, 49, 55, 0.5);
+  color: var(--text, #f0f4f8);
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.controls-checkbox-row input {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: #22c55e;
+  flex: 0 0 auto;
+}
+
+.controls-keymap-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.95rem 1rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(154, 164, 174, 0.14);
+  background: rgba(42, 49, 55, 0.5);
+}
+
+.controls-keymap-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.15rem;
+}
+
+.controls-keymap-head strong {
+  color: var(--text, #f0f4f8);
+  font-size: 0.95rem;
+}
+
+.controls-keymap-head span {
+  color: var(--text-muted, #9aa4ae);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.controls-keymap-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  min-height: 2.65rem;
+  color: #dbeafe;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.controls-keymap-button {
+  min-width: 6.5rem;
+  min-height: 2.35rem;
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  border-radius: 0.75rem;
+  background: rgba(59, 130, 246, 0.12);
+  color: #bfdbfe;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.controls-keymap-button.is-capturing {
+  border-color: rgba(74, 222, 128, 0.58);
+  background: rgba(34, 197, 94, 0.16);
+  color: #dcfce7;
+}
+
+.controls-controller-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 12rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(154, 164, 174, 0.14);
+  background: rgba(42, 49, 55, 0.5);
+  color: var(--text-muted, #9aa4ae);
+  font-size: 0.96rem;
+  font-weight: 800;
+  text-align: center;
+}
+
 .patch-notes-modal {
   width: min(100%, 34rem);
 }

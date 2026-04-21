@@ -70,6 +70,12 @@ import { useGameStore } from "../../store/gameStore";
 import { useLang } from "../../hooks/useLang";
 
 import { playLobbyClick } from "../../utils/soundUtils";
+import {
+  getKeyboardCodeLabel,
+  loadKeyboardControlsSettings,
+  saveKeyboardControlsSettings,
+  type AbilitySkillSlotKey,
+} from "../../settings/controls";
 
 import type { Translations } from "../../i18n/translations";
 
@@ -87,6 +93,7 @@ import "./LobbyScreen.css";
 type LobbyView = "main" | "create" | "join";
 type SkinPickerTab = "piece" | "board";
 type FriendBattleMode = "classic" | "ability";
+type ControlsSettingsTab = "keyboard" | "controller";
 type SkinDetailState =
   | {
       tab: "piece";
@@ -812,6 +819,14 @@ export function LobbyScreen({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const [isAudioSettingsOpen, setIsAudioSettingsOpen] = useState(false);
+  const [isControlsSettingsOpen, setIsControlsSettingsOpen] = useState(false);
+  const [controlsSettingsTab, setControlsSettingsTab] =
+    useState<ControlsSettingsTab>("keyboard");
+  const [keyboardControls, setKeyboardControls] = useState(
+    loadKeyboardControlsSettings,
+  );
+  const [capturingSkillSlot, setCapturingSkillSlot] =
+    useState<AbilitySkillSlotKey | null>(null);
   const [isNameChangeOpen, setIsNameChangeOpen] = useState(false);
 
   const [isAbilityLoadoutOpen, setIsAbilityLoadoutOpen] = useState(false);
@@ -923,6 +938,48 @@ export function LobbyScreen({
     [isSfxMuted, sfxVolume],
   );
 
+  const updateKeyboardControls = useCallback(
+    (
+      updater:
+        | typeof keyboardControls
+        | ((current: typeof keyboardControls) => typeof keyboardControls),
+    ) => {
+      setKeyboardControls((current) => {
+        const next =
+          typeof updater === "function" ? updater(current) : updater;
+        saveKeyboardControlsSettings(next);
+        return next;
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!capturingSkillSlot) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (event.code === "Escape") {
+        setCapturingSkillSlot(null);
+        return;
+      }
+
+      updateKeyboardControls((current) => ({
+        ...current,
+        abilitySkillKeys: {
+          ...current.abilitySkillKeys,
+          [capturingSkillSlot]: event.code,
+        },
+      }));
+      setCapturingSkillSlot(null);
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [capturingSkillSlot, updateKeyboardControls]);
+
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * 4) + 1;
     setLobbySkinIconSrc(`/ui/lobby/lobby-icon-skin${randomIndex}.svg`);
@@ -979,6 +1036,7 @@ export function LobbyScreen({
   const skinButtonLabel = lang === "en" ? "Skin" : "스킨";
 
   const soundButtonLabel = lang === "en" ? "Sound" : "소리";
+  const controlsButtonLabel = lang === "en" ? "Controls" : "조작";
 
   const termsButtonLabel = lang === "en" ? "Terms" : "이용약관";
 
@@ -1178,6 +1236,24 @@ export function LobbyScreen({
   const initialNicknameConfirmLabel = lang === "en" ? "Confirm" : "확인";
 
   const audioModalTitle = lang === "en" ? "Audio Settings" : "오디오 설정";
+  const controlsModalTitle = lang === "en" ? "Controls" : "조작";
+  const keyboardTabLabel = lang === "en" ? "Keyboard" : "키보드";
+  const controllerTabLabel = lang === "en" ? "Controller" : "컨트롤러";
+  const keyboardEnabledLabel =
+    lang === "en" ? "Enable keyboard controls?" : "키보드 사용 활성화?";
+  const keyboardMappingTitle =
+    lang === "en" ? "Ability Battle" : "능력대전";
+  const keyboardMappingDesc =
+    lang === "en"
+      ? "Use arrow keys to draw paths. Press Space to confirm targeted skills."
+      : "화살표 방향키로 경로를 작성하고, 위치 지정 스킬은 스페이스바로 확정합니다.";
+  const controllerComingSoonLabel =
+    lang === "en" ? "Still in development." : "아직 개발 중입니다.";
+  const skillSlotLabels =
+    lang === "en"
+      ? { slot1: "Skill 1", slot2: "Skill 2", slot3: "Skill 3" }
+      : { slot1: "스킬 1", slot2: "스킬 2", slot3: "스킬 3" };
+  const keyCaptureLabel = lang === "en" ? "Press a key..." : "키 입력 대기...";
 
   const musicLabel = lang === "en" ? "Music" : "음악";
 
@@ -4876,6 +4952,17 @@ export function LobbyScreen({
                   {soundButtonLabel}
                 </button>
 
+                <button
+                  className="lobby-btn secondary settings-policy-btn"
+                  onClick={() => {
+                    setControlsSettingsTab("keyboard");
+                    setIsControlsSettingsOpen(true);
+                  }}
+                  type="button"
+                >
+                  {controlsButtonLabel}
+                </button>
+
                 <a
                   className="lobby-btn secondary settings-policy-btn"
                   href={termsUrl}
@@ -5058,6 +5145,107 @@ export function LobbyScreen({
               <button
                 className="lobby-btn primary"
                 onClick={() => setIsAudioSettingsOpen(false)}
+                type="button"
+              >
+                {skinApplyLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isControlsSettingsOpen && (
+        <div
+          className="upgrade-modal-backdrop audio-modal-backdrop"
+          onClick={() => {
+            setCapturingSkillSlot(null);
+            setIsControlsSettingsOpen(false);
+          }}
+        >
+          <div
+            className="upgrade-modal skin-modal controls-settings-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="skin-modal-head">
+              <h3>{controlsModalTitle}</h3>
+            </div>
+
+            <div className="controls-settings-tabs" role="tablist">
+              <button
+                className={`controls-settings-tab ${controlsSettingsTab === "keyboard" ? "is-active" : ""}`}
+                type="button"
+                role="tab"
+                aria-selected={controlsSettingsTab === "keyboard"}
+                onClick={() => setControlsSettingsTab("keyboard")}
+              >
+                {keyboardTabLabel}
+              </button>
+              <button
+                className={`controls-settings-tab ${controlsSettingsTab === "controller" ? "is-active" : ""}`}
+                type="button"
+                role="tab"
+                aria-selected={controlsSettingsTab === "controller"}
+                onClick={() => setControlsSettingsTab("controller")}
+              >
+                {controllerTabLabel}
+              </button>
+            </div>
+
+            {controlsSettingsTab === "keyboard" ? (
+              <div className="controls-settings-body">
+                <label className="controls-checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={keyboardControls.keyboardEnabled}
+                    onChange={(event) =>
+                      updateKeyboardControls((current) => ({
+                        ...current,
+                        keyboardEnabled: event.target.checked,
+                      }))
+                    }
+                  />
+                  <span>{keyboardEnabledLabel}</span>
+                </label>
+
+                {keyboardControls.keyboardEnabled && (
+                  <div className="controls-keymap-panel">
+                    <div className="controls-keymap-head">
+                      <strong>{keyboardMappingTitle}</strong>
+                      <span>{keyboardMappingDesc}</span>
+                    </div>
+
+                    {(["slot1", "slot2", "slot3"] as const).map((slot) => (
+                      <div className="controls-keymap-row" key={slot}>
+                        <span>{skillSlotLabels[slot]}</span>
+                        <button
+                          className={`controls-keymap-button ${capturingSkillSlot === slot ? "is-capturing" : ""}`}
+                          type="button"
+                          onClick={() => setCapturingSkillSlot(slot)}
+                        >
+                          {capturingSkillSlot === slot
+                            ? keyCaptureLabel
+                            : getKeyboardCodeLabel(
+                                keyboardControls.abilitySkillKeys[slot],
+                              )}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="controls-controller-empty">
+                {controllerComingSoonLabel}
+              </div>
+            )}
+
+            <div className="upgrade-modal-actions">
+              <button
+                className="lobby-btn primary"
+                onClick={() => {
+                  setCapturingSkillSlot(null);
+                  setIsControlsSettingsOpen(false);
+                }}
                 type="button"
               >
                 {skinApplyLabel}

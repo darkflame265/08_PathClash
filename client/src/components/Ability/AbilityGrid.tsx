@@ -87,6 +87,7 @@ interface Props {
   teleportTargetsVisible: boolean;
   blitzTargetsVisible: boolean;
   infernoTargetsVisible: boolean;
+  keyboardTarget: Position | null;
   onTeleportTargetSelect: (target: Position) => void;
   onBlitzTargetSelect: (target: Position) => void;
   onInfernoTargetSelect: (target: Position) => void;
@@ -169,6 +170,7 @@ export function AbilityGrid({
   teleportTargetsVisible,
   blitzTargetsVisible,
   infernoTargetsVisible,
+  keyboardTarget,
   onTeleportTargetSelect,
   onBlitzTargetSelect,
   onInfernoTargetSelect,
@@ -923,6 +925,21 @@ export function AbilityGrid({
             }}
           />
         ))}
+
+        {keyboardTarget &&
+          (teleportTargetsVisible ||
+            blitzTargetsVisible ||
+            infernoTargetsVisible) && (
+            <div
+              className="ability-keyboard-target-outline"
+              style={{
+                left: keyboardTarget.col * responsiveCellSize,
+                top: keyboardTarget.row * responsiveCellSize,
+                width: responsiveCellSize,
+                height: responsiveCellSize,
+              }}
+            />
+          )}
 
         {isPlaybackPhase ? (
           movingTeleportMarkers.red && movingTeleportSteps.red !== null ? (
