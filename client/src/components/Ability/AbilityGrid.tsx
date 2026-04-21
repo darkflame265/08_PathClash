@@ -92,7 +92,6 @@ interface Props {
   onInfernoTargetSelect: (target: Position) => void;
   onTeleportCancel: () => void;
   trapTiles: AbilityTrapTile[];
-  mineTriggeredPositions: Array<{ id: number; position: Position }>;
   magicMineCastingColors: { red: boolean; blue: boolean };
 }
 
@@ -175,7 +174,6 @@ export function AbilityGrid({
   onInfernoTargetSelect,
   onTeleportCancel,
   trapTiles,
-  mineTriggeredPositions,
   magicMineCastingColors,
 }: Props) {
   const isSfxMuted = useGameStore((store) => store.isSfxMuted);
@@ -847,22 +845,6 @@ export function AbilityGrid({
           </div>
         ))}
 
-        {mineTriggeredPositions.map((entry) => (
-          <div
-            key={`mine-trigger-${entry.id}`}
-            className="ability-wizard-mine-trigger"
-            style={{
-              left:
-                entry.position.col * responsiveCellSize +
-                responsiveCellSize / 2,
-              top:
-                entry.position.row * responsiveCellSize +
-                responsiveCellSize / 2,
-              width: responsiveCellSize,
-              height: responsiveCellSize,
-            }}
-          />
-        ))}
 
         {isPlanning && infernoMarker ? (
           <div

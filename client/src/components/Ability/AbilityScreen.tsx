@@ -469,12 +469,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [movingAtomicClones, setMovingAtomicClones] =
     useState<AtomicCloneVisualsByColor>(createEmptyAtomicCloneVisuals);
   const [trapTiles, setTrapTiles] = useState<AbilityTrapTile[]>([]);
-  const [mineTriggeredPositions, setMineTriggeredPositions] = useState<
-    Array<{ id: number; position: Position }>
-  >([]);
-  const [mineRevealedPositions, setMineRevealedPositions] = useState<
-    Array<{ id: number; position: Position }>
-  >([]);
   const [pendingOwnedTriggeredTrapTiles, setPendingOwnedTriggeredTrapTiles] =
     useState<AbilityTrapTile[]>([]);
   const [magicMineCastingColors, setMagicMineCastingColors] = useState<{
@@ -908,24 +902,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         );
       })
     : ownerVisibleTrapTiles;
-  // 상대방 눈에 노출된 함정도 포함 (중복 제거)
-  const visibleTrapTiles = [
-    ...filteredOwnerTrapTiles,
-    ...mineRevealedPositions
-      .filter(
-        (rev) =>
-          !filteredOwnerTrapTiles.some(
-            (t) =>
-              t.position.row === rev.position.row &&
-              t.position.col === rev.position.col,
-          ),
-      )
-      .map((rev) => ({
-        position: rev.position,
-        owner: currentColor,
-        remainingTurns: 0,
-      })),
-  ];
+  const visibleTrapTiles = filteredOwnerTrapTiles;
 
   const updateMyPath = (nextPath: Position[]) => {
     const nextReservations = skillReservations.filter(
@@ -1877,7 +1854,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       if (event.skillId === "wizard_magic_mine") {
         if (event.damages && event.damages.length > 0) {
           // 함정 설치자: trapTiles에서 즉시 제거 (밟는 순간 사라짐)
-          // 상대방: mineRevealedPositions에 추가 (밟는 순간 보임)
+          // 상대방 함정 피격: triggerLocalHit으로 피격 이펙트만 표시
           const triggeredPositions = event.affectedPositions ?? [];
           setTrapTiles((prev) =>
             prev.filter(
@@ -1889,28 +1866,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 ),
             ),
           );
-          if (!isSfxMuted) {
-            playEmber(sfxVolume);
-          }
-          for (const position of triggeredPositions) {
-            const effectId = Date.now() + Math.random();
-            setMineRevealedPositions((prev) => [
-              ...prev,
-              { id: effectId, position },
-            ]);
-            setMineTriggeredPositions((prev) => [
-              ...prev,
-              { id: effectId, position },
-            ]);
-            queueAnimationTimeout(() => {
-              setMineRevealedPositions((prev) =>
-                prev.filter((entry) => entry.id !== effectId),
-              );
-              setMineTriggeredPositions((prev) =>
-                prev.filter((entry) => entry.id !== effectId),
-              );
-            }, 700);
-          }
           for (const damage of event.damages) {
             setState((prev) => {
               if (!prev) return prev;
@@ -3269,7 +3224,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             state={state}
             currentColor={currentColor}
             trapTiles={visibleTrapTiles}
-            mineTriggeredPositions={mineTriggeredPositions}
+
             magicMineCastingColors={magicMineCastingColors}
             pathPoints={effectivePathPoints}
             myPath={myPath}
