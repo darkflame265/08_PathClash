@@ -475,7 +475,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     red: boolean;
     blue: boolean;
   }>({ red: false, blue: false });
-  const [movingRevealedTrapPositions, setMovingRevealedTrapPositions] = useState<Position[]>([]);
+  const [briefMineRevealPositions, setBriefMineRevealPositions] = useState<
+    Array<{ id: number; position: Position }>
+  >([]);
   const [winner, setWinner] = useState<PlayerColor | "draw" | null>(null);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const [rematchRequested, setRematchRequested] = useState(false);
@@ -607,26 +609,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     };
   }, []);
 
-  // 이동 중 말이 함정 칸을 밟으면 해당 위치를 누적 — 턴 내내 유지
-  useEffect(() => {
-    if (state?.phase !== "moving") return;
-    const positions = [
-      { pos: redDisplayPos, owner: "red" as const },
-      { pos: blueDisplayPos, owner: "blue" as const },
-    ];
-    for (const { pos, owner } of positions) {
-      const matched = trapTiles.find(
-        (trap) => trap.owner === owner && posEqual(trap.position, pos),
-      );
-      if (matched) {
-        setMovingRevealedTrapPositions((prev) =>
-          prev.some((p) => posEqual(p, matched.position))
-            ? prev
-            : [...prev, matched.position],
-        );
-      }
-    }
-  }, [redDisplayPos, blueDisplayPos, state?.phase, trapTiles]);
 
   useEffect(() => {
     const handleGlobalPointerDown = (event: PointerEvent) => {
@@ -891,18 +873,21 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         : [...tiles, pendingTile],
     baseTrapTiles,
   );
-  // 이동 중 페이즈: 함정은 설치자 말이 해당 칸 위에 있을 때만 표시
-  const isMovingPhase = state?.phase === "moving";
-  const filteredOwnerTrapTiles = isMovingPhase
-    ? ownerVisibleTrapTiles.filter((trap) => {
-        const piecePos = trap.owner === "red" ? redDisplayPos : blueDisplayPos;
-        return (
-          posEqual(piecePos, trap.position) ||
-          movingRevealedTrapPositions.some((p) => posEqual(p, trap.position))
-        );
-      })
-    : ownerVisibleTrapTiles;
-  const visibleTrapTiles = filteredOwnerTrapTiles;
+  // 설치자: trapTiles에 있는 동안 항상 표시 (발동 시 setTrapTiles가 제거함)
+  // 피격자: briefMineRevealPositions에 추가된 동안만 표시
+  const visibleTrapTiles = [
+    ...ownerVisibleTrapTiles,
+    ...briefMineRevealPositions
+      .filter(
+        (rev) =>
+          !ownerVisibleTrapTiles.some((t) => posEqual(t.position, rev.position)),
+      )
+      .map((rev) => ({
+        position: rev.position,
+        owner: currentColor,
+        remainingTurns: 0,
+      })),
+  ];
 
   const updateMyPath = (nextPath: Position[]) => {
     const nextReservations = skillReservations.filter(
@@ -1853,8 +1838,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
       if (event.skillId === "wizard_magic_mine") {
         if (event.damages && event.damages.length > 0) {
-          // 함정 설치자: trapTiles에서 즉시 제거 (밟는 순간 사라짐)
-          // 상대방 함정 피격: triggerLocalHit으로 피격 이펙트만 표시
+          // 설치자: trapTiles에서 즉시 제거
+          // 피격자: briefMineRevealPositions에 잠깐 추가 (SKILL_PAUSE_MS 후 제거)
           const triggeredPositions = event.affectedPositions ?? [];
           setTrapTiles((prev) =>
             prev.filter(
@@ -1866,6 +1851,19 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 ),
             ),
           );
+          if (event.color !== currentColor) {
+            const revealIds: number[] = [];
+            for (const position of triggeredPositions) {
+              const id = Date.now() + Math.random();
+              revealIds.push(id);
+              setBriefMineRevealPositions((prev) => [...prev, { id, position }]);
+            }
+            queueAnimationTimeout(() => {
+              setBriefMineRevealPositions((prev) =>
+                prev.filter((e) => !revealIds.includes(e.id)),
+              );
+            }, SKILL_PAUSE_MS);
+          }
           for (const damage of event.damages) {
             setState((prev) => {
               if (!prev) return prev;
@@ -2582,7 +2580,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       setTrapTiles(nextState.trapTiles ?? []);
       setPendingOwnedTriggeredTrapTiles([]);
       setMagicMineCastingColors({ red: false, blue: false });
-      setMovingRevealedTrapPositions([]);
+      setBriefMineRevealPositions([]);
       resetPlanningState();
       applyState(nextState);
     };
