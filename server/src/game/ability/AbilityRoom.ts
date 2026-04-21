@@ -2427,6 +2427,11 @@ export class AbilityRoom {
 
       if (skillId === 'atomic_fission') {
         if (!bot.previousTurnStart || bot.previousTurnPath.length === 0) continue;
+        const prevTurnSequence = [bot.previousTurnStart, ...bot.previousTurnPath];
+        const opponentOnPrevPath = prevTurnSequence.some(
+          (pos) => pos.row === opponent.position.row && pos.col === opponent.position.col,
+        );
+        if (!opponentOnPrevPath) continue;
         const shadowCoverage = this.scorePathCoverageAgainstModel(
           bot.previousTurnStart,
           bot.previousTurnPath,
