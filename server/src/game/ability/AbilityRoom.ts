@@ -1161,10 +1161,12 @@ export class AbilityRoom {
     blue.pendingManaBonus = 0;
     if (red.pendingOverdriveStage === 1) {
       red.mana = OVERDRIVE_MANA;
+      red.overdriveActive = true;
       red.pendingOverdriveStage = 0;
     }
     if (blue.pendingOverdriveStage === 1) {
       blue.mana = OVERDRIVE_MANA;
+      blue.overdriveActive = true;
       blue.pendingOverdriveStage = 0;
     }
     if (red.pendingVoidCloak) {
@@ -1384,7 +1386,7 @@ export class AbilityRoom {
   private validatePlan(player: AbilityPlayerState, path: Position[], skills: AbilitySkillReservation[]): { path: Position[]; skills: AbilitySkillReservation[] } | null {
     const pathPoints = this.currentPathPoints();
     const uniqueSkills = normalizeSkillReservations(skills);
-    const isOverdriveTurn = player.overdriveActive;
+    const isOverdriveTurn = false;
 
     const manaCost = uniqueSkills.reduce(
       (sum, skill) => sum + ABILITY_SKILL_COSTS[skill.skillId],

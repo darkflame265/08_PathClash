@@ -762,8 +762,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const getMyRole = () => state?.players[currentColor].role ?? "escaper";
   const getMyMana = () => state?.players[currentColor].mana ?? 0;
-  const isOverdriveTurn = () =>
-    state?.players[currentColor].overdriveActive ?? false;
+  const isOverdriveTurn = () => false;
   const getPreviewStart = () => {
     const teleport = skillReservations.find(
       (entry) => entry.skillId === "quantum_shift" && entry.target,
@@ -2988,7 +2987,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       : resolvedBoardSkin === "magic"
         ? "board-bg-magic-screen"
         : "";
-  const overdriveTurn = me.overdriveActive;
+  const overdriveTurn = false;
   const chargeReservedNonOverdrive =
     !overdriveTurn &&
     skillReservations.some((e) => e.skillId === "plasma_charge");
