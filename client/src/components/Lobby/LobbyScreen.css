@@ -1074,6 +1074,49 @@
   }
 }
 
+@keyframes skin-floating-message-rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(16px) scale(0.96);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(0) scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(-26px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(-44px) scale(0.98);
+  }
+}
+
+.skin-floating-message {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 80;
+  max-width: min(calc(100vw - 2rem), 28rem);
+  padding: 0.75rem 1.15rem;
+  border-radius: 999px;
+  border: 1px solid rgba(251, 191, 36, 0.48);
+  background: rgba(15, 23, 42, 0.92);
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.38),
+    0 0 22px rgba(251, 191, 36, 0.22);
+  color: #fde68a;
+  font-size: clamp(1rem, 3.6vw, 1.45rem);
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
+  pointer-events: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  animation: skin-floating-message-rise 1s ease-out both;
+}
+
 .upgrade-modal-backdrop {
   position: fixed;
   inset: 0;

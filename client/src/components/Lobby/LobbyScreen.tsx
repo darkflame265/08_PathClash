@@ -858,6 +858,10 @@ export function LobbyScreen({
   const [skinPurchaseNoticeMessage, setSkinPurchaseNoticeMessage] = useState<
     string | null
   >(null);
+  const [skinFloatingMessage, setSkinFloatingMessage] = useState<{
+    id: number;
+    text: string;
+  } | null>(null);
 
   const [atomicPreviewReady, setAtomicPreviewReady] = useState(false);
 
@@ -868,6 +872,7 @@ export function LobbyScreen({
   const skinPurchaseConfirmResolverRef = useRef<
     ((confirmed: boolean) => void) | null
   >(null);
+  const skinFloatingMessageIdRef = useRef(0);
 
   const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
 
@@ -3430,6 +3435,15 @@ export function LobbyScreen({
     setSkinPurchaseConfirmMessage(null);
   };
 
+  const showSkinFloatingMessage = (text: string) => {
+    skinFloatingMessageIdRef.current += 1;
+
+    setSkinFloatingMessage({
+      id: skinFloatingMessageIdRef.current,
+      text,
+    });
+  };
+
   const handleSkinChoiceSelect = async (
     choice: (typeof skinChoices)[number],
 
@@ -3463,7 +3477,7 @@ export function LobbyScreen({
       }
 
       if (result === "insufficient_tokens") {
-        setSkinPurchaseNoticeMessage(skinPurchaseInsufficientMsg);
+        showSkinFloatingMessage(skinPurchaseInsufficientMsg);
 
         return false;
       }
@@ -3505,7 +3519,7 @@ export function LobbyScreen({
       }
 
       if (result === "insufficient_tokens") {
-        setSkinPurchaseNoticeMessage(skinPurchaseInsufficientMsg);
+        showSkinFloatingMessage(skinPurchaseInsufficientMsg);
         return false;
       }
 
@@ -3534,7 +3548,11 @@ export function LobbyScreen({
         choice.tokenPrice !== undefined &&
         !isOwned &&
         accountTokens < choice.tokenPrice;
-      const isLocked = lockedByWins || lockedByPlays || lockedByTokens;
+      if (lockedByTokens) {
+        showSkinFloatingMessage(skinPurchaseInsufficientMsg);
+        return;
+      }
+      const isLocked = lockedByWins || lockedByPlays;
       const applied = await handleSkinChoiceSelect(choice, isLocked, isOwned);
       if (applied) {
         setSkinDetail(null);
@@ -3549,9 +3567,13 @@ export function LobbyScreen({
       choice.tokenPrice !== undefined &&
       !isOwned &&
       accountTokens < choice.tokenPrice;
+    if (lockedByTokens) {
+      showSkinFloatingMessage(skinPurchaseInsufficientMsg);
+      return;
+    }
     const applied = await handleBoardSkinSelect(
       choice,
-      lockedByTokens,
+      false,
       isOwned,
     );
     if (applied) {
@@ -4269,7 +4291,6 @@ export function LobbyScreen({
                     skinDetail.tab === "piece"
                       ? (() => {
                           const choice = skinDetail.choice;
-                          const isOwned = ownedSkins.includes(choice.id);
                           const lockedByWins =
                             choice.requiredWins !== null &&
                             accountWins < choice.requiredWins;
@@ -4277,25 +4298,9 @@ export function LobbyScreen({
                             choice.requiredPlays !== null &&
                             choice.requiredPlays !== undefined &&
                             totalPlays < choice.requiredPlays;
-                          const lockedByTokens =
-                            choice.tokenPrice !== null &&
-                            choice.tokenPrice !== undefined &&
-                            !isOwned &&
-                            accountTokens < choice.tokenPrice;
-                          return (
-                            lockedByWins || lockedByPlays || lockedByTokens
-                          );
+                          return lockedByWins || lockedByPlays;
                         })()
-                      : (() => {
-                          const choice = skinDetail.choice;
-                          const isOwned = isBoardSkinUnlocked(choice);
-                          return (
-                            choice.tokenPrice !== null &&
-                            choice.tokenPrice !== undefined &&
-                            !isOwned &&
-                            accountTokens < choice.tokenPrice
-                          );
-                        })()
+                      : false
                   }
                 >
                   {skinDetail.tab === "piece"
@@ -4375,6 +4380,18 @@ export function LobbyScreen({
           onClose={() => setSkinPurchaseNoticeMessage(null)}
           t={t}
         />
+      )}
+
+      {skinFloatingMessage && (
+        <div
+          key={skinFloatingMessage.id}
+          className="skin-floating-message"
+          role="status"
+          aria-live="polite"
+          onAnimationEnd={() => setSkinFloatingMessage(null)}
+        >
+          {skinFloatingMessage.text}
+        </div>
       )}
 
       {isTokenShopOpen && (
