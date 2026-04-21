@@ -141,7 +141,7 @@ const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
   },
   gold_overdrive_loop: {
     path: "/sfx/ability/gold_overdrive_loop.mp3",
-    gain: 0.9,
+    gain: 0.45,
     loop: true,
   },
   magic_mine: {
@@ -194,9 +194,7 @@ const audioCache: Partial<Record<AbilitySfxId, HTMLAudioElement>> = {};
 const uiAudioCache: Partial<Record<UiSfxId, HTMLAudioElement>> = {};
 const activeUiAudioCache: Partial<Record<UiSfxId, HTMLAudioElement>> = {};
 const abilityHowlCache: Partial<Record<AbilitySfxId, Howl>> = {};
-const bgmCache: Partial<
-  Record<BgmTrackId, { audio: HTMLAudioElement }>
-> = {};
+const bgmCache: Partial<Record<BgmTrackId, { audio: HTMLAudioElement }>> = {};
 const segmentedLoopHandlers = new WeakMap<
   HTMLAudioElement,
   { timeupdate: () => void; ended: () => void }
@@ -240,7 +238,9 @@ function getBgm(trackId: BgmTrackId): { audio: HTMLAudioElement } | null {
 function getSoundGainNode(howl: Howl, soundId: number): GainNode | null {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sounds = (howl as any)._sounds as Array<{ _id: number; _node?: AudioNode }> | undefined;
+    const sounds = (howl as any)._sounds as
+      | Array<{ _id: number; _node?: AudioNode }>
+      | undefined;
     const sound = sounds?.find((s) => s._id === soundId);
     const node = sound?._node;
     if (node && "gain" in node) return node as GainNode;
@@ -720,7 +720,10 @@ export function startOverdriveLoop(volume = 0.55): void {
       const gain = ctx ? getSoundGainNode(howl, goldOverdriveSoundId) : null;
       if (gain && ctx) {
         gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(normalizedVolume, ctx.currentTime + 0.02);
+        gain.gain.linearRampToValueAtTime(
+          normalizedVolume,
+          ctx.currentTime + 0.02,
+        );
       }
     } else {
       // Already playing — update volume smoothly via setTargetAtTime.
