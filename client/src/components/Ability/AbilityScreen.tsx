@@ -1570,6 +1570,35 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   }, [currentColor, keyboardTargetMode, myPath, state]);
 
   useEffect(() => {
+    if (!keyboardControls.keyboardEnabled || !showTrainingSkillSelect) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.tagName === "SELECT" ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+
+      if (event.code !== keyboardControls.gameActionKey) return;
+      event.preventDefault();
+      setShowTrainingSkillSelect(false);
+      onLeaveToLobby();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    keyboardControls.gameActionKey,
+    keyboardControls.keyboardEnabled,
+    onLeaveToLobby,
+    showTrainingSkillSelect,
+  ]);
+
+  useEffect(() => {
     if (!keyboardControls.keyboardEnabled || !state) return;
     if (state.phase !== "planning" || mySubmitted) return;
 

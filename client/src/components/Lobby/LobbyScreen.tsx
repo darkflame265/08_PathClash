@@ -999,6 +999,76 @@ export function LobbyScreen({
     };
   }, []);
 
+  const closeTopLobbyModal = useCallback(() => {
+    if (capturingControlKey) {
+      setCapturingControlKey(null);
+      return true;
+    }
+    if (isControlsSettingsOpen) {
+      setIsControlsSettingsOpen(false);
+      return true;
+    }
+    if (isAudioSettingsOpen) {
+      setIsAudioSettingsOpen(false);
+      return true;
+    }
+    if (isNameChangeOpen) {
+      setIsNameChangeOpen(false);
+      return true;
+    }
+    if (isPatchNotesOpen) {
+      setIsPatchNotesOpen(false);
+      return true;
+    }
+    if (achievementNoticeMessage) {
+      setAchievementNoticeMessage(null);
+      return true;
+    }
+    if (isAchievementsOpen) {
+      setIsAchievementsOpen(false);
+      return true;
+    }
+    if (isAbilityLoadoutOpen) {
+      setIsAbilityLoadoutOpen(false);
+      return true;
+    }
+    if (isTokenShopOpen) {
+      setIsTokenShopOpen(false);
+      return true;
+    }
+    if (skinDetail) {
+      setSkinDetail(null);
+      return true;
+    }
+    if (isSkinPickerOpen) {
+      setIsSkinPickerOpen(false);
+      return true;
+    }
+    if (isSettingsOpen) {
+      setIsSettingsOpen(false);
+      return true;
+    }
+    if (isDailyRewardInfoOpen) {
+      setIsDailyRewardInfoOpen(false);
+      return true;
+    }
+    return false;
+  }, [
+    achievementNoticeMessage,
+    capturingControlKey,
+    isAbilityLoadoutOpen,
+    isAchievementsOpen,
+    isAudioSettingsOpen,
+    isControlsSettingsOpen,
+    isDailyRewardInfoOpen,
+    isNameChangeOpen,
+    isPatchNotesOpen,
+    isSettingsOpen,
+    isSkinPickerOpen,
+    isTokenShopOpen,
+    skinDetail,
+  ]);
+
   useEffect(() => {
     const clearSelectedElement = () => {
       keyboardNavElementRef.current?.classList.remove(
@@ -1055,6 +1125,54 @@ export function LobbyScreen({
       const currentLayer =
         keyboardNavElementRef.current?.dataset.keyboardNavLayer ?? null;
       const index = currentLayer ? lobbyNavLayers.indexOf(currentLayer) : -1;
+      return index >= 0 ? index : 0;
+    };
+
+    const getModalLayers = (root: HTMLElement) => {
+      const layerNames = Array.from(
+        new Set(
+          Array.from(
+            root.querySelectorAll<HTMLElement>("[data-keyboard-modal-layer]"),
+          )
+            .filter(isUsableNavElement)
+            .map((element) => element.dataset.keyboardModalLayer)
+            .filter((layer): layer is string => Boolean(layer)),
+        ),
+      );
+
+      if (root.classList.contains("skin-picker-modal")) {
+        return layerNames.sort((a, b) => {
+          const order = (layer: string) => {
+            if (layer === "token") return 0;
+            if (layer === "tabs") return 1;
+            if (layer.startsWith("skin-row-")) {
+              return 2 + Number(layer.replace("skin-row-", ""));
+            }
+            if (layer === "close") return 1000;
+            return 900;
+          };
+          return order(a) - order(b);
+        });
+      }
+
+      return layerNames;
+    };
+
+    const getModalLayerElements = (root: HTMLElement, layer: string) =>
+      Array.from(
+        root.querySelectorAll<HTMLElement>(
+          `[data-keyboard-modal-layer="${layer}"]`,
+        ),
+      ).filter(isUsableNavElement);
+
+    const getCurrentModalLayerIndex = (
+      root: HTMLElement,
+      modalLayers: string[],
+    ) => {
+      const current = keyboardNavElementRef.current;
+      if (!current || !root.contains(current)) return 0;
+      const layer = current.dataset.keyboardModalLayer ?? null;
+      const index = layer ? modalLayers.indexOf(layer) : -1;
       return index >= 0 ? index : 0;
     };
 
@@ -1136,6 +1254,20 @@ export function LobbyScreen({
       return best?.element ?? current;
     };
 
+    const pickNextLayeredElement = (
+      current: HTMLElement,
+      layerElements: HTMLElement[],
+      key: string,
+    ) => {
+      const currentIndex = layerElements.indexOf(current);
+      if (currentIndex < 0) return layerElements[0] ?? current;
+      const direction = key === "ArrowLeft" ? -1 : 1;
+      const nextIndex =
+        (currentIndex + direction + layerElements.length) %
+        layerElements.length;
+      return layerElements[nextIndex];
+    };
+
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (
@@ -1150,6 +1282,15 @@ export function LobbyScreen({
       const modalRoot = getModalRoot();
       const modalElements = modalRoot ? getModalNavElements(modalRoot) : [];
       const firstLayerElements = getLayerElements(lobbyNavLayers[0]);
+
+      if (event.code === keyboardControls.gameActionKey) {
+        if (closeTopLobbyModal()) {
+          event.preventDefault();
+          clearSelectedElement();
+        }
+        return;
+      }
+
       if (!modalRoot && firstLayerElements.length === 0) {
         clearSelectedElement();
         return;
@@ -1163,6 +1304,45 @@ export function LobbyScreen({
       ) {
         event.preventDefault();
         if (modalRoot) {
+          const modalLayers = getModalLayers(modalRoot);
+          if (modalLayers.length > 0) {
+            const currentLayerIndex = getCurrentModalLayerIndex(
+              modalRoot,
+              modalLayers,
+            );
+            const currentLayer = modalLayers[currentLayerIndex];
+            const currentLayerElements = getModalLayerElements(
+              modalRoot,
+              currentLayer,
+            );
+            const current = currentLayerElements.includes(
+              keyboardNavElementRef.current!,
+            )
+              ? keyboardNavElementRef.current!
+              : currentLayerElements[0];
+
+            if (!current) return;
+
+            if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+              setSelectedElement(
+                pickNextLayeredElement(current, currentLayerElements, event.key),
+              );
+              return;
+            }
+
+            const direction = event.key === "ArrowDown" ? 1 : -1;
+            const nextLayerIndex = Math.min(
+              Math.max(currentLayerIndex + direction, 0),
+              modalLayers.length - 1,
+            );
+            const nextLayerElements = getModalLayerElements(
+              modalRoot,
+              modalLayers[nextLayerIndex],
+            );
+            setSelectedElement(pickClosestByX(nextLayerElements, current));
+            return;
+          }
+
           const current = modalElements.includes(keyboardNavElementRef.current!)
             ? keyboardNavElementRef.current!
             : modalElements[0];
@@ -1189,12 +1369,9 @@ export function LobbyScreen({
           : (currentLayerElements[0] ?? firstLayerElements[0]);
 
         if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-          const currentIndex = currentLayerElements.indexOf(current);
-          const direction = event.key === "ArrowLeft" ? -1 : 1;
-          const nextIndex =
-            (currentIndex + direction + currentLayerElements.length) %
-            currentLayerElements.length;
-          setSelectedElement(currentLayerElements[nextIndex]);
+          setSelectedElement(
+            pickNextLayeredElement(current, currentLayerElements, event.key),
+          );
           return;
         }
 
@@ -1218,7 +1395,12 @@ export function LobbyScreen({
       window.removeEventListener("keydown", handleKeyDown);
       clearSelectedElement();
     };
-  }, [capturingControlKey, keyboardControls.keyboardEnabled]);
+  }, [
+    capturingControlKey,
+    closeTopLobbyModal,
+    keyboardControls.gameActionKey,
+    keyboardControls.keyboardEnabled,
+  ]);
 
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * 4) + 1;
@@ -1488,7 +1670,7 @@ export function LobbyScreen({
       ? "Use arrow keys to draw paths. Press Space to confirm targeted skills."
       : "화살표 방향키로 경로를 작성하고, 위치 지정 스킬은 스페이스바로 확정합니다.";
   const gameActionKeyLabel =
-    lang === "en" ? "Lobby / Rematch" : "로비로 이동/재시작";
+    lang === "en" ? "Exit / Rematch" : "나가기/재시작";
   const controllerComingSoonLabel =
     lang === "en" ? "Still in development." : "아직 개발 중입니다.";
   const skillSlotLabels =
@@ -4377,7 +4559,7 @@ export function LobbyScreen({
           onClick={() => setIsSkinPickerOpen(false)}
         >
           <div
-            className="upgrade-modal skin-modal"
+            className="upgrade-modal skin-modal skin-picker-modal"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="skin-modal-head">
@@ -4394,6 +4576,7 @@ export function LobbyScreen({
 
                 <button
                   className="skin-token-plus"
+                  data-keyboard-modal-layer="token"
                   type="button"
                   aria-label={tokenShopTitle}
                   title={tokenShopTitle}
@@ -4413,6 +4596,7 @@ export function LobbyScreen({
             >
               <button
                 className={`skin-picker-tab ${skinPickerTab === "piece" ? "is-active" : ""}`}
+                data-keyboard-modal-layer="tabs"
                 onClick={() => setSkinPickerTab("piece")}
                 type="button"
                 role="tab"
@@ -4422,6 +4606,7 @@ export function LobbyScreen({
               </button>
               <button
                 className={`skin-picker-tab ${skinPickerTab === "board" ? "is-active" : ""}`}
+                data-keyboard-modal-layer="tabs"
                 onClick={() => setSkinPickerTab("board")}
                 type="button"
                 role="tab"
@@ -4439,7 +4624,7 @@ export function LobbyScreen({
 
             {skinPickerTab === "piece" ? (
               <div className="skin-option-grid">
-                {skinChoices.map((choice) => {
+                {skinChoices.map((choice, index) => {
                   const isOwned = ownedSkins.includes(choice.id);
                   const isUnlocked = isPieceSkinUnlocked(choice);
                   const isTokenSkin =
@@ -4456,6 +4641,7 @@ export function LobbyScreen({
                       className={`skin-option-card skin-picker-card ${
                         pieceSkin === choice.id ? "is-selected" : ""
                       } ${!isVisualUnlocked ? "is-locked" : ""}`}
+                      data-keyboard-modal-layer={`skin-row-${Math.floor(index / 4)}`}
                       onClick={() => setSkinDetail({ tab: "piece", choice })}
                       disabled={false}
                       type="button"
@@ -4491,7 +4677,7 @@ export function LobbyScreen({
               </div>
             ) : (
               <div className="skin-option-grid">
-                {boardSkinChoices.map((choice) => {
+                {boardSkinChoices.map((choice, index) => {
                   const isOwned = isBoardSkinUnlocked(choice);
                   const isVisualUnlocked =
                     choice.id === "classic" ||
@@ -4503,6 +4689,7 @@ export function LobbyScreen({
                       className={`skin-option-card skin-picker-card ${
                         boardSkin === choice.id ? "is-selected" : ""
                       } ${!isVisualUnlocked ? "is-locked" : ""}`}
+                      data-keyboard-modal-layer={`skin-row-${Math.floor(index / 4)}`}
                       onClick={() => setSkinDetail({ tab: "board", choice })}
                       type="button"
                     >
@@ -4529,6 +4716,7 @@ export function LobbyScreen({
             <div className="upgrade-modal-actions">
               <button
                 className="lobby-btn primary"
+                data-keyboard-modal-layer="close"
                 onClick={() => setIsSkinPickerOpen(false)}
                 type="button"
               >
