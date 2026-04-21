@@ -1730,13 +1730,17 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       if (isBlockedCell(next, state.obstacles)) return;
 
       if (current.length > 0) {
+        const isExtendingFromTeleportTarget =
+          teleportTarget &&
+          teleportStep !== null &&
+          current.length === teleportStep;
         const secondLast =
           current.length < 2
             ? start
             : teleportTarget && current.length - 1 === teleportStep
               ? teleportTarget
               : current[current.length - 2];
-        if (posEqual(next, secondLast)) {
+        if (!isExtendingFromTeleportTarget && posEqual(next, secondLast)) {
           if (!isSfxMuted) playPathStepClick(sfxVolume);
           updateMyPath(current.slice(0, -1));
           return;
