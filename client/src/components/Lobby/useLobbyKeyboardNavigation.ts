@@ -2,6 +2,9 @@ import { useEffect, useRef } from "react";
 
 type UseLobbyKeyboardNavigationArgs = {
   actionKey: string;
+  controllerActionButton?: number;
+  controllerEnabled?: boolean;
+  controllerSelectButton?: number;
   capturingControlKey: unknown;
   closeTopLobbyModal: () => boolean;
   isControlsSettingsOpen: boolean;
@@ -27,6 +30,9 @@ const ARROW_KEYS = new Set([
 
 export function useLobbyKeyboardNavigation({
   actionKey,
+  controllerActionButton,
+  controllerEnabled = false,
+  controllerSelectButton,
   capturingControlKey,
   closeTopLobbyModal,
   isControlsSettingsOpen,
@@ -42,7 +48,10 @@ export function useLobbyKeyboardNavigation({
       selectedElementRef.current = null;
     };
 
-    if ((!keyboardEnabled && !isControlsSettingsOpen) || capturingControlKey) {
+    const inputEnabled =
+      keyboardEnabled || controllerEnabled || isControlsSettingsOpen;
+
+    if (!inputEnabled || capturingControlKey) {
       selectionStackRef.current = [];
       clearSelectedElement();
       return;
@@ -267,6 +276,142 @@ export function useLobbyKeyboardNavigation({
       return true;
     };
 
+    const handleAction = () => {
+      const modalRoot = getModalRoot();
+      const previousModalCount = getModalRoots().length;
+      if (!closeTopLobbyModal()) return false;
+
+      window.requestAnimationFrame(() => {
+        if (getModalRoots().length < previousModalCount) {
+          restorePreviousSelection();
+        }
+      });
+      return Boolean(modalRoot || previousModalCount > 0);
+    };
+
+    const handleArrow = (key: string) => {
+      const modalRoot = getModalRoot();
+      const modalElements = modalRoot ? getModalNavElements(modalRoot) : [];
+      const firstLayerElements = getLayerElements(LOBBY_NAV_LAYERS[0]);
+
+      if (!modalRoot && firstLayerElements.length === 0) {
+        clearSelectedElement();
+        return false;
+      }
+
+      if (modalRoot) {
+        const modalLayers = getModalLayers(modalRoot);
+        if (modalLayers.length > 0) {
+          const currentLayerIndex = getCurrentModalLayerIndex(
+            modalRoot,
+            modalLayers,
+          );
+          const currentLayer = modalLayers[currentLayerIndex];
+          const currentLayerElements = getModalLayerElements(
+            modalRoot,
+            currentLayer,
+          );
+          const current = currentLayerElements.includes(
+            selectedElementRef.current!,
+          )
+            ? selectedElementRef.current!
+            : currentLayerElements[0];
+
+          if (!current) return false;
+
+          if (key === "ArrowLeft" || key === "ArrowRight") {
+            if (
+              adjustRangeInput(current, key === "ArrowRight" ? 1 : -1)
+            ) {
+              return true;
+            }
+
+            setSelectedElement(
+              pickNextLayeredElement(current, currentLayerElements, key),
+            );
+            return true;
+          }
+
+          const direction = key === "ArrowDown" ? 1 : -1;
+          const nextLayerIndex = Math.min(
+            Math.max(currentLayerIndex + direction, 0),
+            modalLayers.length - 1,
+          );
+          const nextLayerElements = getModalLayerElements(
+            modalRoot,
+            modalLayers[nextLayerIndex],
+          );
+          setSelectedElement(pickClosestByX(nextLayerElements, current));
+          return true;
+        }
+
+        const current = modalElements.includes(selectedElementRef.current!)
+          ? selectedElementRef.current!
+          : modalElements[0];
+        setSelectedElement(
+          selectedElementRef.current
+            ? pickNextElement(current, modalElements, key)
+            : current,
+        );
+        return true;
+      }
+
+      if (!selectedElementRef.current) {
+        setSelectedElement(firstLayerElements[0]);
+        return true;
+      }
+
+      const currentLayerIndex = getCurrentLayerIndex();
+      const currentLayer = LOBBY_NAV_LAYERS[currentLayerIndex];
+      const currentLayerElements = getLayerElements(currentLayer);
+      const current = currentLayerElements.includes(selectedElementRef.current)
+        ? selectedElementRef.current
+        : (currentLayerElements[0] ?? firstLayerElements[0]);
+
+      if (key === "ArrowLeft" || key === "ArrowRight") {
+        setSelectedElement(
+          pickNextLayeredElement(current, currentLayerElements, key),
+        );
+        return true;
+      }
+
+      const nextLayerIndex = getNearestLayerIndex(
+        currentLayerIndex,
+        key === "ArrowDown" ? 1 : -1,
+      );
+      const nextLayerElements = getLayerElements(
+        LOBBY_NAV_LAYERS[nextLayerIndex],
+      );
+      setSelectedElement(pickClosestByX(nextLayerElements, current));
+      return true;
+    };
+
+    const handleSelect = () => {
+      if (!selectedElementRef.current) return false;
+
+      const selected = selectedElementRef.current;
+      const previousModalCount = getModalRoots().length;
+      selected.click();
+
+      window.requestAnimationFrame(() => {
+        const nextModalCount = getModalRoots().length;
+
+        if (
+          nextModalCount > previousModalCount &&
+          selected.isConnected &&
+          isUsableNavElement(selected)
+        ) {
+          selectionStackRef.current.push(selected);
+          return;
+        }
+
+        if (nextModalCount < previousModalCount) {
+          restorePreviousSelection();
+        }
+      });
+      return true;
+    };
+
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (
@@ -278,153 +423,103 @@ export function useLobbyKeyboardNavigation({
         return;
       }
 
-      const modalRoot = getModalRoot();
-      const modalElements = modalRoot ? getModalNavElements(modalRoot) : [];
-      const firstLayerElements = getLayerElements(LOBBY_NAV_LAYERS[0]);
-
-      if (event.code === actionKey) {
-        const previousModalCount = getModalRoots().length;
-        if (closeTopLobbyModal()) {
-          event.preventDefault();
-          window.requestAnimationFrame(() => {
-            if (getModalRoots().length < previousModalCount) {
-              restorePreviousSelection();
-            }
-          });
-        }
-        return;
-      }
-
-      if (!modalRoot && firstLayerElements.length === 0) {
-        clearSelectedElement();
-        return;
-      }
-
-      if (ARROW_KEYS.has(event.key)) {
+      if (event.code === actionKey && handleAction()) {
         event.preventDefault();
-        if (modalRoot) {
-          const modalLayers = getModalLayers(modalRoot);
-          if (modalLayers.length > 0) {
-            const currentLayerIndex = getCurrentModalLayerIndex(
-              modalRoot,
-              modalLayers,
-            );
-            const currentLayer = modalLayers[currentLayerIndex];
-            const currentLayerElements = getModalLayerElements(
-              modalRoot,
-              currentLayer,
-            );
-            const current = currentLayerElements.includes(
-              selectedElementRef.current!,
-            )
-              ? selectedElementRef.current!
-              : currentLayerElements[0];
-
-            if (!current) return;
-
-            if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-              if (
-                adjustRangeInput(
-                  current,
-                  event.key === "ArrowRight" ? 1 : -1,
-                )
-              ) {
-                return;
-              }
-
-              setSelectedElement(
-                pickNextLayeredElement(current, currentLayerElements, event.key),
-              );
-              return;
-            }
-
-            const direction = event.key === "ArrowDown" ? 1 : -1;
-            const nextLayerIndex = Math.min(
-              Math.max(currentLayerIndex + direction, 0),
-              modalLayers.length - 1,
-            );
-            const nextLayerElements = getModalLayerElements(
-              modalRoot,
-              modalLayers[nextLayerIndex],
-            );
-            setSelectedElement(pickClosestByX(nextLayerElements, current));
-            return;
-          }
-
-          const current = modalElements.includes(selectedElementRef.current!)
-            ? selectedElementRef.current!
-            : modalElements[0];
-          setSelectedElement(
-            selectedElementRef.current
-              ? pickNextElement(current, modalElements, event.key)
-              : current,
-          );
-          return;
-        }
-
-        if (!selectedElementRef.current) {
-          setSelectedElement(firstLayerElements[0]);
-          return;
-        }
-
-        const currentLayerIndex = getCurrentLayerIndex();
-        const currentLayer = LOBBY_NAV_LAYERS[currentLayerIndex];
-        const currentLayerElements = getLayerElements(currentLayer);
-        const current = currentLayerElements.includes(selectedElementRef.current)
-          ? selectedElementRef.current
-          : (currentLayerElements[0] ?? firstLayerElements[0]);
-
-        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-          setSelectedElement(
-            pickNextLayeredElement(current, currentLayerElements, event.key),
-          );
-          return;
-        }
-
-        const nextLayerIndex = getNearestLayerIndex(
-          currentLayerIndex,
-          event.key === "ArrowDown" ? 1 : -1,
-        );
-        const nextLayerElements = getLayerElements(
-          LOBBY_NAV_LAYERS[nextLayerIndex],
-        );
-        setSelectedElement(pickClosestByX(nextLayerElements, current));
         return;
       }
 
-      if (event.code === selectKey && selectedElementRef.current) {
-        const selected = selectedElementRef.current;
-        const previousModalCount = getModalRoots().length;
+      if (ARROW_KEYS.has(event.key) && handleArrow(event.key)) {
         event.preventDefault();
-        selected.click();
+        return;
+      }
 
-        window.requestAnimationFrame(() => {
-          const nextModalCount = getModalRoots().length;
-
-          if (
-            nextModalCount > previousModalCount &&
-            selected.isConnected &&
-            isUsableNavElement(selected)
-          ) {
-            selectionStackRef.current.push(selected);
-            return;
-          }
-
-          if (nextModalCount < previousModalCount) {
-            restorePreviousSelection();
-          }
-        });
+      if (event.code === selectKey && handleSelect()) {
+        event.preventDefault();
       }
     };
 
+    let raf = 0;
+    let lastControllerInput = "";
+    let lastControllerInputAt = 0;
+
+    const getGamepadDirection = (gamepad: Gamepad) => {
+      if (gamepad.buttons[12]?.pressed) return "ArrowUp";
+      if (gamepad.buttons[13]?.pressed) return "ArrowDown";
+      if (gamepad.buttons[14]?.pressed) return "ArrowLeft";
+      if (gamepad.buttons[15]?.pressed) return "ArrowRight";
+
+      const horizontal = gamepad.axes[0] ?? 0;
+      const vertical = gamepad.axes[1] ?? 0;
+      if (Math.abs(horizontal) > Math.abs(vertical)) {
+        if (horizontal <= -0.55) return "ArrowLeft";
+        if (horizontal >= 0.55) return "ArrowRight";
+      }
+      if (vertical <= -0.55) return "ArrowUp";
+      if (vertical >= 0.55) return "ArrowDown";
+      return "";
+    };
+
+    const shouldAcceptControllerInput = (input: string, now: number) => {
+      if (!input) {
+        lastControllerInput = "";
+        return false;
+      }
+
+      const delay =
+        input === lastControllerInput
+          ? input.startsWith("button:")
+            ? Number.POSITIVE_INFINITY
+            : 170
+          : 0;
+      if (now - lastControllerInputAt < delay) return false;
+      lastControllerInput = input;
+      lastControllerInputAt = now;
+      return true;
+    };
+
+    const pollController = () => {
+      if (controllerEnabled || isControlsSettingsOpen) {
+        const gamepad = navigator.getGamepads().find(Boolean);
+        if (gamepad) {
+          const direction = getGamepadDirection(gamepad);
+          const input =
+            direction ||
+            (controllerActionButton !== undefined &&
+            gamepad.buttons[controllerActionButton]?.pressed
+              ? `button:${controllerActionButton}`
+              : controllerSelectButton !== undefined &&
+                  gamepad.buttons[controllerSelectButton]?.pressed
+                ? `button:${controllerSelectButton}`
+                : "");
+
+          if (shouldAcceptControllerInput(input, performance.now())) {
+            if (direction) {
+              handleArrow(direction);
+            } else if (input === `button:${controllerActionButton}`) {
+              handleAction();
+            } else if (input === `button:${controllerSelectButton}`) {
+              handleSelect();
+            }
+          }
+        }
+      }
+
+      raf = window.requestAnimationFrame(pollController);
+    };
+
     window.addEventListener("keydown", handleKeyDown);
+    raf = window.requestAnimationFrame(pollController);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
+      window.cancelAnimationFrame(raf);
     };
   }, [
     actionKey,
     capturingControlKey,
     closeTopLobbyModal,
+    controllerActionButton,
+    controllerEnabled,
+    controllerSelectButton,
     isControlsSettingsOpen,
     keyboardEnabled,
     selectKey,

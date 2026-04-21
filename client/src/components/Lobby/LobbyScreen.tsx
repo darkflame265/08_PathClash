@@ -70,7 +70,10 @@ import { useGameStore } from "../../store/gameStore";
 import { useLang } from "../../hooks/useLang";
 
 import { playLobbyClick } from "../../utils/soundUtils";
-import { getKeyboardCodeLabel } from "../../settings/controls";
+import {
+  getGamepadButtonLabel,
+  getKeyboardCodeLabel,
+} from "../../settings/controls";
 
 import type { Translations } from "../../i18n/translations";
 
@@ -822,8 +825,12 @@ export function LobbyScreen({
     useState<ControlsSettingsTab>("keyboard");
   const {
     capturingControlKey,
+    capturingControllerButton,
+    controllerControls,
     keyboardControls,
     setCapturingControlKey,
+    setCapturingControllerButton,
+    updateControllerControls,
     updateKeyboardControls,
   } = useKeyboardControlsSettings();
   const [isNameChangeOpen, setIsNameChangeOpen] = useState(false);
@@ -942,6 +949,10 @@ export function LobbyScreen({
       setCapturingControlKey(null);
       return true;
     }
+    if (capturingControllerButton) {
+      setCapturingControllerButton(null);
+      return true;
+    }
     if (isControlsSettingsOpen) {
       setIsControlsSettingsOpen(false);
       return true;
@@ -994,6 +1005,7 @@ export function LobbyScreen({
   }, [
     achievementNoticeMessage,
     capturingControlKey,
+    capturingControllerButton,
     isAbilityLoadoutOpen,
     isAchievementsOpen,
     isAudioSettingsOpen,
@@ -1005,12 +1017,16 @@ export function LobbyScreen({
     isSkinPickerOpen,
     isTokenShopOpen,
     setCapturingControlKey,
+    setCapturingControllerButton,
     skinDetail,
   ]);
 
   useLobbyKeyboardNavigation({
     actionKey: keyboardControls.gameActionKey,
-    capturingControlKey,
+    controllerActionButton: controllerControls.gameActionButton,
+    controllerEnabled: controllerControls.controllerEnabled,
+    controllerSelectButton: controllerControls.selectActionButton,
+    capturingControlKey: capturingControlKey ?? capturingControllerButton,
     closeTopLobbyModal,
     isControlsSettingsOpen,
     keyboardEnabled: keyboardControls.keyboardEnabled,
@@ -1278,6 +1294,8 @@ export function LobbyScreen({
   const controllerTabLabel = lang === "en" ? "Controller" : "컨트롤러";
   const keyboardEnabledLabel =
     lang === "en" ? "Enable keyboard controls" : "키보드 사용 활성화";
+  const controllerEnabledLabel =
+    lang === "en" ? "Enable controller controls" : "컨트롤러 사용 활성화";
   const keyboardMappingTitle = lang === "en" ? "Ability Battle" : "능력대전";
   const inGameMappingTitle = lang === "en" ? "In-Game" : "인게임";
   const keyboardMappingDesc =
@@ -1287,13 +1305,13 @@ export function LobbyScreen({
   const gameActionKeyLabel =
     lang === "en" ? "Exit / Rematch" : "나가기/재시작";
   const selectActionKeyLabel = lang === "en" ? "Select" : "선택";
-  const controllerComingSoonLabel =
-    lang === "en" ? "Still in development." : "아직 개발 중입니다.";
   const skillSlotLabels =
     lang === "en"
       ? { slot1: "Skill 1", slot2: "Skill 2", slot3: "Skill 3" }
       : { slot1: "스킬 1", slot2: "스킬 2", slot3: "스킬 3" };
   const keyCaptureLabel = lang === "en" ? "Press a key..." : "키 입력 대기...";
+  const controllerCaptureLabel =
+    lang === "en" ? "Press a button..." : "버튼 입력 대기...";
 
   const musicLabel = lang === "en" ? "Music" : "음악";
 
@@ -5360,8 +5378,92 @@ export function LobbyScreen({
                 )}
               </div>
             ) : (
-              <div className="controls-controller-empty">
-                {controllerComingSoonLabel}
+              <div className="controls-settings-body">
+                <label
+                  className="controls-checkbox-row"
+                  data-keyboard-modal-layer="controls-enabled"
+                >
+                  <input
+                    type="checkbox"
+                    checked={controllerControls.controllerEnabled}
+                    onChange={(event) =>
+                      updateControllerControls((current) => ({
+                        ...current,
+                        controllerEnabled: event.target.checked,
+                      }))
+                    }
+                  />
+                  <span>{controllerEnabledLabel}</span>
+                </label>
+
+                {controllerControls.controllerEnabled && (
+                  <div className="controls-keymap-panel">
+                    <div className="controls-keymap-head">
+                      <strong>{keyboardMappingTitle}</strong>
+                      <span>{keyboardMappingDesc}</span>
+                    </div>
+
+                    {(["slot1", "slot2", "slot3"] as const).map((slot) => (
+                      <div className="controls-keymap-row" key={slot}>
+                        <span>{skillSlotLabels[slot]}</span>
+                        <button
+                          className={`controls-keymap-button ${capturingControllerButton === slot ? "is-capturing" : ""}`}
+                          data-keyboard-modal-layer={`controls-${slot}`}
+                          type="button"
+                          onClick={() => setCapturingControllerButton(slot)}
+                        >
+                          {capturingControllerButton === slot
+                            ? controllerCaptureLabel
+                            : getGamepadButtonLabel(
+                                controllerControls.abilitySkillButtons[slot],
+                              )}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {controllerControls.controllerEnabled && (
+                  <div className="controls-keymap-panel">
+                    <div className="controls-keymap-head">
+                      <strong>{inGameMappingTitle}</strong>
+                    </div>
+
+                    <div className="controls-keymap-row">
+                      <span>{gameActionKeyLabel}</span>
+                      <button
+                        className={`controls-keymap-button ${capturingControllerButton === "gameAction" ? "is-capturing" : ""}`}
+                        data-keyboard-modal-layer="controls-game-action"
+                        type="button"
+                        onClick={() => setCapturingControllerButton("gameAction")}
+                      >
+                        {capturingControllerButton === "gameAction"
+                          ? controllerCaptureLabel
+                          : getGamepadButtonLabel(
+                              controllerControls.gameActionButton,
+                            )}
+                      </button>
+                    </div>
+
+                    <div className="controls-keymap-row">
+                      <span>{selectActionKeyLabel}</span>
+                      <button
+                        className={`controls-keymap-button ${capturingControllerButton === "selectAction" ? "is-capturing" : ""}`}
+                        data-keyboard-modal-layer="controls-select-action"
+                        type="button"
+                        onClick={() =>
+                          setCapturingControllerButton("selectAction")
+                        }
+                      >
+                        {capturingControllerButton === "selectAction"
+                          ? controllerCaptureLabel
+                          : getGamepadButtonLabel(
+                              controllerControls.selectActionButton,
+                            )}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -5371,6 +5473,7 @@ export function LobbyScreen({
                 data-keyboard-modal-layer="close"
                 onClick={() => {
                   setCapturingControlKey(null);
+                  setCapturingControllerButton(null);
                   setIsControlsSettingsOpen(false);
                 }}
                 type="button"

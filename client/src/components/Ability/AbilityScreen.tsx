@@ -54,6 +54,7 @@ import { AbilityGrid } from "./AbilityGrid";
 import { isBlockedCell, isValidMove, posEqual } from "../../utils/pathUtils";
 import {
   CONTROLS_SETTINGS_CHANGED_EVENT,
+  loadControllerControlsSettings,
   loadKeyboardControlsSettings,
 } from "../../settings/controls";
 import "../Game/GameScreen.css";
@@ -419,6 +420,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [pendingInferno, setPendingInferno] = useState(false);
   const [keyboardControls, setKeyboardControls] = useState(
     loadKeyboardControlsSettings,
+  );
+  const [controllerControls, setControllerControls] = useState(
+    loadControllerControlsSettings,
   );
   const [keyboardTarget, setKeyboardTarget] = useState<Position | null>(null);
   const [redDisplayPos, setRedDisplayPos] = useState<Position>({
@@ -1546,6 +1550,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   useEffect(() => {
     const syncControls = () => {
       setKeyboardControls(loadKeyboardControlsSettings());
+      setControllerControls(loadControllerControlsSettings());
     };
 
     window.addEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
@@ -1579,6 +1584,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   useLobbyKeyboardNavigation({
     actionKey: keyboardControls.gameActionKey,
+    controllerActionButton: controllerControls.gameActionButton,
+    controllerEnabled:
+      controllerControls.controllerEnabled && showTrainingSkillSelect,
+    controllerSelectButton: controllerControls.selectActionButton,
     capturingControlKey: null,
     closeTopLobbyModal: closeTrainingSkillSelect,
     isControlsSettingsOpen: false,
@@ -1587,7 +1596,13 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   });
 
   useEffect(() => {
-    if (!keyboardControls.keyboardEnabled || !state) return;
+    if (
+      !keyboardControls.keyboardEnabled &&
+      !controllerControls.controllerEnabled
+    ) {
+      return;
+    }
+    if (!state) return;
     if (showTrainingSkillSelect) return;
     if (state.phase !== "planning" || mySubmitted) return;
 
@@ -1601,6 +1616,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       ) {
         return;
       }
+      if (!keyboardControls.keyboardEnabled && event.isTrusted) return;
 
       const dirs: Record<string, Position> = {
         ArrowUp: { row: -1, col: 0 },
@@ -1794,6 +1810,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     currentColor,
     currentMatchType,
     gameOverMessage,
+    controllerControls.controllerEnabled,
     isSfxMuted,
     keyboardControls,
     keyboardTarget,
@@ -1809,6 +1826,99 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     state,
     teleportReservation,
     winner,
+  ]);
+
+  useEffect(() => {
+    if (!controllerControls.controllerEnabled || !state) return;
+    if (showTrainingSkillSelect) return;
+    if (state.phase !== "planning" || mySubmitted) return;
+
+    let raf = 0;
+    let lastInput = "";
+    let lastInputAt = 0;
+
+    const getDirection = (gamepad: Gamepad) => {
+      if (gamepad.buttons[12]?.pressed) return "ArrowUp";
+      if (gamepad.buttons[13]?.pressed) return "ArrowDown";
+      if (gamepad.buttons[14]?.pressed) return "ArrowLeft";
+      if (gamepad.buttons[15]?.pressed) return "ArrowRight";
+
+      const horizontal = gamepad.axes[0] ?? 0;
+      const vertical = gamepad.axes[1] ?? 0;
+      if (Math.abs(horizontal) > Math.abs(vertical)) {
+        if (horizontal <= -0.55) return "ArrowLeft";
+        if (horizontal >= 0.55) return "ArrowRight";
+      }
+      if (vertical <= -0.55) return "ArrowUp";
+      if (vertical >= 0.55) return "ArrowDown";
+      return "";
+    };
+
+    const emitKey = (key: string, code = key) => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key, code }));
+    };
+
+    const pollController = () => {
+      const gamepad = navigator.getGamepads().find(Boolean);
+      if (gamepad) {
+        const direction = getDirection(gamepad);
+        const slotEntries = [
+          ["slot1", 0],
+          ["slot2", 1],
+          ["slot3", 2],
+        ] as const;
+        const matchedSlot = slotEntries.find(([slot]) => {
+          const buttonIndex = controllerControls.abilitySkillButtons[slot];
+          return gamepad.buttons[buttonIndex]?.pressed;
+        });
+        const buttonCode =
+          matchedSlot !== undefined
+            ? `slot:${matchedSlot[0]}`
+            : gamepad.buttons[controllerControls.gameActionButton]?.pressed
+              ? "gameAction"
+              : gamepad.buttons[controllerControls.selectActionButton]?.pressed
+                ? "selectAction"
+                : "";
+        const input = direction || buttonCode;
+        const now = performance.now();
+
+        if (!input) {
+          lastInput = "";
+        } else {
+          const delay =
+            input === lastInput
+              ? input.startsWith("Arrow")
+                ? 160
+                : Number.POSITIVE_INFINITY
+              : 0;
+          if (input !== lastInput || now - lastInputAt >= delay) {
+            lastInput = input;
+            lastInputAt = now;
+
+            if (direction) {
+              emitKey(direction);
+            } else if (matchedSlot) {
+              emitKey("", keyboardControls.abilitySkillKeys[matchedSlot[0]]);
+            } else if (buttonCode === "gameAction") {
+              emitKey("", keyboardControls.gameActionKey);
+            } else if (buttonCode === "selectAction") {
+              emitKey("", keyboardControls.selectActionKey);
+            }
+          }
+        }
+      }
+
+      raf = window.requestAnimationFrame(pollController);
+    };
+
+    raf = window.requestAnimationFrame(pollController);
+    return () => window.cancelAnimationFrame(raf);
+  }, [
+    controllerControls,
+    keyboardControls,
+    mySubmitted,
+    showTrainingSkillSelect,
+    state,
   ]);
 
   const triggerLocalHit = (
