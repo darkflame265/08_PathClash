@@ -1900,10 +1900,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           }, SKILL_PAUSE_MS);
           return;
         }
-        // Trap placed — show magic circle on caster's piece, short banner then done
+        // Trap placed — show magic circle for the rest of this turn (cleared on next round start)
         setMagicMineCastingColors((prev) => ({ ...prev, [event.color]: true }));
         queueAnimationTimeout(() => {
-          setMagicMineCastingColors((prev) => ({ ...prev, [event.color]: false }));
           setAbilityBanner(null);
           done();
         }, SKILL_PAUSE_MS);
@@ -2594,6 +2593,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       setRoundInfo(payload);
       setTrapTiles(nextState.trapTiles ?? []);
       setPendingOwnedTriggeredTrapTiles([]);
+      setMagicMineCastingColors({ red: false, blue: false });
       resetPlanningState();
       applyState(nextState);
     };
