@@ -2787,6 +2787,11 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               </span>
             </div>
           </div>
+          <p>
+            {lang === "en"
+              ? "Select up to 3 skills. All skills are available in training."
+              : "훈련장에서는 모든 스킬을 사용할 수 있습니다. 최대 3개를 선택하세요."}
+          </p>
           {trainingLoadout.length > 0 && (
             <div className="ability-loadout-chip-row ability-loadout-modal-selected">
               {trainingLoadout.map((skillId) => {
@@ -2801,11 +2806,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               })}
             </div>
           )}
-          <p>
-            {lang === "en"
-              ? "Select up to 3 skills. All skills are available in training."
-              : "훈련장에서는 모든 스킬을 사용할 수 있습니다. 최대 3개를 선택하세요."}
-          </p>
           {trainingSkillError && (
             <p style={{ color: "var(--red, #EF4444)", margin: "0 0 8px", fontSize: "0.85em" }}>
               {trainingSkillError}

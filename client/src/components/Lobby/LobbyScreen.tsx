@@ -4476,6 +4476,8 @@ export function LobbyScreen({
               </div>
             </div>
 
+            <p>{abilityLoadoutDesc}</p>
+
             {equippedAbilitySkillDefs.length > 0 && (
               <div className="ability-loadout-chip-row ability-loadout-modal-selected">
                 {equippedAbilitySkillDefs.map((skill) => (
@@ -4486,8 +4488,6 @@ export function LobbyScreen({
                 ))}
               </div>
             )}
-
-            <p>{abilityLoadoutDesc}</p>
 
             <div className="skin-option-list">
               {availableAbilitySkills.map((skill) => {
