@@ -821,6 +821,9 @@ export function LobbyScreen({
   const [isPatchNotesOpen, setIsPatchNotesOpen] = useState(false);
 
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
+  const [achievementNoticeMessage, setAchievementNoticeMessage] = useState<
+    string | null
+  >(null);
   const [settingsNicknameDraft, setSettingsNicknameDraft] = useState("");
   const [isChangingNickname, setIsChangingNickname] = useState(false);
 
@@ -874,6 +877,8 @@ export function LobbyScreen({
     lang === "en" ? "Skin Purchase" : "스킨 구매";
   const skinPurchaseConfirmLabel = lang === "en" ? "Yes" : "예";
   const skinPurchaseCancelLabel = lang === "en" ? "No" : "아니요";
+  const achievementNoticeTitle =
+    lang === "en" ? "Achievement Reward" : "업적 보상";
 
   useEffect(() => {
     window.localStorage.setItem(LAST_LOBBY_MODE_KEY, selectedLobbyMode);
@@ -2084,6 +2089,10 @@ export function LobbyScreen({
     async (achievementId: string) => {
       if (isClaimingAchievements) return;
 
+      const achievement = achievementViews.find(
+        (entry) => entry.id === achievementId,
+      );
+
       setIsClaimingAchievements(true);
 
       try {
@@ -2091,13 +2100,19 @@ export function LobbyScreen({
 
         if (profile) {
           applyProfileToStore(profile, setAuthState);
+
+          setAchievementNoticeMessage(
+            lang === "en"
+              ? `Claimed ${achievement?.name.en ?? "achievement"} reward and received ${achievement?.rewardTokens ?? 0} diamonds.`
+              : `${achievement?.name.kr ?? "업적"} 보상을 획득했고, ${achievement?.rewardTokens ?? 0}다이아몬드를 받았습니다.`,
+          );
         }
       } finally {
         setIsClaimingAchievements(false);
       }
     },
 
-    [isClaimingAchievements, setAuthState],
+    [achievementViews, isClaimingAchievements, lang, setAuthState],
   );
 
   const handleClaimAllAchievements = useCallback(async () => {
@@ -2123,7 +2138,7 @@ export function LobbyScreen({
       if (profile) {
         applyProfileToStore(profile, setAuthState);
 
-        window.alert(
+        setAchievementNoticeMessage(
           lang === "en"
             ? `Claimed ${claimableAchievements.length} rewards and received ${rewardSum} diamonds.`
             : `${claimableAchievements.length}개의 업적 보상을 획득했고, ${rewardSum}다이아몬드를 받았습니다.`,
@@ -4723,6 +4738,15 @@ export function LobbyScreen({
           onClaim={handleClaimAchievement}
           onClaimAll={handleClaimAllAchievements}
           onClose={() => setIsAchievementsOpen(false)}
+        />
+      )}
+
+      {achievementNoticeMessage && (
+        <UpgradeNoticeDialog
+          title={achievementNoticeTitle}
+          message={achievementNoticeMessage}
+          onClose={() => setAchievementNoticeMessage(null)}
+          t={t}
         />
       )}
 
