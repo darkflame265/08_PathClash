@@ -33,7 +33,12 @@ import {
   stopOverdriveLoop,
   stopMatchResultBgm,
 } from "../../utils/soundUtils";
-import type { BoardSkin, PlayerColor, Position } from "../../types/game.types";
+import type {
+  BoardSkin,
+  PieceSkin,
+  PlayerColor,
+  Position,
+} from "../../types/game.types";
 import {
   ABILITY_SKILLS,
   type AbilityBattleState,
@@ -68,6 +73,59 @@ const AT_FIELD_VISUAL_STEPS = 1;
 const GUARD_END_PAUSE_MS = 360;
 const AT_FIELD_END_PAUSE_MS = 360;
 const AT_FIELD_END_DELAY_MS = 700;
+
+const TRAINING_SKIN_ORDER: PieceSkin[] = [
+  "classic",
+  "ember",
+  "nova",
+  "aurora",
+  "void",
+  "plasma",
+  "gold_core",
+  "neon_pulse",
+  "inferno",
+  "quantum",
+  "cosmic",
+  "arc_reactor",
+  "electric_core",
+  "wizard",
+  "chronos",
+  "atomic",
+  "sun",
+  "flag_kr",
+  "flag_jp",
+  "flag_cn",
+  "flag_us",
+  "flag_uk",
+];
+
+const TRAINING_SKIN_ORDER_INDEX = new Map(
+  TRAINING_SKIN_ORDER.map((skinId, index) => [skinId, index] as const),
+);
+
+const TRAINING_SKILL_ORDER_INDEX = new Map(
+  Object.values(ABILITY_SKILLS).map(
+    (skill, index) => [skill.id, index] as const,
+  ),
+);
+
+const TRAINING_ABILITY_SKILLS = Object.values(ABILITY_SKILLS).sort(
+  (left, right) => {
+    const leftSkinOrder =
+      TRAINING_SKIN_ORDER_INDEX.get(left.skinId) ?? Number.MAX_SAFE_INTEGER;
+    const rightSkinOrder =
+      TRAINING_SKIN_ORDER_INDEX.get(right.skinId) ?? Number.MAX_SAFE_INTEGER;
+
+    if (leftSkinOrder !== rightSkinOrder) {
+      return leftSkinOrder - rightSkinOrder;
+    }
+
+    return (
+      (TRAINING_SKILL_ORDER_INDEX.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
+      (TRAINING_SKILL_ORDER_INDEX.get(right.id) ?? Number.MAX_SAFE_INTEGER)
+    );
+  },
+);
 const TIME_REWIND_FREEZE_MS = 600;
 const TIME_REWIND_HP_STEP_MS = 120;
 
@@ -330,7 +388,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     sfxVolume,
     triggerHeartShake,
     boardSkin,
-    abilityLoadout,
   } = useGameStore();
 
   const [state, setState] = useState<AbilityBattleState | null>(null);
@@ -2691,7 +2748,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     };
 
     const onTrainingSkillSelect = () => {
-      setTrainingLoadout(abilityLoadout);
+      setTrainingLoadout([]);
+      setTrainingSkillError(null);
       setShowTrainingSkillSelect(true);
     };
 
@@ -2728,7 +2786,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       socket.off("rematch_requested", onRematchRequested);
     };
   }, [
-    abilityLoadout,
     currentColor,
     isSfxMuted,
     lang,
@@ -2829,7 +2886,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             </p>
           )}
           <div className="skin-option-list">
-            {Object.values(ABILITY_SKILLS).map((skill) => {
+            {TRAINING_ABILITY_SKILLS.map((skill) => {
               const equipped = trainingLoadout.includes(skill.id);
               const skillSummary =
                 lang === "en"
