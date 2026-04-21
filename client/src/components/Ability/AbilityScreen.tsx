@@ -481,6 +481,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     red: boolean;
     blue: boolean;
   }>({ red: false, blue: false });
+  const [movingRevealedTrapPositions, setMovingRevealedTrapPositions] = useState<Position[]>([]);
   const [winner, setWinner] = useState<PlayerColor | "draw" | null>(null);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const [rematchRequested, setRematchRequested] = useState(false);
@@ -611,6 +612,27 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       stopMatchResultBgm();
     };
   }, []);
+
+  // 이동 중 말이 함정 칸을 밟으면 해당 위치를 누적 — 턴 내내 유지
+  useEffect(() => {
+    if (state?.phase !== "moving") return;
+    const positions = [
+      { pos: redDisplayPos, owner: "red" as const },
+      { pos: blueDisplayPos, owner: "blue" as const },
+    ];
+    for (const { pos, owner } of positions) {
+      const matched = trapTiles.find(
+        (trap) => trap.owner === owner && posEqual(trap.position, pos),
+      );
+      if (matched) {
+        setMovingRevealedTrapPositions((prev) =>
+          prev.some((p) => posEqual(p, matched.position))
+            ? prev
+            : [...prev, matched.position],
+        );
+      }
+    }
+  }, [redDisplayPos, blueDisplayPos, state?.phase, trapTiles]);
 
   useEffect(() => {
     const handleGlobalPointerDown = (event: PointerEvent) => {
@@ -880,7 +902,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const filteredOwnerTrapTiles = isMovingPhase
     ? ownerVisibleTrapTiles.filter((trap) => {
         const piecePos = trap.owner === "red" ? redDisplayPos : blueDisplayPos;
-        return posEqual(piecePos, trap.position);
+        return (
+          posEqual(piecePos, trap.position) ||
+          movingRevealedTrapPositions.some((p) => posEqual(p, trap.position))
+        );
       })
     : ownerVisibleTrapTiles;
   // 상대방 눈에 노출된 함정도 포함 (중복 제거)
@@ -2602,6 +2627,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       setTrapTiles(nextState.trapTiles ?? []);
       setPendingOwnedTriggeredTrapTiles([]);
       setMagicMineCastingColors({ red: false, blue: false });
+      setMovingRevealedTrapPositions([]);
       resetPlanningState();
       applyState(nextState);
     };
