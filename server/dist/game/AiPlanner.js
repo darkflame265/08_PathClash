@@ -360,6 +360,38 @@ function extendAttackPathToFullPoints(start, basePath, target, pathPoints, obsta
     }
     return path;
 }
+function extendEscapePathToFullPoints(start, basePath, threatPosition, pathPoints, obstacles, threatCandidates) {
+    const path = [...basePath].slice(0, pathPoints);
+    if (path.length >= pathPoints)
+        return path;
+    let current = path[path.length - 1] ?? start;
+    let previous = path.length >= 1 ? (path.length >= 2 ? path[path.length - 2] : start) : null;
+    const visited = new Set([toKey(start), ...path.map((p) => toKey(p))]);
+    while (path.length < pathPoints) {
+        const candidates = getNeighbors(current, obstacles)
+            .filter((c) => !isSamePosition(c, previous))
+            .filter((c) => !visited.has(toKey(c)));
+        if (candidates.length === 0)
+            break;
+        const nextMove = candidates
+            .map((c) => ({
+            candidate: c,
+            score: manhattan(c, threatPosition) * 4.5 -
+                (threatCandidates.heatmap.get(toKey(c)) ?? 0) * 2.5 -
+                (threatCandidates.bottleneckHeatmap.get(toKey(c)) ?? 0) * 3.5 +
+                countOpenNeighbors(c, obstacles) * 2.2 +
+                (isCorner(c) ? -9 : isEdge(c) ? -2.5 : 2.5),
+        }))
+            .sort((a, b) => b.score - a.score)[0]?.candidate;
+        if (!nextMove)
+            break;
+        path.push(nextMove);
+        visited.add(toKey(nextMove));
+        previous = current;
+        current = nextMove;
+    }
+    return path;
+}
 function createEscaperPath(selfPosition, threatPosition, pathPoints, obstacles) {
     const threatCandidates = buildThreatAttackCandidates(threatPosition, selfPosition, pathPoints, obstacles);
     const escapeCandidates = buildEscapePathCandidates(selfPosition, threatPosition, pathPoints, obstacles);
@@ -393,7 +425,8 @@ function createEscaperPath(selfPosition, threatPosition, pathPoints, obstacles) 
     else {
         chosen = pickWeightedTopThree(scoredCandidates);
     }
-    const chosenPath = chosen?.path ?? [];
+    const rawChosenPath = chosen?.path ?? [];
+    const chosenPath = extendEscapePathToFullPoints(selfPosition, rawChosenPath, threatPosition, pathPoints, obstacles, threatCandidates);
     lastAiEscapeDebug = {
         escapeCandidatePathCount: escapeCandidates.length,
         enemyAttackCandidateCount: threatCandidates.candidates.length,
