@@ -173,7 +173,7 @@ const catalog: AchievementCatalogEntry[] = [
   ...buildSeries('ability_special', 'ability_win_full_hp_', FULL_HP_MILESTONES, FULL_HP_REWARDS, (goal, rewardTokens) => ({
     id: '', category: 'ability_special', goal, rewardTokens,
     name: { en: `Perfect Ability Win ${goal}`, kr: `풀피 능력대전 승리 ${goal}회` },
-    description: { en: `Win Ability Battle ${goal} times while staying at 3 HP. Disconnect wins do not count.`, kr: `HP 3인 채로 능력대전에서 ${goal}회 승리하세요. 상대 이탈 승리는 제외됩니다.` },
+    description: { en: `Win Ability Battle ${goal} times while staying at 5 HP. Disconnect wins do not count.`, kr: `HP 5인 채로 능력대전에서 ${goal}회 승리하세요. 상대 이탈 승리는 제외됩니다.` },
   })),
   ...Object.entries(attackSkillNames).flatMap(([skillId, labels]) =>
     buildSeries('ability_attack', `skill_finish_${skillId}_`, ATTACK_SKILL_MILESTONES, ATTACK_SKILL_REWARDS, (goal, rewardTokens) => ({
