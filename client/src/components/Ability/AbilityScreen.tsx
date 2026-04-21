@@ -70,10 +70,9 @@ const SKILL_CAST_DELAY_MS = 500;
 const BLITZ_DASH_STEP_MS = 12;
 const BLITZ_POST_HIT_PAUSE_MS = 640;
 const VOID_REVEAL_PAUSE_MS = 450;
-const AT_FIELD_VISUAL_STEPS = 1;
+const AT_FIELD_VISUAL_STEPS = 2;
 const GUARD_END_PAUSE_MS = 360;
 const AT_FIELD_END_PAUSE_MS = 360;
-const AT_FIELD_END_DELAY_MS = 700;
 
 const TRAINING_SKIN_ORDER: PieceSkin[] = [
   "classic",
@@ -393,7 +392,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const [state, setState] = useState<AbilityBattleState | null>(null);
   const [showTrainingSkillSelect, setShowTrainingSkillSelect] = useState(false);
-  const [trainingSkillError, setTrainingSkillError] = useState<string | null>(null);
+  const [trainingSkillError, setTrainingSkillError] = useState<string | null>(
+    null,
+  );
   const [trainingLoadout, setTrainingLoadout] = useState<AbilitySkillId[]>([]);
   const [roundInfo, setRoundInfo] = useState<AbilityRoundStartPayload | null>(
     null,
@@ -609,7 +610,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       stopMatchResultBgm();
     };
   }, []);
-
 
   useEffect(() => {
     const handleGlobalPointerDown = (event: PointerEvent) => {
@@ -880,7 +880,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     ...briefMineRevealPositions
       .filter(
         (rev) =>
-          !ownerVisibleTrapTiles.some((t) => posEqual(t.position, rev.position)),
+          !ownerVisibleTrapTiles.some((t) =>
+            posEqual(t.position, rev.position),
+          ),
       )
       .map((rev) => ({
         position: rev.position,
@@ -1352,7 +1354,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     const nextPath = [...prefixPath, ...blitzPath];
     if (nextPath.length === 0) return;
     const nextReservations: AbilitySkillReservation[] = [
-      ...skillReservations.filter((entry) => entry.skillId !== "electric_blitz"),
+      ...skillReservations.filter(
+        (entry) => entry.skillId !== "electric_blitz",
+      ),
       {
         skillId: "electric_blitz",
         step: prefixPath.length,
@@ -1856,7 +1860,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             for (const position of triggeredPositions) {
               const id = Date.now() + Math.random();
               revealIds.push(id);
-              setBriefMineRevealPositions((prev) => [...prev, { id, position }]);
+              setBriefMineRevealPositions((prev) => [
+                ...prev,
+                { id, position },
+              ]);
             }
             queueAnimationTimeout(() => {
               setBriefMineRevealPositions((prev) =>
@@ -2514,9 +2521,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
       queueAnimationTimeout(() => {
         runStepEventsAndCollisions(step, () => {
-          const shouldDelayAtFieldEnd =
-            atFieldCounters.red === 1 || atFieldCounters.blue === 1;
-
           const finalizeDefenseEnd = () => {
             const { endedGuards, endedAtFields } = consumeDefenseVisualStep();
 
@@ -2528,11 +2532,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               runAtFieldEndNotice(endedAtFields, continueStep),
             );
           };
-
-          if (shouldDelayAtFieldEnd) {
-            queueAnimationTimeout(finalizeDefenseEnd, AT_FIELD_END_DELAY_MS);
-            return;
-          }
 
           finalizeDefenseEnd();
         });
@@ -2848,7 +2847,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         >
           <div className="skin-modal-head">
             <h3>{lang === "en" ? "Equipped Skills" : "장착 스킬"}</h3>
-            <div className="skin-token-badge" aria-label="Ability loadout count">
+            <div
+              className="skin-token-badge"
+              aria-label="Ability loadout count"
+            >
               <span className="skin-token-badge-main">
                 <span>{trainingLoadout.length} / 3</span>
                 <span>{lang === "en" ? "equipped" : "장착 중"}</span>
@@ -2875,7 +2877,13 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             </div>
           )}
           {trainingSkillError && (
-            <p style={{ color: "var(--red, #EF4444)", margin: "0 0 8px", fontSize: "0.85em" }}>
+            <p
+              style={{
+                color: "var(--red, #EF4444)",
+                margin: "0 0 8px",
+                fontSize: "0.85em",
+              }}
+            >
               {trainingSkillError}
             </p>
           )}
@@ -2884,8 +2892,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               const equipped = trainingLoadout.includes(skill.id);
               const skillSummary =
                 lang === "en"
-                  ? { tags: skill.loadoutTags.en, desc: skill.loadoutDescription.en }
-                  : { tags: skill.loadoutTags.kr, desc: skill.loadoutDescription.kr };
+                  ? {
+                      tags: skill.loadoutTags.en,
+                      desc: skill.loadoutDescription.en,
+                    }
+                  : {
+                      tags: skill.loadoutTags.kr,
+                      desc: skill.loadoutDescription.kr,
+                    };
               return (
                 <button
                   key={skill.id}
@@ -2893,7 +2907,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                   type="button"
                   onClick={() => {
                     if (equipped) {
-                      setTrainingLoadout(trainingLoadout.filter((id) => id !== skill.id));
+                      setTrainingLoadout(
+                        trainingLoadout.filter((id) => id !== skill.id),
+                      );
                       setTrainingSkillError(null);
                       return;
                     }
@@ -2913,7 +2929,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                     {renderSkillIcon(skill.id)}
                   </span>
                   <span className="skin-option-copy">
-                    <strong>{lang === "en" ? skill.name.en : skill.name.kr}</strong>
+                    <strong>
+                      {lang === "en" ? skill.name.en : skill.name.kr}
+                    </strong>
                     <span>
                       {skillSummary.tags}
                       <br />
@@ -2921,10 +2939,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                     </span>
                   </span>
                   <span className="skin-lock-meta ability-skill-meta">
-                    <span className="skin-lock-icon" aria-hidden="true">✨</span>
+                    <span className="skin-lock-icon" aria-hidden="true">
+                      ✨
+                    </span>
                     <span>
                       {skill.category === "passive"
-                        ? lang === "en" ? "Passive · Auto" : "패시브 · 자동"
+                        ? lang === "en"
+                          ? "Passive · Auto"
+                          : "패시브 · 자동"
                         : lang === "en"
                           ? `${skill.manaCost} mana · ${skill.category}`
                           : `마나 ${skill.manaCost} · ${skill.category === "attack" ? "공격" : skill.category === "defense" ? "방어" : "유틸"}`}
@@ -2940,7 +2962,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               type="button"
               onClick={() => {
                 const socket = getSocket();
-                socket.emit("training_skills_confirmed", { skills: trainingLoadout });
+                socket.emit("training_skills_confirmed", {
+                  skills: trainingLoadout,
+                });
                 setShowTrainingSkillSelect(false);
               }}
             >
@@ -2959,7 +2983,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           </div>
         </div>
       </div>,
-      document.body
+      document.body,
     );
 
   if (!state) {
@@ -3223,7 +3247,6 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             state={state}
             currentColor={currentColor}
             trapTiles={visibleTrapTiles}
-
             magicMineCastingColors={magicMineCastingColors}
             pathPoints={effectivePathPoints}
             myPath={myPath}
