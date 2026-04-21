@@ -850,6 +850,11 @@ export function LobbyScreen({
     useState<AccountProfile | null>(null);
   const [isResolvingUpgradeDecision, setIsResolvingUpgradeDecision] =
     useState(false);
+  const [skinPurchaseConfirmMessage, setSkinPurchaseConfirmMessage] =
+    useState<string | null>(null);
+  const [skinPurchaseNoticeMessage, setSkinPurchaseNoticeMessage] = useState<
+    string | null
+  >(null);
 
   const [atomicPreviewReady, setAtomicPreviewReady] = useState(false);
 
@@ -857,12 +862,30 @@ export function LobbyScreen({
   const prevAuthUserIdRef = useRef<string | null>(authUserId);
 
   const lastRewardSyncDayRef = useRef<string>(getUtcDayKey());
+  const skinPurchaseConfirmResolverRef = useRef<
+    ((confirmed: boolean) => void) | null
+  >(null);
 
   const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
+
+  const skinPurchaseConfirmTitle =
+    lang === "en" ? "Confirm Purchase" : "구매 확인";
+  const skinPurchaseNoticeTitle =
+    lang === "en" ? "Skin Purchase" : "스킨 구매";
+  const skinPurchaseConfirmLabel = lang === "en" ? "Yes" : "예";
+  const skinPurchaseCancelLabel = lang === "en" ? "No" : "아니요";
 
   useEffect(() => {
     window.localStorage.setItem(LAST_LOBBY_MODE_KEY, selectedLobbyMode);
   }, [selectedLobbyMode]);
+
+  useEffect(() => {
+    return () => {
+      skinPurchaseConfirmResolverRef.current?.(false);
+
+      skinPurchaseConfirmResolverRef.current = null;
+    };
+  }, []);
 
   const handleLobbyUiClickCapture = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -3375,6 +3398,23 @@ export function LobbyScreen({
     }
   };
 
+  const askSkinPurchaseConfirmation = (message: string) =>
+    new Promise<boolean>((resolve) => {
+      skinPurchaseConfirmResolverRef.current?.(false);
+
+      skinPurchaseConfirmResolverRef.current = resolve;
+
+      setSkinPurchaseConfirmMessage(message);
+    });
+
+  const resolveSkinPurchaseConfirmation = (confirmed: boolean) => {
+    skinPurchaseConfirmResolverRef.current?.(confirmed);
+
+    skinPurchaseConfirmResolverRef.current = null;
+
+    setSkinPurchaseConfirmMessage(null);
+  };
+
   const handleSkinChoiceSelect = async (
     choice: (typeof skinChoices)[number],
 
@@ -3389,7 +3429,9 @@ export function LobbyScreen({
       choice.tokenPrice !== undefined &&
       !isOwned
     ) {
-      const confirmed = window.confirm(skinPurchasePrompt(choice.name));
+      const confirmed = await askSkinPurchaseConfirmation(
+        skinPurchasePrompt(choice.name),
+      );
 
       if (!confirmed) return false;
 
@@ -3400,18 +3442,18 @@ export function LobbyScreen({
 
         setPieceSkin(choice.id);
 
-        window.alert(skinPurchaseSuccessMsg(choice.name));
+        setSkinPurchaseNoticeMessage(skinPurchaseSuccessMsg(choice.name));
 
         return true;
       }
 
       if (result === "insufficient_tokens") {
-        window.alert(skinPurchaseInsufficientMsg);
+        setSkinPurchaseNoticeMessage(skinPurchaseInsufficientMsg);
 
         return false;
       }
 
-      window.alert(skinPurchaseFailedMsg);
+      setSkinPurchaseNoticeMessage(skinPurchaseFailedMsg);
 
       return false;
     }
@@ -3432,7 +3474,9 @@ export function LobbyScreen({
       choice.tokenPrice !== undefined &&
       !isOwned
     ) {
-      const confirmed = window.confirm(skinPurchasePrompt(choice.name));
+      const confirmed = await askSkinPurchaseConfirmation(
+        skinPurchasePrompt(choice.name),
+      );
 
       if (!confirmed) return false;
 
@@ -3441,16 +3485,16 @@ export function LobbyScreen({
       if (result === "purchased" || result === "already_owned") {
         await syncAccountSummary();
         setBoardSkin(choice.id);
-        window.alert(skinPurchaseSuccessMsg(choice.name));
+        setSkinPurchaseNoticeMessage(skinPurchaseSuccessMsg(choice.name));
         return true;
       }
 
       if (result === "insufficient_tokens") {
-        window.alert(skinPurchaseInsufficientMsg);
+        setSkinPurchaseNoticeMessage(skinPurchaseInsufficientMsg);
         return false;
       }
 
-      window.alert(skinPurchaseFailedMsg);
+      setSkinPurchaseNoticeMessage(skinPurchaseFailedMsg);
       return false;
     }
 
@@ -4295,6 +4339,29 @@ export function LobbyScreen({
         </div>
       )}
 
+      {skinPurchaseConfirmMessage && (
+        <UpgradeSwitchConfirmDialog
+          title={skinPurchaseConfirmTitle}
+          message={skinPurchaseConfirmMessage}
+          isSubmitting={false}
+          onConfirm={() => resolveSkinPurchaseConfirmation(true)}
+          onCancel={() => resolveSkinPurchaseConfirmation(false)}
+          confirmLabel={skinPurchaseConfirmLabel}
+          cancelLabel={skinPurchaseCancelLabel}
+          t={t}
+          lang={lang}
+        />
+      )}
+
+      {skinPurchaseNoticeMessage && (
+        <UpgradeNoticeDialog
+          title={skinPurchaseNoticeTitle}
+          message={skinPurchaseNoticeMessage}
+          onClose={() => setSkinPurchaseNoticeMessage(null)}
+          t={t}
+        />
+      )}
+
       {isTokenShopOpen && (
         <div
           className="upgrade-modal-backdrop"
@@ -5075,12 +5142,16 @@ export function LobbyScreen({
 }
 
 function UpgradeNoticeDialog({
+  title,
+
   message,
 
   onClose,
 
   t,
 }: {
+  title?: string;
+
   message: string;
 
   onClose: () => void;
@@ -5090,7 +5161,7 @@ function UpgradeNoticeDialog({
   return (
     <div className="upgrade-modal-backdrop">
       <div className="upgrade-modal">
-        <h3>{t.switchedTitle}</h3>
+        <h3>{title ?? t.switchedTitle}</h3>
 
         <p>{message}</p>
 
@@ -5105,24 +5176,30 @@ function UpgradeNoticeDialog({
 }
 
 function UpgradeSwitchConfirmDialog({
+  title,
   message,
   isSubmitting,
   onConfirm,
   onCancel,
+  confirmLabel,
+  cancelLabel,
   t,
   lang,
 }: {
+  title?: string;
   message: string;
   isSubmitting: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  confirmLabel?: string;
+  cancelLabel?: string;
   t: Translations;
   lang: "en" | "kr";
 }) {
   return (
     <div className="upgrade-modal-backdrop">
       <div className="upgrade-modal">
-        <h3>{t.switchedTitle}</h3>
+        <h3>{title ?? t.switchedTitle}</h3>
 
         <p className="upgrade-switch-message">{message}</p>
 
@@ -5132,14 +5209,14 @@ function UpgradeSwitchConfirmDialog({
             onClick={onConfirm}
             disabled={isSubmitting}
           >
-            {t.confirmBtn}
+            {confirmLabel ?? t.confirmBtn}
           </button>
           <button
             className="lobby-btn secondary"
             onClick={onCancel}
             disabled={isSubmitting}
           >
-            {lang === "en" ? "Cancel" : "취소"}
+            {cancelLabel ?? (lang === "en" ? "Cancel" : "취소")}
           </button>
         </div>
       </div>
