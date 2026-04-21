@@ -1277,6 +1277,10 @@ export function LobbyScreen({
 
   const skinPurchaseInsufficientMsg =
     lang === "en" ? "Not enough diamonds." : "다이아몬드가 부족합니다.";
+  const skinWinRequirementInsufficientMsg =
+    lang === "en" ? "Not enough wins." : "승리 횟수가 부족합니다.";
+  const skinPlayRequirementInsufficientMsg =
+    lang === "en" ? "Not enough plays." : "플레이 횟수가 부족합니다.";
 
   const tokenPacks: Array<{
     id: TokenPackId;
@@ -3548,12 +3552,19 @@ export function LobbyScreen({
         choice.tokenPrice !== undefined &&
         !isOwned &&
         accountTokens < choice.tokenPrice;
+      if (lockedByWins) {
+        showSkinFloatingMessage(skinWinRequirementInsufficientMsg);
+        return;
+      }
+      if (lockedByPlays) {
+        showSkinFloatingMessage(skinPlayRequirementInsufficientMsg);
+        return;
+      }
       if (lockedByTokens) {
         showSkinFloatingMessage(skinPurchaseInsufficientMsg);
         return;
       }
-      const isLocked = lockedByWins || lockedByPlays;
-      const applied = await handleSkinChoiceSelect(choice, isLocked, isOwned);
+      const applied = await handleSkinChoiceSelect(choice, false, isOwned);
       if (applied) {
         setSkinDetail(null);
       }
@@ -4288,19 +4299,7 @@ export function LobbyScreen({
                   type="button"
                   onClick={() => void handleSkinDetailAction()}
                   disabled={
-                    skinDetail.tab === "piece"
-                      ? (() => {
-                          const choice = skinDetail.choice;
-                          const lockedByWins =
-                            choice.requiredWins !== null &&
-                            accountWins < choice.requiredWins;
-                          const lockedByPlays =
-                            choice.requiredPlays !== null &&
-                            choice.requiredPlays !== undefined &&
-                            totalPlays < choice.requiredPlays;
-                          return lockedByWins || lockedByPlays;
-                        })()
-                      : false
+                    false
                   }
                 >
                   {skinDetail.tab === "piece"
