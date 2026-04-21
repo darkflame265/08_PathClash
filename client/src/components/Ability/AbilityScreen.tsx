@@ -716,6 +716,22 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const getAvailableSkills = () =>
     state?.players[currentColor].equippedSkills ?? [];
+  const handleTrainingSkillSelectClickCapture = (
+    event: React.MouseEvent<HTMLDivElement>,
+  ) => {
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+
+    const clickable = target.closest("button, a");
+    if (!(clickable instanceof HTMLElement)) return;
+    if (clickable.hasAttribute("disabled")) return;
+    if (clickable.getAttribute("aria-disabled") === "true") return;
+    if (clickable instanceof HTMLAnchorElement && !clickable.href) return;
+
+    if (!isSfxMuted) {
+      playLobbyClick(sfxVolume);
+    }
+  };
   const teleportReservation =
     skillReservations.find(
       (entry) => entry.skillId === "quantum_shift" && entry.target,
@@ -2773,6 +2789,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       <div
         className="upgrade-modal-backdrop"
         style={{ zIndex: 200 }}
+        onClickCapture={handleTrainingSkillSelectClickCapture}
       >
         <div
           className="upgrade-modal skin-modal ability-loadout-modal"
