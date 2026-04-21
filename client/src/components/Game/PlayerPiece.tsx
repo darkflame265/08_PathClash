@@ -30,6 +30,7 @@ interface Props {
   isBlitzing?: boolean;
   isSunChariotActive?: boolean;
   isRewinding?: boolean;
+  isMagicMineCasting?: boolean;
   isClone?: boolean;
   hp?: number | null;
   maxHp?: number;
@@ -77,6 +78,7 @@ export function PlayerPiece({
   isBlitzing = false,
   isSunChariotActive = false,
   isRewinding = false,
+  isMagicMineCasting = false,
   isClone = false,
   hp = null,
   maxHp = 3,
@@ -161,6 +163,36 @@ export function PlayerPiece({
       {isAtField && (
         <div className="piece-at-field" aria-hidden="true">
           <img src="/ui/ability/at_field.svg" className="piece-at-field-svg" alt="" />
+        </div>
+      )}
+      {isMagicMineCasting && (
+        <div className="piece-magic-mine-cast" aria-hidden="true">
+          <svg viewBox="0 0 100 100" className="piece-magic-mine-cast-svg" style={{ overflow: 'visible' }}>
+            <g className="piece-mine-cast-outer">
+              <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(200,80,255,0.5)" strokeWidth="1" />
+              {Array.from({ length: 12 }).map((_, i) => {
+                const a = ((i * 30 - 90) * Math.PI) / 180;
+                const major = i % 3 === 0;
+                const r1 = major ? 40 : 43;
+                return (
+                  <line
+                    key={i}
+                    x1={50 + r1 * Math.cos(a)} y1={50 + r1 * Math.sin(a)}
+                    x2={50 + 47 * Math.cos(a)} y2={50 + 47 * Math.sin(a)}
+                    stroke={major ? 'rgba(230,110,255,0.9)' : 'rgba(200,80,255,0.6)'}
+                    strokeWidth={major ? '1.6' : '0.8'}
+                  />
+                );
+              })}
+            </g>
+            <g className="piece-mine-cast-hex">
+              <polygon points="50,7 87,72 13,72" fill="rgba(150,30,255,0.08)" stroke="rgba(205,85,255,0.85)" strokeWidth="1.5" />
+              <polygon points="50,93 87,28 13,28" fill="none" stroke="rgba(220,110,255,0.7)" strokeWidth="1.2" />
+            </g>
+            <circle cx="50" cy="50" r="22" fill="rgba(140,20,255,0.1)" stroke="rgba(195,75,255,0.7)" strokeWidth="1" />
+            <circle cx="50" cy="50" r="5.5" fill="rgba(185,55,255,0.25)" stroke="rgba(235,125,255,0.8)" strokeWidth="1" />
+            <circle cx="50" cy="50" r="2.8" fill="rgba(255,215,255,1)" />
+          </svg>
         </div>
       )}
       <div className={`piece-visual${entranceAnimation ? ` roll-in-${entranceAnimation}` : ""}`}>

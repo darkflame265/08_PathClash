@@ -826,3 +826,46 @@
   animation: explode 500ms ease-out forwards !important;
   transition: none !important;
 }
+
+/* Magic Mine casting indicator */
+.piece-magic-mine-cast {
+  position: absolute;
+  inset: 50%;
+  width: calc(var(--piece-size, 56px) * 2.2);
+  height: calc(var(--piece-size, 56px) * 2.2);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 2;
+  animation: mine-cast-appear 0.18s ease-out forwards;
+}
+
+.piece-magic-mine-cast-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.piece-mine-cast-outer {
+  animation: mine-cast-spin 2.4s linear infinite;
+  transform-origin: 50px 50px;
+}
+
+.piece-mine-cast-hex {
+  animation: mine-cast-spin-rev 3.2s linear infinite;
+  transform-origin: 50px 50px;
+}
+
+@keyframes mine-cast-appear {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes mine-cast-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes mine-cast-spin-rev {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}

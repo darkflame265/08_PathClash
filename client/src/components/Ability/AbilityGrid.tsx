@@ -93,6 +93,7 @@ interface Props {
   onTeleportCancel: () => void;
   trapTiles: AbilityTrapTile[];
   mineTriggeredPositions: Array<{ id: number; position: Position }>;
+  magicMineCastingColors: { red: boolean; blue: boolean };
 }
 
 const GRID_SIZE = 5;
@@ -175,6 +176,7 @@ export function AbilityGrid({
   onTeleportCancel,
   trapTiles,
   mineTriggeredPositions,
+  magicMineCastingColors,
 }: Props) {
   const isSfxMuted = useGameStore((store) => store.isSfxMuted);
   const sfxVolume = useGameStore((store) => store.sfxVolume);
@@ -1331,6 +1333,7 @@ export function AbilityGrid({
               isBlitzing={movingBlitzProgress.red > 0}
               isSunChariotActive={activeSunChariots.red}
               isRewinding={rewindingPieceColor === "red"}
+              isMagicMineCasting={magicMineCastingColors.red}
               hp={state.players.red.hp}
               maxHp={5}
               hpOffsetY={redHpOffsetY}
@@ -1368,6 +1371,7 @@ export function AbilityGrid({
               isBlitzing={movingBlitzProgress.blue > 0}
               isSunChariotActive={activeSunChariots.blue}
               isRewinding={rewindingPieceColor === "blue"}
+              isMagicMineCasting={magicMineCastingColors.blue}
               hp={state.players.blue.hp}
               maxHp={5}
               skin={blueSkin}

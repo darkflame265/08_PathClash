@@ -477,6 +477,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   >([]);
   const [pendingOwnedTriggeredTrapTiles, setPendingOwnedTriggeredTrapTiles] =
     useState<AbilityTrapTile[]>([]);
+  const [magicMineCastingColors, setMagicMineCastingColors] = useState<{
+    red: boolean;
+    blue: boolean;
+  }>({ red: false, blue: false });
   const [winner, setWinner] = useState<PlayerColor | "draw" | null>(null);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const [rematchRequested, setRematchRequested] = useState(false);
@@ -1896,8 +1900,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           }, SKILL_PAUSE_MS);
           return;
         }
-        // Trap placed — short banner then done
+        // Trap placed — show magic circle on caster's piece, short banner then done
+        setMagicMineCastingColors((prev) => ({ ...prev, [event.color]: true }));
         queueAnimationTimeout(() => {
+          setMagicMineCastingColors((prev) => ({ ...prev, [event.color]: false }));
           setAbilityBanner(null);
           done();
         }, SKILL_PAUSE_MS);
@@ -3230,6 +3236,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             currentColor={currentColor}
             trapTiles={visibleTrapTiles}
             mineTriggeredPositions={mineTriggeredPositions}
+            magicMineCastingColors={magicMineCastingColors}
             pathPoints={effectivePathPoints}
             myPath={myPath}
             setMyPath={updateMyPath}
