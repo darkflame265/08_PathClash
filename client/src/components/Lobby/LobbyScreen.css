@@ -884,6 +884,14 @@
   transform: scale(0.98);
 }
 
+.keyboard-nav-selected {
+  outline: 3px solid rgba(74, 222, 128, 0.95) !important;
+  outline-offset: 4px;
+  box-shadow:
+    0 0 0 2px rgba(12, 18, 26, 0.72),
+    0 0 16px rgba(74, 222, 128, 0.58) !important;
+}
+
 /* Primary ??forest green */
 .lobby-btn.primary {
   background: var(--primary, #386641);

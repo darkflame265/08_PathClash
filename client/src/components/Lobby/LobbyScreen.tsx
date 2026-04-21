@@ -71,6 +71,7 @@ import { useLang } from "../../hooks/useLang";
 
 import { playLobbyClick } from "../../utils/soundUtils";
 import {
+  CONTROLS_SETTINGS_CHANGED_EVENT,
   getKeyboardCodeLabel,
   loadKeyboardControlsSettings,
   saveKeyboardControlsSettings,
@@ -827,6 +828,7 @@ export function LobbyScreen({
   );
   const [capturingSkillSlot, setCapturingSkillSlot] =
     useState<AbilitySkillSlotKey | null>(null);
+  const keyboardNavElementRef = useRef<HTMLElement | null>(null);
   const [isNameChangeOpen, setIsNameChangeOpen] = useState(false);
 
   const [isAbilityLoadoutOpen, setIsAbilityLoadoutOpen] = useState(false);
@@ -868,8 +870,9 @@ export function LobbyScreen({
     useState<AccountProfile | null>(null);
   const [isResolvingUpgradeDecision, setIsResolvingUpgradeDecision] =
     useState(false);
-  const [skinPurchaseConfirmMessage, setSkinPurchaseConfirmMessage] =
-    useState<string | null>(null);
+  const [skinPurchaseConfirmMessage, setSkinPurchaseConfirmMessage] = useState<
+    string | null
+  >(null);
   const [skinPurchaseNoticeMessage, setSkinPurchaseNoticeMessage] = useState<
     string | null
   >(null);
@@ -893,8 +896,7 @@ export function LobbyScreen({
 
   const skinPurchaseConfirmTitle =
     lang === "en" ? "Confirm Purchase" : "구매 확인";
-  const skinPurchaseNoticeTitle =
-    lang === "en" ? "Skin Purchase" : "스킨 구매";
+  const skinPurchaseNoticeTitle = lang === "en" ? "Skin Purchase" : "스킨 구매";
   const skinPurchaseConfirmLabel = lang === "en" ? "Yes" : "예";
   const skinPurchaseCancelLabel = lang === "en" ? "No" : "아니요";
   const achievementNoticeTitle =
@@ -945,8 +947,7 @@ export function LobbyScreen({
         | ((current: typeof keyboardControls) => typeof keyboardControls),
     ) => {
       setKeyboardControls((current) => {
-        const next =
-          typeof updater === "function" ? updater(current) : updater;
+        const next = typeof updater === "function" ? updater(current) : updater;
         saveKeyboardControlsSettings(next);
         return next;
       });
@@ -979,6 +980,156 @@ export function LobbyScreen({
     window.addEventListener("keydown", handleKeyDown, true);
     return () => window.removeEventListener("keydown", handleKeyDown, true);
   }, [capturingSkillSlot, updateKeyboardControls]);
+
+  useEffect(() => {
+    const syncControls = () => {
+      setKeyboardControls(loadKeyboardControlsSettings());
+    };
+
+    window.addEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
+    window.addEventListener("storage", syncControls);
+    return () => {
+      window.removeEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
+      window.removeEventListener("storage", syncControls);
+    };
+  }, []);
+
+  useEffect(() => {
+    const clearSelectedElement = () => {
+      keyboardNavElementRef.current?.classList.remove(
+        "keyboard-nav-selected",
+      );
+      keyboardNavElementRef.current = null;
+    };
+
+    if (!keyboardControls.keyboardEnabled || capturingSkillSlot) {
+      clearSelectedElement();
+      return;
+    }
+
+    const isUsableNavElement = (element: Element): element is HTMLElement => {
+      if (!(element instanceof HTMLElement)) return false;
+      if (element.closest("[aria-hidden='true']")) return false;
+      if (element instanceof HTMLButtonElement && element.disabled) return false;
+      if (element.getAttribute("aria-disabled") === "true") return false;
+      const rect = element.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return false;
+      const style = window.getComputedStyle(element);
+      return style.visibility !== "hidden" && style.display !== "none";
+    };
+
+    const getNavRoot = () => {
+      const modalRoots = Array.from(
+        document.querySelectorAll<HTMLElement>(".upgrade-modal"),
+      ).filter(isUsableNavElement);
+      return modalRoots[modalRoots.length - 1] ?? document.querySelector(".lobby-screen");
+    };
+
+    const getNavElements = () => {
+      const root = getNavRoot();
+      if (!root) return [];
+      return Array.from(
+        root.querySelectorAll<HTMLElement>("button, a[href]"),
+      ).filter(isUsableNavElement);
+    };
+
+    const setSelectedElement = (element: HTMLElement | null) => {
+      keyboardNavElementRef.current?.classList.remove(
+        "keyboard-nav-selected",
+      );
+      keyboardNavElementRef.current = element;
+      element?.classList.add("keyboard-nav-selected");
+      element?.scrollIntoView({
+        block: "nearest",
+        inline: "nearest",
+        behavior: "smooth",
+      });
+    };
+
+    const getCenter = (element: HTMLElement) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      };
+    };
+
+    const pickNextElement = (
+      current: HTMLElement,
+      elements: HTMLElement[],
+      key: string,
+    ) => {
+      const origin = getCenter(current);
+      const vertical = key === "ArrowUp" || key === "ArrowDown";
+      const direction = key === "ArrowUp" || key === "ArrowLeft" ? -1 : 1;
+      let best: { element: HTMLElement; score: number } | null = null;
+
+      for (const element of elements) {
+        if (element === current) continue;
+        const center = getCenter(element);
+        const primary = vertical
+          ? (center.y - origin.y) * direction
+          : (center.x - origin.x) * direction;
+        if (primary <= 4) continue;
+        const secondary = vertical
+          ? Math.abs(center.x - origin.x)
+          : Math.abs(center.y - origin.y);
+        const score = primary * 1000 + secondary;
+        if (!best || score < best.score) {
+          best = { element, score };
+        }
+      }
+
+      return best?.element ?? current;
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.tagName === "SELECT" ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+
+      const elements = getNavElements();
+      if (elements.length === 0) {
+        clearSelectedElement();
+        return;
+      }
+
+      if (
+        event.key === "ArrowUp" ||
+        event.key === "ArrowDown" ||
+        event.key === "ArrowLeft" ||
+        event.key === "ArrowRight"
+      ) {
+        event.preventDefault();
+        const current = elements.includes(keyboardNavElementRef.current!)
+          ? keyboardNavElementRef.current!
+          : elements[0];
+        setSelectedElement(
+          keyboardNavElementRef.current
+            ? pickNextElement(current, elements, event.key)
+            : current,
+        );
+        return;
+      }
+
+      if (event.code === "Space" && keyboardNavElementRef.current) {
+        event.preventDefault();
+        keyboardNavElementRef.current.click();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      clearSelectedElement();
+    };
+  }, [capturingSkillSlot, keyboardControls.keyboardEnabled]);
 
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * 4) + 1;
@@ -1240,9 +1391,8 @@ export function LobbyScreen({
   const keyboardTabLabel = lang === "en" ? "Keyboard" : "키보드";
   const controllerTabLabel = lang === "en" ? "Controller" : "컨트롤러";
   const keyboardEnabledLabel =
-    lang === "en" ? "Enable keyboard controls?" : "키보드 사용 활성화?";
-  const keyboardMappingTitle =
-    lang === "en" ? "Ability Battle" : "능력대전";
+    lang === "en" ? "Enable keyboard controls" : "키보드 사용 활성화";
+  const keyboardMappingTitle = lang === "en" ? "Ability Battle" : "능력대전";
   const keyboardMappingDesc =
     lang === "en"
       ? "Use arrow keys to draw paths. Press Space to confirm targeted skills."
@@ -2156,12 +2306,15 @@ export function LobbyScreen({
 
     .filter(Boolean);
 
-  const syncAccountSummary = useCallback((options?: { force?: boolean }) => {
-    return refreshAccountSummary(options).then((profile) => {
-      applyProfileToStore(profile, setAuthState);
-      lastRewardSyncDayRef.current = getUtcDayKey();
-    });
-  }, [setAuthState]);
+  const syncAccountSummary = useCallback(
+    (options?: { force?: boolean }) => {
+      return refreshAccountSummary(options).then((profile) => {
+        applyProfileToStore(profile, setAuthState);
+        lastRewardSyncDayRef.current = getUtcDayKey();
+      });
+    },
+    [setAuthState],
+  );
 
   const handleOpenSettings = useCallback(() => {
     setIsSettingsOpen(true);
@@ -3658,11 +3811,7 @@ export function LobbyScreen({
       showSkinFloatingMessage(skinPurchaseInsufficientMsg);
       return;
     }
-    const applied = await handleBoardSkinSelect(
-      choice,
-      false,
-      isOwned,
-    );
+    const applied = await handleBoardSkinSelect(choice, false, isOwned);
     if (applied) {
       setSkinDetail(null);
     }
@@ -4376,9 +4525,7 @@ export function LobbyScreen({
                   className="lobby-btn secondary skin-detail-action-btn"
                   type="button"
                   onClick={() => void handleSkinDetailAction()}
-                  disabled={
-                    false
-                  }
+                  disabled={false}
                 >
                   {skinDetail.tab === "piece"
                     ? (() => {

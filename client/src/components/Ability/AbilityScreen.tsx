@@ -1600,6 +1600,22 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         ([slot]) => keyboardControls.abilitySkillKeys[slot] === event.code,
       );
 
+      if (event.code === "KeyR") {
+        event.preventDefault();
+        if (
+          winner &&
+          currentMatchType === "friend" &&
+          !gameOverMessage &&
+          !rematchRequestSent
+        ) {
+          getSocket().emit("request_rematch");
+          setRematchRequestSent(true);
+          return;
+        }
+        onLeaveToLobby();
+        return;
+      }
+
       if (keyboardTargetMode) {
         if (matchedSlot) {
           const skillId = getAvailableSkills()[matchedSlot[1]];
@@ -1758,16 +1774,22 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
     currentColor,
+    currentMatchType,
+    gameOverMessage,
     isSfxMuted,
     keyboardControls,
     keyboardTarget,
     keyboardTargetMode,
     myPath,
     mySubmitted,
+    onLeaveToLobby,
+    rematchRequestSent,
+    setRematchRequestSent,
     sfxVolume,
     skillReservations,
     state,
     teleportReservation,
+    winner,
   ]);
 
   const triggerLocalHit = (

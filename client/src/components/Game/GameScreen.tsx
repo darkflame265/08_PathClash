@@ -19,6 +19,10 @@ import {
   startMatchResultBgm,
   stopMatchResultBgm,
 } from "../../utils/soundUtils";
+import {
+  CONTROLS_SETTINGS_CHANGED_EVENT,
+  loadKeyboardControlsSettings,
+} from "../../settings/controls";
 import "./GameScreen.css";
 
 interface Props {
@@ -163,6 +167,9 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     top: number;
   } | null>(null);
   const [showEntranceAnimation, setShowEntranceAnimation] = useState(true);
+  const [keyboardControls, setKeyboardControls] = useState(
+    loadKeyboardControlsSettings,
+  );
   const tutorialStartedRef = useRef(false);
   const resultAudioPlayedRef = useRef(false);
 
@@ -177,6 +184,19 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+  }, []);
+
+  useEffect(() => {
+    const syncControls = () => {
+      setKeyboardControls(loadKeyboardControlsSettings());
+    };
+
+    window.addEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
+    window.addEventListener("storage", syncControls);
+    return () => {
+      window.removeEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
+      window.removeEventListener("storage", syncControls);
+    };
   }, []);
 
   useEffect(() => {
@@ -423,6 +443,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (!keyboardControls.keyboardEnabled) return;
       if (isTypingTarget()) return;
 
       if (event.key === "Escape") {
@@ -432,14 +453,15 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       }
 
       if (
-        (event.key === "r" || event.key === "R") &&
-        winner &&
-        !gameOverMessage &&
-        !rematchRequestSent
+        (event.key === "r" || event.key === "R")
       ) {
         event.preventDefault();
-        getSocket().emit("request_rematch");
-        setRematchRequestSent(true);
+        if (winner && !gameOverMessage && !rematchRequestSent) {
+          getSocket().emit("request_rematch");
+          setRematchRequestSent(true);
+          return;
+        }
+        onLeaveToLobby();
       }
     };
 
@@ -447,6 +469,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
     gameOverMessage,
+    keyboardControls.keyboardEnabled,
     onLeaveToLobby,
     rematchRequestSent,
     setRematchRequestSent,
