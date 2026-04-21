@@ -933,22 +933,10 @@ class AbilityRoom {
         blue.pendingManaBonus = 0;
         if (red.pendingOverdriveStage === 1) {
             red.mana = OVERDRIVE_MANA;
-            red.overdriveActive = true;
-            red.pendingOverdriveStage = 2;
-        }
-        else if (red.pendingOverdriveStage === 2) {
-            red.mana = 0;
-            red.reboundLocked = true;
             red.pendingOverdriveStage = 0;
         }
         if (blue.pendingOverdriveStage === 1) {
             blue.mana = OVERDRIVE_MANA;
-            blue.overdriveActive = true;
-            blue.pendingOverdriveStage = 2;
-        }
-        else if (blue.pendingOverdriveStage === 2) {
-            blue.mana = 0;
-            blue.reboundLocked = true;
             blue.pendingOverdriveStage = 0;
         }
         if (red.pendingVoidCloak) {
