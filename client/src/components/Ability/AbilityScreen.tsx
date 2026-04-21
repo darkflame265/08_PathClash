@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { getSocket } from "../../socket/socketClient";
 import { syncServerTime, getEstimatedServerNow } from "../../socket/timeSync";
@@ -61,6 +61,7 @@ import "../Game/GameGrid.css";
 import "../Game/GameOverOverlay.css";
 import "./AbilityScreen.css";
 import "../Lobby/LobbyScreen.css";
+import { useLobbyKeyboardNavigation } from "../Lobby/useLobbyKeyboardNavigation";
 
 interface Props {
   onLeaveToLobby: () => void;
@@ -1569,37 +1570,24 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     });
   }, [currentColor, keyboardTargetMode, myPath, state]);
 
-  useEffect(() => {
-    if (!keyboardControls.keyboardEnabled || !showTrainingSkillSelect) return;
+  const closeTrainingSkillSelect = useCallback(() => {
+    if (!showTrainingSkillSelect) return false;
+    setShowTrainingSkillSelect(false);
+    onLeaveToLobby();
+    return true;
+  }, [onLeaveToLobby, showTrainingSkillSelect]);
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
-        target?.tagName === "SELECT" ||
-        target?.isContentEditable
-      ) {
-        return;
-      }
-
-      if (event.code !== keyboardControls.gameActionKey) return;
-      event.preventDefault();
-      setShowTrainingSkillSelect(false);
-      onLeaveToLobby();
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [
-    keyboardControls.gameActionKey,
-    keyboardControls.keyboardEnabled,
-    onLeaveToLobby,
-    showTrainingSkillSelect,
-  ]);
+  useLobbyKeyboardNavigation({
+    actionKey: keyboardControls.gameActionKey,
+    capturingControlKey: null,
+    closeTopLobbyModal: closeTrainingSkillSelect,
+    isControlsSettingsOpen: false,
+    keyboardEnabled: keyboardControls.keyboardEnabled && showTrainingSkillSelect,
+  });
 
   useEffect(() => {
     if (!keyboardControls.keyboardEnabled || !state) return;
+    if (showTrainingSkillSelect) return;
     if (state.phase !== "planning" || mySubmitted) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -1814,6 +1802,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     onLeaveToLobby,
     rematchRequestSent,
     setRematchRequestSent,
+    showTrainingSkillSelect,
     sfxVolume,
     skillReservations,
     state,
@@ -3198,7 +3187,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             </p>
           )}
           <div className="skin-option-list">
-            {TRAINING_ABILITY_SKILLS.map((skill) => {
+            {TRAINING_ABILITY_SKILLS.map((skill, index) => {
               const equipped = trainingLoadout.includes(skill.id);
               const skillSummary =
                 lang === "en"
@@ -3214,6 +3203,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 <button
                   key={skill.id}
                   className={`skin-option-card ${equipped ? "is-selected" : ""}`}
+                  data-keyboard-modal-layer={`training-skill-row-${index}`}
                   type="button"
                   onClick={() => {
                     if (equipped) {
@@ -3269,6 +3259,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           <div className="upgrade-modal-actions">
             <button
               className="lobby-btn primary"
+              data-keyboard-modal-layer="training-actions"
               type="button"
               onClick={() => {
                 const socket = getSocket();
@@ -3282,6 +3273,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             </button>
             <button
               className="lobby-btn"
+              data-keyboard-modal-layer="training-actions"
               type="button"
               onClick={() => {
                 setShowTrainingSkillSelect(false);

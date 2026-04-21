@@ -4649,7 +4649,7 @@ export function LobbyScreen({
             )}
 
             <div className="skin-option-list">
-              {availableAbilitySkills.map((skill) => {
+              {availableAbilitySkills.map((skill, index) => {
                 const equipped = abilityLoadout.includes(skill.id);
 
                 const unlocked = hasAbilitySkinUnlocked(skill.skinId);
@@ -4682,6 +4682,7 @@ export function LobbyScreen({
                   <button
                     key={skill.id}
                     className={`skin-option-card ${equipped ? "is-selected" : ""} ${!unlocked ? "is-locked" : ""}`}
+                    data-keyboard-modal-layer={`ability-skill-row-${index}`}
                     type="button"
                     onClick={() => {
                       if (!unlocked) return;
@@ -4745,6 +4746,7 @@ export function LobbyScreen({
             <div className="upgrade-modal-actions">
               <button
                 className="lobby-btn primary"
+                data-keyboard-modal-layer="close"
                 onClick={() => setIsAbilityLoadoutOpen(false)}
                 type="button"
               >

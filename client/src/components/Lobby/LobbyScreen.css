@@ -1638,9 +1638,9 @@
 }
 
 .ability-loadout-modal .skin-option-card.is-selected {
-  border: 2.5px solid #4ade80;
-  background: rgba(74, 222, 128, 0.08);
-  box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.22);
+  border: 2.5px solid #7dd3fc;
+  background: rgba(125, 211, 252, 0.1);
+  box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.28);
 }
 
 .skin-option-card.is-locked {
