@@ -4476,6 +4476,17 @@ export function LobbyScreen({
               </div>
             </div>
 
+            {equippedAbilitySkillDefs.length > 0 && (
+              <div className="ability-loadout-chip-row ability-loadout-modal-selected">
+                {equippedAbilitySkillDefs.map((skill) => (
+                  <span key={skill.id} className="ability-loadout-chip">
+                    {renderAbilitySkillIcon(skill.id)}
+                    <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+
             <p>{abilityLoadoutDesc}</p>
 
             <div className="skin-option-list">

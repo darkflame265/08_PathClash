@@ -2986,6 +2986,16 @@
   gap: 0.45rem;
 }
 
+.ability-loadout-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.ability-loadout-modal-selected {
+  margin-top: -0.15rem;
+}
+
 .ability-loadout-chip {
   display: inline-flex;
   align-items: center;
@@ -2997,6 +3007,11 @@
   color: #dbeafe;
   font-size: 0.78rem;
   font-weight: 700;
+}
+
+.ability-loadout-chip .ability-skill-icon-glyph,
+.ability-loadout-chip .ability-skill-icon-custom {
+  flex: 0 0 auto;
 }
 
 .ability-skill-preview {

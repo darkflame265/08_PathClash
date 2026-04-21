@@ -2787,6 +2787,20 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               </span>
             </div>
           </div>
+          {trainingLoadout.length > 0 && (
+            <div className="ability-loadout-chip-row ability-loadout-modal-selected">
+              {trainingLoadout.map((skillId) => {
+                const skill = ABILITY_SKILLS[skillId];
+                if (!skill) return null;
+                return (
+                  <span key={skillId} className="ability-loadout-chip">
+                    {renderSkillIcon(skillId)}
+                    <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
+                  </span>
+                );
+              })}
+            </div>
+          )}
           <p>
             {lang === "en"
               ? "Select up to 3 skills. All skills are available in training."
