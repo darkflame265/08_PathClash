@@ -1077,7 +1077,10 @@ export function LobbyScreen({
       keyboardNavElementRef.current = null;
     };
 
-    if (!keyboardControls.keyboardEnabled || capturingControlKey) {
+    if (
+      (!keyboardControls.keyboardEnabled && !isControlsSettingsOpen) ||
+      capturingControlKey
+    ) {
       clearSelectedElement();
       return;
     }
@@ -1268,6 +1271,24 @@ export function LobbyScreen({
       return layerElements[nextIndex];
     };
 
+    const adjustRangeInput = (
+      element: HTMLElement,
+      direction: 1 | -1,
+    ): boolean => {
+      if (!(element instanceof HTMLInputElement)) return false;
+      if (element.type !== "range") return false;
+
+      if (direction > 0) {
+        element.stepUp();
+      } else {
+        element.stepDown();
+      }
+
+      element.dispatchEvent(new Event("input", { bubbles: true }));
+      element.dispatchEvent(new Event("change", { bubbles: true }));
+      return true;
+    };
+
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (
@@ -1324,6 +1345,15 @@ export function LobbyScreen({
             if (!current) return;
 
             if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+              if (
+                adjustRangeInput(
+                  current,
+                  event.key === "ArrowRight" ? 1 : -1,
+                )
+              ) {
+                return;
+              }
+
               setSelectedElement(
                 pickNextLayeredElement(current, currentLayerElements, event.key),
               );
@@ -1398,6 +1428,7 @@ export function LobbyScreen({
   }, [
     capturingControlKey,
     closeTopLobbyModal,
+    isControlsSettingsOpen,
     keyboardControls.gameActionKey,
     keyboardControls.keyboardEnabled,
   ]);
@@ -5537,6 +5568,7 @@ export function LobbyScreen({
 
                   <button
                     className={`audio-settings-toggle ${!isMusicMuted ? "is-on" : "is-off"}`}
+                    data-keyboard-modal-layer="audio-toggles"
                     onClick={toggleMusicMute}
                     type="button"
                   >
@@ -5549,6 +5581,7 @@ export function LobbyScreen({
 
                   <button
                     className={`audio-settings-toggle ${!isSfxMuted ? "is-on" : "is-off"}`}
+                    data-keyboard-modal-layer="audio-toggles"
                     onClick={toggleSfxMute}
                     type="button"
                   >
@@ -5566,6 +5599,7 @@ export function LobbyScreen({
 
                 <input
                   className="audio-slider"
+                  data-keyboard-modal-layer="audio-music-volume"
                   type="range"
                   min="0"
                   max="100"
@@ -5586,6 +5620,7 @@ export function LobbyScreen({
 
                 <input
                   className="audio-slider"
+                  data-keyboard-modal-layer="audio-sfx-volume"
                   type="range"
                   min="0"
                   max="100"
@@ -5601,6 +5636,7 @@ export function LobbyScreen({
             <div className="upgrade-modal-actions">
               <button
                 className="lobby-btn primary"
+                data-keyboard-modal-layer="close"
                 onClick={() => setIsAudioSettingsOpen(false)}
                 type="button"
               >
@@ -5630,6 +5666,7 @@ export function LobbyScreen({
             <div className="controls-settings-tabs" role="tablist">
               <button
                 className={`controls-settings-tab ${controlsSettingsTab === "keyboard" ? "is-active" : ""}`}
+                data-keyboard-modal-layer="controls-tabs"
                 type="button"
                 role="tab"
                 aria-selected={controlsSettingsTab === "keyboard"}
@@ -5639,6 +5676,7 @@ export function LobbyScreen({
               </button>
               <button
                 className={`controls-settings-tab ${controlsSettingsTab === "controller" ? "is-active" : ""}`}
+                data-keyboard-modal-layer="controls-tabs"
                 type="button"
                 role="tab"
                 aria-selected={controlsSettingsTab === "controller"}
@@ -5650,7 +5688,10 @@ export function LobbyScreen({
 
             {controlsSettingsTab === "keyboard" ? (
               <div className="controls-settings-body">
-                <label className="controls-checkbox-row">
+                <label
+                  className="controls-checkbox-row"
+                  data-keyboard-modal-layer="controls-enabled"
+                >
                   <input
                     type="checkbox"
                     checked={keyboardControls.keyboardEnabled}
@@ -5676,6 +5717,7 @@ export function LobbyScreen({
                         <span>{skillSlotLabels[slot]}</span>
                         <button
                           className={`controls-keymap-button ${capturingControlKey === slot ? "is-capturing" : ""}`}
+                          data-keyboard-modal-layer={`controls-${slot}`}
                           type="button"
                           onClick={() => setCapturingControlKey(slot)}
                         >
@@ -5700,6 +5742,7 @@ export function LobbyScreen({
                       <span>{gameActionKeyLabel}</span>
                       <button
                         className={`controls-keymap-button ${capturingControlKey === "gameAction" ? "is-capturing" : ""}`}
+                        data-keyboard-modal-layer="controls-game-action"
                         type="button"
                         onClick={() => setCapturingControlKey("gameAction")}
                       >
@@ -5722,6 +5765,7 @@ export function LobbyScreen({
             <div className="upgrade-modal-actions">
               <button
                 className="lobby-btn primary"
+                data-keyboard-modal-layer="close"
                 onClick={() => {
                   setCapturingControlKey(null);
                   setIsControlsSettingsOpen(false);
