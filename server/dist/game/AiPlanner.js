@@ -368,26 +368,23 @@ function createEscaperPath(selfPosition, threatPosition, pathPoints, obstacles) 
         .map((candidate) => scoreEscapePathAgainstEnemyAttackCandidates(selfPosition, threatPosition, candidate, threatCandidates, obstacles, pathPoints, futureThreatCache))
         .sort((left, right) => right.score - left.score);
     // 50% 확률로 "등잔 밑" 패턴: 상대방 쪽으로 첫 이동하는 예측 불가 경로 선택
-    // 방향별로 그룹핑 후 방향 자체를 50/50으로 선택해 편향 방지
+    // beam search가 상대방 방향 경로를 미리 제거하므로, 별도로 직접 생성
     let chosen;
     if (Math.random() < 0.5) {
-        const boldCandidates = scoredCandidates.filter((candidate) => {
-            if (candidate.path.length === 0)
-                return false;
-            const firstStep = candidate.path[0];
-            return manhattan(firstStep, threatPosition) < manhattan(selfPosition, threatPosition);
-        });
-        if (boldCandidates.length > 0) {
-            const byDirection = new Map();
-            for (const candidate of boldCandidates) {
-                const dirKey = toKey(candidate.path[0]);
-                if (!byDirection.has(dirKey))
-                    byDirection.set(dirKey, []);
-                byDirection.get(dirKey).push(candidate);
-            }
-            const groups = [...byDirection.values()];
-            const pickedGroup = groups[Math.floor(Math.random() * groups.length)];
-            chosen = pickedGroup[0];
+        const boldFirstSteps = getNeighbors(selfPosition, obstacles).filter((neighbor) => manhattan(neighbor, threatPosition) < manhattan(selfPosition, threatPosition));
+        if (boldFirstSteps.length > 0) {
+            const pickedFirstStep = boldFirstSteps[Math.floor(Math.random() * boldFirstSteps.length)];
+            const boldPaths = listBoardPositions()
+                .filter((target) => !isBlocked(target, obstacles) && !sameCell(target, selfPosition))
+                .map((target) => {
+                const rest = buildShortestPath(pickedFirstStep, target, obstacles).slice(0, pathPoints - 1);
+                return [pickedFirstStep, ...rest];
+            })
+                .filter((path) => path.length > 0);
+            const boldScored = boldPaths
+                .map((path) => scoreEscapePathAgainstEnemyAttackCandidates(selfPosition, threatPosition, path, threatCandidates, obstacles, pathPoints, futureThreatCache))
+                .sort((a, b) => b.score - a.score);
+            chosen = boldScored[0] ?? pickWeightedTopThree(scoredCandidates);
         }
         else {
             chosen = pickWeightedTopThree(scoredCandidates);
