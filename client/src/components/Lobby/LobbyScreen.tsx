@@ -830,6 +830,7 @@ export function LobbyScreen({
     AbilitySkillSlotKey | "gameAction" | null
   >(null);
   const keyboardNavElementRef = useRef<HTMLElement | null>(null);
+  const keyboardNavSelectionStackRef = useRef<HTMLElement[]>([]);
   const [isNameChangeOpen, setIsNameChangeOpen] = useState(false);
 
   const [isAbilityLoadoutOpen, setIsAbilityLoadoutOpen] = useState(false);
@@ -1081,6 +1082,7 @@ export function LobbyScreen({
       (!keyboardControls.keyboardEnabled && !isControlsSettingsOpen) ||
       capturingControlKey
     ) {
+      keyboardNavSelectionStackRef.current = [];
       clearSelectedElement();
       return;
     }
@@ -1096,10 +1098,13 @@ export function LobbyScreen({
       return style.visibility !== "hidden" && style.display !== "none";
     };
 
-    const getModalRoot = () => {
-      const modalRoots = Array.from(
+    const getModalRoots = () =>
+      Array.from(
         document.querySelectorAll<HTMLElement>(".upgrade-modal"),
       ).filter(isUsableNavElement);
+
+    const getModalRoot = () => {
+      const modalRoots = getModalRoots();
       return modalRoots[modalRoots.length - 1] ?? null;
     };
 
@@ -1205,6 +1210,25 @@ export function LobbyScreen({
       });
     };
 
+    const restorePreviousSelection = () => {
+      while (keyboardNavSelectionStackRef.current.length > 0) {
+        const previous = keyboardNavSelectionStackRef.current.pop() ?? null;
+        if (previous && previous.isConnected && isUsableNavElement(previous)) {
+          setSelectedElement(previous);
+          return true;
+        }
+      }
+
+      if (
+        keyboardNavElementRef.current &&
+        !keyboardNavElementRef.current.isConnected
+      ) {
+        clearSelectedElement();
+      }
+
+      return false;
+    };
+
     const getCenter = (element: HTMLElement) => {
       const rect = element.getBoundingClientRect();
       return {
@@ -1305,9 +1329,14 @@ export function LobbyScreen({
       const firstLayerElements = getLayerElements(lobbyNavLayers[0]);
 
       if (event.code === keyboardControls.gameActionKey) {
+        const previousModalCount = getModalRoots().length;
         if (closeTopLobbyModal()) {
           event.preventDefault();
-          clearSelectedElement();
+          window.requestAnimationFrame(() => {
+            if (getModalRoots().length < previousModalCount) {
+              restorePreviousSelection();
+            }
+          });
         }
         return;
       }
@@ -1415,15 +1444,33 @@ export function LobbyScreen({
       }
 
       if (event.code === "Space" && keyboardNavElementRef.current) {
+        const selected = keyboardNavElementRef.current;
+        const previousModalCount = getModalRoots().length;
         event.preventDefault();
-        keyboardNavElementRef.current.click();
+        selected.click();
+
+        window.requestAnimationFrame(() => {
+          const nextModalCount = getModalRoots().length;
+
+          if (
+            nextModalCount > previousModalCount &&
+            selected.isConnected &&
+            isUsableNavElement(selected)
+          ) {
+            keyboardNavSelectionStackRef.current.push(selected);
+            return;
+          }
+
+          if (nextModalCount < previousModalCount) {
+            restorePreviousSelection();
+          }
+        });
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      clearSelectedElement();
     };
   }, [
     capturingControlKey,
