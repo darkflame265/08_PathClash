@@ -365,7 +365,7 @@ function AchievementModal({
 
             <p className="achievements-desc">
               {lang === "en"
-                ? "Complete goals, then claim your diamond rewards here."
+                ? "View achievements and claim rewards."
                 : "조건을 달성한 뒤 여기서 다이아몬드 보상을 획득하세요."}
             </p>
 
@@ -968,7 +968,7 @@ export function LobbyScreen({
       : friendClassicTabLabel;
   const friendModeTitle =
     lang === "en"
-      ? `Friend Match (${friendBattleMode === "classic" ? "Classic" : "Ability Battle"})`
+      ? `Friendly Match (${friendBattleMode === "classic" ? "Classic" : "Ability Battle"})`
       : `친구 대전(${friendBattleMode === "classic" ? "클래식" : "능력대전"})`;
   const friendClassicDesc =
     lang === "en"
@@ -1113,8 +1113,8 @@ export function LobbyScreen({
 
   const settingsModalDesc =
     lang === "en"
-      ? "Review your account information and support details."
-      : "계정 정보와 문의 용 세부 정보를 확인하세요.";
+      ? "Check your account and settings."
+      : "계정 정보와 설정을 확인하세요.";
 
   const settingsCopyLabel = lang === "en" ? "Copy ID" : "ID 복사";
 
@@ -2102,7 +2102,7 @@ export function LobbyScreen({
 
         window.alert(
           lang === "en"
-            ? `Claimed ${claimableAchievements.length} achievement rewards and received ${rewardSum} diamonds.`
+            ? `Claimed ${claimableAchievements.length} rewards and received ${rewardSum} diamonds.`
             : `${claimableAchievements.length}개의 업적 보상을 획득했고, ${rewardSum}다이아몬드를 받았습니다.`,
         );
       }
