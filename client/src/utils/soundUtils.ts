@@ -54,7 +54,8 @@ type AbilitySfxId =
   | "void_cloak"
   | "chronos_tick_tock"
   | "chronos_rewind_loop"
-  | "gold_overdrive_loop";
+  | "gold_overdrive_loop"
+  | "magic_mine";
 
 type UiSfxId = "lobby_click" | "victory_result" | "defeat_result";
 
@@ -142,6 +143,10 @@ const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
     path: "/sfx/ability/gold_overdrive_loop.mp3",
     gain: 0.9,
     loop: true,
+  },
+  magic_mine: {
+    path: "/sfx/ability/magic_mine.mp3",
+    gain: 0.9,
   },
 };
 
@@ -614,6 +619,10 @@ export function playCharge(volume = 0.55): void {
 
 export function playQuantum(volume = 0.55): void {
   playAbilitySfx("quantum", volume);
+}
+
+export function playMagicMine(volume = 0.55): void {
+  playAbilitySfx("magic_mine", volume);
 }
 
 export function playEmber(volume = 0.55): void {

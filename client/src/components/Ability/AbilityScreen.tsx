@@ -23,6 +23,7 @@ import {
   playPhaseShift,
   preloadAbilitySfxAssets,
   playQuantum,
+  playMagicMine,
   playVoidCloak,
   playChronosTickTock,
   startChronosRewindLoop,
@@ -1888,6 +1889,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         }
         // Trap placed — show magic circle for the rest of this turn (cleared on next round start)
         setMagicMineCastingColors((prev) => ({ ...prev, [event.color]: true }));
+        if (!isSfxMuted) playMagicMine(sfxVolume);
         queueAnimationTimeout(() => {
           setAbilityBanner(null);
           done();
