@@ -1600,7 +1600,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         ([slot]) => keyboardControls.abilitySkillKeys[slot] === event.code,
       );
 
-      if (event.code === "KeyR") {
+      if (event.code === keyboardControls.gameActionKey) {
         event.preventDefault();
         if (
           winner &&

@@ -826,8 +826,9 @@ export function LobbyScreen({
   const [keyboardControls, setKeyboardControls] = useState(
     loadKeyboardControlsSettings,
   );
-  const [capturingSkillSlot, setCapturingSkillSlot] =
-    useState<AbilitySkillSlotKey | null>(null);
+  const [capturingControlKey, setCapturingControlKey] = useState<
+    AbilitySkillSlotKey | "gameAction" | null
+  >(null);
   const keyboardNavElementRef = useRef<HTMLElement | null>(null);
   const [isNameChangeOpen, setIsNameChangeOpen] = useState(false);
 
@@ -956,30 +957,34 @@ export function LobbyScreen({
   );
 
   useEffect(() => {
-    if (!capturingSkillSlot) return;
+    if (!capturingControlKey) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       event.preventDefault();
       event.stopPropagation();
 
       if (event.code === "Escape") {
-        setCapturingSkillSlot(null);
+        setCapturingControlKey(null);
         return;
       }
 
       updateKeyboardControls((current) => ({
         ...current,
-        abilitySkillKeys: {
-          ...current.abilitySkillKeys,
-          [capturingSkillSlot]: event.code,
-        },
+        ...(capturingControlKey === "gameAction"
+          ? { gameActionKey: event.code }
+          : {
+              abilitySkillKeys: {
+                ...current.abilitySkillKeys,
+                [capturingControlKey]: event.code,
+              },
+            }),
       }));
-      setCapturingSkillSlot(null);
+      setCapturingControlKey(null);
     };
 
     window.addEventListener("keydown", handleKeyDown, true);
     return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [capturingSkillSlot, updateKeyboardControls]);
+  }, [capturingControlKey, updateKeyboardControls]);
 
   useEffect(() => {
     const syncControls = () => {
@@ -1002,7 +1007,7 @@ export function LobbyScreen({
       keyboardNavElementRef.current = null;
     };
 
-    if (!keyboardControls.keyboardEnabled || capturingSkillSlot) {
+    if (!keyboardControls.keyboardEnabled || capturingControlKey) {
       clearSelectedElement();
       return;
     }
@@ -1018,19 +1023,52 @@ export function LobbyScreen({
       return style.visibility !== "hidden" && style.display !== "none";
     };
 
-    const getNavRoot = () => {
+    const getModalRoot = () => {
       const modalRoots = Array.from(
         document.querySelectorAll<HTMLElement>(".upgrade-modal"),
       ).filter(isUsableNavElement);
-      return modalRoots[modalRoots.length - 1] ?? document.querySelector(".lobby-screen");
+      return modalRoots[modalRoots.length - 1] ?? null;
     };
 
-    const getNavElements = () => {
-      const root = getNavRoot();
-      if (!root) return [];
-      return Array.from(
+    const getModalNavElements = (root: HTMLElement) =>
+      Array.from(
         root.querySelectorAll<HTMLElement>("button, a[href]"),
       ).filter(isUsableNavElement);
+
+    const lobbyNavLayers = [
+      "daily",
+      "mode",
+      "mini",
+      "primary",
+      "bottom",
+      "lang",
+    ];
+
+    const getLayerElements = (layer: string) =>
+      Array.from(
+        document.querySelectorAll<HTMLElement>(
+          `[data-keyboard-nav-layer="${layer}"]`,
+        ),
+      ).filter(isUsableNavElement);
+
+    const getCurrentLayerIndex = () => {
+      const currentLayer =
+        keyboardNavElementRef.current?.dataset.keyboardNavLayer ?? null;
+      const index = currentLayer ? lobbyNavLayers.indexOf(currentLayer) : -1;
+      return index >= 0 ? index : 0;
+    };
+
+    const getNearestLayerIndex = (fromIndex: number, direction: 1 | -1) => {
+      for (
+        let index = fromIndex + direction;
+        index >= 0 && index < lobbyNavLayers.length;
+        index += direction
+      ) {
+        if (getLayerElements(lobbyNavLayers[index]).length > 0) {
+          return index;
+        }
+      }
+      return fromIndex;
     };
 
     const setSelectedElement = (element: HTMLElement | null) => {
@@ -1052,6 +1090,21 @@ export function LobbyScreen({
         x: rect.left + rect.width / 2,
         y: rect.top + rect.height / 2,
       };
+    };
+
+    const pickClosestByX = (elements: HTMLElement[], from: HTMLElement) => {
+      const origin = getCenter(from);
+      let best = elements[0] ?? null;
+      let bestDistance = Number.POSITIVE_INFINITY;
+      for (const element of elements) {
+        const center = getCenter(element);
+        const distance = Math.abs(center.x - origin.x);
+        if (distance < bestDistance) {
+          best = element;
+          bestDistance = distance;
+        }
+      }
+      return best;
     };
 
     const pickNextElement = (
@@ -1094,8 +1147,10 @@ export function LobbyScreen({
         return;
       }
 
-      const elements = getNavElements();
-      if (elements.length === 0) {
+      const modalRoot = getModalRoot();
+      const modalElements = modalRoot ? getModalNavElements(modalRoot) : [];
+      const firstLayerElements = getLayerElements(lobbyNavLayers[0]);
+      if (!modalRoot && firstLayerElements.length === 0) {
         clearSelectedElement();
         return;
       }
@@ -1107,14 +1162,48 @@ export function LobbyScreen({
         event.key === "ArrowRight"
       ) {
         event.preventDefault();
-        const current = elements.includes(keyboardNavElementRef.current!)
-          ? keyboardNavElementRef.current!
-          : elements[0];
-        setSelectedElement(
-          keyboardNavElementRef.current
-            ? pickNextElement(current, elements, event.key)
-            : current,
+        if (modalRoot) {
+          const current = modalElements.includes(keyboardNavElementRef.current!)
+            ? keyboardNavElementRef.current!
+            : modalElements[0];
+          setSelectedElement(
+            keyboardNavElementRef.current
+              ? pickNextElement(current, modalElements, event.key)
+              : current,
+          );
+          return;
+        }
+
+        if (!keyboardNavElementRef.current) {
+          setSelectedElement(firstLayerElements[0]);
+          return;
+        }
+
+        const currentLayerIndex = getCurrentLayerIndex();
+        const currentLayer = lobbyNavLayers[currentLayerIndex];
+        const currentLayerElements = getLayerElements(currentLayer);
+        const current = currentLayerElements.includes(
+          keyboardNavElementRef.current,
+        )
+          ? keyboardNavElementRef.current
+          : (currentLayerElements[0] ?? firstLayerElements[0]);
+
+        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+          const currentIndex = currentLayerElements.indexOf(current);
+          const direction = event.key === "ArrowLeft" ? -1 : 1;
+          const nextIndex =
+            (currentIndex + direction + currentLayerElements.length) %
+            currentLayerElements.length;
+          setSelectedElement(currentLayerElements[nextIndex]);
+          return;
+        }
+
+        const nextLayerIndex = getNearestLayerIndex(
+          currentLayerIndex,
+          event.key === "ArrowDown" ? 1 : -1,
         );
+        const nextLayerElements = getLayerElements(lobbyNavLayers[nextLayerIndex]);
+        setSelectedElement(pickClosestByX(nextLayerElements, current));
         return;
       }
 
@@ -1129,7 +1218,7 @@ export function LobbyScreen({
       window.removeEventListener("keydown", handleKeyDown);
       clearSelectedElement();
     };
-  }, [capturingSkillSlot, keyboardControls.keyboardEnabled]);
+  }, [capturingControlKey, keyboardControls.keyboardEnabled]);
 
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * 4) + 1;
@@ -1393,10 +1482,13 @@ export function LobbyScreen({
   const keyboardEnabledLabel =
     lang === "en" ? "Enable keyboard controls" : "키보드 사용 활성화";
   const keyboardMappingTitle = lang === "en" ? "Ability Battle" : "능력대전";
+  const inGameMappingTitle = lang === "en" ? "In-Game" : "인게임";
   const keyboardMappingDesc =
     lang === "en"
       ? "Use arrow keys to draw paths. Press Space to confirm targeted skills."
       : "화살표 방향키로 경로를 작성하고, 위치 지정 스킬은 스페이스바로 확정합니다.";
+  const gameActionKeyLabel =
+    lang === "en" ? "Lobby / Rematch" : "로비로 이동/재시작";
   const controllerComingSoonLabel =
     lang === "en" ? "Still in development." : "아직 개발 중입니다.";
   const skillSlotLabels =
@@ -3194,6 +3286,7 @@ export function LobbyScreen({
       <button
         type="button"
         className="lobby-mini-btn"
+        data-keyboard-nav-layer="mini"
         onClick={() =>
           handleFriendBattleModeChange(
             friendBattleMode === "classic" ? "ability" : "classic",
@@ -3900,6 +3993,7 @@ export function LobbyScreen({
               <button
                 type="button"
                 className="lobby-mini-btn tutorial"
+                data-keyboard-nav-layer="mini"
                 onClick={() => void handleReplayAiTutorial()}
               >
                 {t.aiTutorialBtn ?? aiTutorialButtonLabel}
@@ -3920,7 +4014,11 @@ export function LobbyScreen({
                       : aiMatchmakingDesc}
                   </p>
                 </div>
-                <button className="lobby-btn cancel" onClick={handleCancelAi}>
+                <button
+                  className="lobby-btn cancel"
+                  data-keyboard-nav-layer="primary"
+                  onClick={handleCancelAi}
+                >
                   {aiCancelLabel}
                 </button>
               </>
@@ -3929,6 +4027,7 @@ export function LobbyScreen({
                 <p>{t.aiDesc}</p>
                 <button
                   className="lobby-btn ai"
+                  data-keyboard-nav-layer="primary"
                   onClick={() => void handleAiMatch()}
                 >
                   {t.aiBtn}
@@ -3949,6 +4048,7 @@ export function LobbyScreen({
             <div className="btn-divider">
               <button
                 className="lobby-btn primary"
+                data-keyboard-nav-layer="primary"
                 onClick={() =>
                   void (friendBattleMode === "ability"
                     ? handleCreateAbilityRoom()
@@ -3959,6 +4059,7 @@ export function LobbyScreen({
               </button>
               <button
                 className="lobby-btn secondary"
+                data-keyboard-nav-layer="primary"
                 onClick={() => {
                   setView("join");
                   setError("");
@@ -3989,6 +4090,7 @@ export function LobbyScreen({
                 </div>
                 <button
                   className="lobby-btn cancel"
+                  data-keyboard-nav-layer="primary"
                   onClick={handleCancelRandom}
                 >
                   {t.cancelBtn}
@@ -3997,6 +4099,7 @@ export function LobbyScreen({
             ) : (
               <button
                 className="lobby-btn accent"
+                data-keyboard-nav-layer="primary"
                 onClick={() => void handleRandom()}
               >
                 {t.startBtn}
@@ -4021,13 +4124,18 @@ export function LobbyScreen({
                   <div className="spinner" />
                   <p>{t.matchmakingDesc}</p>
                 </div>
-                <button className="lobby-btn cancel" onClick={handleCancelCoop}>
+                <button
+                  className="lobby-btn cancel"
+                  data-keyboard-nav-layer="primary"
+                  onClick={handleCancelCoop}
+                >
                   {t.cancelBtn}
                 </button>
               </>
             ) : (
               <button
                 className="lobby-btn accent"
+                data-keyboard-nav-layer="primary"
                 onClick={() => void handleCoopMatch()}
               >
                 {coopStartLabel}
@@ -4052,6 +4160,7 @@ export function LobbyScreen({
                 </div>
                 <button
                   className="lobby-btn cancel"
+                  data-keyboard-nav-layer="primary"
                   onClick={handleCancelTwoVsTwo}
                 >
                   {t.cancelBtn}
@@ -4060,6 +4169,7 @@ export function LobbyScreen({
             ) : (
               <button
                 className="lobby-btn accent"
+                data-keyboard-nav-layer="primary"
                 onClick={() => void handleTwoVsTwoMatch()}
               >
                 {twoVsTwoStartLabel}
@@ -4075,6 +4185,7 @@ export function LobbyScreen({
               <div className="lobby-card-mini-actions">
                 <button
                   className="lobby-mini-btn"
+                  data-keyboard-nav-layer="mini"
                   type="button"
                   onClick={() => void handleAbilityTraining()}
                 >
@@ -4082,6 +4193,7 @@ export function LobbyScreen({
                 </button>
                 <button
                   className="lobby-mini-btn"
+                  data-keyboard-nav-layer="mini"
                   type="button"
                   onClick={() => setIsAbilityLoadoutOpen(true)}
                 >
@@ -4114,6 +4226,7 @@ export function LobbyScreen({
                 </div>
                 <button
                   className="lobby-btn cancel"
+                  data-keyboard-nav-layer="primary"
                   onClick={handleCancelAbility}
                 >
                   {t.cancelBtn}
@@ -4122,6 +4235,7 @@ export function LobbyScreen({
             ) : (
               <button
                 className="lobby-btn accent"
+                data-keyboard-nav-layer="primary"
                 onClick={() => void handleAbilityMatch()}
               >
                 {abilityBattleStartLabel}
@@ -4163,6 +4277,7 @@ export function LobbyScreen({
           <div className="daily-reward-wrap">
             <button
               className="daily-reward-badge daily-reward-badge-btn"
+              data-keyboard-nav-layer="daily"
               aria-label="Daily tokens earned"
               type="button"
               onClick={() => setIsDailyRewardInfoOpen((prev) => !prev)}
@@ -4197,6 +4312,7 @@ export function LobbyScreen({
               key={option.key}
               type="button"
               className={`mode-selector-btn ${selectedLobbyMode === option.key ? "is-active" : ""} ${DISABLED_LOBBY_MODES.has(option.key) ? "is-disabled" : ""}`}
+              data-keyboard-nav-layer="mode"
               onClick={() => handleSelectLobbyMode(option.key)}
               disabled={DISABLED_LOBBY_MODES.has(option.key)}
             >
@@ -4841,6 +4957,7 @@ export function LobbyScreen({
         <div className="lobby-bottom-actions">
           <button
             className={`lobby-bottom-action ${isSkinPickerOpen ? "is-active" : ""}`}
+            data-keyboard-nav-layer="bottom"
             onClick={() => setIsSkinPickerOpen((open) => !open)}
             aria-pressed={isSkinPickerOpen}
             type="button"
@@ -4858,6 +4975,7 @@ export function LobbyScreen({
 
           <button
             className="lobby-bottom-action lobby-patch-notes-link"
+            data-keyboard-nav-layer="bottom"
             onClick={() => {
               setIsPatchNotesOpen(true);
 
@@ -4882,6 +5000,7 @@ export function LobbyScreen({
 
           <button
             className="lobby-bottom-action"
+            data-keyboard-nav-layer="bottom"
             onClick={() => setIsAchievementsOpen(true)}
             type="button"
           >
@@ -4904,6 +5023,7 @@ export function LobbyScreen({
 
           <button
             className="lobby-bottom-action"
+            data-keyboard-nav-layer="bottom"
             onClick={handleOpenSettings}
             type="button"
           >
@@ -4928,6 +5048,7 @@ export function LobbyScreen({
         >
           <button
             className={`lang-toggle-btn ${lang === "en" ? "is-active" : ""}`}
+            data-keyboard-nav-layer="lang"
             onClick={() => setLang("en")}
             aria-pressed={lang === "en"}
             type="button"
@@ -4937,6 +5058,7 @@ export function LobbyScreen({
 
           <button
             className={`lang-toggle-btn ${lang === "kr" ? "is-active" : ""}`}
+            data-keyboard-nav-layer="lang"
             onClick={() => setLang("kr")}
             aria-pressed={lang === "kr"}
             type="button"
@@ -5305,7 +5427,7 @@ export function LobbyScreen({
         <div
           className="upgrade-modal-backdrop audio-modal-backdrop"
           onClick={() => {
-            setCapturingSkillSlot(null);
+            setCapturingControlKey(null);
             setIsControlsSettingsOpen(false);
           }}
         >
@@ -5365,11 +5487,11 @@ export function LobbyScreen({
                       <div className="controls-keymap-row" key={slot}>
                         <span>{skillSlotLabels[slot]}</span>
                         <button
-                          className={`controls-keymap-button ${capturingSkillSlot === slot ? "is-capturing" : ""}`}
+                          className={`controls-keymap-button ${capturingControlKey === slot ? "is-capturing" : ""}`}
                           type="button"
-                          onClick={() => setCapturingSkillSlot(slot)}
+                          onClick={() => setCapturingControlKey(slot)}
                         >
-                          {capturingSkillSlot === slot
+                          {capturingControlKey === slot
                             ? keyCaptureLabel
                             : getKeyboardCodeLabel(
                                 keyboardControls.abilitySkillKeys[slot],
@@ -5377,6 +5499,29 @@ export function LobbyScreen({
                         </button>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {keyboardControls.keyboardEnabled && (
+                  <div className="controls-keymap-panel">
+                    <div className="controls-keymap-head">
+                      <strong>{inGameMappingTitle}</strong>
+                    </div>
+
+                    <div className="controls-keymap-row">
+                      <span>{gameActionKeyLabel}</span>
+                      <button
+                        className={`controls-keymap-button ${capturingControlKey === "gameAction" ? "is-capturing" : ""}`}
+                        type="button"
+                        onClick={() => setCapturingControlKey("gameAction")}
+                      >
+                        {capturingControlKey === "gameAction"
+                          ? keyCaptureLabel
+                          : getKeyboardCodeLabel(
+                              keyboardControls.gameActionKey,
+                            )}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -5390,7 +5535,7 @@ export function LobbyScreen({
               <button
                 className="lobby-btn primary"
                 onClick={() => {
-                  setCapturingSkillSlot(null);
+                  setCapturingControlKey(null);
                   setIsControlsSettingsOpen(false);
                 }}
                 type="button"

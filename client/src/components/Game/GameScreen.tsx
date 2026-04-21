@@ -452,9 +452,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         return;
       }
 
-      if (
-        (event.key === "r" || event.key === "R")
-      ) {
+      if (event.code === keyboardControls.gameActionKey) {
         event.preventDefault();
         if (winner && !gameOverMessage && !rematchRequestSent) {
           getSocket().emit("request_rematch");
@@ -469,6 +467,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
     gameOverMessage,
+    keyboardControls.gameActionKey,
     keyboardControls.keyboardEnabled,
     onLeaveToLobby,
     rematchRequestSent,

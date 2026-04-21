@@ -3,6 +3,7 @@ export type AbilitySkillSlotKey = "slot1" | "slot2" | "slot3";
 export type KeyboardControlsSettings = {
   keyboardEnabled: boolean;
   abilitySkillKeys: Record<AbilitySkillSlotKey, string>;
+  gameActionKey: string;
 };
 
 export const CONTROLS_SETTINGS_CHANGED_EVENT = "pathclash-controls-changed";
@@ -17,6 +18,7 @@ export const DEFAULT_KEYBOARD_CONTROLS_SETTINGS: KeyboardControlsSettings = {
     slot2: "KeyW",
     slot3: "KeyE",
   },
+  gameActionKey: "KeyR",
 };
 
 const SLOT_KEYS: AbilitySkillSlotKey[] = ["slot1", "slot2", "slot3"];
@@ -35,6 +37,7 @@ export function loadKeyboardControlsSettings(): KeyboardControlsSettings {
 
     const parsed = JSON.parse(raw) as Partial<KeyboardControlsSettings> & {
       abilitySkillKeys?: Partial<Record<AbilitySkillSlotKey, string>>;
+      gameActionKey?: string;
     };
 
     return {
@@ -48,6 +51,10 @@ export function loadKeyboardControlsSettings(): KeyboardControlsSettings {
           ),
         }),
         {} as Record<AbilitySkillSlotKey, string>,
+      ),
+      gameActionKey: normalizeCode(
+        parsed.gameActionKey,
+        DEFAULT_KEYBOARD_CONTROLS_SETTINGS.gameActionKey,
       ),
     };
   } catch {
