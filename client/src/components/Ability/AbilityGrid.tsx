@@ -885,11 +885,10 @@ export function AbilityGrid({
             type="button"
             className="ability-teleport-target"
             style={{
-              left: target.col * responsiveCellSize + responsiveCellSize / 2,
-              top: target.row * responsiveCellSize + responsiveCellSize / 2,
-              width: Math.max(32, responsiveCellSize * 0.5),
-              height: Math.max(32, responsiveCellSize * 0.5),
-              transform: "translate(-50%, -50%)",
+              left: target.col * responsiveCellSize,
+              top: target.row * responsiveCellSize,
+              width: responsiveCellSize,
+              height: responsiveCellSize,
             }}
             onClick={() => {
               playTargetSelectSfx();
@@ -904,11 +903,10 @@ export function AbilityGrid({
             type="button"
             className="ability-blitz-target"
             style={{
-              left: target.col * responsiveCellSize + responsiveCellSize / 2,
-              top: target.row * responsiveCellSize + responsiveCellSize / 2,
-              width: Math.max(32, responsiveCellSize * 0.5),
-              height: Math.max(32, responsiveCellSize * 0.5),
-              transform: "translate(-50%, -50%)",
+              left: target.col * responsiveCellSize,
+              top: target.row * responsiveCellSize,
+              width: responsiveCellSize,
+              height: responsiveCellSize,
             }}
             onClick={() => {
               playTargetSelectSfx();
@@ -930,11 +928,10 @@ export function AbilityGrid({
             type="button"
             className="ability-inferno-target"
             style={{
-              left: target.col * responsiveCellSize + responsiveCellSize / 2,
-              top: target.row * responsiveCellSize + responsiveCellSize / 2,
-              width: Math.max(32, responsiveCellSize * 0.5),
-              height: Math.max(32, responsiveCellSize * 0.5),
-              transform: "translate(-50%, -50%)",
+              left: target.col * responsiveCellSize,
+              top: target.row * responsiveCellSize,
+              width: responsiveCellSize,
+              height: responsiveCellSize,
             }}
             onClick={() => {
               playTargetSelectSfx();
