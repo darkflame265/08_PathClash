@@ -19,9 +19,9 @@ export interface AchievementCatalogEntry {
 }
 
 const WIN_MILESTONES = [1, 3, 5, 10, 30, 50, 100, 500, 1000, 10000] as const;
-const WIN_REWARDS = [20, 30, 40, 60, 100, 150, 250, 700, 1500, 10000] as const;
+const WIN_REWARDS = [20, 30, 40, 60, 100, 150, 250, 700, 1500, 3000] as const;
 const TOTAL_WIN_MILESTONES = [10, 50, 100, 500, 1000, 10000] as const;
-const TOTAL_WIN_REWARDS = [50, 100, 180, 500, 1000, 10000] as const;
+const TOTAL_WIN_REWARDS = [50, 100, 180, 500, 1000, 3000] as const;
 const GAMES_PLAYED_MILESTONES = [10, 50, 100, 500, 1000] as const;
 const GAMES_PLAYED_REWARDS = [40, 80, 120, 350, 700] as const;
 const SKIN_MILESTONES = [3, 10, 20] as const;
