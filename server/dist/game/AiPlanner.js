@@ -406,13 +406,15 @@ function createEscaperPath(selfPosition, threatPosition, pathPoints, obstacles) 
         const boldFirstSteps = getNeighbors(selfPosition, obstacles).filter((neighbor) => manhattan(neighbor, threatPosition) < manhattan(selfPosition, threatPosition));
         if (boldFirstSteps.length > 0) {
             const pickedFirstStep = boldFirstSteps[Math.floor(Math.random() * boldFirstSteps.length)];
-            const boldPaths = listBoardPositions()
-                .filter((target) => !isBlocked(target, obstacles) && !sameCell(target, selfPosition))
-                .map((target) => {
-                const rest = buildShortestPath(pickedFirstStep, target, obstacles).slice(0, pathPoints - 1);
-                return [pickedFirstStep, ...rest];
-            })
-                .filter((path) => path.length > 0);
+            // selfPosition을 장애물로 취급해 첫 발 이후 뒤로 돌아가는 경로를 차단
+            const boldObstacles = [...obstacles, selfPosition];
+            const continuationCandidates = buildEscapePathCandidates(pickedFirstStep, threatPosition, pathPoints - 1, boldObstacles);
+            const boldPaths = [
+                [pickedFirstStep],
+                ...continuationCandidates
+                    .filter((rest) => rest.length > 0)
+                    .map((rest) => [pickedFirstStep, ...rest]),
+            ];
             const boldScored = boldPaths
                 .map((path) => scoreEscapePathAgainstEnemyAttackCandidates(selfPosition, threatPosition, path, threatCandidates, obstacles, pathPoints, futureThreatCache))
                 .sort((a, b) => b.score - a.score);
