@@ -77,6 +77,10 @@ import {
   getKeyboardCodeLabel,
   type GamepadButtonLayout,
 } from "../../settings/controls";
+import {
+  ABILITY_SFX_GAIN_IDS,
+  ABILITY_SFX_GAIN_LABELS,
+} from "../../settings/abilitySfx";
 
 import type { Translations } from "../../i18n/translations";
 
@@ -768,6 +772,10 @@ export function LobbyScreen({
 
     setSfxVolume,
 
+    abilitySfxGains,
+
+    setAbilitySfxGain,
+
     pieceSkin,
     boardSkin,
 
@@ -823,6 +831,7 @@ export function LobbyScreen({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const [isAudioSettingsOpen, setIsAudioSettingsOpen] = useState(false);
+  const [isAudioAdvancedOpen, setIsAudioAdvancedOpen] = useState(false);
   const [isControlsSettingsOpen, setIsControlsSettingsOpen] = useState(false);
   const [controlsSettingsTab, setControlsSettingsTab] =
     useState<ControlsSettingsTab>("keyboard");
@@ -1346,6 +1355,9 @@ export function LobbyScreen({
   const musicVolumeLabel = lang === "en" ? "Music Volume" : "음악 볼륨";
 
   const sfxVolumeLabel = lang === "en" ? "SFX Volume" : "효과음 볼륨";
+  const audioAdvancedLabel = lang === "en" ? "Advanced" : "고급 설정";
+  const abilitySfxGainLabel =
+    lang === "en" ? "Ability SFX Gain" : "능력 SFX 개별 볼륨";
 
   const accountTypeValue = isGuestUser
     ? lang === "en"
@@ -5265,6 +5277,58 @@ export function LobbyScreen({
                     setSfxVolume(Number(event.target.value) / 100)
                   }
                 />
+              </div>
+
+              <div className="audio-advanced-section">
+                <button
+                  className={`audio-advanced-toggle ${isAudioAdvancedOpen ? "is-open" : ""}`}
+                  data-keyboard-modal-layer="audio-advanced-toggle"
+                  onClick={() => setIsAudioAdvancedOpen((open) => !open)}
+                  type="button"
+                >
+                  <span>{audioAdvancedLabel}</span>
+                  <strong>{isAudioAdvancedOpen ? "-" : "+"}</strong>
+                </button>
+
+                {isAudioAdvancedOpen && (
+                  <div className="audio-advanced-panel">
+                    <div className="audio-advanced-title">
+                      {abilitySfxGainLabel}
+                    </div>
+
+                    <div className="audio-ability-gain-list">
+                      {ABILITY_SFX_GAIN_IDS.map((gainId) => (
+                        <div className="audio-ability-gain-row" key={gainId}>
+                          <div className="audio-slider-head">
+                            <span>
+                              {ABILITY_SFX_GAIN_LABELS[gainId][lang]}
+                            </span>
+
+                            <strong>
+                              {Math.round(abilitySfxGains[gainId] * 100)}
+                            </strong>
+                          </div>
+
+                          <input
+                            className="audio-slider"
+                            data-keyboard-modal-layer={`audio-ability-gain-${gainId}`}
+                            type="range"
+                            min="0"
+                            max="100"
+                            step="1"
+                            value={Math.round(abilitySfxGains[gainId] * 100)}
+                            onChange={(event) =>
+                              setAbilitySfxGain(
+                                gainId,
+                                Number(event.target.value) / 100,
+                              )
+                            }
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

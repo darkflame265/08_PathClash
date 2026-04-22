@@ -24,6 +24,7 @@ import {
   pauseAllBgm,
   playBgmTrack,
   resumeAudioContext,
+  setAbilitySfxGains,
   setBgmMuted,
   setBgmVolume,
   unloadBgm,
@@ -133,6 +134,7 @@ function App() {
     isSfxMuted,
     musicVolume,
     sfxVolume,
+    abilitySfxGains,
   } = useGameStore();
   const { lang } = useLang();
   const achievementRefreshTimeoutRef = useRef<number | null>(null);
@@ -203,6 +205,10 @@ function App() {
   useEffect(() => {
     setBgmMuted(isMusicMuted);
   }, [isMusicMuted]);
+
+  useEffect(() => {
+    setAbilitySfxGains(abilitySfxGains);
+  }, [abilitySfxGains]);
 
   useEffect(() => {
     const { start, stop } = getMatchResultAudioEvents();
