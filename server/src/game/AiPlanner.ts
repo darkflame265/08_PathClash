@@ -655,46 +655,43 @@ function createEscaperPath(selfPosition: Position, threatPosition: Position, pat
     )
     .sort((left, right) => right.score - left.score);
 
-  // 50% 확률로 "등잔 밑" 패턴: 상대방 쪽으로 첫 이동하는 예측 불가 경로 선택
+  // "등잔 밑" 패턴: 상대방 쪽으로 첫 타일 이동하는 예측 불가 경로
   // beam search가 상대방 방향 경로를 미리 제거하므로, 별도로 직접 생성
+  // boldFirstSteps가 존재하면 무조건 해당 방향으로 첫 발을 내딛음
   let chosen: EscapePathScore | null | undefined;
-  if (Math.random() < 0.5) {
-    const boldFirstSteps = getNeighbors(selfPosition, obstacles).filter(
-      (neighbor) => manhattan(neighbor, threatPosition) < manhattan(selfPosition, threatPosition),
+  const boldFirstSteps = getNeighbors(selfPosition, obstacles).filter(
+    (neighbor) => manhattan(neighbor, threatPosition) < manhattan(selfPosition, threatPosition),
+  );
+  if (boldFirstSteps.length > 0) {
+    const pickedFirstStep = boldFirstSteps[Math.floor(Math.random() * boldFirstSteps.length)];
+    // selfPosition을 장애물로 취급해 첫 발 이후 뒤로 돌아가는 경로를 차단
+    const boldObstacles = [...obstacles, selfPosition];
+    const continuationCandidates = buildEscapePathCandidates(
+      pickedFirstStep,
+      threatPosition,
+      pathPoints - 1,
+      boldObstacles,
     );
-    if (boldFirstSteps.length > 0) {
-      const pickedFirstStep = boldFirstSteps[Math.floor(Math.random() * boldFirstSteps.length)];
-      // selfPosition을 장애물로 취급해 첫 발 이후 뒤로 돌아가는 경로를 차단
-      const boldObstacles = [...obstacles, selfPosition];
-      const continuationCandidates = buildEscapePathCandidates(
-        pickedFirstStep,
-        threatPosition,
-        pathPoints - 1,
-        boldObstacles,
-      );
-      const boldPaths: Position[][] = [
-        [pickedFirstStep],
-        ...continuationCandidates
-          .filter((rest) => rest.length > 0)
-          .map((rest) => [pickedFirstStep, ...rest]),
-      ];
-      const boldScored = boldPaths
-        .map((path) =>
-          scoreEscapePathAgainstEnemyAttackCandidates(
-            selfPosition,
-            threatPosition,
-            path,
-            threatCandidates,
-            obstacles,
-            pathPoints,
-            futureThreatCache,
-          ),
-        )
-        .sort((a, b) => b.score - a.score);
-      chosen = boldScored[0] ?? pickWeightedTopThree(scoredCandidates);
-    } else {
-      chosen = pickWeightedTopThree(scoredCandidates);
-    }
+    const boldPaths: Position[][] = [
+      [pickedFirstStep],
+      ...continuationCandidates
+        .filter((rest) => rest.length > 0)
+        .map((rest) => [pickedFirstStep, ...rest]),
+    ];
+    const boldScored = boldPaths
+      .map((path) =>
+        scoreEscapePathAgainstEnemyAttackCandidates(
+          selfPosition,
+          threatPosition,
+          path,
+          threatCandidates,
+          obstacles,
+          pathPoints,
+          futureThreatCache,
+        ),
+      )
+      .sort((a, b) => b.score - a.score);
+    chosen = boldScored[0] ?? pickWeightedTopThree(scoredCandidates);
   } else {
     chosen = pickWeightedTopThree(scoredCandidates);
   }
@@ -1219,9 +1216,9 @@ function getFutureThreatModel(
 function pickWeightedTopThree<T>(candidates: T[]): T | undefined {
   if (candidates.length === 0) return undefined;
   const roll = Math.random();
-  if (roll < 0.6 || candidates.length === 1) return candidates[0];
-  if (roll < 0.9 || candidates.length === 2) return candidates[1];
-  return candidates[2] ?? candidates[1] ?? candidates[0];
+  if (roll < 0.5 || candidates.length <= 1) return candidates[0];
+  if (roll < 0.8 || candidates.length <= 3) return candidates[Math.min(3, candidates.length - 1)];
+  return candidates[Math.min(6, candidates.length - 1)];
 }
 
 function chooseSafeEscapeCandidate(
