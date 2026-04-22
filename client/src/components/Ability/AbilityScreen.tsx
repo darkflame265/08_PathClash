@@ -3611,7 +3611,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           </div>
           <div className="ability-path-points">
             <div className="gs-path-header">
-              <span className="gs-path-label">
+              <span className="gs-path-label path-points-label-highlight">
                 {lang === "en" ? "Path Points" : "경로 포인트"}
               </span>
               <span className="gs-path-count">

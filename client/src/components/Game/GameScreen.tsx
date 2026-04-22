@@ -635,7 +635,9 @@ export function GameScreen({ onLeaveToLobby }: Props) {
           </div>
           <div className="ability-path-points">
             <div className="gs-path-header">
-              <span className="gs-path-label">{t.pathPoints}</span>
+              <span className="gs-path-label path-points-label-highlight">
+                {t.pathPoints}
+              </span>
               <span className="gs-path-count">
                 <span className="gs-path-current">{myPath.length}</span>
                 <span className="gs-path-sep"> / </span>
