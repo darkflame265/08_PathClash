@@ -56,7 +56,7 @@ exports.ABILITY_SKILL_SERVER_RULES = {
     },
     inferno_field: {
         roleRestriction: 'attacker',
-        stepRule: 'any',
+        stepRule: 'zero_only',
         targetRule: 'position',
     },
     nova_blast: {

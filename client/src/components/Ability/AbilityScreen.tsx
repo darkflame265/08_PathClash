@@ -1283,7 +1283,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       ...skillReservations.filter((entry) => entry.skillId !== "inferno_field"),
       {
         skillId: "inferno_field",
-        step: getCurrentSkillStep(),
+        step: 0,
         order: reservationOrderRef.current++,
         target,
       },
