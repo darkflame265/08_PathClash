@@ -212,8 +212,8 @@ export function getGamepadButtonLabel(
   const playstationLabels: Record<number, string> = {
     0: "X",
     1: "O",
-    2: "Square",
-    3: "Triangle",
+    2: "□",
+    3: "△",
     4: "L1",
     5: "R1",
     6: "L2",
