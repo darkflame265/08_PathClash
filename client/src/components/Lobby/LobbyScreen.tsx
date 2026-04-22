@@ -4782,7 +4782,7 @@ export function LobbyScreen({
           <button
             className={`lobby-bottom-action ${isSkinPickerOpen ? "is-active" : ""}`}
             data-keyboard-nav-layer="bottom"
-            onClick={() => setIsSkinPickerOpen((open) => !open)}
+            onClick={() => setIsSkinPickerOpen(true)}
             aria-pressed={isSkinPickerOpen}
             type="button"
           >

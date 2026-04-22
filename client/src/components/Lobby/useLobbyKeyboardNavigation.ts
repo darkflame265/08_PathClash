@@ -41,6 +41,8 @@ export function useLobbyKeyboardNavigation({
 }: UseLobbyKeyboardNavigationArgs) {
   const selectedElementRef = useRef<HTMLElement | null>(null);
   const selectionStackRef = useRef<HTMLElement[]>([]);
+  const controllerInputRef = useRef("");
+  const controllerInputAtRef = useRef(0);
 
   useEffect(() => {
     const clearSelectedElement = () => {
@@ -439,9 +441,6 @@ export function useLobbyKeyboardNavigation({
     };
 
     let raf = 0;
-    let lastControllerInput = "";
-    let lastControllerInputAt = 0;
-
     const getGamepadDirection = (gamepad: Gamepad) => {
       if (gamepad.buttons[12]?.pressed) return "ArrowUp";
       if (gamepad.buttons[13]?.pressed) return "ArrowDown";
@@ -461,19 +460,19 @@ export function useLobbyKeyboardNavigation({
 
     const shouldAcceptControllerInput = (input: string, now: number) => {
       if (!input) {
-        lastControllerInput = "";
+        controllerInputRef.current = "";
         return false;
       }
 
       const delay =
-        input === lastControllerInput
+        input === controllerInputRef.current
           ? input.startsWith("button:")
             ? Number.POSITIVE_INFINITY
             : 170
           : 0;
-      if (now - lastControllerInputAt < delay) return false;
-      lastControllerInput = input;
-      lastControllerInputAt = now;
+      if (now - controllerInputAtRef.current < delay) return false;
+      controllerInputRef.current = input;
+      controllerInputAtRef.current = now;
       return true;
     };
 
