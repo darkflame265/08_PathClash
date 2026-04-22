@@ -756,7 +756,7 @@ export function initSocketServer(io: Server): void {
         selfPieceSkin: pieceSkin ?? 'classic',
         opponentPieceSkin: opponent.pieceSkin,
       });
-      room.startGame(Boolean(tutorialPending));
+      room.prepareGameStart(Boolean(tutorialPending));
 
       },
     );
@@ -793,7 +793,7 @@ export function initSocketServer(io: Server): void {
         pieceSkin: pieceSkin ?? 'classic',
       });
 
-      room.startGame();
+      room.prepareGameStart();
 
     });
 

@@ -19,6 +19,7 @@ import { PlayerPiece } from "./PlayerPiece";
 import { PathLine } from "./PathLine";
 import { CollisionEffect } from "../Effects/CollisionEffect";
 import { getSocket } from "../../socket/socketClient";
+import { getEstimatedServerNow } from "../../socket/timeSync";
 import { playPathStepClick } from "../../utils/soundUtils";
 import {
   CONTROLS_SETTINGS_CHANGED_EVENT,
@@ -29,6 +30,7 @@ import "./GameGrid.css";
 
 const DEFAULT_CELL_SIZE = 96;
 const GRID_SIZE = 5;
+const PRE_SUBMIT_LEAD_MS = 250;
 
 interface GridProps {
   cellSize?: number;
@@ -93,6 +95,9 @@ export function GameGrid({
 
   const isPlanning = gameState?.phase === "planning";
   const myPos = myColor ? gameState?.players[myColor]?.position : null;
+  const mySubmitted =
+    !!myColor && gameState?.players[myColor]?.pathSubmitted === true;
+  const canEditPath = isPlanning && !mySubmitted;
   const pathPoints = gameState?.pathPoints ?? 5;
   const obstacles = gameState?.obstacles ?? roundInfo?.obstacles ?? [];
   const redPieceSkin =
@@ -255,7 +260,7 @@ export function GameGrid({
 
   const addToPath = useCallback(
     (cell: Position) => {
-      if (!isPlanning || !myPos) return;
+      if (!canEditPath || !myPos) return;
       const current = useGameStore.getState().myPath;
       if (current.length >= pathPoints) return;
       if (isBlockedCell(cell, obstacles)) return;
@@ -267,16 +272,24 @@ export function GameGrid({
       }
     },
     [
-      isPlanning,
+      canEditPath,
       myPos,
       obstacles,
       pathPoints,
+      playPathStepSfx,
       setMyPath,
     ],
   );
 
   const removeFromPath = useCallback(() => {
     const current = useGameStore.getState().myPath;
+    const state = useGameStore.getState();
+    if (
+      !state.myColor ||
+      state.gameState?.players[state.myColor]?.pathSubmitted
+    ) {
+      return;
+    }
     if (current.length > 0) {
       const nextPath = current.slice(0, -1);
       playPathStepSfx();
@@ -290,7 +303,7 @@ export function GameGrid({
   // Pointer handlers cover mouse and touch input with one path.
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!isPlanning || !myPos || !gridRef.current) return;
+      if (!canEditPath || !myPos || !gridRef.current) return;
       if (e.pointerType === "mouse" && e.button !== 0) return;
       const cell = pixelToCell(
         e.clientX,
@@ -317,7 +330,7 @@ export function GameGrid({
         e.currentTarget.setPointerCapture(e.pointerId);
       }
     },
-    [isPlanning, myPos, responsiveCellSize],
+    [canEditPath, myPos, responsiveCellSize],
   );
 
   const handlePointerMove = useCallback(
@@ -329,7 +342,7 @@ export function GameGrid({
         getGridOffset(),
       );
       setHoveredCell(cell);
-      if (!dragState.current.active || !isPlanning || !myPos || !cell) return;
+      if (!dragState.current.active || !canEditPath || !myPos || !cell) return;
       e.preventDefault();
 
       const current = useGameStore.getState().myPath;
@@ -363,7 +376,7 @@ export function GameGrid({
       }
     },
     [
-      isPlanning,
+      canEditPath,
       myPos,
       responsiveCellSize,
       addToPath,
@@ -408,7 +421,7 @@ export function GameGrid({
   // Keyboard handler
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (!isPlanning || !myPos) return;
+      if (!canEditPath || !myPos) return;
       // Don't handle if chat is focused
       if ((e.target as HTMLElement)?.tagName === "INPUT") return;
       if (!keyboardControls.keyboardEnabled && e.isTrusted) return;
@@ -451,7 +464,7 @@ export function GameGrid({
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [
-    isPlanning,
+    canEditPath,
     keyboardControls.keyboardEnabled,
     myPos,
     obstacles,
@@ -463,7 +476,7 @@ export function GameGrid({
 
   useEffect(() => {
     if (!controllerControls.controllerEnabled) return;
-    if (!isPlanning || !myPos) return;
+    if (!canEditPath || !myPos) return;
 
     let raf = 0;
     let lastInput = "";
@@ -535,7 +548,7 @@ export function GameGrid({
     return () => window.cancelAnimationFrame(raf);
   }, [
     controllerControls,
-    isPlanning,
+    canEditPath,
     keyboardControls.gameActionKey,
     keyboardControls.selectActionKey,
     myPos,
@@ -547,14 +560,25 @@ export function GameGrid({
     if (roundInfo.timeLimit <= 0) return;
     if (gameState.players[myColor].pathSubmitted) return;
 
-    const submitAtMs = roundInfo.serverTime + roundInfo.timeLimit * 1000;
-    const finalSubmitDelayMs = Math.max(0, submitAtMs - Date.now());
+    const submitAtMs = roundInfo.roundEndsAt;
+    const preSubmitDelayMs = Math.max(
+      0,
+      submitAtMs - getEstimatedServerNow() - PRE_SUBMIT_LEAD_MS,
+    );
+    const finalSubmitDelayMs = Math.max(
+      0,
+      submitAtMs - getEstimatedServerNow(),
+    );
 
+    const preSubmitTimeoutId = window.setTimeout(() => {
+      submitCurrentPath();
+    }, preSubmitDelayMs);
     const finalSubmitTimeoutId = window.setTimeout(() => {
       submitCurrentPath();
     }, finalSubmitDelayMs);
 
     return () => {
+      window.clearTimeout(preSubmitTimeoutId);
       window.clearTimeout(finalSubmitTimeoutId);
     };
   }, [gameState, isPlanning, myColor, roundInfo, submitCurrentPath]);

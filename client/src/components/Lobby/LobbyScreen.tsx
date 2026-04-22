@@ -64,6 +64,7 @@ import {
 } from "../../payments/tokenShop";
 
 import { connectSocket, disconnectSocket } from "../../socket/socketClient";
+import { syncServerTime } from "../../socket/timeSync";
 
 import { useGameStore } from "../../store/gameStore";
 
@@ -2657,7 +2658,15 @@ export function LobbyScreen({
       onGameStart();
     });
 
+    const emitGameClientReady = () => {
+      void (async () => {
+        await syncServerTime(socket);
+        socket.emit("game_client_ready");
+      })();
+    };
+
     socket.on("round_start", (payload: RoundStartPayload) => {
+      void syncServerTime(socket);
       useGameStore.getState().setRoundInfo(payload);
     });
 
@@ -2741,7 +2750,7 @@ export function LobbyScreen({
 
         setIsMatchmaking(false);
 
-        socket.emit("game_client_ready");
+        emitGameClientReady();
       },
     );
 
@@ -2784,7 +2793,7 @@ export function LobbyScreen({
 
         setIsMatchmaking(false);
 
-        socket.emit("game_client_ready");
+        emitGameClientReady();
       },
     );
 
