@@ -19,6 +19,7 @@ import {
   getUserFromToken,
   recordMatchmakingResult,
   resolveAccount,
+  resolveAccountForUser,
   type PersistentPlayerProfile,
   resolvePlayerProfile,
 } from '../services/playerAuth';
@@ -660,6 +661,7 @@ export function initSocketServer(io: Server): void {
       unregisterSocketSession(socket.id);
       socket.data.userId = undefined;
       socket.data.accessToken = undefined;
+      socket.data.isGuestUser = undefined;
       socket.data.authVerifiedAt = undefined;
       return null;
     }
@@ -678,6 +680,7 @@ export function initSocketServer(io: Server): void {
     socketUsers.set(socket.id, user.id);
     socket.data.userId = user.id;
     socket.data.accessToken = accessToken;
+    socket.data.isGuestUser = user.is_anonymous ?? false;
     socket.data.authVerifiedAt = Date.now();
 
     if (
@@ -1075,11 +1078,21 @@ export function initSocketServer(io: Server): void {
           ack?.({ status: 'UPDATE_REQUIRED', ...requirement });
           return;
         }
-        const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
-        if (userId && achievementId) {
-          await claimAchievementReward(userId, achievementId);
+        try {
+          const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
+          if (userId && achievementId) {
+            await claimAchievementReward(userId, achievementId);
+          }
+          ack?.(
+            await resolveAccountForUser(
+              userId,
+              Boolean(socket.data.isGuestUser),
+            ),
+          );
+        } catch (error) {
+          console.error('[achievements] failed to claim reward', error);
+          ack?.({ status: 'AUTH_INVALID' });
         }
-        ack?.(await resolveAccount(auth));
       },
     );
 
@@ -1095,11 +1108,21 @@ export function initSocketServer(io: Server): void {
           ack?.({ status: 'UPDATE_REQUIRED', ...requirement });
           return;
         }
-        const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
-        if (userId) {
-          await claimAllAchievementRewards(userId);
+        try {
+          const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
+          if (userId) {
+            await claimAllAchievementRewards(userId);
+          }
+          ack?.(
+            await resolveAccountForUser(
+              userId,
+              Boolean(socket.data.isGuestUser),
+            ),
+          );
+        } catch (error) {
+          console.error('[achievements] failed to claim all rewards', error);
+          ack?.({ status: 'AUTH_INVALID' });
         }
-        ack?.(await resolveAccount(auth));
       },
     );
 

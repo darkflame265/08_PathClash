@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUserFromToken = getUserFromToken;
 exports.resolvePlayerProfile = resolvePlayerProfile;
 exports.resolveAccount = resolveAccount;
+exports.resolveAccountForUser = resolveAccountForUser;
 exports.recordMatchmakingResult = recordMatchmakingResult;
 exports.recordMatchmakingWin = recordMatchmakingWin;
 exports.recordMatchmakingLoss = recordMatchmakingLoss;
@@ -207,6 +208,16 @@ async function resolveAccount(auth) {
         return { status: 'AUTH_INVALID' };
     }
     const profile = await readAccountProfile(user.id, 'Guest', user.is_anonymous ?? false);
+    return {
+        status: 'ACCOUNT_OK',
+        profile,
+    };
+}
+async function resolveAccountForUser(userId, isGuestUser = false) {
+    if (!supabase_1.supabaseAdmin || !userId) {
+        return { status: 'AUTH_INVALID' };
+    }
+    const profile = await readAccountProfile(userId, 'Guest', isGuestUser);
     return {
         status: 'ACCOUNT_OK',
         profile,

@@ -2286,7 +2286,20 @@ export function LobbyScreen({
               ? `Claimed ${achievement?.name.en ?? "achievement"} reward and received ${achievement?.rewardTokens ?? 0} diamonds.`
               : `${achievement?.name.kr ?? "업적"} 보상을 획득했고, ${achievement?.rewardTokens ?? 0}다이아몬드를 받았습니다.`,
           );
+        } else {
+          setAchievementNoticeMessage(
+            lang === "en"
+              ? "Unable to claim the reward. Please try again."
+              : "보상을 획득하지 못했습니다. 다시 시도해주세요.",
+          );
         }
+      } catch (error) {
+        console.error("[achievements] failed to claim reward", error);
+        setAchievementNoticeMessage(
+          lang === "en"
+            ? "Unable to claim the reward. Please try again."
+            : "보상을 획득하지 못했습니다. 다시 시도해주세요.",
+        );
       } finally {
         setIsClaimingAchievements(false);
       }
@@ -2323,7 +2336,20 @@ export function LobbyScreen({
             ? `Claimed ${claimableAchievements.length} rewards and received ${rewardSum} diamonds.`
             : `${claimableAchievements.length}개의 업적 보상을 획득했고, ${rewardSum}다이아몬드를 받았습니다.`,
         );
+      } else {
+        setAchievementNoticeMessage(
+          lang === "en"
+            ? "Unable to claim rewards. Please try again."
+            : "보상을 획득하지 못했습니다. 다시 시도해주세요.",
+        );
       }
+    } catch (error) {
+      console.error("[achievements] failed to claim all rewards", error);
+      setAchievementNoticeMessage(
+        lang === "en"
+          ? "Unable to claim rewards. Please try again."
+          : "보상을 획득하지 못했습니다. 다시 시도해주세요.",
+      );
     } finally {
       setIsClaimingAchievements(false);
     }

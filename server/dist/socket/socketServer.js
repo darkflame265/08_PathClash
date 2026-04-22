@@ -436,6 +436,7 @@ function initSocketServer(io) {
             unregisterSocketSession(socket.id);
             socket.data.userId = undefined;
             socket.data.accessToken = undefined;
+            socket.data.isGuestUser = undefined;
             socket.data.authVerifiedAt = undefined;
             return null;
         }
@@ -450,6 +451,7 @@ function initSocketServer(io) {
         socketUsers.set(socket.id, user.id);
         socket.data.userId = user.id;
         socket.data.accessToken = accessToken;
+        socket.data.isGuestUser = user.is_anonymous ?? false;
         socket.data.authVerifiedAt = Date.now();
         if (!options?.allowConcurrentSessions &&
             previousSocketId &&
@@ -734,11 +736,17 @@ function initSocketServer(io) {
                 ack?.({ status: 'UPDATE_REQUIRED', ...requirement });
                 return;
             }
-            const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
-            if (userId && achievementId) {
-                await (0, achievementService_1.claimAchievementReward)(userId, achievementId);
+            try {
+                const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
+                if (userId && achievementId) {
+                    await (0, achievementService_1.claimAchievementReward)(userId, achievementId);
+                }
+                ack?.(await (0, playerAuth_1.resolveAccountForUser)(userId, Boolean(socket.data.isGuestUser)));
             }
-            ack?.(await (0, playerAuth_1.resolveAccount)(auth));
+            catch (error) {
+                console.error('[achievements] failed to claim reward', error);
+                ack?.({ status: 'AUTH_INVALID' });
+            }
         });
         socket.on('achievements_claim_all', async ({ auth }, ack) => {
             const requirement = getUpdateRequirement(socket, auth);
@@ -747,11 +755,17 @@ function initSocketServer(io) {
                 ack?.({ status: 'UPDATE_REQUIRED', ...requirement });
                 return;
             }
-            const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
-            if (userId) {
-                await (0, achievementService_1.claimAllAchievementRewards)(userId);
+            try {
+                const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
+                if (userId) {
+                    await (0, achievementService_1.claimAllAchievementRewards)(userId);
+                }
+                ack?.(await (0, playerAuth_1.resolveAccountForUser)(userId, Boolean(socket.data.isGuestUser)));
             }
-            ack?.(await (0, playerAuth_1.resolveAccount)(auth));
+            catch (error) {
+                console.error('[achievements] failed to claim all rewards', error);
+                ack?.({ status: 'AUTH_INVALID' });
+            }
         });
         socket.on('achievements_sync_settings', async ({ auth, isMusicMuted, isSfxMuted, musicVolumePercent, sfxVolumePercent, }, ack) => {
             const requirement = getUpdateRequirement(socket, auth);

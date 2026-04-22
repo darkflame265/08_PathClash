@@ -826,13 +826,14 @@ async function getCurrentAuthPayload() {
 }
 
 async function emitSocketAck<T>(event: string, payload: unknown): Promise<T> {
+  const timeoutMs = 20_000;
   const socket = connectSocket();
   if (!socket.connected) {
     await new Promise<void>((resolve, reject) => {
       const timeoutId = window.setTimeout(() => {
         socket.off("connect", handleConnect);
         reject(new Error(`socket connect timeout before ${event}`));
-      }, 8000);
+      }, timeoutMs);
 
       const handleConnect = () => {
         window.clearTimeout(timeoutId);
@@ -848,7 +849,7 @@ async function emitSocketAck<T>(event: string, payload: unknown): Promise<T> {
   return new Promise((resolve, reject) => {
     const timeoutId = window.setTimeout(() => {
       reject(new Error(`socket ack timeout for ${event}`));
-    }, 8000);
+    }, timeoutMs);
 
     socket.emit(event, payload, (response: T) => {
       window.clearTimeout(timeoutId);

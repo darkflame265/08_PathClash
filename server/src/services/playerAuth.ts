@@ -328,6 +328,21 @@ export async function resolveAccount(auth: AuthPayload | undefined): Promise<Res
   };
 }
 
+export async function resolveAccountForUser(
+  userId: string | null | undefined,
+  isGuestUser = false,
+): Promise<ResolveAccountResponse> {
+  if (!supabaseAdmin || !userId) {
+    return { status: 'AUTH_INVALID' };
+  }
+
+  const profile = await readAccountProfile(userId, 'Guest', isGuestUser);
+  return {
+    status: 'ACCOUNT_OK',
+    profile,
+  };
+}
+
 export async function recordMatchmakingResult(
   winnerUserId: string | null,
   loserUserId: string | null,
