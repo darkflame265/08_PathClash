@@ -525,6 +525,18 @@
   text-shadow: 0 0 10px rgba(74, 222, 128, 0.24);
 }
 
+.tutorial-role-attack {
+  color: #f87171;
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(248, 113, 113, 0.35);
+}
+
+.tutorial-role-escape {
+  color: #38bdf8;
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+}
+
 .gs-path-count {
   font-family: var(--mono);
   font-size: 0.8rem;

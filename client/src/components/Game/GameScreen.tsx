@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { getSocket } from "../../socket/socketClient";
 import { registerSocketHandlers } from "../../socket/socketHandlers";
 import { useGameStore } from "../../store/gameStore";
@@ -128,6 +129,24 @@ function useAdaptiveCellSize(
 
 function getRoleIcon(role: "attacker" | "escaper") {
   return role === "attacker" ? "ATK" : "RUN";
+}
+
+function TutorialRole({
+  type,
+  children,
+}: {
+  type: "attack" | "escape";
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className={
+        type === "attack" ? "tutorial-role-attack" : "tutorial-role-escape"
+      }
+    >
+      {children}
+    </span>
+  );
 }
 
 export function GameScreen({ onLeaveToLobby }: Props) {
@@ -570,6 +589,135 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       : resolvedBoardSkin === "magic"
         ? "board-bg-magic-screen"
         : "";
+  const gridTutorialHint = (() => {
+    if (tutorialStep === 3) {
+      return lang === "en" ? (
+        <>
+          As the <TutorialRole type="attack">attacker</TutorialRole>, you can
+          deal damage by colliding with the opponent.
+        </>
+      ) : (
+        <>
+          <TutorialRole type="attack">공격</TutorialRole> 역할일 때는 상대 말과
+          충돌하면 피해를 입힐 수 있습니다.
+        </>
+      );
+    }
+
+    if (tutorialStep === 4) {
+      return lang === "en" ? (
+        <>
+          On the other hand, the{" "}
+          <TutorialRole type="escape">escaper</TutorialRole> must predict the
+          attacker's path and plan an escape route.
+        </>
+      ) : (
+        <>
+          반면, <TutorialRole type="escape">도망</TutorialRole> 역할은 상대의
+          공격 경로를 예측하여 도주 경로를 짜야 합니다.
+        </>
+      );
+    }
+
+    if (tutorialStep === 7) {
+      return lang === "en" ? (
+        <>
+          Let's begin the game.
+          <br />
+          You are the <TutorialRole type="attack">attacker</TutorialRole> this
+          round.
+          <br />
+          Draw a path to attack the opponent.
+        </>
+      ) : (
+        <>
+          이제 게임을 시작하겠습니다.
+          <br />
+          이번 라운드에서 당신의 역할은{" "}
+          <TutorialRole type="attack">공격</TutorialRole>입니다.
+          <br />
+          경로를 그려 상대를 공격하세요.
+        </>
+      );
+    }
+
+    if (tutorialStep === 8) {
+      return lang === "en" ? (
+        <>
+          Well done! Here's the next situation.
+          <br />
+          You are the <TutorialRole type="escape">escaper</TutorialRole> this
+          round.
+          <br />
+          Predict the opponent's attack path. Move two cells upward to avoid
+          damage.
+        </>
+      ) : (
+        <>
+          잘했습니다! 다음 상황입니다.
+          <br />
+          이번 라운드에서 당신의 역할은{" "}
+          <TutorialRole type="escape">도망</TutorialRole>입니다.
+          <br />
+          상대의 공격 경로를 예측하세요. 피해를 피하려면 위로 두 칸 이동하세요.
+        </>
+      );
+    }
+
+    if (tutorialStep === 9 || tutorialStep === 11) {
+      return lang === "en" ? (
+        <>
+          Good Job! Here's the next situation.
+          <br />
+          You are the <TutorialRole type="attack">attacker</TutorialRole> this
+          round.
+          <br />
+          Predict the opponent's escape path and attack them.
+        </>
+      ) : (
+        <>
+          잘했습니다! 다음 상황입니다.
+          <br />
+          이번 라운드에서 당신의 역할은{" "}
+          <TutorialRole type="attack">공격</TutorialRole>입니다.
+          <br />
+          상대의 도주 경로를 예측하여 공격하세요.
+        </>
+      );
+    }
+
+    if (tutorialStep === 10) {
+      return lang === "en" ? (
+        <>
+          Nice! We've added barriers, which you can't pass through.
+          <br />
+          You are the <TutorialRole type="attack">attacker</TutorialRole> this
+          round.
+          <br />
+          Predict the opponent's escape path and attack them.
+        </>
+      ) : (
+        <>
+          좋습니다! 지나갈 수 없는 장애물이 추가되었습니다.
+          <br />
+          이번 라운드에서 당신의 역할은{" "}
+          <TutorialRole type="attack">공격</TutorialRole>입니다.
+          <br />
+          상대의 도주 경로를 예측하여 공격하세요.
+        </>
+      );
+    }
+
+    if (tutorialStep === 12) return t.overlapEscapeTutorial;
+    if (tutorialStep === 13) {
+      return (
+        t.chainAttackTutorial ??
+        "잘했습니다! 이번엔 마지막 상황입니다!\npathclash에서는 경로가 겹칠 경우, 연속 충돌 판정이 일어납니다.\n당신의 역할은 공격입니다.\n상대의 경로를 예측하여, 상대에게 3 이상의 연속피해를 입히세요!"
+      );
+    }
+
+    return null;
+  })();
 
   return (
     <div
@@ -668,28 +816,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
           <GameGrid
             entranceAnimation={showEntranceAnimation}
             cellSize={cellSize}
-            tutorialHint={
-              tutorialStep === 3
-                ? t.attackCollisionTutorialHint
-                : tutorialStep === 4
-                  ? t.escapePredictionTutorialHint
-                  : tutorialStep === 7
-                    ? t.dragPathTutorial
-                    : tutorialStep === 8
-                      ? t.escapeRoleDragTutorial
-                      : tutorialStep === 9
-                        ? t.predictPathTutorial
-                        : tutorialStep === 10
-                          ? t.predictObstacleTutorial
-                          : tutorialStep === 11
-                            ? t.predictPathTutorial
-                            : tutorialStep === 12
-                              ? t.predictObstacleTutorial
-                              : tutorialStep === 13
-                                ? (t.chainAttackTutorial ??
-                                  "잘했습니다! 이번엔 마지막 상황입니다!\npathclash에서는 경로가 겹칠 경우, 연속 충돌 판정이 일어납니다.\n당신의 역할은 공격입니다.\n상대의 경로를 예측하여, 상대에게 3 이상의 연속피해를 입히세요!")
-                                : null
-            }
+            tutorialHint={gridTutorialHint}
             tutorialHintTarget={tutorialStep === 4 ? "opponent" : "self"}
             tutorialHintAnchor={tutorialHintAnchor}
             tutorialHintCentered={
@@ -729,7 +856,21 @@ export function GameScreen({ onLeaveToLobby }: Props) {
             animation: "tutorial-hint-in-center 0.22s ease-out",
           }}
         >
-          {t.roleTutorialHint}
+          {lang === "en" ? (
+            <>
+              Your current role is{" "}
+              <TutorialRole type="attack">Attack</TutorialRole>.
+              <br />
+              Your role swaps every round.
+            </>
+          ) : (
+            <>
+              현재 당신의 역할은 <TutorialRole type="attack">공격</TutorialRole>
+              입니다.
+              <br />
+              역할은 매 라운드마다 서로 바뀝니다.
+            </>
+          )}
         </div>
       )}
       {tutorialStep === 5 && pathBarTutorialPos && (
@@ -744,9 +885,8 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         >
           {lang === "en" ? (
             <>
-              The{" "}
-              <span className="tutorial-highlight-green">Path Points</span> at
-              the top determine how many cells you can draw a path through.
+              The <span className="tutorial-highlight-green">Path Points</span>{" "}
+              at the top determine how many cells you can draw a path through.
               <br />
               They increase by 1 each round, up to a maximum of 10.
             </>
@@ -755,8 +895,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
               상단에 있는{" "}
               <span className="tutorial-highlight-green">경로 포인트</span>는
               자신이 경로를 몇 칸이나 그릴 수 있는지를 나타냅니다.
-              <br />
-              매 라운드마다 1씩 증가하며, 최대 10까지 증가합니다.
+              <br />매 라운드마다 1씩 증가하며, 최대 10까지 증가합니다.
             </>
           )}
         </div>

@@ -5,6 +5,7 @@ import {
   useMemo,
   useState,
   type CSSProperties,
+  type ReactNode,
 } from "react";
 import { useGameStore } from "../../store/gameStore";
 import type { BoardSkin, Position } from "../../types/game.types";
@@ -32,7 +33,7 @@ const GRID_SIZE = 5;
 interface GridProps {
   cellSize?: number;
   entranceAnimation?: boolean;
-  tutorialHint?: string | null;
+  tutorialHint?: ReactNode;
   tutorialHintTarget?: "self" | "opponent";
   tutorialGuidePath?: Position[] | null;
   tutorialAutoSubmit?: boolean;
