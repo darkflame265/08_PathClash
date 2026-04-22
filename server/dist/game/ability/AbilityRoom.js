@@ -1916,13 +1916,11 @@ class AbilityRoom {
                         pathPoints,
                         obstacles: effectiveObstacles,
                     });
-                    const base = this.scoreBotActionCandidate(bot, opponent, blinkPath, [
-                        { skillId, step: 0, order: 0, target },
-                    ], opponentModel, `quantum_shift:${target.row},${target.col}`, effectiveObstacles);
+                    const blinkScore = scoreEscapePathAgainstModel(target, blinkPath, opponent.position, opponentModel, effectiveObstacles);
                     quantumScoredList.push({
                         target,
                         blinkPath,
-                        score: base.score - quantumManaWastePenalty,
+                        score: blinkScore - quantumManaWastePenalty,
                     });
                 }
                 // 안전도 기준 내림차순 정렬 → 가장 안전한 목적지 우선
