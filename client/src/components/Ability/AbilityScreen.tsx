@@ -399,9 +399,11 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   const [state, setState] = useState<AbilityBattleState | null>(null);
   const [showTrainingSkillSelect, setShowTrainingSkillSelect] = useState(false);
-  const [trainingSkillError, setTrainingSkillError] = useState<string | null>(
-    null,
-  );
+  const [trainingFloatingMessage, setTrainingFloatingMessage] = useState<{
+    id: number;
+    text: string;
+  } | null>(null);
+  const trainingFloatingMessageIdRef = useRef(0);
   const [trainingLoadout, setTrainingLoadout] = useState<AbilitySkillId[]>([]);
   const [roundInfo, setRoundInfo] = useState<AbilityRoundStartPayload | null>(
     null,
@@ -3227,7 +3229,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
     const onTrainingSkillSelect = () => {
       setTrainingLoadout([]);
-      setTrainingSkillError(null);
+      setTrainingFloatingMessage(null);
       setShowTrainingSkillSelect(true);
     };
 
@@ -3361,16 +3363,16 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               })}
             </div>
           )}
-          {trainingSkillError && (
-            <p
-              style={{
-                color: "var(--red, #EF4444)",
-                margin: "0 0 8px",
-                fontSize: "0.85em",
-              }}
+          {trainingFloatingMessage && (
+            <div
+              key={trainingFloatingMessage.id}
+              className="skin-floating-message"
+              role="status"
+              aria-live="polite"
+              onAnimationEnd={() => setTrainingFloatingMessage(null)}
             >
-              {trainingSkillError}
-            </p>
+              {trainingFloatingMessage.text}
+            </div>
           )}
           <div className="skin-option-list">
             {TRAINING_ABILITY_SKILLS.map((skill, index) => {
@@ -3396,18 +3398,19 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                       setTrainingLoadout(
                         trainingLoadout.filter((id) => id !== skill.id),
                       );
-                      setTrainingSkillError(null);
                       return;
                     }
                     if (trainingLoadout.length >= 3) {
-                      setTrainingSkillError(
-                        lang === "en"
-                          ? "You can equip up to 3 skills."
-                          : "스킬은 최대 3개까지 장착할 수 있습니다.",
-                      );
+                      trainingFloatingMessageIdRef.current += 1;
+                      setTrainingFloatingMessage({
+                        id: trainingFloatingMessageIdRef.current,
+                        text:
+                          lang === "en"
+                            ? "You can equip up to 3 skills."
+                            : "스킬은 최대 3개까지 장착할 수 있습니다.",
+                      });
                       return;
                     }
-                    setTrainingSkillError(null);
                     setTrainingLoadout([...trainingLoadout, skill.id]);
                   }}
                 >

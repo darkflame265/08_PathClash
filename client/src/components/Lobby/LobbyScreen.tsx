@@ -3491,7 +3491,7 @@ export function LobbyScreen({
     }
 
     if (abilityLoadout.length >= 3) {
-      window.alert(
+      showSkinFloatingMessage(
         lang === "en"
           ? "You can equip up to 3 skills."
           : "스킬은 최대 3개까지 장착할 수 있습니다.",
