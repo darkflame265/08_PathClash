@@ -137,7 +137,7 @@ export const translations: Record<Lang, Translations> = {
     chainAttackTutorial:
       "Good Job!\nThis is the final situation!\nIn PathClash, repeated collisions occur when paths overlap.\nYou are the attacker this round.\nPredict the opponent's path and deal 3 or more consecutive damage in a single round!",
     pathPointsTutorialHint:
-      "These are Path Points.\nThey show how many cells you can move through.\nThey increase by 1 each round, up to a maximum of 10.",
+      "The Path Points at the top determine how many cells you can draw a path through.\nThey increase by 1 each round, up to a maximum of 10.",
     winConditionTutorialHint: "Hit your opponent three times to win!",
     roleAttack: "Attack",
     roleEscape: "Escape",
@@ -226,7 +226,7 @@ export const translations: Record<Lang, Translations> = {
     overlapEscapeTutorial:
       "잘했습니다! 이번엔 두 말이 겹쳐진 상태입니다.\n당신의 역할은 도망입니다.\n겹쳐진 상태에서 도망자는 가만히 있으면 반드시 피격을 입습니다.\n상대의 이동경로와 겹치지 않는 방향을 골라서 도망가세요!",
     pathPointsTutorialHint:
-      "이건 패스 포인트 입니다.\n자신이 경로를 몇 칸이나 그릴 수 있는지를 나타냅니다.\n매 라운드마다 1씩 증가하며, 최대 10까지 증가합니다.",
+      "상단에 있는 경로 포인트는 자신이 경로를 몇 칸이나 그릴 수 있는지를 나타냅니다.\n매 라운드마다 1씩 증가하며, 최대 10까지 증가합니다.",
     winConditionTutorialHint: "상대방을 세 번 맞히면 승리합니다!",
     roleAttack: "공격",
     roleEscape: "도주",

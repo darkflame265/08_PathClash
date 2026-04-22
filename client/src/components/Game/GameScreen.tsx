@@ -1,9 +1,4 @@
-﻿import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { getSocket } from "../../socket/socketClient";
 import { registerSocketHandlers } from "../../socket/socketHandlers";
 import { useGameStore } from "../../store/gameStore";
@@ -665,14 +660,6 @@ export function GameScreen({ onLeaveToLobby }: Props) {
             </span>
             <PlayerInfo player={opponent} isMe={false} />
           </div>
-          <div
-            className={`gs-role-badge standard-opponent-role gs-role-badge-${opponent.role === "attacker" ? "atk" : "run"}`}
-          >
-            <span className="gs-role-icon">{getRoleIcon(opponent.role)}</span>
-            <span className="gs-role-label">
-              {opponent.role === "attacker" ? t.roleAttack : t.roleEscape}
-            </span>
-          </div>
         </div>
 
         <div className="gs-grid-area" ref={gridAreaRef}>
@@ -734,10 +721,10 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         <div
           className="ai-tutorial-hint no-arrow"
           style={{
-            left: roleTutorialPos.left,
-            top: roleTutorialPos.top,
-            transform: "translate(0, -100%)",
-            animation: "tutorial-hint-in-for-two 0.22s ease-out",
+            left: "50%",
+            top: "42%",
+            transform: "translate(-50%, -50%)",
+            animation: "tutorial-hint-in-center 0.22s ease-out",
           }}
         >
           {t.roleTutorialHint}
@@ -745,10 +732,12 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       )}
       {tutorialStep === 5 && pathBarTutorialPos && (
         <div
-          className="ai-tutorial-hint arrow-down"
+          className="ai-tutorial-hint no-arrow"
           style={{
-            left: pathBarTutorialPos.left,
-            top: pathBarTutorialPos.top,
+            left: "50%",
+            top: "42%",
+            transform: "translate(-50%, -50%)",
+            animation: "tutorial-hint-in-center 0.22s ease-out",
           }}
         >
           {t.pathPointsTutorialHint}
