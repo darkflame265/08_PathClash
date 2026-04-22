@@ -17,6 +17,11 @@ import {
   startMatchResultBgm,
   stopMatchResultBgm,
 } from "../../utils/soundUtils";
+import {
+  CONTROLS_SETTINGS_CHANGED_EVENT,
+  loadControllerControlsSettings,
+  loadKeyboardControlsSettings,
+} from "../../settings/controls";
 import { HpDisplay } from "../Game/HpDisplay";
 import { PlayerInfo } from "../Game/PlayerInfo";
 import { TimerBar } from "../Game/TimerBar";
@@ -62,6 +67,12 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
   const [rematchRequested, setRematchRequested] = useState(false);
   const [rematchRequestSent, setRematchRequestSent] = useState(false);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
+  const [keyboardControls, setKeyboardControls] = useState(
+    loadKeyboardControlsSettings,
+  );
+  const [controllerControls, setControllerControls] = useState(
+    loadControllerControlsSettings,
+  );
   const timeoutRef = useRef<number | null>(null);
   const portalHitTimeoutsRef = useRef<number[]>([]);
   const playerHitTimeoutsRef = useRef<number[]>([]);
@@ -105,6 +116,20 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
     setBlueDisplayPos(state.players.blue.position);
     setEnemyDisplayPositions(buildEnemyDisplayMap(state.enemies));
     setPortals(state.portals);
+  }, []);
+
+  useEffect(() => {
+    const syncControls = () => {
+      setKeyboardControls(loadKeyboardControlsSettings());
+      setControllerControls(loadControllerControlsSettings());
+    };
+
+    window.addEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
+    window.addEventListener("storage", syncControls);
+    return () => {
+      window.removeEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
+      window.removeEventListener("storage", syncControls);
+    };
   }, []);
 
   useEffect(() => {
@@ -444,19 +469,51 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
       }
 
       if (
-        (event.key === "r" || event.key === "R") &&
-        coopState?.phase === "gameover" &&
-        !rematchRequestSent
+        event.code === keyboardControls.gameActionKey &&
+        coopState?.phase === "gameover"
       ) {
         event.preventDefault();
-        getSocket().emit("request_rematch");
-        setRematchRequestSent(true);
+        onLeaveToLobby();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [coopState?.phase, onLeaveToLobby, rematchRequestSent]);
+  }, [coopState?.phase, keyboardControls.gameActionKey, onLeaveToLobby]);
+
+  useEffect(() => {
+    if (
+      coopState?.phase !== "gameover" ||
+      !controllerControls.controllerEnabled
+    ) {
+      return;
+    }
+
+    let raf = 0;
+    let wasPressed = false;
+
+    const pollControllerExit = () => {
+      const gamepad = navigator.getGamepads().find(Boolean);
+      const isPressed =
+        gamepad?.buttons[controllerControls.gameActionButton]?.pressed === true;
+
+      if (isPressed && !wasPressed) {
+        onLeaveToLobby();
+        return;
+      }
+
+      wasPressed = isPressed;
+      raf = window.requestAnimationFrame(pollControllerExit);
+    };
+
+    raf = window.requestAnimationFrame(pollControllerExit);
+    return () => window.cancelAnimationFrame(raf);
+  }, [
+    controllerControls.controllerEnabled,
+    controllerControls.gameActionButton,
+    coopState?.phase,
+    onLeaveToLobby,
+  ]);
 
   const resultCopy = useMemo(() => {
     if (!coopState || coopState.phase !== "gameover" || !coopState.gameResult) return null;

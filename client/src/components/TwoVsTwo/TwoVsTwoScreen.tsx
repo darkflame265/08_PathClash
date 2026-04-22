@@ -16,6 +16,11 @@ import {
   startMatchResultBgm,
   stopMatchResultBgm,
 } from '../../utils/soundUtils';
+import {
+  CONTROLS_SETTINGS_CHANGED_EVENT,
+  loadControllerControlsSettings,
+  loadKeyboardControlsSettings,
+} from '../../settings/controls';
 import { TimerBar } from '../Game/TimerBar';
 import { PlayerInfo } from '../Game/PlayerInfo';
 import { TwoVsTwoGrid } from './TwoVsTwoGrid';
@@ -107,6 +112,12 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
   const [allySubmitted, setAllySubmitted] = useState(false);
   const [rematchRequested, setRematchRequested] = useState(false);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
+  const [keyboardControls, setKeyboardControls] = useState(
+    loadKeyboardControlsSettings,
+  );
+  const [controllerControls, setControllerControls] = useState(
+    loadControllerControlsSettings,
+  );
   const timeoutRef = useRef<number | null>(null);
   const effectTimeoutsRef = useRef<number[]>([]);
   const stateRef = useRef<TwoVsTwoClientState | null>(null);
@@ -157,6 +168,84 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
   }, []);
+
+  useEffect(() => {
+    const syncControls = () => {
+      setKeyboardControls(loadKeyboardControlsSettings());
+      setControllerControls(loadControllerControlsSettings());
+    };
+
+    window.addEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
+    window.addEventListener('storage', syncControls);
+    return () => {
+      window.removeEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
+      window.removeEventListener('storage', syncControls);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (state?.phase !== 'gameover') return;
+
+    const isTypingTarget = () => {
+      const active = document.activeElement;
+      if (!(active instanceof HTMLElement)) return false;
+      return (
+        active.tagName === 'INPUT' ||
+        active.tagName === 'TEXTAREA' ||
+        active.tagName === 'SELECT' ||
+        active.isContentEditable
+      );
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (isTypingTarget()) return;
+
+      if (
+        event.key === 'Escape' ||
+        event.code === keyboardControls.gameActionKey
+      ) {
+        event.preventDefault();
+        onLeaveToLobby();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [keyboardControls.gameActionKey, onLeaveToLobby, state?.phase]);
+
+  useEffect(() => {
+    if (
+      state?.phase !== 'gameover' ||
+      !controllerControls.controllerEnabled
+    ) {
+      return;
+    }
+
+    let raf = 0;
+    let wasPressed = false;
+
+    const pollControllerExit = () => {
+      const gamepad = navigator.getGamepads().find(Boolean);
+      const isPressed =
+        gamepad?.buttons[controllerControls.gameActionButton]?.pressed === true;
+
+      if (isPressed && !wasPressed) {
+        onLeaveToLobby();
+        return;
+      }
+
+      wasPressed = isPressed;
+      raf = window.requestAnimationFrame(pollControllerExit);
+    };
+
+    raf = window.requestAnimationFrame(pollControllerExit);
+    return () => window.cancelAnimationFrame(raf);
+  }, [
+    controllerControls.controllerEnabled,
+    controllerControls.gameActionButton,
+    onLeaveToLobby,
+    state?.phase,
+  ]);
 
   const clearAnimationTimeout = useCallback(() => {
     if (timeoutRef.current !== null) {

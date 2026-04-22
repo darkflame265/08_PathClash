@@ -1596,6 +1596,81 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   });
 
   useEffect(() => {
+    const isGameOver = state?.phase === "gameover" || winner !== null;
+    if (!isGameOver || showTrainingSkillSelect) return;
+
+    const isTypingTarget = () => {
+      const active = document.activeElement;
+      if (!(active instanceof HTMLElement)) return false;
+      return (
+        active.tagName === "INPUT" ||
+        active.tagName === "TEXTAREA" ||
+        active.tagName === "SELECT" ||
+        active.isContentEditable
+      );
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (isTypingTarget()) return;
+
+      if (
+        event.key === "Escape" ||
+        event.code === keyboardControls.gameActionKey
+      ) {
+        event.preventDefault();
+        onLeaveToLobby();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    keyboardControls.gameActionKey,
+    onLeaveToLobby,
+    showTrainingSkillSelect,
+    state?.phase,
+    winner,
+  ]);
+
+  useEffect(() => {
+    const isGameOver = state?.phase === "gameover" || winner !== null;
+    if (
+      !isGameOver ||
+      showTrainingSkillSelect ||
+      !controllerControls.controllerEnabled
+    ) {
+      return;
+    }
+
+    let raf = 0;
+    let wasPressed = false;
+
+    const pollControllerExit = () => {
+      const gamepad = navigator.getGamepads().find(Boolean);
+      const isPressed =
+        gamepad?.buttons[controllerControls.gameActionButton]?.pressed === true;
+
+      if (isPressed && !wasPressed) {
+        onLeaveToLobby();
+        return;
+      }
+
+      wasPressed = isPressed;
+      raf = window.requestAnimationFrame(pollControllerExit);
+    };
+
+    raf = window.requestAnimationFrame(pollControllerExit);
+    return () => window.cancelAnimationFrame(raf);
+  }, [
+    controllerControls.controllerEnabled,
+    controllerControls.gameActionButton,
+    onLeaveToLobby,
+    showTrainingSkillSelect,
+    state?.phase,
+    winner,
+  ]);
+
+  useEffect(() => {
     if (
       !keyboardControls.keyboardEnabled &&
       !controllerControls.controllerEnabled

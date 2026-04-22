@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { useCallback } from "react";
 import { getSocket } from "../../socket/socketClient";
 import { registerSocketHandlers } from "../../socket/socketHandlers";
 import { useGameStore } from "../../store/gameStore";
@@ -16,6 +17,7 @@ import {
 } from "../../utils/soundUtils";
 import {
   CONTROLS_SETTINGS_CHANGED_EVENT,
+  loadControllerControlsSettings,
   loadKeyboardControlsSettings,
 } from "../../settings/controls";
 import "./GameScreen.css";
@@ -184,6 +186,9 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   const [keyboardControls, setKeyboardControls] = useState(
     loadKeyboardControlsSettings,
   );
+  const [controllerControls, setControllerControls] = useState(
+    loadControllerControlsSettings,
+  );
   const tutorialStartedRef = useRef(false);
   const resultAudioPlayedRef = useRef(false);
 
@@ -203,6 +208,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   useEffect(() => {
     const syncControls = () => {
       setKeyboardControls(loadKeyboardControlsSettings());
+      setControllerControls(loadControllerControlsSettings());
     };
 
     window.addEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
@@ -444,6 +450,28 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     setTutorialStep(0);
   }, [currentMatchType, myColor, tutorialStep, winner]);
 
+  const handleGameAction = useCallback(() => {
+    if (
+      winner &&
+      (currentMatchType === "ai" || currentMatchType === "friend") &&
+      !gameOverMessage &&
+      !rematchRequestSent
+    ) {
+      getSocket().emit("request_rematch");
+      setRematchRequestSent(true);
+      return;
+    }
+
+    onLeaveToLobby();
+  }, [
+    currentMatchType,
+    gameOverMessage,
+    onLeaveToLobby,
+    rematchRequestSent,
+    setRematchRequestSent,
+    winner,
+  ]);
+
   useEffect(() => {
     const isTypingTarget = () => {
       const active = document.activeElement;
@@ -457,7 +485,6 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!keyboardControls.keyboardEnabled && event.isTrusted) return;
       if (isTypingTarget()) return;
 
       if (event.key === "Escape") {
@@ -467,13 +494,11 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       }
 
       if (event.code === keyboardControls.gameActionKey) {
-        event.preventDefault();
-        if (winner && !gameOverMessage && !rematchRequestSent) {
-          getSocket().emit("request_rematch");
-          setRematchRequestSent(true);
+        if (!winner && !keyboardControls.keyboardEnabled && event.isTrusted) {
           return;
         }
-        onLeaveToLobby();
+        event.preventDefault();
+        handleGameAction();
       }
     };
 
@@ -481,11 +506,40 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
     gameOverMessage,
+    handleGameAction,
     keyboardControls.gameActionKey,
     keyboardControls.keyboardEnabled,
     onLeaveToLobby,
-    rematchRequestSent,
-    setRematchRequestSent,
+    winner,
+  ]);
+
+  useEffect(() => {
+    if (!winner || !controllerControls.controllerEnabled) return;
+
+    let raf = 0;
+    let wasPressed = false;
+
+    const pollControllerExit = () => {
+      const gamepad = navigator.getGamepads().find(Boolean);
+      const isPressed =
+        gamepad?.buttons[controllerControls.gameActionButton]?.pressed === true;
+
+      if (isPressed && !wasPressed) {
+        handleGameAction();
+        return;
+      }
+
+      wasPressed = isPressed;
+      raf = window.requestAnimationFrame(pollControllerExit);
+    };
+
+    raf = window.requestAnimationFrame(pollControllerExit);
+    return () => window.cancelAnimationFrame(raf);
+  }, [
+    controllerControls.controllerEnabled,
+    controllerControls.gameActionButton,
+    handleGameAction,
+    onLeaveToLobby,
     winner,
   ]);
 
