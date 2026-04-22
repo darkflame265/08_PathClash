@@ -1450,6 +1450,31 @@ class AbilityRoom {
         const activeSkillCandidates = this.buildBotSkillActionCandidates(bot, opponent, pathPoints, selfModel, opponentModel, effectiveObstacles);
         candidates.push(...activeSkillCandidates);
         candidates.sort((left, right) => right.score - left.score);
+        // 50% 확률로 "등잔 밑" 패턴: 도망 역할일 때 상대방 쪽으로 첫 타일 이동
+        if (bot.role === 'escaper' && Math.random() < 0.5) {
+            const boldFirstSteps = getCardinalNeighbors(bot.position, effectiveObstacles).filter((neighbor) => manhattan(neighbor, opponent.position) < manhattan(bot.position, opponent.position));
+            if (boldFirstSteps.length > 0) {
+                const pickedFirstStep = boldFirstSteps[Math.floor(Math.random() * boldFirstSteps.length)];
+                const boldObstacles = [...effectiveObstacles, bot.position];
+                const continuation = (0, AiPlanner_1.createAiPath)({
+                    color: bot.color,
+                    role: 'escaper',
+                    selfPosition: pickedFirstStep,
+                    opponentPosition: opponent.position,
+                    pathPoints: pathPoints - 1,
+                    obstacles: boldObstacles,
+                });
+                const boldPath = [pickedFirstStep, ...continuation].slice(0, pathPoints);
+                const boldScore = scoreEscapePathAgainstModel(bot.position, boldPath, opponent.position, opponentModel, effectiveObstacles);
+                return {
+                    path: boldPath,
+                    skills: [],
+                    score: boldScore,
+                    reason: 'bold-escape',
+                    selectedSkill: null,
+                };
+            }
+        }
         return candidates[0] ?? {
             path: [],
             skills: [],
