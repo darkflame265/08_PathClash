@@ -19,6 +19,11 @@ import { PathLine } from "./PathLine";
 import { CollisionEffect } from "../Effects/CollisionEffect";
 import { getSocket } from "../../socket/socketClient";
 import { playPathStepClick } from "../../utils/soundUtils";
+import {
+  CONTROLS_SETTINGS_CHANGED_EVENT,
+  loadControllerControlsSettings,
+  loadKeyboardControlsSettings,
+} from "../../settings/controls";
 import "./GameGrid.css";
 
 const DEFAULT_CELL_SIZE = 96;
@@ -72,6 +77,12 @@ export function GameGrid({
   const [boardSize, setBoardSize] = useState(cellSize * GRID_SIZE);
   const [hoveredCell, setHoveredCell] = useState<Position | null>(null);
   const [opponentRevealToken, setOpponentRevealToken] = useState(0);
+  const [keyboardControls, setKeyboardControls] = useState(
+    loadKeyboardControlsSettings,
+  );
+  const [controllerControls, setControllerControls] = useState(
+    loadControllerControlsSettings,
+  );
   const previousPhaseRef = useRef(gameState?.phase ?? null);
   const dragState = useRef<{
     active: boolean;
@@ -163,6 +174,20 @@ export function GameGrid({
 
     observer.observe(element);
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const syncControls = () => {
+      setKeyboardControls(loadKeyboardControlsSettings());
+      setControllerControls(loadControllerControlsSettings());
+    };
+
+    window.addEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
+    window.addEventListener("storage", syncControls);
+    return () => {
+      window.removeEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
+      window.removeEventListener("storage", syncControls);
+    };
   }, []);
 
   const responsiveCellSize = boardSize / GRID_SIZE;
@@ -385,6 +410,7 @@ export function GameGrid({
       if (!isPlanning || !myPos) return;
       // Don't handle if chat is focused
       if ((e.target as HTMLElement)?.tagName === "INPUT") return;
+      if (!keyboardControls.keyboardEnabled && e.isTrusted) return;
 
       const dirs: Record<string, Position> = {
         ArrowUp: { row: -1, col: 0 },
@@ -425,12 +451,93 @@ export function GameGrid({
     return () => window.removeEventListener("keydown", handleKey);
   }, [
     isPlanning,
+    keyboardControls.keyboardEnabled,
     myPos,
     obstacles,
     pathPoints,
     playPathStepSfx,
     removeFromPath,
     setMyPath,
+  ]);
+
+  useEffect(() => {
+    if (!controllerControls.controllerEnabled) return;
+    if (!isPlanning || !myPos) return;
+
+    let raf = 0;
+    let lastInput = "";
+    let lastInputAt = 0;
+
+    const getDirection = (gamepad: Gamepad) => {
+      if (gamepad.buttons[12]?.pressed) return "ArrowUp";
+      if (gamepad.buttons[13]?.pressed) return "ArrowDown";
+      if (gamepad.buttons[14]?.pressed) return "ArrowLeft";
+      if (gamepad.buttons[15]?.pressed) return "ArrowRight";
+
+      const horizontal = gamepad.axes[0] ?? 0;
+      const vertical = gamepad.axes[1] ?? 0;
+      if (Math.abs(horizontal) > Math.abs(vertical)) {
+        if (horizontal <= -0.55) return "ArrowLeft";
+        if (horizontal >= 0.55) return "ArrowRight";
+      }
+      if (vertical <= -0.55) return "ArrowUp";
+      if (vertical >= 0.55) return "ArrowDown";
+      return "";
+    };
+
+    const emitKey = (key: string, code = key) => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key, code }));
+    };
+
+    const pollController = () => {
+      const gamepad = navigator.getGamepads().find(Boolean);
+      if (gamepad) {
+        const direction = getDirection(gamepad);
+        const buttonCode = gamepad.buttons[
+          controllerControls.gameActionButton
+        ]?.pressed
+          ? "gameAction"
+          : gamepad.buttons[controllerControls.selectActionButton]?.pressed
+            ? "selectAction"
+            : "";
+        const input = direction || buttonCode;
+        const now = performance.now();
+
+        if (!input) {
+          lastInput = "";
+        } else {
+          const delay =
+            input === lastInput
+              ? input.startsWith("Arrow")
+                ? 160
+                : Number.POSITIVE_INFINITY
+              : 0;
+          if (input !== lastInput || now - lastInputAt >= delay) {
+            lastInput = input;
+            lastInputAt = now;
+
+            if (direction) {
+              emitKey(direction);
+            } else if (buttonCode === "gameAction") {
+              emitKey("", keyboardControls.gameActionKey);
+            } else if (buttonCode === "selectAction") {
+              emitKey("", keyboardControls.selectActionKey);
+            }
+          }
+        }
+      }
+
+      raf = window.requestAnimationFrame(pollController);
+    };
+
+    raf = window.requestAnimationFrame(pollController);
+    return () => window.cancelAnimationFrame(raf);
+  }, [
+    controllerControls,
+    isPlanning,
+    keyboardControls.gameActionKey,
+    keyboardControls.selectActionKey,
+    myPos,
   ]);
 
   // Submit once when the planning timer ends, even if the path is partial.
@@ -613,6 +720,8 @@ export function GameGrid({
               myColor !== "red" && gameState?.players.red.connected === false
             }
             entranceAnimation={entranceAnimation ? "left" : null}
+            hp={gameState?.players.red.hp ?? 3}
+            maxHp={3}
             skin={redPieceSkin}
           />
         ) : null}
@@ -631,6 +740,8 @@ export function GameGrid({
               myColor !== "blue" && gameState?.players.blue.connected === false
             }
             entranceAnimation={entranceAnimation ? "right" : null}
+            hp={gameState?.players.blue.hp ?? 3}
+            maxHp={3}
             skin={bluePieceSkin}
           />
         ) : null}

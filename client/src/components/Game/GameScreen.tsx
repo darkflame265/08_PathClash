@@ -10,7 +10,6 @@ import { useGameStore } from "../../store/gameStore";
 import { useLang } from "../../hooks/useLang";
 import { GameGrid } from "./GameGrid";
 import { GameOverOverlay } from "./GameOverOverlay";
-import { HpDisplay } from "./HpDisplay";
 import { PlayerInfo } from "./PlayerInfo";
 import { TimerBar } from "./TimerBar";
 import type { BoardSkin, Position } from "../../types/game.types";
@@ -24,6 +23,7 @@ import {
   loadKeyboardControlsSettings,
 } from "../../settings/controls";
 import "./GameScreen.css";
+import "../Ability/AbilityScreen.css";
 
 interface Props {
   onLeaveToLobby: () => void;
@@ -443,7 +443,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!keyboardControls.keyboardEnabled) return;
+      if (!keyboardControls.keyboardEnabled && event.isTrusted) return;
       if (isTypingTarget()) return;
 
       if (event.key === "Escape") {
@@ -578,7 +578,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
 
   return (
     <div
-      className={`game-screen ${screenBoardClass}`}
+      className={`game-screen ability-screen standard-battle-screen ${screenBoardClass}`}
       ref={screenRef}
     >
       <div className="gs-utility-bar">
@@ -605,28 +605,6 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         </div>
       </div>
 
-      <div className={`gs-player-card gs-opponent gs-color-${opponentColor}`}>
-        <div className="gs-role-badge">
-          <span className="gs-role-icon">{getRoleIcon(opponent.role)}</span>
-          <span className="gs-role-label">
-            {opponent.role === "attacker" ? t.roleAttack : t.roleEscape}
-          </span>
-        </div>
-        <div className="gs-player-mid">
-          <PlayerInfo player={opponent} isMe={false} />
-          <span className="gs-color-tag">
-            {opponentColor === "red" ? "RED" : "BLUE"}
-          </span>
-        </div>
-        <div className="gs-hp-slot">
-          <HpDisplay
-            color={opponentColor}
-            hp={gameState.players[opponentColor].hp}
-            myColor={myColor!}
-          />
-        </div>
-      </div>
-
       <div className="gs-board-stage">
         {winner && (
           <div className="gs-result-slot">
@@ -645,6 +623,57 @@ export function GameScreen({ onLeaveToLobby }: Props) {
             />
           </div>
         )}
+
+        <div ref={pathBarRef} className="gs-path-bar ability-path-bar">
+          <div
+            ref={selfRoleBadgeRef}
+            className={`gs-role-badge gs-role-badge-self gs-role-badge-${me?.role === "attacker" ? "atk" : "run"} ability-path-role`}
+          >
+            <span className="gs-role-icon">
+              {getRoleIcon(me?.role ?? "escaper")}
+            </span>
+            <span className="gs-role-label">
+              {(me?.role ?? "escaper") === "attacker"
+                ? t.roleAttack
+                : t.roleEscape}
+            </span>
+          </div>
+          <div className="ability-path-points">
+            <div className="gs-path-header">
+              <span className="gs-path-label">{t.pathPoints}</span>
+              <span className="gs-path-count">
+                <span className="gs-path-current">{myPath.length}</span>
+                <span className="gs-path-sep"> / </span>
+                <span className="gs-path-max">{gameState.pathPoints}</span>
+              </span>
+            </div>
+            <div className="gs-path-gauge">
+              {Array.from({ length: gameState.pathPoints }, (_, index) => (
+                <div
+                  key={index}
+                  className={`gs-path-seg${index < myPath.length ? " filled" : ""}${index === myPath.length - 1 ? " latest" : ""}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="ability-opponent-panel standard-opponent-panel">
+          <div className="ability-opponent-panel-name">
+            <span className="ability-opponent-panel-label">
+              {lang === "en" ? "Opponent" : "상대"}
+            </span>
+            <PlayerInfo player={opponent} isMe={false} />
+          </div>
+          <div
+            className={`gs-role-badge standard-opponent-role gs-role-badge-${opponent.role === "attacker" ? "atk" : "run"}`}
+          >
+            <span className="gs-role-icon">{getRoleIcon(opponent.role)}</span>
+            <span className="gs-role-label">
+              {opponent.role === "attacker" ? t.roleAttack : t.roleEscape}
+            </span>
+          </div>
+        </div>
 
         <div className="gs-grid-area" ref={gridAreaRef}>
           <GameGrid
@@ -688,40 +717,6 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         </div>
       </div>
 
-      <div
-        className={`gs-player-card gs-self gs-color-${myColor} gs-role-${me?.role === "attacker" ? "atk" : "run"}`}
-      >
-        <div
-          ref={selfRoleBadgeRef}
-          className={`gs-role-badge gs-role-badge-self gs-role-badge-${me?.role === "attacker" ? "atk" : "run"}`}
-        >
-          <span className="gs-role-icon">
-            {getRoleIcon(me?.role ?? "escaper")}
-          </span>
-          <span className="gs-role-label">
-            {(me?.role ?? "escaper") === "attacker"
-              ? t.roleAttack
-              : t.roleEscape}
-          </span>
-        </div>
-        <div className="gs-player-mid">
-          <PlayerInfo player={me!} isMe={true} />
-          <span className="gs-color-tag">
-            {myColor === "red" ? "RED" : "BLUE"}
-          </span>
-        </div>
-        <div className="gs-hp-slot">
-          <HpDisplay color={myColor!} hp={me?.hp ?? 3} myColor={myColor!} />
-        </div>
-      </div>
-
-      <div ref={pathBarRef}>
-        <PathProgressBar
-          current={myPath.length}
-          max={gameState.pathPoints}
-          pathPointsLabel={t.pathPoints}
-        />
-      </div>
       {tutorialStep === 1 && (
         <div
           className="ai-tutorial-hint no-arrow"
@@ -771,39 +766,6 @@ export function GameScreen({ onLeaveToLobby }: Props) {
           {t.winConditionTutorialHint}
         </div>
       )}
-    </div>
-  );
-}
-
-function PathProgressBar({
-  current,
-  max,
-  pathPointsLabel,
-}: {
-  current: number;
-  max: number;
-  pathPointsLabel: string;
-}) {
-  const isFull = current >= max;
-
-  return (
-    <div className={`gs-path-bar${isFull ? " gs-path-full" : ""}`}>
-      <div className="gs-path-header">
-        <span className="gs-path-label">{pathPointsLabel}</span>
-        <span className="gs-path-count">
-          <span className="gs-path-current">{current}</span>
-          <span className="gs-path-sep"> / </span>
-          <span className="gs-path-max">{max}</span>
-        </span>
-      </div>
-      <div className="gs-path-gauge">
-        {Array.from({ length: max }, (_, i) => (
-          <div
-            key={i}
-            className={`gs-path-seg${i < current ? " filled" : ""}${i === current - 1 ? " latest" : ""}`}
-          />
-        ))}
-      </div>
     </div>
   );
 }
