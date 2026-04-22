@@ -4699,16 +4699,14 @@ export function LobbyScreen({
 
             <p>{abilityLoadoutDesc}</p>
 
-            {equippedAbilitySkillDefs.length > 0 && (
-              <div className="ability-loadout-chip-row ability-loadout-modal-selected">
-                {equippedAbilitySkillDefs.map((skill) => (
-                  <span key={skill.id} className="ability-loadout-chip">
-                    {renderAbilitySkillIcon(skill.id)}
-                    <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
-                  </span>
-                ))}
-              </div>
-            )}
+            <div className="ability-loadout-chip-row ability-loadout-modal-selected">
+              {equippedAbilitySkillDefs.map((skill) => (
+                <span key={skill.id} className="ability-loadout-chip">
+                  {renderAbilitySkillIcon(skill.id)}
+                  <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
+                </span>
+              ))}
+            </div>
 
             <div className="skin-option-list">
               {availableAbilitySkills.map((skill, index) => {

@@ -3349,20 +3349,18 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               ? "Select up to 3 skills. All skills are available in training."
               : "훈련장에서는 모든 스킬을 사용할 수 있습니다. 최대 3개를 선택하세요."}
           </p>
-          {trainingLoadout.length > 0 && (
-            <div className="ability-loadout-chip-row ability-loadout-modal-selected">
-              {trainingLoadout.map((skillId) => {
-                const skill = ABILITY_SKILLS[skillId];
-                if (!skill) return null;
-                return (
-                  <span key={skillId} className="ability-loadout-chip">
-                    {renderSkillIcon(skillId)}
-                    <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
-                  </span>
-                );
-              })}
-            </div>
-          )}
+          <div className="ability-loadout-chip-row ability-loadout-modal-selected">
+            {trainingLoadout.map((skillId) => {
+              const skill = ABILITY_SKILLS[skillId];
+              if (!skill) return null;
+              return (
+                <span key={skillId} className="ability-loadout-chip">
+                  {renderSkillIcon(skillId)}
+                  <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
+                </span>
+              );
+            })}
+          </div>
           {trainingFloatingMessage && (
             <div
               key={trainingFloatingMessage.id}

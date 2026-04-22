@@ -3289,6 +3289,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
+  min-height: 1.75rem;
 }
 
 .ability-loadout-modal-selected {
