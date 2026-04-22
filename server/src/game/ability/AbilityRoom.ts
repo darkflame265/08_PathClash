@@ -54,6 +54,7 @@ const TRAINING_STARTING_MANA = 10;
 const TRAINING_PATH_POINTS = 10;
 const TRAINING_DUMMY_POSITION: Position = { row: 2, col: 2 };
 const ABILITY_FAKE_AI_DEBUG_LOG = false;
+const UNDER_LAMP_DANGER_TARGET_RANKS = [0, 2, 4, 6] as const;
 const ABILITY_FAKE_AI_SKILL_POOL: AbilitySkillId[] = [
   'classic_guard',
   'ember_blast',
@@ -267,6 +268,91 @@ function buildShortestAbilityPath(
   }
 
   return reversedPath.reverse();
+}
+
+function positionFromKey(key: string): Position | null {
+  const [row, col] = key.split(',').map(Number);
+  if (
+    Number.isInteger(row) &&
+    Number.isInteger(col) &&
+    row >= 0 &&
+    row <= 4 &&
+    col >= 0 &&
+    col <= 4
+  ) {
+    return { row, col };
+  }
+  return null;
+}
+
+function chooseUnderLampDangerTarget(
+  heatmap: Map<string, number>,
+  opponentPosition: Position,
+  obstacles: Position[],
+): Position | null {
+  const rankedTargets = [...heatmap.entries()]
+    .map(([key, score]) => {
+      const position = positionFromKey(key);
+      return position ? { position, score } : null;
+    })
+    .filter(
+      (entry): entry is { position: Position; score: number } =>
+        !!entry &&
+        !posEqual(entry.position, opponentPosition) &&
+        !isObstacle(entry.position, obstacles),
+    )
+    .sort((left, right) => right.score - left.score)
+    .map((entry) => entry.position);
+
+  if (rankedTargets.length === 0) return null;
+
+  const rank =
+    UNDER_LAMP_DANGER_TARGET_RANKS[
+      Math.floor(Math.random() * UNDER_LAMP_DANGER_TARGET_RANKS.length)
+    ];
+  if (rankedTargets[rank]) return rankedTargets[rank];
+
+  for (const fallbackRank of UNDER_LAMP_DANGER_TARGET_RANKS) {
+    if (rankedTargets[fallbackRank]) return rankedTargets[fallbackRank];
+  }
+  return rankedTargets[0] ?? null;
+}
+
+function buildTargetedAbilityContinuations(
+  start: Position,
+  target: Position,
+  maxSteps: number,
+  obstacles: Position[],
+): Position[][] {
+  if (maxSteps < 0) return [];
+  const results: Position[][] = [];
+  const visited = new Set<string>([toKey(start)]);
+
+  const visit = (
+    current: Position,
+    previous: Position | null,
+    path: Position[],
+  ) => {
+    if (posEqual(current, target)) {
+      results.push([...path]);
+      return;
+    }
+    if (path.length >= maxSteps) return;
+
+    for (const neighbor of getCardinalNeighbors(current, obstacles)) {
+      if (previous && posEqual(neighbor, previous)) continue;
+      const key = toKey(neighbor);
+      if (visited.has(key)) continue;
+      visited.add(key);
+      path.push(neighbor);
+      visit(neighbor, current, path);
+      path.pop();
+      visited.delete(key);
+    }
+  };
+
+  visit(start, null, []);
+  return results;
 }
 
 function getSequencePosition(
@@ -1768,15 +1854,44 @@ export class AbilityRoom {
 
     candidates.sort((left, right) => right.score - left.score);
 
-    // 50% 확률로 "등잔 밑" 패턴: 도망 역할일 때 상대방 쪽으로 첫 타일 이동
-    if (bot.role === 'escaper' && Math.random() < 0.5) {
+    // 30% 확률로 "등잔 밑" 패턴: 도망 역할일 때 상대방 쪽으로 첫 타일 이동
+    if (bot.role === 'escaper' && Math.random() < 0.3) {
       const boldFirstSteps = getCardinalNeighbors(bot.position, effectiveObstacles).filter(
         (neighbor) => manhattan(neighbor, opponent.position) < manhattan(bot.position, opponent.position),
       );
       if (boldFirstSteps.length > 0) {
         const pickedFirstStep = boldFirstSteps[Math.floor(Math.random() * boldFirstSteps.length)];
         const boldObstacles = [...effectiveObstacles, bot.position];
-        const continuation = createAiPath({
+        const dangerTarget = chooseUnderLampDangerTarget(
+          opponentModel.heatmap,
+          opponent.position,
+          boldObstacles,
+        );
+        const dangerTargetCandidates = dangerTarget
+          ? buildTargetedAbilityContinuations(
+              pickedFirstStep,
+              dangerTarget,
+              Math.max(0, pathPoints - 1),
+              boldObstacles,
+            )
+          : [];
+        const targetedCandidate = dangerTargetCandidates
+          .map((continuation) => {
+            const path = [pickedFirstStep, ...continuation].slice(0, pathPoints);
+            return {
+              path,
+              score: scoreEscapePathAgainstModel(
+                bot.position,
+                path,
+                opponent.position,
+                opponentModel,
+                effectiveObstacles,
+              ),
+            };
+          })
+          .sort((left, right) => right.score - left.score)[0];
+
+        const fallbackContinuation = createAiPath({
           color: bot.color,
           role: 'escaper',
           selfPosition: pickedFirstStep,
@@ -1784,19 +1899,24 @@ export class AbilityRoom {
           pathPoints: pathPoints - 1,
           obstacles: boldObstacles,
         });
-        const boldPath = [pickedFirstStep, ...continuation].slice(0, pathPoints);
-        const boldScore = scoreEscapePathAgainstModel(
-          bot.position,
-          boldPath,
-          opponent.position,
-          opponentModel,
-          effectiveObstacles,
-        );
+        const fallbackPath = [pickedFirstStep, ...fallbackContinuation].slice(0, pathPoints);
+        const boldPath = targetedCandidate?.path ?? fallbackPath;
+        const boldScore =
+          targetedCandidate?.score ??
+          scoreEscapePathAgainstModel(
+            bot.position,
+            boldPath,
+            opponent.position,
+            opponentModel,
+            effectiveObstacles,
+          );
         return {
           path: boldPath,
           skills: [],
           score: boldScore,
-          reason: 'bold-escape',
+          reason: targetedCandidate
+            ? 'bold-escape-danger-target'
+            : 'bold-escape',
           selectedSkill: null,
         };
       }

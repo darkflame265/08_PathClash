@@ -23,6 +23,7 @@ const ESCAPE_CANDIDATE_LIMIT = 96;
 const ESCAPE_DEBUG_TOP_CANDIDATES = 5;
 const AI_ATTACK_DEBUG_LOG = false;
 const AI_ESCAPE_DEBUG_LOG = false;
+const UNDER_LAMP_DANGER_TARGET_RANKS = [0, 2, 4, 6];
 const ATTACK_SCORE_WEIGHTS = {
     exactCollision: 240,
     crossingCollision: 210,
@@ -399,26 +400,35 @@ function createEscaperPath(selfPosition, threatPosition, pathPoints, obstacles) 
     const scoredCandidates = escapeCandidates
         .map((candidate) => scoreEscapePathAgainstEnemyAttackCandidates(selfPosition, threatPosition, candidate, threatCandidates, obstacles, pathPoints, futureThreatCache))
         .sort((left, right) => right.score - left.score);
-    // 50% 확률로 "등잔 밑" 패턴: 상대방 쪽으로 첫 이동하는 예측 불가 경로 선택
+    // 30% 확률로 "등잔 밑" 패턴: 상대방 쪽으로 첫 이동하는 예측 불가 경로 선택
     // beam search가 상대방 방향 경로를 미리 제거하므로, 별도로 직접 생성
     let chosen;
-    if (Math.random() < 0.5) {
+    if (Math.random() < 0.3) {
         const boldFirstSteps = getNeighbors(selfPosition, obstacles).filter((neighbor) => manhattan(neighbor, threatPosition) < manhattan(selfPosition, threatPosition));
         if (boldFirstSteps.length > 0) {
             const pickedFirstStep = boldFirstSteps[Math.floor(Math.random() * boldFirstSteps.length)];
             // selfPosition을 장애물로 취급해 첫 발 이후 뒤로 돌아가는 경로를 차단
             const boldObstacles = [...obstacles, selfPosition];
-            const continuationCandidates = buildEscapePathCandidates(pickedFirstStep, threatPosition, pathPoints - 1, boldObstacles);
-            const boldPaths = [
-                [pickedFirstStep],
-                ...continuationCandidates
-                    .filter((rest) => rest.length > 0)
-                    .map((rest) => [pickedFirstStep, ...rest]),
-            ];
-            const boldScored = boldPaths
-                .map((path) => scoreEscapePathAgainstEnemyAttackCandidates(selfPosition, threatPosition, path, threatCandidates, obstacles, pathPoints, futureThreatCache))
-                .sort((a, b) => b.score - a.score);
-            chosen = boldScored[0] ?? pickWeightedTopThree(scoredCandidates);
+            const dangerTarget = chooseUnderLampDangerTarget(threatCandidates.heatmap, threatPosition, boldObstacles);
+            const dangerTargetScore = dangerTarget
+                ? buildUnderLampDangerTargetScore(selfPosition, pickedFirstStep, dangerTarget, threatPosition, pathPoints, obstacles, boldObstacles, threatCandidates, futureThreatCache)
+                : null;
+            if (dangerTargetScore) {
+                chosen = dangerTargetScore;
+            }
+            else {
+                const continuationCandidates = buildEscapePathCandidates(pickedFirstStep, threatPosition, pathPoints - 1, boldObstacles);
+                const boldPaths = [
+                    [pickedFirstStep],
+                    ...continuationCandidates
+                        .filter((rest) => rest.length > 0)
+                        .map((rest) => [pickedFirstStep, ...rest]),
+                ];
+                const boldScored = boldPaths
+                    .map((path) => scoreEscapePathAgainstEnemyAttackCandidates(selfPosition, threatPosition, path, threatCandidates, obstacles, pathPoints, futureThreatCache))
+                    .sort((a, b) => b.score - a.score);
+                chosen = boldScored[0] ?? pickWeightedTopThree(scoredCandidates);
+            }
         }
         else {
             chosen = pickWeightedTopThree(scoredCandidates);
@@ -450,6 +460,37 @@ function createEscaperPath(selfPosition, threatPosition, pathPoints, obstacles) 
         console.debug('[ai-escape-debug]', lastAiEscapeDebug);
     }
     return chosenPath;
+}
+function chooseUnderLampDangerTarget(heatmap, threatPosition, obstacles) {
+    const rankedTargets = [...heatmap.entries()]
+        .map(([key, score]) => {
+        const position = positionFromKey(key);
+        return position ? { position, score } : null;
+    })
+        .filter((entry) => !!entry &&
+        !sameCell(entry.position, threatPosition) &&
+        !isBlocked(entry.position, obstacles))
+        .sort((left, right) => right.score - left.score)
+        .map((entry) => entry.position);
+    if (rankedTargets.length === 0)
+        return null;
+    const rank = UNDER_LAMP_DANGER_TARGET_RANKS[Math.floor(Math.random() * UNDER_LAMP_DANGER_TARGET_RANKS.length)];
+    if (rankedTargets[rank])
+        return rankedTargets[rank];
+    for (const fallbackRank of UNDER_LAMP_DANGER_TARGET_RANKS) {
+        if (rankedTargets[fallbackRank])
+            return rankedTargets[fallbackRank];
+    }
+    return rankedTargets[0] ?? null;
+}
+function buildUnderLampDangerTargetScore(selfPosition, pickedFirstStep, dangerTarget, threatPosition, pathPoints, scoringObstacles, pathingObstacles, threatCandidates, futureThreatCache) {
+    const continuationCandidates = buildTargetedContinuationPaths(pickedFirstStep, dangerTarget, Math.max(0, pathPoints - 1), pathingObstacles);
+    if (continuationCandidates.length === 0)
+        return null;
+    const scored = continuationCandidates
+        .map((continuation) => scoreEscapePathAgainstEnemyAttackCandidates(selfPosition, threatPosition, [pickedFirstStep, ...continuation].slice(0, pathPoints), threatCandidates, scoringObstacles, pathPoints, futureThreatCache))
+        .sort((left, right) => right.score - left.score);
+    return scored[0] ?? null;
 }
 function buildThreatAttackCandidates(attackerPosition, targetPosition, pathPoints, obstacles) {
     const attackTargets = buildThreatAttackTargets(attackerPosition, targetPosition, obstacles);
@@ -694,6 +735,34 @@ function buildShortestPath(from, to, obstacles) {
     }
     return reversedPath.reverse();
 }
+function buildTargetedContinuationPaths(start, target, maxSteps, obstacles) {
+    if (maxSteps < 0)
+        return [];
+    const results = [];
+    const visited = new Set([toKey(start)]);
+    const visit = (current, previous, path) => {
+        if (sameCell(current, target)) {
+            results.push([...path]);
+            return;
+        }
+        if (path.length >= maxSteps)
+            return;
+        for (const neighbor of getNeighbors(current, obstacles)) {
+            if (previous && sameCell(neighbor, previous))
+                continue;
+            const key = toKey(neighbor);
+            if (visited.has(key))
+                continue;
+            visited.add(key);
+            path.push(neighbor);
+            visit(neighbor, current, path);
+            path.pop();
+            visited.delete(key);
+        }
+    };
+    visit(start, null, []);
+    return results;
+}
 function getNeighbors(position, obstacles) {
     return DIRECTIONS
         .map((direction) => ({
@@ -853,6 +922,18 @@ function isBlocked(position, obstacles) {
 }
 function toKey(position) {
     return `${position.row},${position.col}`;
+}
+function positionFromKey(key) {
+    const [row, col] = key.split(',').map(Number);
+    if (Number.isInteger(row) &&
+        Number.isInteger(col) &&
+        row >= 0 &&
+        row <= 4 &&
+        col >= 0 &&
+        col <= 4) {
+        return { row, col };
+    }
+    return null;
 }
 function pathToKey(path) {
     return path.map((position) => toKey(position)).join('>');
