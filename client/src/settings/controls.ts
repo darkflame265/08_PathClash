@@ -174,8 +174,42 @@ export function getKeyboardCodeLabel(code: string) {
   return code;
 }
 
-export function getGamepadButtonLabel(button: number) {
-  const labels: Record<number, string> = {
+export type GamepadButtonLayout = "playstation" | "xbox" | "generic";
+
+export function getConnectedGamepadButtonLayout(): GamepadButtonLayout {
+  if (typeof navigator === "undefined" || !navigator.getGamepads) {
+    return "playstation";
+  }
+
+  const gamepad = navigator.getGamepads().find(Boolean);
+  const id = gamepad?.id.toLowerCase() ?? "";
+
+  if (
+    id.includes("xbox") ||
+    id.includes("xinput") ||
+    id.includes("microsoft")
+  ) {
+    return "xbox";
+  }
+
+  if (
+    id.includes("playstation") ||
+    id.includes("dualshock") ||
+    id.includes("dualsense") ||
+    id.includes("sony") ||
+    id.includes("wireless controller")
+  ) {
+    return "playstation";
+  }
+
+  return "generic";
+}
+
+export function getGamepadButtonLabel(
+  button: number,
+  layout: GamepadButtonLayout = getConnectedGamepadButtonLayout(),
+) {
+  const playstationLabels: Record<number, string> = {
     0: "X",
     1: "O",
     2: "Square",
@@ -194,5 +228,25 @@ export function getGamepadButtonLabel(button: number) {
     15: "D-Pad Right",
   };
 
+  const xboxLabels: Record<number, string> = {
+    0: "A",
+    1: "B",
+    2: "X",
+    3: "Y",
+    4: "LB",
+    5: "RB",
+    6: "LT",
+    7: "RT",
+    8: "View",
+    9: "Menu",
+    10: "LS",
+    11: "RS",
+    12: "D-Pad Up",
+    13: "D-Pad Down",
+    14: "D-Pad Left",
+    15: "D-Pad Right",
+  };
+
+  const labels = layout === "xbox" ? xboxLabels : playstationLabels;
   return labels[button] ?? `Button ${button}`;
 }

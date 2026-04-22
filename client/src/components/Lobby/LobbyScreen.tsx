@@ -71,8 +71,10 @@ import { useLang } from "../../hooks/useLang";
 
 import { playLobbyClick } from "../../utils/soundUtils";
 import {
+  getConnectedGamepadButtonLayout,
   getGamepadButtonLabel,
   getKeyboardCodeLabel,
+  type GamepadButtonLayout,
 } from "../../settings/controls";
 
 import type { Translations } from "../../i18n/translations";
@@ -823,6 +825,8 @@ export function LobbyScreen({
   const [isControlsSettingsOpen, setIsControlsSettingsOpen] = useState(false);
   const [controlsSettingsTab, setControlsSettingsTab] =
     useState<ControlsSettingsTab>("keyboard");
+  const [gamepadButtonLayout, setGamepadButtonLayout] =
+    useState<GamepadButtonLayout>(getConnectedGamepadButtonLayout);
   const {
     capturingControlKey,
     capturingControllerButton,
@@ -836,6 +840,20 @@ export function LobbyScreen({
   const [isNameChangeOpen, setIsNameChangeOpen] = useState(false);
 
   const [isAbilityLoadoutOpen, setIsAbilityLoadoutOpen] = useState(false);
+
+  useEffect(() => {
+    const syncGamepadLayout = () => {
+      setGamepadButtonLayout(getConnectedGamepadButtonLayout());
+    };
+
+    syncGamepadLayout();
+    window.addEventListener("gamepadconnected", syncGamepadLayout);
+    window.addEventListener("gamepaddisconnected", syncGamepadLayout);
+    return () => {
+      window.removeEventListener("gamepadconnected", syncGamepadLayout);
+      window.removeEventListener("gamepaddisconnected", syncGamepadLayout);
+    };
+  }, []);
 
   const [isDailyRewardInfoOpen, setIsDailyRewardInfoOpen] = useState(false);
 
@@ -5416,6 +5434,7 @@ export function LobbyScreen({
                             ? controllerCaptureLabel
                             : getGamepadButtonLabel(
                                 controllerControls.abilitySkillButtons[slot],
+                                gamepadButtonLayout,
                               )}
                         </button>
                       </div>
@@ -5441,6 +5460,7 @@ export function LobbyScreen({
                           ? controllerCaptureLabel
                           : getGamepadButtonLabel(
                               controllerControls.gameActionButton,
+                              gamepadButtonLayout,
                             )}
                       </button>
                     </div>
@@ -5459,6 +5479,7 @@ export function LobbyScreen({
                           ? controllerCaptureLabel
                           : getGamepadButtonLabel(
                               controllerControls.selectActionButton,
+                              gamepadButtonLayout,
                             )}
                       </button>
                     </div>
