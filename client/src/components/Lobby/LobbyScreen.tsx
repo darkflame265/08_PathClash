@@ -1319,10 +1319,13 @@ export function LobbyScreen({
   const inGameMappingTitle = lang === "en" ? "In-Game" : "인게임";
   const keyboardMappingDesc =
     lang === "en"
-      ? "Use arrow keys to draw paths. Use Select to confirm targeted skills."
+      ? "Use arrow keys to draw a path. Press 'select' to use skills targeted skills."
       : "화살표 방향키로 경로를 작성하고, 위치 지정 스킬은 선택 키로 확정합니다.";
-  const gameActionKeyLabel =
-    lang === "en" ? "Exit / Rematch" : "나가기/재시작";
+  const controllerMappingDesc =
+    lang === "en"
+      ? "Use the d-pad or left joystick to draw a path. Press 'select' to use skills targeted skills."
+      : "방향 패드 또는 왼쪽 조이스틱으로 경로를 작성하고, 위치 지정 스킬은 선택 버튼으로 확정합니다.";
+  const gameActionKeyLabel = lang === "en" ? "Exit / Rematch" : "나가기/재시작";
   const selectActionKeyLabel = lang === "en" ? "Select" : "선택";
   const skillSlotLabels =
     lang === "en"
@@ -5439,7 +5442,7 @@ export function LobbyScreen({
                   <div className="controls-keymap-panel">
                     <div className="controls-keymap-head">
                       <strong>{keyboardMappingTitle}</strong>
-                      <span>{keyboardMappingDesc}</span>
+                      <span>{controllerMappingDesc}</span>
                     </div>
 
                     {(["slot1", "slot2", "slot3"] as const).map((slot) => (
@@ -5475,7 +5478,9 @@ export function LobbyScreen({
                         className={`controls-keymap-button ${capturingControllerButton === "gameAction" ? "is-capturing" : ""}`}
                         data-keyboard-modal-layer="controls-game-action"
                         type="button"
-                        onClick={() => setCapturingControllerButton("gameAction")}
+                        onClick={() =>
+                          setCapturingControllerButton("gameAction")
+                        }
                       >
                         {capturingControllerButton === "gameAction"
                           ? controllerCaptureLabel
