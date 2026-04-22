@@ -21,6 +21,7 @@ export type CapturingControllerButton =
   | "gameAction"
   | "selectAction"
   | null;
+type ControlAction = Exclude<CapturingControlKey, null>;
 
 type KeyboardControlsUpdater =
   | KeyboardControlsSettings
@@ -28,6 +29,109 @@ type KeyboardControlsUpdater =
 type ControllerControlsUpdater =
   | ControllerControlsSettings
   | ((current: ControllerControlsSettings) => ControllerControlsSettings);
+
+const CONTROL_ACTIONS: ControlAction[] = [
+  "slot1",
+  "slot2",
+  "slot3",
+  "gameAction",
+  "selectAction",
+];
+
+function getKeyboardControlValue(
+  settings: KeyboardControlsSettings,
+  action: ControlAction,
+) {
+  if (action === "gameAction") return settings.gameActionKey;
+  if (action === "selectAction") return settings.selectActionKey;
+  return settings.abilitySkillKeys[action];
+}
+
+function setKeyboardControlValue(
+  settings: KeyboardControlsSettings,
+  action: ControlAction,
+  value: string,
+) {
+  if (action === "gameAction") {
+    settings.gameActionKey = value;
+    return;
+  }
+  if (action === "selectAction") {
+    settings.selectActionKey = value;
+    return;
+  }
+  settings.abilitySkillKeys[action] = value;
+}
+
+function swapKeyboardControlValue(
+  current: KeyboardControlsSettings,
+  target: ControlAction,
+  nextValue: string,
+) {
+  const previousValue = getKeyboardControlValue(current, target);
+  const next: KeyboardControlsSettings = {
+    ...current,
+    abilitySkillKeys: { ...current.abilitySkillKeys },
+  };
+  const duplicate = CONTROL_ACTIONS.find(
+    (action) =>
+      action !== target && getKeyboardControlValue(current, action) === nextValue,
+  );
+
+  setKeyboardControlValue(next, target, nextValue);
+  if (duplicate) {
+    setKeyboardControlValue(next, duplicate, previousValue);
+  }
+  return next;
+}
+
+function getControllerControlValue(
+  settings: ControllerControlsSettings,
+  action: ControlAction,
+) {
+  if (action === "gameAction") return settings.gameActionButton;
+  if (action === "selectAction") return settings.selectActionButton;
+  return settings.abilitySkillButtons[action];
+}
+
+function setControllerControlValue(
+  settings: ControllerControlsSettings,
+  action: ControlAction,
+  value: number,
+) {
+  if (action === "gameAction") {
+    settings.gameActionButton = value;
+    return;
+  }
+  if (action === "selectAction") {
+    settings.selectActionButton = value;
+    return;
+  }
+  settings.abilitySkillButtons[action] = value;
+}
+
+function swapControllerControlValue(
+  current: ControllerControlsSettings,
+  target: ControlAction,
+  nextValue: number,
+) {
+  const previousValue = getControllerControlValue(current, target);
+  const next: ControllerControlsSettings = {
+    ...current,
+    abilitySkillButtons: { ...current.abilitySkillButtons },
+  };
+  const duplicate = CONTROL_ACTIONS.find(
+    (action) =>
+      action !== target &&
+      getControllerControlValue(current, action) === nextValue,
+  );
+
+  setControllerControlValue(next, target, nextValue);
+  if (duplicate) {
+    setControllerControlValue(next, duplicate, previousValue);
+  }
+  return next;
+}
 
 export function useKeyboardControlsSettings() {
   const [keyboardControls, setKeyboardControls] = useState(
@@ -75,19 +179,9 @@ export function useKeyboardControlsSettings() {
         return;
       }
 
-      updateKeyboardControls((current) => ({
-        ...current,
-        ...(capturingControlKey === "gameAction"
-          ? { gameActionKey: event.code }
-          : capturingControlKey === "selectAction"
-            ? { selectActionKey: event.code }
-            : {
-                abilitySkillKeys: {
-                  ...current.abilitySkillKeys,
-                  [capturingControlKey]: event.code,
-                },
-              }),
-      }));
+      updateKeyboardControls((current) =>
+        swapKeyboardControlValue(current, capturingControlKey, event.code),
+      );
       setCapturingControlKey(null);
     };
 
@@ -117,19 +211,13 @@ export function useKeyboardControlsSettings() {
       if (pressedIndex === undefined || pressedIndex < 0) {
         wasAnyButtonPressed = false;
       } else if (!wasAnyButtonPressed) {
-        updateControllerControls((current) => ({
-          ...current,
-          ...(capturingControllerButton === "gameAction"
-            ? { gameActionButton: pressedIndex }
-            : capturingControllerButton === "selectAction"
-              ? { selectActionButton: pressedIndex }
-              : {
-                  abilitySkillButtons: {
-                    ...current.abilitySkillButtons,
-                    [capturingControllerButton]: pressedIndex,
-                  },
-                }),
-        }));
+        updateControllerControls((current) =>
+          swapControllerControlValue(
+            current,
+            capturingControllerButton,
+            pressedIndex,
+          ),
+        );
         setCapturingControllerButton(null);
         return;
       }
