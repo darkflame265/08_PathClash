@@ -50,6 +50,7 @@ export function initSocketServer(io: Server): void {
     string,
     ReturnType<typeof setTimeout>
   >();
+  const pendingCancelRandom = new Set<string>();
   const abilityFallbackTimers = new Map<
     string,
     ReturnType<typeof setTimeout>
@@ -923,9 +924,14 @@ export function initSocketServer(io: Server): void {
     );
 
     socket.on('join_random', async ({ nickname, auth, pieceSkin, boardSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin; boardSkin?: BoardSkin }) => {
+      pendingCancelRandom.delete(socket.id);
       if (emitUpdateRequired(socket, auth)) return;
       await registerSocketSession(socket, auth);
       const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+      if (pendingCancelRandom.has(socket.id)) {
+        pendingCancelRandom.delete(socket.id);
+        return;
+      }
       const selectedPieceSkin = pieceSkin ?? 'classic';
       const selectedBoardSkin = boardSkin ?? 'classic';
       const queued = store.dequeueRandom();
@@ -989,6 +995,7 @@ export function initSocketServer(io: Server): void {
     });
 
     socket.on('cancel_random', () => {
+      pendingCancelRandom.add(socket.id);
       clearRandomFallback(socket.id);
       store.removeFromQueue(socket.id);
     });
@@ -1548,6 +1555,7 @@ export function initSocketServer(io: Server): void {
     socket.on('disconnect', () => {
       clearRandomFallback(socket.id);
       clearAbilityFallback(socket.id);
+      pendingCancelRandom.delete(socket.id);
       console.log(`[-] Disconnected: ${socket.id}`);
       unregisterSocketSession(socket.id);
       store.removeFromQueue(socket.id);

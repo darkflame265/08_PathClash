@@ -28,6 +28,7 @@ function initSocketServer(io) {
     const randomFallbackMatchMs = 7000;
     const abilityFallbackMatchMs = 7000;
     const randomFallbackTimers = new Map();
+    const pendingCancelRandom = new Set();
     const abilityFallbackTimers = new Map();
     const ABILITY_FAKE_AI_SKILL_POOL = [
         'classic_guard',
@@ -601,10 +602,15 @@ function initSocketServer(io) {
             });
         });
         socket.on('join_random', async ({ nickname, auth, pieceSkin, boardSkin }) => {
+            pendingCancelRandom.delete(socket.id);
             if (emitUpdateRequired(socket, auth))
                 return;
             await registerSocketSession(socket, auth);
             const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+            if (pendingCancelRandom.has(socket.id)) {
+                pendingCancelRandom.delete(socket.id);
+                return;
+            }
             const selectedPieceSkin = pieceSkin ?? 'classic';
             const selectedBoardSkin = boardSkin ?? 'classic';
             const queued = store.dequeueRandom();
@@ -661,6 +667,7 @@ function initSocketServer(io) {
             });
         });
         socket.on('cancel_random', () => {
+            pendingCancelRandom.add(socket.id);
             clearRandomFallback(socket.id);
             store.removeFromQueue(socket.id);
         });
@@ -1010,6 +1017,7 @@ function initSocketServer(io) {
         socket.on('disconnect', () => {
             clearRandomFallback(socket.id);
             clearAbilityFallback(socket.id);
+            pendingCancelRandom.delete(socket.id);
             console.log(`[-] Disconnected: ${socket.id}`);
             unregisterSocketSession(socket.id);
             store.removeFromQueue(socket.id);
