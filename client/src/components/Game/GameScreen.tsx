@@ -708,11 +708,58 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       );
     }
 
-    if (tutorialStep === 12) return t.overlapEscapeTutorial;
+    if (tutorialStep === 12) {
+      return lang === "en" ? (
+        <>
+          Well done! This time, you and the opponent are overlapping.
+          <br />
+          You are the <TutorialRole type="escape">escaper</TutorialRole> this
+          round.
+          <br />
+          If you stay still while overlapping, you will definitely get hit.
+          <br />
+          Try to choose a direction that does not overlap with the opponent's
+          path and escape.
+        </>
+      ) : (
+        <>
+          잘했습니다! 이번엔 말이 겹쳐진 상태입니다.
+          <br />
+          이번 라운드에서 당신의 역할은{" "}
+          <TutorialRole type="escape">도망</TutorialRole>입니다.
+          <br />
+          겹쳐진 상태에서 가만히 있으면 반드시 공격을 받습니다.
+          <br />
+          상대의 이동 경로와 겹치지 않는 방향을 골라 도망가세요!
+        </>
+      );
+    }
+
     if (tutorialStep === 13) {
-      return (
-        t.chainAttackTutorial ??
-        "잘했습니다! 이번엔 마지막 상황입니다!\npathclash에서는 경로가 겹칠 경우, 연속 충돌 판정이 일어납니다.\n당신의 역할은 공격입니다.\n상대의 경로를 예측하여, 상대에게 3 이상의 연속피해를 입히세요!"
+      return lang === "en" ? (
+        <>
+          Good Job!
+          <br />
+          This is the final situation!
+          <br />
+          In PathClash, repeated collisions occur when paths overlap.
+          <br />
+          You are the <TutorialRole type="attack">attacker</TutorialRole> this
+          round.
+          <br />
+          Predict the opponent's path and deal 3 or more consecutive damage in a
+          single round!
+        </>
+      ) : (
+        <>
+          잘했습니다! 이번엔 마지막 상황입니다!
+          <br />
+          PathClash에서는 경로가 겹칠 경우, 연속 충돌 판정이 일어납니다.
+          <br />
+          당신의 역할은 <TutorialRole type="attack">공격</TutorialRole>입니다.
+          <br />
+          상대의 경로를 예측하여, 상대에게 3 이상의 연속 피해를 입히세요!
+        </>
       );
     }
 
