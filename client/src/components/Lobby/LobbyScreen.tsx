@@ -5328,6 +5328,12 @@ export function LobbyScreen({
                   <span>{keyboardEnabledLabel}</span>
                 </label>
 
+                <p className="controls-restart-notice">
+                  {lang === "en"
+                    ? "For best results, restart the game after making changes."
+                    : "원활한 적용을 위해, 변경 후 게임을 재시작하는 것을 추천합니다."}
+                </p>
+
                 {keyboardControls.keyboardEnabled && (
                   <div className="controls-keymap-panel">
                     <div className="controls-keymap-head">
@@ -5413,6 +5419,12 @@ export function LobbyScreen({
                   />
                   <span>{controllerEnabledLabel}</span>
                 </label>
+
+                <p className="controls-restart-notice">
+                  {lang === "en"
+                    ? "For best results, restart the game after making changes."
+                    : "원활한 적용을 위해, 변경 후 게임을 재시작하는 것을 추천합니다."}
+                </p>
 
                 {controllerControls.controllerEnabled && (
                   <div className="controls-keymap-panel">

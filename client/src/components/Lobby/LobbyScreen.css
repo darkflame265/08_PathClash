@@ -2635,6 +2635,13 @@
   flex: 0 0 auto;
 }
 
+.controls-restart-notice {
+  font-size: 0.78rem;
+  color: var(--text-muted, #8899a8);
+  margin: 0;
+  padding: 0 0.25rem;
+}
+
 .controls-keymap-panel {
   display: flex;
   flex-direction: column;
