@@ -129,16 +129,33 @@ function initSocketServer(io) {
         const pieceSkin = skinPool[Math.floor(Math.random() * skinPool.length)] ?? 'classic';
         const nickname = fakeRandomNicknames_1.FAKE_RANDOM_NICKNAMES[Math.floor(Math.random() * fakeRandomNicknames_1.FAKE_RANDOM_NICKNAMES.length)];
         const fakeId = `${randomHex(8)}-${randomHex(4)}-${randomHex(4)}-${randomHex(4)}-${randomHex(12)}`;
+        const stats = createNaturalFakeStats(Math.floor(Math.random() * 101) + Math.floor(Math.random() * 101));
         return {
             nickname,
             displayId: fakeId,
             userId: null,
-            stats: {
-                wins: Math.floor(Math.random() * 101),
-                losses: Math.floor(Math.random() * 101),
-            },
+            stats,
             pieceSkin,
             boardSkin: 'classic',
+        };
+    };
+    const createNaturalFakeStats = (totalGames, options = {}) => {
+        const total = Math.max(1, Math.trunc(totalGames));
+        const minRateWins = Math.ceil(total * 0.24);
+        const maxRateWins = Math.floor(total * 0.65);
+        const minWins = Math.max(minRateWins, options.minWins ?? 0);
+        if (minWins > maxRateWins) {
+            const adjustedTotal = Math.ceil(minWins / 0.65);
+            const wins = minWins;
+            return {
+                wins,
+                losses: Math.max(0, adjustedTotal - wins),
+            };
+        }
+        const wins = minWins + Math.floor(Math.random() * (maxRateWins - minWins + 1));
+        return {
+            wins,
+            losses: total - wins,
         };
     };
     const randomHex = (length) => {
@@ -164,7 +181,7 @@ function initSocketServer(io) {
                 nickname,
                 displayId: `${randomHex(8)}-${randomHex(4)}-${randomHex(4)}-${randomHex(4)}-${randomHex(12)}`,
                 userId: null,
-                stats: { wins: 0, losses: 0 },
+                stats: createNaturalFakeStats(Math.floor(Math.random() * 101) + Math.floor(Math.random() * 101)),
                 pieceSkin: 'classic',
                 boardSkin: 'classic',
                 equippedSkills: ['classic_guard'],
@@ -175,10 +192,7 @@ function initSocketServer(io) {
         const equippedSkills = pickRandomUniqueSkills(ABILITY_FAKE_AI_SKILL_POOL, 3);
         // aurora_heal은 100승 이상 해금 스킬 → 장착 시 승리 수를 100~300으로 표기
         const stats = equippedSkills.includes('aurora_heal')
-            ? {
-                wins: Math.floor(Math.random() * 201) + 100,
-                losses: fakeProfile.stats.losses,
-            }
+            ? createNaturalFakeStats(fakeProfile.stats.wins + fakeProfile.stats.losses, { minWins: Math.floor(Math.random() * 201) + 100 })
             : fakeProfile.stats;
         return {
             ...fakeProfile,
