@@ -275,6 +275,12 @@
   animation: tutorial-hint-in-center 0.22s ease-out;
 }
 
+.tutorial-highlight-green {
+  color: #4ade80;
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.35);
+}
+
 .tutorial-finger-path {
   position: absolute;
   inset: 0;

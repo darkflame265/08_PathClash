@@ -740,7 +740,23 @@ export function GameScreen({ onLeaveToLobby }: Props) {
             animation: "tutorial-hint-in-center 0.22s ease-out",
           }}
         >
-          {t.pathPointsTutorialHint}
+          {lang === "en" ? (
+            <>
+              The{" "}
+              <span className="tutorial-highlight-green">Path Points</span> at
+              the top determine how many cells you can draw a path through.
+              <br />
+              They increase by 1 each round, up to a maximum of 10.
+            </>
+          ) : (
+            <>
+              상단에 있는{" "}
+              <span className="tutorial-highlight-green">경로 포인트</span>는
+              자신이 경로를 몇 칸이나 그릴 수 있는지를 나타냅니다.
+              <br />
+              매 라운드마다 1씩 증가하며, 최대 10까지 증가합니다.
+            </>
+          )}
         </div>
       )}
       {tutorialStep === 6 && (
