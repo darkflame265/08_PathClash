@@ -43,6 +43,12 @@ export function useLobbyKeyboardNavigation({
   const selectionStackRef = useRef<HTMLElement[]>([]);
   const controllerInputRef = useRef("");
   const controllerInputAtRef = useRef(0);
+  const controllerEnabledRef = useRef(controllerEnabled);
+  const keyboardEnabledRef = useRef(keyboardEnabled);
+  const isControlsSettingsOpenRef = useRef(isControlsSettingsOpen);
+  controllerEnabledRef.current = controllerEnabled;
+  keyboardEnabledRef.current = keyboardEnabled;
+  isControlsSettingsOpenRef.current = isControlsSettingsOpen;
 
   useEffect(() => {
     controllerInputRef.current = "";
@@ -420,6 +426,8 @@ export function useLobbyKeyboardNavigation({
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (!keyboardEnabledRef.current && !isControlsSettingsOpenRef.current) return;
+
       const target = event.target as HTMLElement | null;
       if (
         target?.tagName === "INPUT" ||
@@ -482,7 +490,7 @@ export function useLobbyKeyboardNavigation({
     };
 
     const pollController = () => {
-      if (controllerEnabled || isControlsSettingsOpen) {
+      if (controllerEnabledRef.current || isControlsSettingsOpenRef.current) {
         const gamepad = navigator.getGamepads().find(Boolean);
         if (gamepad) {
           const direction = getGamepadDirection(gamepad);
