@@ -7,6 +7,7 @@ type UseLobbyKeyboardNavigationArgs = {
   controllerSelectButton?: number;
   capturingControlKey: unknown;
   closeTopLobbyModal: () => boolean;
+  isAnyModalOpen: boolean;
   isControlsSettingsOpen: boolean;
   keyboardEnabled: boolean;
   selectKey: string;
@@ -35,6 +36,7 @@ export function useLobbyKeyboardNavigation({
   controllerSelectButton,
   capturingControlKey,
   closeTopLobbyModal,
+  isAnyModalOpen,
   isControlsSettingsOpen,
   keyboardEnabled,
   selectKey,
@@ -51,7 +53,7 @@ export function useLobbyKeyboardNavigation({
     };
 
     const inputEnabled =
-      keyboardEnabled || controllerEnabled || isControlsSettingsOpen;
+      keyboardEnabled || controllerEnabled || isControlsSettingsOpen || isAnyModalOpen;
 
     if (!inputEnabled || capturingControlKey) {
       selectionStackRef.current = [];
@@ -477,7 +479,7 @@ export function useLobbyKeyboardNavigation({
     };
 
     const pollController = () => {
-      if (controllerEnabled || isControlsSettingsOpen) {
+      if (controllerEnabled || isControlsSettingsOpen || isAnyModalOpen) {
         const gamepad = navigator.getGamepads().find(Boolean);
         if (gamepad) {
           const direction = getGamepadDirection(gamepad);
@@ -519,6 +521,7 @@ export function useLobbyKeyboardNavigation({
     controllerActionButton,
     controllerEnabled,
     controllerSelectButton,
+    isAnyModalOpen,
     isControlsSettingsOpen,
     keyboardEnabled,
     selectKey,

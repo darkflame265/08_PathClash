@@ -1046,6 +1046,19 @@ export function LobbyScreen({
     controllerSelectButton: controllerControls.selectActionButton,
     capturingControlKey: capturingControlKey ?? capturingControllerButton,
     closeTopLobbyModal,
+    isAnyModalOpen:
+      isControlsSettingsOpen ||
+      isAudioSettingsOpen ||
+      isNameChangeOpen ||
+      isPatchNotesOpen ||
+      !!achievementNoticeMessage ||
+      isAchievementsOpen ||
+      isAbilityLoadoutOpen ||
+      isTokenShopOpen ||
+      !!skinDetail ||
+      isSkinPickerOpen ||
+      isSettingsOpen ||
+      isDailyRewardInfoOpen,
     isControlsSettingsOpen,
     keyboardEnabled: keyboardControls.keyboardEnabled,
     selectKey: keyboardControls.selectActionKey,
