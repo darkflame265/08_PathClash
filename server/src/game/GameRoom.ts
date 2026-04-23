@@ -1207,6 +1207,7 @@ export class GameRoom {
   }
 
   private clearPendingTimeouts(): void {
+    this.clearPendingStartTimeout();
     this.clearPlanningGraceTimeout();
     this.clearMovingCompleteTimeout();
     this.clearNextRoundTimeout();

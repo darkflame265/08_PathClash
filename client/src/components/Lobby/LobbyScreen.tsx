@@ -2702,7 +2702,6 @@ export function LobbyScreen({
           ? "Unable to connect to the game server. Please try again shortly."
           : "게임 서버에 연결하지 못했습니다. 잠시 후 다시 시도해주세요.",
       );
-      socket.disconnect();
     });
 
     socket.on("game_start", (gs: ClientGameState) => {

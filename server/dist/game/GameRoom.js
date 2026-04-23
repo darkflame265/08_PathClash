@@ -1014,6 +1014,7 @@ class GameRoom {
         }
     }
     clearPendingTimeouts() {
+        this.clearPendingStartTimeout();
         this.clearPlanningGraceTimeout();
         this.clearMovingCompleteTimeout();
         this.clearNextRoundTimeout();

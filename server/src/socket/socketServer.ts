@@ -788,7 +788,7 @@ export function initSocketServer(io: Server): void {
         selfPieceSkin: pieceSkin ?? 'classic',
         opponentPieceSkin: opponent.pieceSkin,
       });
-      room.prepareGameStart(Boolean(tutorialPending));
+      room.startGame(Boolean(tutorialPending));
 
       },
     );

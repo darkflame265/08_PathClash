@@ -523,7 +523,7 @@ function initSocketServer(io) {
                 selfPieceSkin: pieceSkin ?? 'classic',
                 opponentPieceSkin: opponent.pieceSkin,
             });
-            room.prepareGameStart(Boolean(tutorialPending));
+            room.startGame(Boolean(tutorialPending));
         });
         socket.on('join_room', async ({ code, nickname, auth, pieceSkin, boardSkin }) => {
             if (emitUpdateRequired(socket, auth))
