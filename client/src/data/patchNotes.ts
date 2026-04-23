@@ -11,8 +11,8 @@ export type PatchNoteSection = {
   lines: PatchNoteLine[];
 };
 
-export const PATCH_NOTES_VERSION = "2026-04-23-v37";
-const PATCH_NOTES_APP_VERSION = "1.0.37";
+export const PATCH_NOTES_VERSION = "2026-04-23-v38";
+const PATCH_NOTES_APP_VERSION = "1.0.38";
 
 export function getPatchNotesVersionLabel(lang: "en" | "kr"): string {
   return lang === "en"
