@@ -490,10 +490,16 @@ function initSocketServer(io) {
                 return;
             await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
             const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+            if (!io.sockets.sockets.has(socket.id))
+                return;
             const roomId = store.generateRoomId();
             const code = store.generateCode();
             const room = new GameRoom_1.GameRoom(roomId, code, io, 'friend');
             const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
+            if (!color) {
+                socket.emit('join_error', { message: '방 생성에 실패했습니다.' });
+                return;
+            }
             store.add(room);
             store.registerSocket(socket.id, roomId);
             socket.emit('room_created', { roomId, code, color, pieceSkin: pieceSkin ?? 'classic' });
@@ -503,16 +509,18 @@ function initSocketServer(io) {
                 return;
             await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
             const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+            if (!io.sockets.sockets.has(socket.id))
+                return;
             const roomId = store.generateRoomId();
             const code = store.generateCode();
             const room = new GameRoom_1.GameRoom(roomId, code, io, 'ai');
-            store.add(room);
             const humanColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
             if (!humanColor) {
                 socket.emit('join_error', { message: 'AI room creation failed.' });
                 return;
             }
             room.addAiPlayer('PathClash AI');
+            store.add(room);
             store.registerSocket(socket.id, roomId);
             const roomState = room.toClientState();
             const opponent = roomState.players[humanColor === 'red' ? 'blue' : 'red'];
@@ -530,6 +538,8 @@ function initSocketServer(io) {
                 return;
             await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
             const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+            if (!io.sockets.sockets.has(socket.id))
+                return;
             const room = store.getByCode(code.toUpperCase());
             if (!room || room.isFull) {
                 socket.emit('join_error', { message: '방을 찾을 수 없거나 이미 가득 찼습니다.' });
@@ -562,11 +572,17 @@ function initSocketServer(io) {
                 return;
             await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
             const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+            if (!io.sockets.sockets.has(socket.id))
+                return;
             const roomId = abilityStore.generateRoomId();
             const code = abilityStore.generateCode();
             const room = new AbilityRoom_1.AbilityRoom(roomId, code, io);
             room.enablePrivateMatch();
             const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
+            if (!color) {
+                socket.emit('join_error', { message: '방 생성에 실패했습니다.' });
+                return;
+            }
             abilityStore.add(room);
             abilityStore.registerSocket(socket.id, roomId);
             socket.emit('ability_room_created', {
@@ -580,6 +596,8 @@ function initSocketServer(io) {
                 return;
             await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
             const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+            if (!io.sockets.sockets.has(socket.id))
+                return;
             const room = abilityStore.getByCode(code);
             if (!room || room.isFull) {
                 socket.emit('join_error', { message: '방을 찾을 수 없거나 이미 가득 찼습니다.' });
@@ -613,6 +631,8 @@ function initSocketServer(io) {
                 pendingCancelRandom.delete(socket.id);
                 return;
             }
+            if (!io.sockets.sockets.has(socket.id))
+                return;
             const selectedPieceSkin = pieceSkin ?? 'classic';
             const selectedBoardSkin = boardSkin ?? 'classic';
             const queued = store.dequeueRandom();
@@ -648,20 +668,25 @@ function initSocketServer(io) {
             const code = store.generateCode();
             const room = new GameRoom_1.GameRoom(roomId, code, io, 'random');
             store.add(room);
-            room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin);
-            room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, selectedPieceSkin, selectedBoardSkin);
+            const queuedColor = room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin);
+            const myColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, selectedPieceSkin, selectedBoardSkin);
+            if (!queuedColor || !myColor) {
+                console.error('[join_random] addPlayer failed unexpectedly', { queuedColor, myColor });
+                socket.emit('join_error', { message: '매칭 중 오류가 발생했습니다. 다시 시도해주세요.' });
+                return;
+            }
             store.registerSocket(queued.socketId, roomId);
             store.registerSocket(socket.id, roomId);
             queuedSocket.emit('room_joined', {
                 roomId,
-                color: 'red',
+                color: queuedColor,
                 opponentNickname: profile.nickname,
                 selfPieceSkin: queued.pieceSkin,
                 opponentPieceSkin: selectedPieceSkin,
             });
             socket.emit('room_joined', {
                 roomId,
-                color: 'blue',
+                color: myColor,
                 opponentNickname: queued.nickname,
                 selfPieceSkin: selectedPieceSkin,
                 opponentPieceSkin: queued.pieceSkin,
@@ -678,6 +703,8 @@ function initSocketServer(io) {
                 return;
             await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
             const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+            if (!io.sockets.sockets.has(socket.id))
+                return;
             const queued = coopStore.dequeue();
             if (!queued || queued.socketId === socket.id) {
                 if (queued) {
@@ -687,15 +714,15 @@ function initSocketServer(io) {
                 socket.emit('coop_matchmaking_waiting', {});
                 return;
             }
-            const roomId = coopStore.generateRoomId();
-            const room = new CoopRoom_1.CoopRoom(roomId, roomId, io);
-            coopStore.add(room);
             const queuedSocket = io.sockets.sockets.get(queued.socketId);
             if (!queuedSocket) {
                 coopStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
                 socket.emit('coop_matchmaking_waiting', {});
                 return;
             }
+            const roomId = coopStore.generateRoomId();
+            const room = new CoopRoom_1.CoopRoom(roomId, roomId, io);
+            coopStore.add(room);
             room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin);
             coopStore.registerSocket(queued.socketId, roomId);
             queuedSocket.emit('coop_room_joined', {
@@ -804,6 +831,8 @@ function initSocketServer(io) {
                 return;
             await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
             const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+            if (!io.sockets.sockets.has(socket.id))
+                return;
             twoVsTwoStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
             const existingRoom = twoVsTwoStore.getBySocket(socket.id);
             tryStartTwoVsTwoTeamMatch();
@@ -816,18 +845,22 @@ function initSocketServer(io) {
                 return;
             await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
             const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+            if (!io.sockets.sockets.has(socket.id))
+                return;
             if (training) {
                 clearAbilityFallback(socket.id);
                 const roomId = abilityStore.generateRoomId();
                 const room = new AbilityRoom_1.AbilityRoom(roomId, roomId, io);
                 room.enableTrainingMode();
-                abilityStore.add(room);
-                room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
+                const trainingColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
+                if (!trainingColor)
+                    return;
                 room.addIdleBot('Training Dummy', 'classic', 'classic', []);
+                abilityStore.add(room);
                 abilityStore.registerSocket(socket.id, roomId);
                 socket.emit('ability_room_joined', {
                     roomId,
-                    color: 'red',
+                    color: trainingColor,
                     opponentNickname: 'Training Dummy',
                     training: true,
                 });
@@ -852,9 +885,6 @@ function initSocketServer(io) {
             }
             clearAbilityFallback(socket.id);
             clearAbilityFallback(queued.socketId);
-            const roomId = abilityStore.generateRoomId();
-            const room = new AbilityRoom_1.AbilityRoom(roomId, roomId, io);
-            abilityStore.add(room);
             const queuedSocket = io.sockets.sockets.get(queued.socketId);
             if (!queuedSocket) {
                 abilityStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
@@ -868,18 +898,26 @@ function initSocketServer(io) {
                 });
                 return;
             }
-            room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin, queued.equippedSkills);
+            const roomId = abilityStore.generateRoomId();
+            const room = new AbilityRoom_1.AbilityRoom(roomId, roomId, io);
+            abilityStore.add(room);
+            const queuedAbilityColor = room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin, queued.equippedSkills);
+            const myAbilityColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
+            if (!queuedAbilityColor || !myAbilityColor) {
+                console.error('[join_ability] addPlayer failed unexpectedly');
+                socket.emit('join_error', { message: '매칭 중 오류가 발생했습니다. 다시 시도해주세요.' });
+                return;
+            }
             abilityStore.registerSocket(queued.socketId, roomId);
             queuedSocket.emit('ability_room_joined', {
                 roomId,
-                color: 'red',
+                color: queuedAbilityColor,
                 opponentNickname: profile.nickname,
             });
-            room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
             abilityStore.registerSocket(socket.id, roomId);
             socket.emit('ability_room_joined', {
                 roomId,
-                color: 'blue',
+                color: myAbilityColor,
                 opponentNickname: queued.nickname,
             });
             room.prepareGameStart();

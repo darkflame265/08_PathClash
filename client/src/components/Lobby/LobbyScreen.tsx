@@ -2670,36 +2670,31 @@ export function LobbyScreen({
     const socket = connectSocket();
 
     socket.off("room_created");
-
     socket.off("room_joined");
-
     socket.off("opponent_joined");
-
     socket.off("join_error");
-
     socket.off("matchmaking_waiting");
-
     socket.off("coop_room_joined");
-
     socket.off("coop_matchmaking_waiting");
-
     socket.off("twovtwo_room_joined");
-
     socket.off("twovtwo_matchmaking_waiting");
-
     socket.off("ability_room_joined");
-
     socket.off("ability_room_created");
-
     socket.off("ability_opponent_joined");
-
     socket.off("ability_matchmaking_waiting");
-
     socket.off("connect_error");
-
     socket.off("game_start");
-
     socket.off("round_start");
+    socket.off("opponent_submitted");
+    socket.off("paths_reveal");
+    socket.off("game_over");
+    socket.off("opponent_disconnected");
+    socket.off("rematch_requested");
+    socket.off("rematch_start");
+    socket.off("chat_receive");
+    socket.off("player_skin_updated");
+    socket.off("room_closed");
+    socket.off("session_replaced");
 
     socket.on("connect_error", () => {
       setIsMatchmaking(false);
@@ -3086,14 +3081,17 @@ export function LobbyScreen({
     );
   };
 
-  const ensureMatchmakingProfile = useCallback(async () => {
-    // 스킬 변경 사항이 DB에 반영되기 전에 매칭 버튼을 눌렀을 때를 대비해
-    // 현재 인메모리 로드아웃을 먼저 flush한 뒤 프로필을 가져온다.
-    await syncEquippedAbilitySkills(useGameStore.getState().abilityLoadout);
-    const profile = await refreshAccountSummary({ force: true });
-    applyProfileToStore(profile, setAuthState);
-    return profile;
-  }, [setAuthState]);
+  const ensureMatchmakingProfile = useCallback(
+    async (options?: { syncAbilitySkills?: boolean }) => {
+      if (options?.syncAbilitySkills) {
+        await syncEquippedAbilitySkills(useGameStore.getState().abilityLoadout);
+      }
+      const profile = await refreshAccountSummary({ force: true });
+      applyProfileToStore(profile, setAuthState);
+      return profile;
+    },
+    [setAuthState],
+  );
 
   const buildPlayerPayloadFromProfile = async (profile?: AccountProfile) => ({
     nickname: profile?.nickname ?? getNick(),
@@ -3135,7 +3133,7 @@ export function LobbyScreen({
     setMatchType("friend");
 
     try {
-      const profile = await ensureMatchmakingProfile();
+      const profile = await ensureMatchmakingProfile({ syncAbilitySkills: true });
       const socket = await prepareMatchmakingSocket();
       if (!socket) return;
       socket.emit(
@@ -3189,7 +3187,7 @@ export function LobbyScreen({
     setMatchType("friend");
 
     try {
-      const profile = await ensureMatchmakingProfile();
+      const profile = await ensureMatchmakingProfile({ syncAbilitySkills: true });
       const socket = await prepareMatchmakingSocket();
       if (!socket) return;
       socket.emit("join_ability_room", {
@@ -3472,7 +3470,7 @@ export function LobbyScreen({
     setIsAbilityTrainingQueueing(false);
 
     try {
-      const profile = await ensureMatchmakingProfile();
+      const profile = await ensureMatchmakingProfile({ syncAbilitySkills: true });
       const socket = await prepareMatchmakingSocket();
       if (!socket) return;
       socket.emit("join_ability", {
@@ -3495,7 +3493,7 @@ export function LobbyScreen({
     setIsAbilityTrainingQueueing(true);
 
     try {
-      const profile = await ensureMatchmakingProfile();
+      const profile = await ensureMatchmakingProfile({ syncAbilitySkills: true });
       const socket = await prepareMatchmakingSocket();
       if (!socket) return;
       socket.emit("join_ability", {
