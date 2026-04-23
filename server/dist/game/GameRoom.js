@@ -775,6 +775,26 @@ class GameRoom {
     getSocketIds() {
         return [...this.players.values()].map((player) => player.socketId);
     }
+    hasDisconnectedUser(userId) {
+        for (const player of this.players.values()) {
+            if (player.userId === userId && player.connected === false)
+                return true;
+        }
+        return false;
+    }
+    rejoinPlayer(socket, userId) {
+        for (const [color, player] of this.players) {
+            if (player.userId === userId && player.connected === false) {
+                player.socketId = socket.id;
+                player.connected = true;
+                player.disconnectLossRecorded = false;
+                socket.join(this.roomId);
+                this.touchActivity();
+                return color;
+            }
+        }
+        return null;
+    }
     createPlayerState(color, id, nickname, userId, stats, pieceSkin, boardSkin) {
         const pos = (0, GameEngine_1.getInitialPositions)();
         return {

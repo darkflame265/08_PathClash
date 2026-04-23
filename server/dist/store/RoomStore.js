@@ -112,6 +112,13 @@ class RoomStore {
     isQueuedRandom(socketId) {
         return this.matchQueue.some((entry) => entry.socketId === socketId);
     }
+    findRoomForRejoin(userId) {
+        for (const room of this.rooms.values()) {
+            if (room.hasDisconnectedUser(userId))
+                return room;
+        }
+        return undefined;
+    }
     getStats() {
         return {
             roomCount: this.rooms.size,

@@ -134,6 +134,13 @@ export class AbilityRoomStore {
     this.queue = this.queue.filter((entry) => entry.socketId !== socketId);
   }
 
+  findRoomForRejoin(userId: string): AbilityRoom | undefined {
+    for (const room of this.rooms.values()) {
+      if (room.hasDisconnectedUser(userId)) return room;
+    }
+    return undefined;
+  }
+
   getStats(): {
     roomCount: number;
     queueLength: number;

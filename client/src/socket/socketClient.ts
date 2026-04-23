@@ -22,9 +22,9 @@ export function getSocket(): Socket {
       transports: ["websocket", "polling"],
       tryAllTransports: true,
       timeout: 10_000,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 20,
       reconnectionDelay: 500,
-      reconnectionDelayMax: 2_000,
+      reconnectionDelayMax: 10_000,
     });
     socket.on("connect", () => {
       void syncServerTime(socket!);

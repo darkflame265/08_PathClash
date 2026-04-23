@@ -9,7 +9,7 @@ import { GameGrid } from "./GameGrid";
 import { GameOverOverlay } from "./GameOverOverlay";
 import { PlayerInfo } from "./PlayerInfo";
 import { TimerBar } from "./TimerBar";
-import type { BoardSkin, Position } from "../../types/game.types";
+import type { BoardSkin, ClientGameState, PlayerColor, Position } from "../../types/game.types";
 import {
   playMatchResultSfx,
   startMatchResultBgm,
@@ -191,6 +191,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   );
   const tutorialStartedRef = useRef(false);
   const resultAudioPlayedRef = useRef(false);
+  const [connStatus, setConnStatus] = useState<"connected" | "reconnecting" | "failed">("connected");
 
   useEffect(() => {
     const socket = getSocket();
@@ -198,6 +199,51 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     socket.emit("game_client_ready");
     return cleanup;
   }, []);
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    const handleDisconnect = () => {
+      setConnStatus("reconnecting");
+    };
+
+    const handleConnect = () => {
+      const { authAccessToken, myNickname } = useGameStore.getState();
+      socket.emit("rejoin_game", { accessToken: authAccessToken, nickname: myNickname });
+    };
+
+    const handleRejoinAck = (payload: {
+      mode: string;
+      color: PlayerColor;
+      roomCode: string;
+      gameState?: ClientGameState;
+    }) => {
+      if (payload.mode !== "base") return;
+      const store = useGameStore.getState();
+      store.setMyColor(payload.color);
+      store.setRoomCode(payload.roomCode);
+      if (payload.gameState) store.setGameState(payload.gameState);
+      setConnStatus("connected");
+      socket.emit("game_client_ready");
+    };
+
+    const handleRejoinNotFound = () => {
+      setConnStatus("failed");
+      setTimeout(onLeaveToLobby, 1500);
+    };
+
+    socket.on("disconnect", handleDisconnect);
+    socket.on("connect", handleConnect);
+    socket.on("rejoin_ack", handleRejoinAck);
+    socket.on("rejoin_not_found", handleRejoinNotFound);
+
+    return () => {
+      socket.off("disconnect", handleDisconnect);
+      socket.off("connect", handleConnect);
+      socket.off("rejoin_ack", handleRejoinAck);
+      socket.off("rejoin_not_found", handleRejoinNotFound);
+    };
+  }, [onLeaveToLobby]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -825,6 +871,14 @@ export function GameScreen({ onLeaveToLobby }: Props) {
       className={`game-screen ability-screen standard-battle-screen ${screenBoardClass}`}
       ref={screenRef}
     >
+      {connStatus !== "connected" && (
+        <div className="gs-reconnecting-overlay">
+          <span className="gs-reconnecting-spinner" />
+          <span>
+            {connStatus === "reconnecting" ? (lang === "en" ? "Reconnecting…" : "재연결 중…") : (lang === "en" ? "Connection failed" : "연결 실패")}
+          </span>
+        </div>
+      )}
       <div className="gs-utility-bar">
         <div className="gs-timer-slot">
           {gameState.phase === "planning" &&

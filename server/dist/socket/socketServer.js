@@ -1015,6 +1015,47 @@ function initSocketServer(io) {
             const room = store.getBySocket(socket.id);
             room?.markClientReady(socket.id);
         });
+        socket.on('rejoin_game', async (auth) => {
+            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+            if (!io.sockets.sockets.has(socket.id))
+                return;
+            const userId = typeof socket.data.userId === 'string' ? socket.data.userId : null;
+            if (!userId) {
+                socket.emit('rejoin_not_found');
+                return;
+            }
+            const baseRoom = store.findRoomForRejoin(userId);
+            if (baseRoom) {
+                const color = baseRoom.rejoinPlayer(socket, userId);
+                if (color) {
+                    store.registerSocket(socket.id, baseRoom.roomId);
+                    socket.emit('rejoin_ack', {
+                        mode: 'base',
+                        color,
+                        roomCode: baseRoom.code,
+                        gameState: baseRoom.toClientState(),
+                    });
+                    console.log(`[rejoin_game] base userId=${userId} color=${color} room=${baseRoom.roomId}`);
+                    return;
+                }
+            }
+            const abilityRoom = abilityStore.findRoomForRejoin(userId);
+            if (abilityRoom) {
+                const color = abilityRoom.rejoinPlayer(socket, userId);
+                if (color) {
+                    abilityStore.registerSocket(socket.id, abilityRoom.roomId);
+                    socket.emit('rejoin_ack', {
+                        mode: 'ability',
+                        color,
+                        roomCode: abilityRoom.code,
+                        abilityState: abilityRoom.toClientState(color),
+                    });
+                    console.log(`[rejoin_game] ability userId=${userId} color=${color} room=${abilityRoom.roomId}`);
+                    return;
+                }
+            }
+            socket.emit('rejoin_not_found');
+        });
         socket.on('coop_client_ready', () => {
             const room = coopStore.getBySocket(socket.id);
             room?.markClientReady(socket.id);

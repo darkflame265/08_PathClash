@@ -506,8 +506,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [rewindingPieceColor, setRewindingPieceColor] =
     useState<PlayerColor | null>(null);
   const resultAudioPlayedRef = useRef(false);
+  const [connStatus, setConnStatus] = useState<"connected" | "reconnecting" | "failed">("connected");
 
   const stateRef = useRef<AbilityBattleState | null>(null);
+  const applyStateRef = useRef<(s: AbilityBattleState) => void>((_s) => {});
   const winnerRef = useRef<PlayerColor | "draw" | null>(null);
   const skillReservationsRef = useRef<AbilitySkillReservation[]>([]);
   const animationTimeoutIdsRef = useRef<number[]>([]);
@@ -775,6 +777,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       resetMatchUiState();
     }
   };
+  applyStateRef.current = applyState;
 
   const getMyRole = () => state?.players[currentColor].role ?? "escaper";
   const getMyMana = () => state?.players[currentColor].mana ?? 0;
@@ -3276,6 +3279,51 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   ]);
 
   useEffect(() => {
+    const socket = getSocket();
+
+    const handleDisconnect = () => {
+      setConnStatus("reconnecting");
+    };
+
+    const handleConnect = () => {
+      const { authAccessToken, myNickname } = useGameStore.getState();
+      socket.emit("rejoin_game", { accessToken: authAccessToken, nickname: myNickname });
+    };
+
+    const handleRejoinAck = (payload: {
+      mode: string;
+      color: PlayerColor;
+      roomCode: string;
+      abilityState?: AbilityBattleState;
+    }) => {
+      if (payload.mode !== "ability") return;
+      const store = useGameStore.getState();
+      store.setMyColor(payload.color);
+      store.setRoomCode(payload.roomCode);
+      if (payload.abilityState) applyStateRef.current(payload.abilityState);
+      setConnStatus("connected");
+      socket.emit("ability_client_ready");
+    };
+
+    const handleRejoinNotFound = () => {
+      setConnStatus("failed");
+      setTimeout(onLeaveToLobby, 1500);
+    };
+
+    socket.on("disconnect", handleDisconnect);
+    socket.on("connect", handleConnect);
+    socket.on("rejoin_ack", handleRejoinAck);
+    socket.on("rejoin_not_found", handleRejoinNotFound);
+
+    return () => {
+      socket.off("disconnect", handleDisconnect);
+      socket.off("connect", handleConnect);
+      socket.off("rejoin_ack", handleRejoinAck);
+      socket.off("rejoin_not_found", handleRejoinNotFound);
+    };
+  }, [onLeaveToLobby]);
+
+  useEffect(() => {
     if (!state || state.phase !== "planning" || mySubmitted || !roundInfo)
       return;
     const socket = getSocket();
@@ -3577,6 +3625,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   return (
     <div className={`game-screen ability-screen ${screenBoardClass}`}>
+      {connStatus !== "connected" && (
+        <div className="gs-reconnecting-overlay">
+          <span className="gs-reconnecting-spinner" />
+          <span>
+            {connStatus === "reconnecting" ? (lang === "en" ? "Reconnecting…" : "재연결 중…") : (lang === "en" ? "Connection failed" : "연결 실패")}
+          </span>
+        </div>
+      )}
       <div className="gs-utility-bar">
         <div className="gs-timer-slot">
           {state.phase === "planning" && roundInfo && (
