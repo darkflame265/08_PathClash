@@ -63,7 +63,13 @@ import {
   type TokenPackId,
 } from "../../payments/tokenShop";
 
-import { connectSocket, disconnectSocket } from "../../socket/socketClient";
+import {
+  connectSocket,
+  connectSocketReady,
+  disconnectSocket,
+  resetSocket,
+  SOCKET_CONNECT_FAILED,
+} from "../../socket/socketClient";
 import { syncServerTime } from "../../socket/timeSync";
 
 import { useGameStore } from "../../store/gameStore";
@@ -2697,11 +2703,15 @@ export function LobbyScreen({
 
     socket.on("connect_error", () => {
       setIsMatchmaking(false);
+      setIsAbilityTrainingQueueing(false);
+      setIsAiTutorialQueueing(false);
+      setMatchType(null);
       setError(
         lang === "en"
           ? "Unable to connect to the game server. Please try again shortly."
           : "게임 서버에 연결하지 못했습니다. 잠시 후 다시 시도해주세요.",
       );
+      resetSocket();
     });
 
     socket.on("game_start", (gs: ClientGameState) => {
@@ -3034,6 +3044,48 @@ export function LobbyScreen({
     return socket;
   };
 
+  const showSocketConnectError = () => {
+    setIsMatchmaking(false);
+    setIsAbilityTrainingQueueing(false);
+    setIsAiTutorialQueueing(false);
+    setMatchType(null);
+    setError(
+      lang === "en"
+        ? "Unable to connect to the game server. Please try again shortly."
+        : "게임 서버에 연결하지 못했습니다. 잠시 후 다시 시도해주세요.",
+    );
+  };
+
+  const prepareMatchmakingSocket = async () => {
+    try {
+      await connectSocketReady();
+      return startSocket();
+    } catch {
+      showSocketConnectError();
+      return null;
+    }
+  };
+
+  const showAccountLoadError = (error?: unknown) => {
+    if (
+      error instanceof Error &&
+      error.message === SOCKET_CONNECT_FAILED
+    ) {
+      showSocketConnectError();
+      return;
+    }
+
+    setIsMatchmaking(false);
+    setIsAbilityTrainingQueueing(false);
+    setIsAiTutorialQueueing(false);
+    setMatchType(null);
+    setError(
+      lang === "en"
+        ? "Unable to load account data. Please try again."
+        : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+    );
+  };
+
   const ensureMatchmakingProfile = useCallback(async () => {
     // 스킬 변경 사항이 DB에 반영되기 전에 매칭 버튼을 눌렀을 때를 대비해
     // 현재 인메모리 로드아웃을 먼저 flush한 뒤 프로필을 가져온다.
@@ -3068,15 +3120,11 @@ export function LobbyScreen({
 
     try {
       const profile = await ensureMatchmakingProfile();
-      const socket = startSocket();
+      const socket = await prepareMatchmakingSocket();
+      if (!socket) return;
       socket.emit("create_room", await buildPlayerPayloadFromProfile(profile));
-    } catch {
-      setIsMatchmaking(false);
-      setError(
-        lang === "en"
-          ? "Unable to load account data. Please try again."
-          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
-      );
+    } catch (error) {
+      showAccountLoadError(error);
     }
   };
 
@@ -3088,18 +3136,14 @@ export function LobbyScreen({
 
     try {
       const profile = await ensureMatchmakingProfile();
-      const socket = startSocket();
+      const socket = await prepareMatchmakingSocket();
+      if (!socket) return;
       socket.emit(
         "create_ability_room",
         await buildAbilityPlayerPayloadFromProfile(profile),
       );
-    } catch {
-      setIsMatchmaking(false);
-      setError(
-        lang === "en"
-          ? "Unable to load account data. Please try again."
-          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
-      );
+    } catch (error) {
+      showAccountLoadError(error);
     }
   };
 
@@ -3119,18 +3163,14 @@ export function LobbyScreen({
 
     try {
       const profile = await ensureMatchmakingProfile();
-      const socket = startSocket();
+      const socket = await prepareMatchmakingSocket();
+      if (!socket) return;
       socket.emit("join_room", {
         code: normalizedJoinCode,
         ...(await buildPlayerPayloadFromProfile(profile)),
       });
-    } catch {
-      setIsMatchmaking(false);
-      setError(
-        lang === "en"
-          ? "Unable to load account data. Please try again."
-          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
-      );
+    } catch (error) {
+      showAccountLoadError(error);
     }
   };
 
@@ -3150,18 +3190,14 @@ export function LobbyScreen({
 
     try {
       const profile = await ensureMatchmakingProfile();
-      const socket = startSocket();
+      const socket = await prepareMatchmakingSocket();
+      if (!socket) return;
       socket.emit("join_ability_room", {
         code: normalizedJoinCode,
         ...(await buildAbilityPlayerPayloadFromProfile(profile)),
       });
-    } catch {
-      setIsMatchmaking(false);
-      setError(
-        lang === "en"
-          ? "Unable to load account data. Please try again."
-          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
-      );
+    } catch (error) {
+      showAccountLoadError(error);
     }
   };
 
@@ -3201,16 +3237,11 @@ export function LobbyScreen({
 
     try {
       const profile = await ensureMatchmakingProfile();
-      const socket = startSocket();
+      const socket = await prepareMatchmakingSocket();
+      if (!socket) return;
       socket.emit("join_random", await buildPlayerPayloadFromProfile(profile));
-    } catch {
-      setIsMatchmaking(false);
-      setMatchType(null);
-      setError(
-        lang === "en"
-          ? "Unable to load account data. Please try again."
-          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
-      );
+    } catch (error) {
+      showAccountLoadError(error);
     }
   };
 
@@ -3339,20 +3370,14 @@ export function LobbyScreen({
 
     try {
       const profile = await ensureMatchmakingProfile();
-      const socket = startSocket();
+      const socket = await prepareMatchmakingSocket();
+      if (!socket) return;
       socket.emit("join_ai", {
         ...(await buildPlayerPayloadFromProfile(profile)),
         tutorialPending,
       });
-    } catch {
-      setIsAiTutorialQueueing(false);
-      setIsMatchmaking(false);
-      setMatchType(null);
-      setError(
-        lang === "en"
-          ? "Unable to load account data. Please try again."
-          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
-      );
+    } catch (error) {
+      showAccountLoadError(error);
     }
   };
 
@@ -3414,16 +3439,11 @@ export function LobbyScreen({
 
     try {
       const profile = await ensureMatchmakingProfile();
-      const socket = startSocket();
+      const socket = await prepareMatchmakingSocket();
+      if (!socket) return;
       socket.emit("join_coop", await buildPlayerPayloadFromProfile(profile));
-    } catch {
-      setIsMatchmaking(false);
-      setMatchType(null);
-      setError(
-        lang === "en"
-          ? "Unable to load account data. Please try again."
-          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
-      );
+    } catch (error) {
+      showAccountLoadError(error);
     }
   };
 
@@ -3435,16 +3455,11 @@ export function LobbyScreen({
 
     try {
       const profile = await ensureMatchmakingProfile();
-      const socket = startSocket();
+      const socket = await prepareMatchmakingSocket();
+      if (!socket) return;
       socket.emit("join_2v2", await buildPlayerPayloadFromProfile(profile));
-    } catch {
-      setIsMatchmaking(false);
-      setMatchType(null);
-      setError(
-        lang === "en"
-          ? "Unable to load account data. Please try again."
-          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
-      );
+    } catch (error) {
+      showAccountLoadError(error);
     }
   };
 
@@ -3458,22 +3473,16 @@ export function LobbyScreen({
 
     try {
       const profile = await ensureMatchmakingProfile();
-      const socket = startSocket();
+      const socket = await prepareMatchmakingSocket();
+      if (!socket) return;
       socket.emit("join_ability", {
         ...(await buildPlayerPayloadFromProfile(profile)),
         equippedSkills:
           profile.equippedAbilitySkills ??
           useGameStore.getState().abilityLoadout,
       });
-    } catch {
-      setIsMatchmaking(false);
-      setIsAbilityTrainingQueueing(false);
-      setMatchType(null);
-      setError(
-        lang === "en"
-          ? "Unable to load account data. Please try again."
-          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
-      );
+    } catch (error) {
+      showAccountLoadError(error);
     }
   };
 
@@ -3487,7 +3496,8 @@ export function LobbyScreen({
 
     try {
       const profile = await ensureMatchmakingProfile();
-      const socket = startSocket();
+      const socket = await prepareMatchmakingSocket();
+      if (!socket) return;
       socket.emit("join_ability", {
         ...(await buildPlayerPayloadFromProfile(profile)),
         equippedSkills:
@@ -3495,15 +3505,8 @@ export function LobbyScreen({
           useGameStore.getState().abilityLoadout,
         training: true,
       });
-    } catch {
-      setIsMatchmaking(false);
-      setIsAbilityTrainingQueueing(false);
-      setMatchType(null);
-      setError(
-        lang === "en"
-          ? "Unable to load account data. Please try again."
-          : "계정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
-      );
+    } catch (error) {
+      showAccountLoadError(error);
     }
   };
 
