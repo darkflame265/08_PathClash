@@ -11,13 +11,13 @@ export type PatchNoteSection = {
   lines: PatchNoteLine[];
 };
 
-export const PATCH_NOTES_VERSION = "2026-04-22-v36";
-const PATCH_NOTES_APP_VERSION = "1.0.36";
+export const PATCH_NOTES_VERSION = "2026-04-23-v37";
+const PATCH_NOTES_APP_VERSION = "1.0.37";
 
 export function getPatchNotesVersionLabel(lang: "en" | "kr"): string {
   return lang === "en"
-    ? `${PATCH_NOTES_APP_VERSION} Version 2026.04.22`
-    : `${PATCH_NOTES_APP_VERSION}버전 2026.04.22`;
+    ? `${PATCH_NOTES_APP_VERSION} Version 2026.04.23`
+    : `${PATCH_NOTES_APP_VERSION}버전 2026.04.23`;
 }
 
 export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
@@ -41,6 +41,9 @@ export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
           {
             text: "Quantum Shift mana cost decreased from 4 to 3.",
             change: "buff",
+          },
+          {
+            text: "Improved server and matchmaking stability.",
           },
         ],
       },
@@ -66,6 +69,9 @@ export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
         {
           text: "양자 도약 마나 코스트가 4에서 3으로 감소했습니다.",
           change: "buff",
+        },
+        {
+          text: "서버 및 매칭 안정화 작업을 진행했습니다.",
         },
       ],
     },
