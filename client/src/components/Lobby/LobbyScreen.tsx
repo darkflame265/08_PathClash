@@ -2689,9 +2689,21 @@ export function LobbyScreen({
 
     socket.off("ability_matchmaking_waiting");
 
+    socket.off("connect_error");
+
     socket.off("game_start");
 
     socket.off("round_start");
+
+    socket.on("connect_error", () => {
+      setIsMatchmaking(false);
+      setError(
+        lang === "en"
+          ? "Unable to connect to the game server. Please try again shortly."
+          : "게임 서버에 연결하지 못했습니다. 잠시 후 다시 시도해주세요.",
+      );
+      socket.disconnect();
+    });
 
     socket.on("game_start", (gs: ClientGameState) => {
       setGameState(gs);

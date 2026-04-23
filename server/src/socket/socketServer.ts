@@ -956,11 +956,6 @@ export function initSocketServer(io: Server): void {
       clearRandomFallback(socket.id);
       clearRandomFallback(queued.socketId);
 
-      const roomId = store.generateRoomId();
-      const code = store.generateCode();
-      const room = new GameRoom(roomId, code, io, 'random');
-      store.add(room);
-
       const queuedSocket = io.sockets.sockets.get(queued.socketId);
       if (!queuedSocket) {
         store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats, selectedPieceSkin, selectedBoardSkin);
@@ -974,9 +969,17 @@ export function initSocketServer(io: Server): void {
         return;
       }
 
+      const roomId = store.generateRoomId();
+      const code = store.generateCode();
+      const room = new GameRoom(roomId, code, io, 'random');
+      store.add(room);
+
       room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin);
-      room.prepareGameStart();
+      room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, selectedPieceSkin, selectedBoardSkin);
+
       store.registerSocket(queued.socketId, roomId);
+      store.registerSocket(socket.id, roomId);
+
       queuedSocket.emit('room_joined', {
         roomId,
         color: 'red',
@@ -985,8 +988,6 @@ export function initSocketServer(io: Server): void {
         opponentPieceSkin: selectedPieceSkin,
       });
 
-      room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, selectedPieceSkin, selectedBoardSkin);
-      store.registerSocket(socket.id, roomId);
       socket.emit('room_joined', {
         roomId,
         color: 'blue',
@@ -995,6 +996,7 @@ export function initSocketServer(io: Server): void {
         opponentPieceSkin: queued.pieceSkin,
       });
 
+      room.prepareGameStart();
     });
 
     socket.on('cancel_random', () => {

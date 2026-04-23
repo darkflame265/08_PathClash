@@ -632,10 +632,6 @@ function initSocketServer(io) {
             }
             clearRandomFallback(socket.id);
             clearRandomFallback(queued.socketId);
-            const roomId = store.generateRoomId();
-            const code = store.generateCode();
-            const room = new GameRoom_1.GameRoom(roomId, code, io, 'random');
-            store.add(room);
             const queuedSocket = io.sockets.sockets.get(queued.socketId);
             if (!queuedSocket) {
                 store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats, selectedPieceSkin, selectedBoardSkin);
@@ -648,9 +644,14 @@ function initSocketServer(io) {
                 });
                 return;
             }
+            const roomId = store.generateRoomId();
+            const code = store.generateCode();
+            const room = new GameRoom_1.GameRoom(roomId, code, io, 'random');
+            store.add(room);
             room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin);
-            room.prepareGameStart();
+            room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, selectedPieceSkin, selectedBoardSkin);
             store.registerSocket(queued.socketId, roomId);
+            store.registerSocket(socket.id, roomId);
             queuedSocket.emit('room_joined', {
                 roomId,
                 color: 'red',
@@ -658,8 +659,6 @@ function initSocketServer(io) {
                 selfPieceSkin: queued.pieceSkin,
                 opponentPieceSkin: selectedPieceSkin,
             });
-            room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, selectedPieceSkin, selectedBoardSkin);
-            store.registerSocket(socket.id, roomId);
             socket.emit('room_joined', {
                 roomId,
                 color: 'blue',
@@ -667,6 +666,7 @@ function initSocketServer(io) {
                 selfPieceSkin: selectedPieceSkin,
                 opponentPieceSkin: queued.pieceSkin,
             });
+            room.prepareGameStart();
         });
         socket.on('cancel_random', () => {
             pendingCancelRandom.add(socket.id);
