@@ -16,6 +16,13 @@ export async function syncServerTime(socket: Socket): Promise<void> {
   const clientSentAt = Date.now();
 
   await new Promise<void>((resolve) => {
+    let resolved = false;
+    const timeoutId = window.setTimeout(() => {
+      if (resolved) return;
+      resolved = true;
+      resolve();
+    }, 1_500);
+
     socket.emit(
       "sync_time",
       (
@@ -25,6 +32,9 @@ export async function syncServerTime(socket: Socket): Promise<void> {
             }
           | undefined,
       ) => {
+        if (resolved) return;
+        resolved = true;
+        window.clearTimeout(timeoutId);
         const clientReceivedAt = Date.now();
         const serverNow = response?.serverNow;
 

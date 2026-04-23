@@ -36,6 +36,7 @@ import {
 
 const PLANNING_TIME_MS = 7_000;
 const SUBMIT_GRACE_MS = 350;
+const READY_START_FALLBACK_MS = 5_000;
 type TutorialScenario =
   | "attack"
   | "escape"
@@ -80,6 +81,7 @@ export class GameRoom {
   private planningGraceTimeout: ReturnType<typeof setTimeout> | null = null;
   private movingCompleteTimeout: ReturnType<typeof setTimeout> | null = null;
   private nextRoundTimeout: ReturnType<typeof setTimeout> | null = null;
+  private pendingStartTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor(roomId: string, code: string, io: Server, matchType: MatchType) {
     this.roomId = roomId;
@@ -239,6 +241,7 @@ export class GameRoom {
   // ─── Game flow ─────────────────────────────────────────────────────────────
 
   startGame(startPaused = false): void {
+    this.clearPendingStartTimeout();
     this.pendingStart = false;
     this.pendingStartPaused = false;
     this.tutorialActive = startPaused && this.matchType === "ai";
@@ -270,6 +273,17 @@ export class GameRoom {
     this.pendingStartPaused = startPaused;
     this.readySockets.clear();
     this.touchActivity();
+    this.clearPendingStartTimeout();
+    this.pendingStartTimeout = setTimeout(() => {
+      if (!this.pendingStart) return;
+      this.startGame(this.pendingStartPaused);
+    }, READY_START_FALLBACK_MS);
+  }
+
+  private clearPendingStartTimeout(): void {
+    if (!this.pendingStartTimeout) return;
+    clearTimeout(this.pendingStartTimeout);
+    this.pendingStartTimeout = null;
   }
 
   markClientReady(socketId: string): boolean {

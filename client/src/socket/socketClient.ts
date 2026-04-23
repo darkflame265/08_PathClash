@@ -7,7 +7,14 @@ let socket: Socket | null = null;
 
 export function getSocket(): Socket {
   if (!socket) {
-    socket = io(SERVER_URL, { autoConnect: false });
+    socket = io(SERVER_URL, {
+      autoConnect: false,
+      transports: ["websocket"],
+      timeout: 10_000,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 500,
+      reconnectionDelayMax: 2_000,
+    });
     socket.on("connect", () => {
       void syncServerTime(socket!);
     });

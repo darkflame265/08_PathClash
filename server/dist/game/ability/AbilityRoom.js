@@ -10,6 +10,7 @@ const AbilityTypes_1 = require("./AbilityTypes");
 const AbilityEngine_1 = require("./AbilityEngine");
 const PLANNING_TIME_MS = 9000;
 const SUBMIT_GRACE_MS = 350;
+const READY_START_FALLBACK_MS = 5000;
 const INITIAL_MANA = 4;
 const MAX_MANA = 10;
 const MANA_PER_TURN = 2;
@@ -619,6 +620,7 @@ class AbilityRoom {
         this.planningGraceTimeout = null;
         this.movingCompleteTimeout = null;
         this.nextRoundTimeout = null;
+        this.pendingStartTimeout = null;
         this.rewardsGranted = false;
         this.roomId = roomId;
         this.code = code;
@@ -766,6 +768,18 @@ class AbilityRoom {
         this.pendingStartPaused = startPaused;
         this.readySockets.clear();
         this.touchActivity();
+        this.clearPendingStartTimeout();
+        this.pendingStartTimeout = setTimeout(() => {
+            if (!this.pendingStart)
+                return;
+            this.startGame(this.pendingStartPaused);
+        }, READY_START_FALLBACK_MS);
+    }
+    clearPendingStartTimeout() {
+        if (!this.pendingStartTimeout)
+            return;
+        clearTimeout(this.pendingStartTimeout);
+        this.pendingStartTimeout = null;
     }
     markClientReady(socketId) {
         if (!this.pendingStart && this.trainingMode && this.trainingSkillSelectionPending) {
@@ -794,6 +808,7 @@ class AbilityRoom {
         return true;
     }
     startGame(startPaused = false) {
+        this.clearPendingStartTimeout();
         this.pendingStart = false;
         this.pendingStartPaused = false;
         this.readySockets.clear();

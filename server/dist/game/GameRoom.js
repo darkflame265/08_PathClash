@@ -9,6 +9,7 @@ const playerAuth_1 = require("../services/playerAuth");
 const achievementService_1 = require("../services/achievementService");
 const PLANNING_TIME_MS = 7000;
 const SUBMIT_GRACE_MS = 350;
+const READY_START_FALLBACK_MS = 5000;
 function getTutorialAttackerColor(scenario, humanColor, aiColor) {
     return scenario === "escape" || scenario === "overlap_escape"
         ? aiColor
@@ -34,6 +35,7 @@ class GameRoom {
         this.planningGraceTimeout = null;
         this.movingCompleteTimeout = null;
         this.nextRoundTimeout = null;
+        this.pendingStartTimeout = null;
         this.roomId = roomId;
         this.code = code;
         this.io = io;
@@ -144,6 +146,7 @@ class GameRoom {
     }
     // ─── Game flow ─────────────────────────────────────────────────────────────
     startGame(startPaused = false) {
+        this.clearPendingStartTimeout();
         this.pendingStart = false;
         this.pendingStartPaused = false;
         this.tutorialActive = startPaused && this.matchType === "ai";
@@ -177,6 +180,18 @@ class GameRoom {
         this.pendingStartPaused = startPaused;
         this.readySockets.clear();
         this.touchActivity();
+        this.clearPendingStartTimeout();
+        this.pendingStartTimeout = setTimeout(() => {
+            if (!this.pendingStart)
+                return;
+            this.startGame(this.pendingStartPaused);
+        }, READY_START_FALLBACK_MS);
+    }
+    clearPendingStartTimeout() {
+        if (!this.pendingStartTimeout)
+            return;
+        clearTimeout(this.pendingStartTimeout);
+        this.pendingStartTimeout = null;
     }
     markClientReady(socketId) {
         if (!this.pendingStart)

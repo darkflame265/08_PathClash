@@ -41,6 +41,7 @@ import { resolveAbilityRound } from './AbilityEngine';
 
 const PLANNING_TIME_MS = 9000;
 const SUBMIT_GRACE_MS = 350;
+const READY_START_FALLBACK_MS = 5_000;
 const INITIAL_MANA = 4;
 const MAX_MANA = 10;
 const MANA_PER_TURN = 2;
@@ -833,6 +834,7 @@ export class AbilityRoom {
   private planningGraceTimeout: ReturnType<typeof setTimeout> | null = null;
   private movingCompleteTimeout: ReturnType<typeof setTimeout> | null = null;
   private nextRoundTimeout: ReturnType<typeof setTimeout> | null = null;
+  private pendingStartTimeout: ReturnType<typeof setTimeout> | null = null;
   private rewardsGranted = false;
 
   constructor(roomId: string, code: string, io: Server) {
@@ -1009,6 +1011,17 @@ export class AbilityRoom {
     this.pendingStartPaused = startPaused;
     this.readySockets.clear();
     this.touchActivity();
+    this.clearPendingStartTimeout();
+    this.pendingStartTimeout = setTimeout(() => {
+      if (!this.pendingStart) return;
+      this.startGame(this.pendingStartPaused);
+    }, READY_START_FALLBACK_MS);
+  }
+
+  private clearPendingStartTimeout(): void {
+    if (!this.pendingStartTimeout) return;
+    clearTimeout(this.pendingStartTimeout);
+    this.pendingStartTimeout = null;
   }
 
   markClientReady(socketId: string): boolean {
@@ -1036,6 +1049,7 @@ export class AbilityRoom {
   }
 
   startGame(startPaused = false): void {
+    this.clearPendingStartTimeout();
     this.pendingStart = false;
     this.pendingStartPaused = false;
     this.readySockets.clear();
