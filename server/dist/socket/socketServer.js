@@ -501,7 +501,7 @@ function initSocketServer(io) {
         socket.on('join_ai', async ({ nickname, auth, pieceSkin, tutorialPending, boardSkin, }) => {
             if (emitUpdateRequired(socket, auth))
                 return;
-            await registerSocketSession(socket, auth);
+            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
             const profile = await resolvePlayerProfileCached(socket, auth, nickname);
             const roomId = store.generateRoomId();
             const code = store.generateCode();
@@ -607,7 +607,7 @@ function initSocketServer(io) {
             pendingCancelRandom.delete(socket.id);
             if (emitUpdateRequired(socket, auth))
                 return;
-            await registerSocketSession(socket, auth);
+            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
             const profile = await resolvePlayerProfileCached(socket, auth, nickname);
             if (pendingCancelRandom.has(socket.id)) {
                 pendingCancelRandom.delete(socket.id);
@@ -676,7 +676,7 @@ function initSocketServer(io) {
         socket.on('join_coop', async ({ nickname, auth, pieceSkin }) => {
             if (emitUpdateRequired(socket, auth))
                 return;
-            await registerSocketSession(socket, auth);
+            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
             const profile = await resolvePlayerProfileCached(socket, auth, nickname);
             const queued = coopStore.dequeue();
             if (!queued || queued.socketId === socket.id) {
@@ -802,7 +802,7 @@ function initSocketServer(io) {
         socket.on('join_2v2', async ({ nickname, auth, pieceSkin }) => {
             if (emitUpdateRequired(socket, auth))
                 return;
-            await registerSocketSession(socket, auth);
+            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
             const profile = await resolvePlayerProfileCached(socket, auth, nickname);
             twoVsTwoStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
             const existingRoom = twoVsTwoStore.getBySocket(socket.id);
@@ -814,7 +814,7 @@ function initSocketServer(io) {
         socket.on('join_ability', async ({ nickname, auth, pieceSkin, boardSkin, equippedSkills, training, }) => {
             if (emitUpdateRequired(socket, auth))
                 return;
-            await registerSocketSession(socket, auth);
+            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
             const profile = await resolvePlayerProfileCached(socket, auth, nickname);
             if (training) {
                 clearAbilityFallback(socket.id);
