@@ -567,5 +567,13 @@ on public.nickname_change_history
 for select
 using (auth.uid() = user_id);
 
+-- Skill rotation: daily UTC rotation slots
+create table if not exists skill_rotations (
+  date            text primary key,  -- 'YYYY-MM-DD' UTC
+  common_skill    text not null,
+  rare_skill      text not null,
+  legendary_skill text not null
+);
+
 
 
