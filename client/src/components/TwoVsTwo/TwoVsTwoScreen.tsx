@@ -45,7 +45,7 @@ function calcHitDirection(
     const opSeq = [starts[opSlot], ...paths[opSlot]];
     const opCur = opSeq[Math.min(step, opSeq.length - 1)];
     if (opCur.row === victimPos.row && opCur.col === victimPos.col) {
-      const opPrev = opSeq[Math.max(step - 1, 0)];
+      const opPrev = opSeq[Math.min(Math.max(step - 1, 0), opSeq.length - 1)];
       return { dx: opCur.col - opPrev.col, dy: opCur.row - opPrev.row };
     }
   }

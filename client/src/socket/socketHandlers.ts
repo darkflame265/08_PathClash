@@ -159,7 +159,7 @@ function runAnimation(payload: PathsRevealPayload): void {
       const attackerColor = escapee === 'red' ? 'blue' : 'red';
       const attackerSeq = attackerColor === 'red' ? redSeq : blueSeq;
       const cur = attackerSeq[Math.min(step, attackerSeq.length - 1)];
-      const prev = attackerSeq[Math.max(step - 1, 0)];
+      const prev = attackerSeq[Math.min(Math.max(step - 1, 0), attackerSeq.length - 1)];
       const direction = { dx: cur.col - prev.col, dy: cur.row - prev.row };
 
       const gs = store().gameState;

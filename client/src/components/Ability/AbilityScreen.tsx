@@ -2805,7 +2805,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       const attackerSeq = attackerColor === 'red' ? redSeq : blueSeq;
       const s = collision.step;
       const cur = attackerSeq[Math.min(s, attackerSeq.length - 1)];
-      const prev = attackerSeq[Math.max(s - 1, 0)];
+      const prev = attackerSeq[Math.min(Math.max(s - 1, 0), attackerSeq.length - 1)];
       const direction = { dx: cur.col - prev.col, dy: cur.row - prev.row };
       triggerLocalHit(
         collision.escapeeColor,
