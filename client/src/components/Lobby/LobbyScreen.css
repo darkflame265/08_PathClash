@@ -1898,7 +1898,7 @@
   font-size: 0.65em;
   font-weight: 600;
   background: linear-gradient(90deg, #b8860b, #ffd700, #b8860b);
-  color: #1a1a1a;
+  color: #1a1a1a !important;
   vertical-align: middle;
   letter-spacing: 0.02em;
 }
