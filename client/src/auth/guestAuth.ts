@@ -261,7 +261,7 @@ function getClientInstanceId(): string {
 const clientInstanceId = getClientInstanceId();
 
 function logAuthDebug(message: string, details?: Record<string, unknown>) {
-  console.log(`[auth-debug][${clientInstanceId}] ${message}`, details ?? {});
+  console.log(`[auth-debug-1][${clientInstanceId}] ${message}`, details ?? {});
 }
 
 function getNativeRedirectUrl() {
