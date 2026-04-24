@@ -1,34 +1,40 @@
-﻿import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { getSocket } from '../../socket/socketClient';
-import { syncServerTime } from '../../socket/timeSync';
-import { useLang } from '../../hooks/useLang';
-import { useGameStore } from '../../store/gameStore';
-import type { ChatMessage, Position } from '../../types/game.types';
+﻿import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
+import { getSocket } from "../../socket/socketClient";
+import { syncServerTime } from "../../socket/timeSync";
+import { useLang } from "../../hooks/useLang";
+import { useGameStore } from "../../store/gameStore";
+import type { ChatMessage, Position } from "../../types/game.types";
 import type {
   TwoVsTwoClientState,
   TwoVsTwoPlayerHitEvent,
   TwoVsTwoResolutionPayload,
   TwoVsTwoRoundStartPayload,
   TwoVsTwoSlot,
-} from '../../types/twovtwo.types';
+} from "../../types/twovtwo.types";
 import {
   playMatchResultSfx,
   startMatchResultBgm,
   stopMatchResultBgm,
-} from '../../utils/soundUtils';
+} from "../../utils/soundUtils";
 import {
   CONTROLS_SETTINGS_CHANGED_EVENT,
   loadControllerControlsSettings,
   loadKeyboardControlsSettings,
-} from '../../settings/controls';
-import { TimerBar } from '../Game/TimerBar';
-import { PlayerInfo } from '../Game/PlayerInfo';
-import { TwoVsTwoGrid } from './TwoVsTwoGrid';
-import '../Game/GameScreen.css';
-import '../Game/GameOverOverlay.css';
-import '../Game/HpDisplay.css';
-import '../Coop/CoopScreen.css';
-import './TwoVsTwoScreen.css';
+} from "../../settings/controls";
+import { TimerBar } from "../Game/TimerBar";
+import { PlayerInfo } from "../Game/PlayerInfo";
+import { TwoVsTwoGrid } from "./TwoVsTwoGrid";
+import "../Game/GameScreen.css";
+import "../Game/GameOverOverlay.css";
+import "../Game/HpDisplay.css";
+import "../Coop/CoopScreen.css";
+import "./TwoVsTwoScreen.css";
 
 function calcHitDirection(
   slot: TwoVsTwoSlot,
@@ -38,9 +44,9 @@ function calcHitDirection(
 ): { dx: number; dy: number } {
   const victimSeq = [starts[slot], ...paths[slot]];
   const victimPos = victimSeq[Math.min(step, victimSeq.length - 1)];
-  const opposingSlots: TwoVsTwoSlot[] = slot.startsWith('red')
-    ? ['blue_top', 'blue_bottom']
-    : ['red_top', 'red_bottom'];
+  const opposingSlots: TwoVsTwoSlot[] = slot.startsWith("red")
+    ? ["blue_top", "blue_bottom"]
+    : ["red_top", "red_bottom"];
 
   for (const opSlot of opposingSlots) {
     const opSeq = [starts[opSlot], ...paths[opSlot]];
@@ -58,7 +64,7 @@ interface Props {
 }
 
 const STEP_DURATION_MS = 200;
-const HIT_STOP_MS = 100;
+const HIT_STOP_MS = 0;
 const HIT_VISUAL_DELAY_MS = 0;
 const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
@@ -92,14 +98,16 @@ function useAdaptiveCellSize(
   return cellSize;
 }
 
-
-function getTeamMates(state: TwoVsTwoClientState, team: 'red' | 'blue') {
+function getTeamMates(state: TwoVsTwoClientState, team: "red" | "blue") {
   return Object.values(state.players).filter((player) => player.team === team);
 }
 
 function buildDisplayPositions(state: TwoVsTwoClientState) {
   return Object.fromEntries(
-    Object.values(state.players).map((player) => [player.slot, player.position]),
+    Object.values(state.players).map((player) => [
+      player.slot,
+      player.position,
+    ]),
   ) as Record<TwoVsTwoSlot, Position>;
 }
 
@@ -121,10 +129,14 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     sfxVolume,
   } = useGameStore();
   const [state, setState] = useState<TwoVsTwoClientState | null>(null);
-  const [roundInfo, setRoundInfo] = useState<TwoVsTwoRoundStartPayload | null>(null);
+  const [roundInfo, setRoundInfo] = useState<TwoVsTwoRoundStartPayload | null>(
+    null,
+  );
   const [myPath, setMyPath] = useState<Position[]>([]);
   const [allyPath, setAllyPath] = useState<Position[]>([]);
-  const [enemyPaths, setEnemyPaths] = useState<Record<TwoVsTwoSlot, Position[]>>({
+  const [enemyPaths, setEnemyPaths] = useState<
+    Record<TwoVsTwoSlot, Position[]>
+  >({
     red_top: [],
     red_bottom: [],
     blue_top: [],
@@ -149,11 +161,11 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
   const timeoutRef = useRef<number | null>(null);
   const effectTimeoutsRef = useRef<number[]>([]);
   const stateRef = useRef<TwoVsTwoClientState | null>(null);
-  const currentSlotRef = useRef<TwoVsTwoSlot>(twoVsTwoSlot ?? 'red_top');
+  const currentSlotRef = useRef<TwoVsTwoSlot>(twoVsTwoSlot ?? "red_top");
   const gridAreaRef = useRef<HTMLDivElement>(null);
   const resultAudioPlayedRef = useRef(false);
 
-  const currentSlot = twoVsTwoSlot ?? 'red_top';
+  const currentSlot = twoVsTwoSlot ?? "red_top";
   const cellSize = useAdaptiveCellSize(gridAreaRef);
   const scale = cellSize / DEFAULT_CELL;
 
@@ -166,9 +178,8 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
   }, [currentSlot]);
 
   useEffect(() => {
-    const result =
-      state?.phase === 'gameover' ? state.gameResult : null;
-    if (!result || result === 'draw' || !state) {
+    const result = state?.phase === "gameover" ? state.gameResult : null;
+    if (!result || result === "draw" || !state) {
       resultAudioPlayedRef.current = false;
       stopMatchResultBgm();
       return;
@@ -179,9 +190,9 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     const myCurrentTeam = state.players[currentSlot].team;
     const didWin = result === myCurrentTeam;
     if (!isSfxMuted) {
-      playMatchResultSfx(didWin ? 'victory' : 'defeat', sfxVolume);
+      playMatchResultSfx(didWin ? "victory" : "defeat", sfxVolume);
     }
-    startMatchResultBgm(didWin ? 'victory' : 'defeat');
+    startMatchResultBgm(didWin ? "victory" : "defeat");
     resultAudioPlayedRef.current = true;
   }, [currentSlot, isSfxMuted, sfxVolume, state]);
 
@@ -192,7 +203,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
   }, []);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
   }, []);
@@ -204,23 +215,23 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     };
 
     window.addEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
-    window.addEventListener('storage', syncControls);
+    window.addEventListener("storage", syncControls);
     return () => {
       window.removeEventListener(CONTROLS_SETTINGS_CHANGED_EVENT, syncControls);
-      window.removeEventListener('storage', syncControls);
+      window.removeEventListener("storage", syncControls);
     };
   }, []);
 
   useEffect(() => {
-    if (state?.phase !== 'gameover') return;
+    if (state?.phase !== "gameover") return;
 
     const isTypingTarget = () => {
       const active = document.activeElement;
       if (!(active instanceof HTMLElement)) return false;
       return (
-        active.tagName === 'INPUT' ||
-        active.tagName === 'TEXTAREA' ||
-        active.tagName === 'SELECT' ||
+        active.tagName === "INPUT" ||
+        active.tagName === "TEXTAREA" ||
+        active.tagName === "SELECT" ||
         active.isContentEditable
       );
     };
@@ -229,7 +240,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       if (isTypingTarget()) return;
 
       if (
-        event.key === 'Escape' ||
+        event.key === "Escape" ||
         event.code === keyboardControls.gameActionKey
       ) {
         event.preventDefault();
@@ -237,15 +248,12 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [keyboardControls.gameActionKey, onLeaveToLobby, state?.phase]);
 
   useEffect(() => {
-    if (
-      state?.phase !== 'gameover' ||
-      !controllerControls.controllerEnabled
-    ) {
+    if (state?.phase !== "gameover" || !controllerControls.controllerEnabled) {
       return;
     }
 
@@ -289,129 +297,159 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     effectTimeoutsRef.current = [];
   }, []);
 
-  const applyState = useCallback((nextState: TwoVsTwoClientState) => {
-    stateRef.current = nextState;
-    setState(nextState);
-    setTwoVsTwoDisplayPositions(buildDisplayPositions(nextState));
-    setMyPath([]);
-    setAllyPath([]);
-    setEnemyPaths({
-      red_top: [],
-      red_bottom: [],
-      blue_top: [],
-      blue_bottom: [],
-    });
-    setHitSlots([]);
-    setExplodingSlots([]);
-    setCollisionEffects([]);
-    setMySubmitted(Boolean(nextState.players[currentSlot]?.pathSubmitted));
-    const ally = Object.values(nextState.players).find(
-      (player) =>
-        player.team === nextState.players[currentSlot].team &&
-        player.slot !== currentSlot,
-    );
-    setAllySubmitted(Boolean(ally?.pathSubmitted));
-    if (nextState.phase !== 'gameover') {
-      setGameOverMessage(null);
-      setRematchRequested(false);
-      setRematchRequestSent(false);
-    }
-  }, [currentSlot, setRematchRequestSent, setTwoVsTwoDisplayPositions]);
+  const applyState = useCallback(
+    (nextState: TwoVsTwoClientState) => {
+      stateRef.current = nextState;
+      setState(nextState);
+      setTwoVsTwoDisplayPositions(buildDisplayPositions(nextState));
+      setMyPath([]);
+      setAllyPath([]);
+      setEnemyPaths({
+        red_top: [],
+        red_bottom: [],
+        blue_top: [],
+        blue_bottom: [],
+      });
+      setHitSlots([]);
+      setExplodingSlots([]);
+      setCollisionEffects([]);
+      setMySubmitted(Boolean(nextState.players[currentSlot]?.pathSubmitted));
+      const ally = Object.values(nextState.players).find(
+        (player) =>
+          player.team === nextState.players[currentSlot].team &&
+          player.slot !== currentSlot,
+      );
+      setAllySubmitted(Boolean(ally?.pathSubmitted));
+      if (nextState.phase !== "gameover") {
+        setGameOverMessage(null);
+        setRematchRequested(false);
+        setRematchRequestSent(false);
+      }
+    },
+    [currentSlot, setRematchRequestSent, setTwoVsTwoDisplayPositions],
+  );
 
-  const animateResolution = useCallback((payload: TwoVsTwoResolutionPayload) => {
-    clearAnimationTimeout();
-    clearEffectTimeouts();
-    startTwoVsTwoAnimation(payload);
+  const animateResolution = useCallback(
+    (payload: TwoVsTwoResolutionPayload) => {
+      clearAnimationTimeout();
+      clearEffectTimeouts();
+      startTwoVsTwoAnimation(payload);
 
-    const maxSteps = Math.max(
-      ...(Object.keys(payload.paths) as TwoVsTwoSlot[]).map(
-        (slot) => [payload.starts[slot], ...payload.paths[slot]].length,
-      ),
-      1,
-    );
+      const maxSteps = Math.max(
+        ...(Object.keys(payload.paths) as TwoVsTwoSlot[]).map(
+          (slot) => [payload.starts[slot], ...payload.paths[slot]].length,
+        ),
+        1,
+      );
 
-    const hitsByStep = new Map<number, TwoVsTwoPlayerHitEvent[]>();
-    for (const hit of payload.playerHits) {
-      const hits = hitsByStep.get(hit.step) ?? [];
-      hits.push(hit);
-      hitsByStep.set(hit.step, hits);
-    }
-
-    setEnemyPaths(payload.paths);
-    let step = 0;
-    const tick = () => {
-      if (step >= maxSteps) {
-        finishTwoVsTwoAnimation();
-        setEnemyPaths({ red_top: [], red_bottom: [], blue_top: [], blue_bottom: [] });
-        return;
+      const hitsByStep = new Map<number, TwoVsTwoPlayerHitEvent[]>();
+      for (const hit of payload.playerHits) {
+        const hits = hitsByStep.get(hit.step) ?? [];
+        hits.push(hit);
+        hitsByStep.set(hit.step, hits);
       }
 
-      advanceTwoVsTwoStep();
+      setEnemyPaths(payload.paths);
+      let step = 0;
+      const tick = () => {
+        if (step >= maxSteps) {
+          finishTwoVsTwoAnimation();
+          setEnemyPaths({
+            red_top: [],
+            red_bottom: [],
+            blue_top: [],
+            blue_bottom: [],
+          });
+          return;
+        }
 
-      const stepHits = hitsByStep.get(step) ?? [];
-      if (stepHits.length > 0) {
-        setState((prev) => {
-          if (!prev) return prev;
-          const players = { ...prev.players };
-          for (const hit of stepHits) {
-            players[hit.slot] = { ...players[hit.slot], hp: hit.newHp };
-          }
-          return { ...prev, players };
-        });
+        advanceTwoVsTwoStep();
 
-        const visualHitId = window.setTimeout(() => {
-          setHitSlots(stepHits.map((hit) => hit.slot));
-          setCollisionEffects(
-            stepHits.map((hit) => ({
-              id: Date.now() + Math.random(),
-              position: ([payload.starts[hit.slot], ...payload.paths[hit.slot]])[
-                Math.min(step + 1, payload.paths[hit.slot].length)
-              ],
-              direction: calcHitDirection(hit.slot, step, payload.paths, payload.starts),
-            })),
-          );
-          setBoardShakeKey((k) => k + 1);
+        const stepHits = hitsByStep.get(step) ?? [];
+        if (stepHits.length > 0) {
+          setState((prev) => {
+            if (!prev) return prev;
+            const players = { ...prev.players };
+            for (const hit of stepHits) {
+              players[hit.slot] = { ...players[hit.slot], hp: hit.newHp };
+            }
+            return { ...prev, players };
+          });
 
-          const resetHitsId = window.setTimeout(() => {
-            setHitSlots([]);
-            setCollisionEffects([]);
-            effectTimeoutsRef.current = effectTimeoutsRef.current.filter((id) => id !== resetHitsId);
-          }, 600);
-          effectTimeoutsRef.current.push(resetHitsId);
+          const visualHitId = window.setTimeout(() => {
+            setHitSlots(stepHits.map((hit) => hit.slot));
+            setCollisionEffects(
+              stepHits.map((hit) => ({
+                id: Date.now() + Math.random(),
+                position: [
+                  payload.starts[hit.slot],
+                  ...payload.paths[hit.slot],
+                ][Math.min(step + 1, payload.paths[hit.slot].length)],
+                direction: calcHitDirection(
+                  hit.slot,
+                  step,
+                  payload.paths,
+                  payload.starts,
+                ),
+              })),
+            );
+            setBoardShakeKey((k) => k + 1);
 
-          const killed = stepHits.filter((hit) => hit.newHp <= 0).map((hit) => hit.slot);
-          if (killed.length > 0) {
-            const explodeId = window.setTimeout(() => {
-              setExplodingSlots((prev) => [...new Set([...prev, ...killed])]);
-              const removeExplodeId = window.setTimeout(() => {
-                setExplodingSlots((prev) => prev.filter((slot) => !killed.includes(slot)));
+            const resetHitsId = window.setTimeout(() => {
+              setHitSlots([]);
+              setCollisionEffects([]);
+              effectTimeoutsRef.current = effectTimeoutsRef.current.filter(
+                (id) => id !== resetHitsId,
+              );
+            }, 600);
+            effectTimeoutsRef.current.push(resetHitsId);
+
+            const killed = stepHits
+              .filter((hit) => hit.newHp <= 0)
+              .map((hit) => hit.slot);
+            if (killed.length > 0) {
+              const explodeId = window.setTimeout(() => {
+                setExplodingSlots((prev) => [...new Set([...prev, ...killed])]);
+                const removeExplodeId = window.setTimeout(() => {
+                  setExplodingSlots((prev) =>
+                    prev.filter((slot) => !killed.includes(slot)),
+                  );
+                  effectTimeoutsRef.current = effectTimeoutsRef.current.filter(
+                    (id) => id !== removeExplodeId,
+                  );
+                }, 600);
+                effectTimeoutsRef.current.push(removeExplodeId);
                 effectTimeoutsRef.current = effectTimeoutsRef.current.filter(
-                  (id) => id !== removeExplodeId,
+                  (id) => id !== explodeId,
                 );
               }, 600);
-              effectTimeoutsRef.current.push(removeExplodeId);
-              effectTimeoutsRef.current = effectTimeoutsRef.current.filter((id) => id !== explodeId);
-            }, 600);
-            effectTimeoutsRef.current.push(explodeId);
-          }
+              effectTimeoutsRef.current.push(explodeId);
+            }
 
-          effectTimeoutsRef.current = effectTimeoutsRef.current.filter((id) => id !== visualHitId);
-        }, HIT_VISUAL_DELAY_MS);
-        effectTimeoutsRef.current.push(visualHitId);
-      }
+            effectTimeoutsRef.current = effectTimeoutsRef.current.filter(
+              (id) => id !== visualHitId,
+            );
+          }, HIT_VISUAL_DELAY_MS);
+          effectTimeoutsRef.current.push(visualHitId);
+        }
 
-      step += 1;
-      timeoutRef.current = window.setTimeout(tick, STEP_DURATION_MS + (stepHits.length > 0 ? HIT_STOP_MS : 0));
-    };
+        step += 1;
+        timeoutRef.current = window.setTimeout(
+          tick,
+          STEP_DURATION_MS + (stepHits.length > 0 ? HIT_STOP_MS : 0),
+        );
+      };
 
-    timeoutRef.current = window.setTimeout(tick, STEP_DURATION_MS);
-  }, [
-    advanceTwoVsTwoStep,
-    clearAnimationTimeout,
-    clearEffectTimeouts,
-    finishTwoVsTwoAnimation,
-    startTwoVsTwoAnimation,
-  ]);
+      timeoutRef.current = window.setTimeout(tick, STEP_DURATION_MS);
+    },
+    [
+      advanceTwoVsTwoStep,
+      clearAnimationTimeout,
+      clearEffectTimeouts,
+      finishTwoVsTwoAnimation,
+      startTwoVsTwoAnimation,
+    ],
+  );
 
   useEffect(() => {
     const socket = getSocket();
@@ -434,7 +472,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
     }: {
       roomId: string;
       slot: TwoVsTwoSlot;
-      team: 'red' | 'blue';
+      team: "red" | "blue";
     }) => {
       setMyColor(team);
       setTwoVsTwoSlot(slot);
@@ -443,7 +481,12 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       setState(null);
       setMyPath([]);
       setAllyPath([]);
-      setEnemyPaths({ red_top: [], red_bottom: [], blue_top: [], blue_bottom: [] });
+      setEnemyPaths({
+        red_top: [],
+        red_bottom: [],
+        blue_top: [],
+        blue_bottom: [],
+      });
       setHitSlots([]);
       setExplodingSlots([]);
       setCollisionEffects([]);
@@ -452,12 +495,14 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       setRematchRequested(false);
       setRematchRequestSent(false);
       setGameOverMessage(null);
-      socket.emit('twovtwo_client_ready');
+      socket.emit("twovtwo_client_ready");
     };
 
     const onMatchmakingWaiting = () => {
       setRematchRequested(true);
-      setGameOverMessage(lang === 'en' ? 'Waiting for another team...' : '다른 팀을 찾는 중...');
+      setGameOverMessage(
+        lang === "en" ? "Waiting for another team..." : "다른 팀을 찾는 중...",
+      );
     };
 
     const onPathUpdated = ({
@@ -466,7 +511,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       path,
     }: {
       slot: TwoVsTwoSlot;
-      team: 'red' | 'blue';
+      team: "red" | "blue";
       path: Position[];
     }) => {
       const latestState = stateRef.current;
@@ -483,7 +528,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       path,
     }: {
       slot: TwoVsTwoSlot;
-      team: 'red' | 'blue';
+      team: "red" | "blue";
       path: Position[];
     }) => {
       setState((prev) => {
@@ -522,7 +567,10 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       if (slot === currentSlotRef.current) {
         setMyPath([]);
         setMySubmitted(true);
-      } else if (nextState.players[slot].team === nextState.players[currentSlotRef.current].team) {
+      } else if (
+        nextState.players[slot].team ===
+        nextState.players[currentSlotRef.current].team
+      ) {
         setAllyPath([]);
         setAllySubmitted(true);
       }
@@ -530,7 +578,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
 
     const onResolution = (payload: TwoVsTwoResolutionPayload) => {
       setRoundInfo(null);
-      setState((prev) => (prev ? { ...prev, phase: 'moving' } : prev));
+      setState((prev) => (prev ? { ...prev, phase: "moving" } : prev));
       animateResolution(payload);
     };
 
@@ -538,16 +586,21 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       result,
       message,
     }: {
-      result: 'red' | 'blue' | 'draw';
+      result: "red" | "blue" | "draw";
       message?: string;
     }) => {
       setState((prev) =>
-        prev ? { ...prev, phase: 'gameover', gameResult: result } : prev,
+        prev ? { ...prev, phase: "gameover", gameResult: result } : prev,
       );
       if (message) setGameOverMessage(message);
       clearAnimationTimeout();
       finishTwoVsTwoAnimation();
-      setEnemyPaths({ red_top: [], red_bottom: [], blue_top: [], blue_bottom: [] });
+      setEnemyPaths({
+        red_top: [],
+        red_bottom: [],
+        blue_top: [],
+        blue_bottom: [],
+      });
     };
 
     const onChatReceive = (msg: ChatMessage) => {
@@ -559,7 +612,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       pieceSkin,
     }: {
       slot: TwoVsTwoSlot;
-      pieceSkin: TwoVsTwoClientState['players'][TwoVsTwoSlot]['pieceSkin'];
+      pieceSkin: TwoVsTwoClientState["players"][TwoVsTwoSlot]["pieceSkin"];
     }) => {
       setState((prev) => {
         if (!prev) return prev;
@@ -575,37 +628,37 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
 
     const onRematchRequested = () => setRematchRequested(true);
 
-    socket.on('twovtwo_game_start', onGameStart);
-    socket.on('twovtwo_round_start', onRoundStart);
-    socket.on('twovtwo_room_joined', onRoomJoined);
-    socket.on('twovtwo_matchmaking_waiting', onMatchmakingWaiting);
-    socket.on('twovtwo_path_updated', onPathUpdated);
-    socket.on('twovtwo_player_submitted', onPlayerSubmitted);
-    socket.on('twovtwo_player_disconnected', onPlayerDisconnected);
-    socket.on('twovtwo_resolution', onResolution);
-    socket.on('twovtwo_game_over', onGameOver);
-    socket.on('chat_receive', onChatReceive);
-    socket.on('player_skin_updated', onPlayerSkinUpdated);
-    socket.on('rematch_requested', onRematchRequested);
-    socket.emit('twovtwo_client_ready');
+    socket.on("twovtwo_game_start", onGameStart);
+    socket.on("twovtwo_round_start", onRoundStart);
+    socket.on("twovtwo_room_joined", onRoomJoined);
+    socket.on("twovtwo_matchmaking_waiting", onMatchmakingWaiting);
+    socket.on("twovtwo_path_updated", onPathUpdated);
+    socket.on("twovtwo_player_submitted", onPlayerSubmitted);
+    socket.on("twovtwo_player_disconnected", onPlayerDisconnected);
+    socket.on("twovtwo_resolution", onResolution);
+    socket.on("twovtwo_game_over", onGameOver);
+    socket.on("chat_receive", onChatReceive);
+    socket.on("player_skin_updated", onPlayerSkinUpdated);
+    socket.on("rematch_requested", onRematchRequested);
+    socket.emit("twovtwo_client_ready");
 
     return () => {
       clearAnimationTimeout();
       clearEffectTimeouts();
       finishTwoVsTwoAnimation();
       setTwoVsTwoDisplayPositions(null);
-      socket.off('twovtwo_game_start', onGameStart);
-      socket.off('twovtwo_round_start', onRoundStart);
-      socket.off('twovtwo_room_joined', onRoomJoined);
-      socket.off('twovtwo_matchmaking_waiting', onMatchmakingWaiting);
-      socket.off('twovtwo_path_updated', onPathUpdated);
-      socket.off('twovtwo_player_submitted', onPlayerSubmitted);
-      socket.off('twovtwo_player_disconnected', onPlayerDisconnected);
-      socket.off('twovtwo_resolution', onResolution);
-      socket.off('twovtwo_game_over', onGameOver);
-      socket.off('chat_receive', onChatReceive);
-      socket.off('player_skin_updated', onPlayerSkinUpdated);
-      socket.off('rematch_requested', onRematchRequested);
+      socket.off("twovtwo_game_start", onGameStart);
+      socket.off("twovtwo_round_start", onRoundStart);
+      socket.off("twovtwo_room_joined", onRoomJoined);
+      socket.off("twovtwo_matchmaking_waiting", onMatchmakingWaiting);
+      socket.off("twovtwo_path_updated", onPathUpdated);
+      socket.off("twovtwo_player_submitted", onPlayerSubmitted);
+      socket.off("twovtwo_player_disconnected", onPlayerDisconnected);
+      socket.off("twovtwo_resolution", onResolution);
+      socket.off("twovtwo_game_over", onGameOver);
+      socket.off("chat_receive", onChatReceive);
+      socket.off("player_skin_updated", onPlayerSkinUpdated);
+      socket.off("rematch_requested", onRematchRequested);
     };
   }, [
     animateResolution,
@@ -621,48 +674,56 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
   ]);
 
   if (!state) {
-    return <div className="gs-loading">{lang === 'en' ? 'Loading 2v2...' : '2v2 로딩 중...'}</div>;
+    return (
+      <div className="gs-loading">
+        {lang === "en" ? "Loading 2v2..." : "2v2 로딩 중..."}
+      </div>
+    );
   }
 
   const myTeam = state.players[currentSlot].team;
-  const enemyTeam = myTeam === 'red' ? 'blue' : 'red';
+  const enemyTeam = myTeam === "red" ? "blue" : "red";
   const [me, ally] = getTeamMates(state, myTeam).sort((a, b) =>
-    a.slot === currentSlot ? -1 : b.slot === currentSlot ? 1 : a.slot.localeCompare(b.slot),
+    a.slot === currentSlot
+      ? -1
+      : b.slot === currentSlot
+        ? 1
+        : a.slot.localeCompare(b.slot),
   );
   const [enemyLeft, enemyRight] = getTeamMates(state, enemyTeam);
 
   const resultCopy = state.gameResult
-    ? state.gameResult === 'draw'
-      ? lang === 'en'
-        ? 'Draw'
-        : '무승부'
+    ? state.gameResult === "draw"
+      ? lang === "en"
+        ? "Draw"
+        : "무승부"
       : state.gameResult === myTeam
-        ? lang === 'en'
-          ? 'Victory'
-          : '승리'
-        : lang === 'en'
-          ? 'Defeat'
-          : '패배'
+        ? lang === "en"
+          ? "Victory"
+          : "승리"
+        : lang === "en"
+          ? "Defeat"
+          : "패배"
     : null;
 
   const roleLabel =
     state.attackerTeam === myTeam
-      ? lang === 'en'
-        ? 'Attack'
-        : '공격'
-      : lang === 'en'
-        ? 'Escape'
-        : '도망';
+      ? lang === "en"
+        ? "Attack"
+        : "공격"
+      : lang === "en"
+        ? "Escape"
+        : "도망";
 
   const handleRematch = () => {
-    getSocket().emit('request_rematch');
+    getSocket().emit("request_rematch");
     setRematchRequestSent(true);
   };
   const dailyRewardRemaining = Math.max(0, 120 - accountDailyRewardTokens);
   const rewardCopy =
-    state.phase === 'gameover' && state.gameResult === myTeam
+    state.phase === "gameover" && state.gameResult === myTeam
       ? Math.min(6, dailyRewardRemaining) > 0
-        ? lang === 'en'
+        ? lang === "en"
           ? `+${Math.min(6, dailyRewardRemaining)} Tokens`
           : `+${Math.min(6, dailyRewardRemaining)} 토큰 획득`
         : null
@@ -671,39 +732,48 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
   return (
     <div
       className="game-screen twovtwo-screen"
-      style={{ '--gs-scale': scale } as CSSProperties}
+      style={{ "--gs-scale": scale } as CSSProperties}
     >
       <div className="gs-utility-bar">
         <div className="gs-timer-slot">
-          {state.phase === 'planning' && roundInfo && (
-            <TimerBar duration={roundInfo.timeLimit} roundEndsAt={roundInfo.roundEndsAt} />
+          {state.phase === "planning" && roundInfo && (
+            <TimerBar
+              duration={roundInfo.timeLimit}
+              roundEndsAt={roundInfo.roundEndsAt}
+            />
           )}
-          {state.phase === 'moving' && (
+          {state.phase === "moving" && (
             <div className="gs-phase-moving">
               <span className="gs-moving-pip" />
-              {lang === 'en' ? 'Resolving' : '해결 중'}
+              {lang === "en" ? "Resolving" : "해결 중"}
             </div>
           )}
         </div>
         <div className="gs-utility-buttons">
-          <button className="gs-lobby-btn" onClick={onLeaveToLobby}>Lobby</button>
+          <button className="gs-lobby-btn" onClick={onLeaveToLobby}>
+            Lobby
+          </button>
         </div>
       </div>
 
-      <div className={`twovtwo-team-card twovtwo-team-card-opponent twovtwo-team-${enemyTeam}`}>
+      <div
+        className={`twovtwo-team-card twovtwo-team-card-opponent twovtwo-team-${enemyTeam}`}
+      >
         <div className="twovtwo-player-side">
           {enemyLeft.connected ? (
             <PlayerInfo player={enemyLeft} isMe={false} />
           ) : (
             <div className="twovtwo-player-disconnected">
-              {lang === 'en' ? 'Disconnected' : '연결 끊김'}
+              {lang === "en" ? "Disconnected" : "연결 끊김"}
             </div>
           )}
-          <div className="twovtwo-hp"><HeartsDisplay hp={enemyLeft.hp} /></div>
+          <div className="twovtwo-hp">
+            <HeartsDisplay hp={enemyLeft.hp} />
+          </div>
         </div>
         <div className="twovtwo-role-box gs-role-badge">
           <div className="twovtwo-role-sub">
-            {lang === 'en' ? `Turn ${state.turn}` : `${state.turn}턴`}
+            {lang === "en" ? `Turn ${state.turn}` : `${state.turn}턴`}
           </div>
         </div>
         <div className="twovtwo-player-side twovtwo-player-side-right">
@@ -711,10 +781,12 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
             <PlayerInfo player={enemyRight} isMe={false} />
           ) : (
             <div className="twovtwo-player-disconnected">
-              {lang === 'en' ? 'Disconnected' : '연결 끊김'}
+              {lang === "en" ? "Disconnected" : "연결 끊김"}
             </div>
           )}
-          <div className="twovtwo-hp"><HeartsDisplay hp={enemyRight.hp} /></div>
+          <div className="twovtwo-hp">
+            <HeartsDisplay hp={enemyRight.hp} />
+          </div>
         </div>
       </div>
 
@@ -723,23 +795,37 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
           <div className="gs-result-slot">
             <div className="gameover-overlay">
               <div className="gameover-box">
-                <div className={`gameover-result ${state.gameResult === myTeam ? 'win' : 'lose'}`}>
+                <div
+                  className={`gameover-result ${state.gameResult === myTeam ? "win" : "lose"}`}
+                >
                   {resultCopy}
                 </div>
-                {gameOverMessage && <div className="gameover-message">{gameOverMessage}</div>}
-                {rewardCopy && <div className="gameover-reward">{rewardCopy}</div>}
+                {gameOverMessage && (
+                  <div className="gameover-message">{gameOverMessage}</div>
+                )}
+                {rewardCopy && (
+                  <div className="gameover-reward">{rewardCopy}</div>
+                )}
                 {rematchRequested && (
                   <div className="rematch-notice">
-                    {lang === 'en' ? 'A player requested rematch.' : '한 플레이어가 재도전을 요청했습니다.'}
+                    {lang === "en"
+                      ? "A player requested rematch."
+                      : "한 플레이어가 재도전을 요청했습니다."}
                   </div>
                 )}
                 {rematchRequestSent && (
                   <div className="rematch-notice">
-                    {lang === 'en' ? 'Rematch request sent.' : '재도전 요청을 보냈습니다.'}
+                    {lang === "en"
+                      ? "Rematch request sent."
+                      : "재도전 요청을 보냈습니다."}
                   </div>
                 )}
-                <button className="rematch-btn" onClick={handleRematch} disabled={rematchRequestSent}>
-                  {lang === 'en' ? 'Retry' : '재도전'}
+                <button
+                  className="rematch-btn"
+                  onClick={handleRematch}
+                  disabled={rematchRequestSent}
+                >
+                  {lang === "en" ? "Retry" : "재도전"}
                 </button>
               </div>
             </div>
@@ -765,23 +851,25 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       </div>
 
       <div
-        className={`twovtwo-team-card twovtwo-team-card-self twovtwo-team-${myTeam} gs-self gs-role-${me?.role === 'attacker' ? 'atk' : 'run'}`}
+        className={`twovtwo-team-card twovtwo-team-card-self twovtwo-team-${myTeam} gs-self gs-role-${me?.role === "attacker" ? "atk" : "run"}`}
       >
         <div className="twovtwo-player-side">
           {me.connected ? (
             <PlayerInfo player={me} isMe />
           ) : (
             <div className="twovtwo-player-disconnected">
-              {lang === 'en' ? 'Disconnected' : '연결 끊김'}
+              {lang === "en" ? "Disconnected" : "연결 끊김"}
             </div>
           )}
-          <div className="twovtwo-hp"><HeartsDisplay hp={me.hp} /></div>
+          <div className="twovtwo-hp">
+            <HeartsDisplay hp={me.hp} />
+          </div>
         </div>
         <div
-          className={`twovtwo-role-box gs-role-badge gs-role-badge-self gs-role-badge-${me?.role === 'attacker' ? 'atk' : 'run'}`}
+          className={`twovtwo-role-box gs-role-badge gs-role-badge-self gs-role-badge-${me?.role === "attacker" ? "atk" : "run"}`}
         >
           <span className="gs-role-icon">
-            {state.attackerTeam === myTeam ? 'ATK' : 'RUN'}
+            {state.attackerTeam === myTeam ? "ATK" : "RUN"}
           </span>
           <span className="gs-role-label">{roleLabel}</span>
         </div>
@@ -790,27 +878,35 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
             <PlayerInfo player={ally} isMe={false} />
           ) : (
             <div className="twovtwo-player-disconnected">
-              {lang === 'en' ? 'Disconnected' : '연결 끊김'}
+              {lang === "en" ? "Disconnected" : "연결 끊김"}
             </div>
           )}
-          <div className="twovtwo-hp"><HeartsDisplay hp={ally.hp} /></div>
+          <div className="twovtwo-hp">
+            <HeartsDisplay hp={ally.hp} />
+          </div>
         </div>
       </div>
 
       <div className="coop-path-bar">
-        <div className="coop-path-bar__label">{lang === 'en' ? 'Path Points' : '경로 포인트'}</div>
+        <div className="coop-path-bar__label">
+          {lang === "en" ? "Path Points" : "경로 포인트"}
+        </div>
         <div className="coop-path-bar__track">
           {Array.from({ length: state.pathPoints }, (_, index) => (
             <span
               key={index}
-              className={`coop-path-bar__pip ${index < myPath.length ? 'is-filled' : ''}`}
+              className={`coop-path-bar__pip ${index < myPath.length ? "is-filled" : ""}`}
             />
           ))}
         </div>
         <div className="coop-path-bar__value">
           {myPath.length} / {state.pathPoints}
-          {allySubmitted && state.phase === 'planning' ? ` · ${lang === 'en' ? 'ally ready' : '팀원 준비'}` : ''}
-          {mySubmitted && state.phase === 'planning' ? ` · ${lang === 'en' ? 'ready' : '준비 완료'}` : ''}
+          {allySubmitted && state.phase === "planning"
+            ? ` · ${lang === "en" ? "ally ready" : "팀원 준비"}`
+            : ""}
+          {mySubmitted && state.phase === "planning"
+            ? ` · ${lang === "en" ? "ready" : "준비 완료"}`
+            : ""}
         </div>
       </div>
     </div>
@@ -837,13 +933,14 @@ function HeartsDisplay({ hp, maxHp = 3 }: { hp: number; maxHp?: number }) {
         const filled = index < hp;
         const dying = dyingIndex === index;
         return (
-          <span key={index} className={`heart ${filled ? 'filled' : dying ? 'dying' : 'empty'}`}>
-            {filled || dying ? '♥' : '♡'}
+          <span
+            key={index}
+            className={`heart ${filled ? "filled" : dying ? "dying" : "empty"}`}
+          >
+            {filled || dying ? "♥" : "♡"}
           </span>
         );
       })}
     </>
   );
 }
-
-

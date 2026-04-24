@@ -75,7 +75,7 @@ interface Props {
 const MIN_CELL = 52;
 const MAX_CELL = 160;
 const STEP_DURATION_MS = 200;
-const HIT_STOP_MS = 100;
+const HIT_STOP_MS = 0;
 const HIT_VISUAL_DELAY_MS = 0;
 const SKILL_PAUSE_MS = 640;
 const SKILL_CAST_DELAY_MS = 500;
@@ -450,7 +450,11 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     blue: boolean;
   }>({ red: false, blue: false });
   const [collisionEffects, setCollisionEffects] = useState<
-    Array<{ id: number; position: Position; direction: { dx: number; dy: number } }>
+    Array<{
+      id: number;
+      position: Position;
+      direction: { dx: number; dy: number };
+    }>
   >([]);
   const [boardShakeKey, setBoardShakeKey] = useState(0);
   const [teleportEffects, setTeleportEffects] = useState<
@@ -513,13 +517,13 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [rewindingPieceColor, setRewindingPieceColor] =
     useState<PlayerColor | null>(null);
   const resultAudioPlayedRef = useRef(false);
-  const [connStatus, setConnStatus] = useState<"connected" | "reconnecting" | "failed">("connected");
+  const [connStatus, setConnStatus] = useState<
+    "connected" | "reconnecting" | "failed"
+  >("connected");
 
   const getAbilitySocket = useCallback(
     () =>
-      isLocalAbilityTraining
-        ? getLocalAbilityTrainingSocket()
-        : getSocket(),
+      isLocalAbilityTraining ? getLocalAbilityTrainingSocket() : getSocket(),
     [isLocalAbilityTraining],
   );
 
@@ -1338,7 +1342,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     const opponentColor = currentColor === "red" ? "blue" : "red";
     const opponentPosition = state.players[opponentColor].position;
     const teleportOrigin =
-      myPath.length > 0 ? myPath[myPath.length - 1] : state.players[currentColor].position;
+      myPath.length > 0
+        ? myPath[myPath.length - 1]
+        : state.players[currentColor].position;
     const rowDistance = Math.abs(target.row - teleportOrigin.row);
     const colDistance = Math.abs(target.col - teleportOrigin.col);
     if (
@@ -1611,7 +1617,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     capturingControlKey: null,
     closeTopLobbyModal: closeTrainingSkillSelect,
     isControlsSettingsOpen: false,
-    keyboardEnabled: keyboardControls.keyboardEnabled && showTrainingSkillSelect,
+    keyboardEnabled:
+      keyboardControls.keyboardEnabled && showTrainingSkillSelect,
     selectKey: keyboardControls.selectActionKey,
   });
 
@@ -1775,12 +1782,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               row: origin.row + dir.row,
               col: origin.col + dir.col,
             };
-            if (
-              next.row < 0 ||
-              next.row > 4 ||
-              next.col < 0 ||
-              next.col > 4
-            ) {
+            if (next.row < 0 || next.row > 4 || next.col < 0 || next.col > 4) {
               return origin;
             }
             return next;
@@ -2030,7 +2032,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }, 650);
       triggerHeartShake(color, Math.max(0, hpAfter));
       const effectId = Date.now() + Math.random();
-      setCollisionEffects((prev) => [...prev, { id: effectId, position, direction }]);
+      setCollisionEffects((prev) => [
+        ...prev,
+        { id: effectId, position, direction },
+      ]);
       queueAnimationTimeout(() => {
         setCollisionEffects((prev) =>
           prev.filter((entry) => entry.id !== effectId),
@@ -2137,7 +2142,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         }
         for (const position of event.affectedPositions ?? []) {
           const effectId = Date.now() + Math.random();
-          setCollisionEffects((prev) => [...prev, { id: effectId, position, direction: { dx: 0, dy: 0 } }]);
+          setCollisionEffects((prev) => [
+            ...prev,
+            { id: effectId, position, direction: { dx: 0, dy: 0 } },
+          ]);
           queueAnimationTimeout(() => {
             setCollisionEffects((prev) =>
               prev.filter((entry) => entry.id !== effectId),
@@ -2158,7 +2166,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         }
         for (const position of event.affectedPositions ?? []) {
           const effectId = Date.now() + Math.random();
-          setCollisionEffects((prev) => [...prev, { id: effectId, position, direction: { dx: 0, dy: 0 } }]);
+          setCollisionEffects((prev) => [
+            ...prev,
+            { id: effectId, position, direction: { dx: 0, dy: 0 } },
+          ]);
           queueAnimationTimeout(() => {
             setCollisionEffects((prev) =>
               prev.filter((entry) => entry.id !== effectId),
@@ -2173,7 +2184,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         }
         for (const position of event.affectedPositions ?? []) {
           const effectId = Date.now() + Math.random();
-          setCollisionEffects((prev) => [...prev, { id: effectId, position, direction: { dx: 0, dy: 0 } }]);
+          setCollisionEffects((prev) => [
+            ...prev,
+            { id: effectId, position, direction: { dx: 0, dy: 0 } },
+          ]);
           queueAnimationTimeout(() => {
             setCollisionEffects((prev) =>
               prev.filter((entry) => entry.id !== effectId),
@@ -2212,7 +2226,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         setMovingBlitzProgress((prev) => ({ ...prev, [event.color]: 0 }));
         for (const position of event.affectedPositions ?? []) {
           const effectId = Date.now() + Math.random();
-          setCollisionEffects((prev) => [...prev, { id: effectId, position, direction: { dx: 0, dy: 0 } }]);
+          setCollisionEffects((prev) => [
+            ...prev,
+            { id: effectId, position, direction: { dx: 0, dy: 0 } },
+          ]);
           queueAnimationTimeout(() => {
             setCollisionEffects((prev) =>
               prev.filter((entry) => entry.id !== effectId),
@@ -2803,11 +2820,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           },
         };
       });
-      const attackerColor = collision.escapeeColor === 'red' ? 'blue' : 'red';
-      const attackerSeq = attackerColor === 'red' ? redSeq : blueSeq;
+      const attackerColor = collision.escapeeColor === "red" ? "blue" : "red";
+      const attackerSeq = attackerColor === "red" ? redSeq : blueSeq;
       const s = collision.step;
       const cur = attackerSeq[Math.min(s, attackerSeq.length - 1)];
-      const prev = attackerSeq[Math.min(Math.max(s - 1, 0), attackerSeq.length - 1)];
+      const prev =
+        attackerSeq[Math.min(Math.max(s - 1, 0), attackerSeq.length - 1)];
       const direction = { dx: cur.col - prev.col, dy: cur.row - prev.row };
       triggerLocalHit(
         collision.escapeeColor,
@@ -3034,23 +3052,26 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }
 
       const stepHasCollision = (collisionMap.get(step) ?? []).length > 0;
-      queueAnimationTimeout(() => {
-        runStepEventsAndCollisions(step, () => {
-          const finalizeDefenseEnd = () => {
-            const { endedGuards, endedAtFields } = consumeDefenseVisualStep();
+      queueAnimationTimeout(
+        () => {
+          runStepEventsAndCollisions(step, () => {
+            const finalizeDefenseEnd = () => {
+              const { endedGuards, endedAtFields } = consumeDefenseVisualStep();
 
-            const continueStep = () => {
-              advance(step + 1);
+              const continueStep = () => {
+                advance(step + 1);
+              };
+
+              runGuardEndNotice(endedGuards, () =>
+                runAtFieldEndNotice(endedAtFields, continueStep),
+              );
             };
 
-            runGuardEndNotice(endedGuards, () =>
-              runAtFieldEndNotice(endedAtFields, continueStep),
-            );
-          };
-
-          finalizeDefenseEnd();
-        });
-      }, STEP_DURATION_MS + (stepHasCollision ? HIT_STOP_MS : 0));
+            finalizeDefenseEnd();
+          });
+        },
+        STEP_DURATION_MS + (stepHasCollision ? HIT_STOP_MS : 0),
+      );
     };
 
     if (initialRevealPauseMs > 0) {
@@ -3323,7 +3344,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
     const handleConnect = () => {
       const { authAccessToken, myNickname } = useGameStore.getState();
-      socket.emit("rejoin_game", { accessToken: authAccessToken, nickname: myNickname });
+      socket.emit("rejoin_game", {
+        accessToken: authAccessToken,
+        nickname: myNickname,
+      });
     };
 
     const handleRejoinAck = (payload: {
@@ -3404,7 +3428,15 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     return () => {
       clearSubmitTimeouts();
     };
-  }, [currentColor, isLocalAbilityTraining, myPath, mySubmitted, roundInfo, skillReservations, state]);
+  }, [
+    currentColor,
+    isLocalAbilityTraining,
+    myPath,
+    mySubmitted,
+    roundInfo,
+    skillReservations,
+    state,
+  ]);
 
   const trainingSkillSelectOverlay =
     showTrainingSkillSelect &&
@@ -3667,7 +3699,13 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         <div className="gs-reconnecting-overlay">
           <span className="gs-reconnecting-spinner" />
           <span>
-            {connStatus === "reconnecting" ? (lang === "en" ? "Reconnecting…" : "재연결 중…") : (lang === "en" ? "Connection failed" : "연결 실패")}
+            {connStatus === "reconnecting"
+              ? lang === "en"
+                ? "Reconnecting…"
+                : "재연결 중…"
+              : lang === "en"
+                ? "Connection failed"
+                : "연결 실패"}
           </span>
         </div>
       )}
