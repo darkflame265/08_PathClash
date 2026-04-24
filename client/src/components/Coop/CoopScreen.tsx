@@ -236,7 +236,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
             );
 
             for (const portal of hitPortals) {
-              store.triggerCollisionEffect(portal.position);
+              store.triggerCollisionEffect(portal.position, { dx: 0, dy: 0 });
             }
 
             setPortals((prev) =>
@@ -282,7 +282,7 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
             const prevHp = hit.newHp + 1;
             store.triggerHit(hit.color);
             store.triggerHeartShake(hit.color, prevHp - 1);
-            store.triggerCollisionEffect(hitPosition);
+            store.triggerCollisionEffect(hitPosition, { dx: 0, dy: 0 });
             if (hit.newHp <= 0) {
               const timeoutId = window.setTimeout(() => {
                 useGameStore.getState().triggerExplosion(hit.color);
