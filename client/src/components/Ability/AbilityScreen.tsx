@@ -75,6 +75,7 @@ interface Props {
 const MIN_CELL = 52;
 const MAX_CELL = 160;
 const STEP_DURATION_MS = 200;
+const HIT_STOP_MS = 100;
 const HIT_VISUAL_DELAY_MS = 0;
 const SKILL_PAUSE_MS = 640;
 const SKILL_CAST_DELAY_MS = 500;
@@ -449,7 +450,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     blue: boolean;
   }>({ red: false, blue: false });
   const [collisionEffects, setCollisionEffects] = useState<
-    Array<{ id: number; position: Position }>
+    Array<{ id: number; position: Position; direction: { dx: number; dy: number } }>
   >([]);
   const [teleportEffects, setTeleportEffects] = useState<
     Array<{ id: number; color: PlayerColor; from: Position; to: Position }>
@@ -2018,6 +2019,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     color: PlayerColor,
     hpAfter: number,
     position: Position,
+    direction: { dx: number; dy: number } = { dx: 0, dy: 0 },
   ) => {
     queueAnimationTimeout(() => {
       setHitFlags((prev) => ({ ...prev, [color]: true }));
@@ -2026,7 +2028,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       }, 650);
       triggerHeartShake(color, Math.max(0, hpAfter));
       const effectId = Date.now() + Math.random();
-      setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
+      setCollisionEffects((prev) => [...prev, { id: effectId, position, direction }]);
       queueAnimationTimeout(() => {
         setCollisionEffects((prev) =>
           prev.filter((entry) => entry.id !== effectId),
@@ -2133,7 +2135,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         }
         for (const position of event.affectedPositions ?? []) {
           const effectId = Date.now() + Math.random();
-          setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
+          setCollisionEffects((prev) => [...prev, { id: effectId, position, direction: { dx: 0, dy: 0 } }]);
           queueAnimationTimeout(() => {
             setCollisionEffects((prev) =>
               prev.filter((entry) => entry.id !== effectId),
@@ -2154,7 +2156,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         }
         for (const position of event.affectedPositions ?? []) {
           const effectId = Date.now() + Math.random();
-          setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
+          setCollisionEffects((prev) => [...prev, { id: effectId, position, direction: { dx: 0, dy: 0 } }]);
           queueAnimationTimeout(() => {
             setCollisionEffects((prev) =>
               prev.filter((entry) => entry.id !== effectId),
@@ -2169,7 +2171,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         }
         for (const position of event.affectedPositions ?? []) {
           const effectId = Date.now() + Math.random();
-          setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
+          setCollisionEffects((prev) => [...prev, { id: effectId, position, direction: { dx: 0, dy: 0 } }]);
           queueAnimationTimeout(() => {
             setCollisionEffects((prev) =>
               prev.filter((entry) => entry.id !== effectId),
@@ -2208,7 +2210,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         setMovingBlitzProgress((prev) => ({ ...prev, [event.color]: 0 }));
         for (const position of event.affectedPositions ?? []) {
           const effectId = Date.now() + Math.random();
-          setCollisionEffects((prev) => [...prev, { id: effectId, position }]);
+          setCollisionEffects((prev) => [...prev, { id: effectId, position, direction: { dx: 0, dy: 0 } }]);
           queueAnimationTimeout(() => {
             setCollisionEffects((prev) =>
               prev.filter((entry) => entry.id !== effectId),
@@ -2310,7 +2312,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               const effectId = Date.now() + Math.random();
               setCollisionEffects((prev) => [
                 ...prev,
-                { id: effectId, position },
+                { id: effectId, position, direction: { dx: 0, dy: 0 } },
               ]);
               queueAnimationTimeout(() => {
                 setCollisionEffects((prev) =>
@@ -2799,10 +2801,17 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           },
         };
       });
+      const attackerColor = collision.escapeeColor === 'red' ? 'blue' : 'red';
+      const attackerSeq = attackerColor === 'red' ? redSeq : blueSeq;
+      const s = collision.step;
+      const cur = attackerSeq[Math.min(s, attackerSeq.length - 1)];
+      const prev = attackerSeq[Math.max(s - 1, 0)];
+      const direction = { dx: cur.col - prev.col, dy: cur.row - prev.row };
       triggerLocalHit(
         collision.escapeeColor,
         collision.newHp,
         collision.position,
+        direction,
       );
     };
 
@@ -3022,6 +3031,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         );
       }
 
+      const stepHasCollision = (collisionMap.get(step) ?? []).length > 0;
       queueAnimationTimeout(() => {
         runStepEventsAndCollisions(step, () => {
           const finalizeDefenseEnd = () => {
@@ -3038,7 +3048,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
           finalizeDefenseEnd();
         });
-      }, STEP_DURATION_MS);
+      }, STEP_DURATION_MS + (stepHasCollision ? HIT_STOP_MS : 0));
     };
 
     if (initialRevealPauseMs > 0) {
