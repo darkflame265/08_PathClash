@@ -3974,17 +3974,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                 <span className="ability-skill-icon">
                   {renderSkillIcon(skillId)}
                 </span>
-                <span className="ability-skill-name">
+                <span
+                  className={`ability-skill-name ${isTimeRewindSpent ? "used" : ""}`}
+                >
                   {lang === "en" ? skill.name.en : skill.name.kr}
-                  {isTimeRewindSpent && (
-                    <span
-                      className="ability-skill-consumed-mark"
-                      aria-label={lang === "en" ? "Used" : "사용 완료"}
-                      title={lang === "en" ? "Used" : "사용 완료"}
-                    >
-                      ×
-                    </span>
-                  )}
                 </span>
                 <span className="ability-skill-cost">{skill.manaCost}</span>
               </button>

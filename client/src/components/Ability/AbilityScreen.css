@@ -591,22 +591,16 @@
   gap: calc(0.22rem);
 }
 
+.ability-skill-name.used {
+  opacity: 0.4;
+  text-decoration: line-through;
+  filter: grayscale(1);
+}
+
 .ability-skill-cost {
   color: #fbbf24;
   font-family: var(--mono);
   font-size: clamp(0.64rem, calc(0.72rem), 0.86rem);
-}
-
-.ability-skill-consumed-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  color: #f87171;
-  font-size: 1.4em;
-  font-weight: 900;
-  line-height: 1;
-  text-shadow: 0 0 8px rgba(248, 113, 113, 0.35);
 }
 
 .ability-step-picker {
