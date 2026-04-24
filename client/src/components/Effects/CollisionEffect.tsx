@@ -15,10 +15,10 @@ export function CollisionEffect({ position, cellSize, direction }: Props) {
   const y = position.row * cellSize + cellSize / 2;
   const effectSize = Math.max(34, Math.round(cellSize * 0.72));
 
-  const hasDirection = direction && (direction.dx !== 0 || direction.dy !== 0);
-  const primaryAngle = hasDirection
-    ? Math.atan2(direction!.dy, direction!.dx) * (180 / Math.PI)
-    : null;
+  const primaryAngle =
+    direction && (direction.dx !== 0 || direction.dy !== 0)
+      ? Math.atan2(direction.dy, direction.dx) * (180 / Math.PI)
+      : null;
 
   return (
     <div
