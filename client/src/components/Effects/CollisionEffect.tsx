@@ -17,7 +17,7 @@ export function CollisionEffect({ position, cellSize, direction }: Props) {
 
   const primaryAngle =
     direction && (direction.dx !== 0 || direction.dy !== 0)
-      ? Math.atan2(direction.dy, direction.dx) * (180 / Math.PI)
+      ? Math.atan2(direction.dx, -direction.dy) * (180 / Math.PI)
       : null;
 
   return (
