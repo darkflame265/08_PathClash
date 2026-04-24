@@ -38,7 +38,7 @@ interface Props {
   setMySubmitted: () => void;
   hitSlots: TwoVsTwoSlot[];
   explodingSlots: TwoVsTwoSlot[];
-  collisionEffects: { id: number; position: Position }[];
+  collisionEffects: { id: number; position: Position; direction: { dx: number; dy: number } }[];
 }
 
 export function TwoVsTwoGrid({
@@ -313,8 +313,8 @@ export function TwoVsTwoGrid({
           isPlanning={state.phase === 'planning'}
         />
 
-        {collisionEffects.map(({ id, position }) => (
-          <CollisionEffect key={id} position={position} cellSize={responsiveCellSize} />
+        {collisionEffects.map(({ id, position, direction }) => (
+          <CollisionEffect key={id} position={position} cellSize={responsiveCellSize} direction={direction} />
         ))}
 
         {Object.values(state.players)
