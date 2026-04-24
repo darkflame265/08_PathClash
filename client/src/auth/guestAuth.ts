@@ -128,6 +128,8 @@ export interface AccountProfile {
   dailyRewardTokens: number;
   isGuestUser: boolean;
   achievements: PlayerAchievementState[];
+  rotationSkills?: AbilitySkillId[];
+  removedRotationSkills?: AbilitySkillId[];
 }
 
 export interface PendingUpgradeContext {

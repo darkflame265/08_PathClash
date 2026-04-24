@@ -17,6 +17,7 @@ import {
   syncEquippedSkin,
 } from "./auth/guestAuth";
 import { disconnectSocket, getSocket } from "./socket/socketClient";
+import type { AbilitySkillId } from "./types/ability.types";
 import { stopLocalAbilityTraining } from "./ability/localTrainingSession";
 import { useLang } from "./hooks/useLang";
 import { useGameStore } from "./store/gameStore";
@@ -408,6 +409,47 @@ function App() {
         (response: { updateRequired?: boolean } & Partial<UpdateRequiredPayload>) => {
           if (response?.updateRequired) {
             applyUpdateRequired(response as UpdateRequiredPayload);
+            return;
+          }
+          // 1) 로테이션 배지용 데이터 — auth 불필요, 빠름
+          socket.emit(
+            'get_rotation',
+            (rotationResp: { skills: string[] }) => {
+              useGameStore
+                .getState()
+                .setRotationSkills(
+                  (rotationResp?.skills ?? []) as AbilitySkillId[],
+                );
+            },
+          );
+          // 2) 계정 동기화: 만료 스킬 제거 결과 수신
+          if (authAccessToken && authUserId) {
+            socket.emit(
+              'account_sync',
+              { auth: { accessToken: authAccessToken, userId: authUserId ?? undefined } },
+              (syncResp: {
+                status: string;
+                profile?: {
+                  equippedAbilitySkills?: string[];
+                  removedRotationSkills?: string[];
+                  rotationSkills?: string[];
+                };
+              }) => {
+                if (syncResp?.status === 'ACCOUNT_OK' && syncResp.profile) {
+                  const removed = (syncResp.profile.removedRotationSkills ?? []) as AbilitySkillId[];
+                  const rotSkills = (syncResp.profile.rotationSkills ?? []) as AbilitySkillId[];
+                  const store = useGameStore.getState();
+                  if (rotSkills.length > 0) {
+                    store.setRotationSkills(rotSkills);
+                  }
+                  if (removed.length > 0) {
+                    store.setPendingRemovedRotationSkillsNotice(removed);
+                    const equipped = (syncResp.profile.equippedAbilitySkills ?? []) as AbilitySkillId[];
+                    store.setAbilityLoadout(equipped);
+                  }
+                }
+              },
+            );
           }
         },
       );
