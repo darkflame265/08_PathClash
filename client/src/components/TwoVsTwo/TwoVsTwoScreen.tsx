@@ -29,11 +29,35 @@ import '../Game/GameOverOverlay.css';
 import '../Coop/CoopScreen.css';
 import './TwoVsTwoScreen.css';
 
+function calcHitDirection(
+  slot: TwoVsTwoSlot,
+  step: number,
+  paths: Record<TwoVsTwoSlot, Position[]>,
+  starts: Record<TwoVsTwoSlot, Position>,
+): { dx: number; dy: number } {
+  const victimSeq = [starts[slot], ...paths[slot]];
+  const victimPos = victimSeq[Math.min(step, victimSeq.length - 1)];
+  const opposingSlots: TwoVsTwoSlot[] = slot.startsWith('red')
+    ? ['blue_top', 'blue_bottom']
+    : ['red_top', 'red_bottom'];
+
+  for (const opSlot of opposingSlots) {
+    const opSeq = [starts[opSlot], ...paths[opSlot]];
+    const opCur = opSeq[Math.min(step, opSeq.length - 1)];
+    if (opCur.row === victimPos.row && opCur.col === victimPos.col) {
+      const opPrev = opSeq[Math.max(step - 1, 0)];
+      return { dx: opCur.col - opPrev.col, dy: opCur.row - opPrev.row };
+    }
+  }
+  return { dx: 0, dy: 0 };
+}
+
 interface Props {
   onLeaveToLobby: () => void;
 }
 
 const STEP_DURATION_MS = 200;
+const HIT_STOP_MS = 100;
 const HIT_VISUAL_DELAY_MS = 0;
 const DEFAULT_CELL = 96;
 const MIN_CELL = 52;
@@ -107,7 +131,9 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
   });
   const [hitSlots, setHitSlots] = useState<TwoVsTwoSlot[]>([]);
   const [explodingSlots, setExplodingSlots] = useState<TwoVsTwoSlot[]>([]);
-  const [collisionEffects, setCollisionEffects] = useState<{ id: number; position: Position }[]>([]);
+  const [collisionEffects, setCollisionEffects] = useState<
+    { id: number; position: Position; direction: { dx: number; dy: number } }[]
+  >([]);
   const [mySubmitted, setMySubmitted] = useState(false);
   const [allySubmitted, setAllySubmitted] = useState(false);
   const [rematchRequested, setRematchRequested] = useState(false);
@@ -339,6 +365,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
               position: ([payload.starts[hit.slot], ...payload.paths[hit.slot]])[
                 Math.min(step + 1, payload.paths[hit.slot].length)
               ],
+              direction: calcHitDirection(hit.slot, step, payload.paths, payload.starts),
             })),
           );
 
@@ -371,7 +398,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
       }
 
       step += 1;
-      timeoutRef.current = window.setTimeout(tick, STEP_DURATION_MS);
+      timeoutRef.current = window.setTimeout(tick, STEP_DURATION_MS + (stepHits.length > 0 ? HIT_STOP_MS : 0));
     };
 
     timeoutRef.current = window.setTimeout(tick, STEP_DURATION_MS);
