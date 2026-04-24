@@ -19,8 +19,7 @@ export function getSocket(): Socket {
   if (!socket) {
     socket = io(SERVER_URL, {
       autoConnect: false,
-      transports: ["websocket", "polling"],
-      tryAllTransports: true,
+      transports: ["polling", "websocket"],
       timeout: 10_000,
       reconnectionAttempts: 20,
       reconnectionDelay: 500,
@@ -48,6 +47,7 @@ export function connectSocketReady(timeoutMs = 10_000): Promise<Socket> {
 
   return new Promise((resolve, reject) => {
     let settled = false;
+    let lastConnectError: Error | null = null;
     const cleanup = () => {
       window.clearTimeout(timeout);
       s.off("connect", handleConnect);
@@ -58,7 +58,7 @@ export function connectSocketReady(timeoutMs = 10_000): Promise<Socket> {
       settled = true;
       cleanup();
       resetSocket();
-      reject(new Error(SOCKET_CONNECT_FAILED));
+      reject(lastConnectError ?? new Error(SOCKET_CONNECT_FAILED));
     };
     const handleConnect = () => {
       if (settled) return;
@@ -66,13 +66,13 @@ export function connectSocketReady(timeoutMs = 10_000): Promise<Socket> {
       cleanup();
       resolve(s);
     };
-    const handleConnectError = () => {
-      fail();
+    const handleConnectError = (error: Error) => {
+      lastConnectError = error;
     };
     const timeout = window.setTimeout(fail, timeoutMs);
 
     s.once("connect", handleConnect);
-    s.once("connect_error", handleConnectError);
+    s.on("connect_error", handleConnectError);
   });
 }
 

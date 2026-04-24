@@ -67,7 +67,6 @@ import {
   connectSocket,
   connectSocketReady,
   disconnectSocket,
-  resetSocket,
   SOCKET_CONNECT_FAILED,
 } from "../../socket/socketClient";
 import { syncServerTime } from "../../socket/timeSync";
@@ -2682,7 +2681,6 @@ export function LobbyScreen({
     socket.off("ability_room_created");
     socket.off("ability_opponent_joined");
     socket.off("ability_matchmaking_waiting");
-    socket.off("connect_error");
     socket.off("game_start");
     socket.off("round_start");
     socket.off("opponent_submitted");
@@ -2695,19 +2693,6 @@ export function LobbyScreen({
     socket.off("player_skin_updated");
     socket.off("room_closed");
     socket.off("session_replaced");
-
-    socket.on("connect_error", () => {
-      setIsMatchmaking(false);
-      setIsAbilityTrainingQueueing(false);
-      setIsAiTutorialQueueing(false);
-      setMatchType(null);
-      setError(
-        lang === "en"
-          ? "Unable to connect to the game server. Please try again shortly."
-          : "게임 서버에 연결하지 못했습니다. 잠시 후 다시 시도해주세요.",
-      );
-      resetSocket();
-    });
 
     socket.on("game_start", (gs: ClientGameState) => {
       setGameState(gs);

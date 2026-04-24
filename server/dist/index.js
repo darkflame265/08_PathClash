@@ -99,8 +99,8 @@ const io = new socket_io_1.Server(httpServer, {
         },
         methods: ["GET", "POST"],
     },
-    pingInterval: 10000,
-    pingTimeout: 5000,
+    pingInterval: 25000,
+    pingTimeout: 20000,
 });
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 app.get("/app-version/android", (req, res) => {

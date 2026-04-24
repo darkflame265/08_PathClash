@@ -113,8 +113,8 @@ const io = new Server(httpServer, {
     },
     methods: ["GET", "POST"],
   },
-  pingInterval: 10_000,
-  pingTimeout: 5_000,
+  pingInterval: 25_000,
+  pingTimeout: 20_000,
 });
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
