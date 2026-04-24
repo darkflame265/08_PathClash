@@ -390,8 +390,29 @@ function App() {
     socket.emit("update_piece_skin", { pieceSkin });
   }, [pieceSkin]);
 
+  // get_rotation: auth 불필요, 소켓 연결 즉시 호출
   useEffect(() => {
-    console.log('[rotation-debug] session effect ran', { authReady, hasToken: Boolean(authAccessToken) });
+    const socket = getSocket();
+    const fetchRotation = () => {
+      socket.emit(
+        'get_rotation',
+        (rotationResp: { skills: string[] }) => {
+          useGameStore
+            .getState()
+            .setRotationSkills(
+              (rotationResp?.skills ?? []) as AbilitySkillId[],
+            );
+        },
+      );
+    };
+    socket.on('connect', fetchRotation);
+    if (socket.connected) fetchRotation();
+    return () => {
+      socket.off('connect', fetchRotation);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!authReady || !authAccessToken) return;
 
     const socket = getSocket();
@@ -408,25 +429,11 @@ function App() {
           },
         },
         (response: { updateRequired?: boolean } & Partial<UpdateRequiredPayload>) => {
-          console.log('[rotation-debug] session_register ack fired', response);
           if (response?.updateRequired) {
             applyUpdateRequired(response as UpdateRequiredPayload);
             return;
           }
-          // 1) 로테이션 배지용 데이터 — auth 불필요, 빠름
-          console.log('[rotation-debug] emitting get_rotation');
-          socket.emit(
-            'get_rotation',
-            (rotationResp: { skills: string[] }) => {
-              console.log('[rotation-debug] get_rotation response', rotationResp);
-              useGameStore
-                .getState()
-                .setRotationSkills(
-                  (rotationResp?.skills ?? []) as AbilitySkillId[],
-                );
-            },
-          );
-          // 2) 계정 동기화: 만료 스킬 제거 결과 수신
+          // 계정 동기화: 만료 스킬 제거 결과 수신 + rotationSkills 갱신
           if (authAccessToken && authUserId) {
             socket.emit(
               'account_sync',
@@ -439,7 +446,6 @@ function App() {
                   rotationSkills?: string[];
                 };
               }) => {
-                console.log('[rotation-debug] account_sync response rotationSkills', syncResp?.profile?.rotationSkills);
                 if (syncResp?.status === 'ACCOUNT_OK' && syncResp.profile) {
                   const removed = (syncResp.profile.removedRotationSkills ?? []) as AbilitySkillId[];
                   const rotSkills = (syncResp.profile.rotationSkills ?? []) as AbilitySkillId[];
