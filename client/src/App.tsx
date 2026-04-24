@@ -407,14 +407,17 @@ function App() {
           },
         },
         (response: { updateRequired?: boolean } & Partial<UpdateRequiredPayload>) => {
+          console.log('[rotation-debug] session_register ack fired', response);
           if (response?.updateRequired) {
             applyUpdateRequired(response as UpdateRequiredPayload);
             return;
           }
           // 1) 로테이션 배지용 데이터 — auth 불필요, 빠름
+          console.log('[rotation-debug] emitting get_rotation');
           socket.emit(
             'get_rotation',
             (rotationResp: { skills: string[] }) => {
+              console.log('[rotation-debug] get_rotation response', rotationResp);
               useGameStore
                 .getState()
                 .setRotationSkills(
@@ -435,6 +438,7 @@ function App() {
                   rotationSkills?: string[];
                 };
               }) => {
+                console.log('[rotation-debug] account_sync response rotationSkills', syncResp?.profile?.rotationSkills);
                 if (syncResp?.status === 'ACCOUNT_OK' && syncResp.profile) {
                   const removed = (syncResp.profile.removedRotationSkills ?? []) as AbilitySkillId[];
                   const rotSkills = (syncResp.profile.rotationSkills ?? []) as AbilitySkillId[];
