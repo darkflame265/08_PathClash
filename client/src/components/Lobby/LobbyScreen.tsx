@@ -5340,10 +5340,6 @@ export function LobbyScreen({
                               {ABILITY_SFX_GAIN_LABELS[gainId][lang]}
                             </span>
 
-                            <strong>
-                              {Math.round(abilitySfxGains[gainId] * 100)}
-                            </strong>
-
                             <button
                               className="audio-preview-btn"
                               data-keyboard-modal-layer={`audio-ability-preview-${gainId}`}
@@ -5362,6 +5358,10 @@ export function LobbyScreen({
                             >
                               ▶
                             </button>
+
+                            <strong>
+                              {Math.round(abilitySfxGains[gainId] * 100)}
+                            </strong>
                           </div>
 
                           <input
