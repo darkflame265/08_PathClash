@@ -128,6 +128,7 @@ export function registerSocketHandlers(socket: Socket): () => void {
 
 const STEP_DURATION = 200; // ms per step
 const HIT_VISUAL_DELAY_MS = 100;
+const HIT_STOP_MS = 100;
 
 function runAnimation(payload: PathsRevealPayload): void {
   const { redPath, bluePath, redStart, blueStart, collisions } = payload;
@@ -155,6 +156,12 @@ function runAnimation(payload: PathsRevealPayload): void {
     const collision = collisionMap.get(step);
     if (collision) {
       const escapee = collision.escapeeColor;
+      const attackerColor = escapee === 'red' ? 'blue' : 'red';
+      const attackerSeq = attackerColor === 'red' ? redSeq : blueSeq;
+      const cur = attackerSeq[Math.min(step, attackerSeq.length - 1)];
+      const prev = attackerSeq[Math.max(step - 1, 0)];
+      const direction = { dx: cur.col - prev.col, dy: cur.row - prev.row };
+
       const gs = store().gameState;
       if (gs) {
         useGameStore.setState({
@@ -170,7 +177,7 @@ function runAnimation(payload: PathsRevealPayload): void {
 
       window.setTimeout(() => {
         store().triggerHit(escapee);
-        store().triggerCollisionEffect(collision.position);
+        store().triggerCollisionEffect(collision.position, direction);
         const prevHp = collision.newHp + 1;
         store().triggerHeartShake(escapee, prevHp - 1);
         if (!store().isSfxMuted) playHit(store().sfxVolume);
@@ -181,7 +188,7 @@ function runAnimation(payload: PathsRevealPayload): void {
     }
 
     step++;
-    setTimeout(tick, STEP_DURATION);
+    setTimeout(tick, STEP_DURATION + (collision ? HIT_STOP_MS : 0));
   };
 
   setTimeout(tick, STEP_DURATION);
