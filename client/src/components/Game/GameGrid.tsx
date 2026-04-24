@@ -721,11 +721,12 @@ export function GameGrid({
         />
 
         {/* Collision effects */}
-        {collisionEffects.map(({ id, position }) => (
+        {collisionEffects.map(({ id, position, direction }) => (
           <CollisionEffect
             key={id}
             position={position}
             cellSize={responsiveCellSize}
+            direction={direction}
           />
         ))}
 
