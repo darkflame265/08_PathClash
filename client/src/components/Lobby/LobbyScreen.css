@@ -3197,13 +3197,45 @@
 }
 
 .audio-ability-gain-row .audio-slider-head {
-  gap: 0.65rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.55rem;
   font-size: 0.78rem;
 }
 
 .audio-ability-gain-row .audio-slider-head span {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.audio-slider-name {
+  min-width: 0;
+}
+
+.audio-preview-btn {
+  width: 1.55rem;
+  height: 1.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(76, 95, 116, 0.42);
+  background: rgba(17, 25, 33, 0.88);
+  color: var(--text, #f0f4f8);
+  font-size: 0.72rem;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.audio-preview-btn:hover {
+  background: rgba(32, 136, 235, 0.18);
+  border-color: rgba(82, 181, 255, 0.5);
+}
+
+.audio-preview-btn:active {
+  transform: translateY(1px);
 }
 
 .audio-slider-head {

@@ -191,6 +191,8 @@ let bgmVolume = 0.15;
 let bgmMuted = false;
 let lastPathStepSfxAt = 0;
 let abilitySfxGains = DEFAULT_ABILITY_SFX_GAINS;
+let chronosPreviewTimeout: number | null = null;
+let overdrivePreviewTimeout: number | null = null;
 
 Howler.autoUnlock = true;
 Howler.autoSuspend = false;
@@ -700,6 +702,16 @@ export function stopChronosRewindLoop(): void {
   }
 }
 
+function scheduleChronosPreviewStop(): void {
+  if (chronosPreviewTimeout !== null) {
+    window.clearTimeout(chronosPreviewTimeout);
+  }
+  chronosPreviewTimeout = window.setTimeout(() => {
+    stopChronosRewindLoop();
+    chronosPreviewTimeout = null;
+  }, 1400);
+}
+
 export function startOverdriveLoop(volume = 0.55): void {
   try {
     const howl = getAbilityHowl("gold_overdrive_loop");
@@ -744,5 +756,79 @@ export function stopOverdriveLoop(): void {
     goldOverdriveSoundId = null;
   } catch {
     // Audio engine not available
+  }
+}
+
+function scheduleOverdrivePreviewStop(): void {
+  if (overdrivePreviewTimeout !== null) {
+    window.clearTimeout(overdrivePreviewTimeout);
+  }
+  overdrivePreviewTimeout = window.setTimeout(() => {
+    stopOverdriveLoop();
+    overdrivePreviewTimeout = null;
+  }, 1400);
+}
+
+export function previewAbilitySfxSample(
+  gainId: AbilitySfxGainId,
+  volume = 0.55,
+): void {
+  switch (gainId) {
+    case "guard":
+      playGuard(volume);
+      break;
+    case "shield_block":
+      playShieldBlock(volume);
+      break;
+    case "atomic_fission":
+      playAtomicFission(volume);
+      break;
+    case "charge":
+      playCharge(volume);
+      break;
+    case "quantum":
+      playQuantum(volume);
+      break;
+    case "ember_blast":
+      playEmber(volume);
+      break;
+    case "electric_blitz":
+      playBlitz(volume);
+      break;
+    case "sun_chariot":
+      playSunChariot(volume);
+      break;
+    case "cosmic_bigbang":
+      playBigBang(volume);
+      break;
+    case "healing":
+      playHealing(volume);
+      break;
+    case "inferno_field":
+      playInferno(volume);
+      break;
+    case "phase_shift":
+      playPhaseShift(volume);
+      break;
+    case "arc_reactor_field":
+      playArcReactor(volume);
+      break;
+    case "void_cloak":
+      playVoidCloak(volume);
+      break;
+    case "chronos_tick_tock":
+      playChronosTickTock(volume);
+      break;
+    case "chronos_rewind_loop":
+      startChronosRewindLoop(volume);
+      scheduleChronosPreviewStop();
+      break;
+    case "gold_overdrive_loop":
+      startOverdriveLoop(volume);
+      scheduleOverdrivePreviewStop();
+      break;
+    case "magic_mine":
+      playMagicMine(volume);
+      break;
   }
 }

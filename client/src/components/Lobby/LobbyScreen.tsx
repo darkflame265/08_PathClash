@@ -76,7 +76,11 @@ import { useGameStore } from "../../store/gameStore";
 
 import { useLang } from "../../hooks/useLang";
 
-import { playLobbyClick } from "../../utils/soundUtils";
+import {
+  playLobbyClick,
+  previewAbilitySfxSample,
+  resumeAudioContext,
+} from "../../utils/soundUtils";
 import {
   getConnectedGamepadButtonLayout,
   getGamepadButtonLabel,
@@ -3528,6 +3532,15 @@ export function LobbyScreen({
     setAbilityLoadout([...abilityLoadout, skillId]);
   };
 
+  const handlePreviewAbilitySfx = useCallback(
+    (gainId: (typeof ABILITY_SFX_GAIN_IDS)[number]) => {
+      resumeAudioContext();
+      if (isSfxMuted) return;
+      previewAbilitySfxSample(gainId, sfxVolume);
+    },
+    [isSfxMuted, sfxVolume],
+  );
+
   const handleLinkGoogle = async () => {
     setUpgradeResult({ kind: "none" });
 
@@ -5323,13 +5336,32 @@ export function LobbyScreen({
                       {ABILITY_SFX_GAIN_IDS.map((gainId) => (
                         <div className="audio-ability-gain-row" key={gainId}>
                           <div className="audio-slider-head">
-                            <span>
+                            <span className="audio-slider-name">
                               {ABILITY_SFX_GAIN_LABELS[gainId][lang]}
                             </span>
 
                             <strong>
                               {Math.round(abilitySfxGains[gainId] * 100)}
                             </strong>
+
+                            <button
+                              className="audio-preview-btn"
+                              data-keyboard-modal-layer={`audio-ability-preview-${gainId}`}
+                              type="button"
+                              aria-label={
+                                lang === "en"
+                                  ? `Preview ${ABILITY_SFX_GAIN_LABELS[gainId][lang]}`
+                                  : `${ABILITY_SFX_GAIN_LABELS[gainId][lang]} 미리듣기`
+                              }
+                              title={
+                                lang === "en"
+                                  ? `Preview ${ABILITY_SFX_GAIN_LABELS[gainId][lang]}`
+                                  : `${ABILITY_SFX_GAIN_LABELS[gainId][lang]} 미리듣기`
+                              }
+                              onClick={() => handlePreviewAbilitySfx(gainId)}
+                            >
+                              ▶
+                            </button>
                           </div>
 
                           <input
