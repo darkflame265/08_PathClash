@@ -111,7 +111,7 @@ interface GameStore {
   twoVsTwoDisplayPositions: Record<TwoVsTwoSlot, Position> | null;
   hitEffect: { red: boolean; blue: boolean };
   heartShake: { red: number; blue: number }; // hp index that shakes
-  collisionEffects: { id: number; position: Position }[];
+  collisionEffects: { id: number; position: Position; direction: { dx: number; dy: number } }[];
   explosionEffect: PlayerColor | null;
 
   // Game over
@@ -190,7 +190,7 @@ interface GameStore {
   ) => void;
   triggerHit: (color: PlayerColor) => void;
   triggerHeartShake: (color: PlayerColor, hpIndex: number) => void;
-  triggerCollisionEffect: (pos: Position) => void;
+  triggerCollisionEffect: (pos: Position, direction: { dx: number; dy: number }) => void;
   triggerExplosion: (color: PlayerColor) => void;
   setWinner: (w: PlayerColor) => void;
   setGameOverMessage: (message: string | null) => void;
@@ -598,10 +598,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }, 500);
   },
 
-  triggerCollisionEffect: (pos) => {
+  triggerCollisionEffect: (pos, direction) => {
     const id = Date.now();
     set({
-      collisionEffects: [...get().collisionEffects, { id, position: pos }],
+      collisionEffects: [...get().collisionEffects, { id, position: pos, direction }],
     });
     setTimeout(
       () =>
