@@ -391,6 +391,7 @@ function App() {
   }, [pieceSkin]);
 
   useEffect(() => {
+    console.log('[rotation-debug] session effect ran', { authReady, hasToken: Boolean(authAccessToken) });
     if (!authReady || !authAccessToken) return;
 
     const socket = getSocket();
