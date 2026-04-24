@@ -26,7 +26,7 @@ interface Props {
   displayPositions: { red: Position; blue: Position };
   hitFlags: { red: boolean; blue: boolean };
   explodingFlags: { red: boolean; blue: boolean };
-  collisionEffects: Array<{ id: number; position: Position }>;
+  collisionEffects: Array<{ id: number; position: Position; direction: { dx: number; dy: number } }>;
   teleportEffects: Array<{
     id: number;
     color: PlayerColor;
@@ -1166,11 +1166,12 @@ export function AbilityGrid({
             );
           })}
 
-        {collisionEffects.map(({ id, position }) => (
+        {collisionEffects.map(({ id, position, direction }) => (
           <CollisionEffect
             key={id}
             position={position}
             cellSize={responsiveCellSize}
+            direction={direction}
           />
         ))}
 
