@@ -16,7 +16,7 @@ import {
   syncEquippedBoardSkin,
   syncEquippedSkin,
 } from "./auth/guestAuth";
-import { disconnectSocket, getSocket } from "./socket/socketClient";
+import { connectSocket, disconnectSocket, getSocket } from "./socket/socketClient";
 import type { AbilitySkillId } from "./types/ability.types";
 import { stopLocalAbilityTraining } from "./ability/localTrainingSession";
 import { useLang } from "./hooks/useLang";
@@ -390,9 +390,9 @@ function App() {
     socket.emit("update_piece_skin", { pieceSkin });
   }, [pieceSkin]);
 
-  // get_rotation: auth 불필요, 소켓 연결 즉시 호출
+  // get_rotation: auth 불필요, 앱 마운트 시 소켓 연결 후 즉시 호출
   useEffect(() => {
-    const socket = getSocket();
+    const socket = connectSocket();
     const fetchRotation = () => {
       socket.emit(
         'get_rotation',
