@@ -57,9 +57,11 @@ async function generateAndSaveRotation(excludeSkills: AbilitySkillId[]): Promise
   const skills: AbilitySkillId[] = [common, rare, legendary];
 
   const dateKey = getUtcDateKey();
-  await supabaseAdmin
+  const { error: upsertError } = await supabaseAdmin
     ?.from('skill_rotations')
-    .upsert({ date: dateKey, common_skill: common, rare_skill: rare, legendary_skill: legendary });
+    .upsert({ date: dateKey, common_skill: common, rare_skill: rare, legendary_skill: legendary })
+    ?? { error: null };
+  if (upsertError) console.error('[rotation] upsert failed:', upsertError);
 
   return skills;
 }
@@ -104,6 +106,7 @@ async function loadOrCreateRotation(): Promise<AbilitySkillId[]> {
 let resetTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function scheduleNextReset(): void {
+  if (resetTimeout !== null) clearTimeout(resetTimeout);
   const now = Date.now();
   const nextMidnightUtc = new Date();
   nextMidnightUtc.setUTCHours(24, 0, 0, 0);
