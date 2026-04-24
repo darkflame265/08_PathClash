@@ -6,7 +6,7 @@
   z-index: 80;
   isolation: isolate;
   overflow: visible;
-  animation: collision-impact 220ms ease-out forwards;
+  animation: collision-impact 380ms ease-out forwards;
 }
 
 .collision-effect::before,
@@ -45,16 +45,17 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 4px;
-  height: 18px;
-  margin-left: -2px;
-  margin-top: -9px;
+  width: 6px;
+  height: 30px;
+  margin-left: -3px;
+  margin-top: -15px;
   border-radius: 999px;
   opacity: 0;
   z-index: 7;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(251, 191, 36, 0.92), rgba(239, 68, 68, 0));
+  background: linear-gradient(180deg, #ffffff 0%, #fbbf24 45%, rgba(239, 68, 68, 0) 100%);
+  filter: drop-shadow(0 0 4px rgba(251, 191, 36, 1)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
   transform-origin: 50% 100%;
-  animation: collision-spark 220ms ease-out forwards;
+  animation: collision-spark 420ms ease-out forwards;
 }
 
 .collision-effect-spark-a { --spark-rotate: 0deg; }
@@ -93,27 +94,30 @@
 @keyframes collision-spark {
   0% {
     opacity: 0;
-    transform: rotate(var(--spark-rotate, 0deg)) translateY(0) scaleY(0.5);
+    transform: rotate(var(--spark-rotate, 0deg)) translateY(0) scaleY(0.4);
   }
-  16% {
+  10% {
     opacity: 1;
+  }
+  60% {
+    opacity: 0.85;
   }
   100% {
     opacity: 0;
-    transform: rotate(var(--spark-rotate, 0deg)) translateY(-22px) scaleY(1.15);
+    transform: rotate(var(--spark-rotate, 0deg)) translateY(-52px) scaleY(1.5);
   }
 }
 
 @keyframes burst-inner {
   0%   { transform: scale(0); opacity: 1; }
-  60%  { transform: scale(1.2); opacity: 0.9; }
-  100% { transform: scale(1.8); opacity: 0; }
+  50%  { transform: scale(1.4); opacity: 1; }
+  100% { transform: scale(2.4); opacity: 0; }
 }
 
 @keyframes burst-outer {
-  0%   { transform: scale(0.5); opacity: 0; }
-  30%  { transform: scale(1); opacity: 1; }
-  100% { transform: scale(2); opacity: 0; }
+  0%   { transform: scale(0.4); opacity: 0; }
+  25%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(2.8); opacity: 0; }
 }
 
 @keyframes collision-burst {

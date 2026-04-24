@@ -13,7 +13,7 @@ const DIRECTIONAL_OFFSETS = [0, 30, -30, 60, -60, 180];
 export function CollisionEffect({ position, cellSize, direction }: Props) {
   const x = position.col * cellSize + cellSize / 2;
   const y = position.row * cellSize + cellSize / 2;
-  const effectSize = Math.max(34, Math.round(cellSize * 0.72));
+  const effectSize = Math.max(52, Math.round(cellSize * 1.3));
 
   const primaryAngle =
     direction && (direction.dx !== 0 || direction.dy !== 0)
