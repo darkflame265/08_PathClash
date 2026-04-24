@@ -92,6 +92,8 @@ interface GameStore {
   isLocalAbilityTraining: boolean;
   twoVsTwoSlot: "red_top" | "red_bottom" | "blue_top" | "blue_bottom" | null;
   abilityLoadout: AbilitySkillId[];
+  rotationSkills: AbilitySkillId[];
+  pendingRemovedRotationSkillsNotice: AbilitySkillId[];
 
   // Game
   gameState: ClientGameState | null;
@@ -176,6 +178,8 @@ interface GameStore {
     slot: "red_top" | "red_bottom" | "blue_top" | "blue_bottom" | null,
   ) => void;
   setAbilityLoadout: (skills: AbilitySkillId[]) => void;
+  setRotationSkills: (skills: AbilitySkillId[]) => void;
+  setPendingRemovedRotationSkillsNotice: (skills: AbilitySkillId[]) => void;
   setGameState: (gs: ClientGameState) => void;
   setRoundInfo: (r: RoundStartPayload) => void;
   setMyPath: (p: Position[]) => void;
@@ -349,6 +353,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isLocalAbilityTraining: false,
   twoVsTwoSlot: null,
   abilityLoadout: initialAbilityLoadout,
+  rotationSkills: [],
+  pendingRemovedRotationSkillsNotice: [],
   gameState: null,
   myPath: [],
   opponentSubmitted: false,
@@ -446,6 +452,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const next = normalizeAbilityLoadout(skills);
     set({ abilityLoadout: next });
   },
+  setRotationSkills: (skills) => set({ rotationSkills: skills }),
+  setPendingRemovedRotationSkillsNotice: (skills) =>
+    set({ pendingRemovedRotationSkillsNotice: skills }),
 
   setGameState: (gs) =>
     set(() => ({
