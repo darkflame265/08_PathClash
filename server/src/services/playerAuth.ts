@@ -287,13 +287,16 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
 
   // 제거된 스킬이 있으면 DB 업데이트 (fire-and-forget, 에러는 로그)
   if (removedRotationSkills.length > 0) {
-    supabaseAdmin
-      ?.from('profiles')
-      .update({ equipped_ability_skills: equippedAbilitySkills })
-      .eq('id', userId)
-      .then(({ error }) => {
-        if (error) console.error('[rotation] failed to update equipped_ability_skills', error);
-      });
+    void Promise.resolve(
+      supabaseAdmin
+        ?.from('profiles')
+        .update({ equipped_ability_skills: equippedAbilitySkills })
+        .eq('id', userId)
+    ).then((result) => {
+      if (result?.error) console.error('[rotation] failed to update equipped_ability_skills', result.error);
+    }).catch((err: unknown) => {
+      console.error('[rotation] unexpected error updating equipped_ability_skills', err);
+    });
   }
 
   return {
