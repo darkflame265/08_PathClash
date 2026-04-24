@@ -1890,6 +1890,19 @@
   color: transparent;
 }
 
+.ability-rotation-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.65em;
+  font-weight: 600;
+  background: linear-gradient(90deg, #b8860b, #ffd700, #b8860b);
+  color: #1a1a1a;
+  vertical-align: middle;
+  letter-spacing: 0.02em;
+}
+
 .skin-option-copy span {
   font-size: 0.8rem;
   color: var(--text-muted, #9aa4ae);

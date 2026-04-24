@@ -794,6 +794,14 @@ export function LobbyScreen({
     setBoardSkin,
   } = useGameStore();
 
+  const rotationSkills = useGameStore((s) => s.rotationSkills);
+  const pendingRemovedRotationSkillsNotice = useGameStore(
+    (s) => s.pendingRemovedRotationSkillsNotice,
+  );
+  const setPendingRemovedRotationSkillsNotice = useGameStore(
+    (s) => s.setPendingRemovedRotationSkillsNotice,
+  );
+
   const { lang, setLang, t } = useLang();
 
   const policyUrl = lang === "en" ? POLICY_URL_EN : POLICY_URL_KR;
@@ -935,6 +943,12 @@ export function LobbyScreen({
   >(null);
   const skinFloatingMessageIdRef = useRef(0);
 
+  const langRef = useRef(lang);
+  langRef.current = lang;
+  const showSkinFloatingMessageRef = useRef<(text: string) => void>(
+    () => void 0,
+  );
+
   const upgradeMessage = getUpgradeDisplayMsg(upgradeResult, t);
 
   const skinPurchaseConfirmTitle =
@@ -956,6 +970,25 @@ export function LobbyScreen({
       skinPurchaseConfirmResolverRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (pendingRemovedRotationSkillsNotice.length === 0) return;
+    const first = ABILITY_SKILLS[pendingRemovedRotationSkillsNotice[0]];
+    const firstName =
+      langRef.current === "en" ? first?.name.en : first?.name.kr;
+    const extra =
+      pendingRemovedRotationSkillsNotice.length > 1
+        ? langRef.current === "en"
+          ? ` and ${pendingRemovedRotationSkillsNotice.length - 1} more`
+          : ` 외 ${pendingRemovedRotationSkillsNotice.length - 1}개`
+        : "";
+    showSkinFloatingMessageRef.current(
+      langRef.current === "en"
+        ? `Rotation expired: ${firstName ?? "skill"}${extra} unequipped.`
+        : `로테이션 만료로 ${firstName ?? "스킬"}${extra} 장착이 해제되었습니다.`,
+    );
+    setPendingRemovedRotationSkillsNotice([]);
+  }, [pendingRemovedRotationSkillsNotice, setPendingRemovedRotationSkillsNotice]);
 
   const handleLobbyUiClickCapture = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -2220,6 +2253,11 @@ export function LobbyScreen({
     if (skinId === "void") return accountWins >= 500;
 
     if (skinId === "quantum") return ownedSkins.includes("quantum");
+
+    const skillForSkin = Object.values(ABILITY_SKILLS).find(
+      (s) => s.skinId === skinId,
+    );
+    if (skillForSkin && rotationSkills.includes(skillForSkin.id)) return true;
 
     return ownedSkins.includes(skinId);
   };
@@ -3665,6 +3703,7 @@ export function LobbyScreen({
       text,
     });
   };
+  showSkinFloatingMessageRef.current = showSkinFloatingMessage;
 
   const handleSkinChoiceSelect = async (
     choice: (typeof skinChoices)[number],
@@ -4796,6 +4835,11 @@ export function LobbyScreen({
                     <span className="skin-option-copy">
                       <strong>
                         {lang === "en" ? skill.name.en : skill.name.kr}
+                        {rotationSkills.includes(skill.id) && (
+                          <span className="ability-rotation-badge">
+                            {lang === "en" ? "Rotation" : "로테이션"}
+                          </span>
+                        )}
                       </strong>
 
                       <span>
