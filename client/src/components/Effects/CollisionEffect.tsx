@@ -7,8 +7,8 @@ interface Props {
   direction?: { dx: number; dy: number };
 }
 
-const SPARK_LETTERS = ['a', 'b', 'c', 'd', 'e', 'f'] as const;
-const DIRECTIONAL_OFFSETS = [0, 30, -30, 60, -60, 180];
+const SPARK_LETTERS = ['a', 'b', 'c', 'd', 'e'] as const;
+const DIRECTIONAL_OFFSETS = [0, 15, -15, 30, -30];
 
 export function CollisionEffect({ position, cellSize, direction }: Props) {
   const x = position.col * cellSize + cellSize / 2;
@@ -22,13 +22,16 @@ export function CollisionEffect({ position, cellSize, direction }: Props) {
 
   return (
     <div
-      className="collision-effect"
+      className={`collision-effect${primaryAngle !== null ? ' collision-effect--directional' : ''}`}
       style={{
         left: x,
         top: y,
         width: effectSize,
         height: effectSize,
         transform: 'translate(-50%, -50%)',
+        ...(primaryAngle !== null
+          ? ({ '--primary-angle': `${primaryAngle}deg` } as React.CSSProperties)
+          : {}),
       }}
     >
       <span className="collision-effect-core" />

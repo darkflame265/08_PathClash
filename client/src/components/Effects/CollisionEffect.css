@@ -17,16 +17,42 @@
   border-radius: 50%;
 }
 
+/* 방향 없을 때: 전방향 burst */
 .collision-effect::before {
   background: radial-gradient(circle, #fbbf24 0%, #ef4444 50%, transparent 70%);
-  animation: burst-inner 500ms ease-out forwards;
+  animation: burst-inner 400ms ease-out forwards;
   z-index: 1;
 }
 
 .collision-effect::after {
   background: radial-gradient(circle, transparent 40%, #fbbf24 60%, transparent 80%);
-  animation: burst-outer 500ms ease-out forwards;
+  animation: burst-outer 400ms ease-out forwards;
   z-index: 2;
+}
+
+/* 방향 있을 때: conic wedge burst */
+.collision-effect--directional::before {
+  background: conic-gradient(
+    from calc(var(--primary-angle) - 40deg),
+    transparent 0deg,
+    rgba(251, 191, 36, 0.65) 20deg,
+    rgba(255, 255, 255, 0.35) 40deg,
+    rgba(251, 191, 36, 0.65) 60deg,
+    transparent 80deg,
+    transparent 360deg
+  );
+}
+
+.collision-effect--directional::after {
+  background: conic-gradient(
+    from calc(var(--primary-angle) - 35deg),
+    transparent 0deg,
+    rgba(251, 191, 36, 0.4) 15deg,
+    rgba(255, 220, 80, 0.2) 35deg,
+    rgba(251, 191, 36, 0.4) 55deg,
+    transparent 70deg,
+    transparent 360deg
+  );
 }
 
 .collision-effect-core {
@@ -58,12 +84,12 @@
   animation: collision-spark 420ms ease-out forwards;
 }
 
+/* fallback 각도: 방향 없을 때 5개 균등 분산 */
 .collision-effect-spark-a { --spark-rotate: 0deg; }
-.collision-effect-spark-b { --spark-rotate: 58deg; animation-delay: 14ms; }
-.collision-effect-spark-c { --spark-rotate: 118deg; animation-delay: 22ms; }
-.collision-effect-spark-d { --spark-rotate: 180deg; animation-delay: 10ms; }
-.collision-effect-spark-e { --spark-rotate: 240deg; animation-delay: 18ms; }
-.collision-effect-spark-f { --spark-rotate: 302deg; animation-delay: 26ms; }
+.collision-effect-spark-b { --spark-rotate: 72deg;  animation-delay: 14ms; }
+.collision-effect-spark-c { --spark-rotate: 144deg; animation-delay: 22ms; }
+.collision-effect-spark-d { --spark-rotate: 216deg; animation-delay: 10ms; }
+.collision-effect-spark-e { --spark-rotate: 288deg; animation-delay: 18ms; }
 
 @keyframes collision-impact {
   0% {
