@@ -22,8 +22,8 @@ export function getSocket(): Socket {
       transports: ["polling", "websocket"],
       timeout: 10_000,
       reconnectionAttempts: 20,
-      reconnectionDelay: 500,
-      reconnectionDelayMax: 10_000,
+      reconnectionDelay: 300,
+      reconnectionDelayMax: 3_000,
     });
     socket.on("connect", () => {
       void syncServerTime(socket!);
