@@ -6,6 +6,7 @@ import { Server } from "socket.io";
 import { supabaseAdmin } from "./lib/supabase";
 import { verifyGooglePlayProductPurchase } from "./services/googlePlayVerifier";
 import { initSocketServer } from "./socket/socketServer";
+import { initRotation } from './services/rotationService';
 import { getAndroidVersionStatus } from "./config/appVersion";
 import { getUserFromToken } from "./services/playerAuth";
 
@@ -243,6 +244,7 @@ app.post("/payments/google-play/token-grant", async (req, res) => {
   });
 });
 
+void initRotation();
 initSocketServer(io);
 
 const PORT = process.env.PORT || 3001;

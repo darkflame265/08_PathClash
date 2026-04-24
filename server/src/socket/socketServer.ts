@@ -32,6 +32,7 @@ import {
   recordModeWin,
   trackSettingsAchievements,
 } from '../services/achievementService';
+import { getCurrentRotation } from '../services/rotationService';
 
 export function initSocketServer(io: Server): void {
   const store = RoomStore.getInstance();
@@ -705,6 +706,13 @@ export function initSocketServer(io: Server): void {
       'sync_time',
       (ack?: (response: { serverNow: number }) => void) => {
         ack?.({ serverNow: Date.now() });
+      },
+    );
+
+    socket.on(
+      'get_rotation',
+      (ack?: (response: { skills: AbilitySkillId[] }) => void) => {
+        ack?.({ skills: getCurrentRotation() });
       },
     );
 
