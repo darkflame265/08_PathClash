@@ -89,6 +89,7 @@ interface GameStore {
     | "2v2"
     | "ability"
     | null;
+  isLocalAbilityTraining: boolean;
   twoVsTwoSlot: "red_top" | "red_bottom" | "blue_top" | "blue_bottom" | null;
   abilityLoadout: AbilitySkillId[];
 
@@ -169,6 +170,7 @@ interface GameStore {
   setMatchType: (
     matchType: "friend" | "random" | "ai" | "coop" | "2v2" | "ability" | null,
   ) => void;
+  setLocalAbilityTraining: (enabled: boolean) => void;
   setTwoVsTwoSlot: (
     slot: "red_top" | "red_bottom" | "blue_top" | "blue_bottom" | null,
   ) => void;
@@ -343,6 +345,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   accountDailyRewardTokens: 0,
   accountAchievements: [],
   currentMatchType: null,
+  isLocalAbilityTraining: false,
   twoVsTwoSlot: null,
   abilityLoadout: initialAbilityLoadout,
   gameState: null,
@@ -435,6 +438,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setMyColor: (c) => set({ myColor: c }),
   setRoomCode: (c) => set({ roomCode: c }),
   setMatchType: (matchType) => set({ currentMatchType: matchType }),
+  setLocalAbilityTraining: (enabled) => set({ isLocalAbilityTraining: enabled }),
   setTwoVsTwoSlot: (slot) => set({ twoVsTwoSlot: slot }),
   setAbilityLoadout: (skills) => {
     const next = normalizeAbilityLoadout(skills);
@@ -729,6 +733,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       myColor: null,
       roomCode: "",
       currentMatchType: null,
+      isLocalAbilityTraining: false,
       twoVsTwoSlot: null,
       abilityLoadout: get().abilityLoadout,
       gameState: null,

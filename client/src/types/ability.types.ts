@@ -26,6 +26,19 @@ export type AbilitySkillId =
   | "wizard_magic_mine"
   | "chronos_time_rewind";
 export type AbilitySkillCategory = "attack" | "defense" | "utility" | "passive";
+export type AbilitySkillRoleRestriction = "any" | "attacker" | "escaper";
+export type AbilitySkillStepRule = "any" | "zero_only";
+export type AbilitySkillTargetRule = "none" | "position";
+
+export interface AbilitySkillServerRule {
+  roleRestriction: AbilitySkillRoleRestriction;
+  stepRule: AbilitySkillStepRule;
+  targetRule: AbilitySkillTargetRule;
+  requiresEmptyPathWhenNotOverdrive?: boolean;
+  exclusiveWhenNotOverdrive?: boolean;
+  requiresPreviousTurnPath?: boolean;
+  maxStep?: number;
+}
 
 export const ABILITY_SKILL_IDS: AbilitySkillId[] = [
   "classic_guard",
@@ -87,6 +100,100 @@ export const ABILITY_SKILL_COSTS: Record<AbilitySkillId, number> = {
   chronos_time_rewind: 0,
 };
 
+export const ABILITY_SKILL_SERVER_RULES: Record<
+  AbilitySkillId,
+  AbilitySkillServerRule
+> = {
+  classic_guard: {
+    roleRestriction: "escaper",
+    stepRule: "zero_only",
+    targetRule: "none",
+    requiresEmptyPathWhenNotOverdrive: true,
+  },
+  arc_reactor_field: {
+    roleRestriction: "escaper",
+    stepRule: "any",
+    targetRule: "none",
+  },
+  phase_shift: {
+    roleRestriction: "escaper",
+    stepRule: "zero_only",
+    targetRule: "none",
+  },
+  ember_blast: {
+    roleRestriction: "attacker",
+    stepRule: "any",
+    targetRule: "none",
+  },
+  atomic_fission: {
+    roleRestriction: "attacker",
+    stepRule: "zero_only",
+    targetRule: "none",
+    requiresPreviousTurnPath: true,
+  },
+  inferno_field: {
+    roleRestriction: "attacker",
+    stepRule: "zero_only",
+    targetRule: "position",
+  },
+  nova_blast: {
+    roleRestriction: "attacker",
+    stepRule: "any",
+    targetRule: "none",
+  },
+  sun_chariot: {
+    roleRestriction: "attacker",
+    stepRule: "zero_only",
+    targetRule: "none",
+  },
+  aurora_heal: {
+    roleRestriction: "any",
+    stepRule: "any",
+    targetRule: "none",
+  },
+  gold_overdrive: {
+    roleRestriction: "escaper",
+    stepRule: "any",
+    targetRule: "none",
+  },
+  quantum_shift: {
+    roleRestriction: "any",
+    stepRule: "any",
+    targetRule: "position",
+  },
+  plasma_charge: {
+    roleRestriction: "any",
+    stepRule: "zero_only",
+    targetRule: "none",
+  },
+  void_cloak: {
+    roleRestriction: "any",
+    stepRule: "any",
+    targetRule: "none",
+  },
+  electric_blitz: {
+    roleRestriction: "attacker",
+    stepRule: "any",
+    targetRule: "position",
+  },
+  cosmic_bigbang: {
+    roleRestriction: "attacker",
+    stepRule: "any",
+    targetRule: "none",
+    maxStep: 3,
+  },
+  wizard_magic_mine: {
+    roleRestriction: "attacker",
+    stepRule: "any",
+    targetRule: "none",
+  },
+  chronos_time_rewind: {
+    roleRestriction: "any",
+    stepRule: "zero_only",
+    targetRule: "none",
+  },
+};
+
 export interface AbilitySkillDefinition {
   id: AbilitySkillId;
   name: { en: string; kr: string };
@@ -105,6 +212,12 @@ export interface AbilitySkillReservation {
   target?: Position | null;
 }
 
+export interface AbilityTurnSnapshot {
+  turn: number;
+  position: Position;
+  hp: number;
+}
+
 export interface AbilityLavaTile {
   position: Position;
   remainingTurns: number;
@@ -118,18 +231,26 @@ export interface AbilityTrapTile {
 
 export interface AbilityPlayerState {
   id: string;
+  userId?: string | null;
+  socketId?: string;
   nickname: string;
   color: PlayerColor;
   connected?: boolean;
+  isBot?: boolean;
   pieceSkin: PieceSkin;
   boardSkin: BoardSkin;
   hp: number;
   position: Position;
+  plannedPath?: Position[];
+  plannedSkills?: AbilitySkillReservation[];
   pathSubmitted: boolean;
   role: PlayerRole;
   stats: { wins: number; losses: number };
   mana: number;
   invulnerableSteps: number;
+  pendingManaBonus?: number;
+  pendingOverdriveStage?: number;
+  pendingVoidCloak?: boolean;
   overdriveActive: boolean;
   reboundLocked: boolean;
   hidden: boolean;
@@ -137,6 +258,7 @@ export interface AbilityPlayerState {
   previousTurnPath: Position[];
   equippedSkills: AbilitySkillId[];
   timeRewindUsed: boolean;
+  turnHistory?: AbilityTurnSnapshot[];
 }
 
 export interface AbilityBattleState {

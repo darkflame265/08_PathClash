@@ -17,6 +17,7 @@ import {
   syncEquippedSkin,
 } from "./auth/guestAuth";
 import { disconnectSocket, getSocket } from "./socket/socketClient";
+import { stopLocalAbilityTraining } from "./ability/localTrainingSession";
 import { useLang } from "./hooks/useLang";
 import { useGameStore } from "./store/gameStore";
 import {
@@ -543,6 +544,7 @@ function App() {
   }, [authAccessToken, authReady, authUserId, isGuestUser, setAuthState]);
 
   const handleReturnToLobby = useCallback(() => {
+    stopLocalAbilityTraining();
     disconnectSocket();
     useGameStore.getState().resetGame();
     setShowExitConfirm(false);
@@ -561,6 +563,7 @@ function App() {
         isGuestUser: useGameStore.getState().isGuestUser,
       });
       disconnectSocket();
+      stopLocalAbilityTraining();
       useGameStore.getState().resetGame();
       setMatchResultAudioKind(null);
       setView("lobby");

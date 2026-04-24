@@ -69,6 +69,7 @@ import {
   disconnectSocket,
   SOCKET_CONNECT_FAILED,
 } from "../../socket/socketClient";
+import { startLocalAbilityTraining } from "../../ability/localTrainingSession";
 import { syncServerTime } from "../../socket/timeSync";
 
 import { useGameStore } from "../../store/gameStore";
@@ -748,6 +749,7 @@ export function LobbyScreen({
     setAuthState,
 
     setMatchType,
+    setLocalAbilityTraining,
 
     setTwoVsTwoSlot,
 
@@ -3449,6 +3451,7 @@ export function LobbyScreen({
   const handleAbilityMatch = async () => {
     setError("");
 
+    setLocalAbilityTraining(false);
     setMatchType("ability");
 
     setIsMatchmaking(true);
@@ -3471,29 +3474,28 @@ export function LobbyScreen({
 
   const handleAbilityTraining = async () => {
     setError("");
-
+    setLocalAbilityTraining(true);
     setMatchType("ability");
-
-    setIsMatchmaking(true);
     setIsAbilityTrainingQueueing(true);
 
     try {
-      const profile = await ensureMatchmakingProfile({ syncAbilitySkills: true });
-      const socket = await prepareMatchmakingSocket();
-      if (!socket) return;
-      socket.emit("join_ability", {
-        ...(await buildPlayerPayloadFromProfile(profile)),
-        equippedSkills:
-          profile.equippedAbilitySkills ??
-          useGameStore.getState().abilityLoadout,
-        training: true,
+      const store = useGameStore.getState();
+      startLocalAbilityTraining({
+        nickname: store.myNickname.trim() || `Guest${Math.floor(Math.random() * 9999)}`,
+        pieceSkin: store.pieceSkin,
+        boardSkin: store.boardSkin,
       });
+      setIsMatchmaking(false);
+      setIsAbilityTrainingQueueing(false);
+      onAbilityStart();
     } catch (error) {
+      setLocalAbilityTraining(false);
       showAccountLoadError(error);
     }
   };
 
   const handleCancelAbility = () => {
+    setLocalAbilityTraining(false);
     const socket = connectSocket();
 
     socket.emit("cancel_ability");

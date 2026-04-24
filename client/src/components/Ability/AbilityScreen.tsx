@@ -1,6 +1,10 @@
 ﻿import { useCallback, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { getSocket } from "../../socket/socketClient";
+import {
+  connectLocalAbilityTrainingClient,
+  getLocalAbilityTrainingSocket,
+} from "../../ability/localTrainingSession";
 import { syncServerTime, getEstimatedServerNow } from "../../socket/timeSync";
 import { useLang } from "../../hooks/useLang";
 import { useGameStore } from "../../store/gameStore";
@@ -389,6 +393,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     setRoomCode,
     accountDailyRewardTokens,
     currentMatchType,
+    isLocalAbilityTraining,
     rematchRequestSent,
     setRematchRequestSent,
     isSfxMuted,
@@ -507,6 +512,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     useState<PlayerColor | null>(null);
   const resultAudioPlayedRef = useRef(false);
   const [connStatus, setConnStatus] = useState<"connected" | "reconnecting" | "failed">("connected");
+
+  const getAbilitySocket = useCallback(
+    () =>
+      isLocalAbilityTraining
+        ? getLocalAbilityTrainingSocket()
+        : getSocket(),
+    [isLocalAbilityTraining],
+  );
 
   const stateRef = useRef<AbilityBattleState | null>(null);
   const applyStateRef = useRef<(s: AbilityBattleState) => void>((_s) => {});
@@ -1722,7 +1735,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           !gameOverMessage &&
           !rematchRequestSent
         ) {
-          getSocket().emit("request_rematch");
+          getAbilitySocket().emit("request_rematch");
           setRematchRequestSent(true);
           return;
         }
@@ -3036,7 +3049,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   };
 
   useEffect(() => {
-    const socket = getSocket();
+    const socket = isLocalAbilityTraining
+      ? getLocalAbilityTrainingSocket()
+      : getSocket();
 
     const onGameStart = (nextState: AbilityBattleState) => {
       setRoundInfo(null);
@@ -3047,7 +3062,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     };
 
     const onRoundStart = (payload: AbilityRoundStartPayload) => {
-      void syncServerTime(socket);
+      if (!isLocalAbilityTraining) {
+        void syncServerTime(getSocket());
+      }
       const previousState = stateRef.current;
       const nextState = payload.state;
       const voidCloakTriggered =
@@ -3248,7 +3265,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     socket.on("opponent_disconnected", onOpponentDisconnected);
     socket.on("rematch_requested", onRematchRequested);
 
-    if (!initialReadySentRef.current) {
+    if (isLocalAbilityTraining) {
+      connectLocalAbilityTrainingClient();
+    } else if (!initialReadySentRef.current) {
       initialReadySentRef.current = true;
       socket.emit("ability_client_ready");
     }
@@ -3270,6 +3289,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     };
   }, [
     currentColor,
+    isLocalAbilityTraining,
     isSfxMuted,
     lang,
     setMyColor,
@@ -3279,6 +3299,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   ]);
 
   useEffect(() => {
+    if (isLocalAbilityTraining) {
+      setConnStatus("connected");
+      return;
+    }
     const socket = getSocket();
 
     const handleDisconnect = () => {
@@ -3321,12 +3345,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       socket.off("rejoin_ack", handleRejoinAck);
       socket.off("rejoin_not_found", handleRejoinNotFound);
     };
-  }, [onLeaveToLobby]);
+  }, [isLocalAbilityTraining, onLeaveToLobby]);
 
   useEffect(() => {
     if (!state || state.phase !== "planning" || mySubmitted || !roundInfo)
       return;
-    const socket = getSocket();
+    const socket = isLocalAbilityTraining
+      ? getLocalAbilityTrainingSocket()
+      : getSocket();
     const submitCurrentPlan = () => {
       const latest = stateRef.current;
       if (!latest || latest.phase !== "planning") return;
@@ -3366,7 +3392,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     return () => {
       clearSubmitTimeouts();
     };
-  }, [currentColor, myPath, mySubmitted, roundInfo, skillReservations, state]);
+  }, [currentColor, isLocalAbilityTraining, myPath, mySubmitted, roundInfo, skillReservations, state]);
 
   const trainingSkillSelectOverlay =
     showTrainingSkillSelect &&
@@ -3497,7 +3523,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               data-keyboard-modal-layer="training-actions"
               type="button"
               onClick={() => {
-                const socket = getSocket();
+                const socket = getAbilitySocket();
                 socket.emit("training_skills_confirmed", {
                   skills: trainingLoadout,
                 });
@@ -3605,7 +3631,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   };
 
   const handleRequestRematch = () => {
-    getSocket().emit("request_rematch");
+    getAbilitySocket().emit("request_rematch");
     setRematchRequestSent(true);
   };
 
