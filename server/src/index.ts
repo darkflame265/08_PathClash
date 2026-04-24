@@ -9,6 +9,13 @@ import { initSocketServer } from "./socket/socketServer";
 import { getAndroidVersionStatus } from "./config/appVersion";
 import { getUserFromToken } from "./services/playerAuth";
 
+process.on('uncaughtException', (error) => {
+  console.error('[fatal] uncaughtException:', error);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[fatal] unhandledRejection:', reason);
+});
+
 const app = express();
 const httpServer = createServer(app);
 app.use(express.json());

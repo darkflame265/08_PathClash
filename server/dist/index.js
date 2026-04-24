@@ -12,6 +12,12 @@ const googlePlayVerifier_1 = require("./services/googlePlayVerifier");
 const socketServer_1 = require("./socket/socketServer");
 const appVersion_1 = require("./config/appVersion");
 const playerAuth_1 = require("./services/playerAuth");
+process.on('uncaughtException', (error) => {
+    console.error('[fatal] uncaughtException:', error);
+});
+process.on('unhandledRejection', (reason) => {
+    console.error('[fatal] unhandledRejection:', reason);
+});
 const app = (0, express_1.default)();
 const httpServer = (0, http_1.createServer)(app);
 app.use(express_1.default.json());

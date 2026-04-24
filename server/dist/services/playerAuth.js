@@ -107,15 +107,21 @@ async function getUserFromToken(accessToken) {
     if (cached) {
         verifiedUserCache.delete(normalizedToken);
     }
-    const { data, error } = await supabase_1.supabaseAdmin.auth.getUser(normalizedToken);
-    if (error || !data.user)
+    try {
+        const { data, error } = await supabase_1.supabaseAdmin.auth.getUser(normalizedToken);
+        if (error || !data.user)
+            return null;
+        verifiedUserCache.set(normalizedToken, {
+            expiresAt: now + VERIFIED_USER_CACHE_TTL_MS,
+            user: data.user,
+        });
+        pruneVerifiedUserCache(now);
+        return data.user;
+    }
+    catch (err) {
+        console.error('[auth] getUserFromToken network error:', err);
         return null;
-    verifiedUserCache.set(normalizedToken, {
-        expiresAt: now + VERIFIED_USER_CACHE_TTL_MS,
-        user: data.user,
-    });
-    pruneVerifiedUserCache(now);
-    return data.user;
+    }
 }
 async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUser = false) {
     const profilePromise = supabase_1.supabaseAdmin
@@ -139,11 +145,14 @@ async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUse
         .eq('user_id', userId)
         .returns();
     const [profileResult, statsResult, ownedSkinsResult, ownedBoardSkinsResult] = await Promise.all([
-        profilePromise,
-        statsPromise,
-        ownedSkinsPromise,
-        ownedBoardSkinsPromise,
-    ]);
+        profilePromise ?? Promise.resolve(null),
+        statsPromise ?? Promise.resolve(null),
+        ownedSkinsPromise ?? Promise.resolve(null),
+        ownedBoardSkinsPromise ?? Promise.resolve(null),
+    ]).catch((err) => {
+        console.error('[auth] readAccountProfile query error:', err);
+        return [null, null, null, null];
+    });
     const nickname = profileResult?.data?.nickname?.trim() || fallbackNickname;
     const dailyRewardWins = getActiveDailyRewardWins(statsResult?.data);
     const ownedSkins = (ownedSkinsResult?.data ?? [])

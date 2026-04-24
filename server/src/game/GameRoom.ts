@@ -194,7 +194,7 @@ export class GameRoom {
           if (p.userId && !p.disconnectLossRecorded) {
             p.stats.losses += 1;
             p.disconnectLossRecorded = true;
-            void recordMatchmakingLoss(p.userId);
+            recordMatchmakingLoss(p.userId).catch(err => console.error('[db] recordMatchmakingLoss failed:', err));
           }
           p.connected = false;
           p.pathSubmitted = true;
@@ -748,44 +748,37 @@ export class GameRoom {
         if (!loserLossAlreadyRecorded && loserUserId) {
           this.players.get(loser)!.stats.losses++;
         }
+        const dbErr = (label: string) => (err: unknown) => console.error(`[db] ${label} failed:`, err);
         if (winnerUserId && loserUserId && !loserLossAlreadyRecorded) {
-          void recordMatchmakingResult(
-            winnerUserId,
-            loserUserId,
-          );
+          recordMatchmakingResult(winnerUserId, loserUserId).catch(dbErr('recordMatchmakingResult'));
         } else {
           if (winnerUserId) {
-            void recordMatchmakingWin(winnerUserId);
+            recordMatchmakingWin(winnerUserId).catch(dbErr('recordMatchmakingWin'));
           }
           if (loserUserId && !loserLossAlreadyRecorded) {
-            void recordMatchmakingLoss(loserUserId);
+            recordMatchmakingLoss(loserUserId).catch(dbErr('recordMatchmakingLoss'));
           }
         }
         if (winnerUserId) {
-          void recordModeWin({ userId: winnerUserId, mode: "duel" });
+          recordModeWin({ userId: winnerUserId, mode: "duel" }).catch(dbErr('recordModeWin'));
         }
         const playedUserIds = [winnerUserId, loserUserId].filter(
           (userId): userId is string => Boolean(userId),
         );
         if (playedUserIds.length > 0) {
-          void recordMatchPlayed({
-            userIds: playedUserIds,
-            matchType: "duel",
-          });
+          recordMatchPlayed({ userIds: playedUserIds, matchType: "duel" }).catch(dbErr('recordMatchPlayed'));
         }
       } else if (this.matchType === "ai" && !this.tutorialActive) {
         const humanUserIds = [...this.players.values()]
           .filter((player) => player.color !== this.aiColor)
           .map((player) => player.userId);
-        void recordMatchPlayed({
-          userIds: humanUserIds,
-          matchType: "ai",
-        });
+        const dbErr = (label: string) => (err: unknown) => console.error(`[db] ${label} failed:`, err);
+        recordMatchPlayed({ userIds: humanUserIds, matchType: "ai" }).catch(dbErr('recordMatchPlayed'));
         if (winner !== this.aiColor) {
-          void recordModeWin({ userId: winnerUserId, mode: "ai" });
+          recordModeWin({ userId: winnerUserId, mode: "ai" }).catch(dbErr('recordModeWin'));
         }
       } else if (this.matchType === "ai" && this.tutorialActive && winner !== this.aiColor) {
-        void markTutorialComplete(winnerUserId);
+        markTutorialComplete(winnerUserId).catch(err => console.error('[db] markTutorialComplete failed:', err));
       }
 
       this.touchActivity();

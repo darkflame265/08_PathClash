@@ -106,7 +106,7 @@ class GameRoom {
                     if (p.userId && !p.disconnectLossRecorded) {
                         p.stats.losses += 1;
                         p.disconnectLossRecorded = true;
-                        void (0, playerAuth_1.recordMatchmakingLoss)(p.userId);
+                        (0, playerAuth_1.recordMatchmakingLoss)(p.userId).catch(err => console.error('[db] recordMatchmakingLoss failed:', err));
                     }
                     p.connected = false;
                     p.pathSubmitted = true;
@@ -600,42 +600,38 @@ class GameRoom {
                 if (!loserLossAlreadyRecorded && loserUserId) {
                     this.players.get(loser).stats.losses++;
                 }
+                const dbErr = (label) => (err) => console.error(`[db] ${label} failed:`, err);
                 if (winnerUserId && loserUserId && !loserLossAlreadyRecorded) {
-                    void (0, playerAuth_1.recordMatchmakingResult)(winnerUserId, loserUserId);
+                    (0, playerAuth_1.recordMatchmakingResult)(winnerUserId, loserUserId).catch(dbErr('recordMatchmakingResult'));
                 }
                 else {
                     if (winnerUserId) {
-                        void (0, playerAuth_1.recordMatchmakingWin)(winnerUserId);
+                        (0, playerAuth_1.recordMatchmakingWin)(winnerUserId).catch(dbErr('recordMatchmakingWin'));
                     }
                     if (loserUserId && !loserLossAlreadyRecorded) {
-                        void (0, playerAuth_1.recordMatchmakingLoss)(loserUserId);
+                        (0, playerAuth_1.recordMatchmakingLoss)(loserUserId).catch(dbErr('recordMatchmakingLoss'));
                     }
                 }
                 if (winnerUserId) {
-                    void (0, achievementService_1.recordModeWin)({ userId: winnerUserId, mode: "duel" });
+                    (0, achievementService_1.recordModeWin)({ userId: winnerUserId, mode: "duel" }).catch(dbErr('recordModeWin'));
                 }
                 const playedUserIds = [winnerUserId, loserUserId].filter((userId) => Boolean(userId));
                 if (playedUserIds.length > 0) {
-                    void (0, achievementService_1.recordMatchPlayed)({
-                        userIds: playedUserIds,
-                        matchType: "duel",
-                    });
+                    (0, achievementService_1.recordMatchPlayed)({ userIds: playedUserIds, matchType: "duel" }).catch(dbErr('recordMatchPlayed'));
                 }
             }
             else if (this.matchType === "ai" && !this.tutorialActive) {
                 const humanUserIds = [...this.players.values()]
                     .filter((player) => player.color !== this.aiColor)
                     .map((player) => player.userId);
-                void (0, achievementService_1.recordMatchPlayed)({
-                    userIds: humanUserIds,
-                    matchType: "ai",
-                });
+                const dbErr = (label) => (err) => console.error(`[db] ${label} failed:`, err);
+                (0, achievementService_1.recordMatchPlayed)({ userIds: humanUserIds, matchType: "ai" }).catch(dbErr('recordMatchPlayed'));
                 if (winner !== this.aiColor) {
-                    void (0, achievementService_1.recordModeWin)({ userId: winnerUserId, mode: "ai" });
+                    (0, achievementService_1.recordModeWin)({ userId: winnerUserId, mode: "ai" }).catch(dbErr('recordModeWin'));
                 }
             }
             else if (this.matchType === "ai" && this.tutorialActive && winner !== this.aiColor) {
-                void (0, achievementService_1.markTutorialComplete)(winnerUserId);
+                (0, achievementService_1.markTutorialComplete)(winnerUserId).catch(err => console.error('[db] markTutorialComplete failed:', err));
             }
             this.touchActivity();
             this.io.to(this.roomId).emit("game_over", { winner });

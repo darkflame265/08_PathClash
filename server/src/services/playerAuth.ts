@@ -193,16 +193,21 @@ export async function getUserFromToken(accessToken?: string) {
     verifiedUserCache.delete(normalizedToken);
   }
 
-  const { data, error } = await supabaseAdmin.auth.getUser(normalizedToken);
-  if (error || !data.user) return null;
+  try {
+    const { data, error } = await supabaseAdmin.auth.getUser(normalizedToken);
+    if (error || !data.user) return null;
 
-  verifiedUserCache.set(normalizedToken, {
-    expiresAt: now + VERIFIED_USER_CACHE_TTL_MS,
-    user: data.user,
-  });
-  pruneVerifiedUserCache(now);
+    verifiedUserCache.set(normalizedToken, {
+      expiresAt: now + VERIFIED_USER_CACHE_TTL_MS,
+      user: data.user,
+    });
+    pruneVerifiedUserCache(now);
 
-  return data.user;
+    return data.user;
+  } catch (err) {
+    console.error('[auth] getUserFromToken network error:', err);
+    return null;
+  }
 }
 
 async function readAccountProfile(userId: string, fallbackNickname = 'Guest', isGuestUser = false): Promise<AccountProfile> {
@@ -231,11 +236,14 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
     .returns<OwnedBoardSkinRow[]>();
 
   const [profileResult, statsResult, ownedSkinsResult, ownedBoardSkinsResult] = await Promise.all([
-    profilePromise,
-    statsPromise,
-    ownedSkinsPromise,
-    ownedBoardSkinsPromise,
-  ]);
+    profilePromise ?? Promise.resolve(null),
+    statsPromise ?? Promise.resolve(null),
+    ownedSkinsPromise ?? Promise.resolve(null),
+    ownedBoardSkinsPromise ?? Promise.resolve(null),
+  ]).catch((err) => {
+    console.error('[auth] readAccountProfile query error:', err);
+    return [null, null, null, null] as const;
+  });
   const nickname = profileResult?.data?.nickname?.trim() || fallbackNickname;
   const dailyRewardWins = getActiveDailyRewardWins(statsResult?.data);
   const ownedSkins = (ownedSkinsResult?.data ?? [])

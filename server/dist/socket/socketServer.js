@@ -480,218 +480,260 @@ function initSocketServer(io) {
                 });
                 return;
             }
-            const userId = await registerSocketSession(socket, auth, {
-                allowConcurrentSessions: true,
-            });
-            ack?.({ ok: Boolean(userId), updateRequired: false });
+            try {
+                const userId = await registerSocketSession(socket, auth, {
+                    allowConcurrentSessions: true,
+                });
+                ack?.({ ok: Boolean(userId), updateRequired: false });
+            }
+            catch (err) {
+                console.error('[session_register] handler error:', err);
+                ack?.({ ok: false, updateRequired: false });
+            }
         });
         socket.on('create_room', async ({ nickname, auth, pieceSkin, boardSkin }) => {
-            if (emitUpdateRequired(socket, auth))
-                return;
-            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
-            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
-            if (!io.sockets.sockets.has(socket.id))
-                return;
-            const roomId = store.generateRoomId();
-            const code = store.generateCode();
-            const room = new GameRoom_1.GameRoom(roomId, code, io, 'friend');
-            const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
-            if (!color) {
-                socket.emit('join_error', { message: '방 생성에 실패했습니다.' });
-                return;
+            try {
+                if (emitUpdateRequired(socket, auth))
+                    return;
+                await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+                if (!io.sockets.sockets.has(socket.id))
+                    return;
+                const roomId = store.generateRoomId();
+                const code = store.generateCode();
+                const room = new GameRoom_1.GameRoom(roomId, code, io, 'friend');
+                const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
+                if (!color) {
+                    socket.emit('join_error', { message: '방 생성에 실패했습니다.' });
+                    return;
+                }
+                store.add(room);
+                store.registerSocket(socket.id, roomId);
+                socket.emit('room_created', { roomId, code, color, pieceSkin: pieceSkin ?? 'classic' });
             }
-            store.add(room);
-            store.registerSocket(socket.id, roomId);
-            socket.emit('room_created', { roomId, code, color, pieceSkin: pieceSkin ?? 'classic' });
+            catch (err) {
+                console.error('[create_room] handler error:', err);
+                socket.emit('join_error', { message: '방 생성 중 오류가 발생했습니다.' });
+            }
         });
         socket.on('join_ai', async ({ nickname, auth, pieceSkin, tutorialPending, boardSkin, }) => {
-            if (emitUpdateRequired(socket, auth))
-                return;
-            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
-            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
-            if (!io.sockets.sockets.has(socket.id))
-                return;
-            const roomId = store.generateRoomId();
-            const code = store.generateCode();
-            const room = new GameRoom_1.GameRoom(roomId, code, io, 'ai');
-            const humanColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
-            if (!humanColor) {
-                socket.emit('join_error', { message: 'AI room creation failed.' });
-                return;
+            try {
+                if (emitUpdateRequired(socket, auth))
+                    return;
+                await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+                if (!io.sockets.sockets.has(socket.id))
+                    return;
+                const roomId = store.generateRoomId();
+                const code = store.generateCode();
+                const room = new GameRoom_1.GameRoom(roomId, code, io, 'ai');
+                const humanColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
+                if (!humanColor) {
+                    socket.emit('join_error', { message: 'AI room creation failed.' });
+                    return;
+                }
+                room.addAiPlayer('PathClash AI');
+                store.add(room);
+                store.registerSocket(socket.id, roomId);
+                const roomState = room.toClientState();
+                const opponent = roomState.players[humanColor === 'red' ? 'blue' : 'red'];
+                socket.emit('room_joined', {
+                    roomId: room.roomId,
+                    color: humanColor,
+                    opponentNickname: opponent.nickname,
+                    selfPieceSkin: pieceSkin ?? 'classic',
+                    opponentPieceSkin: opponent.pieceSkin,
+                });
+                room.startGame(Boolean(tutorialPending));
             }
-            room.addAiPlayer('PathClash AI');
-            store.add(room);
-            store.registerSocket(socket.id, roomId);
-            const roomState = room.toClientState();
-            const opponent = roomState.players[humanColor === 'red' ? 'blue' : 'red'];
-            socket.emit('room_joined', {
-                roomId: room.roomId,
-                color: humanColor,
-                opponentNickname: opponent.nickname,
-                selfPieceSkin: pieceSkin ?? 'classic',
-                opponentPieceSkin: opponent.pieceSkin,
-            });
-            room.startGame(Boolean(tutorialPending));
+            catch (err) {
+                console.error('[join_ai] handler error:', err);
+                socket.emit('join_error', { message: 'AI 매칭 중 오류가 발생했습니다.' });
+            }
         });
         socket.on('join_room', async ({ code, nickname, auth, pieceSkin, boardSkin }) => {
-            if (emitUpdateRequired(socket, auth))
-                return;
-            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
-            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
-            if (!io.sockets.sockets.has(socket.id))
-                return;
-            const room = store.getByCode(code.toUpperCase());
-            if (!room || room.isFull) {
-                socket.emit('join_error', { message: '방을 찾을 수 없거나 이미 가득 찼습니다.' });
-                return;
+            try {
+                if (emitUpdateRequired(socket, auth))
+                    return;
+                await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+                if (!io.sockets.sockets.has(socket.id))
+                    return;
+                const room = store.getByCode(code.toUpperCase());
+                if (!room || room.isFull) {
+                    socket.emit('join_error', { message: '방을 찾을 수 없거나 이미 가득 찼습니다.' });
+                    return;
+                }
+                const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
+                if (!color) {
+                    socket.emit('join_error', { message: '입장할 수 없습니다.' });
+                    return;
+                }
+                store.registerSocket(socket.id, room.roomId);
+                const roomState = room.toClientState();
+                const opponent = roomState.players[color === 'red' ? 'blue' : 'red'];
+                socket.emit('room_joined', {
+                    roomId: room.roomId,
+                    color,
+                    opponentNickname: opponent.nickname,
+                    selfPieceSkin: pieceSkin ?? 'classic',
+                    opponentPieceSkin: opponent.pieceSkin,
+                });
+                socket.to(room.roomId).emit('opponent_joined', {
+                    nickname: profile.nickname,
+                    color,
+                    pieceSkin: pieceSkin ?? 'classic',
+                });
+                room.prepareGameStart();
             }
-            const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic');
-            if (!color) {
-                socket.emit('join_error', { message: '입장할 수 없습니다.' });
-                return;
+            catch (err) {
+                console.error('[join_room] handler error:', err);
+                socket.emit('join_error', { message: '방 입장 중 오류가 발생했습니다.' });
             }
-            store.registerSocket(socket.id, room.roomId);
-            const roomState = room.toClientState();
-            const opponent = roomState.players[color === 'red' ? 'blue' : 'red'];
-            socket.emit('room_joined', {
-                roomId: room.roomId,
-                color,
-                opponentNickname: opponent.nickname,
-                selfPieceSkin: pieceSkin ?? 'classic',
-                opponentPieceSkin: opponent.pieceSkin,
-            });
-            socket.to(room.roomId).emit('opponent_joined', {
-                nickname: profile.nickname,
-                color,
-                pieceSkin: pieceSkin ?? 'classic',
-            });
-            room.prepareGameStart();
         });
         socket.on('create_ability_room', async ({ nickname, auth, pieceSkin, boardSkin, equippedSkills, }) => {
-            if (emitUpdateRequired(socket, auth))
-                return;
-            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
-            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
-            if (!io.sockets.sockets.has(socket.id))
-                return;
-            const roomId = abilityStore.generateRoomId();
-            const code = abilityStore.generateCode();
-            const room = new AbilityRoom_1.AbilityRoom(roomId, code, io);
-            room.enablePrivateMatch();
-            const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
-            if (!color) {
-                socket.emit('join_error', { message: '방 생성에 실패했습니다.' });
-                return;
+            try {
+                if (emitUpdateRequired(socket, auth))
+                    return;
+                await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+                if (!io.sockets.sockets.has(socket.id))
+                    return;
+                const roomId = abilityStore.generateRoomId();
+                const code = abilityStore.generateCode();
+                const room = new AbilityRoom_1.AbilityRoom(roomId, code, io);
+                room.enablePrivateMatch();
+                const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
+                if (!color) {
+                    socket.emit('join_error', { message: '방 생성에 실패했습니다.' });
+                    return;
+                }
+                abilityStore.add(room);
+                abilityStore.registerSocket(socket.id, roomId);
+                socket.emit('ability_room_created', {
+                    roomId,
+                    code,
+                    color,
+                });
             }
-            abilityStore.add(room);
-            abilityStore.registerSocket(socket.id, roomId);
-            socket.emit('ability_room_created', {
-                roomId,
-                code,
-                color,
-            });
+            catch (err) {
+                console.error('[create_ability_room] handler error:', err);
+                socket.emit('join_error', { message: '방 생성 중 오류가 발생했습니다.' });
+            }
         });
         socket.on('join_ability_room', async ({ code, nickname, auth, pieceSkin, boardSkin, equippedSkills, }) => {
-            if (emitUpdateRequired(socket, auth))
-                return;
-            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
-            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
-            if (!io.sockets.sockets.has(socket.id))
-                return;
-            const room = abilityStore.getByCode(code);
-            if (!room || room.isFull) {
-                socket.emit('join_error', { message: '방을 찾을 수 없거나 이미 가득 찼습니다.' });
-                return;
+            try {
+                if (emitUpdateRequired(socket, auth))
+                    return;
+                await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+                if (!io.sockets.sockets.has(socket.id))
+                    return;
+                const room = abilityStore.getByCode(code);
+                if (!room || room.isFull) {
+                    socket.emit('join_error', { message: '방을 찾을 수 없거나 이미 가득 찼습니다.' });
+                    return;
+                }
+                room.enablePrivateMatch();
+                const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
+                if (!color) {
+                    socket.emit('join_error', { message: '입장할 수 없습니다.' });
+                    return;
+                }
+                room.prepareGameStart();
+                abilityStore.registerSocket(socket.id, room.roomId);
+                socket.emit('ability_room_joined', {
+                    roomId: room.roomId,
+                    color,
+                    opponentNickname: room.toClientState(color).players[color === 'red' ? 'blue' : 'red'].nickname,
+                });
+                socket.to(room.roomId).emit('ability_opponent_joined', {
+                    nickname: profile.nickname,
+                    color,
+                });
             }
-            room.enablePrivateMatch();
-            const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
-            if (!color) {
-                socket.emit('join_error', { message: '입장할 수 없습니다.' });
-                return;
+            catch (err) {
+                console.error('[join_ability_room] handler error:', err);
+                socket.emit('join_error', { message: '방 입장 중 오류가 발생했습니다.' });
             }
-            room.prepareGameStart();
-            abilityStore.registerSocket(socket.id, room.roomId);
-            socket.emit('ability_room_joined', {
-                roomId: room.roomId,
-                color,
-                opponentNickname: room.toClientState(color).players[color === 'red' ? 'blue' : 'red'].nickname,
-            });
-            socket.to(room.roomId).emit('ability_opponent_joined', {
-                nickname: profile.nickname,
-                color,
-            });
         });
         socket.on('join_random', async ({ nickname, auth, pieceSkin, boardSkin }) => {
-            pendingCancelRandom.delete(socket.id);
-            if (emitUpdateRequired(socket, auth))
-                return;
-            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
-            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
-            if (pendingCancelRandom.has(socket.id)) {
+            try {
                 pendingCancelRandom.delete(socket.id);
-                return;
-            }
-            if (!io.sockets.sockets.has(socket.id))
-                return;
-            const selectedPieceSkin = pieceSkin ?? 'classic';
-            const selectedBoardSkin = boardSkin ?? 'classic';
-            const queued = store.dequeueRandom();
-            if (!queued || queued.socketId === socket.id) {
-                if (queued) {
-                    store.enqueueRandom(queued.socketId, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin);
+                if (emitUpdateRequired(socket, auth))
+                    return;
+                await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+                if (pendingCancelRandom.has(socket.id)) {
+                    pendingCancelRandom.delete(socket.id);
+                    return;
                 }
-                store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats, selectedPieceSkin, selectedBoardSkin);
-                socket.emit('matchmaking_waiting', {});
-                scheduleRandomFallback({
-                    socket,
-                    profile,
-                    pieceSkin: selectedPieceSkin,
-                    boardSkin: selectedBoardSkin,
+                if (!io.sockets.sockets.has(socket.id))
+                    return;
+                const selectedPieceSkin = pieceSkin ?? 'classic';
+                const selectedBoardSkin = boardSkin ?? 'classic';
+                const queued = store.dequeueRandom();
+                if (!queued || queued.socketId === socket.id) {
+                    if (queued) {
+                        store.enqueueRandom(queued.socketId, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin);
+                    }
+                    store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats, selectedPieceSkin, selectedBoardSkin);
+                    socket.emit('matchmaking_waiting', {});
+                    scheduleRandomFallback({
+                        socket,
+                        profile,
+                        pieceSkin: selectedPieceSkin,
+                        boardSkin: selectedBoardSkin,
+                    });
+                    return;
+                }
+                clearRandomFallback(socket.id);
+                clearRandomFallback(queued.socketId);
+                const queuedSocket = io.sockets.sockets.get(queued.socketId);
+                if (!queuedSocket) {
+                    store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats, selectedPieceSkin, selectedBoardSkin);
+                    socket.emit('matchmaking_waiting', {});
+                    scheduleRandomFallback({
+                        socket,
+                        profile,
+                        pieceSkin: selectedPieceSkin,
+                        boardSkin: selectedBoardSkin,
+                    });
+                    return;
+                }
+                const roomId = store.generateRoomId();
+                const code = store.generateCode();
+                const room = new GameRoom_1.GameRoom(roomId, code, io, 'random');
+                store.add(room);
+                const queuedColor = room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin);
+                const myColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, selectedPieceSkin, selectedBoardSkin);
+                if (!queuedColor || !myColor) {
+                    console.error('[join_random] addPlayer failed unexpectedly', { queuedColor, myColor });
+                    socket.emit('join_error', { message: '매칭 중 오류가 발생했습니다. 다시 시도해주세요.' });
+                    return;
+                }
+                store.registerSocket(queued.socketId, roomId);
+                store.registerSocket(socket.id, roomId);
+                queuedSocket.emit('room_joined', {
+                    roomId,
+                    color: queuedColor,
+                    opponentNickname: profile.nickname,
+                    selfPieceSkin: queued.pieceSkin,
+                    opponentPieceSkin: selectedPieceSkin,
                 });
-                return;
-            }
-            clearRandomFallback(socket.id);
-            clearRandomFallback(queued.socketId);
-            const queuedSocket = io.sockets.sockets.get(queued.socketId);
-            if (!queuedSocket) {
-                store.enqueueRandom(socket.id, profile.nickname, profile.userId, profile.stats, selectedPieceSkin, selectedBoardSkin);
-                socket.emit('matchmaking_waiting', {});
-                scheduleRandomFallback({
-                    socket,
-                    profile,
-                    pieceSkin: selectedPieceSkin,
-                    boardSkin: selectedBoardSkin,
+                socket.emit('room_joined', {
+                    roomId,
+                    color: myColor,
+                    opponentNickname: queued.nickname,
+                    selfPieceSkin: selectedPieceSkin,
+                    opponentPieceSkin: queued.pieceSkin,
                 });
-                return;
+                room.prepareGameStart();
             }
-            const roomId = store.generateRoomId();
-            const code = store.generateCode();
-            const room = new GameRoom_1.GameRoom(roomId, code, io, 'random');
-            store.add(room);
-            const queuedColor = room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin);
-            const myColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, selectedPieceSkin, selectedBoardSkin);
-            if (!queuedColor || !myColor) {
-                console.error('[join_random] addPlayer failed unexpectedly', { queuedColor, myColor });
-                socket.emit('join_error', { message: '매칭 중 오류가 발생했습니다. 다시 시도해주세요.' });
-                return;
+            catch (err) {
+                console.error('[join_random] handler error:', err);
+                socket.emit('join_error', { message: '랜덤 매칭 중 오류가 발생했습니다.' });
             }
-            store.registerSocket(queued.socketId, roomId);
-            store.registerSocket(socket.id, roomId);
-            queuedSocket.emit('room_joined', {
-                roomId,
-                color: queuedColor,
-                opponentNickname: profile.nickname,
-                selfPieceSkin: queued.pieceSkin,
-                opponentPieceSkin: selectedPieceSkin,
-            });
-            socket.emit('room_joined', {
-                roomId,
-                color: myColor,
-                opponentNickname: queued.nickname,
-                selfPieceSkin: selectedPieceSkin,
-                opponentPieceSkin: queued.pieceSkin,
-            });
-            room.prepareGameStart();
         });
         socket.on('cancel_random', () => {
             pendingCancelRandom.add(socket.id);
@@ -699,49 +741,55 @@ function initSocketServer(io) {
             store.removeFromQueue(socket.id);
         });
         socket.on('join_coop', async ({ nickname, auth, pieceSkin }) => {
-            if (emitUpdateRequired(socket, auth))
-                return;
-            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
-            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
-            if (!io.sockets.sockets.has(socket.id))
-                return;
-            const queued = coopStore.dequeue();
-            if (!queued || queued.socketId === socket.id) {
-                if (queued) {
-                    coopStore.enqueue(queued.socketId, queued.nickname, queued.userId, queued.stats, queued.pieceSkin);
+            try {
+                if (emitUpdateRequired(socket, auth))
+                    return;
+                await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+                if (!io.sockets.sockets.has(socket.id))
+                    return;
+                const queued = coopStore.dequeue();
+                if (!queued || queued.socketId === socket.id) {
+                    if (queued) {
+                        coopStore.enqueue(queued.socketId, queued.nickname, queued.userId, queued.stats, queued.pieceSkin);
+                    }
+                    coopStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
+                    socket.emit('coop_matchmaking_waiting', {});
+                    return;
                 }
-                coopStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
-                socket.emit('coop_matchmaking_waiting', {});
-                return;
+                const queuedSocket = io.sockets.sockets.get(queued.socketId);
+                if (!queuedSocket) {
+                    coopStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
+                    socket.emit('coop_matchmaking_waiting', {});
+                    return;
+                }
+                const roomId = coopStore.generateRoomId();
+                const room = new CoopRoom_1.CoopRoom(roomId, roomId, io);
+                coopStore.add(room);
+                room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin);
+                coopStore.registerSocket(queued.socketId, roomId);
+                queuedSocket.emit('coop_room_joined', {
+                    roomId,
+                    color: 'red',
+                    teammateNickname: profile.nickname,
+                    selfPieceSkin: queued.pieceSkin,
+                    teammatePieceSkin: pieceSkin ?? 'classic',
+                });
+                room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
+                coopStore.registerSocket(socket.id, roomId);
+                socket.emit('coop_room_joined', {
+                    roomId,
+                    color: 'blue',
+                    teammateNickname: queued.nickname,
+                    selfPieceSkin: pieceSkin ?? 'classic',
+                    teammatePieceSkin: queued.pieceSkin,
+                });
+                room.prepareGameStart();
             }
-            const queuedSocket = io.sockets.sockets.get(queued.socketId);
-            if (!queuedSocket) {
-                coopStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
-                socket.emit('coop_matchmaking_waiting', {});
-                return;
+            catch (err) {
+                console.error('[join_coop] handler error:', err);
+                socket.emit('join_error', { message: '협동 매칭 중 오류가 발생했습니다.' });
             }
-            const roomId = coopStore.generateRoomId();
-            const room = new CoopRoom_1.CoopRoom(roomId, roomId, io);
-            coopStore.add(room);
-            room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin);
-            coopStore.registerSocket(queued.socketId, roomId);
-            queuedSocket.emit('coop_room_joined', {
-                roomId,
-                color: 'red',
-                teammateNickname: profile.nickname,
-                selfPieceSkin: queued.pieceSkin,
-                teammatePieceSkin: pieceSkin ?? 'classic',
-            });
-            room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
-            coopStore.registerSocket(socket.id, roomId);
-            socket.emit('coop_room_joined', {
-                roomId,
-                color: 'blue',
-                teammateNickname: queued.nickname,
-                selfPieceSkin: pieceSkin ?? 'classic',
-                teammatePieceSkin: queued.pieceSkin,
-            });
-            room.prepareGameStart();
         });
         socket.on('cancel_coop', () => {
             coopStore.removeFromQueue(socket.id);
@@ -753,8 +801,14 @@ function initSocketServer(io) {
                 ack?.({ status: 'UPDATE_REQUIRED', ...requirement });
                 return;
             }
-            await registerSocketSession(socket, auth, { forceRevalidate: true });
-            ack?.(await (0, playerAuth_1.resolveAccount)(auth));
+            try {
+                await registerSocketSession(socket, auth, { forceRevalidate: true });
+                ack?.(await (0, playerAuth_1.resolveAccount)(auth));
+            }
+            catch (err) {
+                console.error('[account_sync] handler error:', err);
+                ack?.({ status: 'AUTH_INVALID' });
+            }
         });
         socket.on('achievements_claim', async ({ auth, achievementId }, ack) => {
             const requirement = getUpdateRequirement(socket, auth);
@@ -801,21 +855,33 @@ function initSocketServer(io) {
                 ack?.({ ok: true, status: 'UPDATE_REQUIRED' });
                 return;
             }
-            const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
-            if (userId) {
-                await (0, achievementService_1.trackSettingsAchievements)({
-                    userId,
-                    isMusicMuted,
-                    isSfxMuted,
-                    musicVolumePercent,
-                    sfxVolumePercent,
-                });
+            try {
+                const userId = await registerSocketSession(socket, auth, { forceRevalidate: true });
+                if (userId) {
+                    await (0, achievementService_1.trackSettingsAchievements)({
+                        userId,
+                        isMusicMuted,
+                        isSfxMuted,
+                        musicVolumePercent,
+                        sfxVolumePercent,
+                    });
+                }
+                ack?.({ ok: true, status: userId ? 'ACCOUNT_OK' : 'AUTH_INVALID' });
             }
-            ack?.({ ok: true, status: userId ? 'ACCOUNT_OK' : 'AUTH_INVALID' });
+            catch (err) {
+                console.error('[achievements_sync_settings] handler error:', err);
+                ack?.({ ok: true, status: 'AUTH_INVALID' });
+            }
         });
         socket.on('finalize_google_upgrade', async ({ auth, guestAuth, guestProfile, flowStartedAt, allowExistingSwitch, }, ack) => {
-            await registerSocketSession(socket, auth, { forceRevalidate: true });
-            ack?.(await (0, playerAuth_1.finalizeGoogleUpgrade)(auth, guestAuth, guestProfile, flowStartedAt, Boolean(allowExistingSwitch)));
+            try {
+                await registerSocketSession(socket, auth, { forceRevalidate: true });
+                ack?.(await (0, playerAuth_1.finalizeGoogleUpgrade)(auth, guestAuth, guestProfile, flowStartedAt, Boolean(allowExistingSwitch)));
+            }
+            catch (err) {
+                console.error('[finalize_google_upgrade] handler error:', err);
+                ack?.({ status: 'UPGRADE_FAILED' });
+            }
         });
         socket.on('path_update', ({ path }) => {
             const room = store.getBySocket(socket.id);
@@ -827,100 +893,112 @@ function initSocketServer(io) {
             coopRoom?.updatePlannedPath(socket.id, path);
         });
         socket.on('join_2v2', async ({ nickname, auth, pieceSkin }) => {
-            if (emitUpdateRequired(socket, auth))
-                return;
-            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
-            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
-            if (!io.sockets.sockets.has(socket.id))
-                return;
-            twoVsTwoStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
-            const existingRoom = twoVsTwoStore.getBySocket(socket.id);
-            tryStartTwoVsTwoTeamMatch();
-            if (!existingRoom && !twoVsTwoStore.getBySocket(socket.id)) {
-                socket.emit('twovtwo_matchmaking_waiting', {});
+            try {
+                if (emitUpdateRequired(socket, auth))
+                    return;
+                await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+                if (!io.sockets.sockets.has(socket.id))
+                    return;
+                twoVsTwoStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
+                const existingRoom = twoVsTwoStore.getBySocket(socket.id);
+                tryStartTwoVsTwoTeamMatch();
+                if (!existingRoom && !twoVsTwoStore.getBySocket(socket.id)) {
+                    socket.emit('twovtwo_matchmaking_waiting', {});
+                }
+            }
+            catch (err) {
+                console.error('[join_2v2] handler error:', err);
+                socket.emit('join_error', { message: '2v2 매칭 중 오류가 발생했습니다.' });
             }
         });
         socket.on('join_ability', async ({ nickname, auth, pieceSkin, boardSkin, equippedSkills, training, }) => {
-            if (emitUpdateRequired(socket, auth))
-                return;
-            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
-            const profile = await resolvePlayerProfileCached(socket, auth, nickname);
-            if (!io.sockets.sockets.has(socket.id))
-                return;
-            if (training) {
+            try {
+                if (emitUpdateRequired(socket, auth))
+                    return;
+                await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                const profile = await resolvePlayerProfileCached(socket, auth, nickname);
+                if (!io.sockets.sockets.has(socket.id))
+                    return;
+                if (training) {
+                    clearAbilityFallback(socket.id);
+                    const roomId = abilityStore.generateRoomId();
+                    const room = new AbilityRoom_1.AbilityRoom(roomId, roomId, io);
+                    room.enableTrainingMode();
+                    const trainingColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
+                    if (!trainingColor)
+                        return;
+                    room.addIdleBot('Training Dummy', 'classic', 'classic', []);
+                    abilityStore.add(room);
+                    abilityStore.registerSocket(socket.id, roomId);
+                    socket.emit('ability_room_joined', {
+                        roomId,
+                        color: trainingColor,
+                        opponentNickname: 'Training Dummy',
+                        training: true,
+                    });
+                    room.waitForSkillSelection();
+                    return;
+                }
+                const queued = abilityStore.dequeue();
+                if (!queued || queued.socketId === socket.id) {
+                    if (queued) {
+                        abilityStore.enqueue(queued.socketId, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin, queued.equippedSkills);
+                    }
+                    abilityStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
+                    socket.emit('ability_matchmaking_waiting', {});
+                    scheduleAbilityFallback({
+                        socket,
+                        profile,
+                        pieceSkin: pieceSkin ?? 'classic',
+                        boardSkin: boardSkin ?? 'classic',
+                        equippedSkills,
+                    });
+                    return;
+                }
                 clearAbilityFallback(socket.id);
+                clearAbilityFallback(queued.socketId);
+                const queuedSocket = io.sockets.sockets.get(queued.socketId);
+                if (!queuedSocket) {
+                    abilityStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
+                    socket.emit('ability_matchmaking_waiting', {});
+                    scheduleAbilityFallback({
+                        socket,
+                        profile,
+                        pieceSkin: pieceSkin ?? 'classic',
+                        boardSkin: boardSkin ?? 'classic',
+                        equippedSkills,
+                    });
+                    return;
+                }
                 const roomId = abilityStore.generateRoomId();
                 const room = new AbilityRoom_1.AbilityRoom(roomId, roomId, io);
-                room.enableTrainingMode();
-                const trainingColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
-                if (!trainingColor)
-                    return;
-                room.addIdleBot('Training Dummy', 'classic', 'classic', []);
                 abilityStore.add(room);
+                const queuedAbilityColor = room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin, queued.equippedSkills);
+                const myAbilityColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
+                if (!queuedAbilityColor || !myAbilityColor) {
+                    console.error('[join_ability] addPlayer failed unexpectedly');
+                    socket.emit('join_error', { message: '매칭 중 오류가 발생했습니다. 다시 시도해주세요.' });
+                    return;
+                }
+                abilityStore.registerSocket(queued.socketId, roomId);
+                queuedSocket.emit('ability_room_joined', {
+                    roomId,
+                    color: queuedAbilityColor,
+                    opponentNickname: profile.nickname,
+                });
                 abilityStore.registerSocket(socket.id, roomId);
                 socket.emit('ability_room_joined', {
                     roomId,
-                    color: trainingColor,
-                    opponentNickname: 'Training Dummy',
-                    training: true,
+                    color: myAbilityColor,
+                    opponentNickname: queued.nickname,
                 });
-                room.waitForSkillSelection();
-                return;
+                room.prepareGameStart();
             }
-            const queued = abilityStore.dequeue();
-            if (!queued || queued.socketId === socket.id) {
-                if (queued) {
-                    abilityStore.enqueue(queued.socketId, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin, queued.equippedSkills);
-                }
-                abilityStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
-                socket.emit('ability_matchmaking_waiting', {});
-                scheduleAbilityFallback({
-                    socket,
-                    profile,
-                    pieceSkin: pieceSkin ?? 'classic',
-                    boardSkin: boardSkin ?? 'classic',
-                    equippedSkills,
-                });
-                return;
+            catch (err) {
+                console.error('[join_ability] handler error:', err);
+                socket.emit('join_error', { message: 'Ability 매칭 중 오류가 발생했습니다.' });
             }
-            clearAbilityFallback(socket.id);
-            clearAbilityFallback(queued.socketId);
-            const queuedSocket = io.sockets.sockets.get(queued.socketId);
-            if (!queuedSocket) {
-                abilityStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
-                socket.emit('ability_matchmaking_waiting', {});
-                scheduleAbilityFallback({
-                    socket,
-                    profile,
-                    pieceSkin: pieceSkin ?? 'classic',
-                    boardSkin: boardSkin ?? 'classic',
-                    equippedSkills,
-                });
-                return;
-            }
-            const roomId = abilityStore.generateRoomId();
-            const room = new AbilityRoom_1.AbilityRoom(roomId, roomId, io);
-            abilityStore.add(room);
-            const queuedAbilityColor = room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin, queued.equippedSkills);
-            const myAbilityColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
-            if (!queuedAbilityColor || !myAbilityColor) {
-                console.error('[join_ability] addPlayer failed unexpectedly');
-                socket.emit('join_error', { message: '매칭 중 오류가 발생했습니다. 다시 시도해주세요.' });
-                return;
-            }
-            abilityStore.registerSocket(queued.socketId, roomId);
-            queuedSocket.emit('ability_room_joined', {
-                roomId,
-                color: queuedAbilityColor,
-                opponentNickname: profile.nickname,
-            });
-            abilityStore.registerSocket(socket.id, roomId);
-            socket.emit('ability_room_joined', {
-                roomId,
-                color: myAbilityColor,
-                opponentNickname: queued.nickname,
-            });
-            room.prepareGameStart();
         });
         socket.on('cancel_2v2', () => {
             twoVsTwoStore.removeFromQueue(socket.id);
@@ -1016,45 +1094,51 @@ function initSocketServer(io) {
             room?.markClientReady(socket.id);
         });
         socket.on('rejoin_game', async (auth) => {
-            await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
-            if (!io.sockets.sockets.has(socket.id))
-                return;
-            const userId = typeof socket.data.userId === 'string' ? socket.data.userId : null;
-            if (!userId) {
+            try {
+                await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                if (!io.sockets.sockets.has(socket.id))
+                    return;
+                const userId = typeof socket.data.userId === 'string' ? socket.data.userId : null;
+                if (!userId) {
+                    socket.emit('rejoin_not_found');
+                    return;
+                }
+                const baseRoom = store.findRoomForRejoin(userId);
+                if (baseRoom) {
+                    const color = baseRoom.rejoinPlayer(socket, userId);
+                    if (color) {
+                        store.registerSocket(socket.id, baseRoom.roomId);
+                        socket.emit('rejoin_ack', {
+                            mode: 'base',
+                            color,
+                            roomCode: baseRoom.code,
+                            gameState: baseRoom.toClientState(),
+                        });
+                        console.log(`[rejoin_game] base userId=${userId} color=${color} room=${baseRoom.roomId}`);
+                        return;
+                    }
+                }
+                const abilityRoom = abilityStore.findRoomForRejoin(userId);
+                if (abilityRoom) {
+                    const color = abilityRoom.rejoinPlayer(socket, userId);
+                    if (color) {
+                        abilityStore.registerSocket(socket.id, abilityRoom.roomId);
+                        socket.emit('rejoin_ack', {
+                            mode: 'ability',
+                            color,
+                            roomCode: abilityRoom.code,
+                            abilityState: abilityRoom.toClientState(color),
+                        });
+                        console.log(`[rejoin_game] ability userId=${userId} color=${color} room=${abilityRoom.roomId}`);
+                        return;
+                    }
+                }
                 socket.emit('rejoin_not_found');
-                return;
             }
-            const baseRoom = store.findRoomForRejoin(userId);
-            if (baseRoom) {
-                const color = baseRoom.rejoinPlayer(socket, userId);
-                if (color) {
-                    store.registerSocket(socket.id, baseRoom.roomId);
-                    socket.emit('rejoin_ack', {
-                        mode: 'base',
-                        color,
-                        roomCode: baseRoom.code,
-                        gameState: baseRoom.toClientState(),
-                    });
-                    console.log(`[rejoin_game] base userId=${userId} color=${color} room=${baseRoom.roomId}`);
-                    return;
-                }
+            catch (err) {
+                console.error('[rejoin_game] handler error:', err);
+                socket.emit('rejoin_not_found');
             }
-            const abilityRoom = abilityStore.findRoomForRejoin(userId);
-            if (abilityRoom) {
-                const color = abilityRoom.rejoinPlayer(socket, userId);
-                if (color) {
-                    abilityStore.registerSocket(socket.id, abilityRoom.roomId);
-                    socket.emit('rejoin_ack', {
-                        mode: 'ability',
-                        color,
-                        roomCode: abilityRoom.code,
-                        abilityState: abilityRoom.toClientState(color),
-                    });
-                    console.log(`[rejoin_game] ability userId=${userId} color=${color} room=${abilityRoom.roomId}`);
-                    return;
-                }
-            }
-            socket.emit('rejoin_not_found');
         });
         socket.on('coop_client_ready', () => {
             const room = coopStore.getBySocket(socket.id);
