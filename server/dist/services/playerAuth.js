@@ -11,6 +11,7 @@ exports.grantDailyRewardTokens = grantDailyRewardTokens;
 exports.finalizeGoogleUpgrade = finalizeGoogleUpgrade;
 const supabase_1 = require("../lib/supabase");
 const achievementService_1 = require("./achievementService");
+const rotationService_1 = require("./rotationService");
 function normalizeAbilityLoadout(value) {
     if (!Array.isArray(value)) {
         return ['classic_guard'];
@@ -166,12 +167,39 @@ async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUse
         ownedSkins,
     });
     const achievements = await (0, achievementService_1.listPlayerAchievements)(userId);
+    const rawEquipped = normalizeAbilityLoadout(profileResult?.data?.equipped_ability_skills ?? []);
+    const activeRotation = (0, rotationService_1.getCurrentRotation)();
+    // 로테이션 만료 스킬 필터링: 풀 소속이지만 현재 로테이션에도 없고 스킨도 미보유인 스킬 제거
+    const removedRotationSkills = [];
+    const equippedAbilitySkills = rawEquipped.filter((skillId) => {
+        if (!(0, rotationService_1.isRotationSkill)(skillId))
+            return true;
+        if (activeRotation.includes(skillId))
+            return true;
+        const requiredSkin = (0, rotationService_1.getRotationSkillSkin)(skillId);
+        if (requiredSkin && ownedSkins.includes(requiredSkin))
+            return true;
+        removedRotationSkills.push(skillId);
+        return false;
+    });
+    // 제거된 스킬이 있으면 DB 업데이트 (fire-and-forget, 에러는 로그)
+    if (removedRotationSkills.length > 0) {
+        void Promise.resolve(supabase_1.supabaseAdmin
+            ?.from('profiles')
+            .update({ equipped_ability_skills: equippedAbilitySkills })
+            .eq('id', userId)).then((result) => {
+            if (result?.error)
+                console.error('[rotation] failed to update equipped_ability_skills', result.error);
+        }).catch((err) => {
+            console.error('[rotation] unexpected error updating equipped_ability_skills', err);
+        });
+    }
     return {
         userId,
         nickname,
         equippedSkin: profileResult?.data?.equipped_skin ?? 'classic',
         equippedBoardSkin: profileResult?.data?.equipped_board_skin ?? 'classic',
-        equippedAbilitySkills: normalizeAbilityLoadout(profileResult?.data?.equipped_ability_skills ?? []),
+        equippedAbilitySkills,
         ownedSkins,
         ownedBoardSkins,
         wins: statsResult?.data?.wins ?? 0,
@@ -181,6 +209,8 @@ async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUse
         dailyRewardTokens: dailyRewardWins * DAILY_REWARD_TOKENS_PER_WIN,
         isGuestUser,
         achievements,
+        rotationSkills: activeRotation,
+        removedRotationSkills,
     };
 }
 async function resolvePlayerProfile(auth, fallbackNickname) {

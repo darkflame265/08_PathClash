@@ -10,6 +10,7 @@ const socket_io_1 = require("socket.io");
 const supabase_1 = require("./lib/supabase");
 const googlePlayVerifier_1 = require("./services/googlePlayVerifier");
 const socketServer_1 = require("./socket/socketServer");
+const rotationService_1 = require("./services/rotationService");
 const appVersion_1 = require("./config/appVersion");
 const playerAuth_1 = require("./services/playerAuth");
 process.on('uncaughtException', (error) => {
@@ -202,6 +203,7 @@ app.post("/payments/google-play/token-grant", async (req, res) => {
         tokens: pack.tokens,
     });
 });
+void (0, rotationService_1.initRotation)();
 (0, socketServer_1.initSocketServer)(io);
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {

@@ -13,6 +13,7 @@ const appVersion_1 = require("../config/appVersion");
 const fakeRandomNicknames_1 = require("../config/fakeRandomNicknames");
 const playerAuth_1 = require("../services/playerAuth");
 const achievementService_1 = require("../services/achievementService");
+const rotationService_1 = require("../services/rotationService");
 function initSocketServer(io) {
     const store = RoomStore_1.RoomStore.getInstance();
     const coopStore = CoopRoomStore_1.CoopRoomStore.getInstance();
@@ -468,6 +469,9 @@ function initSocketServer(io) {
         console.log(`[+] Connected: ${socket.id}`);
         socket.on('sync_time', (ack) => {
             ack?.({ serverNow: Date.now() });
+        });
+        socket.on('get_rotation', (ack) => {
+            ack?.({ skills: (0, rotationService_1.getCurrentRotation)() });
         });
         socket.on('session_register', async ({ auth }, ack) => {
             const requirement = getUpdateRequirement(socket, auth);
