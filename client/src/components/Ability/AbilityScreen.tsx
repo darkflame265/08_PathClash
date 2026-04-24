@@ -3799,12 +3799,16 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           <div className="ability-opponent-panel-skills">
             {opponent.equippedSkills.map((skillId) => {
               const skill = ABILITY_SKILLS[skillId];
+              const isOpponentTimeRewindSpent =
+                skillId === "chronos_time_rewind" && opponent.timeRewindUsed;
               return (
                 <div key={skillId} className="ability-opponent-panel-skill">
                   <span className="ability-opponent-panel-skill-icon">
                     {renderSkillIcon(skillId)}
                   </span>
-                  <span className="ability-opponent-panel-skill-name">
+                  <span
+                    className={`ability-opponent-panel-skill-name ${isOpponentTimeRewindSpent ? "used" : ""}`}
+                  >
                     {lang === "en" ? skill.name.en : skill.name.kr}
                   </span>
                 </div>
