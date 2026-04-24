@@ -26,6 +26,7 @@ import { PlayerInfo } from '../Game/PlayerInfo';
 import { TwoVsTwoGrid } from './TwoVsTwoGrid';
 import '../Game/GameScreen.css';
 import '../Game/GameOverOverlay.css';
+import '../Game/HpDisplay.css';
 import '../Coop/CoopScreen.css';
 import './TwoVsTwoScreen.css';
 
@@ -134,6 +135,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
   const [collisionEffects, setCollisionEffects] = useState<
     { id: number; position: Position; direction: { dx: number; dy: number } }[]
   >([]);
+  const [boardShakeKey, setBoardShakeKey] = useState(0);
   const [mySubmitted, setMySubmitted] = useState(false);
   const [allySubmitted, setAllySubmitted] = useState(false);
   const [rematchRequested, setRematchRequested] = useState(false);
@@ -368,6 +370,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
               direction: calcHitDirection(hit.slot, step, payload.paths, payload.starts),
             })),
           );
+          setBoardShakeKey((k) => k + 1);
 
           const resetHitsId = window.setTimeout(() => {
             setHitSlots([]);
@@ -696,7 +699,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
               {lang === 'en' ? 'Disconnected' : '연결 끊김'}
             </div>
           )}
-          <div className="twovtwo-hp">{renderHearts(enemyLeft.hp)}</div>
+          <div className="twovtwo-hp"><HeartsDisplay hp={enemyLeft.hp} /></div>
         </div>
         <div className="twovtwo-role-box gs-role-badge">
           <div className="twovtwo-role-sub">
@@ -711,7 +714,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
               {lang === 'en' ? 'Disconnected' : '연결 끊김'}
             </div>
           )}
-          <div className="twovtwo-hp">{renderHearts(enemyRight.hp)}</div>
+          <div className="twovtwo-hp"><HeartsDisplay hp={enemyRight.hp} /></div>
         </div>
       </div>
 
@@ -756,6 +759,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
             hitSlots={hitSlots}
             explodingSlots={explodingSlots}
             collisionEffects={collisionEffects}
+            shakeKey={boardShakeKey}
           />
         </div>
       </div>
@@ -771,7 +775,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
               {lang === 'en' ? 'Disconnected' : '연결 끊김'}
             </div>
           )}
-          <div className="twovtwo-hp">{renderHearts(me.hp)}</div>
+          <div className="twovtwo-hp"><HeartsDisplay hp={me.hp} /></div>
         </div>
         <div
           className={`twovtwo-role-box gs-role-badge gs-role-badge-self gs-role-badge-${me?.role === 'attacker' ? 'atk' : 'run'}`}
@@ -789,7 +793,7 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
               {lang === 'en' ? 'Disconnected' : '연결 끊김'}
             </div>
           )}
-          <div className="twovtwo-hp">{renderHearts(ally.hp)}</div>
+          <div className="twovtwo-hp"><HeartsDisplay hp={ally.hp} /></div>
         </div>
       </div>
 
@@ -813,12 +817,33 @@ export function TwoVsTwoScreen({ onLeaveToLobby }: Props) {
   );
 }
 
-function renderHearts(hp: number) {
-  return Array.from({ length: 3 }, (_, index) => (
-    <span key={index} className={`heart ${index < hp ? 'filled' : 'empty'}`}>
-      {index < hp ? '♥' : '♡'}
-    </span>
-  ));
+function HeartsDisplay({ hp, maxHp = 3 }: { hp: number; maxHp?: number }) {
+  const prevHpRef = useRef(hp);
+  const [dyingIndex, setDyingIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    const prev = prevHpRef.current;
+    prevHpRef.current = hp;
+    if (prev > hp) {
+      setDyingIndex(hp);
+      const t = setTimeout(() => setDyingIndex(null), 600);
+      return () => clearTimeout(t);
+    }
+  }, [hp]);
+
+  return (
+    <>
+      {Array.from({ length: maxHp }, (_, index) => {
+        const filled = index < hp;
+        const dying = dyingIndex === index;
+        return (
+          <span key={index} className={`heart ${filled ? 'filled' : dying ? 'dying' : 'empty'}`}>
+            {filled || dying ? '♥' : '♡'}
+          </span>
+        );
+      })}
+    </>
+  );
 }
 
 

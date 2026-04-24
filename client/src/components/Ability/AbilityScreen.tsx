@@ -452,6 +452,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [collisionEffects, setCollisionEffects] = useState<
     Array<{ id: number; position: Position; direction: { dx: number; dy: number } }>
   >([]);
+  const [boardShakeKey, setBoardShakeKey] = useState(0);
   const [teleportEffects, setTeleportEffects] = useState<
     Array<{ id: number; color: PlayerColor; from: Position; to: Position }>
   >([]);
@@ -2023,6 +2024,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   ) => {
     queueAnimationTimeout(() => {
       setHitFlags((prev) => ({ ...prev, [color]: true }));
+      setBoardShakeKey((k) => k + 1);
       queueAnimationTimeout(() => {
         setHitFlags((prev) => ({ ...prev, [color]: false }));
       }, 650);
@@ -3880,6 +3882,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             onBlitzTargetSelect={handleBlitzTargetSelect}
             onInfernoTargetSelect={handleInfernoTargetSelect}
             onTeleportCancel={handleTeleportCancel}
+            shakeKey={boardShakeKey}
           />
         </div>
       </div>

@@ -16,6 +16,7 @@ import { playLobbyClick, playPathStepClick } from "../../utils/soundUtils";
 import { PlayerPiece } from "../Game/PlayerPiece";
 import { PathLine } from "../Game/PathLine";
 import { CollisionEffect } from "../Effects/CollisionEffect";
+import '../Game/GameGrid.css';
 
 interface Props {
   state: AbilityBattleState;
@@ -94,6 +95,7 @@ interface Props {
   onTeleportCancel: () => void;
   trapTiles: AbilityTrapTile[];
   magicMineCastingColors: { red: boolean; blue: boolean };
+  shakeKey?: number;
 }
 
 const GRID_SIZE = 5;
@@ -177,6 +179,7 @@ export function AbilityGrid({
   onTeleportCancel,
   trapTiles,
   magicMineCastingColors,
+  shakeKey = 0,
 }: Props) {
   const isSfxMuted = useGameStore((store) => store.isSfxMuted);
   const sfxVolume = useGameStore((store) => store.sfxVolume);
@@ -196,6 +199,17 @@ export function AbilityGrid({
     fromStart: false,
     fromEnd: false,
   });
+
+  useEffect(() => {
+    if (!shakeKey) return;
+    const el = shellRef.current;
+    if (!el) return;
+    el.classList.remove('board-shake');
+    void el.offsetWidth;
+    el.classList.add('board-shake');
+    const t = setTimeout(() => el.classList.remove('board-shake'), 130);
+    return () => clearTimeout(t);
+  }, [shakeKey]);
 
   useEffect(() => {
     const element = shellRef.current;

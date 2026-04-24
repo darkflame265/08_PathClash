@@ -112,6 +112,7 @@ interface GameStore {
   hitEffect: { red: boolean; blue: boolean };
   heartShake: { red: number; blue: number }; // hp index that shakes
   collisionEffects: { id: number; position: Position; direction: { dx: number; dy: number } }[];
+  boardShakeKey: number;
   explosionEffect: PlayerColor | null;
 
   // Game over
@@ -360,6 +361,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   hitEffect: { red: false, blue: false },
   heartShake: { red: -1, blue: -1 },
   collisionEffects: [],
+  boardShakeKey: 0,
   explosionEffect: null,
   winner: null,
   gameOverMessage: null,
@@ -602,6 +604,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const id = Date.now();
     set({
       collisionEffects: [...get().collisionEffects, { id, position: pos, direction }],
+      boardShakeKey: get().boardShakeKey + 1,
     });
     setTimeout(
       () =>
@@ -748,6 +751,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       hitEffect: { red: false, blue: false },
       heartShake: { red: -1, blue: -1 },
       collisionEffects: [],
+      boardShakeKey: 0,
       explosionEffect: null,
       winner: null,
       gameOverMessage: null,

@@ -96,3 +96,33 @@
 .heart.healing {
   animation: heart-heal-pulse 900ms ease;
 }
+
+@keyframes heart-damage-flash {
+  0% {
+    color: #ffffff;
+    transform: scale(1.4);
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 1)) drop-shadow(0 0 4px #ef4444);
+    opacity: 1;
+  }
+  25% {
+    color: #ef4444;
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.9));
+    opacity: 1;
+  }
+  70% {
+    color: #7f1d1d;
+    transform: scale(0.95);
+    opacity: 0.6;
+  }
+  100% {
+    color: var(--tile-border, #3a444d);
+    transform: scale(1);
+    filter: none;
+    opacity: 0.7;
+  }
+}
+
+.heart.dying {
+  animation: heart-damage-flash 550ms ease-out forwards;
+}

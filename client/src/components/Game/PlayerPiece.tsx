@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import type { Position, PlayerColor } from '../../types/game.types';
 import { FlagSkin, isFlagSkin } from '../shared/FlagSkin';
 import { CosmicGame } from '../../skins/rare/cosmic/Game';
@@ -89,6 +90,20 @@ export function PlayerPiece({
 }: Props) {
   const effectiveSkin =
     isOverloaded && skin === "neon_pulse" ? "classic" : skin;
+
+  const prevHpRef = useRef(hp);
+  const [dyingSegIndex, setDyingSegIndex] = useState<number | null>(null);
+  useEffect(() => {
+    if (hp === null) return;
+    const prev = prevHpRef.current;
+    prevHpRef.current = hp;
+    if (prev !== null && prev > hp) {
+      setDyingSegIndex(hp);
+      const t = setTimeout(() => setDyingSegIndex(null), 550);
+      return () => clearTimeout(t);
+    }
+  }, [hp]);
+
   const x = position.col * cellSize + cellSize / 2;
   const y = position.row * cellSize + cellSize / 2;
   const pieceSize = Math.max(28, Math.round(cellSize * 0.58));
@@ -219,12 +234,16 @@ export function PlayerPiece({
             style={{ ['--piece-hp-offset-y' as string]: `${hpOffsetY}px` }}
             aria-hidden="true"
           >
-            {Array.from({ length: maxHp }, (_, index) => (
-              <span
-                key={index}
-                className={`piece-hp-seg${index < hp ? " is-filled" : ""}`}
-              />
-            ))}
+            {Array.from({ length: maxHp }, (_, index) => {
+              const filled = index < hp;
+              const dying = dyingSegIndex === index;
+              return (
+                <span
+                  key={index}
+                  className={`piece-hp-seg${filled ? " is-filled" : dying ? " is-dying" : ""}`}
+                />
+              );
+            })}
           </div>
         )}
       </div>

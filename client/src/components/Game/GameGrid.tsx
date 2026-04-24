@@ -71,6 +71,7 @@ export function GameGrid({
     hitEffect,
     explosionEffect,
     collisionEffects,
+    boardShakeKey,
     isSfxMuted,
     sfxVolume,
   } = useGameStore();
@@ -158,6 +159,17 @@ export function GameGrid({
     const rect = gridRef.current?.getBoundingClientRect();
     return rect ? { x: rect.left, y: rect.top } : { x: 0, y: 0 };
   };
+
+  useEffect(() => {
+    if (!boardShakeKey) return;
+    const el = shellRef.current;
+    if (!el) return;
+    el.classList.remove('board-shake');
+    void el.offsetWidth;
+    el.classList.add('board-shake');
+    const t = setTimeout(() => el.classList.remove('board-shake'), 130);
+    return () => clearTimeout(t);
+  }, [boardShakeKey]);
 
   useEffect(() => {
     const element = shellRef.current;

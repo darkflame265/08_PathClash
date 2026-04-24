@@ -39,6 +39,7 @@ interface Props {
   hitSlots: TwoVsTwoSlot[];
   explodingSlots: TwoVsTwoSlot[];
   collisionEffects: { id: number; position: Position; direction: { dx: number; dy: number } }[];
+  shakeKey?: number;
 }
 
 export function TwoVsTwoGrid({
@@ -53,6 +54,7 @@ export function TwoVsTwoGrid({
   hitSlots,
   explodingSlots,
   collisionEffects,
+  shakeKey = 0,
 }: Props) {
   const shellRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -78,6 +80,17 @@ export function TwoVsTwoGrid({
     (Object.fromEntries(
       (Object.keys(state.players) as TwoVsTwoSlot[]).map((slot) => [slot, state.players[slot].position]),
     ) as DisplayPositions);
+
+  useEffect(() => {
+    if (!shakeKey) return;
+    const el = shellRef.current;
+    if (!el) return;
+    el.classList.remove('board-shake');
+    void el.offsetWidth;
+    el.classList.add('board-shake');
+    const t = setTimeout(() => el.classList.remove('board-shake'), 130);
+    return () => clearTimeout(t);
+  }, [shakeKey]);
 
   useEffect(() => {
     const element = shellRef.current;
