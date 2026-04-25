@@ -1,5 +1,5 @@
 import { resolveAbilityRound } from "./AbilityEngine";
-import { isBlockedCell, isValidMove } from "../utils/pathUtils";
+import { isBlockedCell, isValidMove, posEqual } from "../utils/pathUtils";
 import type {
   BoardSkin,
   PieceSkin,
@@ -132,6 +132,51 @@ function countOpenDirections(position: Position, nextObstacles: Position[]): num
     count += 1;
   }
   return count;
+}
+
+function inBoard(position: Position): boolean {
+  return (
+    position.row >= 0 &&
+    position.row <= 4 &&
+    position.col >= 0 &&
+    position.col <= 4
+  );
+}
+
+function buildBlitzPath(start: Position, target: Position): Position[] {
+  const rowDelta = target.row - start.row;
+  const colDelta = target.col - start.col;
+  const rowStep = rowDelta === 0 ? 0 : rowDelta > 0 ? 1 : -1;
+  const colStep = colDelta === 0 ? 0 : colDelta > 0 ? 1 : -1;
+
+  if (Math.abs(rowDelta) + Math.abs(colDelta) !== 1) return [];
+
+  const path: Position[] = [];
+  let row = start.row + rowStep;
+  let col = start.col + colStep;
+  while (row >= 0 && row <= 4 && col >= 0 && col <= 4) {
+    path.push({ row, col });
+    row += rowStep;
+    col += colStep;
+  }
+  return path;
+}
+
+function isValidPath(
+  start: Position,
+  path: Position[],
+  pathPoints: number,
+  validationObstacles: Position[],
+): boolean {
+  if (path.length > pathPoints) return false;
+  let current = start;
+  for (const position of path) {
+    if (!inBoard(position)) return false;
+    if (isBlockedCell(position, validationObstacles)) return false;
+    if (!isValidMove(current, position)) return false;
+    current = position;
+  }
+  return true;
 }
 
 function generateObstaclesForTraining(
@@ -355,58 +400,233 @@ function applyTimeRewindIfNeeded(
           : null;
 }
 
-function sanitizeSkills(player: TrainingPlayerState, skills: AbilitySkillReservation[]) {
-  const deduped = Array.from(
-    new Map(skills.map((skill) => [skill.skillId, { ...skill, target: skill.target ?? null }])).values(),
-  ).slice(0, 3);
-  const pathLength = player.plannedPath.length;
-  const manaCost = deduped.reduce(
-    (sum, skill) => sum + ABILITY_SKILL_COSTS[skill.skillId],
-    0,
-  );
-  if (manaCost > player.mana) return [] as AbilitySkillReservation[];
+function normalizeSkillReservations(
+  skills: AbilitySkillReservation[],
+): AbilitySkillReservation[] {
+  return Array.from(
+    new Map(
+      skills.map((skill) => [
+        skill.skillId,
+        { ...skill, target: skill.target ?? null },
+      ]),
+    ).values(),
+  )
+    .slice(0, 3)
+    .sort((left, right) => left.order - right.order);
+}
 
-  return deduped.filter((skill) => {
-    const rule = ABILITY_SKILL_SERVER_RULES[skill.skillId];
-    if (rule.roleRestriction === "attacker" && player.role !== "attacker") {
-      return false;
-    }
-    if (rule.roleRestriction === "escaper" && player.role !== "escaper") {
-      return false;
-    }
-    if (skill.step < 0 || skill.step > pathLength) return false;
-    if (rule.stepRule === "zero_only" && skill.step !== 0) return false;
-    if (rule.maxStep !== undefined && skill.step > rule.maxStep) return false;
-    if (rule.requiresEmptyPathWhenNotOverdrive && pathLength > 0) return false;
-    if (rule.requiresPreviousTurnPath && (!player.previousTurnStart || player.previousTurnPath.length === 0)) {
-      return false;
-    }
-    if (rule.targetRule === "position") {
-      if (!skill.target) return false;
-      if (
-        skill.target.row < 0 ||
-        skill.target.row > 4 ||
-        skill.target.col < 0 ||
-        skill.target.col > 4
-      ) {
-        return false;
-      }
-    }
+function validateSkillRoleRestrictions(
+  player: TrainingPlayerState,
+  skills: AbilitySkillReservation[],
+): boolean {
+  return skills.every((skill) => {
+    const { roleRestriction } = ABILITY_SKILL_SERVER_RULES[skill.skillId];
+    if (roleRestriction === "attacker") return player.role === "attacker";
+    if (roleRestriction === "escaper") return player.role === "escaper";
     return true;
   });
 }
 
-function sanitizePath(path: Position[]): Position[] {
-  if (!redPlayer) return [];
-  const result: Position[] = [];
-  let current = redPlayer.position;
-  for (const position of path.slice(0, TRAINING_PATH_POINTS)) {
-    if (isBlockedCell(position, obstacles)) break;
-    if (!isValidMove(current, position)) break;
-    result.push(position);
-    current = position;
+function validateCommonSkillReservations(
+  player: TrainingPlayerState,
+  skills: AbilitySkillReservation[],
+  path: Position[],
+): boolean {
+  const pathLength = path.length;
+  const hasExclusiveSkill = skills.some(
+    (skill) => ABILITY_SKILL_SERVER_RULES[skill.skillId].exclusiveWhenNotOverdrive,
+  );
+
+  if (hasExclusiveSkill && skills.length !== 1) return false;
+
+  return skills.every((skill) => {
+    const rule = ABILITY_SKILL_SERVER_RULES[skill.skillId];
+
+    if (skill.step < 0 || skill.step > pathLength) return false;
+    if (rule.targetRule === "position" && !skill.target) return false;
+    if (rule.stepRule === "zero_only" && skill.step !== 0) return false;
+    if (rule.maxStep !== undefined && skill.step > rule.maxStep) return false;
+
+    if (rule.requiresEmptyPathWhenNotOverdrive && pathLength > 0) {
+      return false;
+    }
+
+    if (
+      rule.requiresPreviousTurnPath &&
+      (!player.previousTurnStart || player.previousTurnPath.length === 0)
+    ) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+function validateTrainingPlan(
+  player: TrainingPlayerState,
+  path: Position[],
+  skills: AbilitySkillReservation[],
+): { path: Position[]; skills: AbilitySkillReservation[] } | null {
+  const candidatePath = path.slice(0, TRAINING_PATH_POINTS);
+  const uniqueSkills = normalizeSkillReservations(skills);
+  const manaCost = uniqueSkills.reduce(
+    (sum, skill) => sum + ABILITY_SKILL_COSTS[skill.skillId],
+    0,
+  );
+  if (manaCost > player.mana) return null;
+  if (!validateSkillRoleRestrictions(player, uniqueSkills)) return null;
+  if (!validateCommonSkillReservations(player, uniqueSkills, candidatePath)) {
+    return null;
   }
-  return result;
+
+  const hasGuard = uniqueSkills.some(
+    (skill) => skill.skillId === "classic_guard",
+  );
+  const hasPhaseShift = uniqueSkills.some(
+    (skill) => skill.skillId === "phase_shift",
+  );
+  const hasCharge = uniqueSkills.some(
+    (skill) => skill.skillId === "plasma_charge",
+  );
+  const teleport =
+    uniqueSkills.find((skill) => skill.skillId === "quantum_shift") ?? null;
+  const hasBlitz = uniqueSkills.some(
+    (skill) => skill.skillId === "electric_blitz",
+  );
+  const validationObstacles = hasPhaseShift ? [] : obstacles;
+
+  for (const skill of uniqueSkills) {
+    if (skill.target && !inBoard(skill.target)) return null;
+    if (skill.skillId === "inferno_field") {
+      if (!skill.target) return null;
+      const infernoOrigin =
+        skill.step === 0 ? player.position : candidatePath[skill.step - 1];
+      if (infernoOrigin && posEqual(infernoOrigin, skill.target)) return null;
+    }
+  }
+
+  if (!hasBlitz) {
+    if (teleport) {
+      if (!teleport.target) return null;
+      const teleportOrigin =
+        teleport.step === 0 ? player.position : candidatePath[teleport.step - 1];
+      if (!teleportOrigin) return null;
+      const rowDelta = Math.abs(teleport.target.row - teleportOrigin.row);
+      const colDelta = Math.abs(teleport.target.col - teleportOrigin.col);
+      if (rowDelta > 1 || colDelta > 1 || (rowDelta === 0 && colDelta === 0)) {
+        return null;
+      }
+      if (isBlockedCell(teleport.target, validationObstacles)) return null;
+
+      const prefixPath = candidatePath.slice(0, teleport.step);
+      const suffixPath = candidatePath.slice(teleport.step);
+      if (
+        !isValidPath(
+          player.position,
+          prefixPath,
+          hasGuard ? 0 : TRAINING_PATH_POINTS,
+          validationObstacles,
+        )
+      ) {
+        return null;
+      }
+      if (
+        !isValidPath(
+          teleport.target,
+          suffixPath,
+          hasGuard ? 0 : TRAINING_PATH_POINTS,
+          validationObstacles,
+        )
+      ) {
+        return null;
+      }
+    } else if (
+      !isValidPath(
+        player.position,
+        candidatePath,
+        hasGuard ? 0 : hasCharge ? 1 : TRAINING_PATH_POINTS,
+        validationObstacles,
+      )
+    ) {
+      return null;
+    }
+
+    return { path: candidatePath, skills: uniqueSkills };
+  }
+
+  let cursor = 0;
+  let segmentStart = player.position;
+  const movementSkills = uniqueSkills
+    .filter(
+      (skill) =>
+        skill.skillId === "quantum_shift" || skill.skillId === "electric_blitz",
+    )
+    .sort((left, right) => {
+      if (left.step !== right.step) return left.step - right.step;
+      return left.order - right.order;
+    });
+
+  for (const movementSkill of movementSkills) {
+    if (movementSkill.step < cursor) return null;
+    const prefixSegment = candidatePath.slice(cursor, movementSkill.step);
+    if (
+      !isValidPath(
+        segmentStart,
+        prefixSegment,
+        TRAINING_PATH_POINTS,
+        validationObstacles,
+      )
+    ) {
+      return null;
+    }
+    const movementOrigin =
+      prefixSegment.length > 0
+        ? prefixSegment[prefixSegment.length - 1]
+        : segmentStart;
+
+    if (movementSkill.skillId === "quantum_shift") {
+      const target = movementSkill.target;
+      if (!target) return null;
+      const rowDelta = Math.abs(target.row - movementOrigin.row);
+      const colDelta = Math.abs(target.col - movementOrigin.col);
+      if (rowDelta > 1 || colDelta > 1 || (rowDelta === 0 && colDelta === 0)) {
+        return null;
+      }
+      if (isBlockedCell(target, validationObstacles)) return null;
+      segmentStart = target;
+      cursor = movementSkill.step;
+      continue;
+    }
+
+    const target = movementSkill.target;
+    if (!target) return null;
+    const blitzPath = buildBlitzPath(movementOrigin, target);
+    if (blitzPath.length === 0) return null;
+    const authoredBlitzPath = candidatePath.slice(
+      movementSkill.step,
+      movementSkill.step + blitzPath.length,
+    );
+    if (authoredBlitzPath.length !== blitzPath.length) return null;
+    for (let index = 0; index < blitzPath.length; index += 1) {
+      if (!posEqual(blitzPath[index], authoredBlitzPath[index])) return null;
+    }
+    segmentStart = blitzPath[blitzPath.length - 1];
+    cursor = movementSkill.step + blitzPath.length;
+  }
+
+  const suffix = candidatePath.slice(cursor);
+  if (
+    !isValidPath(
+      segmentStart,
+      suffix,
+      TRAINING_PATH_POINTS,
+      validationObstacles,
+    )
+  ) {
+    return null;
+  }
+
+  return { path: candidatePath, skills: uniqueSkills };
 }
 
 function startRound(): void {
@@ -633,8 +853,13 @@ function submitPlan(
     return;
   }
 
-  redPlayer.plannedPath = sanitizePath(payload?.path ?? []);
-  redPlayer.plannedSkills = sanitizeSkills(redPlayer, payload?.skills ?? []);
+  const validated = validateTrainingPlan(
+    redPlayer,
+    payload?.path ?? [],
+    payload?.skills ?? [],
+  ) ?? { path: [], skills: [] };
+  redPlayer.plannedPath = validated.path;
+  redPlayer.plannedSkills = validated.skills;
   redPlayer.pathSubmitted = true;
 
   emit("ability_player_submitted", {
