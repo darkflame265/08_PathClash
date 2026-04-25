@@ -806,7 +806,13 @@
 }
 
 .ability-skill-icon-glyph.is-sun-chariot {
-  color: #fff176;
+  color: #fff6a3;
+  font-weight: 900;
+  text-shadow:
+    0 0 4px rgba(245, 158, 11, 1),
+    0 0 8px rgba(255, 238, 140, 1),
+    0 0 16px rgba(250, 204, 21, 0.95),
+    0 0 28px rgba(245, 158, 11, 0.75);
 }
 
 .google-link-btn {
@@ -2915,33 +2921,37 @@
 }
 
 .skin-detail-skill-icon:has(.ability-skill-icon-glyph.is-atomic-fission) {
-  border-color: rgba(240, 171, 252, 0.96);
+  border: 2px solid #f472ff;
   background: radial-gradient(
     circle at 50% 50%,
-    rgba(255, 255, 255, 0.18) 0%,
-    rgba(244, 114, 255, 0.42) 38%,
-    rgba(126, 34, 206, 0.44) 100%
+    rgba(255, 180, 255, 0.95) 0%,
+    rgba(217, 70, 239, 0.8) 28%,
+    rgba(126, 34, 206, 0.75) 58%,
+    rgba(45, 15, 70, 0.95) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(244, 114, 255, 0.5),
-    0 0 14px rgba(244, 114, 255, 0.86),
-    0 0 28px rgba(192, 38, 211, 0.52),
-    inset 0 0 12px rgba(255, 255, 255, 0.2);
+    0 0 8px rgba(255, 180, 255, 0.95),
+    0 0 18px rgba(244, 114, 255, 0.85),
+    0 0 32px rgba(192, 38, 211, 0.65),
+    inset 0 0 10px rgba(255, 255, 255, 0.25),
+    inset 0 0 18px rgba(126, 34, 206, 0.8);
 }
 
 .skin-detail-skill-icon:has(.ability-skill-icon-glyph.is-sun-chariot) {
-  border-color: rgba(254, 240, 138, 0.96);
+  border: 2px solid #facc15;
   background: radial-gradient(
     circle at 50% 50%,
-    rgba(255, 255, 255, 0.2) 0%,
-    rgba(250, 204, 21, 0.46) 42%,
-    rgba(180, 83, 9, 0.42) 100%
+    rgba(255, 246, 163, 0.96) 0%,
+    rgba(250, 204, 21, 0.84) 30%,
+    rgba(245, 158, 11, 0.78) 60%,
+    rgba(63, 38, 0, 0.95) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(254, 240, 138, 0.52),
-    0 0 14px rgba(250, 204, 21, 0.9),
-    0 0 28px rgba(245, 158, 11, 0.56),
-    inset 0 0 12px rgba(255, 255, 255, 0.22);
+    0 0 8px rgba(255, 246, 163, 0.95),
+    0 0 18px rgba(250, 204, 21, 0.85),
+    0 0 32px rgba(245, 158, 11, 0.65),
+    inset 0 0 10px rgba(255, 255, 255, 0.25),
+    inset 0 0 18px rgba(146, 64, 14, 0.78);
 }
 
 .skin-detail-skill-title-wrap {
@@ -3441,13 +3451,21 @@
 }
 
 .ability-skill-preview:has(.ability-skill-icon-glyph.is-sun-chariot) {
-  background: radial-gradient(circle, #7c5a00 0%, #5b3d00 45%, #2b1a00 100%);
-
   border: 2px solid #facc15;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 246, 163, 0.96) 0%,
+    rgba(250, 204, 21, 0.84) 30%,
+    rgba(245, 158, 11, 0.78) 60%,
+    rgba(63, 38, 0, 0.95) 100%
+  );
 
   box-shadow:
-    0 0 8px rgba(250, 204, 21, 0.6),
-    0 0 18px rgba(245, 158, 11, 0.45);
+    0 0 8px rgba(255, 246, 163, 0.95),
+    0 0 18px rgba(250, 204, 21, 0.85),
+    0 0 32px rgba(245, 158, 11, 0.65),
+    inset 0 0 10px rgba(255, 255, 255, 0.25),
+    inset 0 0 18px rgba(146, 64, 14, 0.78);
 }
 
 .ability-skill-meta {
