@@ -665,10 +665,11 @@ function renderAbilitySkillIcon(skillId: AbilitySkillId) {
   }
 
   const icon = skillId === "electric_blitz" ? "⚡︎" : skill.icon;
+  const skillIconClass = `is-${skillId.replaceAll("_", "-")}`;
 
   return (
     <span
-      className={`ability-skill-icon-glyph${skillId === "electric_blitz" ? " is-electric-blitz" : ""}${skillId === "aurora_heal" ? " is-aurora-heal" : ""}${skillId === "gold_overdrive" ? " is-gold-overdrive" : ""}${skillId === "atomic_fission" ? " is-atomic-fission" : ""}${skillId === "sun_chariot" ? " is-sun-chariot" : ""}`}
+      className={`ability-skill-icon-glyph ${skillIconClass}`}
       aria-hidden="true"
     >
       {icon}
@@ -4512,7 +4513,9 @@ export function LobbyScreen({
                       {linkedSkill ? (
                         <>
                           <div className="skin-detail-skill-head">
-                            <span className="skin-preview skin-detail-skill-icon">
+                            <span
+                              className={`skin-preview skin-detail-skill-icon ability-skill-preview-${linkedSkill.id.replaceAll("_", "-")}`}
+                            >
                               {renderAbilitySkillIcon(linkedSkill.id)}
                             </span>
 
@@ -4830,7 +4833,9 @@ export function LobbyScreen({
                     }}
                     disabled={!unlocked}
                   >
-                    <span className="skin-preview ability-skill-preview">
+                    <span
+                      className={`skin-preview ability-skill-preview ability-skill-preview-${skill.id.replaceAll("_", "-")}`}
+                    >
                       {renderAbilitySkillIcon(skill.id)}
                     </span>
 
