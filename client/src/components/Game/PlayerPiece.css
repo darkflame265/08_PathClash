@@ -21,13 +21,42 @@
   transform: translate(-50%, -50%);
   overflow: visible;
   pointer-events: none;
-  will-change: opacity;
   animation: blitz-ring-breathe 1.6s ease-in-out infinite;
 }
 
 @keyframes blitz-ring-breathe {
   0%, 100% { opacity: 0.82; }
   50% { opacity: 1; }
+}
+
+.piece-blitz-ring .blitz-ring-arc-a {
+  stroke-dasharray: 22 8;
+  animation: blitz-arc-a 1.8s linear infinite;
+}
+
+.piece-blitz-ring .blitz-ring-arc-b {
+  stroke-dasharray: 18 10;
+  animation: blitz-arc-b 1.4s linear infinite;
+}
+
+.piece-blitz-ring .blitz-ring-arc-c {
+  stroke-dasharray: 15 12;
+  animation: blitz-arc-c 2.2s linear infinite;
+}
+
+@keyframes blitz-arc-a {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -30; }
+}
+
+@keyframes blitz-arc-b {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: 28; }
+}
+
+@keyframes blitz-arc-c {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -27; }
 }
 
 .player-piece.hit {

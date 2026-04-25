@@ -184,9 +184,9 @@ export function PlayerPiece({
           </defs>
           <circle cx="50" cy="50" r="70" fill="none" stroke="rgba(147,51,234,0.28)" strokeWidth="18" filter={`url(#br-glow-${color})`} />
           <circle cx="50" cy="50" r="64" fill="none" stroke="rgba(192,132,252,0.42)" strokeWidth="7" filter={`url(#br-glow-${color})`} />
-          <circle cx="50" cy="50" r="66" fill="none" stroke="rgba(192,132,252,0.52)" strokeWidth="4" filter={`url(#br-f-${color})`} />
-          <circle cx="50" cy="50" r="62" fill="none" stroke="#c084fc" strokeWidth="2.5" filter={`url(#br-f-${color})`} />
-          <circle cx="50" cy="50" r="56" fill="none" stroke="rgba(233,213,255,0.38)" strokeWidth="1.5" filter={`url(#br-f-${color})`} />
+          <circle className="blitz-ring-arc-a" cx="50" cy="50" r="66" fill="none" stroke="rgba(192,132,252,0.52)" strokeWidth="4" filter={`url(#br-f-${color})`} />
+          <circle className="blitz-ring-arc-b" cx="50" cy="50" r="62" fill="none" stroke="#c084fc" strokeWidth="2.5" filter={`url(#br-f-${color})`} />
+          <circle className="blitz-ring-arc-c" cx="50" cy="50" r="56" fill="none" stroke="rgba(233,213,255,0.38)" strokeWidth="1.5" filter={`url(#br-f-${color})`} />
         </svg>
       )}
       {isGuard && (
