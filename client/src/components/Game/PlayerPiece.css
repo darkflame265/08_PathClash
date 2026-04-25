@@ -12,6 +12,22 @@
   pointer-events: none;
 }
 
+.piece-blitz-ring {
+  position: absolute;
+  width: var(--piece-size, 56px);
+  height: var(--piece-size, 56px);
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+  animation: blitz-ring-breathe 1.6s ease-in-out infinite;
+}
+
+@keyframes blitz-ring-breathe {
+  0%, 100% { opacity: 0.82; }
+  50% { opacity: 1; }
+}
+
 .player-piece.hit {
   z-index: 60;
 }

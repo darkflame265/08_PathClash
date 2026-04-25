@@ -33,6 +33,7 @@ interface Props {
   isRewinding?: boolean;
   isMagicMineCasting?: boolean;
   isClone?: boolean;
+  isBlitzRingActive?: boolean;
   hp?: number | null;
   maxHp?: number;
   hpOffsetY?: number;
@@ -81,6 +82,7 @@ export function PlayerPiece({
   isRewinding = false,
   isMagicMineCasting = false,
   isClone = false,
+  isBlitzRingActive = false,
   hp = null,
   maxHp = 3,
   hpOffsetY = 0,
@@ -162,6 +164,42 @@ export function PlayerPiece({
         ['--wizard-scale' as string]: `${wizardScale}`,
       }}
     >
+      {isBlitzRingActive && (
+        <svg className="piece-blitz-ring" viewBox="0 0 100 100" aria-hidden="true" style={{ overflow: 'visible' }}>
+          <defs>
+            <filter id={`br-glow-${color}`} x="-100%" y="-100%" width="300%" height="300%">
+              <feGaussianBlur stdDeviation="3" />
+            </filter>
+            <filter id={`br-f-${color}`} colorInterpolationFilters="sRGB" x="-100%" y="-100%" width="300%" height="300%">
+              <feTurbulence type="turbulence" baseFrequency="0.04 0.04" numOctaves="5" result="n1" seed="7" />
+              <feOffset in="n1" result="oN1">
+                <animate attributeName="dy" values="80; 0" dur="4s" repeatCount="indefinite" calcMode="linear" />
+              </feOffset>
+              <feTurbulence type="turbulence" baseFrequency="0.04 0.04" numOctaves="5" result="n2" seed="7" />
+              <feOffset in="n2" result="oN2">
+                <animate attributeName="dy" values="0; -80" dur="4s" repeatCount="indefinite" calcMode="linear" />
+              </feOffset>
+              <feTurbulence type="turbulence" baseFrequency="0.04 0.04" numOctaves="5" result="n3" seed="8" />
+              <feOffset in="n3" result="oN3">
+                <animate attributeName="dx" values="80; 0" dur="4s" repeatCount="indefinite" calcMode="linear" />
+              </feOffset>
+              <feTurbulence type="turbulence" baseFrequency="0.04 0.04" numOctaves="5" result="n4" seed="8" />
+              <feOffset in="n4" result="oN4">
+                <animate attributeName="dx" values="0; -80" dur="4s" repeatCount="indefinite" calcMode="linear" />
+              </feOffset>
+              <feComposite in="oN1" in2="oN2" result="p1" />
+              <feComposite in="oN3" in2="oN4" result="p2" />
+              <feBlend in="p1" in2="p2" mode="color-dodge" result="combined" />
+              <feDisplacementMap in="SourceGraphic" in2="combined" scale="16" xChannelSelector="R" yChannelSelector="B" />
+            </filter>
+          </defs>
+          <circle cx="50" cy="50" r="70" fill="none" stroke="rgba(147,51,234,0.28)" strokeWidth="18" filter={`url(#br-glow-${color})`} />
+          <circle cx="50" cy="50" r="64" fill="none" stroke="rgba(192,132,252,0.42)" strokeWidth="7" filter={`url(#br-glow-${color})`} />
+          <circle cx="50" cy="50" r="66" fill="none" stroke="rgba(192,132,252,0.52)" strokeWidth="4" filter={`url(#br-f-${color})`} />
+          <circle cx="50" cy="50" r="62" fill="none" stroke="#c084fc" strokeWidth="2.5" filter={`url(#br-f-${color})`} />
+          <circle cx="50" cy="50" r="56" fill="none" stroke="rgba(233,213,255,0.38)" strokeWidth="1.5" filter={`url(#br-f-${color})`} />
+        </svg>
+      )}
       {isGuard && (
         <div className="piece-guard-barrier" aria-hidden="true">
           <span className="piece-guard-barrier-dome" />
