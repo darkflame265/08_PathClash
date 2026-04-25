@@ -193,6 +193,7 @@ let lastPathStepSfxAt = 0;
 let abilitySfxGains = DEFAULT_ABILITY_SFX_GAINS;
 let chronosPreviewTimeout: number | null = null;
 let overdrivePreviewTimeout: number | null = null;
+let abilitySfxPreloadStarted = false;
 
 Howler.autoUnlock = true;
 Howler.autoSuspend = false;
@@ -432,6 +433,14 @@ function playAbilitySfx(id: AbilitySfxId, volume = 0.55): void {
     if (!shouldUseHtmlAbilityAudio(id)) {
       const howl = getAbilityHowl(id);
       if (!howl) return;
+      // Howler exposes state/load at runtime, but the bundled type used here is narrower.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const abilityHowl = howl as any;
+      if (abilityHowl.state?.() !== "loaded") {
+        howl.once("load", () => playAbilitySfx(id, volume));
+        abilityHowl.load?.();
+        return;
+      }
       // Start at 0 so Howler schedules setValueAtTime(0) on the new sound,
       // then ramp up on that specific sound's gain node to avoid click noise.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -458,6 +467,12 @@ function playAbilitySfx(id: AbilitySfxId, volume = 0.55): void {
 
     const baseAudio = getAbilityAudio(id);
     if (!baseAudio) return;
+    if (baseAudio.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+      const playAfterLoad = () => playAbilitySfx(id, volume);
+      baseAudio.addEventListener("loadeddata", playAfterLoad, { once: true });
+      baseAudio.load();
+      return;
+    }
     const audio = baseAudio.cloneNode(true) as HTMLAudioElement;
     audio.loop = false;
     audio.volume = normalizedVolume;
@@ -521,6 +536,8 @@ function playUiSfx(
 }
 
 export function preloadAbilitySfxAssets(): void {
+  if (abilitySfxPreloadStarted) return;
+  abilitySfxPreloadStarted = true;
   for (const id of Object.keys(ABILITY_SFX) as AbilitySfxId[]) {
     if (!shouldUseHtmlAbilityAudio(id)) {
       getAbilityHowl(id);
@@ -759,6 +776,11 @@ export function stopOverdriveLoop(): void {
   }
 }
 
+export function prepareSfxPreviewAudio(): void {
+  resumeAudioContext();
+  preloadAbilitySfxAssets();
+}
+
 function scheduleOverdrivePreviewStop(): void {
   if (overdrivePreviewTimeout !== null) {
     window.clearTimeout(overdrivePreviewTimeout);
@@ -773,6 +795,7 @@ export function previewAbilitySfxSample(
   gainId: AbilitySfxGainId,
   volume = 0.55,
 ): void {
+  resumeAudioContext();
   switch (gainId) {
     case "guard":
       playGuard(volume);

@@ -78,8 +78,8 @@ import { useLang } from "../../hooks/useLang";
 
 import {
   playLobbyClick,
+  prepareSfxPreviewAudio,
   previewAbilitySfxSample,
-  resumeAudioContext,
 } from "../../utils/soundUtils";
 import {
   getConnectedGamepadButtonLayout,
@@ -3572,7 +3572,7 @@ export function LobbyScreen({
 
   const handlePreviewAbilitySfx = useCallback(
     (gainId: (typeof ABILITY_SFX_GAIN_IDS)[number]) => {
-      resumeAudioContext();
+      prepareSfxPreviewAudio();
       if (isSfxMuted) return;
       previewAbilitySfxSample(gainId, sfxVolume);
     },
@@ -5161,7 +5161,10 @@ export function LobbyScreen({
               <div className="upgrade-modal-actions settings-actions">
                 <button
                   className="lobby-btn secondary settings-policy-btn"
-                  onClick={() => setIsAudioSettingsOpen(true)}
+                  onClick={() => {
+                    prepareSfxPreviewAudio();
+                    setIsAudioSettingsOpen(true);
+                  }}
                   type="button"
                 >
                   {soundButtonLabel}
@@ -5363,7 +5366,10 @@ export function LobbyScreen({
                 <button
                   className={`audio-advanced-toggle ${isAudioAdvancedOpen ? "is-open" : ""}`}
                   data-keyboard-modal-layer="audio-advanced-toggle"
-                  onClick={() => setIsAudioAdvancedOpen((open) => !open)}
+                  onClick={() => {
+                    prepareSfxPreviewAudio();
+                    setIsAudioAdvancedOpen((open) => !open);
+                  }}
                   type="button"
                 >
                   <span>{audioAdvancedLabel}</span>
