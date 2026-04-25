@@ -2916,6 +2916,32 @@
   font-size: 1.63rem;
 }
 
+.skin-detail-skill-icon:has(.ability-skill-icon-glyph.is-atomic-fission) {
+  border-color: rgba(217, 70, 239, 0.86);
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(192, 38, 211, 0.24),
+    rgba(30, 41, 59, 0.96)
+  );
+  box-shadow:
+    0 0 0 1px rgba(217, 70, 239, 0.32),
+    0 0 12px rgba(192, 38, 211, 0.5),
+    inset 0 0 10px rgba(217, 70, 239, 0.18);
+}
+
+.skin-detail-skill-icon:has(.ability-skill-icon-glyph.is-sun-chariot) {
+  border-color: rgba(250, 204, 21, 0.9);
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(245, 158, 11, 0.24),
+    rgba(30, 41, 59, 0.96)
+  );
+  box-shadow:
+    0 0 0 1px rgba(250, 204, 21, 0.32),
+    0 0 12px rgba(245, 158, 11, 0.5),
+    inset 0 0 10px rgba(250, 204, 21, 0.2);
+}
+
 .skin-detail-skill-title-wrap {
   min-width: 0;
   display: flex;
@@ -3391,6 +3417,32 @@
   align-items: center;
   justify-content: center;
   font-size: 0.95rem;
+}
+
+.ability-skill-preview:has(.ability-skill-icon-glyph.is-atomic-fission) {
+  border-color: rgba(217, 70, 239, 0.86);
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(192, 38, 211, 0.24),
+    rgba(30, 41, 59, 0.96)
+  );
+  box-shadow:
+    0 0 0 1px rgba(217, 70, 239, 0.32),
+    0 0 12px rgba(192, 38, 211, 0.5),
+    inset 0 0 10px rgba(217, 70, 239, 0.18);
+}
+
+.ability-skill-preview:has(.ability-skill-icon-glyph.is-sun-chariot) {
+  border-color: rgba(250, 204, 21, 0.9);
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(245, 158, 11, 0.24),
+    rgba(30, 41, 59, 0.96)
+  );
+  box-shadow:
+    0 0 0 1px rgba(250, 204, 21, 0.32),
+    0 0 12px rgba(245, 158, 11, 0.5),
+    inset 0 0 10px rgba(250, 204, 21, 0.2);
 }
 
 .ability-skill-meta {
