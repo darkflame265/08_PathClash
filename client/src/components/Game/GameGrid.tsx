@@ -101,6 +101,8 @@ export function GameGrid({
   const canEditPath = isPlanning && !mySubmitted;
   const pathPoints = gameState?.pathPoints ?? 5;
   const obstacles = gameState?.obstacles ?? roundInfo?.obstacles ?? [];
+  const shouldAnimateInitialObstacles =
+    gameState?.turn === 1 && gameState.tutorialActive !== true;
   const redPieceSkin =
     playerPieceSkins?.red ?? (myColor === "red" ? pieceSkin : "classic");
   const bluePieceSkin =
@@ -646,25 +648,38 @@ export function GameGrid({
         onPointerLeave={() => setHoveredCell(null)}
         style={{ width: boardSize, height: boardSize }}
       >
-        {cells.map(({ row, col }) => (
-          <div
-            key={`${row}-${col}`}
-            className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? "obstacle" : ""} ${
-              hoveredCell?.row === row && hoveredCell?.col === col
-                ? "is-hovered"
-                : ""
-            }`}
-            style={getCellStyle(
-              row,
-              col,
-              isBlockedCell({ row, col }, obstacles),
-            )}
-          >
-            {isBlockedCell({ row, col }, obstacles) && (
-              <div className="obstacle-mark" />
-            )}
-          </div>
-        ))}
+        {cells.map(({ row, col }) => {
+          const cell = { row, col };
+          const obstacleIndex = obstacles.findIndex((obstacle) =>
+            posEqual(obstacle, cell),
+          );
+          const blocked = obstacleIndex >= 0;
+          const obstacleEnterDelayMs = Math.min(obstacleIndex, 5) * 45;
+          return (
+            <div
+              key={`${row}-${col}`}
+              className={`grid-cell ${blocked ? "obstacle" : ""} ${
+                hoveredCell?.row === row && hoveredCell?.col === col
+                  ? "is-hovered"
+                  : ""
+              }`}
+              style={getCellStyle(row, col, blocked)}
+            >
+              {blocked && (
+                <div
+                  className={`obstacle-mark${shouldAnimateInitialObstacles ? " slide-in-fwd-center" : ""}`}
+                  style={
+                    shouldAnimateInitialObstacles
+                      ? ({
+                          "--obstacle-enter-delay": `${obstacleEnterDelayMs}ms`,
+                        } as CSSProperties)
+                      : undefined
+                  }
+                />
+              )}
+            </div>
+          );
+        })}
 
         {tutorialGuideSvgPath && (
           <>

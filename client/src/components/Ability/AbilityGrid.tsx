@@ -322,6 +322,7 @@ export function AbilityGrid({
   const baseStart = state.players[currentColor].position;
   const myStart = previewStart;
   const obstacles = state.obstacles;
+  const shouldAnimateInitialObstacles = state.turn === 1;
   const opponentColor = currentColor === "red" ? "blue" : "red";
   const teleportBlockedPositions = [
     ...obstacles,
@@ -801,25 +802,38 @@ export function AbilityGrid({
         onPointerLeave={() => setHoveredCell(null)}
         style={{ width: boardSize, height: boardSize }}
       >
-        {cells.map(({ row, col }) => (
-          <div
-            key={`${row}-${col}`}
-            className={`grid-cell ${isBlockedCell({ row, col }, obstacles) ? "obstacle" : ""} ${
-              hoveredCell?.row === row && hoveredCell?.col === col
-                ? "is-hovered"
-                : ""
-            }`}
-            style={getCellStyle(
-              row,
-              col,
-              isBlockedCell({ row, col }, obstacles),
-            )}
-          >
-            {isBlockedCell({ row, col }, obstacles) && (
-              <div className="obstacle-mark" />
-            )}
-          </div>
-        ))}
+        {cells.map(({ row, col }) => {
+          const cell = { row, col };
+          const obstacleIndex = obstacles.findIndex((obstacle) =>
+            posEqual(obstacle, cell),
+          );
+          const blocked = obstacleIndex >= 0;
+          const obstacleEnterDelayMs = Math.min(obstacleIndex, 5) * 45;
+          return (
+            <div
+              key={`${row}-${col}`}
+              className={`grid-cell ${blocked ? "obstacle" : ""} ${
+                hoveredCell?.row === row && hoveredCell?.col === col
+                  ? "is-hovered"
+                  : ""
+              }`}
+              style={getCellStyle(row, col, blocked)}
+            >
+              {blocked && (
+                <div
+                  className={`obstacle-mark${shouldAnimateInitialObstacles ? " slide-in-fwd-center" : ""}`}
+                  style={
+                    shouldAnimateInitialObstacles
+                      ? ({
+                          "--obstacle-enter-delay": `${obstacleEnterDelayMs}ms`,
+                        } as Record<string, string>)
+                      : undefined
+                  }
+                />
+              )}
+            </div>
+          );
+        })}
 
         {state.lavaTiles.map((tile) => (
           <div
