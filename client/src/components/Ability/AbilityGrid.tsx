@@ -140,7 +140,7 @@ function buildBlitzForks(
   reach: number,
 ) {
   const forks: Array<{ points: string; className: string }> = [];
-  const numPoints = 8;
+  const numPoints = 5;
   positions.slice(1).forEach((position, index) => {
     const prev = positions[index];
     if (!prev) return;
@@ -152,9 +152,9 @@ function buildBlitzForks(
     const tx = dx / length;
     const ty = dy / length;
 
-    for (let branch = 0; branch < 4; branch += 1) {
+    for (let branch = 0; branch < 2; branch += 1) {
       const side = branch % 2 === 0 ? 1 : -1;
-      const lane = (branch + 1) / 5;
+      const lane = (branch + 1) / 3;
       const base = {
         x:
           (prev.col + (position.col - prev.col) * lane) * cellSize +
@@ -165,9 +165,9 @@ function buildBlitzForks(
       };
       const phase = 0.9 + index * 1.73 + branch * 2.11;
       const phaseDiff = 1.42 + ((index + branch) % 3) * 0.17;
-      const amp = cellSize * (0.035 + branch * 0.008);
-      const branchReach = reach * (0.48 + ((index + branch) % 4) * 0.18);
-      const tangentLean = (branch - 1.5) * cellSize * 0.045;
+      const amp = cellSize * (0.038 + branch * 0.01);
+      const branchReach = reach * (0.52 + ((index + branch) % 3) * 0.22);
+      const tangentLean = (branch - 0.5) * cellSize * 0.05;
       const points = Array.from({ length: numPoints }, (_, pointIndex) => {
         const progress = pointIndex / (numPoints - 1);
         const electricWobble =
@@ -190,12 +190,7 @@ function buildBlitzForks(
 
       forks.push({
         points: points.map((point) => `${point.x},${point.y}`).join(" "),
-        className:
-          branch === 0
-            ? "ability-blitz-fork is-hot"
-            : branch === 3
-              ? "ability-blitz-fork is-small"
-              : "ability-blitz-fork",
+        className: branch === 0 ? "ability-blitz-fork is-hot" : "ability-blitz-fork is-small",
       });
     }
   });
@@ -685,31 +680,6 @@ export function AbilityGrid({
         height="100%"
         viewBox={`0 0 ${boardSize} ${boardSize}`}
       >
-        <defs>
-          <filter
-            id={`ability-blitz-warp-${color}-${variant}`}
-            colorInterpolationFilters="sRGB"
-            x="-20%"
-            y="-20%"
-            width="140%"
-            height="140%"
-          >
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.035 0.12"
-              numOctaves="3"
-              seed={color === "red" ? "13" : "19"}
-              result="noise"
-            />
-            <feDisplacementMap
-              in="SourceGraphic"
-              in2="noise"
-              scale={variant === "planning" ? "8" : "12"}
-              xChannelSelector="R"
-              yChannelSelector="B"
-            />
-          </filter>
-        </defs>
         <g className="ability-blitz-aura">
           <polyline
             className="ability-blitz-aura-wide"
@@ -742,7 +712,6 @@ export function AbilityGrid({
             className="ability-blitz-core"
             points={branchA}
             fill="none"
-            filter={`url(#ability-blitz-warp-${color}-${variant})`}
           />
         </g>
         <g className="ability-blitz-forks">

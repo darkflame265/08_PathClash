@@ -890,7 +890,7 @@
 }
 
 .ability-grid .ability-blitz-aura {
-  filter: blur(0.2px) drop-shadow(0 0 12px rgba(255, 0, 204, 0.46))
+  filter: drop-shadow(0 0 12px rgba(255, 0, 204, 0.46))
     drop-shadow(0 0 30px rgba(147, 51, 234, 0.28));
   mix-blend-mode: screen;
 }
@@ -917,7 +917,6 @@
   filter: drop-shadow(0 0 10px rgba(255, 0, 204, 0.58))
     drop-shadow(0 0 24px rgba(217, 70, 239, 0.38))
     drop-shadow(0 0 6px rgba(255, 255, 255, 0.36));
-  mix-blend-mode: screen;
 }
 
 .ability-grid .ability-blitz-glow {
@@ -937,11 +936,11 @@
 }
 
 .ability-grid .ability-blitz-branch-a {
-  animation: ability-blitz-branch-flow-a 150ms linear infinite;
+  animation: ability-blitz-branch-flow-a 220ms linear infinite;
 }
 
 .ability-grid .ability-blitz-branch-b {
-  animation: ability-blitz-branch-flow-b 110ms linear infinite;
+  animation: ability-blitz-branch-flow-b 180ms linear infinite;
 }
 
 .ability-grid .ability-blitz-core {
@@ -950,13 +949,12 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 8 7;
-  animation: ability-blitz-core-flow 80ms linear infinite;
+  animation: ability-blitz-core-flow 160ms linear infinite;
 }
 
 .ability-grid .ability-blitz-forks {
   filter: drop-shadow(0 0 8px rgba(255, 0, 204, 0.72))
     drop-shadow(0 0 18px rgba(255, 0, 204, 0.38));
-  mix-blend-mode: screen;
 }
 
 .ability-grid .ability-blitz-fork {
@@ -965,14 +963,14 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 9 8;
-  animation: ability-blitz-fork-flicker 340ms steps(2, end) infinite,
-    ability-blitz-fork-flow 170ms linear infinite;
+  animation: ability-blitz-fork-flicker 400ms steps(2, end) infinite,
+    ability-blitz-fork-flow 240ms linear infinite;
 }
 
 .ability-grid .ability-blitz-fork.is-hot {
   stroke: #ff00cc;
   stroke-width: clamp(2px, 0.34vw, 3.6px);
-  animation-duration: 260ms, 130ms;
+  animation-duration: 340ms, 200ms;
 }
 
 .ability-grid .ability-blitz-fork.is-small {
@@ -985,7 +983,6 @@
 .ability-grid .ability-blitz-sparks {
   filter: drop-shadow(0 0 7px rgba(255, 0, 204, 0.75))
     drop-shadow(0 0 15px rgba(192, 132, 252, 0.55));
-  mix-blend-mode: screen;
 }
 
 .ability-grid .ability-blitz-spark {

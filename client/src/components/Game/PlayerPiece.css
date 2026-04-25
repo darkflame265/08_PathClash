@@ -21,6 +21,7 @@
   transform: translate(-50%, -50%);
   overflow: visible;
   pointer-events: none;
+  will-change: opacity;
   animation: blitz-ring-breathe 1.6s ease-in-out infinite;
 }
 

@@ -174,30 +174,12 @@ export function PlayerPiece({
       {isBlitzRingActive && (
         <svg className="piece-blitz-ring" viewBox="0 0 100 100" aria-hidden="true" style={{ overflow: 'visible' }}>
           <defs>
-            <filter id={`br-glow-${color}`} x="-100%" y="-100%" width="300%" height="300%">
+            <filter id={`br-glow-${color}`} x="-60%" y="-60%" width="220%" height="220%">
               <feGaussianBlur stdDeviation="3" />
             </filter>
-            <filter id={`br-f-${color}`} colorInterpolationFilters="sRGB" x="-100%" y="-100%" width="300%" height="300%">
-              <feTurbulence type="turbulence" baseFrequency="0.04 0.04" numOctaves="5" result="n1" seed="7" />
-              <feOffset in="n1" result="oN1">
-                <animate attributeName="dy" values="80; 0" dur="4s" repeatCount="indefinite" calcMode="linear" />
-              </feOffset>
-              <feTurbulence type="turbulence" baseFrequency="0.04 0.04" numOctaves="5" result="n2" seed="7" />
-              <feOffset in="n2" result="oN2">
-                <animate attributeName="dy" values="0; -80" dur="4s" repeatCount="indefinite" calcMode="linear" />
-              </feOffset>
-              <feTurbulence type="turbulence" baseFrequency="0.04 0.04" numOctaves="5" result="n3" seed="8" />
-              <feOffset in="n3" result="oN3">
-                <animate attributeName="dx" values="80; 0" dur="4s" repeatCount="indefinite" calcMode="linear" />
-              </feOffset>
-              <feTurbulence type="turbulence" baseFrequency="0.04 0.04" numOctaves="5" result="n4" seed="8" />
-              <feOffset in="n4" result="oN4">
-                <animate attributeName="dx" values="0; -80" dur="4s" repeatCount="indefinite" calcMode="linear" />
-              </feOffset>
-              <feComposite in="oN1" in2="oN2" result="p1" />
-              <feComposite in="oN3" in2="oN4" result="p2" />
-              <feBlend in="p1" in2="p2" mode="color-dodge" result="combined" />
-              <feDisplacementMap in="SourceGraphic" in2="combined" scale="16" xChannelSelector="R" yChannelSelector="B" />
+            <filter id={`br-f-${color}`} colorInterpolationFilters="sRGB" x="-50%" y="-50%" width="200%" height="200%">
+              <feTurbulence type="turbulence" baseFrequency="0.04 0.06" numOctaves="2" result="noise" seed="7" />
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="B" />
             </filter>
           </defs>
           <circle cx="50" cy="50" r="70" fill="none" stroke="rgba(147,51,234,0.28)" strokeWidth="18" filter={`url(#br-glow-${color})`} />
