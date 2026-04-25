@@ -315,6 +315,18 @@ export function useLobbyKeyboardNavigation({
       if (modalRoot) {
         const modalLayers = getModalLayers(modalRoot);
         if (modalLayers.length > 0) {
+          if (
+            !selectedElementRef.current ||
+            !modalRoot.contains(selectedElementRef.current)
+          ) {
+            const firstLayerElements = getModalLayerElements(
+              modalRoot,
+              modalLayers[0],
+            );
+            setSelectedElement(firstLayerElements[0] ?? null);
+            return true;
+          }
+
           const currentLayerIndex = getCurrentModalLayerIndex(
             modalRoot,
             modalLayers,

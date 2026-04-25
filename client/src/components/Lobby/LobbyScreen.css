@@ -499,6 +499,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  line-height: 1;
+  transform: translateY(-0.06em);
 }
 
 .ability-skill-icon-custom {

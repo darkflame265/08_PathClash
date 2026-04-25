@@ -4580,6 +4580,7 @@ export function LobbyScreen({
               <div className="skin-detail-actions">
                 <button
                   className="lobby-btn secondary skin-detail-action-btn"
+                  data-keyboard-modal-layer="skin-detail-action"
                   type="button"
                   onClick={() => void handleSkinDetailAction()}
                   disabled={false}
@@ -4630,6 +4631,7 @@ export function LobbyScreen({
             <div className="upgrade-modal-actions">
               <button
                 className="lobby-btn primary"
+                data-keyboard-modal-layer="close"
                 onClick={() => setSkinDetail(null)}
                 type="button"
               >

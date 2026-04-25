@@ -32,6 +32,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  line-height: 1;
+  transform: translateY(-0.06em);
 }
 
 .ability-skill-icon-custom {
@@ -412,8 +414,7 @@
   width: auto;
   position: relative;
   overflow: visible;
-  padding: calc(0.55rem)
-    calc(0.875rem);
+  padding: calc(0.55rem) calc(0.875rem);
   background: var(--panel);
   border: 1px solid var(--tile-border);
   border-radius: calc(0.875rem);
@@ -901,7 +902,8 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 18 11;
-  animation: ability-blitz-aura-drift 420ms linear infinite,
+  animation:
+    ability-blitz-aura-drift 420ms linear infinite,
     ability-blitz-aura-pulse 900ms ease-in-out infinite;
 }
 
@@ -963,7 +965,8 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 9 8;
-  animation: ability-blitz-fork-flicker 400ms steps(2, end) infinite,
+  animation:
+    ability-blitz-fork-flicker 400ms steps(2, end) infinite,
     ability-blitz-fork-flow 240ms linear infinite;
 }
 
@@ -979,7 +982,6 @@
   stroke-dasharray: 6 7;
   opacity: 0.72;
 }
-
 
 .ability-grid .ability-blitz-impact-ring {
   fill: none;
@@ -1442,14 +1444,12 @@
   }
   72% {
     opacity: 1;
-    transform: translate(-50%, -50%)
-      translateY(calc(-0.75rem)) scale(1.02);
+    transform: translate(-50%, -50%) translateY(calc(-0.75rem)) scale(1.02);
     filter: blur(0);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%)
-      translateY(calc(-1.45rem)) scale(1.05);
+    transform: translate(-50%, -50%) translateY(calc(-1.45rem)) scale(1.05);
     filter: blur(0.5px);
   }
 }
@@ -1495,14 +1495,12 @@
   }
   74% {
     opacity: 1;
-    transform: translate(-50%, -50%)
-      translateY(calc(-0.9rem)) scale(1.03);
+    transform: translate(-50%, -50%) translateY(calc(-0.9rem)) scale(1.03);
     filter: blur(0);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%)
-      translateY(calc(-1.65rem)) scale(1.06);
+    transform: translate(-50%, -50%) translateY(calc(-1.65rem)) scale(1.06);
     filter: blur(0.45px);
   }
 }
@@ -1646,7 +1644,6 @@
   }
 }
 
-
 @keyframes ability-blitz-impact-outer {
   0% {
     opacity: 0.95;
@@ -1745,19 +1742,16 @@
 
   .ability-screen .gs-player-card {
     gap: calc(0.45rem);
-    padding: calc(0.42rem)
-      calc(0.62rem);
+    padding: calc(0.42rem) calc(0.62rem);
   }
 
   .ability-screen .gs-role-badge {
     min-width: calc(44px);
-    padding: calc(0.34rem)
-      calc(0.42rem);
+    padding: calc(0.34rem) calc(0.42rem);
   }
 
   .ability-screen .gs-path-bar {
-    padding: calc(0.42rem)
-      calc(0.62rem);
+    padding: calc(0.42rem) calc(0.62rem);
   }
 
   .ability-path-bar {
@@ -1769,8 +1763,7 @@
   }
 
   .ability-skill-panel {
-    padding: calc(0.42rem)
-      calc(0.62rem);
+    padding: calc(0.42rem) calc(0.62rem);
     gap: calc(0.16rem);
   }
 
