@@ -55,7 +55,6 @@ interface Props {
     step: number;
   } | null;
   teleportReservation: AbilitySkillReservation | null;
-  blitzReservation: AbilitySkillReservation | null;
   teleportMarker: Position | null;
   infernoMarker: Position | null;
   movingTeleportMarkers: { red: Position | null; blue: Position | null };
@@ -222,7 +221,6 @@ export function AbilityGrid({
   previewStart,
   previewAtomicClone,
   teleportReservation,
-  blitzReservation,
   teleportMarker,
   infernoMarker,
   movingTeleportMarkers,
@@ -1167,17 +1165,6 @@ export function AbilityGrid({
             movingBlitzSteps.red,
             movingBlitzProgress.red,
           )}
-        {!isPlaybackPhase &&
-          currentColor === "red" &&
-          blitzReservation &&
-          renderBlitzEffect(
-            "red",
-            myStart,
-            redPath,
-            blitzReservation.step,
-            redPath.length - blitzReservation.step,
-            "planning",
-          )}
         {isPlaybackPhase ? (
           movingTeleportMarkers.blue && movingTeleportSteps.blue !== null ? (
             <>
@@ -1242,17 +1229,6 @@ export function AbilityGrid({
             movingPaths.blue,
             movingBlitzSteps.blue,
             movingBlitzProgress.blue,
-          )}
-        {!isPlaybackPhase &&
-          currentColor === "blue" &&
-          blitzReservation &&
-          renderBlitzEffect(
-            "blue",
-            myStart,
-            bluePath,
-            blitzReservation.step,
-            bluePath.length - blitzReservation.step,
-            "planning",
           )}
 
         {isPlanning && previewAtomicClone && (
