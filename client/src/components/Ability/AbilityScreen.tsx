@@ -345,7 +345,7 @@ function renderSkillIcon(skillId: AbilitySkillId) {
   const icon = skillId === "electric_blitz" ? "⚡︎" : skill.icon;
   return (
     <span
-      className={`ability-skill-icon-glyph${skillId === "electric_blitz" ? " is-electric-blitz" : ""}${skillId === "aurora_heal" ? " is-aurora-heal" : ""}${skillId === "gold_overdrive" ? " is-gold-overdrive" : ""}`}
+      className={`ability-skill-icon-glyph${skillId === "electric_blitz" ? " is-electric-blitz" : ""}${skillId === "aurora_heal" ? " is-aurora-heal" : ""}${skillId === "gold_overdrive" ? " is-gold-overdrive" : ""}${skillId === "atomic_fission" ? " is-atomic-fission" : ""}${skillId === "sun_chariot" ? " is-sun-chariot" : ""}`}
       aria-hidden="true"
     >
       {icon}
