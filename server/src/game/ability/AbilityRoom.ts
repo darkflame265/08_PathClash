@@ -2332,6 +2332,21 @@ export class AbilityRoom {
       if (bot.hp === 4 && Math.random() < 0.25) return [];
     }
 
+    // ── 용암지대 마나 모으기 하드 규칙 ──────────────────────────────────
+    // inferno_field 장착 + cosmic_bigbang 미장착 시 마나가 부족하면 절약 패턴:
+    //   마나 ≥ 7: 정상 진행 (inferno_field 후보가 스코어 경쟁)
+    //   1~2턴 이내 달성: 65% 확률로 스킬 후보 전체 차단 (마나 절약)
+    //   3턴 이내 달성: 45% 확률로 스킬 후보 전체 차단
+    if (
+      bot.equippedSkills.includes('inferno_field') &&
+      !bot.equippedSkills.includes('cosmic_bigbang') &&
+      bot.mana < ABILITY_SKILL_COSTS.inferno_field
+    ) {
+      const turnsNeeded = Math.ceil((ABILITY_SKILL_COSTS.inferno_field - bot.mana) / 2);
+      if (turnsNeeded <= 2 && Math.random() < 0.65) return [];
+      if (turnsNeeded === 3 && Math.random() < 0.45) return [];
+    }
+
     const candidates: BotActionCandidate[] = [];
     const basePaths = selfModel.paths.slice(0, 5);
 
@@ -2724,25 +2739,48 @@ export class AbilityRoom {
       }
 
       if (skillId === 'inferno_field') {
-        // 용암지대: 상대 핫스팟에 용암을 설치해 2턴간 통행 차단
-        // 상대 heatmap 상위 셀을 타깃으로 하므로 장기 압박 가치가 높다.
-        // 가중치를 충분히 높여 기본 경로보다 우선 선택되도록 한다.
+        // 용암지대: 상대 핫스팟 또는 퇴로 인접 셀에 용암을 설치해 통행 차단
+        // ① hotspot 기반 일반 압박, ② 상대 인접 퇴로 직접 차단 두 경로를 모두 탐색한다.
+
+        // 상대방 현재 퇴로 수 (용암 차단 전)
+        const opponentExits = getCardinalNeighbors(opponent.position, effectiveObstacles);
+        const currentOpponentMobility = opponentExits.length;
+
         let bestLavaValue = 0;
         let bestLavaPath: Position[] = basePaths[0] ?? [];
         let bestLavaTarget: Position | null = null;
+
         for (const path of basePaths.slice(0, 3)) {
+          // ── ① hotspot 기반 후보 ──
           for (const target of opponentModel.hotspotCells.slice(0, 5)) {
             const origin = getSequencePosition(bot.position, path, 0);
-            // 시전자 현재 위치와 상대방 현재 위치에는 용암 설치 불가
             if (posEqual(origin, target)) continue;
             if (posEqual(opponent.position, target)) continue;
-            // 봇 자신이 이동할 경로가 설치한 용암 위치를 경유하면 자기 피해 → 건너뜀
             if (path.some((pos) => posEqual(pos, target))) continue;
+
             const lavaValue =
               (opponentModel.heatmap.get(toKey(target)) ?? 0) * 40 +
               (opponentModel.timeHeatmap.get(`1:${toKey(target)}`) ?? 0) * 28;
-            if (lavaValue > bestLavaValue) {
-              bestLavaValue = lavaValue;
+
+            // 퇴로 차단 보너스: 용암이 상대 인접 셀에 놓이면 탈출구 수 감소
+            const reducedMobility = getCardinalNeighbors(
+              opponent.position,
+              [...effectiveObstacles, target],
+            ).length;
+            const blockedExits = currentOpponentMobility - reducedMobility;
+            const escapeBlockBonus = blockedExits > 0 ? blockedExits * 380 : 0;
+
+            // 갇힌 상대 추격 보너스: 용암 설치 후 봇이 상대방 근처에서 마무리
+            const finalBotPos = path.length > 0 ? path[path.length - 1] : bot.position;
+            const distAfterLava = manhattan(finalBotPos, opponent.position);
+            const chaseBonusAfterTrap =
+              blockedExits >= 2 && distAfterLava <= 2 ? 450 :
+              blockedExits >= 1 && distAfterLava <= 2 ? 250 : 0;
+
+            const totalValue = lavaValue + escapeBlockBonus + chaseBonusAfterTrap;
+
+            if (totalValue > bestLavaValue) {
+              bestLavaValue = totalValue;
               bestLavaPath = path;
               bestLavaTarget = target;
             }
@@ -2756,13 +2794,57 @@ export class AbilityRoom {
                   opponent.position,
                   opponentModel,
                   effectiveObstacles,
-                ) +
-                lavaValue,
+                ) + totalValue,
               reason: `inferno_field:${target.row},${target.col}`,
               selectedSkill: skillId,
             });
           }
+
+          // ── ② 상대 퇴로(인접 셀) 직접 차단 후보 ──
+          // hotspot과 무관하게 상대 이동 가능 방향을 봉쇄해 추격을 유리하게 만든다.
+          for (const exitCell of opponentExits) {
+            if (posEqual(bot.position, exitCell)) continue;
+            if (path.some((pos) => posEqual(pos, exitCell))) continue;
+            // hotspot 루프에서 이미 처리된 셀은 중복 건너뜀
+            if (opponentModel.hotspotCells.slice(0, 5).some((h) => posEqual(h, exitCell))) continue;
+
+            const reducedMobility = getCardinalNeighbors(
+              opponent.position,
+              [...effectiveObstacles, exitCell],
+            ).length;
+            const blockedExits = currentOpponentMobility - reducedMobility;
+            if (blockedExits === 0) continue;
+
+            const exitLavaValue = blockedExits * 420;
+            const finalBotPos = path.length > 0 ? path[path.length - 1] : bot.position;
+            const distAfterLava = manhattan(finalBotPos, opponent.position);
+            const chaseBonusAfterTrap =
+              blockedExits >= 2 && distAfterLava <= 2 ? 500 :
+              blockedExits >= 1 && distAfterLava <= 2 ? 280 : 0;
+
+            const totalExitValue = exitLavaValue + chaseBonusAfterTrap;
+            if (totalExitValue > bestLavaValue) {
+              bestLavaValue = totalExitValue;
+              bestLavaPath = path;
+              bestLavaTarget = exitCell;
+            }
+            candidates.push({
+              path,
+              skills: [{ skillId, step: 0, order: 0, target: exitCell }],
+              score:
+                this.scorePathCoverageAgainstModel(
+                  bot.position,
+                  path,
+                  opponent.position,
+                  opponentModel,
+                  effectiveObstacles,
+                ) + totalExitValue,
+              reason: `inferno_field:exit:${exitCell.row},${exitCell.col}`,
+              selectedSkill: skillId,
+            });
+          }
         }
+
         // 최선의 용암 위치에 추가 보너스(경로 차단 가치 반영)
         if (bestLavaTarget && bestLavaValue > 0) {
           candidates.push({
@@ -2777,7 +2859,7 @@ export class AbilityRoom {
                 effectiveObstacles,
               ) +
               bestLavaValue +
-              180,
+              220,
             reason: `inferno_field:best:${bestLavaTarget.row},${bestLavaTarget.col}`,
             selectedSkill: skillId,
           });
