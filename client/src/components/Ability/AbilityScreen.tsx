@@ -3669,6 +3669,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           reservation.skillId === "electric_blitz" ||
           reservation.skillId === "cosmic_bigbang",
       ));
+  const myBlitzReserved =
+    isPlanning &&
+    skillReservations.some((r) => r.skillId === "electric_blitz");
 
   const handleRematch = () => {
     onLeaveToLobby();
@@ -3920,6 +3923,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             onBlitzTargetSelect={handleBlitzTargetSelect}
             onInfernoTargetSelect={handleInfernoTargetSelect}
             onTeleportCancel={handleTeleportCancel}
+            myBlitzReserved={myBlitzReserved}
             shakeKey={boardShakeKey}
           />
         </div>

@@ -356,6 +356,7 @@
 .ability-grid.is-time-rewinding .piece-guard-barrier,
 .ability-grid.is-time-rewinding .piece-at-field,
 .ability-grid.is-time-rewinding .ability-blitz-line,
+.ability-grid.is-time-rewinding .ability-blitz-reservation-ring,
 .ability-grid.is-time-rewinding .collision-effect {
   filter: grayscale(1) saturate(0.06) brightness(0.88);
 }
@@ -886,6 +887,20 @@
   pointer-events: none;
   z-index: 3;
   overflow: visible;
+}
+
+.ability-grid .ability-blitz-reservation-ring {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  overflow: visible;
+  animation: blitz-ring-breathe 1.6s ease-in-out infinite;
+}
+
+@keyframes blitz-ring-breathe {
+  0%, 100% { opacity: 0.82; }
+  50% { opacity: 1; }
 }
 
 .ability-grid .ability-blitz-beam {

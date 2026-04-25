@@ -95,6 +95,7 @@ interface Props {
   onTeleportCancel: () => void;
   trapTiles: AbilityTrapTile[];
   magicMineCastingColors: { red: boolean; blue: boolean };
+  myBlitzReserved: boolean;
   shakeKey?: number;
 }
 
@@ -179,6 +180,7 @@ export function AbilityGrid({
   onTeleportCancel,
   trapTiles,
   magicMineCastingColors,
+  myBlitzReserved,
   shakeKey = 0,
 }: Props) {
   const isSfxMuted = useGameStore((store) => store.isSfxMuted);
@@ -593,6 +595,7 @@ export function AbilityGrid({
     );
     const end = visiblePath[visiblePath.length - 1];
     const endPixel = toGridPixel(end, responsiveCellSize);
+    const moveFilterId = `blitz-move-filter-${color}`;
 
     return (
       <svg
@@ -601,7 +604,21 @@ export function AbilityGrid({
         height="100%"
         viewBox={`0 0 ${boardSize} ${boardSize}`}
       >
-        <g className="ability-blitz-beam">
+        <defs>
+          <filter id={moveFilterId} colorInterpolationFilters="sRGB" x="-25%" y="-25%" width="150%" height="150%">
+            <feTurbulence type="turbulence" baseFrequency="0.035 0.012" numOctaves="5" result="noise1" seed="3" />
+            <feOffset in="noise1" result="offsetNoise1">
+              <animate attributeName="dy" values="200; 0" dur="3s" repeatCount="indefinite" calcMode="linear" />
+            </feOffset>
+            <feTurbulence type="turbulence" baseFrequency="0.035 0.012" numOctaves="5" result="noise2" seed="3" />
+            <feOffset in="noise2" result="offsetNoise2">
+              <animate attributeName="dy" values="0; -200" dur="3s" repeatCount="indefinite" calcMode="linear" />
+            </feOffset>
+            <feComposite in="offsetNoise1" in2="offsetNoise2" result="combinedNoise" />
+            <feDisplacementMap in="SourceGraphic" in2="combinedNoise" scale="10" xChannelSelector="R" yChannelSelector="B" />
+          </filter>
+        </defs>
+        <g className="ability-blitz-beam" filter={`url(#${moveFilterId})`}>
           <polyline
             className="ability-blitz-glow"
             points={mainPoints}
@@ -640,6 +657,83 @@ export function AbilityGrid({
             r={Math.max(5, responsiveCellSize * 0.1)}
           />
         </g>
+      </svg>
+    );
+  };
+
+  const renderBlitzReservationRing = () => {
+    if (!myBlitzReserved || !isPlanning) return null;
+    const piece = displayPositions[currentColor];
+    const { x, y } = toGridPixel(piece, responsiveCellSize);
+    const pieceSize = Math.max(28, Math.round(responsiveCellSize * 0.58));
+    const ringR = Math.round(pieceSize * 0.68);
+    const planFilterId = `blitz-plan-filter-${currentColor}`;
+    const glowFilterId = `blitz-plan-glow-${currentColor}`;
+
+    return (
+      <svg
+        className="ability-blitz-reservation-ring"
+        width="100%"
+        height="100%"
+        viewBox={`0 0 ${boardSize} ${boardSize}`}
+      >
+        <defs>
+          <filter id={glowFilterId} x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="5" />
+          </filter>
+          <filter id={planFilterId} colorInterpolationFilters="sRGB" x="-60%" y="-60%" width="220%" height="220%">
+            <feTurbulence type="turbulence" baseFrequency="0.03 0.03" numOctaves="6" result="noise1" seed="7" />
+            <feOffset in="noise1" result="offsetNoise1">
+              <animate attributeName="dy" values="250; 0" dur="4s" repeatCount="indefinite" calcMode="linear" />
+            </feOffset>
+            <feTurbulence type="turbulence" baseFrequency="0.03 0.03" numOctaves="6" result="noise2" seed="7" />
+            <feOffset in="noise2" result="offsetNoise2">
+              <animate attributeName="dy" values="0; -250" dur="4s" repeatCount="indefinite" calcMode="linear" />
+            </feOffset>
+            <feTurbulence type="turbulence" baseFrequency="0.03 0.03" numOctaves="6" result="noise3" seed="8" />
+            <feOffset in="noise3" result="offsetNoise3">
+              <animate attributeName="dx" values="250; 0" dur="4s" repeatCount="indefinite" calcMode="linear" />
+            </feOffset>
+            <feTurbulence type="turbulence" baseFrequency="0.03 0.03" numOctaves="6" result="noise4" seed="8" />
+            <feOffset in="noise4" result="offsetNoise4">
+              <animate attributeName="dx" values="0; -250" dur="4s" repeatCount="indefinite" calcMode="linear" />
+            </feOffset>
+            <feComposite in="offsetNoise1" in2="offsetNoise2" result="part1" />
+            <feComposite in="offsetNoise3" in2="offsetNoise4" result="part2" />
+            <feBlend in="part1" in2="part2" mode="color-dodge" result="combinedNoise" />
+            <feDisplacementMap in="SourceGraphic" in2="combinedNoise" scale="14" xChannelSelector="R" yChannelSelector="B" />
+          </filter>
+        </defs>
+        {/* Outer diffuse aura */}
+        <circle
+          cx={x} cy={y} r={ringR + 8}
+          fill="none" stroke="rgba(147, 51, 234, 0.28)" strokeWidth="14"
+          filter={`url(#${glowFilterId})`}
+        />
+        {/* Mid glow ring */}
+        <circle
+          cx={x} cy={y} r={ringR + 3}
+          fill="none" stroke="rgba(192, 132, 252, 0.42)" strokeWidth="6"
+          filter={`url(#${glowFilterId})`}
+        />
+        {/* Electric outer ring */}
+        <circle
+          cx={x} cy={y} r={ringR + 2}
+          fill="none" stroke="rgba(192, 132, 252, 0.52)" strokeWidth="3.5"
+          filter={`url(#${planFilterId})`}
+        />
+        {/* Electric main ring */}
+        <circle
+          cx={x} cy={y} r={ringR}
+          fill="none" stroke="#c084fc" strokeWidth="2.5"
+          filter={`url(#${planFilterId})`}
+        />
+        {/* Inner subtle ring */}
+        <circle
+          cx={x} cy={y} r={ringR - 5}
+          fill="none" stroke="rgba(233, 213, 255, 0.38)" strokeWidth="1.5"
+          filter={`url(#${planFilterId})`}
+        />
       </svg>
     );
   };
@@ -1316,6 +1410,8 @@ export function AbilityGrid({
             <span className="ability-overdrive-wave ability-overdrive-wave-c" />
           </div>
         )}
+
+        {renderBlitzReservationRing()}
 
         {redVisible &&
         (state.players.red.hp > 0 ||
