@@ -3672,6 +3672,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const myBlitzReserved =
     isPlanning &&
     skillReservations.some((r) => r.skillId === "electric_blitz");
+  const blitzReservation =
+    skillReservations.find((r) => r.skillId === "electric_blitz") ?? null;
 
   const handleRematch = () => {
     onLeaveToLobby();
@@ -3892,6 +3894,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             previewStart={previewStart}
             previewAtomicClone={previewAtomicClone}
             teleportReservation={teleportReservation}
+            blitzReservation={blitzReservation}
             teleportMarker={
               state.phase === "moving"
                 ? movingTeleportMarkers[currentColor]

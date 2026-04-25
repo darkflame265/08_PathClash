@@ -55,6 +55,7 @@ interface Props {
     step: number;
   } | null;
   teleportReservation: AbilitySkillReservation | null;
+  blitzReservation: AbilitySkillReservation | null;
   teleportMarker: Position | null;
   infernoMarker: Position | null;
   movingTeleportMarkers: { red: Position | null; blue: Position | null };
@@ -134,6 +135,52 @@ function buildBlitzBoltPoints(
     .join(" ");
 }
 
+function buildBlitzForks(
+  positions: Position[],
+  cellSize: number,
+  reach: number,
+) {
+  const forks: Array<{ points: string; className: string }> = [];
+  positions.slice(1).forEach((position, index) => {
+    const prev = positions[index];
+    if (!prev) return;
+    const { x, y } = toGridPixel(position, cellSize);
+    const dx = position.col - prev.col;
+    const dy = position.row - prev.row;
+    const length = Math.hypot(dx, dy) || 1;
+    const nx = -dy / length;
+    const ny = dx / length;
+    const tx = dx / length;
+    const ty = dy / length;
+    const side = index % 2 === 0 ? 1 : -1;
+
+    const baseX = x - tx * cellSize * 0.26;
+    const baseY = y - ty * cellSize * 0.26;
+    const midX = baseX + nx * reach * side + tx * reach * 0.32;
+    const midY = baseY + ny * reach * side + ty * reach * 0.32;
+    const endX = midX + nx * reach * 0.58 * side + tx * reach * 0.24;
+    const endY = midY + ny * reach * 0.58 * side + ty * reach * 0.24;
+
+    forks.push({
+      points: `${baseX},${baseY} ${midX},${midY} ${endX},${endY}`,
+      className:
+        index % 3 === 0 ? "ability-blitz-fork is-hot" : "ability-blitz-fork",
+    });
+
+    if (index % 2 === 0) {
+      const smallBaseX = x - tx * cellSize * 0.08;
+      const smallBaseY = y - ty * cellSize * 0.08;
+      const smallEndX = smallBaseX - nx * reach * 0.7 * side;
+      const smallEndY = smallBaseY - ny * reach * 0.7 * side;
+      forks.push({
+        points: `${smallBaseX},${smallBaseY} ${smallEndX},${smallEndY}`,
+        className: "ability-blitz-fork is-small",
+      });
+    }
+  });
+  return forks;
+}
+
 export function AbilityGrid({
   state,
   currentColor,
@@ -153,6 +200,7 @@ export function AbilityGrid({
   previewStart,
   previewAtomicClone,
   teleportReservation,
+  blitzReservation,
   teleportMarker,
   infernoMarker,
   movingTeleportMarkers,
@@ -565,6 +613,7 @@ export function AbilityGrid({
     path: Position[],
     startStep: number | null,
     progress: number,
+    variant: "planning" | "playback" = "playback",
   ) => {
     const effectiveStartStep = Math.max(0, startStep ?? 0);
     const pathStart =
@@ -593,16 +642,65 @@ export function AbilityGrid({
       Math.max(3, responsiveCellSize * 0.055),
       1,
     );
+    const branchC = buildBlitzBoltPoints(
+      allPositions,
+      responsiveCellSize,
+      Math.max(6, responsiveCellSize * 0.115),
+      2,
+    );
+    const forks = buildBlitzForks(
+      allPositions,
+      responsiveCellSize,
+      Math.max(10, responsiveCellSize * 0.22),
+    );
     const end = visiblePath[visiblePath.length - 1];
     const endPixel = toGridPixel(end, responsiveCellSize);
+    const sparkRadius = Math.max(3, responsiveCellSize * 0.055);
 
     return (
       <svg
-        className={`ability-blitz-line ability-blitz-line-${color}`}
+        className={`ability-blitz-line ability-blitz-line-${color} ability-blitz-line-${variant}`}
         width="100%"
         height="100%"
         viewBox={`0 0 ${boardSize} ${boardSize}`}
       >
+        <defs>
+          <filter
+            id={`ability-blitz-warp-${color}-${variant}`}
+            colorInterpolationFilters="sRGB"
+            x="-20%"
+            y="-20%"
+            width="140%"
+            height="140%"
+          >
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.035 0.12"
+              numOctaves="3"
+              seed={color === "red" ? "13" : "19"}
+              result="noise"
+            />
+            <feDisplacementMap
+              in="SourceGraphic"
+              in2="noise"
+              scale={variant === "planning" ? "8" : "12"}
+              xChannelSelector="R"
+              yChannelSelector="B"
+            />
+          </filter>
+        </defs>
+        <g className="ability-blitz-aura">
+          <polyline
+            className="ability-blitz-aura-wide"
+            points={branchC}
+            fill="none"
+          />
+          <polyline
+            className="ability-blitz-aura-hot"
+            points={mainPoints}
+            fill="none"
+          />
+        </g>
         <g className="ability-blitz-beam">
           <polyline
             className="ability-blitz-glow"
@@ -623,7 +721,32 @@ export function AbilityGrid({
             className="ability-blitz-core"
             points={branchA}
             fill="none"
+            filter={`url(#ability-blitz-warp-${color}-${variant})`}
           />
+        </g>
+        <g className="ability-blitz-forks">
+          {forks.map((fork, index) => (
+            <polyline
+              key={`${fork.points}-${index}`}
+              className={fork.className}
+              points={fork.points}
+              fill="none"
+            />
+          ))}
+        </g>
+        <g className="ability-blitz-sparks">
+          {visiblePath.map((position, index) => {
+            const pixel = toGridPixel(position, responsiveCellSize);
+            return (
+              <circle
+                key={`${position.row}-${position.col}-${index}`}
+                className={`ability-blitz-spark ability-blitz-spark-${index % 3}`}
+                cx={pixel.x}
+                cy={pixel.y}
+                r={sparkRadius}
+              />
+            );
+          })}
         </g>
         <g
           className="ability-blitz-impact"
@@ -1022,6 +1145,17 @@ export function AbilityGrid({
             movingBlitzSteps.red,
             movingBlitzProgress.red,
           )}
+        {!isPlaybackPhase &&
+          currentColor === "red" &&
+          blitzReservation &&
+          renderBlitzEffect(
+            "red",
+            myStart,
+            redPath,
+            blitzReservation.step,
+            redPath.length - blitzReservation.step,
+            "planning",
+          )}
         {isPlaybackPhase ? (
           movingTeleportMarkers.blue && movingTeleportSteps.blue !== null ? (
             <>
@@ -1086,6 +1220,17 @@ export function AbilityGrid({
             movingPaths.blue,
             movingBlitzSteps.blue,
             movingBlitzProgress.blue,
+          )}
+        {!isPlaybackPhase &&
+          currentColor === "blue" &&
+          blitzReservation &&
+          renderBlitzEffect(
+            "blue",
+            myStart,
+            bluePath,
+            blitzReservation.step,
+            bluePath.length - blitzReservation.step,
+            "planning",
           )}
 
         {isPlanning && previewAtomicClone && (
