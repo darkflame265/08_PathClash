@@ -362,7 +362,8 @@ export function useLobbyKeyboardNavigation({
           ? selectedElementRef.current!
           : modalElements[0];
         setSelectedElement(
-          selectedElementRef.current
+          selectedElementRef.current &&
+          modalElements.includes(selectedElementRef.current)
             ? pickNextElement(current, modalElements, key)
             : current,
         );
