@@ -1761,11 +1761,11 @@
     rgba(45, 15, 70, 0.95) 100%
   );
   box-shadow:
-    0 0 8px rgba(255, 180, 255, 0.95),
-    0 0 18px rgba(244, 114, 255, 0.85),
-    0 0 32px rgba(192, 38, 211, 0.65),
-    inset 0 0 10px rgba(255, 255, 255, 0.25),
-    inset 0 0 18px rgba(126, 34, 206, 0.8);
+    0 0 2px rgba(255, 180, 255, 0.95),
+    0 0 5px rgba(244, 114, 255, 0.85),
+    0 0 8px rgba(192, 38, 211, 0.65),
+    inset 0 0 2px rgba(255, 255, 255, 0.25),
+    inset 0 0 5px rgba(126, 34, 206, 0.8);
 }
 
 .ability-skill-preview:has(.ability-skill-icon-glyph.is-sun-chariot) {
@@ -1778,11 +1778,11 @@
     rgba(63, 38, 0, 0.95) 100%
   );
   box-shadow:
-    0 0 8px rgba(255, 246, 163, 0.95),
-    0 0 18px rgba(250, 204, 21, 0.85),
-    0 0 32px rgba(245, 158, 11, 0.65),
-    inset 0 0 10px rgba(255, 255, 255, 0.25),
-    inset 0 0 18px rgba(146, 64, 14, 0.78);
+    0 0 2px rgba(255, 246, 163, 0.95),
+    0 0 5px rgba(250, 204, 21, 0.85),
+    0 0 8px rgba(245, 158, 11, 0.65),
+    inset 0 0 2px rgba(255, 255, 255, 0.25),
+    inset 0 0 5px rgba(146, 64, 14, 0.78);
 }
 
 .ability-skill-icon-glyph.is-classic-guard {
@@ -1881,14 +1881,14 @@
 .ability-skill-preview-classic-guard {
   border: 2px solid #7dd3fc;
   background: radial-gradient(circle at 50% 50%, rgba(224, 247, 255, 0.95) 0%, rgba(56, 189, 248, 0.78) 30%, rgba(2, 132, 199, 0.72) 60%, rgba(8, 47, 73, 0.95) 100%);
-  box-shadow: 0 0 8px rgba(186, 230, 253, 0.9), 0 0 18px rgba(56, 189, 248, 0.82), 0 0 32px rgba(2, 132, 199, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.25), inset 0 0 18px rgba(12, 74, 110, 0.78);
+  box-shadow: 0 0 2px rgba(186, 230, 253, 0.9), 0 0 5px rgba(56, 189, 248, 0.82), 0 0 8px rgba(2, 132, 199, 0.6), inset 0 0 2px rgba(255, 255, 255, 0.25), inset 0 0 5px rgba(12, 74, 110, 0.78);
 }
 
 .ability-skill-preview-phase-shift,
 .ability-skill-preview-plasma-charge {
   border: 2px solid #67e8f9;
   background: radial-gradient(circle at 50% 50%, rgba(224, 255, 255, 0.95) 0%, rgba(34, 211, 238, 0.82) 30%, rgba(20, 184, 166, 0.74) 60%, rgba(8, 47, 73, 0.95) 100%);
-  box-shadow: 0 0 8px rgba(165, 243, 252, 0.95), 0 0 18px rgba(34, 211, 238, 0.86), 0 0 32px rgba(20, 184, 166, 0.62), inset 0 0 10px rgba(255, 255, 255, 0.25), inset 0 0 18px rgba(8, 145, 178, 0.78);
+  box-shadow: 0 0 2px rgba(165, 243, 252, 0.95), 0 0 5px rgba(34, 211, 238, 0.86), 0 0 8px rgba(20, 184, 166, 0.62), inset 0 0 2px rgba(255, 255, 255, 0.25), inset 0 0 5px rgba(8, 145, 178, 0.78);
 }
 
 .ability-skill-preview-arc-reactor-field,
@@ -1896,32 +1896,32 @@
 .ability-skill-preview-chronos-time-rewind {
   border: 2px solid #93c5fd;
   background: radial-gradient(circle at 50% 50%, rgba(240, 251, 255, 0.95) 0%, rgba(125, 211, 252, 0.82) 30%, rgba(59, 130, 246, 0.76) 60%, rgba(23, 37, 84, 0.95) 100%);
-  box-shadow: 0 0 8px rgba(219, 234, 254, 0.95), 0 0 18px rgba(96, 165, 250, 0.85), 0 0 32px rgba(37, 99, 235, 0.62), inset 0 0 10px rgba(255, 255, 255, 0.25), inset 0 0 18px rgba(30, 64, 175, 0.78);
+  box-shadow: 0 0 2px rgba(219, 234, 254, 0.95), 0 0 5px rgba(96, 165, 250, 0.85), 0 0 8px rgba(37, 99, 235, 0.62), inset 0 0 2px rgba(255, 255, 255, 0.25), inset 0 0 5px rgba(30, 64, 175, 0.78);
 }
 
 .ability-skill-preview-ember-blast,
 .ability-skill-preview-inferno-field {
   border: 2px solid #fb923c;
   background: radial-gradient(circle at 50% 50%, rgba(255, 240, 194, 0.96) 0%, rgba(251, 146, 60, 0.84) 30%, rgba(239, 68, 68, 0.78) 60%, rgba(69, 10, 10, 0.95) 100%);
-  box-shadow: 0 0 8px rgba(253, 186, 116, 0.95), 0 0 18px rgba(249, 115, 22, 0.85), 0 0 32px rgba(185, 28, 28, 0.65), inset 0 0 10px rgba(255, 255, 255, 0.25), inset 0 0 18px rgba(127, 29, 29, 0.78);
+  box-shadow: 0 0 2px rgba(253, 186, 116, 0.95), 0 0 5px rgba(249, 115, 22, 0.85), 0 0 8px rgba(185, 28, 28, 0.65), inset 0 0 2px rgba(255, 255, 255, 0.25), inset 0 0 5px rgba(127, 29, 29, 0.78);
 }
 
 .ability-skill-preview-aurora-heal {
   border: 2px solid #86efac;
   background: radial-gradient(circle at 50% 50%, rgba(220, 255, 233, 0.96) 0%, rgba(74, 222, 128, 0.84) 30%, rgba(34, 197, 94, 0.76) 60%, rgba(20, 83, 45, 0.95) 100%);
-  box-shadow: 0 0 8px rgba(187, 247, 208, 0.95), 0 0 18px rgba(74, 222, 128, 0.85), 0 0 32px rgba(21, 128, 61, 0.65), inset 0 0 10px rgba(255, 255, 255, 0.25), inset 0 0 18px rgba(20, 83, 45, 0.78);
+  box-shadow: 0 0 2px rgba(187, 247, 208, 0.95), 0 0 5px rgba(74, 222, 128, 0.85), 0 0 8px rgba(21, 128, 61, 0.65), inset 0 0 2px rgba(255, 255, 255, 0.25), inset 0 0 5px rgba(20, 83, 45, 0.78);
 }
 
 .ability-skill-preview-gold-overdrive {
   border: 2px solid #fde047;
   background: radial-gradient(circle at 50% 50%, rgba(255, 248, 199, 0.96) 0%, rgba(250, 204, 21, 0.84) 30%, rgba(202, 138, 4, 0.78) 60%, rgba(63, 38, 0, 0.95) 100%);
-  box-shadow: 0 0 8px rgba(254, 240, 138, 0.95), 0 0 18px rgba(250, 204, 21, 0.85), 0 0 32px rgba(180, 83, 9, 0.65), inset 0 0 10px rgba(255, 255, 255, 0.25), inset 0 0 18px rgba(146, 64, 14, 0.78);
+  box-shadow: 0 0 2px rgba(254, 240, 138, 0.95), 0 0 5px rgba(250, 204, 21, 0.85), 0 0 8px rgba(180, 83, 9, 0.65), inset 0 0 2px rgba(255, 255, 255, 0.25), inset 0 0 5px rgba(146, 64, 14, 0.78);
 }
 
 .ability-skill-preview-quantum-shift {
   border: 2px solid #c4b5fd;
   background: radial-gradient(circle at 50% 50%, rgba(238, 242, 255, 0.96) 0%, rgba(196, 181, 253, 0.84) 30%, rgba(129, 140, 248, 0.78) 60%, rgba(49, 46, 129, 0.95) 100%);
-  box-shadow: 0 0 8px rgba(221, 214, 254, 0.95), 0 0 18px rgba(129, 140, 248, 0.85), 0 0 32px rgba(79, 70, 229, 0.65), inset 0 0 10px rgba(255, 255, 255, 0.25), inset 0 0 18px rgba(67, 56, 202, 0.78);
+  box-shadow: 0 0 2px rgba(221, 214, 254, 0.95), 0 0 5px rgba(129, 140, 248, 0.85), 0 0 8px rgba(79, 70, 229, 0.65), inset 0 0 2px rgba(255, 255, 255, 0.25), inset 0 0 5px rgba(67, 56, 202, 0.78);
 }
 
 .ability-skill-preview-void-cloak,
@@ -1929,13 +1929,13 @@
 .ability-skill-preview-electric-blitz {
   border: 2px solid #f472ff;
   background: radial-gradient(circle at 50% 50%, rgba(255, 230, 255, 0.95) 0%, rgba(217, 70, 239, 0.8) 30%, rgba(126, 34, 206, 0.75) 60%, rgba(45, 15, 70, 0.95) 100%);
-  box-shadow: 0 0 8px rgba(255, 180, 255, 0.95), 0 0 18px rgba(244, 114, 255, 0.85), 0 0 32px rgba(192, 38, 211, 0.65), inset 0 0 10px rgba(255, 255, 255, 0.25), inset 0 0 18px rgba(126, 34, 206, 0.8);
+  box-shadow: 0 0 2px rgba(255, 180, 255, 0.95), 0 0 5px rgba(244, 114, 255, 0.85), 0 0 8px rgba(192, 38, 211, 0.65), inset 0 0 2px rgba(255, 255, 255, 0.25), inset 0 0 5px rgba(126, 34, 206, 0.8);
 }
 
 .ability-skill-preview-cosmic-bigbang {
   border: 2px solid #f0abfc;
   background: radial-gradient(circle at 50% 50%, rgba(255, 245, 210, 0.96) 0%, rgba(244, 114, 182, 0.84) 30%, rgba(168, 85, 247, 0.78) 60%, rgba(49, 15, 80, 0.95) 100%);
-  box-shadow: 0 0 8px rgba(251, 207, 232, 0.95), 0 0 18px rgba(244, 114, 182, 0.85), 0 0 32px rgba(168, 85, 247, 0.65), inset 0 0 10px rgba(255, 255, 255, 0.25), inset 0 0 18px rgba(88, 28, 135, 0.78);
+  box-shadow: 0 0 2px rgba(251, 207, 232, 0.95), 0 0 5px rgba(244, 114, 182, 0.85), 0 0 8px rgba(168, 85, 247, 0.65), inset 0 0 2px rgba(255, 255, 255, 0.25), inset 0 0 5px rgba(88, 28, 135, 0.78);
 }
 
 .ability-skill-meta {
