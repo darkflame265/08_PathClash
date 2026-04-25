@@ -671,8 +671,6 @@ export function AbilityGrid({
     );
     const end = visiblePath[visiblePath.length - 1];
     const endPixel = toGridPixel(end, responsiveCellSize);
-    const sparkRadius = Math.max(3, responsiveCellSize * 0.055);
-
     return (
       <svg
         className={`ability-blitz-line ability-blitz-line-${color} ability-blitz-line-${variant}`}
@@ -723,20 +721,6 @@ export function AbilityGrid({
               fill="none"
             />
           ))}
-        </g>
-        <g className="ability-blitz-sparks">
-          {visiblePath.map((position, index) => {
-            const pixel = toGridPixel(position, responsiveCellSize);
-            return (
-              <circle
-                key={`${position.row}-${position.col}-${index}`}
-                className={`ability-blitz-spark ability-blitz-spark-${index % 3}`}
-                cx={pixel.x}
-                cy={pixel.y}
-                r={sparkRadius}
-              />
-            );
-          })}
         </g>
         <g
           className="ability-blitz-impact"

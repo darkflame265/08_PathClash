@@ -980,26 +980,6 @@
   opacity: 0.72;
 }
 
-.ability-grid .ability-blitz-sparks {
-  filter: drop-shadow(0 0 7px rgba(255, 0, 204, 0.75))
-    drop-shadow(0 0 15px rgba(192, 132, 252, 0.55));
-}
-
-.ability-grid .ability-blitz-spark {
-  fill: rgba(255, 255, 255, 0.92);
-  transform-origin: center;
-  animation: ability-blitz-spark-pop 640ms ease-in-out infinite;
-}
-
-.ability-grid .ability-blitz-spark-1 {
-  animation-delay: 120ms;
-  fill: rgba(255, 0, 204, 0.86);
-}
-
-.ability-grid .ability-blitz-spark-2 {
-  animation-delay: 240ms;
-  fill: rgba(255, 170, 238, 0.8);
-}
 
 .ability-grid .ability-blitz-impact-ring {
   fill: none;
@@ -1666,21 +1646,6 @@
   }
 }
 
-@keyframes ability-blitz-spark-pop {
-  0%,
-  100% {
-    opacity: 0.1;
-    transform: scale(0.45);
-  }
-  42% {
-    opacity: 1;
-    transform: scale(1.12);
-  }
-  70% {
-    opacity: 0.38;
-    transform: scale(0.74);
-  }
-}
 
 @keyframes ability-blitz-impact-outer {
   0% {
