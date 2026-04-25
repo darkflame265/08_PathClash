@@ -894,13 +894,13 @@
 }
 
 .ability-grid .ability-blitz-aura {
-  filter: blur(0.2px) drop-shadow(0 0 12px rgba(168, 85, 247, 0.42))
-    drop-shadow(0 0 30px rgba(59, 130, 246, 0.22));
+  filter: blur(0.2px) drop-shadow(0 0 12px rgba(255, 0, 204, 0.46))
+    drop-shadow(0 0 30px rgba(147, 51, 234, 0.28));
   mix-blend-mode: screen;
 }
 
 .ability-grid .ability-blitz-aura-wide {
-  stroke: rgba(126, 34, 206, 0.28);
+  stroke: rgba(255, 0, 204, 0.24);
   stroke-width: clamp(18px, 2.6vw, 30px);
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -910,7 +910,7 @@
 }
 
 .ability-grid .ability-blitz-aura-hot {
-  stroke: rgba(236, 72, 153, 0.2);
+  stroke: rgba(255, 0, 204, 0.22);
   stroke-width: clamp(12px, 1.85vw, 22px);
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -918,14 +918,14 @@
 }
 
 .ability-grid .ability-blitz-beam {
-  filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.55))
-    drop-shadow(0 0 24px rgba(217, 70, 239, 0.32))
+  filter: drop-shadow(0 0 10px rgba(255, 0, 204, 0.58))
+    drop-shadow(0 0 24px rgba(217, 70, 239, 0.38))
     drop-shadow(0 0 6px rgba(255, 255, 255, 0.36));
   mix-blend-mode: screen;
 }
 
 .ability-grid .ability-blitz-glow {
-  stroke: rgba(192, 132, 252, 0.54);
+  stroke: rgba(255, 0, 204, 0.5);
   stroke-width: clamp(12px, 1.7vw, 20px);
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -933,7 +933,7 @@
 }
 
 .ability-grid .ability-blitz-branch {
-  stroke: rgba(216, 180, 254, 0.9);
+  stroke: rgba(255, 172, 235, 0.9);
   stroke-width: clamp(4px, 0.72vw, 8px);
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -949,7 +949,7 @@
 }
 
 .ability-grid .ability-blitz-core {
-  stroke: #f5d0fe;
+  stroke: #ffe5fb;
   stroke-width: clamp(2px, 0.32vw, 4px);
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -958,13 +958,13 @@
 }
 
 .ability-grid .ability-blitz-forks {
-  filter: drop-shadow(0 0 8px rgba(216, 180, 254, 0.66))
-    drop-shadow(0 0 18px rgba(147, 51, 234, 0.36));
+  filter: drop-shadow(0 0 8px rgba(255, 0, 204, 0.72))
+    drop-shadow(0 0 18px rgba(255, 0, 204, 0.38));
   mix-blend-mode: screen;
 }
 
 .ability-grid .ability-blitz-fork {
-  stroke: rgba(233, 213, 255, 0.84);
+  stroke: rgba(255, 221, 249, 0.88);
   stroke-width: clamp(1.6px, 0.28vw, 3px);
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -974,20 +974,20 @@
 }
 
 .ability-grid .ability-blitz-fork.is-hot {
-  stroke: rgba(253, 224, 71, 0.78);
+  stroke: #ff00cc;
   stroke-width: clamp(2px, 0.34vw, 3.6px);
   animation-duration: 260ms, 130ms;
 }
 
 .ability-grid .ability-blitz-fork.is-small {
-  stroke: rgba(125, 211, 252, 0.72);
+  stroke: rgba(255, 0, 204, 0.72);
   stroke-width: clamp(1.2px, 0.22vw, 2.4px);
   stroke-dasharray: 6 7;
   opacity: 0.72;
 }
 
 .ability-grid .ability-blitz-sparks {
-  filter: drop-shadow(0 0 7px rgba(253, 224, 71, 0.72))
+  filter: drop-shadow(0 0 7px rgba(255, 0, 204, 0.75))
     drop-shadow(0 0 15px rgba(192, 132, 252, 0.55));
   mix-blend-mode: screen;
 }
@@ -1000,12 +1000,12 @@
 
 .ability-grid .ability-blitz-spark-1 {
   animation-delay: 120ms;
-  fill: rgba(253, 224, 71, 0.86);
+  fill: rgba(255, 0, 204, 0.86);
 }
 
 .ability-grid .ability-blitz-spark-2 {
   animation-delay: 240ms;
-  fill: rgba(125, 211, 252, 0.8);
+  fill: rgba(255, 170, 238, 0.8);
 }
 
 .ability-grid .ability-blitz-line-planning .ability-blitz-impact-ring,

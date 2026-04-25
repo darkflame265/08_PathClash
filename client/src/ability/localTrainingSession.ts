@@ -467,7 +467,7 @@ function validateTrainingPlan(
   path: Position[],
   skills: AbilitySkillReservation[],
 ): { path: Position[]; skills: AbilitySkillReservation[] } | null {
-  const candidatePath = path.slice(0, TRAINING_PATH_POINTS);
+  const candidatePath = path;
   const uniqueSkills = normalizeSkillReservations(skills);
   const manaCost = uniqueSkills.reduce(
     (sum, skill) => sum + ABILITY_SKILL_COSTS[skill.skillId],

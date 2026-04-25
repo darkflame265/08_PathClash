@@ -141,10 +141,10 @@ function buildBlitzForks(
   reach: number,
 ) {
   const forks: Array<{ points: string; className: string }> = [];
+  const numPoints = 8;
   positions.slice(1).forEach((position, index) => {
     const prev = positions[index];
     if (!prev) return;
-    const { x, y } = toGridPixel(position, cellSize);
     const dx = position.col - prev.col;
     const dy = position.row - prev.row;
     const length = Math.hypot(dx, dy) || 1;
@@ -152,29 +152,51 @@ function buildBlitzForks(
     const ny = dx / length;
     const tx = dx / length;
     const ty = dy / length;
-    const side = index % 2 === 0 ? 1 : -1;
 
-    const baseX = x - tx * cellSize * 0.26;
-    const baseY = y - ty * cellSize * 0.26;
-    const midX = baseX + nx * reach * side + tx * reach * 0.32;
-    const midY = baseY + ny * reach * side + ty * reach * 0.32;
-    const endX = midX + nx * reach * 0.58 * side + tx * reach * 0.24;
-    const endY = midY + ny * reach * 0.58 * side + ty * reach * 0.24;
+    for (let branch = 0; branch < 4; branch += 1) {
+      const side = branch % 2 === 0 ? 1 : -1;
+      const lane = (branch + 1) / 5;
+      const base = {
+        x:
+          (prev.col + (position.col - prev.col) * lane) * cellSize +
+          cellSize / 2,
+        y:
+          (prev.row + (position.row - prev.row) * lane) * cellSize +
+          cellSize / 2,
+      };
+      const phase = 0.9 + index * 1.73 + branch * 2.11;
+      const phaseDiff = 1.42 + ((index + branch) % 3) * 0.17;
+      const amp = cellSize * (0.035 + branch * 0.008);
+      const branchReach = reach * (0.48 + ((index + branch) % 4) * 0.18);
+      const tangentLean = (branch - 1.5) * cellSize * 0.045;
+      const points = Array.from({ length: numPoints }, (_, pointIndex) => {
+        const progress = pointIndex / (numPoints - 1);
+        const electricWobble =
+          amp *
+          Math.max(0.15, progress) *
+          (1 - progress * 0.22) *
+          Math.sin(phase + pointIndex * phaseDiff);
+        const out = branchReach * progress;
+        return {
+          x:
+            base.x +
+            nx * out * side +
+            tx * (tangentLean * progress + electricWobble),
+          y:
+            base.y +
+            ny * out * side +
+            ty * (tangentLean * progress + electricWobble),
+        };
+      });
 
-    forks.push({
-      points: `${baseX},${baseY} ${midX},${midY} ${endX},${endY}`,
-      className:
-        index % 3 === 0 ? "ability-blitz-fork is-hot" : "ability-blitz-fork",
-    });
-
-    if (index % 2 === 0) {
-      const smallBaseX = x - tx * cellSize * 0.08;
-      const smallBaseY = y - ty * cellSize * 0.08;
-      const smallEndX = smallBaseX - nx * reach * 0.7 * side;
-      const smallEndY = smallBaseY - ny * reach * 0.7 * side;
       forks.push({
-        points: `${smallBaseX},${smallBaseY} ${smallEndX},${smallEndY}`,
-        className: "ability-blitz-fork is-small",
+        points: points.map((point) => `${point.x},${point.y}`).join(" "),
+        className:
+          branch === 0
+            ? "ability-blitz-fork is-hot"
+            : branch === 3
+              ? "ability-blitz-fork is-small"
+              : "ability-blitz-fork",
       });
     }
   });
