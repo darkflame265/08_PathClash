@@ -129,6 +129,12 @@ export function PlayerPiece({
     effectiveSkin === 'wizard'
       ? (innerSize / 250) * 1.2 * sunChariotScaleMultiplier
       : (innerSize / 250) * sunChariotScaleMultiplier;
+  const blitzRingScale =
+    effectiveSkin === 'sun'
+      ? isSunChariotActive
+        ? 6
+        : 1.5
+      : sunChariotScaleMultiplier;
   const classes = [
     'player-piece',
     `piece-${color}`,
@@ -162,6 +168,7 @@ export function PlayerPiece({
         ['--arc-reactor-scale' as string]: `${arcReactorScale}`,
         ['--chronos-scale' as string]: `${chronosScale}`,
         ['--wizard-scale' as string]: `${wizardScale}`,
+        ['--blitz-ring-scale' as string]: `${blitzRingScale}`,
       }}
     >
       {isBlitzRingActive && (

@@ -14,10 +14,11 @@
 
 .piece-blitz-ring {
   position: absolute;
-  width: var(--piece-size, 56px);
-  height: var(--piece-size, 56px);
-  top: 0;
-  left: 0;
+  width: calc(var(--piece-size, 56px) * var(--blitz-ring-scale, 1));
+  height: calc(var(--piece-size, 56px) * var(--blitz-ring-scale, 1));
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   overflow: visible;
   pointer-events: none;
   animation: blitz-ring-breathe 1.6s ease-in-out infinite;
