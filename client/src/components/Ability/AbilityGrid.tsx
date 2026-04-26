@@ -134,68 +134,6 @@ function buildBlitzBoltPoints(
     .join(" ");
 }
 
-function buildBlitzForks(
-  positions: Position[],
-  cellSize: number,
-  reach: number,
-) {
-  const forks: Array<{ points: string; className: string }> = [];
-  const numPoints = 5;
-  positions.slice(1).forEach((position, index) => {
-    const prev = positions[index];
-    if (!prev) return;
-    const dx = position.col - prev.col;
-    const dy = position.row - prev.row;
-    const length = Math.hypot(dx, dy) || 1;
-    const nx = -dy / length;
-    const ny = dx / length;
-    const tx = dx / length;
-    const ty = dy / length;
-
-    for (let branch = 0; branch < 2; branch += 1) {
-      const side = branch % 2 === 0 ? 1 : -1;
-      const lane = (branch + 1) / 3;
-      const base = {
-        x:
-          (prev.col + (position.col - prev.col) * lane) * cellSize +
-          cellSize / 2,
-        y:
-          (prev.row + (position.row - prev.row) * lane) * cellSize +
-          cellSize / 2,
-      };
-      const phase = 0.9 + index * 1.73 + branch * 2.11;
-      const phaseDiff = 1.42 + ((index + branch) % 3) * 0.17;
-      const amp = cellSize * (0.038 + branch * 0.01);
-      const branchReach = reach * (0.52 + ((index + branch) % 3) * 0.22);
-      const tangentLean = (branch - 0.5) * cellSize * 0.05;
-      const points = Array.from({ length: numPoints }, (_, pointIndex) => {
-        const progress = pointIndex / (numPoints - 1);
-        const electricWobble =
-          amp *
-          Math.max(0.15, progress) *
-          (1 - progress * 0.22) *
-          Math.sin(phase + pointIndex * phaseDiff);
-        const out = branchReach * progress;
-        return {
-          x:
-            base.x +
-            nx * out * side +
-            tx * (tangentLean * progress + electricWobble),
-          y:
-            base.y +
-            ny * out * side +
-            ty * (tangentLean * progress + electricWobble),
-        };
-      });
-
-      forks.push({
-        points: points.map((point) => `${point.x},${point.y}`).join(" "),
-        className: branch === 0 ? "ability-blitz-fork is-hot" : "ability-blitz-fork is-small",
-      });
-    }
-  });
-  return forks;
-}
 
 export function AbilityGrid({
   state,
@@ -629,7 +567,6 @@ export function AbilityGrid({
     path: Position[],
     startStep: number | null,
     progress: number,
-    variant: "planning" | "playback" = "playback",
   ) => {
     const effectiveStartStep = Math.max(0, startStep ?? 0);
     const pathStart =
@@ -658,38 +595,15 @@ export function AbilityGrid({
       Math.max(3, responsiveCellSize * 0.055),
       1,
     );
-    const branchC = buildBlitzBoltPoints(
-      allPositions,
-      responsiveCellSize,
-      Math.max(6, responsiveCellSize * 0.115),
-      2,
-    );
-    const forks = buildBlitzForks(
-      allPositions,
-      responsiveCellSize,
-      Math.max(10, responsiveCellSize * 0.22),
-    );
     const end = visiblePath[visiblePath.length - 1];
     const endPixel = toGridPixel(end, responsiveCellSize);
     return (
       <svg
-        className={`ability-blitz-line ability-blitz-line-${color} ability-blitz-line-${variant}`}
+        className={`ability-blitz-line ability-blitz-line-${color}`}
         width="100%"
         height="100%"
         viewBox={`0 0 ${boardSize} ${boardSize}`}
       >
-        <g className="ability-blitz-aura">
-          <polyline
-            className="ability-blitz-aura-wide"
-            points={branchC}
-            fill="none"
-          />
-          <polyline
-            className="ability-blitz-aura-hot"
-            points={mainPoints}
-            fill="none"
-          />
-        </g>
         <g className="ability-blitz-beam">
           <polyline
             className="ability-blitz-glow"
@@ -711,16 +625,6 @@ export function AbilityGrid({
             points={branchA}
             fill="none"
           />
-        </g>
-        <g className="ability-blitz-forks">
-          {forks.map((fork, index) => (
-            <polyline
-              key={`${fork.points}-${index}`}
-              className={fork.className}
-              points={fork.points}
-              fill="none"
-            />
-          ))}
         </g>
         <g
           className="ability-blitz-impact"

@@ -910,30 +910,6 @@
   overflow: visible;
 }
 
-.ability-grid .ability-blitz-aura {
-  filter: drop-shadow(0 0 12px rgba(255, 0, 204, 0.46))
-    drop-shadow(0 0 30px rgba(147, 51, 234, 0.28));
-  mix-blend-mode: screen;
-}
-
-.ability-grid .ability-blitz-aura-wide {
-  stroke: rgba(255, 0, 204, 0.24);
-  stroke-width: clamp(18px, 2.6vw, 30px);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 18 11;
-  animation:
-    ability-blitz-aura-drift 420ms linear infinite,
-    ability-blitz-aura-pulse 900ms ease-in-out infinite;
-}
-
-.ability-grid .ability-blitz-aura-hot {
-  stroke: rgba(255, 0, 204, 0.22);
-  stroke-width: clamp(12px, 1.85vw, 22px);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  animation: ability-blitz-aura-hot 520ms ease-in-out infinite alternate;
-}
 
 .ability-grid .ability-blitz-beam {
   filter: drop-shadow(0 0 10px rgba(255, 0, 204, 0.58))
@@ -974,34 +950,6 @@
   animation: ability-blitz-core-flow 160ms linear infinite;
 }
 
-.ability-grid .ability-blitz-forks {
-  filter: drop-shadow(0 0 8px rgba(255, 0, 204, 0.72))
-    drop-shadow(0 0 18px rgba(255, 0, 204, 0.38));
-}
-
-.ability-grid .ability-blitz-fork {
-  stroke: rgba(255, 221, 249, 0.88);
-  stroke-width: clamp(1.6px, 0.28vw, 3px);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 9 8;
-  animation:
-    ability-blitz-fork-flicker 400ms steps(2, end) infinite,
-    ability-blitz-fork-flow 240ms linear infinite;
-}
-
-.ability-grid .ability-blitz-fork.is-hot {
-  stroke: #ff00cc;
-  stroke-width: clamp(2px, 0.34vw, 3.6px);
-  animation-duration: 340ms, 200ms;
-}
-
-.ability-grid .ability-blitz-fork.is-small {
-  stroke: rgba(255, 0, 204, 0.72);
-  stroke-width: clamp(1.2px, 0.22vw, 2.4px);
-  stroke-dasharray: 6 7;
-  opacity: 0.72;
-}
 
 .ability-grid .ability-blitz-impact-ring {
   fill: none;
@@ -1590,33 +1538,6 @@
   }
 }
 
-@keyframes ability-blitz-aura-drift {
-  from {
-    stroke-dashoffset: 0;
-  }
-  to {
-    stroke-dashoffset: -29;
-  }
-}
-
-@keyframes ability-blitz-aura-pulse {
-  0%,
-  100% {
-    stroke-opacity: 0.32;
-  }
-  50% {
-    stroke-opacity: 0.68;
-  }
-}
-
-@keyframes ability-blitz-aura-hot {
-  0% {
-    stroke-opacity: 0.16;
-  }
-  100% {
-    stroke-opacity: 0.42;
-  }
-}
 
 @keyframes ability-blitz-branch-flow-a {
   from {
@@ -1645,24 +1566,6 @@
   }
 }
 
-@keyframes ability-blitz-fork-flow {
-  from {
-    stroke-dashoffset: 0;
-  }
-  to {
-    stroke-dashoffset: -17;
-  }
-}
-
-@keyframes ability-blitz-fork-flicker {
-  0%,
-  100% {
-    opacity: 0.18;
-  }
-  50% {
-    opacity: 1;
-  }
-}
 
 @keyframes ability-blitz-impact-outer {
   0% {
