@@ -437,7 +437,7 @@ function App() {
           if (authAccessToken && authUserId) {
             socket.emit(
               'account_sync',
-              { auth: { accessToken: authAccessToken, userId: authUserId ?? undefined } },
+              { auth: { accessToken: authAccessToken, userId: authUserId ?? undefined, clientPlatform: authMetadata.clientPlatform, appVersionCode: authMetadata.appVersionCode } },
               (syncResp: {
                 status: string;
                 profile?: {
