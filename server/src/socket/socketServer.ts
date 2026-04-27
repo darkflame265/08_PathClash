@@ -112,7 +112,19 @@ export function initSocketServer(io: Server): void {
 
     if (!isAndroidClient) return null;
 
-    return getAndroidVersionStatus(getCurrentAppVersionCode(auth));
+    const currentVersionCode = getCurrentAppVersionCode(auth);
+    const result = getAndroidVersionStatus(currentVersionCode);
+    if (result.forceUpdate) {
+      console.warn('[version_check] forceUpdate triggered', {
+        origin,
+        clientPlatform: auth?.clientPlatform,
+        sentAppVersionCode: auth?.appVersionCode,
+        parsedCurrentVersionCode: currentVersionCode,
+        minSupportedVersionCode: result.minSupportedVersionCode,
+        latestVersionCode: result.latestVersionCode,
+      });
+    }
+    return result;
   };
 
   const emitUpdateRequired = (socket: Socket, auth?: AuthPayload) => {
