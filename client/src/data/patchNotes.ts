@@ -11,13 +11,13 @@ export type PatchNoteSection = {
   lines: PatchNoteLine[];
 };
 
-export const PATCH_NOTES_VERSION = "2026-04-23-v38";
-const PATCH_NOTES_APP_VERSION = "1.0.38";
+export const PATCH_NOTES_VERSION = "2026-04-27-v39";
+const PATCH_NOTES_APP_VERSION = "1.0.39";
 
 export function getPatchNotesVersionLabel(lang: "en" | "kr"): string {
   return lang === "en"
-    ? `${PATCH_NOTES_APP_VERSION} Version 2026.04.23`
-    : `${PATCH_NOTES_APP_VERSION}버전 2026.04.23`;
+    ? `${PATCH_NOTES_APP_VERSION} Version 2026.04.27`
+    : `${PATCH_NOTES_APP_VERSION}버전 2026.04.27`;
 }
 
 export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
@@ -27,23 +27,13 @@ export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
         heading: "Updates",
         lines: [
           {
-            text: "Lava Zone mana cost increased from 6 to 7.",
-            change: "nerf",
+            text: "Three Ability Battle skills are now available for free each day through daily rotation.",
           },
           {
-            text: "Nova Burst mana cost increased from 4 to 5.",
-            change: "nerf",
+            text: "Added glow effects to skill icons.",
           },
           {
-            text: "Phase Shift mana cost decreased from 8 to 7.",
-            change: "buff",
-          },
-          {
-            text: "Quantum Shift mana cost decreased from 4 to 3.",
-            change: "buff",
-          },
-          {
-            text: "Improved server and matchmaking stability.",
+            text: "Fixed an issue where SFX preview buttons in Sound > Advanced Settings could ignore early clicks.",
           },
         ],
       },
@@ -55,23 +45,13 @@ export function getPatchNotes(lang: "en" | "kr"): PatchNoteSection[] {
       heading: "업데이트",
       lines: [
         {
-          text: "용암지대 마나 코스트가 6에서 7로 증가했습니다.",
-          change: "nerf",
+          text: "매일 스킬 3개를 로테이션으로 무료 제공하도록 추가했습니다.",
         },
         {
-          text: "노바 폭발 마나 코스트가 4에서 5로 증가했습니다.",
-          change: "nerf",
+          text: "스킬 아이콘에 glow 효과를 추가했습니다.",
         },
         {
-          text: "페이즈 시프트 마나 코스트가 8에서 7로 감소했습니다.",
-          change: "buff",
-        },
-        {
-          text: "양자 도약 마나 코스트가 4에서 3으로 감소했습니다.",
-          change: "buff",
-        },
-        {
-          text: "서버 및 매칭 안정화 작업을 진행했습니다.",
+          text: "소리 > 고급 설정에서 SFX 재생 버튼 클릭이 초반에 씹히던 문제를 수정했습니다.",
         },
       ],
     },
