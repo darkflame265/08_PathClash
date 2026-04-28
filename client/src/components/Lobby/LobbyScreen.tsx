@@ -1,7 +1,5 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { FlagSkin, isFlagSkin } from "../shared/FlagSkin";
-
 import { AtomicPreview } from "../../skins/legendary/atomic/Preview";
 import { ChronosPreview } from "../../skins/legendary/chronos/Preview";
 import { SunPreview } from "../../skins/legendary/sun/Preview";
@@ -1608,12 +1606,7 @@ export function LobbyScreen({
       | "quantum"
       | "atomic"
       | "chronos"
-      | "sun"
-      | "flag_kr"
-      | "flag_jp"
-      | "flag_cn"
-      | "flag_us"
-      | "flag_uk";
+      | "sun";
 
     name: string;
 
@@ -1905,86 +1898,6 @@ export function LobbyScreen({
 
       tier: "legendary",
     },
-
-    {
-      id: "flag_kr",
-
-      name: lang === "en" ? "Korea" : "한국",
-
-      desc: lang === "en" ? "The Korean flag." : "대한민국 국기.",
-
-      requiredWins: null,
-
-      requiredPlays: 100,
-
-      tokenPrice: null,
-
-      tier: null,
-    },
-
-    {
-      id: "flag_jp",
-
-      name: lang === "en" ? "Japan" : "일본",
-
-      desc: lang === "en" ? "The Japanese flag." : "일본 국기.",
-
-      requiredWins: null,
-
-      requiredPlays: 100,
-
-      tokenPrice: null,
-
-      tier: null,
-    },
-
-    {
-      id: "flag_cn",
-
-      name: lang === "en" ? "China" : "중국",
-
-      desc: lang === "en" ? "The Chinese flag." : "중국 국기.",
-
-      requiredWins: null,
-
-      requiredPlays: 100,
-
-      tokenPrice: null,
-
-      tier: null,
-    },
-
-    {
-      id: "flag_us",
-
-      name: lang === "en" ? "USA" : "미국",
-
-      desc: lang === "en" ? "The American flag." : "미국 국기.",
-
-      requiredWins: null,
-
-      requiredPlays: 100,
-
-      tokenPrice: null,
-
-      tier: null,
-    },
-
-    {
-      id: "flag_uk",
-
-      name: lang === "en" ? "UK" : "영국",
-
-      desc: lang === "en" ? "The British flag." : "영국 국기.",
-
-      requiredWins: null,
-
-      requiredPlays: 100,
-
-      tokenPrice: null,
-
-      tier: null,
-    },
   ];
 
   const boardSkinChoices: Array<{
@@ -2130,7 +2043,6 @@ export function LobbyScreen({
     className = "skin-preview",
   ) => (
     <span className={`${className} skin-preview-${skinId}`} aria-hidden="true">
-      {isFlagSkin(skinId) && <FlagSkin id={skinId} />}
       {skinId === "plasma" && <PlasmaPreview />}
       {skinId === "gold_core" && <GoldCorePreview />}
       {skinId === "neon_pulse" && <NeonPulsePreview />}

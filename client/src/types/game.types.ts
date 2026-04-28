@@ -23,12 +23,7 @@ export type PieceSkin =
   | 'atomic'
   | 'chronos'
   | 'wizard'
-  | 'sun'
-  | 'flag_kr'
-  | 'flag_jp'
-  | 'flag_cn'
-  | 'flag_us'
-  | 'flag_uk';
+  | 'sun';
 
 export type BoardSkin = 'classic' | 'blue_gray' | 'pharaoh' | 'magic';
 

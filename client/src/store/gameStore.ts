@@ -315,12 +315,7 @@ const initialPieceSkin = (() => {
     stored === "atomic" ||
     stored === "chronos" ||
     stored === "wizard" ||
-    stored === "sun" ||
-    stored === "flag_kr" ||
-    stored === "flag_jp" ||
-    stored === "flag_cn" ||
-    stored === "flag_us" ||
-    stored === "flag_uk"
+    stored === "sun"
     ? stored
     : "classic";
 })();

@@ -104,11 +104,6 @@ const TRAINING_SKIN_ORDER: PieceSkin[] = [
   "chronos",
   "atomic",
   "sun",
-  "flag_kr",
-  "flag_jp",
-  "flag_cn",
-  "flag_us",
-  "flag_uk",
 ];
 
 const TRAINING_SKIN_ORDER_INDEX = new Map(

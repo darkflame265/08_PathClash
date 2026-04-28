@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Position, PlayerColor } from '../../types/game.types';
-import { FlagSkin, isFlagSkin } from '../shared/FlagSkin';
 import { CosmicGame } from '../../skins/rare/cosmic/Game';
 import { ArcReactorGame } from '../../skins/rare/arc_reactor/Game';
 import { AtomicGame } from '../../skins/legendary/atomic/Game';
@@ -56,12 +55,7 @@ interface Props {
     | "atomic"
     | "chronos"
     | "sun"
-    | "wizard"
-    | "flag_kr"
-    | "flag_jp"
-    | "flag_cn"
-    | "flag_us"
-    | "flag_uk";
+    | "wizard";
 }
 
 export function PlayerPiece({
@@ -241,7 +235,6 @@ export function PlayerPiece({
         {isAttacker && <div className={`attacker-glow glow-${color}`} />}
         <span className="piece-hit-flash" aria-hidden="true" />
         <div className="piece-inner">
-          {isFlagSkin(effectiveSkin) && <FlagSkin id={effectiveSkin} />}
           {effectiveSkin === "plasma" && <PlasmaGame />}
           {effectiveSkin === "gold_core" && <GoldCoreGame />}
           {effectiveSkin === "neon_pulse" && <NeonPulseGame />}
