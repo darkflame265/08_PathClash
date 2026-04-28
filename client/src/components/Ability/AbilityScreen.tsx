@@ -2971,6 +2971,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
         (event) => event.skillId === "electric_blitz",
       );
 
+      const hasAtomicFissionSpawn = events.some(
+        (event) => event.skillId === "atomic_fission" && event.cloneStart,
+      );
+
       const runStepSkills = () => {
         runSkillQueue(events, 0, () => {
           applyPersistentSkillCounters(events);
@@ -2984,6 +2988,19 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           done();
         });
       };
+
+      // 원자분열 분신 스폰과 충돌이 같은 스텝에 있으면 분신 먼저 등장시킨 후 피격
+      if (collisions.length > 0 && hasAtomicFissionSpawn) {
+        runSkillQueue(events, 0, () => {
+          applyPersistentSkillCounters(events);
+          if (blocks.length > 0 && !isSfxMuted) {
+            playShieldBlock(sfxVolume);
+          }
+          applyCollisions(collisions);
+          done();
+        });
+        return;
+      }
 
       if (collisions.length > 0) {
         applyCollisions(collisions);
