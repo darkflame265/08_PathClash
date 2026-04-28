@@ -23,7 +23,7 @@ import {
 const PLANNING_TIME_MS = 9_000;
 const TRAINING_STARTING_MANA = 10;
 const MAX_MANA = 10;
-const MANA_PER_TURN = 2;
+const MANA_PER_TURN = 3;
 const ABILITY_STARTING_HP = 5;
 const TRAINING_PATH_POINTS = 10;
 const TRAINING_DUMMY_POSITION: Position = { row: 2, col: 2 };
