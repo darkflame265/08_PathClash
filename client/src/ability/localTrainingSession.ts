@@ -1,5 +1,6 @@
 import { resolveAbilityRound } from "./AbilityEngine";
 import { isBlockedCell, isValidMove, posEqual } from "../utils/pathUtils";
+import { getEstimatedServerNow } from "../socket/timeSync";
 import type {
   BoardSkin,
   PieceSkin,
@@ -661,7 +662,7 @@ function startRound(): void {
   obstacles = generateObstaclesForTraining(roomId, turn, redPlayer.position, bluePlayer.position);
   recordTurnSnapshot(redPlayer);
   recordTurnSnapshot(bluePlayer);
-  roundEndsAt = Date.now() + PLANNING_TIME_MS;
+  roundEndsAt = getEstimatedServerNow() + PLANNING_TIME_MS;
 
   emit("ability_round_start", {
     timeLimit: PLANNING_TIME_MS / 1000,
