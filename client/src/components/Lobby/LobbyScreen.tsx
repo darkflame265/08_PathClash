@@ -885,6 +885,8 @@ export function LobbyScreen({
 
   const [isDailyRewardInfoOpen, setIsDailyRewardInfoOpen] = useState(false);
 
+  const [isModePickerOpen, setIsModePickerOpen] = useState(false);
+
   const [isPatchNotesOpen, setIsPatchNotesOpen] = useState(false);
 
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
@@ -3151,9 +3153,24 @@ export function LobbyScreen({
     }
   };
 
-  const renderFriendBattleHeader = () => (
+  const renderModeTitleBtn = (label: string, extra?: React.ReactNode) => (
     <div className="lobby-card-title-row">
-      <h2 data-step="2">{friendModeTitle}</h2>
+      <button
+        type="button"
+        className="mode-title-btn"
+        data-keyboard-nav-layer="mode-title"
+        onClick={() => setIsModePickerOpen(true)}
+      >
+        {label}
+        <span className="mode-title-chevron" aria-hidden="true">▾</span>
+      </button>
+      {extra}
+    </div>
+  );
+
+  const renderFriendBattleHeader = () =>
+    renderModeTitleBtn(
+      friendModeTitle,
       <button
         type="button"
         className="lobby-mini-btn"
@@ -3165,9 +3182,8 @@ export function LobbyScreen({
         }
       >
         {friendModeToggleLabel}
-      </button>
-    </div>
-  );
+      </button>,
+    );
 
   const handleRandom = async () => {
     setError("");
@@ -3776,6 +3792,7 @@ export function LobbyScreen({
   const handleSelectLobbyMode = (mode: LobbyModeKey) => {
     if (DISABLED_LOBBY_MODES.has(mode)) return;
     setSelectedLobbyMode(mode);
+    setIsModePickerOpen(false);
 
     if (mode !== "friend" && view !== "main") {
       setView("main");
@@ -3836,8 +3853,8 @@ export function LobbyScreen({
       case "ai":
         return (
           <>
-            <div className="lobby-card-title-row">
-              <h2 data-step="1">{t.aiTitle}</h2>
+            {renderModeTitleBtn(
+              t.aiTitle,
               <button
                 type="button"
                 className="lobby-mini-btn tutorial"
@@ -3845,8 +3862,8 @@ export function LobbyScreen({
                 onClick={() => void handleReplayAiTutorial()}
               >
                 {t.aiTutorialBtn ?? aiTutorialButtonLabel}
-              </button>
-            </div>
+              </button>,
+            )}
 
             {isMatchmaking && currentMatchType === "ai" ? (
               <>
@@ -3921,9 +3938,7 @@ export function LobbyScreen({
       case "random":
         return (
           <>
-            <div className="lobby-card-title-row">
-              <h2 data-step="3">{t.randomTitle}</h2>
-            </div>
+            {renderModeTitleBtn(t.randomTitle)}
             <p>{randomDesc}</p>
 
             {isMatchmaking && currentMatchType === "random" ? (
@@ -3960,7 +3975,7 @@ export function LobbyScreen({
       case "coop":
         return (
           <>
-            <h2 data-step="6">{coopTitle}</h2>
+            {renderModeTitleBtn(coopTitle)}
             <p>{coopDesc}</p>
             {isMatchmaking && currentMatchType === "coop" ? (
               <>
@@ -3994,7 +4009,7 @@ export function LobbyScreen({
       case "2v2":
         return (
           <>
-            <h2 data-step="5">{twoVsTwoTitle}</h2>
+            {renderModeTitleBtn(twoVsTwoTitle)}
             <p>{twoVsTwoDesc}</p>
             {isMatchmaking && currentMatchType === "2v2" ? (
               <>
@@ -4028,8 +4043,8 @@ export function LobbyScreen({
       case "ability":
         return (
           <>
-            <div className="lobby-card-title-row">
-              <h2 data-step="4">{abilityBattleTitle}</h2>
+            {renderModeTitleBtn(
+              abilityBattleTitle,
               <div className="lobby-card-mini-actions">
                 <button
                   className="lobby-mini-btn"
@@ -4047,8 +4062,8 @@ export function LobbyScreen({
                 >
                   {abilityLoadoutTitle}
                 </button>
-              </div>
-            </div>
+              </div>,
+            )}
             <div className="ability-loadout-chip-row">
               {equippedAbilitySkillDefs.map((skill) => (
                 <span key={skill.id} className="ability-loadout-chip">
@@ -4094,7 +4109,7 @@ export function LobbyScreen({
       case "classic_ranked":
         return (
           <>
-            <h2 data-step="7">{classicRankedTitle}</h2>
+            {renderModeTitleBtn(classicRankedTitle)}
             <p>{rankedComingSoonDesc}</p>
             <button className="lobby-btn accent" type="button" disabled>
               {t.startBtn}
@@ -4104,7 +4119,7 @@ export function LobbyScreen({
       case "skill_ranked":
         return (
           <>
-            <h2 data-step="8">{skillRankedTitle}</h2>
+            {renderModeTitleBtn(skillRankedTitle)}
             <p>{rankedComingSoonDesc}</p>
             <button className="lobby-btn accent" type="button" disabled>
               {abilityBattleStartLabel}
@@ -4119,57 +4134,39 @@ export function LobbyScreen({
   return (
     <div className="lobby-screen" onClickCapture={handleLobbyUiClickCapture}>
       <h1 className="logo">PathClash</h1>
-      <div className="lobby-card mode-selector-card">
-        <div className="mode-selector-head">
-          <h2>{modeSelectorTitle}</h2>
-          <div className="daily-reward-wrap">
-            <button
-              className="daily-reward-badge daily-reward-badge-btn"
-              data-keyboard-nav-layer="daily"
-              aria-label="Daily tokens earned"
-              type="button"
-              onClick={() => setIsDailyRewardInfoOpen((prev) => !prev)}
-            >
-              <span className="daily-reward-icon" aria-hidden="true">
-                {"💎"}
-              </span>
-              <span>{accountDailyRewardTokens}</span>
-              <span className="daily-reward-separator">/</span>
-              <span>120</span>
-            </button>
 
-            {isDailyRewardInfoOpen && (
-              <div
-                className="daily-reward-popover"
-                role="dialog"
-                aria-label={dailyRewardGuideTitle}
-              >
-                <strong>{dailyRewardGuideTitle}</strong>
-                <p>{dailyRewardGuideMax}</p>
-                <p>{dailyRewardGuideDuel}</p>
-                <p>{dailyRewardGuideCoop}</p>
-                <p>{dailyRewardGuideAi}</p>
-                <p>{dailyRewardGuideReset}</p>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="mode-selector-grid">
-          {lobbyModeOptions.map((option) => (
-            <button
-              key={option.key}
-              type="button"
-              className={`mode-selector-btn ${selectedLobbyMode === option.key ? "is-active" : ""} ${DISABLED_LOBBY_MODES.has(option.key) ? "is-disabled" : ""}`}
-              data-keyboard-nav-layer="mode"
-              onClick={() => handleSelectLobbyMode(option.key)}
-              disabled={DISABLED_LOBBY_MODES.has(option.key)}
+      <div className="lobby-user-header">
+        <span className="lobby-user-name">{myNickname || "-"}</span>
+        <div className="daily-reward-wrap">
+          <button
+            className="daily-reward-badge daily-reward-badge-btn"
+            data-keyboard-nav-layer="daily"
+            aria-label="Daily tokens earned"
+            type="button"
+            onClick={() => setIsDailyRewardInfoOpen((prev) => !prev)}
+          >
+            <span className="daily-reward-icon" aria-hidden="true">
+              {"💎"}
+            </span>
+            <span>{accountDailyRewardTokens}</span>
+            <span className="daily-reward-separator">/</span>
+            <span>120</span>
+          </button>
+
+          {isDailyRewardInfoOpen && (
+            <div
+              className="daily-reward-popover"
+              role="dialog"
+              aria-label={dailyRewardGuideTitle}
             >
-              <span className="mode-selector-icon" aria-hidden="true">
-                {option.icon}
-              </span>
-              <span className="mode-selector-label">{option.label}</span>
-            </button>
-          ))}
+              <strong>{dailyRewardGuideTitle}</strong>
+              <p>{dailyRewardGuideMax}</p>
+              <p>{dailyRewardGuideDuel}</p>
+              <p>{dailyRewardGuideCoop}</p>
+              <p>{dailyRewardGuideAi}</p>
+              <p>{dailyRewardGuideReset}</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -4178,6 +4175,47 @@ export function LobbyScreen({
       >
         {renderSelectedModeContent()}
       </div>
+
+      {isModePickerOpen && (
+        <div
+          className="mode-picker-overlay"
+          onClick={() => setIsModePickerOpen(false)}
+        >
+          <div
+            className="mode-picker-popup"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mode-picker-head">
+              <span>{modeSelectorTitle}</span>
+              <button
+                type="button"
+                className="mode-picker-close"
+                onClick={() => setIsModePickerOpen(false)}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="mode-selector-grid">
+              {lobbyModeOptions.map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  className={`mode-selector-btn ${selectedLobbyMode === option.key ? "is-active" : ""} ${DISABLED_LOBBY_MODES.has(option.key) ? "is-disabled" : ""}`}
+                  data-keyboard-nav-layer="mode"
+                  onClick={() => handleSelectLobbyMode(option.key)}
+                  disabled={DISABLED_LOBBY_MODES.has(option.key)}
+                >
+                  <span className="mode-selector-icon" aria-hidden="true">
+                    {option.icon}
+                  </span>
+                  <span className="mode-selector-label">{option.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {upgradeFlowLoading &&
         !pendingUpgradeSwitchProfile &&
