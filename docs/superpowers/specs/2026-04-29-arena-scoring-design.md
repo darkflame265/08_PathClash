@@ -1,7 +1,7 @@
 # Arena & Scoring System Design
 
 **Date:** 2026-04-29
-**Scope:** 일반 대결전 전용 (능력 대전 경쟁전은 추후 별도 추가)
+**Scope:** 능력 대전 전용 (일반 대결전 경쟁전은 추후 별도 추가 예정)
 
 ---
 
@@ -98,7 +98,7 @@ ranked_unlocked       boolean  NOT NULL DEFAULT false
 
 ## 7. 서버 흐름 (게임 결과 처리)
 
-**파일:** `server/src/game/GameRoom.ts`
+**파일:** `server/src/game/ability/AbilityRoom.ts`
 
 게임 종료 시 순서:
 1. 승자/패자의 `current_rating` 조회
@@ -162,7 +162,7 @@ AI 대기 시간은 **current_rating 기준 현재 아레나**로 결정 (highes
 - 5000점 미만: `Next Arena: 250 pts`
 - 5000점 이상: `Ranked Unlocked` 배지
 
-### 결과 화면 (client/src/components/Game/GameScreen.tsx)
+### 결과 화면 (client/src/components/Ability/AbilityScreen.tsx)
 
 - 승리: `+40 Rating`
 - 패배: `-25 Rating`
@@ -182,11 +182,11 @@ AI 대기 시간은 **current_rating 기준 현재 아레나**로 결정 (highes
 |------|------|
 | `supabase/schema.sql` | player_stats 컬럼 추가, purchase_skin_with_tokens RPC 아레나 체크 추가 |
 | `server/src/game/arenaConfig.ts` | 신규: 아레나 상수 및 유틸 함수 |
-| `server/src/game/GameRoom.ts` | 게임 종료 후 rating 업데이트 로직 추가 |
+| `server/src/game/ability/AbilityRoom.ts` | 게임 종료 후 rating 업데이트 로직 추가 |
 | `server/src/socket/socketServer.ts` | AI 대기 시간 아레나별 분기, 매칭 범위 확장 로직 |
 | `client/src/data/arenaCatalog.ts` | 신규: 아레나 상수 + 스킨-아레나 매핑 (수정 포인트) |
 | `client/src/components/Lobby/LobbyScreen.tsx` | 로비 rating/arena 표시, 스킨 잠금 UI |
-| `client/src/components/Game/GameScreen.tsx` | 결과 화면 rating 변화 표시, 아레나 승급 팝업 |
-| `client/src/types/game.types.ts` | 결과 페이로드에 rating 관련 필드 추가 |
+| `client/src/components/Ability/AbilityScreen.tsx` | 결과 화면 rating 변화 표시, 아레나 승급 팝업 |
+| `client/src/types/ability.types.ts` | 결과 페이로드에 rating 관련 필드 추가 |
 | `client/src/store/gameStore.ts` | currentRating, highestArena, rankedUnlocked 상태 추가 |
 | `server/src/services/playerAuth.ts` | 계정 스냅샷에 arena 필드 포함 |
