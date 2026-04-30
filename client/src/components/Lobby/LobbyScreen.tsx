@@ -4168,8 +4168,6 @@ export function LobbyScreen({
 
   return (
     <div className="lobby-screen" onClickCapture={handleLobbyUiClickCapture}>
-      <h1 className="logo">PathClash</h1>
-
       <div className="lobby-user-header">
         <div className="lobby-user-info">
           <span className="lobby-user-name">{myNickname || "-"}</span>
