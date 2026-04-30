@@ -1287,6 +1287,9 @@ export function LobbyScreen({
   // based on terminal mojibake output; verify against the actual UI/editor first.
 
   const patchNotesVersionLabel = getPatchNotesVersionLabel(lang);
+  const lobbyArenaImageSrc = `/arena/arena${highestArena}.png`;
+  const lobbyArenaImageAlt =
+    lang === "en" ? `Arena ${highestArena}` : `아레나 ${highestArena}`;
 
   // Patch note convention:
 
@@ -4205,6 +4208,20 @@ export function LobbyScreen({
           )}
         </div>
       </div>
+
+      <figure
+        className="lobby-arena-showcase"
+        aria-label={lobbyArenaImageAlt}
+      >
+        <img
+          src={lobbyArenaImageSrc}
+          alt={lobbyArenaImageAlt}
+          onError={(event) => {
+            if (event.currentTarget.src.endsWith("/arena/arena1.png")) return;
+            event.currentTarget.src = "/arena/arena1.png";
+          }}
+        />
+      </figure>
 
       <div
         className={`lobby-card mode-content-card${accountSummaryLoading ? " is-db-loading" : ""}`}
