@@ -4100,6 +4100,10 @@ export function LobbyScreen({
       <div className="lobby-user-header">
         <div className="lobby-user-info">
           <span className="lobby-user-name">{myNickname || "-"}</span>
+          <div className="lobby-user-score">
+            <span className="lobby-user-score-value">{currentRating}</span>
+            <span className="lobby-user-score-icon" aria-hidden="true">⭐</span>
+          </div>
           <div className="daily-reward-wrap">
             <button
               className="daily-reward-badge daily-reward-badge-btn"
@@ -4149,6 +4153,9 @@ export function LobbyScreen({
           />
           <LobbyArenaOverlay arena={highestArena} />
           <div className="arena-progress-bar-wrap" aria-hidden="true">
+            <div className="arena-name-in-bar">
+              {getArenaLabel(highestArena, rankedUnlocked)}
+            </div>
             <div className="arena-progress-labels">
               <span>{arenaProgressMin}</span>
               <span>{arenaProgressMax}</span>
@@ -4161,13 +4168,6 @@ export function LobbyScreen({
             </div>
           </div>
         </figure>
-
-        <div className="lobby-arena-badge">
-          <span className="lobby-arena-label">
-            {getArenaLabel(highestArena, rankedUnlocked)}
-          </span>
-          <span className="lobby-arena-rating">{currentRating}</span>
-        </div>
       </div>
 
       <div
