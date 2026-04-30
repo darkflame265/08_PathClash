@@ -248,21 +248,31 @@
 }
 
 .lobby-user-score {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  width: fit-content;
   gap: 0.28rem;
+  padding: 0.38rem 0.62rem;
+  border-radius: 999px;
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  background: rgba(8, 20, 35, 0.74);
+  color: #dbeafe;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
 }
 
 .lobby-user-score-value {
-  font-size: 0.88rem;
+  font-size: inherit;
   font-weight: 700;
-  color: #fbbf24;
+  color: inherit;
   font-family: var(--mono, "JetBrains Mono", monospace);
   letter-spacing: 0.02em;
 }
 
 .lobby-user-score-icon {
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   line-height: 1;
 }
 

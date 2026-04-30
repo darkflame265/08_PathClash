@@ -4101,8 +4101,8 @@ export function LobbyScreen({
         <div className="lobby-user-info">
           <span className="lobby-user-name">{myNickname || "-"}</span>
           <div className="lobby-user-score">
-            <span className="lobby-user-score-value">{currentRating}</span>
             <span className="lobby-user-score-icon" aria-hidden="true">⭐</span>
+            <span className="lobby-user-score-value">{currentRating}</span>
           </div>
           <div className="daily-reward-wrap">
             <button
