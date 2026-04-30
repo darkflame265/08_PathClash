@@ -1,6 +1,8 @@
 ﻿/* ?? Lobby layout ??????????????????????????????????????? */
 .lobby-screen {
   --lobby-stage-width: min(calc(100vw - 1rem), calc(100dvh * 0.5603), 640px);
+  --lobby-action-inset: clamp(0.75rem, 3.5vw, 1.5rem);
+  --lobby-action-width: calc(var(--lobby-stage-width) - (var(--lobby-action-inset) * 2));
   --lobby-bottom-nav-height: calc(7.45rem + env(safe-area-inset-bottom));
   --lobby-mode-panel-gap: clamp(0.85rem, 2.4dvh, 1.55rem);
   box-sizing: border-box;
@@ -589,8 +591,8 @@
   left: 50%;
   bottom: calc(var(--lobby-bottom-nav-height) + var(--lobby-mode-panel-gap));
   z-index: 70;
-  width: var(--lobby-stage-width);
-  max-width: calc(100vw - 1rem);
+  width: var(--lobby-action-width);
+  max-width: calc(100vw - (var(--lobby-action-inset) * 2));
   flex-shrink: 0;
   min-height: 0;
   padding: 0;
@@ -2550,7 +2552,7 @@
   flex-shrink: 0;
   gap: 0.9rem;
   margin: 0;
-  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+  padding: 0.75rem var(--lobby-action-inset) calc(0.75rem + env(safe-area-inset-bottom));
   background: linear-gradient(
     180deg,
     rgba(10, 17, 19, 0),
@@ -2561,7 +2563,8 @@
 }
 
 .lobby-bottom-actions {
-  width: 100%;
+  width: var(--lobby-action-width);
+  max-width: 100%;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
