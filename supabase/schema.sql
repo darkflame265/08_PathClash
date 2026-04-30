@@ -43,6 +43,15 @@ add column if not exists daily_reward_wins integer not null default 0;
 alter table public.player_stats
 add column if not exists daily_reward_day date;
 
+alter table public.player_stats
+add column if not exists current_rating integer not null default 0;
+
+alter table public.player_stats
+add column if not exists highest_arena_reached integer not null default 1;
+
+alter table public.player_stats
+add column if not exists ranked_unlocked boolean not null default false;
+
 create table if not exists public.account_merges (
   source_user_id uuid primary key references auth.users(id) on delete cascade,
   target_user_id uuid not null references auth.users(id) on delete cascade,
@@ -179,6 +188,8 @@ declare
   v_user_id uuid;
   v_tokens integer;
   v_cost integer;
+  v_required_arena integer;
+  v_highest_arena integer;
 begin
   v_user_id := auth.uid();
 
@@ -204,6 +215,31 @@ begin
 
   if v_cost is null then
     return 'INVALID_SKIN';
+  end if;
+
+  v_required_arena := case p_skin_id
+    when 'plasma'        then 1
+    when 'inferno'       then 1
+    when 'quantum'       then 2
+    when 'cosmic'        then 2
+    when 'neon_pulse'    then 3
+    when 'arc_reactor'   then 3
+    when 'electric_core' then 4
+    when 'gold_core'     then 4
+    when 'atomic'        then 5
+    when 'chronos'       then 5
+    when 'wizard'        then 6
+    when 'sun'           then 6
+    else 1
+  end;
+
+  select coalesce(highest_arena_reached, 1)
+    into v_highest_arena
+    from public.player_stats
+   where user_id = v_user_id;
+
+  if coalesce(v_highest_arena, 1) < v_required_arena then
+    return 'ARENA_REQUIRED';
   end if;
 
   select tokens
@@ -492,7 +528,13 @@ begin
           where pa.user_id = target_user_id
         ),
         '[]'::jsonb
-      )
+      ),
+    'currentRating',
+      coalesce((select ps.current_rating from public.player_stats ps where ps.user_id = target_user_id), 0),
+    'highestArena',
+      coalesce((select ps.highest_arena_reached from public.player_stats ps where ps.user_id = target_user_id), 1),
+    'rankedUnlocked',
+      coalesce((select ps.ranked_unlocked from public.player_stats ps where ps.user_id = target_user_id), false)
   );
 end;
 $$;

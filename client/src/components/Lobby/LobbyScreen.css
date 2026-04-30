@@ -225,6 +225,13 @@
   padding: 0 0.25rem;
 }
 
+.lobby-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
 .lobby-user-name {
   font-size: 1.15rem;
   font-weight: 700;
@@ -234,6 +241,26 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.lobby-arena-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 0.5rem;
+  padding: 0.15rem 0.55rem;
+  width: fit-content;
+}
+
+.lobby-arena-rating {
+  font-weight: 600;
+  color: var(--text-muted, #9AA4AE);
+  font-size: 0.72rem;
 }
 
 /* ?? Mode title button ???????????????????????????????????????? */
@@ -2042,6 +2069,31 @@
   white-space: nowrap;
 }
 
+.skin-arena-req {
+  color: #fbbf24 !important;
+}
+
+.skin-option-card.is-arena-locked {
+  opacity: 0.78;
+}
+
+.skin-arena-requirement {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.22);
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.75rem;
+}
+
+.skin-arena-req-icon {
+  font-size: 0.9rem;
+}
+
 .skin-requirement-icon {
   display: inline-flex;
   align-items: center;
@@ -3123,7 +3175,10 @@
 
 .skin-detail-actions {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .skin-detail-action-btn {

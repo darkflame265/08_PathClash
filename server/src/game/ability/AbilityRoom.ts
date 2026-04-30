@@ -15,6 +15,8 @@ import {
   recordMatchmakingLoss,
   recordMatchmakingResult,
   recordMatchmakingWin,
+  updateAbilityRating,
+  type AbilityRatingResult,
 } from '../../services/playerAuth';
 import {
   recordAbilityBlockEvents,
@@ -1431,14 +1433,14 @@ export class AbilityRoom {
     this.clearMovingCompleteTimeout();
     this.movingCompleteTimeout = setTimeout(() => {
       this.movingCompleteTimeout = null;
-      this.onMovingComplete(resolution.winner, resolution.payload);
+      void this.onMovingComplete(resolution.winner, resolution.payload);
     }, animTime);
   }
 
-  private onMovingComplete(
+  private async onMovingComplete(
     winner: PlayerColor | 'draw' | null,
     resolutionPayload?: AbilityResolutionPayload,
-  ): void {
+  ): Promise<void> {
     if (this.phase !== 'moving') return;
     if (!this.hasBothPlayers()) return;
 
@@ -1451,6 +1453,8 @@ export class AbilityRoom {
 
     if (winner) {
       this.phase = 'gameover';
+      let winnerRating: AbilityRatingResult | null = null;
+      let loserRating: AbilityRatingResult | null = null;
       if (winner !== 'draw' && !this.rewardsGranted && this.isRewardEligible()) {
         const loserColor: PlayerColor = winner === 'red' ? 'blue' : 'red';
         const winnerUserId = this.players.get(winner)?.userId ?? null;
@@ -1483,10 +1487,39 @@ export class AbilityRoom {
             ? findFinisherSkillId(loserColor, resolutionPayload.skillEvents)
             : null,
         });
+        // rating 업데이트 (병렬)
+        if (winnerUserId) {
+          winnerRating = await updateAbilityRating(winnerUserId, true);
+        }
+        if (loserUserId) {
+          loserRating = await updateAbilityRating(loserUserId, false);
+        }
         this.rewardsGranted = true;
       }
       this.touchActivity();
-      this.io.to(this.roomId).emit('ability_game_over', { winner });
+      // 각 플레이어에게 본인 rating 정보 포함해서 개별 전송
+      const winnerColor = winner !== 'draw' ? winner : null;
+      const loserColor = winnerColor ? (winnerColor === 'red' ? 'blue' as PlayerColor : 'red' as PlayerColor) : null;
+      let sentToSocket = false;
+      for (const [color, player] of this.players.entries()) {
+        const targetSocketId = player.socketId;
+        if (!targetSocketId || targetSocketId.startsWith('bot:')) continue;
+        const isWinner = color === winnerColor;
+        const ratingResult = isWinner ? winnerRating : (color === loserColor ? loserRating : null);
+        this.io.to(targetSocketId).emit('ability_game_over', {
+          winner,
+          ratingChange: ratingResult?.ratingChange ?? null,
+          newRating: ratingResult?.newRating ?? null,
+          newArena: ratingResult?.newArena ?? null,
+          arenaPromoted: ratingResult?.arenaPromoted ?? false,
+          rankedUnlocked: ratingResult?.rankedUnlocked ?? false,
+        });
+        sentToSocket = true;
+      }
+      // 실 소켓이 없는 경우(예: 두 플레이어 모두 봇) 룸 전체에 emit
+      if (!sentToSocket) {
+        this.io.to(this.roomId).emit('ability_game_over', { winner, ratingChange: null, newRating: null, newArena: null, arenaPromoted: false, rankedUnlocked: false });
+      }
       return;
     }
 

@@ -7,6 +7,15 @@
   Position,
 } from "./game.types";
 
+export interface AbilityGameOverPayload {
+  winner: PlayerColor | "draw";
+  ratingChange: number | null;
+  newRating: number | null;
+  newArena: number | null;
+  arenaPromoted: boolean;
+  rankedUnlocked: boolean;
+}
+
 export type AbilitySkillId =
   | "classic_guard"
   | "arc_reactor_field"

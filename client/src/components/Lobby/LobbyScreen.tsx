@@ -53,6 +53,11 @@ import {
   PATCH_NOTES_VERSION,
   type PatchNoteSection,
 } from "../../data/patchNotes";
+import {
+  getArenaLabel,
+  getSkinRequiredArena,
+  isSkinArenaUnlocked,
+} from "../../data/arenaCatalog";
 
 import { startDonation } from "../../payments/donate";
 
@@ -566,6 +571,10 @@ function applyProfileToStore(
     dailyRewardTokens: profile.dailyRewardTokens,
 
     achievements: profile.achievements,
+
+    currentRating: profile.currentRating,
+    highestArena: profile.highestArena,
+    rankedUnlocked: profile.rankedUnlocked,
   });
 }
 
@@ -791,6 +800,10 @@ export function LobbyScreen({
 
     setPieceSkin,
     setBoardSkin,
+
+    currentRating,
+    highestArena,
+    rankedUnlocked,
   } = useGameStore();
 
   const rotationSkills = useGameStore((s) => s.rotationSkills);
@@ -3727,6 +3740,13 @@ export function LobbyScreen({
     if (skinDetail.tab === "piece") {
       const choice = skinDetail.choice;
       const isOwned = ownedSkins.includes(choice.id);
+      const isTokenSkin =
+        choice.tokenPrice !== null && choice.tokenPrice !== undefined;
+      const lockedByArena =
+        choice.id !== "classic" &&
+        isTokenSkin &&
+        !isOwned &&
+        !isSkinArenaUnlocked(choice.id, highestArena);
       const lockedByWins =
         choice.requiredWins !== null && accountWins < choice.requiredWins;
       const lockedByPlays =
@@ -3738,6 +3758,14 @@ export function LobbyScreen({
         choice.tokenPrice !== undefined &&
         !isOwned &&
         accountTokens < choice.tokenPrice;
+      if (lockedByArena) {
+        showSkinFloatingMessage(
+          lang === "en"
+            ? `Arena ${getSkinRequiredArena(choice.id)} required`
+            : `아레나 ${getSkinRequiredArena(choice.id)} 필요`,
+        );
+        return;
+      }
       if (lockedByWins) {
         showSkinFloatingMessage(skinWinRequirementInsufficientMsg);
         return;
@@ -4136,7 +4164,15 @@ export function LobbyScreen({
       <h1 className="logo">PathClash</h1>
 
       <div className="lobby-user-header">
-        <span className="lobby-user-name">{myNickname || "-"}</span>
+        <div className="lobby-user-info">
+          <span className="lobby-user-name">{myNickname || "-"}</span>
+          <div className="lobby-arena-badge">
+            <span className="lobby-arena-label">
+              {getArenaLabel(highestArena, rankedUnlocked)}
+            </span>
+            <span className="lobby-arena-rating">{currentRating}</span>
+          </div>
+        </div>
         <div className="daily-reward-wrap">
           <button
             className="daily-reward-badge daily-reward-badge-btn"
@@ -4335,6 +4371,11 @@ export function LobbyScreen({
                     choice.tokenPrice !== null &&
                     choice.tokenPrice !== undefined &&
                     choice.tokenPrice > 0;
+                  const isArenaLocked =
+                    choice.id !== "classic" &&
+                    isTokenSkin &&
+                    !isOwned &&
+                    !isSkinArenaUnlocked(choice.id, highestArena);
                   const isVisualUnlocked =
                     choice.id === "classic" ||
                     (isTokenSkin ? isOwned : isUnlocked);
@@ -4344,7 +4385,7 @@ export function LobbyScreen({
                       key={choice.id}
                       className={`skin-option-card skin-picker-card ${
                         pieceSkin === choice.id ? "is-selected" : ""
-                      } ${!isVisualUnlocked ? "is-locked" : ""}`}
+                      } ${!isVisualUnlocked ? "is-locked" : ""} ${isArenaLocked ? "is-arena-locked" : ""}`}
                       data-keyboard-modal-layer={`skin-row-${Math.floor(index / 4)}`}
                       onClick={() => setSkinDetail({ tab: "piece", choice })}
                       disabled={false}
@@ -4365,7 +4406,14 @@ export function LobbyScreen({
                         >
                           {choice.name}
                         </strong>
-                        {!isUnlocked && (
+                        {isArenaLocked ? (
+                          <span className="skin-unlock-meta skin-picker-unlock-meta skin-arena-req">
+                            🔒{" "}
+                            {lang === "en"
+                              ? `Arena ${getSkinRequiredArena(choice.id)}`
+                              : `아레나 ${getSkinRequiredArena(choice.id)} 필요`}
+                          </span>
+                        ) : !isUnlocked ? (
                           <span className="skin-unlock-meta skin-picker-unlock-meta">
                             {getSkinRequirementLabel(
                               choice.requiredWins,
@@ -4373,7 +4421,7 @@ export function LobbyScreen({
                               choice.tokenPrice,
                             )}
                           </span>
-                        )}
+                        ) : null}
                       </span>
                     </button>
                   );
@@ -4531,12 +4579,53 @@ export function LobbyScreen({
               )}
 
               <div className="skin-detail-actions">
+                {skinDetail.tab === "piece" &&
+                  (() => {
+                    const choice = skinDetail.choice;
+                    const isOwned = ownedSkins.includes(choice.id);
+                    const isTokenSkin =
+                      choice.tokenPrice !== null &&
+                      choice.tokenPrice !== undefined;
+                    const isArenaLocked =
+                      choice.id !== "classic" &&
+                      isTokenSkin &&
+                      !isOwned &&
+                      !isSkinArenaUnlocked(choice.id, highestArena);
+                    if (isArenaLocked) {
+                      return (
+                        <div className="skin-arena-requirement">
+                          <span className="skin-arena-req-icon">🔒</span>
+                          <span>
+                            {lang === "en"
+                              ? `Requires Arena ${getSkinRequiredArena(choice.id)}`
+                              : `아레나 ${getSkinRequiredArena(choice.id)} 필요`}
+                          </span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 <button
                   className="lobby-btn secondary skin-detail-action-btn"
                   data-keyboard-modal-layer="skin-detail-action"
                   type="button"
                   onClick={() => void handleSkinDetailAction()}
-                  disabled={false}
+                  disabled={
+                    skinDetail.tab === "piece" &&
+                    (() => {
+                      const choice = skinDetail.choice;
+                      const isOwned = ownedSkins.includes(choice.id);
+                      const isTokenSkin =
+                        choice.tokenPrice !== null &&
+                        choice.tokenPrice !== undefined;
+                      return (
+                        choice.id !== "classic" &&
+                        isTokenSkin &&
+                        !isOwned &&
+                        !isSkinArenaUnlocked(choice.id, highestArena)
+                      );
+                    })()
+                  }
                 >
                   {skinDetail.tab === "piece"
                     ? (() => {

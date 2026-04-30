@@ -1,4 +1,5 @@
 ﻿import { Server, Socket } from 'socket.io';
+import { getAbilityAiFallbackMs } from '../game/arenaConfig';
 import { GameRoom } from '../game/GameRoom';
 import { RoomStore } from '../store/RoomStore';
 import { CoopRoom } from '../game/coop/CoopRoom';
@@ -47,7 +48,6 @@ export function initSocketServer(io: Server): void {
   const metricsLogIntervalMs = 60 * 1000;
   const slowProfileResolveThresholdMs = 150;
   const randomFallbackMatchMs = 7_000;
-  const abilityFallbackMatchMs = 7_000;
   const randomFallbackTimers = new Map<
     string,
     ReturnType<typeof setTimeout>
@@ -480,14 +480,20 @@ export function initSocketServer(io: Server): void {
     pieceSkin,
     boardSkin,
     equippedSkills,
+    currentRating,
+    rankedUnlocked,
   }: {
     socket: Socket;
     profile: PersistentPlayerProfile;
     pieceSkin: PieceSkin;
     boardSkin: BoardSkin;
     equippedSkills: AbilitySkillId[];
+    currentRating: number;
+    rankedUnlocked: boolean;
   }) => {
     clearAbilityFallback(socket.id);
+    const fallbackMs = getAbilityAiFallbackMs(currentRating, rankedUnlocked);
+    if (fallbackMs < 0) return; // ranked_unlocked: AI 없음
     abilityFallbackTimers.set(
       socket.id,
       setTimeout(() => {
@@ -498,7 +504,7 @@ export function initSocketServer(io: Server): void {
           boardSkin,
           equippedSkills,
         });
-      }, abilityFallbackMatchMs),
+      }, fallbackMs),
     );
   };
 
@@ -1378,7 +1384,12 @@ export function initSocketServer(io: Server): void {
           room.waitForSkillSelection();
           return;
         }
-        const queued = abilityStore.dequeue();
+        const playerCurrentRating = profile.currentRating;
+        const playerRankedUnlocked = profile.rankedUnlocked;
+
+        // rating ±300 이내 우선 매칭, 없으면 제한 없이 대기 중인 첫 번째 상대와 매칭
+        const queued = abilityStore.dequeueWithinRange(playerCurrentRating, 300)
+          ?? abilityStore.dequeueWithinRange(playerCurrentRating);
         if (!queued || queued.socketId === socket.id) {
           if (queued) {
             abilityStore.enqueue(
@@ -1389,6 +1400,7 @@ export function initSocketServer(io: Server): void {
               queued.pieceSkin,
               queued.boardSkin,
               queued.equippedSkills,
+              queued.currentRating,
             );
           }
           abilityStore.enqueue(
@@ -1399,6 +1411,7 @@ export function initSocketServer(io: Server): void {
             pieceSkin ?? 'classic',
             boardSkin ?? 'classic',
             equippedSkills,
+            playerCurrentRating,
           );
           socket.emit('ability_matchmaking_waiting', {});
           scheduleAbilityFallback({
@@ -1407,6 +1420,8 @@ export function initSocketServer(io: Server): void {
             pieceSkin: pieceSkin ?? 'classic',
             boardSkin: boardSkin ?? 'classic',
             equippedSkills,
+            currentRating: playerCurrentRating,
+            rankedUnlocked: playerRankedUnlocked,
           });
           return;
         }
@@ -1424,6 +1439,7 @@ export function initSocketServer(io: Server): void {
             pieceSkin ?? 'classic',
             boardSkin ?? 'classic',
             equippedSkills,
+            playerCurrentRating,
           );
           socket.emit('ability_matchmaking_waiting', {});
           scheduleAbilityFallback({
@@ -1432,6 +1448,8 @@ export function initSocketServer(io: Server): void {
             pieceSkin: pieceSkin ?? 'classic',
             boardSkin: boardSkin ?? 'classic',
             equippedSkills,
+            currentRating: playerCurrentRating,
+            rankedUnlocked: playerRankedUnlocked,
           });
           return;
         }

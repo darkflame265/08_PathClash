@@ -43,6 +43,9 @@ interface StatsRow {
   tokens: number | null;
   daily_reward_wins: number | null;
   daily_reward_day: string | null;
+  current_rating: number | null;
+  highest_arena_reached: number | null;
+  ranked_unlocked: boolean | null;
 }
 
 interface OwnedSkinRow {
@@ -89,6 +92,9 @@ interface AccountSnapshot {
   dailyRewardWins: number;
   dailyRewardTokens: number;
   achievements: PlayerAchievementState[];
+  currentRating: number;
+  highestArena: number;
+  rankedUnlocked: boolean;
 }
 
 interface AccountSnapshotRpcRow {
@@ -111,6 +117,9 @@ interface AccountSnapshotRpcRow {
     completedAt?: string | null;
     claimedAt?: string | null;
   }> | null;
+  currentRating?: number | null;
+  highestArena?: number | null;
+  rankedUnlocked?: boolean | null;
 }
 
 export interface AccountProfile {
@@ -130,6 +139,9 @@ export interface AccountProfile {
   achievements: PlayerAchievementState[];
   rotationSkills?: AbilitySkillId[];
   removedRotationSkills?: AbilitySkillId[];
+  currentRating: number;
+  highestArena: number;
+  rankedUnlocked: boolean;
 }
 
 export interface PendingUpgradeContext {
@@ -627,6 +639,9 @@ function normalizeAccountSnapshot(
         claimedAt: row.claimedAt ?? null,
       }))
       .filter((row) => row.achievementId.length > 0),
+    currentRating: Number(source?.currentRating ?? 0),
+    highestArena: Number(source?.highestArena ?? 1),
+    rankedUnlocked: Boolean(source?.rankedUnlocked ?? false),
   };
 }
 
@@ -648,6 +663,9 @@ async function getAccountSnapshot(
       dailyRewardWins: 0,
       dailyRewardTokens: 0,
       achievements: [],
+      currentRating: 0,
+      highestArena: 1,
+      rankedUnlocked: false,
     };
   }
 
@@ -695,7 +713,7 @@ async function getAccountSnapshot(
         .maybeSingle<ProfileRow>(),
       supabase
         .from("player_stats")
-        .select("wins, losses, tokens, daily_reward_wins, daily_reward_day")
+        .select("wins, losses, tokens, daily_reward_wins, daily_reward_day, current_rating, highest_arena_reached, ranked_unlocked")
         .eq("user_id", userId)
         .maybeSingle<StatsRow>(),
       supabase
@@ -761,6 +779,9 @@ async function getAccountSnapshot(
         completedAt: row.completed_at ?? null,
         claimedAt: row.claimed_at ?? null,
       })),
+      currentRating: Number(statsResult.data?.current_rating ?? 0),
+      highestArena: Number(statsResult.data?.highest_arena_reached ?? 1),
+      rankedUnlocked: Boolean(statsResult.data?.ranked_unlocked ?? false),
     } satisfies AccountSnapshot;
 
     cacheAccountSnapshot(userId, snapshot);
@@ -1026,6 +1047,9 @@ export async function refreshAccountSummary(options?: {
       dailyRewardWins: 0,
       dailyRewardTokens: 0,
       achievements: [],
+      currentRating: 0,
+      highestArena: 1,
+      rankedUnlocked: false,
     };
   }
 
@@ -1046,6 +1070,9 @@ export async function refreshAccountSummary(options?: {
       dailyRewardWins: 0,
       dailyRewardTokens: 0,
       achievements: [],
+      currentRating: 0,
+      highestArena: 1,
+      rankedUnlocked: false,
     };
   }
 
@@ -1065,6 +1092,9 @@ export async function refreshAccountSummary(options?: {
     dailyRewardWins: snapshot.dailyRewardWins,
     dailyRewardTokens: snapshot.dailyRewardTokens,
     achievements: snapshot.achievements,
+    currentRating: snapshot.currentRating,
+    highestArena: snapshot.highestArena,
+    rankedUnlocked: snapshot.rankedUnlocked,
   };
 }
 

@@ -65,15 +65,28 @@ class AbilityRoomStore {
         } while (this.codeToRoom.has(this.normalizeCode(code)));
         return code;
     }
-    enqueue(socketId, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills) {
+    enqueue(socketId, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills, currentRating = 0) {
         this.removeFromQueue(socketId);
-        this.queue.push({ socketId, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills });
+        this.queue.push({ socketId, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills, currentRating });
     }
     isQueued(socketId) {
         return this.queue.some((entry) => entry.socketId === socketId);
     }
     dequeue() {
         return this.queue.shift();
+    }
+    /** rating 차이 |range| 이내인 가장 오래 기다린 상대 반환. range가 undefined면 제한 없음. */
+    dequeueWithinRange(currentRating, range) {
+        if (this.queue.length === 0)
+            return undefined;
+        if (range === undefined) {
+            return this.queue.shift();
+        }
+        const idx = this.queue.findIndex((entry) => Math.abs(entry.currentRating - currentRating) <= range);
+        if (idx === -1)
+            return undefined;
+        const [entry] = this.queue.splice(idx, 1);
+        return entry;
     }
     removeFromQueue(socketId) {
         this.queue = this.queue.filter((entry) => entry.socketId !== socketId);

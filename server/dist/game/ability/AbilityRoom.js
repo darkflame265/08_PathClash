@@ -13,7 +13,7 @@ const SUBMIT_GRACE_MS = 350;
 const READY_START_FALLBACK_MS = 5000;
 const INITIAL_MANA = 4;
 const MAX_MANA = 10;
-const MANA_PER_TURN = 2;
+const MANA_PER_TURN = 3;
 const SKILL_EVENT_BUFFER_MS = 1100;
 const AT_FIELD_END_DELAY_MS = 700;
 const TIME_REWIND_FREEZE_MS = 600;
@@ -1162,10 +1162,10 @@ class AbilityRoom {
         this.clearMovingCompleteTimeout();
         this.movingCompleteTimeout = setTimeout(() => {
             this.movingCompleteTimeout = null;
-            this.onMovingComplete(resolution.winner, resolution.payload);
+            void this.onMovingComplete(resolution.winner, resolution.payload);
         }, animTime);
     }
-    onMovingComplete(winner, resolutionPayload) {
+    async onMovingComplete(winner, resolutionPayload) {
         if (this.phase !== 'moving')
             return;
         if (!this.hasBothPlayers())
@@ -1178,6 +1178,8 @@ class AbilityRoom {
         }
         if (winner) {
             this.phase = 'gameover';
+            let winnerRating = null;
+            let loserRating = null;
             if (winner !== 'draw' && !this.rewardsGranted && this.isRewardEligible()) {
                 const loserColor = winner === 'red' ? 'blue' : 'red';
                 const winnerUserId = this.players.get(winner)?.userId ?? null;
@@ -1210,10 +1212,40 @@ class AbilityRoom {
                         ? findFinisherSkillId(loserColor, resolutionPayload.skillEvents)
                         : null,
                 });
+                // rating 업데이트 (병렬)
+                if (winnerUserId) {
+                    winnerRating = await (0, playerAuth_1.updateAbilityRating)(winnerUserId, true);
+                }
+                if (loserUserId) {
+                    loserRating = await (0, playerAuth_1.updateAbilityRating)(loserUserId, false);
+                }
                 this.rewardsGranted = true;
             }
             this.touchActivity();
-            this.io.to(this.roomId).emit('ability_game_over', { winner });
+            // 각 플레이어에게 본인 rating 정보 포함해서 개별 전송
+            const winnerColor = winner !== 'draw' ? winner : null;
+            const loserColor = winnerColor ? (winnerColor === 'red' ? 'blue' : 'red') : null;
+            let sentToSocket = false;
+            for (const [color, player] of this.players.entries()) {
+                const targetSocketId = player.socketId;
+                if (!targetSocketId || targetSocketId.startsWith('bot:'))
+                    continue;
+                const isWinner = color === winnerColor;
+                const ratingResult = isWinner ? winnerRating : (color === loserColor ? loserRating : null);
+                this.io.to(targetSocketId).emit('ability_game_over', {
+                    winner,
+                    ratingChange: ratingResult?.ratingChange ?? null,
+                    newRating: ratingResult?.newRating ?? null,
+                    newArena: ratingResult?.newArena ?? null,
+                    arenaPromoted: ratingResult?.arenaPromoted ?? false,
+                    rankedUnlocked: ratingResult?.rankedUnlocked ?? false,
+                });
+                sentToSocket = true;
+            }
+            // 실 소켓이 없는 경우(예: 두 플레이어 모두 봇) 룸 전체에 emit
+            if (!sentToSocket) {
+                this.io.to(this.roomId).emit('ability_game_over', { winner, ratingChange: null, newRating: null, newArena: null, arenaPromoted: false, rankedUnlocked: false });
+            }
             return;
         }
         for (const player of this.players.values()) {

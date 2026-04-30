@@ -161,9 +161,7 @@ AI 대기 시간은 **current_rating 기준 현재 아레나**로 결정 (highes
 
 ### 로비 (client/src/components/Lobby/LobbyScreen.tsx)
 
-- 닉네임 근처: `Arena 6` + `Rating: 2450`
-- 5000점 미만: `Next Arena: 250 pts`
-- 5000점 이상: `Ranked Unlocked` 배지
+- 닉네임 근처: `Arena 6` + `Rating: 2450` -모드 박스 위, 그리고 닉네임 아래에 따로 아레나 박스를 만듬. 아레나 박스에는 아레나의 그림과, 이름이 적혀있음.
 
 ### 결과 화면 (client/src/components/Ability/AbilityScreen.tsx)
 

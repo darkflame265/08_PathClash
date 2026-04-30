@@ -9,7 +9,9 @@ exports.recordMatchmakingWin = recordMatchmakingWin;
 exports.recordMatchmakingLoss = recordMatchmakingLoss;
 exports.grantDailyRewardTokens = grantDailyRewardTokens;
 exports.finalizeGoogleUpgrade = finalizeGoogleUpgrade;
+exports.updateAbilityRating = updateAbilityRating;
 const supabase_1 = require("../lib/supabase");
+const arenaConfig_1 = require("../game/arenaConfig");
 const achievementService_1 = require("./achievementService");
 const rotationService_1 = require("./rotationService");
 function normalizeAbilityLoadout(value) {
@@ -132,7 +134,7 @@ async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUse
         .maybeSingle();
     const statsPromise = supabase_1.supabaseAdmin
         ?.from('player_stats')
-        .select('wins, losses, tokens, daily_reward_wins, daily_reward_day')
+        .select('wins, losses, tokens, daily_reward_wins, daily_reward_day, current_rating, highest_arena_reached, ranked_unlocked')
         .eq('user_id', userId)
         .maybeSingle();
     const ownedSkinsPromise = supabase_1.supabaseAdmin
@@ -211,6 +213,9 @@ async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUse
         achievements,
         rotationSkills: activeRotation,
         removedRotationSkills,
+        currentRating: statsResult?.data?.current_rating ?? 0,
+        highestArena: statsResult?.data?.highest_arena_reached ?? 1,
+        rankedUnlocked: statsResult?.data?.ranked_unlocked ?? false,
     };
 }
 async function resolvePlayerProfile(auth, fallbackNickname) {
@@ -220,6 +225,8 @@ async function resolvePlayerProfile(auth, fallbackNickname) {
             userId: null,
             nickname: normalizedFallback,
             stats: { wins: 0, losses: 0 },
+            currentRating: 0,
+            rankedUnlocked: false,
         };
     }
     const user = await getUserFromToken(auth.accessToken);
@@ -228,6 +235,8 @@ async function resolvePlayerProfile(auth, fallbackNickname) {
             userId: null,
             nickname: normalizedFallback,
             stats: { wins: 0, losses: 0 },
+            currentRating: 0,
+            rankedUnlocked: false,
         };
     }
     const userId = user.id;
@@ -236,6 +245,8 @@ async function resolvePlayerProfile(auth, fallbackNickname) {
         userId,
         nickname: profile.nickname,
         stats: { wins: profile.wins, losses: profile.losses },
+        currentRating: profile.currentRating,
+        rankedUnlocked: profile.rankedUnlocked,
     };
 }
 async function resolveAccount(auth) {
@@ -618,4 +629,39 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
         status: 'UPGRADE_OK',
         profile,
     };
+}
+async function updateAbilityRating(userId, isWin) {
+    if (!supabase_1.supabaseAdmin)
+        return null;
+    const { data: row, error } = await supabase_1.supabaseAdmin
+        .from('player_stats')
+        .select('current_rating, highest_arena_reached, ranked_unlocked')
+        .eq('user_id', userId)
+        .maybeSingle();
+    if (error) {
+        console.error('[arena] failed to read player_stats for rating', error);
+        return null;
+    }
+    const currentRating = Number(row?.current_rating ?? 0);
+    const highestArena = Number(row?.highest_arena_reached ?? 1);
+    const wasRankedUnlocked = Boolean(row?.ranked_unlocked ?? false);
+    const ratingChange = (0, arenaConfig_1.getRatingChange)(currentRating, isWin);
+    const newRating = Math.max(0, currentRating + ratingChange);
+    const newArena = (0, arenaConfig_1.getArenaFromRating)(newRating);
+    const newHighestArena = Math.max(highestArena, newArena);
+    const arenaPromoted = newHighestArena > highestArena;
+    const rankedUnlocked = wasRankedUnlocked || newRating >= arenaConfig_1.RANKED_UNLOCKED_THRESHOLD;
+    const { error: upsertError } = await supabase_1.supabaseAdmin
+        .from('player_stats')
+        .upsert({
+        user_id: userId,
+        current_rating: newRating,
+        highest_arena_reached: newHighestArena,
+        ranked_unlocked: rankedUnlocked,
+    }, { onConflict: 'user_id' });
+    if (upsertError) {
+        console.error('[arena] failed to upsert rating', upsertError);
+        return null;
+    }
+    return { ratingChange, newRating, newArena, arenaPromoted, rankedUnlocked };
 }

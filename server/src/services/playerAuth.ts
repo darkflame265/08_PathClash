@@ -2,6 +2,7 @@ import type { BoardSkin, PieceSkin } from '../types/game.types';
 import type { AbilitySkillId } from '../game/ability/AbilityTypes';
 import type { User } from '@supabase/supabase-js';
 import { supabaseAdmin } from '../lib/supabase';
+import { getRatingChange, getArenaFromRating, RANKED_UNLOCKED_THRESHOLD } from '../game/arenaConfig';
 import {
   listPlayerAchievements,
   mergePlayerAchievements,
@@ -26,6 +27,8 @@ export interface PersistentPlayerProfile {
   userId: string | null;
   nickname: string;
   stats: { wins: number; losses: number };
+  currentRating: number;
+  rankedUnlocked: boolean;
 }
 
 export interface AccountProfile {
@@ -45,6 +48,9 @@ export interface AccountProfile {
   achievements: PlayerAchievementState[];
   rotationSkills: AbilitySkillId[];
   removedRotationSkills: AbilitySkillId[];
+  currentRating: number;
+  highestArena: number;
+  rankedUnlocked: boolean;
 }
 
 export type ResolveAccountResponse =
@@ -70,6 +76,9 @@ interface StatsRow {
   tokens: number | null;
   daily_reward_wins: number | null;
   daily_reward_day: string | null;
+  current_rating: number | null;
+  highest_arena_reached: number | null;
+  ranked_unlocked: boolean | null;
 }
 
 interface OwnedSkinRow {
@@ -226,7 +235,7 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
 
   const statsPromise = supabaseAdmin
     ?.from('player_stats')
-    .select('wins, losses, tokens, daily_reward_wins, daily_reward_day')
+    .select('wins, losses, tokens, daily_reward_wins, daily_reward_day, current_rating, highest_arena_reached, ranked_unlocked')
     .eq('user_id', userId)
     .maybeSingle<StatsRow>();
 
@@ -316,6 +325,9 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
     achievements,
     rotationSkills: activeRotation,
     removedRotationSkills,
+    currentRating: statsResult?.data?.current_rating ?? 0,
+    highestArena: statsResult?.data?.highest_arena_reached ?? 1,
+    rankedUnlocked: statsResult?.data?.ranked_unlocked ?? false,
   };
 }
 
@@ -330,6 +342,8 @@ export async function resolvePlayerProfile(
       userId: null,
       nickname: normalizedFallback,
       stats: { wins: 0, losses: 0 },
+      currentRating: 0,
+      rankedUnlocked: false,
     };
   }
 
@@ -339,6 +353,8 @@ export async function resolvePlayerProfile(
       userId: null,
       nickname: normalizedFallback,
       stats: { wins: 0, losses: 0 },
+      currentRating: 0,
+      rankedUnlocked: false,
     };
   }
 
@@ -353,6 +369,8 @@ export async function resolvePlayerProfile(
     userId,
     nickname: profile.nickname,
     stats: { wins: profile.wins, losses: profile.losses },
+    currentRating: profile.currentRating,
+    rankedUnlocked: profile.rankedUnlocked,
   };
 }
 
@@ -868,4 +886,60 @@ export async function finalizeGoogleUpgrade(
     status: 'UPGRADE_OK',
     profile,
   };
+}
+
+export interface AbilityRatingResult {
+  ratingChange: number;
+  newRating: number;
+  newArena: number;
+  arenaPromoted: boolean;
+  rankedUnlocked: boolean;
+}
+
+export async function updateAbilityRating(
+  userId: string,
+  isWin: boolean,
+): Promise<AbilityRatingResult | null> {
+  if (!supabaseAdmin) return null;
+
+  const { data: row, error } = await supabaseAdmin
+    .from('player_stats')
+    .select('current_rating, highest_arena_reached, ranked_unlocked')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('[arena] failed to read player_stats for rating', error);
+    return null;
+  }
+
+  const currentRating = Number(row?.current_rating ?? 0);
+  const highestArena = Number(row?.highest_arena_reached ?? 1);
+  const wasRankedUnlocked = Boolean(row?.ranked_unlocked ?? false);
+
+  const ratingChange = getRatingChange(currentRating, isWin);
+  const newRating = Math.max(0, currentRating + ratingChange);
+  const newArena = getArenaFromRating(newRating);
+  const newHighestArena = Math.max(highestArena, newArena);
+  const arenaPromoted = newHighestArena > highestArena;
+  const rankedUnlocked = wasRankedUnlocked || newRating >= RANKED_UNLOCKED_THRESHOLD;
+
+  const { error: upsertError } = await supabaseAdmin
+    .from('player_stats')
+    .upsert(
+      {
+        user_id: userId,
+        current_rating: newRating,
+        highest_arena_reached: newHighestArena,
+        ranked_unlocked: rankedUnlocked,
+      },
+      { onConflict: 'user_id' },
+    );
+
+  if (upsertError) {
+    console.error('[arena] failed to upsert rating', upsertError);
+    return null;
+  }
+
+  return { ratingChange, newRating, newArena, arenaPromoted, rankedUnlocked };
 }

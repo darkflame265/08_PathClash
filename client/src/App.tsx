@@ -273,6 +273,9 @@ function App() {
               dailyRewardWins,
               dailyRewardTokens,
               achievements,
+              currentRating,
+              highestArena,
+              rankedUnlocked,
             }) => {
               if (!active) return;
               setAuthState({
@@ -292,6 +295,9 @@ function App() {
                 dailyRewardWins,
                 dailyRewardTokens,
                 achievements,
+                currentRating,
+                highestArena,
+                rankedUnlocked,
               });
             },
           )
@@ -554,6 +560,9 @@ function App() {
             dailyRewardWins,
             dailyRewardTokens,
             achievements,
+            currentRating,
+            highestArena,
+            rankedUnlocked,
           }) => {
             setAuthState({
               ready: true,
@@ -572,6 +581,9 @@ function App() {
               dailyRewardWins,
               dailyRewardTokens,
               achievements,
+              currentRating,
+              highestArena,
+              rankedUnlocked,
             });
           },
         );

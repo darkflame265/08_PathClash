@@ -94,6 +94,9 @@ interface GameStore {
   abilityLoadout: AbilitySkillId[];
   rotationSkills: AbilitySkillId[];
   pendingRemovedRotationSkillsNotice: AbilitySkillId[];
+  currentRating: number;
+  highestArena: number;
+  rankedUnlocked: boolean;
 
   // Game
   gameState: ClientGameState | null;
@@ -166,6 +169,9 @@ interface GameStore {
       completedAt: string | null;
       claimedAt: string | null;
     }>;
+    currentRating?: number;
+    highestArena?: number;
+    rankedUnlocked?: boolean;
   }) => void;
   setAccountSummaryLoading: (loading: boolean) => void;
   setMyColor: (c: PlayerColor) => void;
@@ -350,6 +356,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   abilityLoadout: initialAbilityLoadout,
   rotationSkills: [],
   pendingRemovedRotationSkillsNotice: [],
+  currentRating: 0,
+  highestArena: 1,
+  rankedUnlocked: false,
   gameState: null,
   myPath: [],
   opponentSubmitted: false,
@@ -403,6 +412,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     dailyRewardWins,
     dailyRewardTokens,
     achievements,
+    currentRating,
+    highestArena,
+    rankedUnlocked,
   }) => {
     if (equippedSkin) {
       localStorage.setItem(PIECE_SKIN_KEY, equippedSkin);
@@ -436,6 +448,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       accountDailyRewardTokens:
         dailyRewardTokens ?? state.accountDailyRewardTokens,
       accountAchievements: achievements ?? state.accountAchievements,
+      currentRating: currentRating ?? state.currentRating,
+      highestArena: highestArena ?? state.highestArena,
+      rankedUnlocked: rankedUnlocked ?? state.rankedUnlocked,
     }));
   },
   setMyColor: (c) => set({ myColor: c }),

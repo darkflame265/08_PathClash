@@ -45,6 +45,7 @@ export class AbilityRoomStore {
     pieceSkin: PieceSkin;
     boardSkin: BoardSkin;
     equippedSkills: AbilitySkillId[];
+    currentRating: number;
   }> = [];
 
   private static instance: AbilityRoomStore;
@@ -109,9 +110,10 @@ export class AbilityRoomStore {
     pieceSkin: PieceSkin,
     boardSkin: BoardSkin,
     equippedSkills: AbilitySkillId[],
+    currentRating = 0,
   ): void {
     this.removeFromQueue(socketId);
-    this.queue.push({ socketId, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills });
+    this.queue.push({ socketId, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills, currentRating });
   }
 
   isQueued(socketId: string): boolean {
@@ -126,8 +128,35 @@ export class AbilityRoomStore {
     pieceSkin: PieceSkin;
     boardSkin: BoardSkin;
     equippedSkills: AbilitySkillId[];
+    currentRating: number;
   } | undefined {
     return this.queue.shift();
+  }
+
+  /** rating 차이 |range| 이내인 가장 오래 기다린 상대 반환. range가 undefined면 제한 없음. */
+  dequeueWithinRange(
+    currentRating: number,
+    range?: number,
+  ): {
+    socketId: string;
+    nickname: string;
+    userId: string | null;
+    stats: { wins: number; losses: number };
+    pieceSkin: PieceSkin;
+    boardSkin: BoardSkin;
+    equippedSkills: AbilitySkillId[];
+    currentRating: number;
+  } | undefined {
+    if (this.queue.length === 0) return undefined;
+    if (range === undefined) {
+      return this.queue.shift();
+    }
+    const idx = this.queue.findIndex(
+      (entry) => Math.abs(entry.currentRating - currentRating) <= range,
+    );
+    if (idx === -1) return undefined;
+    const [entry] = this.queue.splice(idx, 1);
+    return entry;
   }
 
   removeFromQueue(socketId: string): void {

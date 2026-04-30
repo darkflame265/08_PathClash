@@ -48,12 +48,14 @@ import type {
 import {
   ABILITY_SKILLS,
   type AbilityBattleState,
+  type AbilityGameOverPayload,
   type AbilityResolutionPayload,
   type AbilityRoundStartPayload,
   type AbilitySkillId,
   type AbilitySkillReservation,
   type AbilityTrapTile,
 } from "../../types/ability.types";
+import { getArenaLabel } from "../../data/arenaCatalog";
 import { AbilityGrid } from "./AbilityGrid";
 import { isBlockedCell, isValidMove, posEqual } from "../../utils/pathUtils";
 import {
@@ -505,6 +507,10 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   >([]);
   const [winner, setWinner] = useState<PlayerColor | "draw" | null>(null);
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
+  const [ratingResult, setRatingResult] = useState<Pick<
+    AbilityGameOverPayload,
+    "ratingChange" | "newRating" | "newArena" | "arenaPromoted" | "rankedUnlocked"
+  > | null>(null);
   const [rematchRequested, setRematchRequested] = useState(false);
   const [abilityBanner, setAbilityBanner] = useState<string | null>(null);
   const [mySkillInfo, setMySkillInfo] = useState<AbilitySkillId | null>(null);
@@ -3240,11 +3246,17 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
     const onGameOver = ({
       winner: nextWinner,
-    }: {
-      winner: PlayerColor | "draw";
-    }) => {
+      ratingChange,
+      newRating,
+      newArena,
+      arenaPromoted,
+      rankedUnlocked,
+    }: AbilityGameOverPayload) => {
       setWinner(nextWinner);
       setState((prev) => (prev ? { ...prev, phase: "gameover" } : prev));
+      if (ratingChange !== null) {
+        setRatingResult({ ratingChange, newRating, newArena, arenaPromoted, rankedUnlocked });
+      }
     };
 
     const onOpponentDisconnected = () => {
@@ -3779,6 +3791,28 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                     {lang === "en"
                       ? `+${rewardTokens} Tokens`
                       : `+${rewardTokens} 토큰 획득`}
+                  </div>
+                )}
+                {ratingResult && ratingResult.ratingChange !== null && (
+                  <div
+                    className={`gameover-rating ${ratingResult.ratingChange >= 0 ? "rating-up" : "rating-down"}`}
+                  >
+                    {ratingResult.ratingChange >= 0
+                      ? `+${ratingResult.ratingChange}`
+                      : `${ratingResult.ratingChange}`}{" "}
+                    Rating
+                    {ratingResult.newRating !== null && (
+                      <span className="gameover-rating-total">
+                        {" "}({ratingResult.newRating})
+                      </span>
+                    )}
+                  </div>
+                )}
+                {ratingResult?.arenaPromoted && ratingResult.newArena !== null && (
+                  <div className="gameover-arena-promotion">
+                    {lang === "en"
+                      ? `Arena promoted: ${getArenaLabel(ratingResult.newArena, ratingResult.rankedUnlocked)}`
+                      : `아레나 승급: ${getArenaLabel(ratingResult.newArena, ratingResult.rankedUnlocked)}`}
                   </div>
                 )}
                 {rematchRequested && (
