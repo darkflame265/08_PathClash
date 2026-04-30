@@ -39,18 +39,33 @@ export function getArenaLabel(arena: number, rankedUnlocked: boolean): string {
 
 /** 스킨별 필요 최소 highest_arena_reached 번호 */
 export const SKIN_ARENA_REQUIREMENTS: Partial<Record<PieceSkin, number>> = {
+  // Arena 1: 시작의 방
+  cosmic:        1,
   plasma:        1,
-  inferno:       1,
+
+  // Arena 2: 네온사인-사이버펑크
+  neon_pulse:    2,
   quantum:       2,
-  cosmic:        2,
-  neon_pulse:    3,
-  arc_reactor:   3,
+
+  // Arena 3: 화산지대
+  inferno:       3,
+
+  // Arena 4: 번개지대
   electric_core: 4,
-  gold_core:     4,
-  atomic:        5,
-  chronos:       5,
-  wizard:        6,
+
+  // Arena 5: 마법사의 방
+  wizard:        5,
+
+  // Arena 6: 피라미드
   sun:           6,
+  gold_core:     6,
+
+  // Arena 8: 과학의 방
+  atomic:        8,
+  arc_reactor:   8,
+
+  // Arena 10: 천공의 신전
+  chronos:       10,
 };
 
 export function getSkinRequiredArena(skinId: PieceSkin): number {

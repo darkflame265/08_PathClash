@@ -89,10 +89,45 @@ const POLICY_PATH_KR = "/privacy.html";
 const POLICY_PATH_EN = "/privacy-en.html";
 const MIN_GAME_LOADING_MS = 3000;
 
-function GameLoadingScreen({ label }: { label: string }) {
+const LOADING_TIPS = {
+  kr: [
+    "상대의 다음 경로를 예측하면 한 수 앞서갈 수 있습니다.",
+    "위험한 길을 피하는 것보다, 상대가 싫어하는 길을 고르는 것도 방법입니다.",
+    "능력은 아끼는 것보다 결정적인 순간에 쓰는 것이 더 중요합니다.",
+    "시간이 부족할수록 가장 단순한 경로가 강한 선택이 될 수 있습니다.",
+    "상대가 자주 고르는 방향을 기억해두면 다음 판이 쉬워집니다.",
+    "훈련장에서 스킬 조합을 미리 시험해볼 수 있습니다.",
+    "승리가 어렵다면 안전한 경로를 먼저 확보해보세요.",
+    "타임 리와인드는 실수를 되돌리는 것뿐 아니라 심리전에도 유용합니다.",
+  ],
+  en: [
+    "Predicting your opponent's next path can put you one step ahead.",
+    "Sometimes the best route is the one your opponent least wants you to take.",
+    "Abilities matter most when saved for the decisive moment.",
+    "When time is short, the simplest route can be the strongest choice.",
+    "Remembering your opponent's favorite direction makes the next round easier.",
+    "You can test skill combinations in Training.",
+    "If winning feels hard, secure a safe route first.",
+    "Time Rewind is useful for mind games, not just fixing mistakes.",
+  ],
+} as const;
+
+function getRandomLoadingTipIndex() {
+  return Math.floor(Math.random() * LOADING_TIPS.kr.length);
+}
+
+function GameLoadingScreen({
+  tip,
+  onNextTip,
+}: {
+  tip: string;
+  onNextTip: () => void;
+}) {
   return (
     <div className="game-loading-screen" role="status" aria-live="polite">
-      <div className="game-loading-label">{label}</div>
+      <button className="game-loading-tip" onClick={onNextTip} type="button">
+        {tip}
+      </button>
     </div>
   );
 }
@@ -115,6 +150,7 @@ function writeStoredLegalConsent(record: StoredLegalConsent) {
 function App() {
   const [view, setView] = useState<AppView>("lobby");
   const [gameLoadingUntil, setGameLoadingUntil] = useState(0);
+  const [loadingTipIndex, setLoadingTipIndex] = useState(getRandomLoadingTipIndex);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showSessionReplaced, setShowSessionReplaced] = useState(false);
   const [isSessionResetting, setIsSessionResetting] = useState(false);
@@ -151,13 +187,19 @@ function App() {
   } = useGameStore();
   const { lang } = useLang();
 
-  const gameLoadingLabel = lang === "en" ? "Loading..." : "로딩 중...";
+  const loadingTips = lang === "en" ? LOADING_TIPS.en : LOADING_TIPS.kr;
+  const loadingTip = loadingTips[loadingTipIndex % loadingTips.length];
+
+  const showNextLoadingTip = useCallback(() => {
+    setLoadingTipIndex((index) => (index + 1) % LOADING_TIPS.kr.length);
+  }, []);
 
   const startGameView = useCallback((nextView: Exclude<AppView, "lobby">) => {
     if (gameLoadingTimeoutRef.current !== null) {
       window.clearTimeout(gameLoadingTimeoutRef.current);
     }
 
+    setLoadingTipIndex(getRandomLoadingTipIndex());
     setGameLoadingUntil(Date.now() + MIN_GAME_LOADING_MS);
     setView(nextView);
     gameLoadingTimeoutRef.current = window.setTimeout(() => {
@@ -875,7 +917,7 @@ function App() {
     return (
       <div className="app-outer app-outer--lobby">
         <div className="app-inner">
-          <GameLoadingScreen label={gameLoadingLabel} />
+          <GameLoadingScreen tip={loadingTip} onNextTip={showNextLoadingTip} />
         </div>
       </div>
     );
@@ -917,7 +959,7 @@ function App() {
   return (
     <div className={`app-outer ${view === "lobby" ? "app-outer--lobby" : "app-outer--game"}`}>
       <div className="app-inner">
-        <Suspense fallback={<GameLoadingScreen label={gameLoadingLabel} />}>
+        <Suspense fallback={<GameLoadingScreen tip={loadingTip} onNextTip={showNextLoadingTip} />}>
         {view === "lobby" && (
           <LobbyScreen
             onGameStart={() => startGameView("game")}
@@ -932,7 +974,9 @@ function App() {
         {view === "twovtwo" && <TwoVsTwoScreen onLeaveToLobby={handleReturnToLobby} />}
         {view === "ability" && <AbilityScreen onLeaveToLobby={handleReturnToLobby} />}
       </Suspense>
-      {isGameLoadingVisible && <GameLoadingScreen label={gameLoadingLabel} />}
+      {isGameLoadingVisible && (
+        <GameLoadingScreen tip={loadingTip} onNextTip={showNextLoadingTip} />
+      )}
       {showExitConfirm && view === "lobby" && (
         <div
           className="app-confirm-backdrop"
