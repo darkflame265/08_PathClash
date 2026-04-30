@@ -2374,7 +2374,7 @@
   align-items: center;
   flex-shrink: 0;
   gap: 0.9rem;
-  margin-top: 0.1rem;
+  margin-top: clamp(0.85rem, 2.4dvh, 1.55rem);
   margin-bottom: 0;
 }
 
