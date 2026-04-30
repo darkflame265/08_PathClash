@@ -87,6 +87,15 @@ const TERMS_PATH_KR = "/terms.html";
 const TERMS_PATH_EN = "/terms-en.html";
 const POLICY_PATH_KR = "/privacy.html";
 const POLICY_PATH_EN = "/privacy-en.html";
+const MIN_GAME_LOADING_MS = 2000;
+
+function GameLoadingScreen({ label }: { label: string }) {
+  return (
+    <div className="game-loading-screen" role="status" aria-live="polite">
+      <div className="game-loading-label">{label}</div>
+    </div>
+  );
+}
 
 function readStoredLegalConsent(): StoredLegalConsent | null {
   const raw = window.localStorage.getItem(LEGAL_CONSENT_STORAGE_KEY);
@@ -105,6 +114,7 @@ function writeStoredLegalConsent(record: StoredLegalConsent) {
 
 function App() {
   const [view, setView] = useState<AppView>("lobby");
+  const [gameLoadingUntil, setGameLoadingUntil] = useState(0);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showSessionReplaced, setShowSessionReplaced] = useState(false);
   const [isSessionResetting, setIsSessionResetting] = useState(false);
@@ -119,6 +129,7 @@ function App() {
   const [openLegalDocument, setOpenLegalDocument] =
     useState<LegalDocumentType | null>(null);
   const [tutorialPromptTrigger, setTutorialPromptTrigger] = useState(0);
+  const gameLoadingTimeoutRef = useRef<number | null>(null);
   const [matchResultAudioKind, setMatchResultAudioKind] =
     useState<MatchResultAudioKind | null>(null);
   const {
@@ -139,6 +150,29 @@ function App() {
     abilitySfxGains,
   } = useGameStore();
   const { lang } = useLang();
+
+  const gameLoadingLabel = lang === "en" ? "Loading..." : "로딩 중...";
+
+  const startGameView = useCallback((nextView: Exclude<AppView, "lobby">) => {
+    if (gameLoadingTimeoutRef.current !== null) {
+      window.clearTimeout(gameLoadingTimeoutRef.current);
+    }
+
+    setGameLoadingUntil(Date.now() + MIN_GAME_LOADING_MS);
+    setView(nextView);
+    gameLoadingTimeoutRef.current = window.setTimeout(() => {
+      setGameLoadingUntil(0);
+      gameLoadingTimeoutRef.current = null;
+    }, MIN_GAME_LOADING_MS);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (gameLoadingTimeoutRef.current !== null) {
+        window.clearTimeout(gameLoadingTimeoutRef.current);
+      }
+    };
+  }, []);
   const achievementRefreshTimeoutRef = useRef<number | null>(null);
   const accountSummaryRefreshTimeoutRef = useRef<number | null>(null);
   const lastAccountSummaryRefreshAuthKeyRef = useRef<string | null>(null);
@@ -609,15 +643,18 @@ function App() {
   }, [authAccessToken, authReady, authUserId, isGuestUser, setAuthState]);
 
   const handleReturnToLobby = useCallback(() => {
+    if (gameLoadingTimeoutRef.current !== null) {
+      window.clearTimeout(gameLoadingTimeoutRef.current);
+      gameLoadingTimeoutRef.current = null;
+    }
     stopLocalAbilityTraining();
     disconnectSocket();
     useGameStore.getState().resetGame();
     setShowExitConfirm(false);
     setMatchResultAudioKind(null);
+    setGameLoadingUntil(0);
     setView("lobby");
-  }, [
-    view,
-  ]);
+  }, []);
 
   const handleSessionReplacedConfirm = useCallback(async () => {
     setIsSessionResetting(true);
@@ -837,7 +874,9 @@ function App() {
   if (!authReady || !legalConsentResolved) {
     return (
       <div className="app-outer app-outer--lobby">
-        <div className="app-inner app-loading">Connecting guest session...</div>
+        <div className="app-inner">
+          <GameLoadingScreen label={gameLoadingLabel} />
+        </div>
       </div>
     );
   }
@@ -873,17 +912,18 @@ function App() {
   const legalDocumentCloseLabel = lang === "en" ? "Close" : "닫기";
   const legalDocumentSrc =
     openLegalDocument === "terms" ? legalConsentTermsPath : legalConsentPolicyPath;
+  const isGameLoadingVisible = gameLoadingUntil > 0;
 
   return (
     <div className={`app-outer ${view === "lobby" ? "app-outer--lobby" : "app-outer--game"}`}>
       <div className="app-inner">
-        <Suspense fallback={<div className="loading">Loading...</div>}>
+        <Suspense fallback={<GameLoadingScreen label={gameLoadingLabel} />}>
         {view === "lobby" && (
           <LobbyScreen
-            onGameStart={() => setView("game")}
-            onCoopStart={() => setView("coop")}
-            onTwoVsTwoStart={() => setView("twovtwo")}
-            onAbilityStart={() => setView("ability")}
+            onGameStart={() => startGameView("game")}
+            onCoopStart={() => startGameView("coop")}
+            onTwoVsTwoStart={() => startGameView("twovtwo")}
+            onAbilityStart={() => startGameView("ability")}
             tutorialPromptTrigger={tutorialPromptTrigger}
           />
         )}
@@ -892,6 +932,7 @@ function App() {
         {view === "twovtwo" && <TwoVsTwoScreen onLeaveToLobby={handleReturnToLobby} />}
         {view === "ability" && <AbilityScreen onLeaveToLobby={handleReturnToLobby} />}
       </Suspense>
+      {isGameLoadingVisible && <GameLoadingScreen label={gameLoadingLabel} />}
       {showExitConfirm && view === "lobby" && (
         <div
           className="app-confirm-backdrop"
