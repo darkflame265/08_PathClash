@@ -81,19 +81,20 @@ interface ArenaGalleryModalProps {
 ## 레이아웃
 
 ```
-┌─────────────────────────────┐
-│  [ 아레나 이미지 (동일 비율) ]  │   ← /arena/arena{n}.png, 없으면 arena6.png fallback
-├─────────────────────────────┤
-│  Arena 1  시작의 방           │   ← 좌: label(소문자), 우: themeName
-│  ████████░░░░   0 / 199     │   ← 진행 게이지 + min/max 레이블
-├─────────────────────────────┤
-│  해금 스킨:                  │
-│  [프리뷰1]  [프리뷰2]        │   ← 스킨 없으면 공간 유지, 프리뷰만 없음
-├─────────────────────────────┤
-│       [ 닫기 ]               │   ← lobby-btn primary
-└─────────────────────────────┘
+┌──────────────────────────────────────┐
+│                                      │
+│     [ 아레나 이미지 (object-fit cover) ]  │  ← lobby-arena-showcase 구조 그대로
+│                                      │
+│  Arena 1   시작의 방   ← 이미지 오버레이  │  ← arena-name-in-bar (absolute bottom)
+│  ████████░░░  0 / 199  ← 이미지 오버레이 │  ← arena-progress-bar-wrap (absolute bottom)
+└──────────────────────────────────────┘
+  해금 스킨:
+  [프리뷰1]  [프리뷰2]                      ← 스킨 없으면 공간 유지, 프리뷰만 없음
+        [ 닫기 ]                            ← lobby-btn primary
 ```
 
+- 이미지+오버레이 블록: 로비의 `.lobby-arena-showcase` + `.arena-progress-bar-wrap` + `.arena-name-in-bar` CSS 클래스를 그대로 재사용
+- `arena-name-in-bar` 내부 구조 변경: 좌측 소문자 `Arena 1` + 우측 테마명 `시작의 방` (flex row)
 - 모달 컨테이너: `upgrade-modal-backdrop` + `upgrade-modal skin-modal` 클래스 재사용
 - 배경 오버레이 클릭 시 닫힘
 
