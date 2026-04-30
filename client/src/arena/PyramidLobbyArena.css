@@ -1,0 +1,109 @@
+.pyramid-arena-flame-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.pyramid-arena-flame {
+  --flame-x: 50%;
+  --flame-y: 50%;
+  --flame-scale: 1;
+  position: absolute;
+  left: var(--flame-x);
+  top: var(--flame-y);
+  width: calc(3.2% * var(--flame-scale));
+  aspect-ratio: 0.72;
+  border-radius: 54% 46% 48% 52% / 62% 62% 38% 38%;
+  background:
+    radial-gradient(circle at 50% 74%, rgba(255, 255, 210, 0.98) 0 16%, transparent 34%),
+    radial-gradient(circle at 48% 58%, rgba(255, 215, 95, 0.96) 0 26%, transparent 50%),
+    radial-gradient(circle at 52% 40%, rgba(255, 111, 24, 0.9) 0 38%, transparent 68%);
+  filter:
+    drop-shadow(0 0 calc(0.45rem * var(--flame-scale)) rgba(255, 178, 48, 0.92))
+    drop-shadow(0 0 calc(1rem * var(--flame-scale)) rgba(255, 95, 24, 0.42));
+  mix-blend-mode: screen;
+  opacity: 0.9;
+  transform: translate(-50%, -80%) scale(var(--flame-scale)) rotate(-2deg);
+  transform-origin: 50% 88%;
+  animation: pyramid-arena-flame-flicker 0.72s ease-in-out infinite alternate;
+}
+
+.pyramid-arena-flame::before,
+.pyramid-arena-flame::after {
+  content: "";
+  position: absolute;
+  inset: 20% 18% 8%;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 58%, rgba(255, 245, 150, 0.92), rgba(255, 130, 24, 0.58) 48%, transparent 72%);
+  transform-origin: 50% 92%;
+  animation: pyramid-arena-flame-inner 0.58s ease-in-out infinite alternate;
+}
+
+.pyramid-arena-flame::after {
+  inset: 38% 34% 10%;
+  background: radial-gradient(circle at 50% 62%, rgba(255, 255, 220, 0.95), rgba(255, 196, 72, 0.42) 54%, transparent 78%);
+  animation-duration: 0.46s;
+}
+
+.pyramid-arena-flame-1 {
+  --flame-x: 28.5%;
+  --flame-y: 62.5%;
+  --flame-scale: 1.12;
+  animation-delay: -0.2s;
+}
+
+.pyramid-arena-flame-2 {
+  --flame-x: 43.5%;
+  --flame-y: 55.4%;
+  --flame-scale: 0.72;
+  animation-delay: -0.43s;
+}
+
+.pyramid-arena-flame-3 {
+  --flame-x: 56.8%;
+  --flame-y: 56.6%;
+  --flame-scale: 0.86;
+  animation-delay: -0.1s;
+}
+
+.pyramid-arena-flame-4 {
+  --flame-x: 60.6%;
+  --flame-y: 66.6%;
+  --flame-scale: 1.18;
+  animation-delay: -0.34s;
+}
+
+@keyframes pyramid-arena-flame-flicker {
+  0% {
+    opacity: 0.76;
+    transform: translate(-50%, -80%) scale(calc(var(--flame-scale) * 0.92), calc(var(--flame-scale) * 1.02)) rotate(-5deg);
+  }
+
+  45% {
+    opacity: 0.98;
+  }
+
+  100% {
+    opacity: 0.88;
+    transform: translate(-50%, -80%) scale(calc(var(--flame-scale) * 1.08), calc(var(--flame-scale) * 0.94)) rotate(4deg);
+  }
+}
+
+@keyframes pyramid-arena-flame-inner {
+  0% {
+    transform: translateX(-8%) scale(0.88, 1.08) rotate(-7deg);
+  }
+
+  100% {
+    transform: translateX(7%) scale(1.08, 0.94) rotate(6deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pyramid-arena-flame,
+  .pyramid-arena-flame::before,
+  .pyramid-arena-flame::after {
+    animation: none;
+  }
+}
