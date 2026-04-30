@@ -4109,8 +4109,8 @@ export function LobbyScreen({
               src={lobbyArenaImageSrc}
               alt={lobbyArenaImageAlt}
               onError={(event) => {
-                if (event.currentTarget.src.endsWith("/arena/arena1.png")) return;
-                event.currentTarget.src = "/arena/arena1.png";
+                if (event.currentTarget.src.endsWith("/arena/arena6.png")) return;
+                event.currentTarget.src = "/arena/arena6.png";
               }}
             />
             <LobbyArenaOverlay arena={highestArena} />
