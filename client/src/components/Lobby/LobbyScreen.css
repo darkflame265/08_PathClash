@@ -1,16 +1,19 @@
 ﻿/* ?? Lobby layout ??????????????????????????????????????? */
 .lobby-screen {
+  --lobby-bottom-nav-height: calc(7.45rem + env(safe-area-inset-bottom));
+  --lobby-mode-panel-gap: clamp(0.85rem, 2.4dvh, 1.55rem);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 1rem calc(17rem + env(safe-area-inset-bottom));
   min-height: 100dvh;
   height: 100dvh;
   width: 100%;
   max-width: 640px;
   margin: 0 auto;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* ?? Logo ??????????????????????????????????????????????? */
@@ -579,7 +582,11 @@
 }
 
 .mode-content-card {
-  width: 100%;
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--lobby-bottom-nav-height) + var(--lobby-mode-panel-gap));
+  z-index: 70;
+  width: min(calc(100% - 2rem), 640px);
   flex-shrink: 0;
   min-height: 0;
   padding: 0;
@@ -588,6 +595,7 @@
   background: transparent;
   box-shadow: none;
   gap: 0.65rem;
+  transform: translateX(-50%);
 }
 
 .lobby-card.mode-content-card:hover,
@@ -2522,14 +2530,25 @@
 }
 
 .lobby-bottom-panel {
-  width: 100%;
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 80;
+  width: min(100%, 640px);
   display: flex;
   flex-direction: column;
   align-items: center;
   flex-shrink: 0;
   gap: 0.9rem;
-  margin-top: clamp(0.85rem, 2.4dvh, 1.55rem);
-  margin-bottom: 0;
+  margin: 0;
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+  background: linear-gradient(
+    180deg,
+    rgba(10, 17, 19, 0),
+    rgba(10, 17, 19, 0.88) 24%,
+    rgba(10, 17, 19, 0.98) 100%
+  );
+  transform: translateX(-50%);
 }
 
 .lobby-bottom-actions {
