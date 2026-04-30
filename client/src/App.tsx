@@ -87,7 +87,7 @@ const TERMS_PATH_KR = "/terms.html";
 const TERMS_PATH_EN = "/terms-en.html";
 const POLICY_PATH_KR = "/privacy.html";
 const POLICY_PATH_EN = "/privacy-en.html";
-const MIN_GAME_LOADING_MS = 2000;
+const MIN_GAME_LOADING_MS = 3000;
 
 function GameLoadingScreen({ label }: { label: string }) {
   return (

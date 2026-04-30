@@ -40,6 +40,7 @@ body {
 
 /* ── Inner: the actual game column ──────────────────────────────── */
 .app-inner {
+  position: relative;
   width: 100%;
   min-height: 100dvh;
   background: var(--bg, #12181b);
@@ -95,9 +96,11 @@ body {
 }
 
 .game-loading-screen {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 1000;
+  width: 100%;
+  min-height: 100%;
   display: flex;
   align-items: flex-end;
   justify-content: center;
