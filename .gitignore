@@ -20,3 +20,4 @@ client/android/keystore.properties
 
 # Local screenshots
 docs/screenshots_v2/
+.worktrees/
