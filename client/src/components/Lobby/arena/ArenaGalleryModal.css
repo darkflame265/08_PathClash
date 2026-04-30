@@ -1,0 +1,90 @@
+/* ── 모달 컨테이너 ─────────────────────────────── */
+.arena-gallery-modal {
+  width: min(100%, 36rem);
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+/* ── 아레나 showcase (로비와 동일 구조, 높이만 조정) ── */
+.arena-gallery-showcase {
+  width: 100%;
+  height: clamp(10rem, 28dvh, 19rem);
+  border-radius: 0;
+  border: none;
+  flex-shrink: 0;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.arena-gallery-showcase:active {
+  cursor: grabbing;
+}
+
+/* 드래그 중에는 transition 없음; snap-back 시에만 transition 적용 */
+.arena-gallery-showcase.is-snapping {
+  transition: transform 0.25s ease;
+}
+
+/* bounce 애니메이션 */
+.arena-gallery-showcase.is-bouncing {
+  animation: arenaGalleryBounce 0.45s ease;
+}
+
+@keyframes arenaGalleryBounce {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(16px); }
+  55%       { transform: translateX(-9px); }
+  78%       { transform: translateX(4px); }
+}
+
+/* ── 아레나 이름 바 (오버레이) ─────────────────── */
+.arena-gallery-name-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  margin-bottom: 0.45rem;
+}
+
+.arena-gallery-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: rgba(251, 191, 36, 0.65);
+  letter-spacing: 0.07em;
+  flex-shrink: 0;
+}
+
+/* ── 해금 스킨 영역 ─────────────────────────────── */
+.arena-gallery-rewards {
+  padding: 0.9rem 1.2rem 0;
+  min-height: 5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.arena-gallery-rewards-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted, #9aa4ae);
+  letter-spacing: 0.04em;
+}
+
+.arena-gallery-previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.arena-gallery-preview-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* ── 닫기 버튼 영역 ─────────────────────────────── */
+.arena-gallery-actions {
+  padding: 0.9rem 1.2rem 1.2rem;
+}
