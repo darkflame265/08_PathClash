@@ -4076,59 +4076,62 @@ export function LobbyScreen({
       <div className="lobby-user-header">
         <div className="lobby-user-info">
           <span className="lobby-user-name">{myNickname || "-"}</span>
-          <div className="lobby-arena-badge">
-            <span className="lobby-arena-label">
-              {getArenaLabel(highestArena, rankedUnlocked)}
-            </span>
-            <span className="lobby-arena-rating">{currentRating}</span>
-          </div>
-        </div>
-        <div className="daily-reward-wrap">
-          <button
-            className="daily-reward-badge daily-reward-badge-btn"
-            data-keyboard-nav-layer="daily"
-            aria-label="Daily tokens earned"
-            type="button"
-            onClick={() => setIsDailyRewardInfoOpen((prev) => !prev)}
-          >
-            <span className="daily-reward-icon" aria-hidden="true">
-              {"💎"}
-            </span>
-            <span>{accountDailyRewardTokens}</span>
-            <span className="daily-reward-separator">/</span>
-            <span>120</span>
-          </button>
-
-          {isDailyRewardInfoOpen && (
-            <div
-              className="daily-reward-popover"
-              role="dialog"
-              aria-label={dailyRewardGuideTitle}
+          <div className="daily-reward-wrap">
+            <button
+              className="daily-reward-badge daily-reward-badge-btn"
+              data-keyboard-nav-layer="daily"
+              aria-label="Daily tokens earned"
+              type="button"
+              onClick={() => setIsDailyRewardInfoOpen((prev) => !prev)}
             >
-              <strong>{dailyRewardGuideTitle}</strong>
-              <p>{dailyRewardGuideMax}</p>
-              <p>{dailyRewardGuideDuel}</p>
-              <p>{dailyRewardGuideCoop}</p>
-              <p>{dailyRewardGuideAi}</p>
-              <p>{dailyRewardGuideReset}</p>
-            </div>
-          )}
+              <span className="daily-reward-icon" aria-hidden="true">
+                {"💎"}
+              </span>
+              <span>{accountDailyRewardTokens}</span>
+              <span className="daily-reward-separator">/</span>
+              <span>120</span>
+            </button>
+
+            {isDailyRewardInfoOpen && (
+              <div
+                className="daily-reward-popover"
+                role="dialog"
+                aria-label={dailyRewardGuideTitle}
+              >
+                <strong>{dailyRewardGuideTitle}</strong>
+                <p>{dailyRewardGuideMax}</p>
+                <p>{dailyRewardGuideDuel}</p>
+                <p>{dailyRewardGuideCoop}</p>
+                <p>{dailyRewardGuideAi}</p>
+                <p>{dailyRewardGuideReset}</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <figure
-        className="lobby-arena-showcase"
-        aria-label={lobbyArenaImageAlt}
-      >
-        <img
-          src={lobbyArenaImageSrc}
-          alt={lobbyArenaImageAlt}
-          onError={(event) => {
-            if (event.currentTarget.src.endsWith("/arena/arena1.png")) return;
-            event.currentTarget.src = "/arena/arena1.png";
-          }}
-        />
-      </figure>
+      <div className="lobby-arena-center">
+        <figure
+          className="lobby-arena-showcase"
+          aria-label={lobbyArenaImageAlt}
+        >
+          <img
+            src={lobbyArenaImageSrc}
+            alt={lobbyArenaImageAlt}
+            onError={(event) => {
+              if (event.currentTarget.src.endsWith("/arena/arena1.png")) return;
+              event.currentTarget.src = "/arena/arena1.png";
+            }}
+          />
+        </figure>
+
+        <div className="lobby-arena-badge">
+          <span className="lobby-arena-label">
+            {getArenaLabel(highestArena, rankedUnlocked)}
+          </span>
+          <span className="lobby-arena-rating">{currentRating}</span>
+        </div>
+      </div>
 
       <div
         className={`lobby-card mode-content-card${accountSummaryLoading ? " is-db-loading" : ""}`}
