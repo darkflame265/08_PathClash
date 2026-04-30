@@ -3776,6 +3776,7 @@ export function LobbyScreen({
   const selectedLobbyModeOption =
     lobbyModeOptions.find((option) => option.key === selectedLobbyMode) ??
     lobbyModeOptions[0];
+  const showLobbyArenaContent = selectedLobbyMode === "ability";
 
   const renderModePickerAction = () => (
     <button
@@ -4089,44 +4090,48 @@ export function LobbyScreen({
       <div className="lobby-user-header">
         <div className="lobby-user-info">
           <span className="lobby-user-name">{myNickname || "-"}</span>
-          <div className="lobby-user-score">
-            <span className="lobby-user-score-icon" aria-hidden="true">⭐</span>
-            <span className="lobby-user-score-value">{currentRating}</span>
-          </div>
+          {showLobbyArenaContent && (
+            <div className="lobby-user-score">
+              <span className="lobby-user-score-icon" aria-hidden="true">⭐</span>
+              <span className="lobby-user-score-value">{currentRating}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="lobby-arena-center">
-        <figure
-          className="lobby-arena-showcase"
-          aria-label={lobbyArenaImageAlt}
-        >
-          <img
-            src={lobbyArenaImageSrc}
-            alt={lobbyArenaImageAlt}
-            onError={(event) => {
-              if (event.currentTarget.src.endsWith("/arena/arena1.png")) return;
-              event.currentTarget.src = "/arena/arena1.png";
-            }}
-          />
-          <LobbyArenaOverlay arena={highestArena} />
-          <div className="arena-progress-bar-wrap" aria-hidden="true">
-            <div className="arena-name-in-bar">
-              {getArenaLabel(highestArena, rankedUnlocked)}
+      {showLobbyArenaContent && (
+        <div className="lobby-arena-center">
+          <figure
+            className="lobby-arena-showcase"
+            aria-label={lobbyArenaImageAlt}
+          >
+            <img
+              src={lobbyArenaImageSrc}
+              alt={lobbyArenaImageAlt}
+              onError={(event) => {
+                if (event.currentTarget.src.endsWith("/arena/arena1.png")) return;
+                event.currentTarget.src = "/arena/arena1.png";
+              }}
+            />
+            <LobbyArenaOverlay arena={highestArena} />
+            <div className="arena-progress-bar-wrap" aria-hidden="true">
+              <div className="arena-name-in-bar">
+                {getArenaLabel(highestArena, rankedUnlocked)}
+              </div>
+              <div className="arena-progress-labels">
+                <span>{arenaProgressMin}</span>
+                <span>{arenaProgressMax}</span>
+              </div>
+              <div className="arena-progress-track">
+                <div
+                  className="arena-progress-fill"
+                  style={{ width: `${arenaProgressPct}%` }}
+                />
+              </div>
             </div>
-            <div className="arena-progress-labels">
-              <span>{arenaProgressMin}</span>
-              <span>{arenaProgressMax}</span>
-            </div>
-            <div className="arena-progress-track">
-              <div
-                className="arena-progress-fill"
-                style={{ width: `${arenaProgressPct}%` }}
-              />
-            </div>
-          </div>
-        </figure>
-      </div>
+          </figure>
+        </div>
+      )}
 
       <div
         className={`lobby-card mode-content-card${accountSummaryLoading ? " is-db-loading" : ""}`}
