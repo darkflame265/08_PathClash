@@ -28,7 +28,7 @@ interface ArenaGalleryModalProps {
 const DRAG_THRESHOLD = 50;
 const BOUNCE_DURATION_MS = 480;
 const SNAP_DURATION_MS = 280;
-const ARENA_MAX = 10;
+const ARENA_MAX = Math.max(...ARENA_RANGES.map((r) => r.arena));
 
 function renderSkinPreview(skinId: PieceSkin) {
   switch (skinId) {
