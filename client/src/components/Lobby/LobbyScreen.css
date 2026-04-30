@@ -621,6 +621,11 @@
   gap: 0.65rem;
 }
 
+.lobby-card.mode-content-card:hover,
+.lobby-card.mode-content-card:active {
+  box-shadow: none;
+}
+
 .mode-content-card.is-db-loading h2::after {
   content: "";
   display: inline-block;
