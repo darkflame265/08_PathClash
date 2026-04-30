@@ -1,4 +1,4 @@
-import { PyramidLobbyArena } from "./PyramidLobbyArena";
+import { PyramidLobbyArena } from "./arena_1_pyramid/PyramidLobbyArena";
 
 interface LobbyArenaOverlayProps {
   arena: number;

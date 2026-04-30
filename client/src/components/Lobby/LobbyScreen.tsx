@@ -60,7 +60,7 @@ import {
 } from "../../data/arenaCatalog";
 
 import { startDonation } from "../../payments/donate";
-import { LobbyArenaOverlay } from "../../arena/LobbyArenaOverlay";
+import { LobbyArenaOverlay } from "./arena/LobbyArenaOverlay";
 
 import {
   startTokenPackPurchase,
