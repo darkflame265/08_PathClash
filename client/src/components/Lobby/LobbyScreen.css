@@ -263,7 +263,7 @@
 
 .lobby-arena-rating {
   font-weight: 600;
-  color: var(--text-muted, #9AA4AE);
+  color: var(--text-muted, #9aa4ae);
   font-size: 0.72rem;
 }
 
@@ -378,7 +378,7 @@
 
 .arena-progress-track {
   position: relative;
-  height: 0.42rem;
+  height: 1.1rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.13);
   overflow: hidden;
