@@ -4114,6 +4114,7 @@ export function LobbyScreen({
         <figure
           className="lobby-arena-showcase"
           aria-label={lobbyArenaImageAlt}
+          data-arena={highestArena}
         >
           <img
             src={lobbyArenaImageSrc}
@@ -4123,6 +4124,12 @@ export function LobbyScreen({
               event.currentTarget.src = "/arena/arena1.png";
             }}
           />
+          <span className="arena-flame-layer" aria-hidden="true">
+            <span className="arena-flame arena-flame-1" />
+            <span className="arena-flame arena-flame-2" />
+            <span className="arena-flame arena-flame-3" />
+            <span className="arena-flame arena-flame-4" />
+          </span>
         </figure>
 
         <div className="lobby-arena-badge">
