@@ -1,7 +1,9 @@
 ﻿/* ?? Lobby layout ??????????????????????????????????????? */
 .lobby-screen {
+  --lobby-stage-width: min(calc(100vw - 1rem), calc(100dvh * 0.5603), 640px);
   --lobby-bottom-nav-height: calc(7.45rem + env(safe-area-inset-bottom));
   --lobby-mode-panel-gap: clamp(0.85rem, 2.4dvh, 1.55rem);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -9,8 +11,8 @@
   padding: 0.75rem 1rem calc(17rem + env(safe-area-inset-bottom));
   min-height: 100dvh;
   height: 100dvh;
-  width: 100%;
-  max-width: 640px;
+  width: var(--lobby-stage-width);
+  max-width: 100%;
   margin: 0 auto;
   overflow-x: hidden;
   overflow-y: auto;
@@ -582,11 +584,13 @@
 }
 
 .mode-content-card {
+  box-sizing: border-box;
   position: fixed;
   left: 50%;
   bottom: calc(var(--lobby-bottom-nav-height) + var(--lobby-mode-panel-gap));
   z-index: 70;
-  width: min(calc(100% - 2rem), 640px);
+  width: var(--lobby-stage-width);
+  max-width: calc(100vw - 1rem);
   flex-shrink: 0;
   min-height: 0;
   padding: 0;
@@ -1260,6 +1264,7 @@
 
 .lobby-mode-action {
   grid-column: 1;
+  min-width: 0;
   min-height: 5.95rem;
   padding: 0.42rem 0.32rem;
   border-radius: 0.8rem;
@@ -1281,6 +1286,7 @@
   align-items: center;
   justify-content: center;
   grid-column: 2 / span 2;
+  min-width: 0;
   min-height: 5.95rem;
   border-radius: 0.7rem;
   font-size: clamp(1.22rem, 4vw, 1.75rem);
@@ -1368,6 +1374,7 @@
 .mode-action-side {
   display: flex;
   grid-column: 4;
+  min-width: 0;
   align-items: stretch;
   justify-content: center;
   min-height: 5.95rem;
@@ -1589,7 +1596,7 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  z-index: 30;
+  z-index: 300;
   animation: modal-backdrop-in 0.18s ease both;
 }
 
@@ -1628,7 +1635,7 @@
 .upgrade-flow-overlay {
   position: fixed;
   inset: 0;
-  z-index: 29;
+  z-index: 300;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2530,11 +2537,13 @@
 }
 
 .lobby-bottom-panel {
+  box-sizing: border-box;
   position: fixed;
   left: 50%;
   bottom: 0;
   z-index: 80;
-  width: min(100%, 640px);
+  width: var(--lobby-stage-width);
+  max-width: calc(100vw - 1rem);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2564,6 +2573,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-width: 0;
   gap: 0.24rem;
   min-height: 5.95rem;
   padding: 0.52rem 0.42rem 0.48rem;
