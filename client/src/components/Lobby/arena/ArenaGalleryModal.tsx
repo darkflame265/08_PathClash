@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { AtomicPreview } from "../../../skins/legendary/atomic/Preview";
 import { ChronosPreview } from "../../../skins/legendary/chronos/Preview";
@@ -28,6 +28,7 @@ interface ArenaGalleryModalProps {
 const DRAG_THRESHOLD = 50;
 const BOUNCE_DURATION_MS = 480;
 const SNAP_DURATION_MS = 280;
+const ARENA_MAX = 10;
 
 function renderSkinPreview(skinId: PieceSkin) {
   switch (skinId) {
@@ -59,8 +60,15 @@ export function ArenaGalleryModal({
 
   const dragStartX = useRef<number | null>(null);
   const isDragging = useRef(false);
+  const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const range = ARENA_RANGES.find((r) => r.arena === viewArena)!;
+  useEffect(() => {
+    return () => {
+      if (animTimerRef.current !== null) clearTimeout(animTimerRef.current);
+    };
+  }, []);
+
+  const range = ARENA_RANGES.find((r) => r.arena === viewArena) ?? ARENA_RANGES[0];
   const rewardSkins = ARENA_REWARD_SKINS[viewArena] ?? [];
 
   const gaugePct =
@@ -86,12 +94,12 @@ export function ArenaGalleryModal({
   }
 
   function moveDrag(clientX: number) {
-    if (!isDragging.current || dragStartX.current === null) return;
+    if (!isDragging.current || dragStartX.current === null || isBouncing) return;
     setDragOffset(clientX - dragStartX.current);
   }
 
   function endDrag(clientX: number) {
-    if (!isDragging.current || dragStartX.current === null) return;
+    if (!isDragging.current || dragStartX.current === null || isBouncing) return;
     isDragging.current = false;
     const delta = clientX - dragStartX.current;
     dragStartX.current = null;
@@ -99,20 +107,28 @@ export function ArenaGalleryModal({
     if (Math.abs(delta) < DRAG_THRESHOLD) {
       setIsSnapping(true);
       setDragOffset(0);
-      setTimeout(() => setIsSnapping(false), SNAP_DURATION_MS);
+      animTimerRef.current = setTimeout(() => setIsSnapping(false), SNAP_DURATION_MS);
       return;
     }
 
-    const next = viewArena + (delta > 0 ? -1 : 1);
     setDragOffset(0);
 
-    if (next < 1 || next > 10) {
+    const direction = delta > 0 ? -1 : 1;
+    const isAtEdge =
+      (direction === -1 && viewArena <= 1) ||
+      (direction === 1 && viewArena >= ARENA_MAX);
+
+    if (isAtEdge) {
       setIsBouncing(true);
-      setTimeout(() => setIsBouncing(false), BOUNCE_DURATION_MS);
+      animTimerRef.current = setTimeout(() => setIsBouncing(false), BOUNCE_DURATION_MS);
       return;
     }
 
-    setViewArena(next);
+    setViewArena((prev) => {
+      const next = prev + direction;
+      if (next < 1 || next > ARENA_MAX) return prev;
+      return next;
+    });
   }
 
   function cancelDrag() {
@@ -121,7 +137,7 @@ export function ArenaGalleryModal({
     dragStartX.current = null;
     setIsSnapping(true);
     setDragOffset(0);
-    setTimeout(() => setIsSnapping(false), SNAP_DURATION_MS);
+    animTimerRef.current = setTimeout(() => setIsSnapping(false), SNAP_DURATION_MS);
   }
 
   const showcaseTransform = isBouncing
