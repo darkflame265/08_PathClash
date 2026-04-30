@@ -1181,11 +1181,6 @@ export function LobbyScreen({
 
   const coopTitle = lang === "en" ? "Co-op Mode" : "협동전";
 
-  const coopDesc =
-    lang === "en"
-      ? "Destroy the portals and secure the area before enemies emerge from them."
-      : "포탈에서 적들이 나오기 전에, 포탈을 부수고 안전을 확보하세요.";
-
   const coopStartLabel = lang === "en" ? "Start Co-op Match" : "매칭 시작";
 
   const twoVsTwoTitle = "2v2";
@@ -1200,32 +1195,12 @@ export function LobbyScreen({
     lang === "en"
       ? `Friendly Match (${friendBattleMode === "classic" ? "Classic" : "Ability Battle"})`
       : `친구 대전(${friendBattleMode === "classic" ? "클래식" : "능력대전"})`;
-  const friendClassicDesc =
-    lang === "en"
-      ? "Create a private room or enter a code to play a classic duel with a friend."
-      : "방을 만들거나 코드를 입력해 친구와 클래식 대결전을 즐길 수 있습니다.";
-  const friendAbilityDesc =
-    lang === "en"
-      ? "Create a private room or enter a code to play Ability Battle with a friend using your current equipped skills."
-      : "방을 만들거나 코드를 입력해 현재 장착한 스킬로 친구와 능력대전을 즐길 수 있습니다.";
-
-  const randomDesc =
-    lang === "en"
-      ? "FInd another player online and start a match."
-      : "온라인 상태의 다른 플레이어를 찾아 바로 대결전에 입장합니다.";
-
-  const twoVsTwoDesc =
-    lang === "en"
-      ? "A 2v2 team battle mode where teammates can share paths during planning."
-      : "같은 팀끼리 경로를 공유하며 싸우는 2v2 팀 대전 모드입니다.";
 
   const twoVsTwoStartLabel = lang === "en" ? "Start Match" : "매칭 시작";
 
   const abilityBattleTitle = lang === "en" ? "Ability Battle" : "능력 대전";
   const classicRankedTitle = lang === "en" ? "Classic Ranked" : "클래식 랭크전";
   const skillRankedTitle = lang === "en" ? "Skill Ranked" : "스킬 랭크전";
-  const rankedComingSoonDesc =
-    lang === "en" ? "Coming soon." : "아직 준비중입니다.";
 
   const abilityBattleStartLabel = lang === "en" ? "Start Match" : "매칭 시작";
 
@@ -3831,6 +3806,139 @@ export function LobbyScreen({
     }
   };
 
+  const selectedLobbyModeOption =
+    lobbyModeOptions.find((option) => option.key === selectedLobbyMode) ??
+    lobbyModeOptions[0];
+
+  const renderModePickerAction = () => (
+    <button
+      type="button"
+      className="lobby-bottom-action lobby-mode-action"
+      data-keyboard-nav-layer="mode-title"
+      onClick={() => setIsModePickerOpen(true)}
+    >
+      <span className="lobby-bottom-action-icon-wrap" aria-hidden="true">
+        <span className="lobby-mode-action-icon">
+          {selectedLobbyModeOption.icon}
+        </span>
+      </span>
+      <span className="lobby-bottom-action-label">
+        {selectedLobbyModeOption.label}
+      </span>
+    </button>
+  );
+
+  const renderModeSideActions = () => {
+    if (selectedLobbyMode === "ability") {
+      return (
+        <div className="mode-action-side mode-action-side--double">
+          <button
+            className="lobby-mini-btn"
+            data-keyboard-nav-layer="mini"
+            type="button"
+            onClick={() => void handleAbilityTraining()}
+          >
+            {abilityTrainingTitle}
+          </button>
+          <button
+            className="lobby-mini-btn"
+            data-keyboard-nav-layer="mini"
+            type="button"
+            onClick={() => setIsAbilityLoadoutOpen(true)}
+          >
+            {abilityLoadoutTitle}
+          </button>
+        </div>
+      );
+    }
+
+    if (selectedLobbyMode === "ai") {
+      return (
+        <div className="mode-action-side">
+          <button
+            type="button"
+            className="lobby-mini-btn tutorial"
+            data-keyboard-nav-layer="mini"
+            onClick={() => void handleReplayAiTutorial()}
+          >
+            {t.aiTutorialBtn ?? aiTutorialButtonLabel}
+          </button>
+        </div>
+      );
+    }
+
+    if (selectedLobbyMode === "friend") {
+      return (
+        <div className="mode-action-side mode-action-side--double">
+          <button
+            type="button"
+            className="lobby-mini-btn"
+            data-keyboard-nav-layer="mini"
+            onClick={() =>
+              handleFriendBattleModeChange(
+                friendBattleMode === "classic" ? "ability" : "classic",
+              )
+            }
+          >
+            {friendModeToggleLabel}
+          </button>
+          <button
+            className="lobby-mini-btn"
+            data-keyboard-nav-layer="mini"
+            type="button"
+            onClick={() => {
+              setView("join");
+              setError("");
+            }}
+          >
+            {t.enterCodeBtn}
+          </button>
+        </div>
+      );
+    }
+
+    return <div className="mode-action-side" aria-hidden="true" />;
+  };
+
+  const renderAbilityLoadoutBar = () => {
+    if (selectedLobbyMode !== "ability") return null;
+
+    return (
+      <div className="ability-loadout-chip-row mode-loadout-row">
+        {equippedAbilitySkillDefs.map((skill) => (
+          <span key={skill.id} className="ability-loadout-chip">
+            {renderAbilitySkillIcon(skill.id)}
+            <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
+          </span>
+        ))}
+      </div>
+    );
+  };
+
+  const renderModeControlBar = (
+    primaryClassName: string,
+    primaryLabel: string,
+    onPrimaryClick?: () => void,
+    options?: { disabled?: boolean },
+  ) => (
+    <>
+      {renderAbilityLoadoutBar()}
+      <div className="mode-control-bar">
+        {renderModePickerAction()}
+        <button
+          className={`lobby-btn mode-start-btn ${primaryClassName}`}
+          data-keyboard-nav-layer="primary"
+          type="button"
+          onClick={onPrimaryClick}
+          disabled={options?.disabled}
+        >
+          {primaryLabel}
+        </button>
+        {renderModeSideActions()}
+      </div>
+    </>
+  );
+
   const renderSelectedModeContent = () => {
     if (selectedLobbyMode === "friend" && view === "create") {
       return (
@@ -3884,18 +3992,6 @@ export function LobbyScreen({
       case "ai":
         return (
           <>
-            {renderModeTitleBtn(
-              t.aiTitle,
-              <button
-                type="button"
-                className="lobby-mini-btn tutorial"
-                data-keyboard-nav-layer="mini"
-                onClick={() => void handleReplayAiTutorial()}
-              >
-                {t.aiTutorialBtn ?? aiTutorialButtonLabel}
-              </button>,
-            )}
-
             {isMatchmaking && currentMatchType === "ai" ? (
               <>
                 <div className="matchmaking-status">
@@ -3919,59 +4015,23 @@ export function LobbyScreen({
                 </button>
               </>
             ) : (
-              <>
-                <p>{t.aiDesc}</p>
-                <button
-                  className="lobby-btn ai"
-                  data-keyboard-nav-layer="primary"
-                  onClick={() => void handleAiMatch()}
-                >
-                  {t.aiBtn}
-                </button>
-              </>
+              renderModeControlBar("ai", t.aiBtn, () => void handleAiMatch())
             )}
           </>
         );
       case "friend":
         return (
           <>
-            {renderFriendBattleHeader()}
-            <p>
-              {friendBattleMode === "ability"
-                ? friendAbilityDesc
-                : friendClassicDesc}
-            </p>
-            <div className="btn-divider">
-              <button
-                className="lobby-btn primary"
-                data-keyboard-nav-layer="primary"
-                onClick={() =>
-                  void (friendBattleMode === "ability"
-                    ? handleCreateAbilityRoom()
-                    : handleCreateRoom())
-                }
-              >
-                {t.createRoomBtn}
-              </button>
-              <button
-                className="lobby-btn secondary"
-                data-keyboard-nav-layer="primary"
-                onClick={() => {
-                  setView("join");
-                  setError("");
-                }}
-              >
-                {t.enterCodeBtn}
-              </button>
-            </div>
+            {renderModeControlBar("primary", t.createRoomBtn, () =>
+              void (friendBattleMode === "ability"
+                ? handleCreateAbilityRoom()
+                : handleCreateRoom()),
+            )}
           </>
         );
       case "random":
         return (
           <>
-            {renderModeTitleBtn(t.randomTitle)}
-            <p>{randomDesc}</p>
-
             {isMatchmaking && currentMatchType === "random" ? (
               <>
                 <div className="matchmaking-status">
@@ -3991,13 +4051,7 @@ export function LobbyScreen({
                 </button>
               </>
             ) : (
-              <button
-                className="lobby-btn accent"
-                data-keyboard-nav-layer="primary"
-                onClick={() => void handleRandom()}
-              >
-                {t.startBtn}
-              </button>
+              renderModeControlBar("accent", t.startBtn, () => void handleRandom())
             )}
 
             {error && <p className="error-msg">{error}</p>}
@@ -4006,8 +4060,6 @@ export function LobbyScreen({
       case "coop":
         return (
           <>
-            {renderModeTitleBtn(coopTitle)}
-            <p>{coopDesc}</p>
             {isMatchmaking && currentMatchType === "coop" ? (
               <>
                 <div className="matchmaking-status">
@@ -4027,21 +4079,15 @@ export function LobbyScreen({
                 </button>
               </>
             ) : (
-              <button
-                className="lobby-btn accent"
-                data-keyboard-nav-layer="primary"
-                onClick={() => void handleCoopMatch()}
-              >
-                {coopStartLabel}
-              </button>
+              renderModeControlBar("accent", coopStartLabel, () =>
+                void handleCoopMatch(),
+              )
             )}
           </>
         );
       case "2v2":
         return (
           <>
-            {renderModeTitleBtn(twoVsTwoTitle)}
-            <p>{twoVsTwoDesc}</p>
             {isMatchmaking && currentMatchType === "2v2" ? (
               <>
                 <div className="matchmaking-status">
@@ -4061,49 +4107,15 @@ export function LobbyScreen({
                 </button>
               </>
             ) : (
-              <button
-                className="lobby-btn accent"
-                data-keyboard-nav-layer="primary"
-                onClick={() => void handleTwoVsTwoMatch()}
-              >
-                {twoVsTwoStartLabel}
-              </button>
+              renderModeControlBar("accent", twoVsTwoStartLabel, () =>
+                void handleTwoVsTwoMatch(),
+              )
             )}
           </>
         );
       case "ability":
         return (
           <>
-            {renderModeTitleBtn(
-              abilityBattleTitle,
-              <div className="lobby-card-mini-actions">
-                <button
-                  className="lobby-mini-btn"
-                  data-keyboard-nav-layer="mini"
-                  type="button"
-                  onClick={() => void handleAbilityTraining()}
-                >
-                  {abilityTrainingTitle}
-                </button>
-                <button
-                  className="lobby-mini-btn"
-                  data-keyboard-nav-layer="mini"
-                  type="button"
-                  onClick={() => setIsAbilityLoadoutOpen(true)}
-                >
-                  {abilityLoadoutTitle}
-                </button>
-              </div>,
-            )}
-            <div className="ability-loadout-chip-row">
-              {equippedAbilitySkillDefs.map((skill) => (
-                <span key={skill.id} className="ability-loadout-chip">
-                  {renderAbilitySkillIcon(skill.id)}
-                  <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
-                </span>
-              ))}
-            </div>
-
             {isMatchmaking && currentMatchType === "ability" ? (
               <>
                 <div className="matchmaking-status">
@@ -4127,34 +4139,26 @@ export function LobbyScreen({
                 </button>
               </>
             ) : (
-              <button
-                className="lobby-btn accent"
-                data-keyboard-nav-layer="primary"
-                onClick={() => void handleAbilityMatch()}
-              >
-                {abilityBattleStartLabel}
-              </button>
+              renderModeControlBar("accent", abilityBattleStartLabel, () =>
+                void handleAbilityMatch(),
+              )
             )}
           </>
         );
       case "classic_ranked":
         return (
           <>
-            {renderModeTitleBtn(classicRankedTitle)}
-            <p>{rankedComingSoonDesc}</p>
-            <button className="lobby-btn accent" type="button" disabled>
-              {t.startBtn}
-            </button>
+            {renderModeControlBar("accent", t.startBtn, undefined, {
+              disabled: true,
+            })}
           </>
         );
       case "skill_ranked":
         return (
           <>
-            {renderModeTitleBtn(skillRankedTitle)}
-            <p>{rankedComingSoonDesc}</p>
-            <button className="lobby-btn accent" type="button" disabled>
-              {abilityBattleStartLabel}
-            </button>
+            {renderModeControlBar("accent", abilityBattleStartLabel, undefined, {
+              disabled: true,
+            })}
           </>
         );
       default:
