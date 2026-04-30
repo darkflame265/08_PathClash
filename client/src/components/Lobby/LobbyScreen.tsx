@@ -896,8 +896,6 @@ export function LobbyScreen({
     };
   }, []);
 
-  const [isDailyRewardInfoOpen, setIsDailyRewardInfoOpen] = useState(false);
-
   const [isModePickerOpen, setIsModePickerOpen] = useState(false);
 
   const [isPatchNotesOpen, setIsPatchNotesOpen] = useState(false);
@@ -1083,10 +1081,6 @@ export function LobbyScreen({
       setIsSettingsOpen(false);
       return true;
     }
-    if (isDailyRewardInfoOpen) {
-      setIsDailyRewardInfoOpen(false);
-      return true;
-    }
     return false;
   }, [
     achievementNoticeMessage,
@@ -1096,7 +1090,6 @@ export function LobbyScreen({
     isAchievementsOpen,
     isAudioSettingsOpen,
     isControlsSettingsOpen,
-    isDailyRewardInfoOpen,
     isNameChangeOpen,
     isPatchNotesOpen,
     isSettingsOpen,
@@ -1282,32 +1275,6 @@ export function LobbyScreen({
   // - Reuse this structure for future patch note updates.
 
   const patchNotesBody: PatchNoteSection[] = getPatchNotes(lang);
-
-  const dailyRewardGuideTitle =
-    lang === "en" ? "📌 Daily Reward Info" : "📌 일일 보상 안내";
-
-  const dailyRewardGuideMax =
-    lang === "en"
-      ? "You can earn up to 120 diamonds per day."
-      : "하루 최대 120 다이아몬드를 획득할 수 있습니다.";
-
-  const dailyRewardGuideDuel =
-    lang === "en"
-      ? "Duel / Ability Battle / 2v2 Victory: +6 diamonds"
-      : "대결전 / 능력대전 / 2v2 대전 승리: +6 다이아몬드";
-
-  const dailyRewardGuideCoop =
-    lang === "en"
-      ? "Co-op Victory: +12 diamonds"
-      : "협동전 승리: +12 다이아몬드";
-
-  const dailyRewardGuideAi =
-    lang === "en" ? "AI Match: no diamonds" : "AI 대전: 다이아몬드 없음";
-
-  const dailyRewardGuideReset =
-    lang === "en"
-      ? "Daily rewards reset every day at UTC 00:00."
-      : "일일 보상은 매일 UTC 00:00에 초기화됩니다.";
 
   const skinModalTitle = lang === "en" ? "Choose Skin" : "스킨 선택";
 
@@ -3919,6 +3886,24 @@ export function LobbyScreen({
     );
   };
 
+  const renderDailyRewardBadge = () => (
+    <span className="daily-reward-badge mode-start-reward">
+      <span className="daily-reward-icon" aria-hidden="true">
+        {"💎"}
+      </span>
+      <span>{accountDailyRewardTokens}</span>
+      <span className="daily-reward-separator">/</span>
+      <span>120</span>
+    </span>
+  );
+
+  const renderRewardStartLabel = (label: string) => (
+    <span className="mode-start-label-stack">
+      <span>{label}</span>
+      {renderDailyRewardBadge()}
+    </span>
+  );
+
   const renderModeControlBar = (
     primaryClassName: string,
     primaryLabel: React.ReactNode,
@@ -4032,7 +4017,9 @@ export function LobbyScreen({
             {isMatchmaking && currentMatchType === "random" ? (
               renderMatchmakingControlBar(handleCancelRandom, t.cancelBtn)
             ) : (
-              renderModeControlBar("accent", t.startBtn, () => void handleRandom())
+              renderModeControlBar("accent", renderRewardStartLabel(t.startBtn), () =>
+                void handleRandom(),
+              )
             )}
 
             {error && <p className="error-msg">{error}</p>}
@@ -4068,8 +4055,10 @@ export function LobbyScreen({
             {isMatchmaking && currentMatchType === "ability" ? (
               renderMatchmakingControlBar(handleCancelAbility, t.cancelBtn)
             ) : (
-              renderModeControlBar("accent", abilityBattleStartLabel, () =>
-                void handleAbilityMatch(),
+              renderModeControlBar(
+                "accent",
+                renderRewardStartLabel(abilityBattleStartLabel),
+                () => void handleAbilityMatch(),
               )
             )}
           </>
@@ -4103,37 +4092,6 @@ export function LobbyScreen({
           <div className="lobby-user-score">
             <span className="lobby-user-score-icon" aria-hidden="true">⭐</span>
             <span className="lobby-user-score-value">{currentRating}</span>
-          </div>
-          <div className="daily-reward-wrap">
-            <button
-              className="daily-reward-badge daily-reward-badge-btn"
-              data-keyboard-nav-layer="daily"
-              aria-label="Daily tokens earned"
-              type="button"
-              onClick={() => setIsDailyRewardInfoOpen((prev) => !prev)}
-            >
-              <span className="daily-reward-icon" aria-hidden="true">
-                {"💎"}
-              </span>
-              <span>{accountDailyRewardTokens}</span>
-              <span className="daily-reward-separator">/</span>
-              <span>120</span>
-            </button>
-
-            {isDailyRewardInfoOpen && (
-              <div
-                className="daily-reward-popover"
-                role="dialog"
-                aria-label={dailyRewardGuideTitle}
-              >
-                <strong>{dailyRewardGuideTitle}</strong>
-                <p>{dailyRewardGuideMax}</p>
-                <p>{dailyRewardGuideDuel}</p>
-                <p>{dailyRewardGuideCoop}</p>
-                <p>{dailyRewardGuideAi}</p>
-                <p>{dailyRewardGuideReset}</p>
-              </div>
-            )}
           </div>
         </div>
       </div>
