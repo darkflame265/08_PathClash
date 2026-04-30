@@ -1176,6 +1176,8 @@ export function LobbyScreen({
 
   const soundButtonLabel = lang === "en" ? "Sound" : "소리";
   const controlsButtonLabel = lang === "en" ? "Controls" : "조작";
+  const languageButtonLabel =
+    lang === "en" ? "Language : English" : "언어 : 한국어";
 
   const termsButtonLabel = lang === "en" ? "Terms" : "이용약관";
 
@@ -3806,6 +3808,10 @@ export function LobbyScreen({
     }
   };
 
+  const handleToggleLanguage = () => {
+    setLang(lang === "en" ? "kr" : "en");
+  };
+
   const selectedLobbyModeOption =
     lobbyModeOptions.find((option) => option.key === selectedLobbyMode) ??
     lobbyModeOptions[0];
@@ -5056,31 +5062,6 @@ export function LobbyScreen({
           </button>
         </div>
 
-        <div
-          className="lang-toggle lobby-bottom-lang-toggle"
-          role="group"
-          aria-label="Language toggle"
-        >
-          <button
-            className={`lang-toggle-btn ${lang === "en" ? "is-active" : ""}`}
-            data-keyboard-nav-layer="lang"
-            onClick={() => setLang("en")}
-            aria-pressed={lang === "en"}
-            type="button"
-          >
-            EN
-          </button>
-
-          <button
-            className={`lang-toggle-btn ${lang === "kr" ? "is-active" : ""}`}
-            data-keyboard-nav-layer="lang"
-            onClick={() => setLang("kr")}
-            aria-pressed={lang === "kr"}
-            type="button"
-          >
-            KR
-          </button>
-        </div>
       </div>
 
       <div className="lobby-utility-links legacy-hidden">
@@ -5228,6 +5209,14 @@ export function LobbyScreen({
               </div>
 
               <div className="upgrade-modal-actions settings-actions">
+                <button
+                  className="lobby-btn secondary settings-policy-btn"
+                  onClick={handleToggleLanguage}
+                  type="button"
+                >
+                  {languageButtonLabel}
+                </button>
+
                 <button
                   className="lobby-btn secondary settings-policy-btn"
                   onClick={() => {
