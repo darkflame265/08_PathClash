@@ -54,6 +54,8 @@ import {
   type PatchNoteSection,
 } from "../../data/patchNotes";
 import {
+  ARENA_RANGES,
+  RANKED_UNLOCKED_THRESHOLD,
   getArenaLabel,
   getSkinRequiredArena,
   isSkinArenaUnlocked,
@@ -1249,6 +1251,27 @@ export function LobbyScreen({
   const lobbyArenaImageSrc = `/arena/arena${highestArena}.png`;
   const lobbyArenaImageAlt =
     lang === "en" ? `Arena ${highestArena}` : `아레나 ${highestArena}`;
+
+  const currentArenaRange = ARENA_RANGES.find((r) => r.arena === highestArena);
+  const arenaProgressPct = rankedUnlocked
+    ? 100
+    : currentArenaRange
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            ((currentRating - currentArenaRange.minRating) /
+              (currentArenaRange.maxRating - currentArenaRange.minRating)) *
+              100,
+          ),
+        )
+      : 0;
+  const arenaProgressMin = rankedUnlocked
+    ? String(RANKED_UNLOCKED_THRESHOLD)
+    : String(currentArenaRange?.minRating ?? 0);
+  const arenaProgressMax = rankedUnlocked
+    ? "∞"
+    : String(currentArenaRange?.maxRating ?? 0);
 
   // Patch note convention:
 
@@ -4125,6 +4148,18 @@ export function LobbyScreen({
             }}
           />
           <LobbyArenaOverlay arena={highestArena} />
+          <div className="arena-progress-bar-wrap" aria-hidden="true">
+            <div className="arena-progress-labels">
+              <span>{arenaProgressMin}</span>
+              <span>{arenaProgressMax}</span>
+            </div>
+            <div className="arena-progress-track">
+              <div
+                className="arena-progress-fill"
+                style={{ width: `${arenaProgressPct}%` }}
+              />
+            </div>
+          </div>
         </figure>
 
         <div className="lobby-arena-badge">
