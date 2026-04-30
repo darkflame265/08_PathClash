@@ -849,9 +849,6 @@ export function LobbyScreen({
   const [error, setError] = useState("");
 
   const [isMatchmaking, setIsMatchmaking] = useState(false);
-  const [isAiTutorialQueueing, setIsAiTutorialQueueing] = useState(false);
-  const [isAbilityTrainingQueueing, setIsAbilityTrainingQueueing] =
-    useState(false);
 
   const [isSkinPickerOpen, setIsSkinPickerOpen] = useState(false);
   const [skinPickerTab, setSkinPickerTab] = useState<SkinPickerTab>("piece");
@@ -1215,10 +1212,6 @@ export function LobbyScreen({
       : "능력 대전에 가져갈 스킬을 최대 3개까지 선택하세요.";
 
   const abilityLoadoutCount = lang === "en" ? "equipped" : "장착 중";
-  const abilityTrainingMatchmakingDesc =
-    lang === "en"
-      ? "Entering the training room. Please wait a moment."
-      : "훈련장에 입장중입니다. 잠시 기다려주세요.";
 
   const patchNotesLabel = lang === "en" ? "Patch Notes" : "패치노트";
   const modeSelectorTitle = lang === "en" ? "Select Mode" : "모드 선택";
@@ -1239,19 +1232,7 @@ export function LobbyScreen({
 
   const aiTutorialNoLabel = lang === "en" ? "No" : "아니요";
 
-  const aiMatchmakingDesc =
-    lang === "en"
-      ? "Joining an AI match. Please wait a moment."
-      : "AI매칭에 진입중입니다. 잠시 기다려주세요.";
-
-  const aiTutorialMatchmakingDesc =
-    lang === "en"
-      ? "Entering the tutorial. Please wait a moment."
-      : "튜토리얼에 입장중입니다. 잠시 기다려주세요.";
-
   const aiTutorialButtonLabel = lang === "en" ? "Tutorial" : "튜토리얼";
-
-  const aiMatchmakingHead = lang === "en" ? t.matchmakingHead : "매칭 중...";
 
   const aiCancelLabel = lang === "en" ? t.cancelBtn : "매칭 취소";
   const upgradeFlowLoadingLabel =
@@ -2978,8 +2959,6 @@ export function LobbyScreen({
 
   const showSocketConnectError = () => {
     setIsMatchmaking(false);
-    setIsAbilityTrainingQueueing(false);
-    setIsAiTutorialQueueing(false);
     setMatchType(null);
     setError(
       lang === "en"
@@ -3008,8 +2987,6 @@ export function LobbyScreen({
     }
 
     setIsMatchmaking(false);
-    setIsAbilityTrainingQueueing(false);
-    setIsAiTutorialQueueing(false);
     setMatchType(null);
     setError(
       lang === "en"
@@ -3312,7 +3289,6 @@ export function LobbyScreen({
   const handleAiMatchWithTutorial = async (tutorialPending: boolean) => {
     setError("");
 
-    setIsAiTutorialQueueing(tutorialPending);
     setIsMatchmaking(true);
 
     setMatchType("ai");
@@ -3335,7 +3311,6 @@ export function LobbyScreen({
 
     useGameStore.getState().resetGame();
 
-    setIsAiTutorialQueueing(false);
     setIsMatchmaking(false);
 
     setMatchType(null);
@@ -3360,7 +3335,6 @@ export function LobbyScreen({
   };
 
   const handleAiMatch = async () => {
-    setIsAiTutorialQueueing(false);
     await handleAiMatchWithTutorial(false);
   };
 
@@ -3419,7 +3393,6 @@ export function LobbyScreen({
     setMatchType("ability");
 
     setIsMatchmaking(true);
-    setIsAbilityTrainingQueueing(false);
 
     try {
       const profile = await ensureMatchmakingProfile({ syncAbilitySkills: true });
@@ -3440,7 +3413,6 @@ export function LobbyScreen({
     setError("");
     setLocalAbilityTraining(true);
     setMatchType("ability");
-    setIsAbilityTrainingQueueing(true);
 
     try {
       const store = useGameStore.getState();
@@ -3450,7 +3422,6 @@ export function LobbyScreen({
         boardSkin: store.boardSkin,
       });
       setIsMatchmaking(false);
-      setIsAbilityTrainingQueueing(false);
       onAbilityStart();
     } catch (error) {
       setLocalAbilityTraining(false);
@@ -3465,7 +3436,6 @@ export function LobbyScreen({
     socket.emit("cancel_ability");
 
     setIsMatchmaking(false);
-    setIsAbilityTrainingQueueing(false);
 
     setMatchType(null);
   };
@@ -3927,7 +3897,7 @@ export function LobbyScreen({
 
   const renderModeControlBar = (
     primaryClassName: string,
-    primaryLabel: string,
+    primaryLabel: React.ReactNode,
     onPrimaryClick?: () => void,
     options?: { disabled?: boolean },
   ) => (
@@ -3948,6 +3918,19 @@ export function LobbyScreen({
       </div>
     </>
   );
+
+  const renderMatchmakingControlBar = (
+    onCancel: () => void,
+    cancelLabel: string,
+  ) =>
+    renderModeControlBar(
+      "cancel mode-cancel-start-btn",
+      <>
+        <span>{cancelLabel}</span>
+        <span className="mode-cancel-spinner" aria-hidden="true" />
+      </>,
+      onCancel,
+    );
 
   const renderSelectedModeContent = () => {
     if (selectedLobbyMode === "friend" && view === "create") {
@@ -4003,27 +3986,7 @@ export function LobbyScreen({
         return (
           <>
             {isMatchmaking && currentMatchType === "ai" ? (
-              <>
-                <div className="matchmaking-status">
-                  <div className="matchmaking-status-head">
-                    <span className="matchmaking-dot" />
-                    <strong>{aiMatchmakingHead}</strong>
-                  </div>
-                  <div className="spinner" />
-                  <p>
-                    {isAiTutorialQueueing
-                      ? aiTutorialMatchmakingDesc
-                      : aiMatchmakingDesc}
-                  </p>
-                </div>
-                <button
-                  className="lobby-btn cancel"
-                  data-keyboard-nav-layer="primary"
-                  onClick={handleCancelAi}
-                >
-                  {aiCancelLabel}
-                </button>
-              </>
+              renderMatchmakingControlBar(handleCancelAi, aiCancelLabel)
             ) : (
               renderModeControlBar("ai", t.aiBtn, () => void handleAiMatch())
             )}
@@ -4043,23 +4006,7 @@ export function LobbyScreen({
         return (
           <>
             {isMatchmaking && currentMatchType === "random" ? (
-              <>
-                <div className="matchmaking-status">
-                  <div className="matchmaking-status-head">
-                    <span className="matchmaking-dot" />
-                    <strong>{t.matchmakingHead}</strong>
-                  </div>
-                  <div className="spinner" />
-                  <p>{t.matchmakingDesc}</p>
-                </div>
-                <button
-                  className="lobby-btn cancel"
-                  data-keyboard-nav-layer="primary"
-                  onClick={handleCancelRandom}
-                >
-                  {t.cancelBtn}
-                </button>
-              </>
+              renderMatchmakingControlBar(handleCancelRandom, t.cancelBtn)
             ) : (
               renderModeControlBar("accent", t.startBtn, () => void handleRandom())
             )}
@@ -4071,23 +4018,7 @@ export function LobbyScreen({
         return (
           <>
             {isMatchmaking && currentMatchType === "coop" ? (
-              <>
-                <div className="matchmaking-status">
-                  <div className="matchmaking-status-head">
-                    <span className="matchmaking-dot" />
-                    <strong>{t.matchmakingHead}</strong>
-                  </div>
-                  <div className="spinner" />
-                  <p>{t.matchmakingDesc}</p>
-                </div>
-                <button
-                  className="lobby-btn cancel"
-                  data-keyboard-nav-layer="primary"
-                  onClick={handleCancelCoop}
-                >
-                  {t.cancelBtn}
-                </button>
-              </>
+              renderMatchmakingControlBar(handleCancelCoop, t.cancelBtn)
             ) : (
               renderModeControlBar("accent", coopStartLabel, () =>
                 void handleCoopMatch(),
@@ -4099,23 +4030,7 @@ export function LobbyScreen({
         return (
           <>
             {isMatchmaking && currentMatchType === "2v2" ? (
-              <>
-                <div className="matchmaking-status">
-                  <div className="matchmaking-status-head">
-                    <span className="matchmaking-dot" />
-                    <strong>{t.matchmakingHead}</strong>
-                  </div>
-                  <div className="spinner" />
-                  <p>{t.matchmakingDesc}</p>
-                </div>
-                <button
-                  className="lobby-btn cancel"
-                  data-keyboard-nav-layer="primary"
-                  onClick={handleCancelTwoVsTwo}
-                >
-                  {t.cancelBtn}
-                </button>
-              </>
+              renderMatchmakingControlBar(handleCancelTwoVsTwo, t.cancelBtn)
             ) : (
               renderModeControlBar("accent", twoVsTwoStartLabel, () =>
                 void handleTwoVsTwoMatch(),
@@ -4127,27 +4042,7 @@ export function LobbyScreen({
         return (
           <>
             {isMatchmaking && currentMatchType === "ability" ? (
-              <>
-                <div className="matchmaking-status">
-                  <div className="matchmaking-status-head">
-                    <span className="matchmaking-dot" />
-                    <strong>{t.matchmakingHead}</strong>
-                  </div>
-                  <div className="spinner" />
-                  <p>
-                    {isAbilityTrainingQueueing
-                      ? abilityTrainingMatchmakingDesc
-                      : t.matchmakingDesc}
-                  </p>
-                </div>
-                <button
-                  className="lobby-btn cancel"
-                  data-keyboard-nav-layer="primary"
-                  onClick={handleCancelAbility}
-                >
-                  {t.cancelBtn}
-                </button>
-              </>
+              renderMatchmakingControlBar(handleCancelAbility, t.cancelBtn)
             ) : (
               renderModeControlBar("accent", abilityBattleStartLabel, () =>
                 void handleAbilityMatch(),
