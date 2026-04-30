@@ -100,7 +100,7 @@ export const translations: Record<Lang, Translations> = {
 
     aiTitle: "AI Match",
     aiDesc: "Practice against AI. Stats are not recorded.",
-    aiBtn: "Start AI Match",
+    aiBtn: "AI Match",
     aiTutorialBtn: "Tutorial",
 
     friendTitle: "Friendly Match",
@@ -191,7 +191,7 @@ export const translations: Record<Lang, Translations> = {
 
     aiTitle: "AI 대전",
     aiDesc: "AI와 연습 대전을 즐겨보세요. 전적은 저장되지 않습니다.",
-    aiBtn: "AI와 대전 시작",
+    aiBtn: "AI 대전",
 
     friendTitle: "친구 대전",
     createRoomBtn: "방 만들기",

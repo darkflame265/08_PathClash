@@ -3901,16 +3901,20 @@ export function LobbyScreen({
   };
 
   const renderAbilityLoadoutBar = () => {
-    if (selectedLobbyMode !== "ability") return null;
+    const showLoadout = selectedLobbyMode === "ability";
 
     return (
-      <div className="ability-loadout-chip-row mode-loadout-row">
-        {equippedAbilitySkillDefs.map((skill) => (
-          <span key={skill.id} className="ability-loadout-chip">
-            {renderAbilitySkillIcon(skill.id)}
-            <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
-          </span>
-        ))}
+      <div
+        className={`ability-loadout-chip-row mode-loadout-row${showLoadout ? "" : " is-empty"}`}
+        aria-hidden={!showLoadout}
+      >
+        {showLoadout &&
+          equippedAbilitySkillDefs.map((skill) => (
+            <span key={skill.id} className="ability-loadout-chip">
+              {renderAbilitySkillIcon(skill.id)}
+              <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
+            </span>
+          ))}
       </div>
     );
   };

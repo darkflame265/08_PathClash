@@ -1168,7 +1168,7 @@
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.28));
 }
 
-.mode-start-btn {
+.lobby-btn.mode-start-btn {
   min-height: 5.35rem;
   border-radius: 0.7rem;
   font-size: clamp(1.22rem, 4vw, 1.75rem);
@@ -1180,7 +1180,7 @@
     inset 0 2px 0 rgba(255, 255, 255, 0.18);
 }
 
-.mode-start-btn:active {
+.lobby-btn.mode-start-btn:active {
   transform: translateY(3px);
   box-shadow:
     0 3px 0 rgba(28, 74, 43, 0.92),
@@ -1226,8 +1226,15 @@
 }
 
 .mode-loadout-row {
+  align-items: center;
   justify-content: center;
+  height: 2.35rem;
   margin-bottom: 0.15rem;
+  overflow: hidden;
+}
+
+.mode-loadout-row.is-empty {
+  visibility: hidden;
 }
 
 /* ?? Room code display ?????????????????????????????????? */
@@ -2545,7 +2552,7 @@
     min-height: 4.95rem;
   }
 
-  .mode-start-btn {
+  .lobby-btn.mode-start-btn {
     font-size: 1.18rem;
   }
 
