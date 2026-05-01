@@ -155,6 +155,7 @@
   overflow: visible;
 }
 
+.arena-gallery-skin-card .skin-preview.skin-preview-cosmic,
 .arena-gallery-skin-card .skin-preview.skin-preview-sun {
   overflow: hidden;
 }
