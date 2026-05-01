@@ -32,6 +32,21 @@ const SNAP_DURATION_MS = 280;
 // 좌우에 노출되는 인접 아레나 이미지 너비 (px)
 const PEEK = 48;
 
+const SKIN_META: Partial<Record<PieceSkin, { name: string; tier: string }>> = {
+  plasma:        { name: "플라즈마",      tier: "common"    },
+  gold_core:     { name: "골드 코어",     tier: "common"    },
+  neon_pulse:    { name: "네온 펄스",     tier: "common"    },
+  inferno:       { name: "인페르노",      tier: "common"    },
+  quantum:       { name: "퀀텀",          tier: "common"    },
+  cosmic:        { name: "코스믹",        tier: "rare"      },
+  arc_reactor:   { name: "헥사곤",        tier: "rare"      },
+  electric_core: { name: "일렉트릭 코어", tier: "rare"      },
+  wizard:        { name: "위저드",        tier: "legendary" },
+  atomic:        { name: "아토믹",        tier: "legendary" },
+  chronos:       { name: "크로노스",      tier: "legendary" },
+  sun:           { name: "썬",            tier: "legendary" },
+};
+
 function renderSkinPreview(skinId: PieceSkin) {
   switch (skinId) {
     case "plasma":        return <PlasmaPreview />;
@@ -289,17 +304,22 @@ export function ArenaGalleryModal({
         {/* 해금 스킨 영역 (스킨 없어도 공간 유지) */}
         <div className="arena-gallery-rewards">
           <span className="arena-gallery-rewards-label">해금 스킨</span>
-          <div className="arena-gallery-previews">
-            {rewardSkins.map((skinId) => (
-              <div key={skinId} className="arena-gallery-preview-item">
-                <span
-                  className={`skin-preview skin-preview-${skinId}`}
-                  aria-hidden="true"
-                >
-                  {renderSkinPreview(skinId)}
-                </span>
-              </div>
-            ))}
+          <div className="arena-gallery-skin-grid">
+            {rewardSkins.map((skinId) => {
+              const meta = SKIN_META[skinId];
+              return (
+                <div key={skinId} className="skin-option-card skin-picker-card arena-gallery-skin-card">
+                  <span className="skin-preview skin-picker-preview" aria-hidden="true">
+                    {renderSkinPreview(skinId)}
+                  </span>
+                  <span className="skin-option-copy skin-picker-copy">
+                    <strong className={`skin-name-tier-${meta?.tier ?? "common"}`}>
+                      {meta?.name ?? skinId}
+                    </strong>
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 

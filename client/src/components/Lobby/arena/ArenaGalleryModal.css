@@ -85,7 +85,7 @@
 /* ── 해금 스킨 영역 ─────────────────────────────── */
 .arena-gallery-rewards {
   padding: 0.9rem 1.2rem 0;
-  min-height: 5rem;
+  min-height: 5.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -98,17 +98,22 @@
   letter-spacing: 0.04em;
 }
 
-.arena-gallery-previews {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
+/* skin-option-grid 레이아웃 재사용 */
+.arena-gallery-skin-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.68rem;
 }
 
-.arena-gallery-preview-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.3rem;
+/* 갤러리 내 스킨 카드: 표시 전용 (hover/transform 제거) */
+.arena-gallery-skin-card.skin-option-card {
+  cursor: default;
+}
+.arena-gallery-skin-card.skin-option-card:hover {
+  transform: none;
+  border-color: rgba(154, 164, 174, 0.18);
+  background: rgba(42, 49, 55, 0.78);
+  box-shadow: none;
 }
 
 /* ── 닫기 버튼 ──────────────────────────────────── */
