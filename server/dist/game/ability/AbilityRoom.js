@@ -941,10 +941,11 @@ class AbilityRoom {
             disconnectedColor = color;
             const wasActive = this.phase === 'planning' || this.phase === 'moving';
             if (wasActive && !player.isBot) {
-                if (player.userId && !player.disconnectLossRecorded) {
+                if (this.isRewardEligible() && player.userId && !player.disconnectLossRecorded) {
                     player.stats.losses += 1;
                     player.disconnectLossRecorded = true;
                     void (0, playerAuth_1.recordMatchmakingLoss)(player.userId);
+                    void (0, playerAuth_1.updateAbilityRating)(player.userId, false);
                 }
                 player.connected = false;
                 player.pathSubmitted = true;
@@ -1216,7 +1217,7 @@ class AbilityRoom {
                 if (winnerUserId) {
                     winnerRating = await (0, playerAuth_1.updateAbilityRating)(winnerUserId, true);
                 }
-                if (loserUserId) {
+                if (loserUserId && !loserLossAlreadyRecorded) {
                     loserRating = await (0, playerAuth_1.updateAbilityRating)(loserUserId, false);
                 }
                 this.rewardsGranted = true;
