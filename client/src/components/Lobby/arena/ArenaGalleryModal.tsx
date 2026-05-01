@@ -25,12 +25,15 @@ interface ArenaGalleryModalProps {
   onClose: () => void;
 }
 
-const ARENA_MAX = Math.max(...ARENA_RANGES.map((r) => r.arena));
 const DRAG_THRESHOLD = 50;
 const BOUNCE_DURATION_MS = 480;
 const SNAP_DURATION_MS = 280;
 // 좌우에 노출되는 인접 아레나 이미지 너비 (px)
 const PEEK = 16;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
 
 const SKIN_META: Partial<Record<PieceSkin, { name: string; tier: string }>> = {
   plasma:        { name: "플라즈마",      tier: "common"    },
@@ -71,20 +74,11 @@ function ArenaSlide({
   highestArena,
   currentRating,
 }: {
-  arenaNum: number | null;
+  arenaNum: number;
   slideWidth: number;
   highestArena: number;
   currentRating: number;
 }) {
-  if (arenaNum === null) {
-    return (
-      <div
-        className="arena-gallery-slide arena-gallery-slide--empty"
-        style={{ width: slideWidth }}
-      />
-    );
-  }
-
   const range = ARENA_RANGES.find((r) => r.arena === arenaNum)!;
   const gaugePct =
     arenaNum < highestArena
@@ -174,14 +168,16 @@ export function ArenaGalleryModal({
   }, []);
 
   // slideWidth: viewport 너비 - 좌우 PEEK
-  // trackBaseOffset: 중간 슬라이드(index 1)의 왼쪽 끝이 viewport x=PEEK에 오도록
+  // trackBaseOffset: 현재 아레나의 왼쪽 끝이 viewport x=PEEK에 오도록
   const slideWidth = Math.max(0, containerWidth - 2 * PEEK);
-  const trackBaseOffset = slideWidth > 0 ? PEEK - slideWidth : 0;
+  const viewIndex = Math.max(
+    0,
+    ARENA_RANGES.findIndex((r) => r.arena === viewArena),
+  );
+  const trackBaseOffset = slideWidth > 0 ? PEEK - viewIndex * slideWidth : 0;
 
-  const range = ARENA_RANGES.find((r) => r.arena === viewArena) ?? ARENA_RANGES[0];
+  const range = ARENA_RANGES[viewIndex] ?? ARENA_RANGES[0];
   const rewardSkins = ARENA_REWARD_SKINS[viewArena] ?? [];
-  const prevArena = viewArena > 1 ? viewArena - 1 : null;
-  const nextArena = viewArena < ARENA_MAX ? viewArena + 1 : null;
 
   function startDrag(clientX: number) {
     if (isBouncing || isSnapping) return;
@@ -214,14 +210,27 @@ export function ArenaGalleryModal({
       return;
     }
 
-    // delta > 0: 오른쪽 스와이프 → 이전 아레나(-1)
-    // delta < 0: 왼쪽 스와이프 → 다음 아레나(+1)
-    const direction = delta > 0 ? -1 : 1;
-    const isAtEdge =
-      (direction === -1 && viewArena <= 1) ||
-      (direction === 1 && viewArena >= ARENA_MAX);
+    // delta > 0: 오른쪽 스와이프 → 이전 아레나
+    // delta < 0: 왼쪽 스와이프 → 다음 아레나
+    if (slideWidth <= 0) {
+      setIsSnapping(true);
+      setDragOffset(0);
+      animTimerRef.current = setTimeout(() => {
+        setIsSnapping(false);
+        animTimerRef.current = null;
+      }, SNAP_DURATION_MS);
+      return;
+    }
 
-    if (isAtEdge) {
+    const direction = delta > 0 ? -1 : 1;
+    const slidesMoved = Math.max(1, Math.round(Math.abs(delta) / slideWidth));
+    const targetIndex = clamp(
+      viewIndex + direction * slidesMoved,
+      0,
+      ARENA_RANGES.length - 1,
+    );
+
+    if (targetIndex === viewIndex) {
       setDragOffset(0);
       setIsBouncing(true);
       animTimerRef.current = setTimeout(() => {
@@ -231,14 +240,11 @@ export function ArenaGalleryModal({
       return;
     }
 
-    // 목표 슬라이드까지 애니메이션 후 viewArena 업데이트
-    // targetOffset이 0이 되면 새 center 슬라이드가 동일 위치에 오므로 끊김 없음
-    const targetOffset = -direction * slideWidth;
+    // 모든 아레나가 같은 트랙에 있으므로 target arena로 바로 스냅해도 재마운트 깜빡임이 없다.
     setIsSnapping(true);
-    setDragOffset(targetOffset);
+    setViewArena(ARENA_RANGES[targetIndex].arena);
+    setDragOffset(0);
     animTimerRef.current = setTimeout(() => {
-      setViewArena((prev) => prev + direction);
-      setDragOffset(0);
       setIsSnapping(false);
       animTimerRef.current = null;
     }, SNAP_DURATION_MS);
@@ -280,24 +286,15 @@ export function ArenaGalleryModal({
             className={`arena-gallery-track${isSnapping ? " is-snapping" : ""}`}
             style={{ transform: `translateX(${trackBaseOffset + dragOffset}px)` }}
           >
-            <ArenaSlide
-              arenaNum={prevArena}
-              slideWidth={slideWidth}
-              highestArena={highestArena}
-              currentRating={currentRating}
-            />
-            <ArenaSlide
-              arenaNum={viewArena}
-              slideWidth={slideWidth}
-              highestArena={highestArena}
-              currentRating={currentRating}
-            />
-            <ArenaSlide
-              arenaNum={nextArena}
-              slideWidth={slideWidth}
-              highestArena={highestArena}
-              currentRating={currentRating}
-            />
+            {ARENA_RANGES.map((arena) => (
+              <ArenaSlide
+                key={arena.arena}
+                arenaNum={arena.arena}
+                slideWidth={slideWidth}
+                highestArena={highestArena}
+                currentRating={currentRating}
+              />
+            ))}
           </div>
         </div>
 
