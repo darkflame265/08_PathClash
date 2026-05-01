@@ -727,3 +727,137 @@
 @keyframes gs-spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── 경기 시작 인트로 배너 ──────────────────────────────────── */
+.match-intro-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  background: rgba(0, 0, 0, 0.62);
+  animation: match-intro-bg-in 0.3s ease-out both;
+  overflow: visible;
+}
+
+.match-intro-overlay.exiting {
+  animation: match-intro-bg-out 0.45s ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes match-intro-bg-in {
+  from { background: rgba(0, 0, 0, 0); }
+  to { background: rgba(0, 0, 0, 0.62); }
+}
+
+@keyframes match-intro-bg-out {
+  from { background: rgba(0, 0, 0, 0.62); }
+  to { background: rgba(0, 0, 0, 0); }
+}
+
+.match-intro-banner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.55rem 1.1rem;
+  background: var(--panel);
+  border: 1px solid var(--tile-border);
+  border-radius: 0.625rem;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  min-width: 110px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+}
+
+.match-intro-banner-opponent {
+  transform: translateX(-50%) translateY(-100%);
+  margin-top: -10px;
+  animation: banner-enter-top 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.match-intro-banner-me {
+  transform: translateX(-50%);
+  margin-top: 10px;
+  animation: banner-enter-bottom 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.match-intro-banner-red {
+  border-color: rgba(239, 68, 68, 0.5);
+  border-left-width: 3px;
+}
+
+.match-intro-banner-blue {
+  border-color: rgba(59, 130, 246, 0.5);
+  border-left-width: 3px;
+}
+
+.match-intro-overlay.exiting .match-intro-banner-opponent {
+  animation: banner-exit-top 0.4s ease-in forwards;
+}
+
+.match-intro-overlay.exiting .match-intro-banner-me {
+  animation: banner-exit-bottom 0.4s ease-in forwards;
+}
+
+@keyframes banner-enter-top {
+  from {
+    transform: translateX(-50%) translateY(-100%) translateY(-24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(-100%);
+    opacity: 1;
+  }
+}
+
+@keyframes banner-enter-bottom {
+  from {
+    transform: translateX(-50%) translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes banner-exit-top {
+  from {
+    transform: translateX(-50%) translateY(-100%);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-50%) translateY(-100%) translateY(-24px);
+    opacity: 0;
+  }
+}
+
+@keyframes banner-exit-bottom {
+  from {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-50%) translateY(24px);
+    opacity: 0;
+  }
+}
+
+.match-intro-banner-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.match-intro-banner-score {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}

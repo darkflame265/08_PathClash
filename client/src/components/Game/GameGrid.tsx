@@ -35,6 +35,7 @@ const PRE_SUBMIT_LEAD_MS = 250;
 interface GridProps {
   cellSize?: number;
   entranceAnimation?: boolean;
+  disabled?: boolean;
   tutorialHint?: ReactNode;
   tutorialHintTarget?: "self" | "opponent";
   tutorialGuidePath?: Position[] | null;
@@ -48,6 +49,7 @@ interface GridProps {
 export function GameGrid({
   cellSize = DEFAULT_CELL_SIZE,
   entranceAnimation = false,
+  disabled = false,
   tutorialHint = null,
   tutorialHintTarget = "self",
   tutorialGuidePath = null,
@@ -98,7 +100,7 @@ export function GameGrid({
   const myPos = myColor ? gameState?.players[myColor]?.position : null;
   const mySubmitted =
     !!myColor && gameState?.players[myColor]?.pathSubmitted === true;
-  const canEditPath = isPlanning && !mySubmitted;
+  const canEditPath = isPlanning && !mySubmitted && !disabled;
   const pathPoints = gameState?.pathPoints ?? 5;
   const obstacles = gameState?.obstacles ?? roundInfo?.obstacles ?? [];
   const shouldAnimateInitialObstacles =

@@ -169,6 +169,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   } = useGameStore();
   const { t, lang } = useLang();
   const gridAreaRef = useRef<HTMLDivElement>(null);
+  const boardStageRef = useRef<HTMLDivElement>(null);
   const screenRef = useRef<HTMLDivElement>(null);
   const selfRoleBadgeRef = useRef<HTMLDivElement>(null);
   const pathBarRef = useRef<HTMLDivElement>(null);
@@ -183,6 +184,14 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     top: number;
   } | null>(null);
   const [showEntranceAnimation, setShowEntranceAnimation] = useState(true);
+  const [matchIntroVisible, setMatchIntroVisible] = useState(true);
+  const [matchIntroExiting, setMatchIntroExiting] = useState(false);
+  const [introBannerPositions, setIntroBannerPositions] = useState<{
+    opponentLeft: number;
+    opponentTop: number;
+    meLeft: number;
+    meTop: number;
+  } | null>(null);
   const [keyboardControls, setKeyboardControls] = useState(
     loadKeyboardControlsSettings,
   );
@@ -272,6 +281,62 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     }, 620);
     return () => window.clearTimeout(timeout);
   }, []);
+
+  // Skip intro for tutorial games
+  useEffect(() => {
+    if (gameState?.tutorialActive) {
+      setMatchIntroVisible(false);
+    }
+  }, [gameState?.tutorialActive]);
+
+  // 4-second intro timer: start exit animation at 3.5s, hide at 4s
+  useEffect(() => {
+    const exitTimer = window.setTimeout(() => setMatchIntroExiting(true), 3500);
+    const doneTimer = window.setTimeout(() => setMatchIntroVisible(false), 4000);
+    return () => {
+      window.clearTimeout(exitTimer);
+      window.clearTimeout(doneTimer);
+    };
+  }, []);
+
+  // Calculate banner positions relative to the board stage
+  useEffect(() => {
+    if (!matchIntroVisible || !gameState || !myColor) return;
+    if (!gridAreaRef.current || !boardStageRef.current) return;
+
+    const updatePositions = () => {
+      const gridAreaEl = gridAreaRef.current;
+      const boardStageEl = boardStageRef.current;
+      if (!gridAreaEl || !boardStageEl) return;
+
+      const areaRect = gridAreaEl.getBoundingClientRect();
+      const stageRect = boardStageEl.getBoundingClientRect();
+
+      const areaW = areaRect.width;
+      const areaH = areaRect.height;
+      const minDim = Math.min(areaW, areaH > 60 ? areaH : areaW);
+      const gridRenderSize = minDim * 0.92;
+      const approxCell = gridRenderSize / 5;
+
+      const gridAbsLeft = (areaRect.left - stageRect.left) + (areaW - gridRenderSize) / 2;
+      const gridAbsTop = (areaRect.top - stageRect.top) + (areaH > 60 ? (areaH - gridRenderSize) / 2 : 0);
+
+      const oppColor = myColor === "red" ? "blue" : "red";
+      const opponentPos = gameState.players[oppColor].position;
+      const myPos = gameState.players[myColor].position;
+
+      setIntroBannerPositions({
+        opponentLeft: gridAbsLeft + (opponentPos.col + 0.5) * approxCell,
+        opponentTop: gridAbsTop + opponentPos.row * approxCell,
+        meLeft: gridAbsLeft + (myPos.col + 0.5) * approxCell,
+        meTop: gridAbsTop + (myPos.row + 1) * approxCell,
+      });
+    };
+
+    updatePositions();
+    window.addEventListener("resize", updatePositions);
+    return () => window.removeEventListener("resize", updatePositions);
+  }, [matchIntroVisible, gameState, myColor, cellSize]);
 
   useEffect(() => {
     if (!winner || !myColor) {
@@ -883,7 +948,8 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         <div className="gs-timer-slot">
           {gameState.phase === "planning" &&
             roundInfo &&
-            !tutorialInProgress && (
+            !tutorialInProgress &&
+            !matchIntroVisible && (
               <TimerBar
                 duration={roundInfo.timeLimit}
                 roundEndsAt={roundInfo.roundEndsAt}
@@ -903,7 +969,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
         </div>
       </div>
 
-      <div className="gs-board-stage">
+      <div className="gs-board-stage" ref={boardStageRef}>
         {winner && (
           <div className="gs-result-slot">
             <GameOverOverlay
@@ -984,8 +1050,46 @@ export function GameScreen({ onLeaveToLobby }: Props) {
             tutorialHintAbove={tutorialStep === 9}
             tutorialGuidePath={tutorialGuidePath}
             tutorialAutoSubmit={tutorialInProgress}
+            disabled={matchIntroVisible}
           />
         </div>
+
+        {matchIntroVisible && !gameState.tutorialActive && (
+          <div className={`match-intro-overlay${matchIntroExiting ? " exiting" : ""}`}>
+            {introBannerPositions && myColor && (
+              <>
+                <div
+                  className={`match-intro-banner match-intro-banner-opponent match-intro-banner-${opponentColor}`}
+                  style={{
+                    left: introBannerPositions.opponentLeft,
+                    top: introBannerPositions.opponentTop,
+                  }}
+                >
+                  <span className="match-intro-banner-name">{opponent?.nickname}</span>
+                  <span className="match-intro-banner-score">
+                    {lang === "en"
+                      ? `${opponent?.stats.wins}W ${opponent?.stats.losses}L`
+                      : `${opponent?.stats.wins}승 ${opponent?.stats.losses}패`}
+                  </span>
+                </div>
+                <div
+                  className={`match-intro-banner match-intro-banner-me match-intro-banner-${myColor}`}
+                  style={{
+                    left: introBannerPositions.meLeft,
+                    top: introBannerPositions.meTop,
+                  }}
+                >
+                  <span className="match-intro-banner-name">{me?.nickname}</span>
+                  <span className="match-intro-banner-score">
+                    {lang === "en"
+                      ? `${me?.stats.wins}W ${me?.stats.losses}L`
+                      : `${me?.stats.wins}승 ${me?.stats.losses}패`}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {tutorialStep === 1 && (
