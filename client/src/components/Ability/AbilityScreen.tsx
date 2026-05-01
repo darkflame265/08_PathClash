@@ -537,7 +537,16 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const submitTimeoutIdsRef = useRef<number[]>([]);
   const initialReadySentRef = useRef(false);
   const gridAreaRef = useRef<HTMLDivElement>(null);
+  const boardStageRef = useRef<HTMLDivElement>(null);
   const cellSize = useAdaptiveCellSize(gridAreaRef);
+  const [matchIntroVisible, setMatchIntroVisible] = useState(true);
+  const [matchIntroExiting, setMatchIntroExiting] = useState(false);
+  const [introBannerPositions, setIntroBannerPositions] = useState<{
+    opponentLeft: number;
+    opponentTop: number;
+    meLeft: number;
+    meTop: number;
+  } | null>(null);
   const currentColor = myColor ?? "red";
   const opponentColor: PlayerColor = currentColor === "red" ? "blue" : "red";
   const planningSunChariots: BoolByColor = {
@@ -602,6 +611,62 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
   }, []);
+
+  // Skip intro for local training sessions
+  useEffect(() => {
+    if (isLocalAbilityTraining) {
+      setMatchIntroVisible(false);
+    }
+  }, [isLocalAbilityTraining]);
+
+  // 4-second match intro: exit animation at 3.5s, hide at 4s
+  useEffect(() => {
+    const exitTimer = window.setTimeout(() => setMatchIntroExiting(true), 3500);
+    const doneTimer = window.setTimeout(() => setMatchIntroVisible(false), 4000);
+    return () => {
+      window.clearTimeout(exitTimer);
+      window.clearTimeout(doneTimer);
+    };
+  }, []);
+
+  // Calculate banner positions from grid area DOM measurements
+  useEffect(() => {
+    if (!matchIntroVisible || !state || !myColor) return;
+    if (!gridAreaRef.current || !boardStageRef.current) return;
+
+    const updatePositions = () => {
+      const gridAreaEl = gridAreaRef.current;
+      const boardStageEl = boardStageRef.current;
+      if (!gridAreaEl || !boardStageEl) return;
+
+      const areaRect = gridAreaEl.getBoundingClientRect();
+      const stageRect = boardStageEl.getBoundingClientRect();
+
+      const areaW = areaRect.width;
+      const areaH = areaRect.height;
+      const minDim = Math.min(areaW, areaH > 60 ? areaH : areaW);
+      const gridRenderSize = minDim * 0.92;
+      const approxCell = gridRenderSize / 5;
+
+      const gridAbsLeft = (areaRect.left - stageRect.left) + (areaW - gridRenderSize) / 2;
+      const gridAbsTop = (areaRect.top - stageRect.top) + (areaH > 60 ? (areaH - gridRenderSize) / 2 : 0);
+
+      const oppColor: PlayerColor = myColor === "red" ? "blue" : "red";
+      const opponentPos = state.players[oppColor].position;
+      const myPos = state.players[myColor].position;
+
+      setIntroBannerPositions({
+        opponentLeft: gridAbsLeft + (opponentPos.col + 0.5) * approxCell,
+        opponentTop: gridAbsTop + opponentPos.row * approxCell,
+        meLeft: gridAbsLeft + (myPos.col + 0.5) * approxCell,
+        meTop: gridAbsTop + (myPos.row + 1) * approxCell,
+      });
+    };
+
+    updatePositions();
+    window.addEventListener("resize", updatePositions);
+    return () => window.removeEventListener("resize", updatePositions);
+  }, [matchIntroVisible, state, myColor, cellSize]);
 
   useEffect(() => {
     preloadAbilitySfxAssets();
@@ -1849,6 +1914,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               ? 0
               : state.pathPoints;
       const canDrawPath =
+        !matchIntroVisible &&
         effectivePathPoints > 0 &&
         !skillReservations.some(
           (reservation) =>
@@ -1914,6 +1980,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     keyboardControls,
     keyboardTarget,
     keyboardTargetMode,
+    matchIntroVisible,
     myPath,
     mySubmitted,
     onLeaveToLobby,
@@ -3741,7 +3808,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       )}
       <div className="gs-utility-bar">
         <div className="gs-timer-slot">
-          {state.phase === "planning" && roundInfo && (
+          {state.phase === "planning" && roundInfo && !matchIntroVisible && (
             <TimerBar
               duration={roundInfo.timeLimit}
               roundEndsAt={roundInfo.roundEndsAt}
@@ -3763,7 +3830,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
       {trainingSkillSelectOverlay}
 
-      <div className="gs-board-stage">
+      <div className="gs-board-stage" ref={boardStageRef}>
         {winner && (
           <div className="gs-result-slot">
             <div className="gameover-overlay">
@@ -3961,7 +4028,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             rewindingPieceColor={rewindingPieceColor}
             cellSize={cellSize}
             isPlanning={state.phase === "planning"}
-            canEditPath={canDrawPath}
+            canEditPath={canDrawPath && !matchIntroVisible}
             teleportTargetsVisible={pendingTeleport}
             blitzTargetsVisible={pendingBlitz}
             infernoTargetsVisible={
@@ -3976,6 +4043,47 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             shakeKey={boardShakeKey}
           />
         </div>
+
+        {matchIntroVisible && !isLocalAbilityTraining && (
+          <div className={`match-intro-overlay${matchIntroExiting ? " exiting" : ""}`}>
+            {introBannerPositions && (
+              <>
+                <div
+                  className={`match-intro-banner match-intro-banner-opponent match-intro-banner-${opponentColor}`}
+                  style={{
+                    left: introBannerPositions.opponentLeft,
+                    top: introBannerPositions.opponentTop,
+                  }}
+                >
+                  <span className="match-intro-banner-name">
+                    {state.players[opponentColor].nickname}
+                  </span>
+                  <span className="match-intro-banner-score">
+                    {lang === "en"
+                      ? `${state.players[opponentColor].stats.wins}W ${state.players[opponentColor].stats.losses}L`
+                      : `${state.players[opponentColor].stats.wins}승 ${state.players[opponentColor].stats.losses}패`}
+                  </span>
+                </div>
+                <div
+                  className={`match-intro-banner match-intro-banner-me match-intro-banner-${currentColor}`}
+                  style={{
+                    left: introBannerPositions.meLeft,
+                    top: introBannerPositions.meTop,
+                  }}
+                >
+                  <span className="match-intro-banner-name">
+                    {state.players[currentColor].nickname}
+                  </span>
+                  <span className="match-intro-banner-score">
+                    {lang === "en"
+                      ? `${state.players[currentColor].stats.wins}W ${state.players[currentColor].stats.losses}L`
+                      : `${state.players[currentColor].stats.wins}승 ${state.players[currentColor].stats.losses}패`}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="ability-skill-panel">
