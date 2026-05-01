@@ -72,6 +72,7 @@ import { useLobbyKeyboardNavigation } from "../Lobby/useLobbyKeyboardNavigation"
 
 interface Props {
   onLeaveToLobby: () => void;
+  screenReadyAt?: number; // timestamp when loading screen ends
 }
 
 const MIN_CELL = 52;
@@ -384,7 +385,7 @@ function useAdaptiveCellSize(
   return cellSize;
 }
 
-export function AbilityScreen({ onLeaveToLobby }: Props) {
+export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
   const { lang } = useLang();
   const {
     myColor,
@@ -509,7 +510,11 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
   const [ratingResult, setRatingResult] = useState<Pick<
     AbilityGameOverPayload,
-    "ratingChange" | "newRating" | "newArena" | "arenaPromoted" | "rankedUnlocked"
+    | "ratingChange"
+    | "newRating"
+    | "newArena"
+    | "arenaPromoted"
+    | "rankedUnlocked"
   > | null>(null);
   const [rematchRequested, setRematchRequested] = useState(false);
   const [abilityBanner, setAbilityBanner] = useState<string | null>(null);
@@ -539,7 +544,9 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const gridAreaRef = useRef<HTMLDivElement>(null);
   const boardStageRef = useRef<HTMLDivElement>(null);
   const cellSize = useAdaptiveCellSize(gridAreaRef);
-  const [matchIntroPhase, setMatchIntroPhase] = useState<'pre' | 'banner' | 'exiting' | 'done'>('pre');
+  const [matchIntroPhase, setMatchIntroPhase] = useState<
+    "pre" | "banner" | "exiting" | "done"
+  >("pre");
   const [introBannerPositions, setIntroBannerPositions] = useState<{
     opponentLeft: number;
     opponentTop: number;
@@ -614,25 +621,27 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   // Skip intro for local training sessions
   useEffect(() => {
     if (isLocalAbilityTraining) {
-      setMatchIntroPhase('done');
+      setMatchIntroPhase("done");
     }
   }, [isLocalAbilityTraining]);
 
-  // Phase timeline: pre(400ms) → banner(4000ms) → exiting(500ms) → done
+  // Phase timeline: pre → banner(enter anim) → exiting → done
+  // bannerDelay = 로딩 화면 종료 후 300ms (보드가 먼저 보인 뒤 배너 등장)
   useEffect(() => {
-    const bannerTimer = window.setTimeout(() => setMatchIntroPhase('banner'), 400);
-    const exitTimer  = window.setTimeout(() => setMatchIntroPhase('exiting'), 4400);
-    const doneTimer  = window.setTimeout(() => setMatchIntroPhase('done'), 4900);
+    const bannerDelay = Math.max(0, (screenReadyAt ?? 0) - Date.now()) + 300;
+    const bannerTimer = window.setTimeout(() => setMatchIntroPhase("banner"), bannerDelay);
+    const exitTimer   = window.setTimeout(() => setMatchIntroPhase("exiting"), bannerDelay + 4000);
+    const doneTimer   = window.setTimeout(() => setMatchIntroPhase("done"), bannerDelay + 4500);
     return () => {
       window.clearTimeout(bannerTimer);
       window.clearTimeout(exitTimer);
       window.clearTimeout(doneTimer);
     };
-  }, []);
+  }, [screenReadyAt]);
 
   // Calculate banner positions from grid area DOM measurements
   useEffect(() => {
-    if (matchIntroPhase === 'done' || matchIntroPhase === 'pre') return;
+    if (matchIntroPhase === "done" || matchIntroPhase === "pre") return;
     if (!state || !myColor) return;
     if (!gridAreaRef.current || !boardStageRef.current) return;
 
@@ -650,8 +659,12 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       const gridRenderSize = minDim * 0.92;
       const approxCell = gridRenderSize / 5;
 
-      const gridAbsLeft = (areaRect.left - stageRect.left) + (areaW - gridRenderSize) / 2;
-      const gridAbsTop = (areaRect.top - stageRect.top) + (areaH > 60 ? (areaH - gridRenderSize) / 2 : 0);
+      const gridAbsLeft =
+        areaRect.left - stageRect.left + (areaW - gridRenderSize) / 2;
+      const gridAbsTop =
+        areaRect.top -
+        stageRect.top +
+        (areaH > 60 ? (areaH - gridRenderSize) / 2 : 0);
 
       const oppColor: PlayerColor = myColor === "red" ? "blue" : "red";
       const opponentPos = state.players[oppColor].position;
@@ -1916,7 +1929,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               ? 0
               : state.pathPoints;
       const canDrawPath =
-        matchIntroPhase === 'done' &&
+        matchIntroPhase === "done" &&
         effectivePathPoints > 0 &&
         !skillReservations.some(
           (reservation) =>
@@ -3324,7 +3337,13 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       setWinner(nextWinner);
       setState((prev) => (prev ? { ...prev, phase: "gameover" } : prev));
       if (ratingChange !== null) {
-        setRatingResult({ ratingChange, newRating, newArena, arenaPromoted, rankedUnlocked });
+        setRatingResult({
+          ratingChange,
+          newRating,
+          newArena,
+          arenaPromoted,
+          rankedUnlocked,
+        });
       }
     };
 
@@ -3766,8 +3785,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           reservation.skillId === "cosmic_bigbang",
       ));
   const myBlitzReserved =
-    isPlanning &&
-    skillReservations.some((r) => r.skillId === "electric_blitz");
+    isPlanning && skillReservations.some((r) => r.skillId === "electric_blitz");
 
   const handleRematch = () => {
     onLeaveToLobby();
@@ -3810,12 +3828,14 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       )}
       <div className="gs-utility-bar">
         <div className="gs-timer-slot">
-          {state.phase === "planning" && roundInfo && matchIntroPhase === 'done' && (
-            <TimerBar
-              duration={roundInfo.timeLimit}
-              roundEndsAt={roundInfo.roundEndsAt}
-            />
-          )}
+          {state.phase === "planning" &&
+            roundInfo &&
+            matchIntroPhase === "done" && (
+              <TimerBar
+                duration={roundInfo.timeLimit}
+                roundEndsAt={roundInfo.roundEndsAt}
+              />
+            )}
           {state.phase === "moving" && (
             <div className="gs-phase-moving">
               <span className="gs-moving-pip" />
@@ -3872,18 +3892,20 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
                     Rating
                     {ratingResult.newRating !== null && (
                       <span className="gameover-rating-total">
-                        {" "}({ratingResult.newRating})
+                        {" "}
+                        ({ratingResult.newRating})
                       </span>
                     )}
                   </div>
                 )}
-                {ratingResult?.arenaPromoted && ratingResult.newArena !== null && (
-                  <div className="gameover-arena-promotion">
-                    {lang === "en"
-                      ? `Arena promoted: ${getArenaLabel(ratingResult.newArena, ratingResult.rankedUnlocked)}`
-                      : `아레나 승급: ${getArenaLabel(ratingResult.newArena, ratingResult.rankedUnlocked)}`}
-                  </div>
-                )}
+                {ratingResult?.arenaPromoted &&
+                  ratingResult.newArena !== null && (
+                    <div className="gameover-arena-promotion">
+                      {lang === "en"
+                        ? `Arena promoted: ${getArenaLabel(ratingResult.newArena, ratingResult.rankedUnlocked)}`
+                        : `아레나 승급: ${getArenaLabel(ratingResult.newArena, ratingResult.rankedUnlocked)}`}
+                    </div>
+                  )}
                 {rematchRequested && (
                   <div className="rematch-notice">
                     {lang === "en"
@@ -4030,7 +4052,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             rewindingPieceColor={rewindingPieceColor}
             cellSize={cellSize}
             isPlanning={state.phase === "planning"}
-            canEditPath={canDrawPath && matchIntroPhase === 'done'}
+            canEditPath={canDrawPath && matchIntroPhase === "done"}
             teleportTargetsVisible={pendingTeleport}
             blitzTargetsVisible={pendingBlitz}
             infernoTargetsVisible={
@@ -4046,49 +4068,52 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           />
         </div>
 
-        {matchIntroPhase === 'pre' && !isLocalAbilityTraining && (
+        {matchIntroPhase === "pre" && !isLocalAbilityTraining && (
           <div className="match-intro-overlay match-intro-overlay-pre" />
         )}
-        {(matchIntroPhase === 'banner' || matchIntroPhase === 'exiting') && !isLocalAbilityTraining && (
-          <div className={`match-intro-overlay${matchIntroPhase === 'exiting' ? " exiting" : ""}`}>
-            {introBannerPositions && (
-              <>
-                <div
-                  className={`match-intro-banner match-intro-banner-opponent match-intro-banner-${opponentColor}`}
-                  style={{
-                    left: introBannerPositions.opponentLeft,
-                    top: introBannerPositions.opponentTop,
-                  }}
-                >
-                  <span className="match-intro-banner-name">
-                    {state.players[opponentColor].nickname}
-                  </span>
-                  <span className="match-intro-banner-score">
-                    {lang === "en"
-                      ? `${state.players[opponentColor].stats.wins}W ${state.players[opponentColor].stats.losses}L`
-                      : `${state.players[opponentColor].stats.wins}승 ${state.players[opponentColor].stats.losses}패`}
-                  </span>
-                </div>
-                <div
-                  className={`match-intro-banner match-intro-banner-me match-intro-banner-${currentColor}`}
-                  style={{
-                    left: introBannerPositions.meLeft,
-                    top: introBannerPositions.meTop,
-                  }}
-                >
-                  <span className="match-intro-banner-name">
-                    {state.players[currentColor].nickname}
-                  </span>
-                  <span className="match-intro-banner-score">
-                    {lang === "en"
-                      ? `${state.players[currentColor].stats.wins}W ${state.players[currentColor].stats.losses}L`
-                      : `${state.players[currentColor].stats.wins}승 ${state.players[currentColor].stats.losses}패`}
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-        )}
+        {(matchIntroPhase === "banner" || matchIntroPhase === "exiting") &&
+          !isLocalAbilityTraining && (
+            <div
+              className={`match-intro-overlay${matchIntroPhase === "exiting" ? " exiting" : ""}`}
+            >
+              {introBannerPositions && (
+                <>
+                  <div
+                    className={`match-intro-banner match-intro-banner-opponent match-intro-banner-${opponentColor}`}
+                    style={{
+                      left: introBannerPositions.opponentLeft,
+                      top: introBannerPositions.opponentTop,
+                    }}
+                  >
+                    <span className="match-intro-banner-name">
+                      {state.players[opponentColor].nickname}
+                    </span>
+                    <span className="match-intro-banner-score">
+                      {lang === "en"
+                        ? `${state.players[opponentColor].stats.wins}W ${state.players[opponentColor].stats.losses}L`
+                        : `${state.players[opponentColor].stats.wins}승 ${state.players[opponentColor].stats.losses}패`}
+                    </span>
+                  </div>
+                  <div
+                    className={`match-intro-banner match-intro-banner-me match-intro-banner-${currentColor}`}
+                    style={{
+                      left: introBannerPositions.meLeft,
+                      top: introBannerPositions.meTop,
+                    }}
+                  >
+                    <span className="match-intro-banner-name">
+                      {state.players[currentColor].nickname}
+                    </span>
+                    <span className="match-intro-banner-score">
+                      {lang === "en"
+                        ? `${state.players[currentColor].stats.wins}W ${state.players[currentColor].stats.losses}L`
+                        : `${state.players[currentColor].stats.wins}승 ${state.players[currentColor].stats.losses}패`}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
       </div>
 
       <div className="ability-skill-panel">

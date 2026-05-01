@@ -1051,7 +1051,7 @@ function App() {
         {view === "game" && <GameScreen onLeaveToLobby={handleReturnToLobby} />}
         {view === "coop" && <CoopScreen onLeaveToLobby={handleReturnToLobby} />}
         {view === "twovtwo" && <TwoVsTwoScreen onLeaveToLobby={handleReturnToLobby} />}
-        {view === "ability" && <AbilityScreen onLeaveToLobby={handleReturnToLobby} />}
+        {view === "ability" && <AbilityScreen onLeaveToLobby={handleReturnToLobby} screenReadyAt={gameLoadingUntil} />}
       </Suspense>
       {isGameLoadingVisible && (
         <GameLoadingScreen tip={loadingTip} onNextTip={showNextLoadingTip} />
