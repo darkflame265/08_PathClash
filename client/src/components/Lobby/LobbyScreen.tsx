@@ -63,6 +63,7 @@ import {
 
 import { startDonation } from "../../payments/donate";
 import { LobbyArenaOverlay } from "./arena/LobbyArenaOverlay";
+import { ArenaGalleryModal } from "./arena/ArenaGalleryModal";
 
 import {
   startTokenPackPurchase,
@@ -897,6 +898,7 @@ export function LobbyScreen({
   }, []);
 
   const [isModePickerOpen, setIsModePickerOpen] = useState(false);
+  const [showArenaGallery, setShowArenaGallery] = useState(false);
 
   const [isPatchNotesOpen, setIsPatchNotesOpen] = useState(false);
 
@@ -4104,6 +4106,8 @@ export function LobbyScreen({
           <figure
             className="lobby-arena-showcase"
             aria-label={lobbyArenaImageAlt}
+            onClick={() => setShowArenaGallery(true)}
+            style={{ cursor: "pointer" }}
           >
             <img
               src={lobbyArenaImageSrc}
@@ -4138,6 +4142,14 @@ export function LobbyScreen({
       >
         {renderSelectedModeContent()}
       </div>
+
+      {showArenaGallery && (
+        <ArenaGalleryModal
+          highestArena={highestArena}
+          currentRating={currentRating}
+          onClose={() => setShowArenaGallery(false)}
+        />
+      )}
 
       {isModePickerOpen && (
         <div
