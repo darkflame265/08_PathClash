@@ -310,7 +310,10 @@ export function ArenaGalleryModal({
               const meta = SKIN_META[skinId];
               return (
                 <div key={skinId} className="skin-option-card skin-picker-card arena-gallery-skin-card">
-                  <span className="skin-preview skin-picker-preview" aria-hidden="true">
+                  <span
+                    className={`skin-preview skin-picker-preview skin-preview-${skinId}`}
+                    aria-hidden="true"
+                  >
                     {renderSkinPreview(skinId)}
                   </span>
                   <span className="skin-option-copy skin-picker-copy">
