@@ -55,7 +55,7 @@ import {
   type AbilitySkillReservation,
   type AbilityTrapTile,
 } from "../../types/ability.types";
-import { getArenaLabel } from "../../data/arenaCatalog";
+import { getArenaFromRating, getArenaLabel } from "../../data/arenaCatalog";
 import { AbilityGrid } from "./AbilityGrid";
 import { isBlockedCell, isValidMove, posEqual } from "../../utils/pathUtils";
 import {
@@ -400,7 +400,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     sfxVolume,
     triggerHeartShake,
     boardSkin,
-    highestArena,
+    currentRating,
   } = useGameStore();
 
   const [state, setState] = useState<AbilityBattleState | null>(null);
@@ -3745,7 +3745,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
         ? state.players.blue.boardSkin
         : boardSkin;
   const screenBoardClass =
-    highestArena === 2
+    getArenaFromRating(currentRating) === 2
       ? "arena-bg-2-screen"
       : resolvedBoardSkin === "pharaoh"
       ? "board-bg-pharaoh-screen"

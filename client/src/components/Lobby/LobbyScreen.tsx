@@ -56,6 +56,7 @@ import {
 import {
   ARENA_RANGES,
   RANKED_UNLOCKED_THRESHOLD,
+  getArenaFromRating,
   getArenaLabel,
   getSkinRequiredArena,
   isSkinArenaUnlocked,
@@ -1243,11 +1244,13 @@ export function LobbyScreen({
   // based on terminal mojibake output; verify against the actual UI/editor first.
 
   const patchNotesVersionLabel = getPatchNotesVersionLabel(lang);
-  const lobbyArenaImageSrc = `/arena/arena${highestArena}.png`;
+  const currentArena = getArenaFromRating(currentRating);
+  const lobbyArena = rankedUnlocked ? 10 : currentArena;
+  const lobbyArenaImageSrc = `/arena/arena${lobbyArena}.png`;
   const lobbyArenaImageAlt =
-    lang === "en" ? `Arena ${highestArena}` : `아레나 ${highestArena}`;
+    lang === "en" ? `Arena ${lobbyArena}` : `아레나 ${lobbyArena}`;
 
-  const currentArenaRange = ARENA_RANGES.find((r) => r.arena === highestArena);
+  const currentArenaRange = ARENA_RANGES.find((r) => r.arena === lobbyArena);
   const arenaProgressPct = rankedUnlocked
     ? 100
     : currentArenaRange
@@ -4117,10 +4120,10 @@ export function LobbyScreen({
                 event.currentTarget.src = "/arena/arena6.png";
               }}
             />
-            <LobbyArenaOverlay arena={highestArena} />
+            <LobbyArenaOverlay arena={lobbyArena} />
             <div className="arena-progress-bar-wrap" aria-hidden="true">
               <div className="arena-name-in-bar">
-                {getArenaLabel(highestArena, rankedUnlocked)}
+                {getArenaLabel(lobbyArena, rankedUnlocked)}
               </div>
               <div className="arena-progress-labels">
                 <span>{arenaProgressMin}</span>
@@ -4146,6 +4149,7 @@ export function LobbyScreen({
       {showArenaGallery && (
         <ArenaGalleryModal
           highestArena={highestArena}
+          currentArena={lobbyArena}
           currentRating={currentRating}
           onClose={() => setShowArenaGallery(false)}
         />

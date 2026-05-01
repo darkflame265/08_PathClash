@@ -5,6 +5,7 @@ import { getSocket } from "../../socket/socketClient";
 import { registerSocketHandlers } from "../../socket/socketHandlers";
 import { useGameStore } from "../../store/gameStore";
 import { useLang } from "../../hooks/useLang";
+import { getArenaFromRating } from "../../data/arenaCatalog";
 import { GameGrid } from "./GameGrid";
 import { GameOverOverlay } from "./GameOverOverlay";
 import { PlayerInfo } from "./PlayerInfo";
@@ -164,7 +165,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     currentMatchType,
     accountDailyRewardTokens,
     boardSkin,
-    highestArena,
+    currentRating,
     isSfxMuted,
     sfxVolume,
   } = useGameStore();
@@ -685,7 +686,7 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     return boardSkin;
   })();
   const screenBoardClass =
-    highestArena === 2
+    getArenaFromRating(currentRating) === 2
       ? "arena-bg-2-screen"
       : resolvedBoardSkin === "pharaoh"
       ? "board-bg-pharaoh-screen"

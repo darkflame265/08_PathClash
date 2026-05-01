@@ -21,6 +21,7 @@ import "./ArenaGalleryModal.css";
 
 interface ArenaGalleryModalProps {
   highestArena: number;
+  currentArena: number;
   currentRating: number;
   onClose: () => void;
 }
@@ -71,19 +72,19 @@ function renderSkinPreview(skinId: PieceSkin) {
 function ArenaSlide({
   arenaNum,
   slideWidth,
-  highestArena,
+  currentArena,
   currentRating,
 }: {
   arenaNum: number;
   slideWidth: number;
-  highestArena: number;
+  currentArena: number;
   currentRating: number;
 }) {
   const range = ARENA_RANGES.find((r) => r.arena === arenaNum)!;
   const gaugePct =
-    arenaNum < highestArena
+    arenaNum < currentArena
       ? 100
-      : arenaNum === highestArena
+      : arenaNum === currentArena
         ? Math.min(
             100,
             Math.max(
@@ -128,10 +129,11 @@ function ArenaSlide({
 
 export function ArenaGalleryModal({
   highestArena,
+  currentArena,
   currentRating,
   onClose,
 }: ArenaGalleryModalProps) {
-  const [viewArena, setViewArena] = useState(highestArena);
+  const [viewArena, setViewArena] = useState(currentArena || highestArena);
   const [dragOffset, setDragOffset] = useState(0);
   const [isSnapping, setIsSnapping] = useState(false);
   const [isBouncing, setIsBouncing] = useState(false);
@@ -291,7 +293,7 @@ export function ArenaGalleryModal({
                 key={arena.arena}
                 arenaNum={arena.arena}
                 slideWidth={slideWidth}
-                highestArena={highestArena}
+                currentArena={currentArena}
                 currentRating={currentRating}
               />
             ))}
