@@ -400,6 +400,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     sfxVolume,
     triggerHeartShake,
     boardSkin,
+    highestArena,
   } = useGameStore();
 
   const [state, setState] = useState<AbilityBattleState | null>(null);
@@ -3744,7 +3745,9 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
         ? state.players.blue.boardSkin
         : boardSkin;
   const screenBoardClass =
-    resolvedBoardSkin === "pharaoh"
+    highestArena === 2
+      ? "arena-bg-2-screen"
+      : resolvedBoardSkin === "pharaoh"
       ? "board-bg-pharaoh-screen"
       : resolvedBoardSkin === "magic"
         ? "board-bg-magic-screen"

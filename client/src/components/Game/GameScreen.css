@@ -45,6 +45,23 @@
   pointer-events: none;
 }
 
+.game-screen.arena-bg-2-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(4, 10, 24, 0.24), rgba(4, 10, 24, 0.38)),
+    url("/arena_bg/arena2_bg.png") center / cover no-repeat;
+  opacity: 0.99;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.game-screen.arena-bg-2-screen > * {
+  position: relative;
+  z-index: 1;
+}
+
 .game-screen.board-bg-pharaoh-screen > * {
   position: relative;
   z-index: 1;
