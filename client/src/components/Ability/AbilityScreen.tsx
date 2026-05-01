@@ -539,8 +539,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   const gridAreaRef = useRef<HTMLDivElement>(null);
   const boardStageRef = useRef<HTMLDivElement>(null);
   const cellSize = useAdaptiveCellSize(gridAreaRef);
-  const [matchIntroVisible, setMatchIntroVisible] = useState(true);
-  const [matchIntroExiting, setMatchIntroExiting] = useState(false);
+  const [matchIntroPhase, setMatchIntroPhase] = useState<'pre' | 'banner' | 'exiting' | 'done'>('pre');
   const [introBannerPositions, setIntroBannerPositions] = useState<{
     opponentLeft: number;
     opponentTop: number;
@@ -615,15 +614,17 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
   // Skip intro for local training sessions
   useEffect(() => {
     if (isLocalAbilityTraining) {
-      setMatchIntroVisible(false);
+      setMatchIntroPhase('done');
     }
   }, [isLocalAbilityTraining]);
 
-  // 4-second match intro: exit animation at 3.5s, hide at 4s
+  // Phase timeline: pre(400ms) → banner(4000ms) → exiting(500ms) → done
   useEffect(() => {
-    const exitTimer = window.setTimeout(() => setMatchIntroExiting(true), 3500);
-    const doneTimer = window.setTimeout(() => setMatchIntroVisible(false), 4000);
+    const bannerTimer = window.setTimeout(() => setMatchIntroPhase('banner'), 400);
+    const exitTimer  = window.setTimeout(() => setMatchIntroPhase('exiting'), 4400);
+    const doneTimer  = window.setTimeout(() => setMatchIntroPhase('done'), 4900);
     return () => {
+      window.clearTimeout(bannerTimer);
       window.clearTimeout(exitTimer);
       window.clearTimeout(doneTimer);
     };
@@ -631,7 +632,8 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
 
   // Calculate banner positions from grid area DOM measurements
   useEffect(() => {
-    if (!matchIntroVisible || !state || !myColor) return;
+    if (matchIntroPhase === 'done' || matchIntroPhase === 'pre') return;
+    if (!state || !myColor) return;
     if (!gridAreaRef.current || !boardStageRef.current) return;
 
     const updatePositions = () => {
@@ -666,7 +668,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     updatePositions();
     window.addEventListener("resize", updatePositions);
     return () => window.removeEventListener("resize", updatePositions);
-  }, [matchIntroVisible, state, myColor, cellSize]);
+  }, [matchIntroPhase, state, myColor, cellSize]);
 
   useEffect(() => {
     preloadAbilitySfxAssets();
@@ -1914,7 +1916,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
               ? 0
               : state.pathPoints;
       const canDrawPath =
-        !matchIntroVisible &&
+        matchIntroPhase === 'done' &&
         effectivePathPoints > 0 &&
         !skillReservations.some(
           (reservation) =>
@@ -1980,7 +1982,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
     keyboardControls,
     keyboardTarget,
     keyboardTargetMode,
-    matchIntroVisible,
+    matchIntroPhase,
     myPath,
     mySubmitted,
     onLeaveToLobby,
@@ -3808,7 +3810,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
       )}
       <div className="gs-utility-bar">
         <div className="gs-timer-slot">
-          {state.phase === "planning" && roundInfo && !matchIntroVisible && (
+          {state.phase === "planning" && roundInfo && matchIntroPhase === 'done' && (
             <TimerBar
               duration={roundInfo.timeLimit}
               roundEndsAt={roundInfo.roundEndsAt}
@@ -4028,7 +4030,7 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
             rewindingPieceColor={rewindingPieceColor}
             cellSize={cellSize}
             isPlanning={state.phase === "planning"}
-            canEditPath={canDrawPath && !matchIntroVisible}
+            canEditPath={canDrawPath && matchIntroPhase === 'done'}
             teleportTargetsVisible={pendingTeleport}
             blitzTargetsVisible={pendingBlitz}
             infernoTargetsVisible={
@@ -4044,8 +4046,11 @@ export function AbilityScreen({ onLeaveToLobby }: Props) {
           />
         </div>
 
-        {matchIntroVisible && !isLocalAbilityTraining && (
-          <div className={`match-intro-overlay${matchIntroExiting ? " exiting" : ""}`}>
+        {matchIntroPhase === 'pre' && !isLocalAbilityTraining && (
+          <div className="match-intro-overlay match-intro-overlay-pre" />
+        )}
+        {(matchIntroPhase === 'banner' || matchIntroPhase === 'exiting') && !isLocalAbilityTraining && (
+          <div className={`match-intro-overlay${matchIntroPhase === 'exiting' ? " exiting" : ""}`}>
             {introBannerPositions && (
               <>
                 <div

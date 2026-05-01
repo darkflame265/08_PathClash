@@ -734,12 +734,18 @@
   inset: 0;
   z-index: 25;
   background: rgba(0, 0, 0, 0.62);
-  animation: match-intro-bg-in 0.3s ease-out both;
+  animation: match-intro-bg-in 0.35s ease-out both;
   overflow: visible;
 }
 
+/* pre 단계: 투명하게 포인터만 차단 */
+.match-intro-overlay-pre {
+  background: transparent;
+  animation: none;
+}
+
 .match-intro-overlay.exiting {
-  animation: match-intro-bg-out 0.45s ease-in forwards;
+  animation: match-intro-bg-out 0.5s ease-in forwards;
   pointer-events: none;
 }
 
