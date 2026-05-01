@@ -1,6 +1,6 @@
 /* ── 모달 컨테이너 ─────────────────────────────── */
 .arena-gallery-modal {
-  width: min(calc(100vw - 1.7rem), 36rem);
+  width: min(calc(100vw - 1rem), 36rem);
   max-width: 36rem;
   height: min(calc(clamp(12rem, 36dvh, 23rem) + 12.15rem), 92dvh);
   max-height: min(calc(clamp(12rem, 36dvh, 23rem) + 12.15rem), 92dvh);
@@ -13,12 +13,10 @@
 /* ── 슬라이드 뷰포트 ────────────────────────────── */
 .arena-gallery-viewport {
   width: 100%;
-  min-height: 12rem;
-  max-height: 23rem;
-  height: auto;
+  height: clamp(12rem, 36dvh, 23rem);
+  flex: 0 0 clamp(12rem, 36dvh, 23rem);
   overflow: hidden;
   position: relative;
-  flex: 1 1 auto;
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;

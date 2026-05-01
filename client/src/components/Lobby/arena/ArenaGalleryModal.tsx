@@ -30,8 +30,7 @@ interface ArenaGalleryModalProps {
 const DRAG_THRESHOLD = 50;
 const BOUNCE_DURATION_MS = 480;
 const SNAP_DURATION_MS = 280;
-// 좌우에 노출되는 인접 아레나 이미지 너비 (px)
-const PEEK = 16;
+const PEEK = 0;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
