@@ -2,8 +2,8 @@
 .arena-gallery-modal {
   width: min(calc(100vw - 1.7rem), 36rem);
   max-width: 36rem;
-  height: min(calc(clamp(10rem, 28dvh, 19rem) + 12.15rem), 92dvh);
-  max-height: min(calc(clamp(10rem, 28dvh, 19rem) + 12.15rem), 92dvh);
+  height: min(calc(clamp(12rem, 36dvh, 23rem) + 12.15rem), 92dvh);
+  max-height: min(calc(clamp(12rem, 36dvh, 23rem) + 12.15rem), 92dvh);
   box-sizing: border-box;
   padding: 0;
   gap: 0;
@@ -13,8 +13,8 @@
 /* ── 슬라이드 뷰포트 ────────────────────────────── */
 .arena-gallery-viewport {
   width: 100%;
-  min-height: 10rem;
-  max-height: 19rem;
+  min-height: 12rem;
+  max-height: 23rem;
   height: auto;
   overflow: hidden;
   position: relative;
