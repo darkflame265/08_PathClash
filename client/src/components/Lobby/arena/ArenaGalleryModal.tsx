@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { AtomicPreview } from "../../../skins/legendary/atomic/Preview";
 import { ChronosPreview } from "../../../skins/legendary/chronos/Preview";
@@ -25,10 +25,12 @@ interface ArenaGalleryModalProps {
   onClose: () => void;
 }
 
+const ARENA_MAX = Math.max(...ARENA_RANGES.map((r) => r.arena));
 const DRAG_THRESHOLD = 50;
 const BOUNCE_DURATION_MS = 480;
 const SNAP_DURATION_MS = 280;
-const ARENA_MAX = Math.max(...ARENA_RANGES.map((r) => r.arena));
+// 좌우에 노출되는 인접 아레나 이미지 너비 (px)
+const PEEK = 48;
 
 function renderSkinPreview(skinId: PieceSkin) {
   switch (skinId) {
@@ -48,33 +50,31 @@ function renderSkinPreview(skinId: PieceSkin) {
   }
 }
 
-export function ArenaGalleryModal({
+function ArenaSlide({
+  arenaNum,
+  slideWidth,
   highestArena,
   currentRating,
-  onClose,
-}: ArenaGalleryModalProps) {
-  const [viewArena, setViewArena] = useState(highestArena);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isSnapping, setIsSnapping] = useState(false);
-  const [isBouncing, setIsBouncing] = useState(false);
+}: {
+  arenaNum: number | null;
+  slideWidth: number;
+  highestArena: number;
+  currentRating: number;
+}) {
+  if (arenaNum === null) {
+    return (
+      <div
+        className="arena-gallery-slide arena-gallery-slide--empty"
+        style={{ width: slideWidth }}
+      />
+    );
+  }
 
-  const dragStartX = useRef<number | null>(null);
-  const isDragging = useRef(false);
-  const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (animTimerRef.current !== null) clearTimeout(animTimerRef.current);
-    };
-  }, []);
-
-  const range = ARENA_RANGES.find((r) => r.arena === viewArena) ?? ARENA_RANGES[0];
-  const rewardSkins = ARENA_REWARD_SKINS[viewArena] ?? [];
-
+  const range = ARENA_RANGES.find((r) => r.arena === arenaNum)!;
   const gaugePct =
-    viewArena < highestArena
+    arenaNum < highestArena
       ? 100
-      : viewArena === highestArena
+      : arenaNum === highestArena
         ? Math.min(
             100,
             Math.max(
@@ -86,20 +86,105 @@ export function ArenaGalleryModal({
           )
         : 0;
 
+  return (
+    <div className="arena-gallery-slide" style={{ width: slideWidth }}>
+      <img
+        src={`/arena/arena${arenaNum}.png`}
+        alt={`${range.label} ${range.themeName}`}
+        onError={(e) => {
+          if (e.currentTarget.src.endsWith("/arena/arena6.png")) return;
+          e.currentTarget.src = "/arena/arena6.png";
+        }}
+      />
+      <LobbyArenaOverlay arena={arenaNum} />
+      <div className="arena-progress-bar-wrap" aria-hidden="true">
+        <div className="arena-name-in-bar arena-gallery-name-bar">
+          <span className="arena-gallery-label">{range.label}</span>
+          <span>{range.themeName}</span>
+        </div>
+        <div className="arena-progress-labels">
+          <span>{range.minRating}</span>
+          <span>{range.maxRating}</span>
+        </div>
+        <div className="arena-progress-track">
+          <div
+            className="arena-progress-fill"
+            style={{ width: `${gaugePct}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ArenaGalleryModal({
+  highestArena,
+  currentRating,
+  onClose,
+}: ArenaGalleryModalProps) {
+  const [viewArena, setViewArena] = useState(highestArena);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isSnapping, setIsSnapping] = useState(false);
+  const [isBouncing, setIsBouncing] = useState(false);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const dragStartX = useRef<number | null>(null);
+  const isDragging = useRef(false);
+  const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 초기 렌더 직후 동기 측정 (FOUC 방지)
+  useLayoutEffect(() => {
+    if (viewportRef.current) {
+      setContainerWidth(viewportRef.current.offsetWidth);
+    }
+  }, []);
+
+  // 모달 리사이즈 대응
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setContainerWidth(entry.contentRect.width);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (animTimerRef.current !== null) clearTimeout(animTimerRef.current);
+    };
+  }, []);
+
+  // slideWidth: viewport 너비 - 좌우 PEEK
+  // trackBaseOffset: 중간 슬라이드(index 1)의 왼쪽 끝이 viewport x=PEEK에 오도록
+  const slideWidth = Math.max(0, containerWidth - 2 * PEEK);
+  const trackBaseOffset = slideWidth > 0 ? PEEK - slideWidth : 0;
+
+  const range = ARENA_RANGES.find((r) => r.arena === viewArena) ?? ARENA_RANGES[0];
+  const rewardSkins = ARENA_REWARD_SKINS[viewArena] ?? [];
+  const prevArena = viewArena > 1 ? viewArena - 1 : null;
+  const nextArena = viewArena < ARENA_MAX ? viewArena + 1 : null;
+
   function startDrag(clientX: number) {
-    if (isBouncing) return;
+    if (isBouncing || isSnapping) return;
+    if (animTimerRef.current !== null) {
+      clearTimeout(animTimerRef.current);
+      animTimerRef.current = null;
+    }
     dragStartX.current = clientX;
     isDragging.current = true;
-    setIsSnapping(false);
   }
 
   function moveDrag(clientX: number) {
-    if (!isDragging.current || dragStartX.current === null || isBouncing) return;
+    if (!isDragging.current || dragStartX.current === null) return;
     setDragOffset(clientX - dragStartX.current);
   }
 
   function endDrag(clientX: number) {
-    if (!isDragging.current || dragStartX.current === null || isBouncing) return;
+    if (!isDragging.current || dragStartX.current === null) return;
     isDragging.current = false;
     const delta = clientX - dragStartX.current;
     dragStartX.current = null;
@@ -107,64 +192,66 @@ export function ArenaGalleryModal({
     if (Math.abs(delta) < DRAG_THRESHOLD) {
       setIsSnapping(true);
       setDragOffset(0);
-      animTimerRef.current = setTimeout(() => setIsSnapping(false), SNAP_DURATION_MS);
+      animTimerRef.current = setTimeout(() => {
+        setIsSnapping(false);
+        animTimerRef.current = null;
+      }, SNAP_DURATION_MS);
       return;
     }
 
-    setDragOffset(0);
-
+    // delta > 0: 오른쪽 스와이프 → 이전 아레나(-1)
+    // delta < 0: 왼쪽 스와이프 → 다음 아레나(+1)
     const direction = delta > 0 ? -1 : 1;
     const isAtEdge =
       (direction === -1 && viewArena <= 1) ||
       (direction === 1 && viewArena >= ARENA_MAX);
 
     if (isAtEdge) {
+      setDragOffset(0);
       setIsBouncing(true);
-      animTimerRef.current = setTimeout(() => setIsBouncing(false), BOUNCE_DURATION_MS);
+      animTimerRef.current = setTimeout(() => {
+        setIsBouncing(false);
+        animTimerRef.current = null;
+      }, BOUNCE_DURATION_MS);
       return;
     }
 
-    setViewArena((prev) => {
-      const next = prev + direction;
-      if (next < 1 || next > ARENA_MAX) return prev;
-      return next;
-    });
+    // 목표 슬라이드까지 애니메이션 후 viewArena 업데이트
+    // targetOffset이 0이 되면 새 center 슬라이드가 동일 위치에 오므로 끊김 없음
+    const targetOffset = -direction * slideWidth;
+    setIsSnapping(true);
+    setDragOffset(targetOffset);
+    animTimerRef.current = setTimeout(() => {
+      setViewArena((prev) => prev + direction);
+      setDragOffset(0);
+      setIsSnapping(false);
+      animTimerRef.current = null;
+    }, SNAP_DURATION_MS);
   }
 
   function cancelDrag() {
     if (!isDragging.current) return;
     isDragging.current = false;
     dragStartX.current = null;
+    if (animTimerRef.current !== null) clearTimeout(animTimerRef.current);
     setIsSnapping(true);
     setDragOffset(0);
-    animTimerRef.current = setTimeout(() => setIsSnapping(false), SNAP_DURATION_MS);
+    animTimerRef.current = setTimeout(() => {
+      setIsSnapping(false);
+      animTimerRef.current = null;
+    }, SNAP_DURATION_MS);
   }
 
-  const showcaseTransform = isBouncing
-    ? undefined
-    : `translateX(${dragOffset}px)`;
-
-  const showcaseClass = [
-    "lobby-arena-showcase",
-    "arena-gallery-showcase",
-    isSnapping ? "is-snapping" : "",
-    isBouncing ? "is-bouncing" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-
   return (
-    <div
-      className="upgrade-modal-backdrop"
-      onClick={onClose}
-    >
+    <div className="upgrade-modal-backdrop" onClick={onClose}>
       <div
         className="upgrade-modal skin-modal arena-gallery-modal"
         onClick={(e) => e.stopPropagation()}
       >
-        <figure
-          className={showcaseClass}
-          style={{ transform: showcaseTransform }}
+        {/* 슬라이드 뷰포트: overflow:hidden으로 좌우 peek 클리핑 */}
+        <div
+          ref={viewportRef}
+          className={`arena-gallery-viewport${isBouncing ? " is-bouncing" : ""}`}
           aria-label={`${range.label} ${range.themeName}`}
           onTouchStart={(e) => startDrag(e.touches[0].clientX)}
           onTouchMove={(e) => moveDrag(e.touches[0].clientX)}
@@ -174,33 +261,32 @@ export function ArenaGalleryModal({
           onMouseUp={(e) => endDrag(e.clientX)}
           onMouseLeave={cancelDrag}
         >
-          <img
-            src={`/arena/arena${viewArena}.png`}
-            alt={`${range.label} ${range.themeName}`}
-            onError={(e) => {
-              if (e.currentTarget.src.endsWith("/arena/arena6.png")) return;
-              e.currentTarget.src = "/arena/arena6.png";
-            }}
-          />
-          <LobbyArenaOverlay arena={viewArena} />
-          <div className="arena-progress-bar-wrap" aria-hidden="true">
-            <div className="arena-name-in-bar arena-gallery-name-bar">
-              <span className="arena-gallery-label">{range.label}</span>
-              <span>{range.themeName}</span>
-            </div>
-            <div className="arena-progress-labels">
-              <span>{range.minRating}</span>
-              <span>{range.maxRating}</span>
-            </div>
-            <div className="arena-progress-track">
-              <div
-                className="arena-progress-fill"
-                style={{ width: `${gaugePct}%` }}
-              />
-            </div>
+          <div
+            className={`arena-gallery-track${isSnapping ? " is-snapping" : ""}`}
+            style={{ transform: `translateX(${trackBaseOffset + dragOffset}px)` }}
+          >
+            <ArenaSlide
+              arenaNum={prevArena}
+              slideWidth={slideWidth}
+              highestArena={highestArena}
+              currentRating={currentRating}
+            />
+            <ArenaSlide
+              arenaNum={viewArena}
+              slideWidth={slideWidth}
+              highestArena={highestArena}
+              currentRating={currentRating}
+            />
+            <ArenaSlide
+              arenaNum={nextArena}
+              slideWidth={slideWidth}
+              highestArena={highestArena}
+              currentRating={currentRating}
+            />
           </div>
-        </figure>
+        </div>
 
+        {/* 해금 스킨 영역 (스킨 없어도 공간 유지) */}
         <div className="arena-gallery-rewards">
           <span className="arena-gallery-rewards-label">해금 스킨</span>
           <div className="arena-gallery-previews">
@@ -217,12 +303,9 @@ export function ArenaGalleryModal({
           </div>
         </div>
 
+        {/* 닫기 버튼 */}
         <div className="arena-gallery-actions">
-          <button
-            className="lobby-btn primary"
-            type="button"
-            onClick={onClose}
-          >
+          <button className="lobby-btn primary" type="button" onClick={onClose}>
             닫기
           </button>
         </div>
