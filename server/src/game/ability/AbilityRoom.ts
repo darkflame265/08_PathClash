@@ -44,6 +44,7 @@ import { resolveAbilityRound } from './AbilityEngine';
 const PLANNING_TIME_MS = 9000;
 const SUBMIT_GRACE_MS = 350;
 const READY_START_FALLBACK_MS = 5_000;
+const INTRO_FALLBACK_MS = 10_000;
 const INITIAL_MANA = 4;
 const MAX_MANA = 10;
 const MANA_PER_TURN = 3;
@@ -837,6 +838,9 @@ export class AbilityRoom {
   private movingCompleteTimeout: ReturnType<typeof setTimeout> | null = null;
   private nextRoundTimeout: ReturnType<typeof setTimeout> | null = null;
   private pendingStartTimeout: ReturnType<typeof setTimeout> | null = null;
+  private introPhase = false;
+  private introReadySockets = new Set<string>();
+  private introFallbackTimeout: ReturnType<typeof setTimeout> | null = null;
   private rewardsGranted = false;
 
   constructor(roomId: string, code: string, io: Server) {
@@ -1069,6 +1073,34 @@ export class AbilityRoom {
     if (!allReady) return false;
     this.startGame(this.pendingStartPaused);
     return true;
+  }
+
+  markIntroReady(socketId: string): void {
+    if (!this.introPhase) return;
+    const player = this.getPlayerBySocket(socketId);
+    if (!player || player.isBot) return;
+    this.introReadySockets.add(socketId);
+    const humanSocketIds = [...this.players.values()]
+      .filter((p) => !p.isBot)
+      .map((p) => p.socketId);
+    const allReady =
+      humanSocketIds.length > 0 &&
+      humanSocketIds.every((id) => this.introReadySockets.has(id));
+    if (allReady) this.startPlanningTimer();
+  }
+
+  private startPlanningTimer(): void {
+    if (!this.introPhase) return;
+    this.introPhase = false;
+    this.introReadySockets.clear();
+    this.clearIntroFallbackTimeout();
+    const now = Date.now();
+    const roundEndsAt = now + PLANNING_TIME_MS;
+    this.touchActivity(now);
+    for (const player of this.players.values()) {
+      this.io.to(player.socketId).emit('ability_timer_start', { roundEndsAt });
+    }
+    this.timer.start(PLANNING_TIME_MS, () => this.onPlanningTimeout());
   }
 
   startGame(startPaused = false): void {
@@ -1315,15 +1347,32 @@ export class AbilityRoom {
 
     const now = Date.now();
     this.touchActivity(now);
-    for (const player of this.players.values()) {
-      const payload: AbilityRoundStartPayload = {
-        timeLimit: PLANNING_TIME_MS / 1000,
-        roundEndsAt: now + PLANNING_TIME_MS,
-        state: this.toClientState(player.color),
-      };
-      this.io.to(player.socketId).emit('ability_round_start', payload);
+
+    if (this.turn === 1 && !this.trainingMode) {
+      this.introPhase = true;
+      this.introReadySockets.clear();
+      for (const player of this.players.values()) {
+        const payload: AbilityRoundStartPayload = {
+          timeLimit: PLANNING_TIME_MS / 1000,
+          roundEndsAt: 0,
+          state: this.toClientState(player.color),
+        };
+        this.io.to(player.socketId).emit('ability_round_start', payload);
+      }
+      this.introFallbackTimeout = setTimeout(() => {
+        this.startPlanningTimer();
+      }, INTRO_FALLBACK_MS);
+    } else {
+      for (const player of this.players.values()) {
+        const payload: AbilityRoundStartPayload = {
+          timeLimit: PLANNING_TIME_MS / 1000,
+          roundEndsAt: now + PLANNING_TIME_MS,
+          state: this.toClientState(player.color),
+        };
+        this.io.to(player.socketId).emit('ability_round_start', payload);
+      }
+      this.timer.start(PLANNING_TIME_MS, () => this.onPlanningTimeout());
     }
-    this.timer.start(PLANNING_TIME_MS, () => this.onPlanningTimeout());
   }
 
   private onPlanningTimeout(): void {
@@ -3207,6 +3256,8 @@ export class AbilityRoom {
   private resetGame(): void {
     this.timer.clear();
     this.clearPendingTimeouts();
+    this.introPhase = false;
+    this.introReadySockets.clear();
     this.turn = 1;
     this.attackerColor = 'red';
     this.phase = 'waiting';
@@ -3250,9 +3301,17 @@ export class AbilityRoom {
     }
   }
 
+  private clearIntroFallbackTimeout(): void {
+    if (this.introFallbackTimeout) {
+      clearTimeout(this.introFallbackTimeout);
+      this.introFallbackTimeout = null;
+    }
+  }
+
   private clearPendingTimeouts(): void {
     this.clearPlanningGraceTimeout();
     this.clearMovingCompleteTimeout();
     this.clearNextRoundTimeout();
+    this.clearIntroFallbackTimeout();
   }
 }

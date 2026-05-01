@@ -11,6 +11,7 @@ const AbilityEngine_1 = require("./AbilityEngine");
 const PLANNING_TIME_MS = 9000;
 const SUBMIT_GRACE_MS = 350;
 const READY_START_FALLBACK_MS = 5000;
+const INTRO_FALLBACK_MS = 10000;
 const INITIAL_MANA = 4;
 const MAX_MANA = 10;
 const MANA_PER_TURN = 3;
@@ -621,6 +622,9 @@ class AbilityRoom {
         this.movingCompleteTimeout = null;
         this.nextRoundTimeout = null;
         this.pendingStartTimeout = null;
+        this.introPhase = false;
+        this.introReadySockets = new Set();
+        this.introFallbackTimeout = null;
         this.rewardsGranted = false;
         this.roomId = roomId;
         this.code = code;
@@ -826,6 +830,35 @@ class AbilityRoom {
             return false;
         this.startGame(this.pendingStartPaused);
         return true;
+    }
+    markIntroReady(socketId) {
+        if (!this.introPhase)
+            return;
+        const player = this.getPlayerBySocket(socketId);
+        if (!player || player.isBot)
+            return;
+        this.introReadySockets.add(socketId);
+        const humanSocketIds = [...this.players.values()]
+            .filter((p) => !p.isBot)
+            .map((p) => p.socketId);
+        const allReady = humanSocketIds.length > 0 &&
+            humanSocketIds.every((id) => this.introReadySockets.has(id));
+        if (allReady)
+            this.startPlanningTimer();
+    }
+    startPlanningTimer() {
+        if (!this.introPhase)
+            return;
+        this.introPhase = false;
+        this.introReadySockets.clear();
+        this.clearIntroFallbackTimeout();
+        const now = Date.now();
+        const roundEndsAt = now + PLANNING_TIME_MS;
+        this.touchActivity(now);
+        for (const player of this.players.values()) {
+            this.io.to(player.socketId).emit('ability_timer_start', { roundEndsAt });
+        }
+        this.timer.start(PLANNING_TIME_MS, () => this.onPlanningTimeout());
     }
     startGame(startPaused = false) {
         this.clearPendingStartTimeout();
@@ -1061,15 +1094,32 @@ class AbilityRoom {
         this.recordTurnSnapshot(blue);
         const now = Date.now();
         this.touchActivity(now);
-        for (const player of this.players.values()) {
-            const payload = {
-                timeLimit: PLANNING_TIME_MS / 1000,
-                roundEndsAt: now + PLANNING_TIME_MS,
-                state: this.toClientState(player.color),
-            };
-            this.io.to(player.socketId).emit('ability_round_start', payload);
+        if (this.turn === 1 && !this.trainingMode) {
+            this.introPhase = true;
+            this.introReadySockets.clear();
+            for (const player of this.players.values()) {
+                const payload = {
+                    timeLimit: PLANNING_TIME_MS / 1000,
+                    roundEndsAt: 0,
+                    state: this.toClientState(player.color),
+                };
+                this.io.to(player.socketId).emit('ability_round_start', payload);
+            }
+            this.introFallbackTimeout = setTimeout(() => {
+                this.startPlanningTimer();
+            }, INTRO_FALLBACK_MS);
         }
-        this.timer.start(PLANNING_TIME_MS, () => this.onPlanningTimeout());
+        else {
+            for (const player of this.players.values()) {
+                const payload = {
+                    timeLimit: PLANNING_TIME_MS / 1000,
+                    roundEndsAt: now + PLANNING_TIME_MS,
+                    state: this.toClientState(player.color),
+                };
+                this.io.to(player.socketId).emit('ability_round_start', payload);
+            }
+            this.timer.start(PLANNING_TIME_MS, () => this.onPlanningTimeout());
+        }
     }
     onPlanningTimeout() {
         if (!this.hasBothPlayers())
@@ -2575,6 +2625,8 @@ class AbilityRoom {
     resetGame() {
         this.timer.clear();
         this.clearPendingTimeouts();
+        this.introPhase = false;
+        this.introReadySockets.clear();
         this.turn = 1;
         this.attackerColor = 'red';
         this.phase = 'waiting';
@@ -2612,10 +2664,17 @@ class AbilityRoom {
             this.nextRoundTimeout = null;
         }
     }
+    clearIntroFallbackTimeout() {
+        if (this.introFallbackTimeout) {
+            clearTimeout(this.introFallbackTimeout);
+            this.introFallbackTimeout = null;
+        }
+    }
     clearPendingTimeouts() {
         this.clearPlanningGraceTimeout();
         this.clearMovingCompleteTimeout();
         this.clearNextRoundTimeout();
+        this.clearIntroFallbackTimeout();
     }
 }
 exports.AbilityRoom = AbilityRoom;

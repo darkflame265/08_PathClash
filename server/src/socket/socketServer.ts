@@ -1524,6 +1524,11 @@ export function initSocketServer(io: Server): void {
       room?.markClientReady(socket.id);
     });
 
+    socket.on('ability_intro_done', () => {
+      const room = abilityStore.getBySocket(socket.id);
+      room?.markIntroReady(socket.id);
+    });
+
     socket.on(
       'training_skills_confirmed',
       ({ skills }: { skills: AbilitySkillId[] }) => {

@@ -639,6 +639,15 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     };
   }, [screenReadyAt]);
 
+  // Notify server when intro is done so it can start the planning timer.
+  // Also handles rematch: matchIntroPhase stays 'done' but roundInfo resets to roundEndsAt=0.
+  useEffect(() => {
+    if (matchIntroPhase !== "done") return;
+    if (isLocalAbilityTraining) return;
+    if (!roundInfo || roundInfo.roundEndsAt !== 0) return;
+    getSocket().emit("ability_intro_done");
+  }, [matchIntroPhase, isLocalAbilityTraining, roundInfo]);
+
   // Calculate banner positions from grid area DOM measurements
   useEffect(() => {
     if (matchIntroPhase === "done" || matchIntroPhase === "pre") return;
@@ -3399,8 +3408,13 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       setShowTrainingSkillSelect(true);
     };
 
+    const onTimerStart = ({ roundEndsAt }: { roundEndsAt: number }) => {
+      setRoundInfo((prev) => (prev ? { ...prev, roundEndsAt } : null));
+    };
+
     socket.on("ability_game_start", onGameStart);
     socket.on("ability_round_start", onRoundStart);
+    socket.on("ability_timer_start", onTimerStart);
     socket.on("ability_room_joined", onRoomJoined);
     socket.on("ability_training_skill_select", onTrainingSkillSelect);
     socket.on("ability_plan_updated", onPlanUpdated);
@@ -3423,6 +3437,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       clearSubmitTimeouts();
       socket.off("ability_game_start", onGameStart);
       socket.off("ability_round_start", onRoundStart);
+      socket.off("ability_timer_start", onTimerStart);
       socket.off("ability_room_joined", onRoomJoined);
       socket.off("ability_training_skill_select", onTrainingSkillSelect);
       socket.off("ability_plan_updated", onPlanUpdated);
@@ -3499,6 +3514,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
   useEffect(() => {
     if (!state || state.phase !== "planning" || mySubmitted || !roundInfo)
       return;
+    if (roundInfo.roundEndsAt <= 0) return;
     const socket = isLocalAbilityTraining
       ? getLocalAbilityTrainingSocket()
       : getSocket();

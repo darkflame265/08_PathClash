@@ -1042,6 +1042,10 @@ function initSocketServer(io) {
             const room = abilityStore.getBySocket(socket.id);
             room?.markClientReady(socket.id);
         });
+        socket.on('ability_intro_done', () => {
+            const room = abilityStore.getBySocket(socket.id);
+            room?.markIntroReady(socket.id);
+        });
         socket.on('training_skills_confirmed', ({ skills }) => {
             const room = abilityStore.getBySocket(socket.id);
             room?.confirmTrainingSkills(socket.id, skills);
