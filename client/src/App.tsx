@@ -116,6 +116,12 @@ function getRandomLoadingTipIndex() {
   return Math.floor(Math.random() * LOADING_TIPS.kr.length);
 }
 
+function wait(ms: number) {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
 function GameLoadingScreen({
   tip,
   onNextTip,
@@ -193,6 +199,49 @@ function App() {
   const showNextLoadingTip = useCallback(() => {
     setLoadingTipIndex((index) => (index + 1) % LOADING_TIPS.kr.length);
   }, []);
+
+  const applyAccountSummary = useCallback(
+    ({
+      nickname,
+      equippedSkin,
+      equippedBoardSkin,
+      equippedAbilitySkills,
+      ownedSkins,
+      ownedBoardSkins,
+      wins,
+      losses,
+      tokens,
+      dailyRewardWins,
+      dailyRewardTokens,
+      achievements,
+      currentRating,
+      highestArena,
+      rankedUnlocked,
+    }: Awaited<ReturnType<typeof refreshAccountSummary>>) => {
+      setAuthState({
+        ready: true,
+        userId: useGameStore.getState().authUserId,
+        accessToken: useGameStore.getState().authAccessToken,
+        isGuestUser: useGameStore.getState().isGuestUser,
+        nickname,
+        equippedSkin,
+        equippedBoardSkin,
+        equippedAbilitySkills,
+        ownedSkins,
+        ownedBoardSkins,
+        wins,
+        losses,
+        tokens,
+        dailyRewardWins,
+        dailyRewardTokens,
+        achievements,
+        currentRating,
+        highestArena,
+        rankedUnlocked,
+      });
+    },
+    [setAuthState],
+  );
 
   const startGameView = useCallback((nextView: Exclude<AppView, "lobby">) => {
     if (gameLoadingTimeoutRef.current !== null) {
@@ -689,14 +738,44 @@ function App() {
       window.clearTimeout(gameLoadingTimeoutRef.current);
       gameLoadingTimeoutRef.current = null;
     }
+    const loadingStartedAt = Date.now();
     stopLocalAbilityTraining();
     disconnectSocket();
     useGameStore.getState().resetGame();
     setShowExitConfirm(false);
     setMatchResultAudioKind(null);
-    setGameLoadingUntil(0);
+    setLoadingTipIndex(getRandomLoadingTipIndex());
+    setGameLoadingUntil(loadingStartedAt + MIN_GAME_LOADING_MS);
     setView("lobby");
-  }, []);
+
+    void (async () => {
+      if (authReady && authUserId && authAccessToken) {
+        setAccountSummaryLoading(true);
+        try {
+          await wait(500);
+          const summary = await refreshAccountSummary({ force: true });
+          applyAccountSummary(summary);
+        } catch (error) {
+          console.warn("[session-debug] failed to refresh account summary after leaving match", error);
+        } finally {
+          setAccountSummaryLoading(false);
+        }
+      }
+
+      const remainingLoadingMs =
+        MIN_GAME_LOADING_MS - (Date.now() - loadingStartedAt);
+      if (remainingLoadingMs > 0) {
+        await wait(remainingLoadingMs);
+      }
+      setGameLoadingUntil(0);
+    })();
+  }, [
+    applyAccountSummary,
+    authAccessToken,
+    authReady,
+    authUserId,
+    setAccountSummaryLoading,
+  ]);
 
   const handleSessionReplacedConfirm = useCallback(async () => {
     setIsSessionResetting(true);
