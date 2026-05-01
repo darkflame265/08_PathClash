@@ -15,6 +15,7 @@ import { QuantumPreview } from "../../../skins/common/quantum/Preview";
 
 import { ARENA_RANGES, ARENA_REWARD_SKINS } from "../../../data/arenaCatalog";
 import { LobbyArenaOverlay } from "./LobbyArenaOverlay";
+import { useLang } from "../../../hooks/useLang";
 import type { PieceSkin } from "../../../types/game.types";
 
 import "./ArenaGalleryModal.css";
@@ -80,6 +81,7 @@ function ArenaSlide({
   currentArena: number;
   currentRating: number;
 }) {
+  const { lang } = useLang();
   const range = ARENA_RANGES.find((r) => r.arena === arenaNum)!;
   const gaugePct =
     arenaNum < currentArena
@@ -100,7 +102,7 @@ function ArenaSlide({
     <div className="arena-gallery-slide" style={{ width: slideWidth }}>
       <img
         src={`/arena/arena${arenaNum}.png`}
-        alt={`${range.label} ${range.themeName}`}
+        alt={`${range.label} ${lang === "en" ? range.themeNameEn : range.themeName}`}
         onError={(e) => {
           if (e.currentTarget.src.endsWith("/arena/arena6.png")) return;
           e.currentTarget.src = "/arena/arena6.png";
@@ -110,7 +112,7 @@ function ArenaSlide({
       <div className="arena-progress-bar-wrap" aria-hidden="true">
         <div className="arena-name-in-bar arena-gallery-name-bar">
           <span className="arena-gallery-label">{range.label}</span>
-          <span>{range.themeName}</span>
+          <span>{lang === "en" ? range.themeNameEn : range.themeName}</span>
         </div>
         <div className="arena-progress-labels">
           <span>{range.minRating}</span>
@@ -133,6 +135,7 @@ export function ArenaGalleryModal({
   currentRating,
   onClose,
 }: ArenaGalleryModalProps) {
+  const { lang } = useLang();
   const [viewArena, setViewArena] = useState(currentArena || highestArena);
   const [dragOffset, setDragOffset] = useState(0);
   const [isSnapping, setIsSnapping] = useState(false);
@@ -275,7 +278,7 @@ export function ArenaGalleryModal({
         <div
           ref={viewportRef}
           className={`arena-gallery-viewport${isBouncing ? " is-bouncing" : ""}`}
-          aria-label={`${range.label} ${range.themeName}`}
+          aria-label={`${range.label} ${lang === "en" ? range.themeNameEn : range.themeName}`}
           onTouchStart={(e) => startDrag(e.touches[0].clientX)}
           onTouchMove={(e) => moveDrag(e.touches[0].clientX)}
           onTouchEnd={(e) => endDrag(e.changedTouches[0].clientX)}
