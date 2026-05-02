@@ -1,19 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
   <defs>
-    <linearGradient id="rim" x1="2" y1="38" x2="38" y2="2" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#A855F7"/>
-      <stop offset="0.28" stop-color="#1C1030"/>
-      <stop offset="0.72" stop-color="#07060E"/>
-      <stop offset="1" stop-color="#7DD3FC"/>
+    <linearGradient id="stormRim" x1="2" y1="2" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7DD3FC"/>
+      <stop offset="0.25" stop-color="#261443"/>
+      <stop offset="0.68" stop-color="#060815"/>
+      <stop offset="1" stop-color="#A855F7"/>
     </linearGradient>
-    <radialGradient id="stone" cx="0.42" cy="0.32" r="0.8">
-      <stop offset="0" stop-color="#16112C"/>
-      <stop offset="0.58" stop-color="#09071A"/>
-      <stop offset="1" stop-color="#040309"/>
+    <radialGradient id="stormStone" cx="0.44" cy="0.28" r="0.82">
+      <stop offset="0" stop-color="#15102A"/>
+      <stop offset="0.62" stop-color="#090716"/>
+      <stop offset="1" stop-color="#03040B"/>
     </radialGradient>
+    <linearGradient id="mist" x1="6" y1="7" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E9D5FF" stop-opacity="0.12"/>
+      <stop offset="0.48" stop-color="#FFFFFF" stop-opacity="0.02"/>
+      <stop offset="1" stop-color="#A855F7" stop-opacity="0.08"/>
+    </linearGradient>
   </defs>
-  <rect x="1" y="1" width="38" height="38" rx="5" fill="url(#rim)"/>
-  <rect x="2.5" y="2.5" width="35" height="35" rx="4.5" fill="url(#stone)" stroke="#050412" stroke-width="0.8"/>
-  <rect x="4.2" y="4.2" width="31.6" height="31.6" rx="3.5" stroke="#231A40" stroke-opacity="0.55" stroke-width="0.8" fill="none"/>
-  <rect x="6.2" y="6.2" width="27.6" height="27.6" rx="2.6" stroke="#A855F7" stroke-opacity="0.06" stroke-width="1" fill="none"/>
+  <rect x="1" y="1" width="38" height="38" rx="5" fill="url(#stormRim)"/>
+  <rect x="2.7" y="2.7" width="34.6" height="34.6" rx="4.25" fill="url(#stormStone)" stroke="#050512" stroke-width="1"/>
+  <rect x="4.6" y="4.6" width="30.8" height="30.8" rx="3.4" fill="url(#mist)" stroke="#2E244B" stroke-opacity="0.78" stroke-width="1"/>
+  <rect x="6.6" y="6.6" width="26.8" height="26.8" rx="2.6" stroke="#E9D5FF" stroke-opacity="0.08" stroke-width="1"/>
 </svg>
