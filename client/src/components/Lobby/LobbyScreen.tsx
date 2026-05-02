@@ -75,6 +75,7 @@ import {
   connectSocket,
   connectSocketReady,
   disconnectSocket,
+  getSocket,
   SOCKET_CONNECT_FAILED,
 } from "../../socket/socketClient";
 import { startLocalAbilityTraining } from "../../ability/localTrainingSession";
@@ -1032,6 +1033,11 @@ export function LobbyScreen({
 
   const dailyResetTimeoutRef = useRef<number | null>(null);
   const prevAuthUserIdRef = useRef<string | null>(authUserId);
+  const matchmakingEpochRef = useRef(0);
+  const activeNetworkMatchRef = useRef<{
+    mode: "friend" | "random" | "ai" | "coop" | "2v2" | "ability";
+    epoch: number;
+  } | null>(null);
 
   const lastRewardSyncDayRef = useRef<string>(getUtcDayKey());
   const skinPurchaseConfirmResolverRef = useRef<
@@ -2698,6 +2704,45 @@ export function LobbyScreen({
   const getNick = () =>
     myNickname.trim() || `Guest${Math.floor(Math.random() * 9999)}`;
 
+  const beginNetworkMatch = (
+    mode: "friend" | "random" | "ai" | "coop" | "2v2" | "ability",
+  ) => {
+    const epoch = matchmakingEpochRef.current + 1;
+    matchmakingEpochRef.current = epoch;
+    activeNetworkMatchRef.current = { mode, epoch };
+    return epoch;
+  };
+
+  const cancelNetworkMatch = (
+    mode?: "friend" | "random" | "ai" | "coop" | "2v2" | "ability",
+  ) => {
+    if (!mode || activeNetworkMatchRef.current?.mode === mode) {
+      activeNetworkMatchRef.current = null;
+    }
+    matchmakingEpochRef.current += 1;
+  };
+
+  const isNetworkMatchActive = (
+    mode: "friend" | "random" | "ai" | "coop" | "2v2" | "ability",
+    epoch?: number,
+  ) => {
+    const active = activeNetworkMatchRef.current;
+    if (!active || active.mode !== mode) return false;
+    if (epoch !== undefined && active.epoch !== epoch) return false;
+    if (
+      mode === "ability" &&
+      useGameStore.getState().isLocalAbilityTraining
+    ) {
+      return false;
+    }
+    return useGameStore.getState().currentMatchType === mode;
+  };
+
+  const isAnyNetworkMatchActive = (
+    modes: Array<"friend" | "random" | "ai" | "coop" | "2v2" | "ability">,
+    epoch?: number,
+  ) => modes.some((mode) => isNetworkMatchActive(mode, epoch));
+
   const startSocket = () => {
     const socket = connectSocket();
 
@@ -2728,6 +2773,8 @@ export function LobbyScreen({
     socket.off("session_replaced");
 
     socket.on("game_start", (gs: ClientGameState) => {
+      if (!activeNetworkMatchRef.current) return;
+      if (useGameStore.getState().isLocalAbilityTraining) return;
       setGameState(gs);
 
       onGameStart();
@@ -2763,6 +2810,7 @@ export function LobbyScreen({
 
         pieceSkin?: PieceSkin;
       }) => {
+        if (!isAnyNetworkMatchActive(["friend", "random", "ai"])) return;
         setMyColor(color);
 
         setRoomCode(code);
@@ -2805,6 +2853,7 @@ export function LobbyScreen({
 
         opponentPieceSkin?: PieceSkin;
       }) => {
+        if (!isAnyNetworkMatchActive(["friend", "random", "ai"])) return;
         setMyColor(color);
 
         setRoomCode(roomId);
@@ -2843,6 +2892,7 @@ export function LobbyScreen({
 
         pieceSkin?: PieceSkin;
       }) => {
+        if (!isAnyNetworkMatchActive(["friend", "random", "ai"])) return;
         const myCurrentColor = useGameStore.getState().myColor;
 
         const myCurrentPieceSkin = useGameStore.getState().pieceSkin;
@@ -2873,12 +2923,14 @@ export function LobbyScreen({
     );
 
     socket.on("join_error", ({ message }: { message: string }) => {
+      cancelNetworkMatch();
       setIsMatchmaking(false);
 
       setError(message);
     });
 
     socket.on("matchmaking_waiting", () => {
+      if (!isNetworkMatchActive("random")) return;
       setError("");
 
       setIsMatchmaking(true);
@@ -2906,6 +2958,7 @@ export function LobbyScreen({
 
         teammatePieceSkin?: PieceSkin;
       }) => {
+        if (!isNetworkMatchActive("coop")) return;
         setMyColor(color);
 
         setRoomCode(roomId);
@@ -2931,6 +2984,7 @@ export function LobbyScreen({
     );
 
     socket.on("coop_matchmaking_waiting", () => {
+      if (!isNetworkMatchActive("coop")) return;
       setError("");
 
       setIsMatchmaking(true);
@@ -2952,6 +3006,7 @@ export function LobbyScreen({
 
         team: "red" | "blue";
       }) => {
+        if (!isNetworkMatchActive("2v2")) return;
         setMyColor(team);
 
         setTwoVsTwoSlot(slot);
@@ -2967,6 +3022,7 @@ export function LobbyScreen({
     );
 
     socket.on("twovtwo_matchmaking_waiting", () => {
+      if (!isNetworkMatchActive("2v2")) return;
       setError("");
 
       setIsMatchmaking(true);
@@ -2986,6 +3042,7 @@ export function LobbyScreen({
 
         color: "red" | "blue";
       }) => {
+        if (!isNetworkMatchActive("friend")) return;
         setMyColor(color);
 
         setRoomCode(code);
@@ -3010,6 +3067,7 @@ export function LobbyScreen({
 
         color?: "red" | "blue";
       }) => {
+        if (!isNetworkMatchActive("friend")) return;
         if (color) {
           setMyColor(color === "red" ? "blue" : "red");
         }
@@ -3036,6 +3094,7 @@ export function LobbyScreen({
 
         opponentNickname: string;
       }) => {
+        if (!isAnyNetworkMatchActive(["friend", "ability"])) return;
         setMyColor(color);
 
         setRoomCode(roomId);
@@ -3049,6 +3108,7 @@ export function LobbyScreen({
     );
 
     socket.on("ability_matchmaking_waiting", () => {
+      if (!isNetworkMatchActive("ability")) return;
       setError("");
 
       setIsMatchmaking(true);
@@ -3123,6 +3183,7 @@ export function LobbyScreen({
 
   const handleCreateRoom = async () => {
     setError("");
+    const epoch = beginNetworkMatch("friend");
     setIsMatchmaking(true);
 
     setMatchType("friend");
@@ -3130,15 +3191,17 @@ export function LobbyScreen({
     try {
       const profile = await ensureMatchmakingProfile();
       const socket = await prepareMatchmakingSocket();
-      if (!socket) return;
-      socket.emit("create_room", await buildPlayerPayloadFromProfile(profile));
+      const payload = await buildPlayerPayloadFromProfile(profile);
+      if (!socket || !isNetworkMatchActive("friend", epoch)) return;
+      socket.emit("create_room", payload);
     } catch (error) {
-      showAccountLoadError(error);
+      if (isNetworkMatchActive("friend", epoch)) showAccountLoadError(error);
     }
   };
 
   const handleCreateAbilityRoom = async () => {
     setError("");
+    const epoch = beginNetworkMatch("friend");
     setIsMatchmaking(true);
 
     setMatchType("friend");
@@ -3148,13 +3211,11 @@ export function LobbyScreen({
         syncAbilitySkills: true,
       });
       const socket = await prepareMatchmakingSocket();
-      if (!socket) return;
-      socket.emit(
-        "create_ability_room",
-        await buildAbilityPlayerPayloadFromProfile(profile),
-      );
+      const payload = await buildAbilityPlayerPayloadFromProfile(profile);
+      if (!socket || !isNetworkMatchActive("friend", epoch)) return;
+      socket.emit("create_ability_room", payload);
     } catch (error) {
-      showAccountLoadError(error);
+      if (isNetworkMatchActive("friend", epoch)) showAccountLoadError(error);
     }
   };
 
@@ -3168,6 +3229,7 @@ export function LobbyScreen({
     }
 
     setError("");
+    const epoch = beginNetworkMatch("friend");
     setIsMatchmaking(true);
 
     setMatchType("friend");
@@ -3175,13 +3237,14 @@ export function LobbyScreen({
     try {
       const profile = await ensureMatchmakingProfile();
       const socket = await prepareMatchmakingSocket();
-      if (!socket) return;
+      const payload = await buildPlayerPayloadFromProfile(profile);
+      if (!socket || !isNetworkMatchActive("friend", epoch)) return;
       socket.emit("join_room", {
         code: normalizedJoinCode,
-        ...(await buildPlayerPayloadFromProfile(profile)),
+        ...payload,
       });
     } catch (error) {
-      showAccountLoadError(error);
+      if (isNetworkMatchActive("friend", epoch)) showAccountLoadError(error);
     }
   };
 
@@ -3195,6 +3258,7 @@ export function LobbyScreen({
     }
 
     setError("");
+    const epoch = beginNetworkMatch("friend");
     setIsMatchmaking(true);
 
     setMatchType("friend");
@@ -3204,13 +3268,14 @@ export function LobbyScreen({
         syncAbilitySkills: true,
       });
       const socket = await prepareMatchmakingSocket();
-      if (!socket) return;
+      const payload = await buildAbilityPlayerPayloadFromProfile(profile);
+      if (!socket || !isNetworkMatchActive("friend", epoch)) return;
       socket.emit("join_ability_room", {
         code: normalizedJoinCode,
-        ...(await buildAbilityPlayerPayloadFromProfile(profile)),
+        ...payload,
       });
     } catch (error) {
-      showAccountLoadError(error);
+      if (isNetworkMatchActive("friend", epoch)) showAccountLoadError(error);
     }
   };
 
@@ -3260,6 +3325,7 @@ export function LobbyScreen({
 
   const handleRandom = async () => {
     setError("");
+    const epoch = beginNetworkMatch("random");
     setIsMatchmaking(true);
 
     setMatchType("random");
@@ -3267,17 +3333,19 @@ export function LobbyScreen({
     try {
       const profile = await ensureMatchmakingProfile();
       const socket = await prepareMatchmakingSocket();
-      if (!socket) return;
-      socket.emit("join_random", await buildPlayerPayloadFromProfile(profile));
+      const payload = await buildPlayerPayloadFromProfile(profile);
+      if (!socket || !isNetworkMatchActive("random", epoch)) return;
+      socket.emit("join_random", payload);
     } catch (error) {
-      showAccountLoadError(error);
+      if (isNetworkMatchActive("random", epoch)) showAccountLoadError(error);
     }
   };
 
   const handleCancelRandom = () => {
-    const socket = connectSocket();
+    cancelNetworkMatch("random");
+    const socket = getSocket();
 
-    socket.emit("cancel_random");
+    if (socket.connected) socket.emit("cancel_random");
 
     setIsMatchmaking(false);
 
@@ -3370,9 +3438,10 @@ export function LobbyScreen({
   ]);
 
   const handleCancelCoop = () => {
-    const socket = connectSocket();
+    cancelNetworkMatch("coop");
+    const socket = getSocket();
 
-    socket.emit("cancel_coop");
+    if (socket.connected) socket.emit("cancel_coop");
 
     setIsMatchmaking(false);
 
@@ -3380,9 +3449,10 @@ export function LobbyScreen({
   };
 
   const handleCancelTwoVsTwo = () => {
-    const socket = connectSocket();
+    cancelNetworkMatch("2v2");
+    const socket = getSocket();
 
-    socket.emit("cancel_2v2");
+    if (socket.connected) socket.emit("cancel_2v2");
 
     setIsMatchmaking(false);
 
@@ -3390,6 +3460,7 @@ export function LobbyScreen({
   };
 
   const handleAiMatchWithTutorial = async (tutorialPending: boolean) => {
+    const epoch = beginNetworkMatch("ai");
     setError("");
 
     setIsMatchmaking(true);
@@ -3399,17 +3470,19 @@ export function LobbyScreen({
     try {
       const profile = await ensureMatchmakingProfile();
       const socket = await prepareMatchmakingSocket();
-      if (!socket) return;
+      const payload = await buildPlayerPayloadFromProfile(profile);
+      if (!socket || !isNetworkMatchActive("ai", epoch)) return;
       socket.emit("join_ai", {
-        ...(await buildPlayerPayloadFromProfile(profile)),
+        ...payload,
         tutorialPending,
       });
     } catch (error) {
-      showAccountLoadError(error);
+      if (isNetworkMatchActive("ai", epoch)) showAccountLoadError(error);
     }
   };
 
   const handleCancelAi = () => {
+    cancelNetworkMatch("ai");
     disconnectSocket();
 
     useGameStore.getState().resetGame();
@@ -3458,6 +3531,7 @@ export function LobbyScreen({
   };
 
   const handleCoopMatch = async () => {
+    const epoch = beginNetworkMatch("coop");
     setError("");
     setIsMatchmaking(true);
 
@@ -3466,14 +3540,16 @@ export function LobbyScreen({
     try {
       const profile = await ensureMatchmakingProfile();
       const socket = await prepareMatchmakingSocket();
-      if (!socket) return;
-      socket.emit("join_coop", await buildPlayerPayloadFromProfile(profile));
+      const payload = await buildPlayerPayloadFromProfile(profile);
+      if (!socket || !isNetworkMatchActive("coop", epoch)) return;
+      socket.emit("join_coop", payload);
     } catch (error) {
-      showAccountLoadError(error);
+      if (isNetworkMatchActive("coop", epoch)) showAccountLoadError(error);
     }
   };
 
   const handleTwoVsTwoMatch = async () => {
+    const epoch = beginNetworkMatch("2v2");
     setError("");
     setIsMatchmaking(true);
 
@@ -3482,14 +3558,16 @@ export function LobbyScreen({
     try {
       const profile = await ensureMatchmakingProfile();
       const socket = await prepareMatchmakingSocket();
-      if (!socket) return;
-      socket.emit("join_2v2", await buildPlayerPayloadFromProfile(profile));
+      const payload = await buildPlayerPayloadFromProfile(profile);
+      if (!socket || !isNetworkMatchActive("2v2", epoch)) return;
+      socket.emit("join_2v2", payload);
     } catch (error) {
-      showAccountLoadError(error);
+      if (isNetworkMatchActive("2v2", epoch)) showAccountLoadError(error);
     }
   };
 
   const handleAbilityMatch = async () => {
+    const epoch = beginNetworkMatch("ability");
     setError("");
 
     setLocalAbilityTraining(false);
@@ -3502,19 +3580,19 @@ export function LobbyScreen({
         syncAbilitySkills: true,
       });
       const socket = await prepareMatchmakingSocket();
-      if (!socket) return;
-      socket.emit("join_ability", {
-        ...(await buildPlayerPayloadFromProfile(profile)),
-        equippedSkills:
-          profile.equippedAbilitySkills ??
-          useGameStore.getState().abilityLoadout,
-      });
+      const payload = await buildAbilityPlayerPayloadFromProfile(profile);
+      if (!socket || !isNetworkMatchActive("ability", epoch)) return;
+      socket.emit("join_ability", payload);
     } catch (error) {
-      showAccountLoadError(error);
+      if (isNetworkMatchActive("ability", epoch)) showAccountLoadError(error);
     }
   };
 
   const handleAbilityTraining = async () => {
+    cancelNetworkMatch();
+    const socket = getSocket();
+    if (socket.connected) socket.emit("cancel_ability");
+
     setError("");
     setLocalAbilityTraining(true);
     setMatchType("ability");
@@ -3536,10 +3614,11 @@ export function LobbyScreen({
   };
 
   const handleCancelAbility = () => {
+    cancelNetworkMatch("ability");
     setLocalAbilityTraining(false);
-    const socket = connectSocket();
+    const socket = getSocket();
 
-    socket.emit("cancel_ability");
+    if (socket.connected) socket.emit("cancel_ability");
 
     setIsMatchmaking(false);
 
