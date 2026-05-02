@@ -685,9 +685,10 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     if (blueBoardSkin && blueBoardSkin !== "classic") return blueBoardSkin;
     return boardSkin;
   })();
+  const currentArena = getArenaFromRating(currentRating);
   const screenBoardClass =
-    getArenaFromRating(currentRating) === 2
-      ? "arena-bg-2-screen"
+    currentArena > 1
+      ? `arena-bg-${currentArena}-screen`
       : resolvedBoardSkin === "pharaoh"
       ? "board-bg-pharaoh-screen"
       : resolvedBoardSkin === "magic"

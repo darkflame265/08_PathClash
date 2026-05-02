@@ -45,19 +45,71 @@
   pointer-events: none;
 }
 
-.game-screen.arena-bg-2-screen::before {
+.game-screen.arena-bg-2-screen::before,
+.game-screen.arena-bg-3-screen::before,
+.game-screen.arena-bg-4-screen::before,
+.game-screen.arena-bg-5-screen::before,
+.game-screen.arena-bg-6-screen::before,
+.game-screen.arena-bg-7-screen::before,
+.game-screen.arena-bg-8-screen::before,
+.game-screen.arena-bg-9-screen::before,
+.game-screen.arena-bg-10-screen::before {
   content: "";
   position: absolute;
   inset: 0;
   background:
     linear-gradient(rgba(4, 10, 24, 0.24), rgba(4, 10, 24, 0.38)),
-    url("/arena_bg/arena2_bg.png") center / cover no-repeat;
+    var(--arena-bg-image) center / cover no-repeat;
   opacity: 0.99;
   z-index: 0;
   pointer-events: none;
 }
 
-.game-screen.arena-bg-2-screen > * {
+.game-screen.arena-bg-2-screen {
+  --arena-bg-image: url("/arena_bg/arena2_bg.png");
+}
+
+.game-screen.arena-bg-3-screen {
+  --arena-bg-image: url("/arena_bg/arena3_bg.png");
+}
+
+.game-screen.arena-bg-4-screen {
+  --arena-bg-image: url("/arena_bg/arena4_bg.png");
+}
+
+.game-screen.arena-bg-5-screen {
+  --arena-bg-image: url("/arena_bg/arena5_bg.png");
+}
+
+.game-screen.arena-bg-6-screen {
+  --arena-bg-image: url("/arena_bg/arena6_bg.png");
+}
+
+.game-screen.arena-bg-7-screen {
+  --arena-bg-image: url("/arena_bg/arena7_bg.png");
+}
+
+.game-screen.arena-bg-8-screen {
+  --arena-bg-image: url("/arena_bg/arena8_bg.png");
+}
+
+.game-screen.arena-bg-9-screen {
+  --arena-bg-image: url("/arena_bg/arena9_bg.png");
+}
+
+.game-screen.arena-bg-10-screen {
+  --arena-bg-image: url("/arena_bg/arena10_bg.png");
+}
+
+.game-screen.arena-bg-2-screen > *,
+.game-screen.arena-bg-3-screen > *,
+.game-screen.arena-bg-4-screen > *,
+.game-screen.arena-bg-5-screen > *,
+.game-screen.arena-bg-6-screen > *,
+.game-screen.arena-bg-7-screen > *,
+.game-screen.arena-bg-8-screen > *,
+.game-screen.arena-bg-9-screen > *,
+.game-screen.arena-bg-10-screen > * {
   position: relative;
   z-index: 1;
 }
