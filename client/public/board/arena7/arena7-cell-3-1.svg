@@ -1,0 +1,30 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
+  <defs>
+    <linearGradient id="forestRim" x1="2" y1="2" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#DBEAFE"/>
+      <stop offset="0.18" stop-color="#A78BFA"/>
+      <stop offset="0.5" stop-color="#10251A"/>
+      <stop offset="1" stop-color="#22C55E"/>
+    </linearGradient>
+    <radialGradient id="forestCore" cx="0.44" cy="0.28" r="0.82">
+      <stop offset="0" stop-color="#10251A"/>
+      <stop offset="0.62" stop-color="#08130E"/>
+      <stop offset="1" stop-color="#020604"/>
+    </radialGradient>
+    <radialGradient id="moonBloom" cx="0.22" cy="0.18" r="0.82">
+      <stop offset="0" stop-color="#DBEAFE" stop-opacity="0.11"/>
+      <stop offset="0.48" stop-color="#A78BFA" stop-opacity="0.035"/>
+      <stop offset="1" stop-color="#22C55E" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mossWash" x1="6" y1="33" x2="34" y2="6" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22C55E" stop-opacity="0.12"/>
+      <stop offset="0.5" stop-color="#193726" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#A78BFA" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="38" height="38" rx="7" fill="url(#forestRim)"/>
+  <rect x="2.8" y="2.8" width="34.4" height="34.4" rx="6" fill="#06100B" stroke="#06150F" stroke-width="1"/>
+  <rect x="4.5" y="4.5" width="31" height="31" rx="5.2" fill="url(#forestCore)" stroke="#193726" stroke-opacity="0.82" stroke-width="1.1"/>
+  <rect x="6.6" y="6.6" width="26.8" height="26.8" rx="4.4" fill="url(#moonBloom)" stroke="#22C55E" stroke-opacity="0.12" stroke-width="0.9"/>
+  <rect x="8.4" y="8.4" width="23.2" height="23.2" rx="3.6" fill="url(#mossWash)" stroke="#DBEAFE" stroke-opacity="0.055" stroke-width="0.8"/>
+</svg>
