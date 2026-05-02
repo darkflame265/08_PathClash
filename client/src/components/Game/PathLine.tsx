@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import type { Position, PlayerColor } from '../../types/game.types';
 
 interface Props {
@@ -17,11 +18,16 @@ export function PathLine({
   isPlanning = false,
   animateReveal = false,
 }: Props) {
+  const glowId = useId();
+
   if (path.length === 0) return null;
 
   const allPoints = [startPos, ...path];
   const points = allPoints
-    .map(p => `${p.col * cellSize + cellSize / 2},${p.row * cellSize + cellSize / 2}`)
+    .map(
+      (p) =>
+        `${p.col * cellSize + cellSize / 2},${p.row * cellSize + cellSize / 2}`,
+    )
     .join(' ');
 
   const isRed = color === 'red';
@@ -31,11 +37,21 @@ export function PathLine({
   const stroke = isRed ? '#ef4444' : '#3b82f6';
   const opacity = isRed ? 0.7 : 0.85;
   const zIndex = isRed ? 2 : 3;
+  const outlineStroke = isRed
+    ? 'rgba(84, 12, 18, 0.92)'
+    : 'rgba(8, 30, 76, 0.92)';
+  const outlineWidth = strokeWidth + Math.max(4, cellSize * 0.042);
+  const glowWidth = strokeWidth + Math.max(8, cellSize * 0.09);
+  const glowOpacity = isRed ? 0.48 : 0.55;
+  const innerHighlight = isRed ? '#fecaca' : '#bfdbfe';
   const endRadius = isRed
     ? Math.max(4, cellSize * 0.072)
     : Math.max(3, cellSize * 0.052);
-  // 경로 지정 단계: 점선 표시 (dasharray = 선길이 공백길이)
-  const strokeDasharray = isPlanning ? `${strokeWidth * 2} ${strokeWidth * 1.5}` : undefined;
+  const strokeDasharray = isPlanning
+    ? `${strokeWidth * 2} ${strokeWidth * 1.5}`
+    : undefined;
+  const endX = path[path.length - 1].col * cellSize + cellSize / 2;
+  const endY = path[path.length - 1].row * cellSize + cellSize / 2;
 
   return (
     <svg
@@ -50,6 +66,46 @@ export function PathLine({
       width="100%"
       height="100%"
     >
+      <defs>
+        <filter
+          id={glowId}
+          x="-35%"
+          y="-35%"
+          width="170%"
+          height="170%"
+          colorInterpolationFilters="sRGB"
+        >
+          <feGaussianBlur
+            stdDeviation={Math.max(2, cellSize * 0.035)}
+            result="blur"
+          />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      <polyline
+        points={points}
+        fill="none"
+        stroke={stroke}
+        strokeWidth={glowWidth}
+        strokeOpacity={glowOpacity}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray={strokeDasharray}
+        filter={`url(#${glowId})`}
+      />
+      <polyline
+        points={points}
+        fill="none"
+        stroke={outlineStroke}
+        strokeWidth={outlineWidth}
+        strokeOpacity={0.9}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray={strokeDasharray}
+      />
       <polyline
         points={points}
         fill="none"
@@ -60,16 +116,32 @@ export function PathLine({
         strokeLinejoin="round"
         strokeDasharray={strokeDasharray}
       />
-      {/* Arrow at the end */}
-      {path.length > 0 && (
-        <circle
-          cx={path[path.length - 1].col * cellSize + cellSize / 2}
-          cy={path[path.length - 1].row * cellSize + cellSize / 2}
-          r={endRadius}
-          fill={stroke}
-          fillOpacity={opacity}
-        />
-      )}
+      <polyline
+        points={points}
+        fill="none"
+        stroke={innerHighlight}
+        strokeWidth={Math.max(1.4, strokeWidth * 0.28)}
+        strokeOpacity={isRed ? 0.35 : 0.42}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray={strokeDasharray}
+      />
+      <circle
+        cx={endX}
+        cy={endY}
+        r={endRadius + Math.max(5, cellSize * 0.055)}
+        fill={stroke}
+        fillOpacity={glowOpacity}
+        filter={`url(#${glowId})`}
+      />
+      <circle
+        cx={endX}
+        cy={endY}
+        r={endRadius + Math.max(2, cellSize * 0.025)}
+        fill={outlineStroke}
+        fillOpacity={0.95}
+      />
+      <circle cx={endX} cy={endY} r={endRadius} fill={stroke} fillOpacity={opacity} />
     </svg>
   );
 }
