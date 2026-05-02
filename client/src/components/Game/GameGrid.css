@@ -85,6 +85,7 @@
 
 .game-grid.board-skin-pharaoh .grid-cell,
 .game-grid.board-skin-arena6 .grid-cell {
+  background: transparent;
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -94,6 +95,7 @@
 .game-grid.board-skin-pharaoh .grid-cell.is-hovered,
 .game-grid.board-skin-arena6 .grid-cell:hover,
 .game-grid.board-skin-arena6 .grid-cell.is-hovered {
+  background: transparent;
   box-shadow:
     inset 0 0 0 1px rgba(255, 221, 148, 0.18),
     0 0 18px rgba(196, 149, 69, 0.12);
@@ -105,9 +107,15 @@
 .game-grid.board-skin-arena6 .grid-cell.obstacle,
 .game-grid.board-skin-arena6 .grid-cell.obstacle:hover,
 .game-grid.board-skin-arena6 .grid-cell.obstacle.is-hovered {
+  background-color: transparent;
   box-shadow:
     inset 0 0 0 1px rgba(255, 221, 148, 0.18),
     0 0 18px rgba(196, 149, 69, 0.12);
+}
+
+.game-grid.board-skin-arena6 {
+  background: transparent;
+  border-color: transparent;
 }
 
 .game-grid.board-skin-magic {
