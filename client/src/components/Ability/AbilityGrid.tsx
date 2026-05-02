@@ -274,6 +274,8 @@ export function AbilityGrid({
   const boardSkinClass =
     arena === 2
       ? "board-skin-arena2"
+      : arena === 3
+        ? "board-skin-arena3"
       : resolvedBoardSkin === "blue_gray"
       ? "board-skin-blue-gray"
       : resolvedBoardSkin === "pharaoh"
@@ -299,6 +301,8 @@ export function AbilityGrid({
     const cellUrl =
       arena === 2
         ? `/board/arena2/arena2-cell-${row}-${col}.svg`
+        : arena === 3
+          ? `/board/arena3/arena3-cell-${row}-${col}.svg`
         : resolvedBoardSkin === "magic"
           ? `/board/magic-cells/magic-cell-${row}-${col}.svg`
           : resolvedBoardSkin === "pharaoh"
