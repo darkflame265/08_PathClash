@@ -1,0 +1,32 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
+  <defs>
+    <linearGradient id="stormRim" x1="2" y1="2" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#C084FC"/>
+      <stop offset="0.26" stop-color="#24123D"/>
+      <stop offset="0.7" stop-color="#0B0614"/>
+      <stop offset="1" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <radialGradient id="stormStone" cx="0.44" cy="0.3" r="0.82">
+      <stop offset="0" stop-color="#11182C"/>
+      <stop offset="0.62" stop-color="#0B0D1A"/>
+      <stop offset="1" stop-color="#03040B"/>
+    </radialGradient>
+    <filter id="stormGlow" x="-10" y="-10" width="60" height="60" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="0.85" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect x="1" y="1" width="38" height="38" rx="5" fill="url(#stormRim)"/>
+  <rect x="2.7" y="2.7" width="34.6" height="34.6" rx="4.25" fill="url(#stormStone)" stroke="#050512" stroke-width="1"/>
+  <rect x="4.6" y="4.6" width="30.8" height="30.8" rx="3.4" stroke="#2E244B" stroke-opacity="0.78" stroke-width="1"/>
+  <path d="M13 8 L15 15 L22 16 L21 23 L27 31" stroke="#050512" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.62"/>
+  <path d="M13 8 L15 15 L22 16 L21 23 L27 31" stroke="#8B5CF6" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.58" filter="url(#stormGlow)"/>
+  <path d="M13 8 L15 15 L22 16 L21 23 L27 31" stroke="#BAE6FD" stroke-width="0.42" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.78"/>
+  <path d="M22 16 L27 13" stroke="#C084FC" stroke-width="0.72" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.42"/>
+  <path d="M21 23 L17 27" stroke="#8B5CF6" stroke-width="0.68" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.36"/>
+  <circle cx="27" cy="26" r="0.85" fill="#BAE6FD" fill-opacity="0.32" filter="url(#stormGlow)"/>
+  <circle cx="24" cy="28" r="0.55" fill="#8B5CF6" fill-opacity="0.38"/>
+</svg>
