@@ -174,6 +174,80 @@ interface Props {
   tutorialPromptTrigger?: number;
 }
 
+type SettingsIconKind =
+  | "language"
+  | "sound"
+  | "controls"
+  | "terms"
+  | "privacy"
+  | "donate";
+
+function SettingsActionIcon({
+  kind,
+  lang,
+}: {
+  kind: SettingsIconKind;
+  lang: "en" | "kr";
+}) {
+  if (kind === "language") {
+    return (
+      <span className="settings-action-icon settings-action-lang-icon" aria-hidden="true">
+        {lang === "en" ? "EN" : "KR"}
+      </span>
+    );
+  }
+
+  const iconPaths = {
+    sound: (
+      <>
+        <path d="M4 9v6h4l5 4V5L8 9H4Z" />
+        <path d="M16 8.5a5 5 0 0 1 0 7" />
+        <path d="M18.5 6a8 8 0 0 1 0 12" />
+      </>
+    ),
+    controls: (
+      <>
+        <path d="M7.5 9.5h9a4.5 4.5 0 0 1 4.2 6.1l-.5 1.3a2.2 2.2 0 0 1-3.7.7l-1.6-1.8H9.1l-1.6 1.8a2.2 2.2 0 0 1-3.7-.7l-.5-1.3a4.5 4.5 0 0 1 4.2-6.1Z" />
+        <path d="M8 13h3" />
+        <path d="M9.5 11.5v3" />
+        <path d="M16.8 12.3h.01" />
+        <path d="M18.6 14.1h.01" />
+      </>
+    ),
+    terms: (
+      <>
+        <path d="M6 3.5h9l3 3V20.5H6V3.5Z" />
+        <path d="M15 3.5v3h3" />
+        <path d="M8.5 10h7" />
+        <path d="M8.5 13.5h7" />
+        <path d="M8.5 17h4.5" />
+      </>
+    ),
+    privacy: (
+      <>
+        <path d="M12 3.5 5.5 6.2v5.2c0 4.1 2.6 7.7 6.5 9.1 3.9-1.4 6.5-5 6.5-9.1V6.2L12 3.5Z" />
+        <path d="M9.4 12.2 11.2 14l3.4-4" />
+      </>
+    ),
+    donate: (
+      <>
+        <path d="M12 3.5 20 9l-8 11.5L4 9l8-5.5Z" />
+        <path d="M4 9h16" />
+        <path d="M8.5 9 12 20.5 15.5 9" />
+        <path d="M8.5 9 12 3.5 15.5 9" />
+      </>
+    ),
+  } satisfies Record<Exclude<SettingsIconKind, "language">, unknown>;
+
+  return (
+    <span className="settings-action-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" focusable="false">
+        {iconPaths[kind]}
+      </svg>
+    </span>
+  );
+}
+
 const POLICY_URL_KR =
   import.meta.env.VITE_POLICY_URL_KR?.trim() ||
   "https://pathclash.com/privacy.html";
@@ -5152,7 +5226,8 @@ export function LobbyScreen({
                   onClick={handleToggleLanguage}
                   type="button"
                 >
-                  {languageButtonLabel}
+                  <SettingsActionIcon kind="language" lang={lang} />
+                  <span>{languageButtonLabel}</span>
                 </button>
 
                 <button
@@ -5163,7 +5238,8 @@ export function LobbyScreen({
                   }}
                   type="button"
                 >
-                  {soundButtonLabel}
+                  <SettingsActionIcon kind="sound" lang={lang} />
+                  <span>{soundButtonLabel}</span>
                 </button>
 
                 <button
@@ -5174,7 +5250,8 @@ export function LobbyScreen({
                   }}
                   type="button"
                 >
-                  {controlsButtonLabel}
+                  <SettingsActionIcon kind="controls" lang={lang} />
+                  <span>{controlsButtonLabel}</span>
                 </button>
 
                 <a
@@ -5183,7 +5260,8 @@ export function LobbyScreen({
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {termsButtonLabel}
+                  <SettingsActionIcon kind="terms" lang={lang} />
+                  <span>{termsButtonLabel}</span>
                 </a>
 
                 <a
@@ -5192,7 +5270,8 @@ export function LobbyScreen({
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {t.policyBtn}
+                  <SettingsActionIcon kind="privacy" lang={lang} />
+                  <span>{t.policyBtn}</span>
                 </a>
 
                 <button
@@ -5200,7 +5279,8 @@ export function LobbyScreen({
                   onClick={() => void handleDonate()}
                   type="button"
                 >
-                  {t.donateBtn}
+                  <SettingsActionIcon kind="donate" lang={lang} />
+                  <span>{t.donateBtn}</span>
                 </button>
               </div>
             </div>
