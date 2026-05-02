@@ -191,7 +191,10 @@ function SettingsActionIcon({
 }) {
   if (kind === "language") {
     return (
-      <span className="settings-action-icon settings-action-lang-icon" aria-hidden="true">
+      <span
+        className="settings-action-icon settings-action-lang-icon"
+        aria-hidden="true"
+      >
         {lang === "en" ? "EN" : "KR"}
       </span>
     );
@@ -208,8 +211,8 @@ function SettingsActionIcon({
     controls: (
       <>
         <path d="M7.5 9.5h9a4.5 4.5 0 0 1 4.2 6.1l-.5 1.3a2.2 2.2 0 0 1-3.7.7l-1.6-1.8H9.1l-1.6 1.8a2.2 2.2 0 0 1-3.7-.7l-.5-1.3a4.5 4.5 0 0 1 4.2-6.1Z" />
-        <path d="M8 13h3" />
-        <path d="M9.5 11.5v3" />
+        <path d="M6 13h3" />
+        <path d="M7.5 11.5v3" />
         <path d="M16.8 12.3h.01" />
         <path d="M18.6 14.1h.01" />
       </>
@@ -1081,7 +1084,10 @@ export function LobbyScreen({
         : `로테이션 만료로 ${firstName ?? "스킬"}${extra} 장착이 해제되었습니다.`,
     );
     setPendingRemovedRotationSkillsNotice([]);
-  }, [pendingRemovedRotationSkillsNotice, setPendingRemovedRotationSkillsNotice]);
+  }, [
+    pendingRemovedRotationSkillsNotice,
+    setPendingRemovedRotationSkillsNotice,
+  ]);
 
   const handleLobbyUiClickCapture = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -3072,10 +3078,7 @@ export function LobbyScreen({
   };
 
   const showAccountLoadError = (error?: unknown) => {
-    if (
-      error instanceof Error &&
-      error.message === SOCKET_CONNECT_FAILED
-    ) {
+    if (error instanceof Error && error.message === SOCKET_CONNECT_FAILED) {
       showSocketConnectError();
       return;
     }
@@ -3141,7 +3144,9 @@ export function LobbyScreen({
     setMatchType("friend");
 
     try {
-      const profile = await ensureMatchmakingProfile({ syncAbilitySkills: true });
+      const profile = await ensureMatchmakingProfile({
+        syncAbilitySkills: true,
+      });
       const socket = await prepareMatchmakingSocket();
       if (!socket) return;
       socket.emit(
@@ -3195,7 +3200,9 @@ export function LobbyScreen({
     setMatchType("friend");
 
     try {
-      const profile = await ensureMatchmakingProfile({ syncAbilitySkills: true });
+      const profile = await ensureMatchmakingProfile({
+        syncAbilitySkills: true,
+      });
       const socket = await prepareMatchmakingSocket();
       if (!socket) return;
       socket.emit("join_ability_room", {
@@ -3226,7 +3233,9 @@ export function LobbyScreen({
         onClick={() => setIsModePickerOpen(true)}
       >
         {label}
-        <span className="mode-title-chevron" aria-hidden="true">▾</span>
+        <span className="mode-title-chevron" aria-hidden="true">
+          ▾
+        </span>
       </button>
       {extra}
     </div>
@@ -3489,7 +3498,9 @@ export function LobbyScreen({
     setIsMatchmaking(true);
 
     try {
-      const profile = await ensureMatchmakingProfile({ syncAbilitySkills: true });
+      const profile = await ensureMatchmakingProfile({
+        syncAbilitySkills: true,
+      });
       const socket = await prepareMatchmakingSocket();
       if (!socket) return;
       socket.emit("join_ability", {
@@ -3511,7 +3522,8 @@ export function LobbyScreen({
     try {
       const store = useGameStore.getState();
       startLocalAbilityTraining({
-        nickname: store.myNickname.trim() || `Guest${Math.floor(Math.random() * 9999)}`,
+        nickname:
+          store.myNickname.trim() || `Guest${Math.floor(Math.random() * 9999)}`,
         pieceSkin: store.pieceSkin,
         boardSkin: store.boardSkin,
       });
@@ -4098,33 +4110,34 @@ export function LobbyScreen({
       case "ai":
         return (
           <>
-            {isMatchmaking && currentMatchType === "ai" ? (
-              renderMatchmakingControlBar(handleCancelAi, aiCancelLabel)
-            ) : (
-              renderModeControlBar("ai", t.aiBtn, () => void handleAiMatch())
-            )}
+            {isMatchmaking && currentMatchType === "ai"
+              ? renderMatchmakingControlBar(handleCancelAi, aiCancelLabel)
+              : renderModeControlBar("ai", t.aiBtn, () => void handleAiMatch())}
           </>
         );
       case "friend":
         return (
           <>
-            {renderModeControlBar("primary", t.createRoomBtn, () =>
-              void (friendBattleMode === "ability"
-                ? handleCreateAbilityRoom()
-                : handleCreateRoom()),
+            {renderModeControlBar(
+              "primary",
+              t.createRoomBtn,
+              () =>
+                void (friendBattleMode === "ability"
+                  ? handleCreateAbilityRoom()
+                  : handleCreateRoom()),
             )}
           </>
         );
       case "random":
         return (
           <>
-            {isMatchmaking && currentMatchType === "random" ? (
-              renderMatchmakingControlBar(handleCancelRandom, t.cancelBtn)
-            ) : (
-              renderModeControlBar("accent", renderRewardStartLabel(t.startBtn), () =>
-                void handleRandom(),
-              )
-            )}
+            {isMatchmaking && currentMatchType === "random"
+              ? renderMatchmakingControlBar(handleCancelRandom, t.cancelBtn)
+              : renderModeControlBar(
+                  "accent",
+                  renderRewardStartLabel(t.startBtn),
+                  () => void handleRandom(),
+                )}
 
             {error && <p className="error-msg">{error}</p>}
           </>
@@ -4132,39 +4145,37 @@ export function LobbyScreen({
       case "coop":
         return (
           <>
-            {isMatchmaking && currentMatchType === "coop" ? (
-              renderMatchmakingControlBar(handleCancelCoop, t.cancelBtn)
-            ) : (
-              renderModeControlBar("accent", coopStartLabel, () =>
-                void handleCoopMatch(),
-              )
-            )}
+            {isMatchmaking && currentMatchType === "coop"
+              ? renderMatchmakingControlBar(handleCancelCoop, t.cancelBtn)
+              : renderModeControlBar(
+                  "accent",
+                  coopStartLabel,
+                  () => void handleCoopMatch(),
+                )}
           </>
         );
       case "2v2":
         return (
           <>
-            {isMatchmaking && currentMatchType === "2v2" ? (
-              renderMatchmakingControlBar(handleCancelTwoVsTwo, t.cancelBtn)
-            ) : (
-              renderModeControlBar("accent", twoVsTwoStartLabel, () =>
-                void handleTwoVsTwoMatch(),
-              )
-            )}
+            {isMatchmaking && currentMatchType === "2v2"
+              ? renderMatchmakingControlBar(handleCancelTwoVsTwo, t.cancelBtn)
+              : renderModeControlBar(
+                  "accent",
+                  twoVsTwoStartLabel,
+                  () => void handleTwoVsTwoMatch(),
+                )}
           </>
         );
       case "ability":
         return (
           <>
-            {isMatchmaking && currentMatchType === "ability" ? (
-              renderMatchmakingControlBar(handleCancelAbility, t.cancelBtn)
-            ) : (
-              renderModeControlBar(
-                "accent",
-                renderRewardStartLabel(abilityBattleStartLabel),
-                () => void handleAbilityMatch(),
-              )
-            )}
+            {isMatchmaking && currentMatchType === "ability"
+              ? renderMatchmakingControlBar(handleCancelAbility, t.cancelBtn)
+              : renderModeControlBar(
+                  "accent",
+                  renderRewardStartLabel(abilityBattleStartLabel),
+                  () => void handleAbilityMatch(),
+                )}
           </>
         );
       case "classic_ranked":
@@ -4178,9 +4189,14 @@ export function LobbyScreen({
       case "skill_ranked":
         return (
           <>
-            {renderModeControlBar("accent", abilityBattleStartLabel, undefined, {
-              disabled: true,
-            })}
+            {renderModeControlBar(
+              "accent",
+              abilityBattleStartLabel,
+              undefined,
+              {
+                disabled: true,
+              },
+            )}
           </>
         );
       default:
@@ -4195,7 +4211,9 @@ export function LobbyScreen({
           <span className="lobby-user-name">{myNickname || "-"}</span>
           {showLobbyArenaContent && (
             <div className="lobby-user-score">
-              <span className="lobby-user-score-icon" aria-hidden="true">⭐</span>
+              <span className="lobby-user-score-icon" aria-hidden="true">
+                ⭐
+              </span>
               <span className="lobby-user-score-value">{currentRating}</span>
             </div>
           )}
@@ -4214,7 +4232,8 @@ export function LobbyScreen({
               src={lobbyArenaImageSrc}
               alt={lobbyArenaImageAlt}
               onError={(event) => {
-                if (event.currentTarget.src.endsWith("/arena/arena6.png")) return;
+                if (event.currentTarget.src.endsWith("/arena/arena6.png"))
+                  return;
                 event.currentTarget.src = "/arena/arena6.png";
               }}
             />
@@ -5073,7 +5092,6 @@ export function LobbyScreen({
             </span>
           </button>
         </div>
-
       </div>
 
       <div className="lobby-utility-links legacy-hidden">
