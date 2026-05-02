@@ -1,4 +1,11 @@
-﻿import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
+﻿import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import {
@@ -16,10 +23,13 @@ import {
   syncEquippedBoardSkin,
   syncEquippedSkin,
 } from "./auth/guestAuth";
-import { connectSocket, disconnectSocket, getSocket } from "./socket/socketClient";
+import {
+  connectSocket,
+  disconnectSocket,
+  getSocket,
+} from "./socket/socketClient";
 import type { AbilitySkillId } from "./types/ability.types";
 import { stopLocalAbilityTraining } from "./ability/localTrainingSession";
-import { getArenaFromRating } from "./data/arenaCatalog";
 import { useLang } from "./hooks/useLang";
 import { useGameStore } from "./store/gameStore";
 import {
@@ -36,9 +46,8 @@ import {
 } from "./utils/soundUtils";
 import "./App.css";
 
-const loadLobbyScreen = () => import("./components/Lobby/LobbyScreen");
 const LobbyScreen = lazy(() =>
-  loadLobbyScreen().then((module) => ({
+  import("./components/Lobby/LobbyScreen").then((module) => ({
     default: module.LobbyScreen,
   })),
 );
@@ -94,13 +103,12 @@ const MIN_GAME_LOADING_MS = 3000;
 const LOADING_TIPS = {
   kr: [
     "상대의 다음 경로를 예측하면 한 수 앞서갈 수 있습니다.",
-    "위험한 길을 피하는 것보다, 상대가 싫어하는 길을 고르는 것도 방법입니다.",
+    "마나는 라운드 당 3씩 회복됩니다.",
     "능력은 아끼는 것보다 결정적인 순간에 쓰는 것이 더 중요합니다.",
-    "시간이 부족할수록 가장 단순한 경로가 강한 선택이 될 수 있습니다.",
-    "상대가 자주 고르는 방향을 기억해두면 다음 판이 쉬워집니다.",
+    "한 라운드 당 시간은 9초가 주어집니다.",
+    "경기에서 승리하면 보상으로 다이아몬드 6개가 주어집니다.",
     "훈련장에서 스킬 조합을 미리 시험해볼 수 있습니다.",
     "승리가 어렵다면 안전한 경로를 먼저 확보해보세요.",
-    "타임 리와인드는 실수를 되돌리는 것뿐 아니라 심리전에도 유용합니다.",
   ],
   en: [
     "Predicting your opponent's next path can put you one step ahead.",
@@ -110,39 +118,11 @@ const LOADING_TIPS = {
     "Remembering your opponent's favorite direction makes the next round easier.",
     "You can test skill combinations in Training.",
     "If winning feels hard, secure a safe route first.",
-    "Time Rewind is useful for mind games, not just fixing mistakes.",
   ],
 } as const;
 
 function getRandomLoadingTipIndex() {
   return Math.floor(Math.random() * LOADING_TIPS.kr.length);
-}
-
-function wait(ms: number) {
-  return new Promise<void>((resolve) => {
-    window.setTimeout(resolve, ms);
-  });
-}
-
-function preloadImage(src: string) {
-  return new Promise<void>((resolve) => {
-    const image = new Image();
-    image.onload = () => resolve();
-    image.onerror = () => resolve();
-    image.src = src;
-  });
-}
-
-async function preloadLobbyForSummary(
-  summary: Awaited<ReturnType<typeof refreshAccountSummary>>,
-) {
-  const lobbyArena = summary.rankedUnlocked
-    ? 10
-    : getArenaFromRating(summary.currentRating);
-  await Promise.all([
-    loadLobbyScreen(),
-    preloadImage(`/arena/arena${lobbyArena}.png`),
-  ]);
 }
 
 function GameLoadingScreen({
@@ -173,14 +153,18 @@ function readStoredLegalConsent(): StoredLegalConsent | null {
 }
 
 function writeStoredLegalConsent(record: StoredLegalConsent) {
-  window.localStorage.setItem(LEGAL_CONSENT_STORAGE_KEY, JSON.stringify(record));
+  window.localStorage.setItem(
+    LEGAL_CONSENT_STORAGE_KEY,
+    JSON.stringify(record),
+  );
 }
 
 function App() {
   const [view, setView] = useState<AppView>("lobby");
   const [gameLoadingUntil, setGameLoadingUntil] = useState(0);
-  const [loadingTipIndex, setLoadingTipIndex] = useState(getRandomLoadingTipIndex);
-  const [initialLobbyDataReady, setInitialLobbyDataReady] = useState(false);
+  const [loadingTipIndex, setLoadingTipIndex] = useState(
+    getRandomLoadingTipIndex,
+  );
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showSessionReplaced, setShowSessionReplaced] = useState(false);
   const [isSessionResetting, setIsSessionResetting] = useState(false);
@@ -223,53 +207,6 @@ function App() {
   const showNextLoadingTip = useCallback(() => {
     setLoadingTipIndex((index) => (index + 1) % LOADING_TIPS.kr.length);
   }, []);
-
-  useEffect(() => {
-    void loadLobbyScreen();
-  }, []);
-
-  const applyAccountSummary = useCallback(
-    ({
-      nickname,
-      equippedSkin,
-      equippedBoardSkin,
-      equippedAbilitySkills,
-      ownedSkins,
-      ownedBoardSkins,
-      wins,
-      losses,
-      tokens,
-      dailyRewardWins,
-      dailyRewardTokens,
-      achievements,
-      currentRating,
-      highestArena,
-      rankedUnlocked,
-    }: Awaited<ReturnType<typeof refreshAccountSummary>>) => {
-      setAuthState({
-        ready: true,
-        userId: useGameStore.getState().authUserId,
-        accessToken: useGameStore.getState().authAccessToken,
-        isGuestUser: useGameStore.getState().isGuestUser,
-        nickname,
-        equippedSkin,
-        equippedBoardSkin,
-        equippedAbilitySkills,
-        ownedSkins,
-        ownedBoardSkins,
-        wins,
-        losses,
-        tokens,
-        dailyRewardWins,
-        dailyRewardTokens,
-        achievements,
-        currentRating,
-        highestArena,
-        rankedUnlocked,
-      });
-    },
-    [setAuthState],
-  );
 
   const startGameView = useCallback((nextView: Exclude<AppView, "lobby">) => {
     if (gameLoadingTimeoutRef.current !== null) {
@@ -386,7 +323,9 @@ function App() {
   useEffect(() => {
     let active = true;
     let cleanupNativeAuth = () => {};
-    const applyAuthPayload = (payload: Awaited<ReturnType<typeof initializeGuestAuth>>) => {
+    const applyAuthPayload = (
+      payload: Awaited<ReturnType<typeof initializeGuestAuth>>,
+    ) => {
       console.log("[session-debug] applyAuthPayload", {
         ...getStoredIdentityDebugSnapshot(),
         userId: payload.userId,
@@ -398,7 +337,6 @@ function App() {
       if (!payload.userId || !payload.accessToken) {
         lastAccountSummaryRefreshAuthKeyRef.current = null;
         setAccountSummaryLoading(false);
-        setInitialLobbyDataReady(true);
         return;
       }
       const authKey = `${payload.userId}:${payload.accessToken}`;
@@ -406,7 +344,6 @@ function App() {
         return;
       }
       lastAccountSummaryRefreshAuthKeyRef.current = authKey;
-      setInitialLobbyDataReady(false);
       setAccountSummaryLoading(true);
       if (accountSummaryRefreshTimeoutRef.current !== null) {
         window.clearTimeout(accountSummaryRefreshTimeoutRef.current);
@@ -414,40 +351,61 @@ function App() {
       accountSummaryRefreshTimeoutRef.current = window.setTimeout(() => {
         accountSummaryRefreshTimeoutRef.current = null;
         void refreshAccountSummary({ force: true })
-          .then(async (summary) => {
-            if (!active) return;
-            setAuthState({
-              ready: true,
-              userId: payload.userId,
-              accessToken: useGameStore.getState().authAccessToken ?? payload.accessToken,
-              isGuestUser: useGameStore.getState().isGuestUser,
-              nickname: summary.nickname,
-              equippedSkin: summary.equippedSkin,
-              equippedBoardSkin: summary.equippedBoardSkin,
-              equippedAbilitySkills: summary.equippedAbilitySkills,
-              ownedSkins: summary.ownedSkins,
-              ownedBoardSkins: summary.ownedBoardSkins,
-              wins: summary.wins,
-              losses: summary.losses,
-              tokens: summary.tokens,
-              dailyRewardWins: summary.dailyRewardWins,
-              dailyRewardTokens: summary.dailyRewardTokens,
-              achievements: summary.achievements,
-              currentRating: summary.currentRating,
-              highestArena: summary.highestArena,
-              rankedUnlocked: summary.rankedUnlocked,
-            });
-            await preloadLobbyForSummary(summary);
-          })
+          .then(
+            ({
+              nickname,
+              equippedSkin,
+              equippedBoardSkin,
+              equippedAbilitySkills,
+              ownedSkins,
+              ownedBoardSkins,
+              wins,
+              losses,
+              tokens,
+              dailyRewardWins,
+              dailyRewardTokens,
+              achievements,
+              currentRating,
+              highestArena,
+              rankedUnlocked,
+            }) => {
+              if (!active) return;
+              setAuthState({
+                ready: true,
+                userId: payload.userId,
+                accessToken:
+                  useGameStore.getState().authAccessToken ??
+                  payload.accessToken,
+                isGuestUser: useGameStore.getState().isGuestUser,
+                nickname,
+                equippedSkin,
+                equippedBoardSkin,
+                equippedAbilitySkills,
+                ownedSkins,
+                ownedBoardSkins,
+                wins,
+                losses,
+                tokens,
+                dailyRewardWins,
+                dailyRewardTokens,
+                achievements,
+                currentRating,
+                highestArena,
+                rankedUnlocked,
+              });
+            },
+          )
           .catch((error) => {
             if (!active) return;
             lastAccountSummaryRefreshAuthKeyRef.current = null;
-            console.warn("[session-debug] failed to refresh account summary", error);
+            console.warn(
+              "[session-debug] failed to refresh account summary",
+              error,
+            );
           })
           .finally(() => {
             if (!active) return;
             setAccountSummaryLoading(false);
-            setInitialLobbyDataReady(true);
           });
       }, 80);
     };
@@ -474,26 +432,46 @@ function App() {
         window.clearTimeout(accountSummaryRefreshTimeoutRef.current);
         accountSummaryRefreshTimeoutRef.current = null;
       }
-      setInitialLobbyDataReady(false);
       cleanupNativeAuth();
       unsubscribe();
     };
   }, [setAccountSummaryLoading, setAuthState]);
 
   useEffect(() => {
-    if (!authReady || !authUserId || !authAccessToken || accountSummaryLoading) return;
+    if (!authReady || !authUserId || !authAccessToken || accountSummaryLoading)
+      return;
     void syncEquippedSkin(pieceSkin);
-  }, [accountSummaryLoading, authAccessToken, authReady, authUserId, pieceSkin]);
+  }, [
+    accountSummaryLoading,
+    authAccessToken,
+    authReady,
+    authUserId,
+    pieceSkin,
+  ]);
 
   useEffect(() => {
-    if (!authReady || !authUserId || !authAccessToken || accountSummaryLoading) return;
+    if (!authReady || !authUserId || !authAccessToken || accountSummaryLoading)
+      return;
     void syncEquippedBoardSkin(boardSkin);
-  }, [accountSummaryLoading, authAccessToken, authReady, authUserId, boardSkin]);
+  }, [
+    accountSummaryLoading,
+    authAccessToken,
+    authReady,
+    authUserId,
+    boardSkin,
+  ]);
 
   useEffect(() => {
-    if (!authReady || !authUserId || !authAccessToken || accountSummaryLoading) return;
+    if (!authReady || !authUserId || !authAccessToken || accountSummaryLoading)
+      return;
     void syncEquippedAbilitySkills(abilityLoadout);
-  }, [abilityLoadout, accountSummaryLoading, authAccessToken, authReady, authUserId]);
+  }, [
+    abilityLoadout,
+    accountSummaryLoading,
+    authAccessToken,
+    authReady,
+    authUserId,
+  ]);
 
   useEffect(() => {
     if (!authReady || !authAccessToken) return;
@@ -540,21 +518,16 @@ function App() {
   useEffect(() => {
     const socket = connectSocket();
     const fetchRotation = () => {
-      socket.emit(
-        'get_rotation',
-        (rotationResp: { skills: string[] }) => {
-          useGameStore
-            .getState()
-            .setRotationSkills(
-              (rotationResp?.skills ?? []) as AbilitySkillId[],
-            );
-        },
-      );
+      socket.emit("get_rotation", (rotationResp: { skills: string[] }) => {
+        useGameStore
+          .getState()
+          .setRotationSkills((rotationResp?.skills ?? []) as AbilitySkillId[]);
+      });
     };
-    socket.on('connect', fetchRotation);
+    socket.on("connect", fetchRotation);
     if (socket.connected) fetchRotation();
     return () => {
-      socket.off('connect', fetchRotation);
+      socket.off("connect", fetchRotation);
     };
   }, []);
 
@@ -574,7 +547,11 @@ function App() {
             appVersionCode: authMetadata.appVersionCode,
           },
         },
-        (response: { updateRequired?: boolean } & Partial<UpdateRequiredPayload>) => {
+        (
+          response: {
+            updateRequired?: boolean;
+          } & Partial<UpdateRequiredPayload>,
+        ) => {
           if (response?.updateRequired) {
             applyUpdateRequired(response as UpdateRequiredPayload);
             return;
@@ -582,8 +559,15 @@ function App() {
           // 계정 동기화: 만료 스킬 제거 결과 수신 + rotationSkills 갱신
           if (authAccessToken && authUserId) {
             socket.emit(
-              'account_sync',
-              { auth: { accessToken: authAccessToken, userId: authUserId ?? undefined, clientPlatform: authMetadata.clientPlatform, appVersionCode: authMetadata.appVersionCode } },
+              "account_sync",
+              {
+                auth: {
+                  accessToken: authAccessToken,
+                  userId: authUserId ?? undefined,
+                  clientPlatform: authMetadata.clientPlatform,
+                  appVersionCode: authMetadata.appVersionCode,
+                },
+              },
               (syncResp: {
                 status: string;
                 profile?: {
@@ -592,16 +576,19 @@ function App() {
                   rotationSkills?: string[];
                 };
               }) => {
-                if (syncResp?.status === 'ACCOUNT_OK' && syncResp.profile) {
-                  const removed = (syncResp.profile.removedRotationSkills ?? []) as AbilitySkillId[];
-                  const rotSkills = (syncResp.profile.rotationSkills ?? []) as AbilitySkillId[];
+                if (syncResp?.status === "ACCOUNT_OK" && syncResp.profile) {
+                  const removed = (syncResp.profile.removedRotationSkills ??
+                    []) as AbilitySkillId[];
+                  const rotSkills = (syncResp.profile.rotationSkills ??
+                    []) as AbilitySkillId[];
                   const store = useGameStore.getState();
                   if (rotSkills.length > 0) {
                     store.setRotationSkills(rotSkills);
                   }
                   if (removed.length > 0) {
                     store.setPendingRemovedRotationSkillsNotice(removed);
-                    const equipped = (syncResp.profile.equippedAbilitySkills ?? []) as AbilitySkillId[];
+                    const equipped = (syncResp.profile.equippedAbilitySkills ??
+                      []) as AbilitySkillId[];
                     store.setAbilityLoadout(equipped);
                   }
                 }
@@ -658,11 +645,7 @@ function App() {
 
   useEffect(() => {
     const socket = getSocket();
-    const onRoomClosed = ({
-      reason,
-    }: {
-      reason?: RoomClosedReason;
-    }) => {
+    const onRoomClosed = ({ reason }: { reason?: RoomClosedReason }) => {
       if (reason !== "turn_limit") return;
       useGameStore.getState().resetGame();
       setShowExitConfirm(false);
@@ -687,14 +670,14 @@ function App() {
       }
       achievementRefreshTimeoutRef.current = window.setTimeout(() => {
         void refreshAccountSummary({ force: true }).then(
-        ({
-          nickname,
-          equippedSkin,
-          equippedBoardSkin,
-          equippedAbilitySkills,
-          ownedSkins,
-          ownedBoardSkins,
-          wins,
+          ({
+            nickname,
+            equippedSkin,
+            equippedBoardSkin,
+            equippedAbilitySkills,
+            ownedSkins,
+            ownedBoardSkins,
+            wins,
             losses,
             tokens,
             dailyRewardWins,
@@ -709,13 +692,13 @@ function App() {
               userId: authUserId,
               accessToken: useGameStore.getState().authAccessToken,
               isGuestUser,
-            nickname,
-            equippedSkin,
-            equippedBoardSkin,
-            equippedAbilitySkills,
-            ownedSkins,
-            ownedBoardSkins,
-            wins,
+              nickname,
+              equippedSkin,
+              equippedBoardSkin,
+              equippedAbilitySkills,
+              ownedSkins,
+              ownedBoardSkins,
+              wins,
               losses,
               tokens,
               dailyRewardWins,
@@ -753,44 +736,14 @@ function App() {
       window.clearTimeout(gameLoadingTimeoutRef.current);
       gameLoadingTimeoutRef.current = null;
     }
-    const loadingStartedAt = Date.now();
     stopLocalAbilityTraining();
     disconnectSocket();
     useGameStore.getState().resetGame();
     setShowExitConfirm(false);
     setMatchResultAudioKind(null);
-    setLoadingTipIndex(getRandomLoadingTipIndex());
-    setGameLoadingUntil(loadingStartedAt + MIN_GAME_LOADING_MS);
+    setGameLoadingUntil(0);
     setView("lobby");
-
-    void (async () => {
-      if (authReady && authUserId && authAccessToken) {
-        setAccountSummaryLoading(true);
-        try {
-          await wait(500);
-          const summary = await refreshAccountSummary({ force: true });
-          applyAccountSummary(summary);
-        } catch (error) {
-          console.warn("[session-debug] failed to refresh account summary after leaving match", error);
-        } finally {
-          setAccountSummaryLoading(false);
-        }
-      }
-
-      const remainingLoadingMs =
-        MIN_GAME_LOADING_MS - (Date.now() - loadingStartedAt);
-      if (remainingLoadingMs > 0) {
-        await wait(remainingLoadingMs);
-      }
-      setGameLoadingUntil(0);
-    })();
-  }, [
-    applyAccountSummary,
-    authAccessToken,
-    authReady,
-    authUserId,
-    setAccountSummaryLoading,
-  ]);
+  }, []);
 
   const handleSessionReplacedConfirm = useCallback(async () => {
     setIsSessionResetting(true);
@@ -817,19 +770,23 @@ function App() {
         setAccountSummaryLoading(true);
         try {
           const summary = await refreshAccountSummary({ force: true });
-          console.log("[session-debug] session_replaced confirm:summary restored", {
-            ...getStoredIdentityDebugSnapshot(),
-            userId: restoredState.userId,
-            nickname: summary.nickname,
-            wins: summary.wins,
-            losses: summary.losses,
-            tokens: summary.tokens,
-          });
+          console.log(
+            "[session-debug] session_replaced confirm:summary restored",
+            {
+              ...getStoredIdentityDebugSnapshot(),
+              userId: restoredState.userId,
+              nickname: summary.nickname,
+              wins: summary.wins,
+              losses: summary.losses,
+              tokens: summary.tokens,
+            },
+          );
           setAuthState({
             ready: true,
             userId: restoredState.userId,
             accessToken:
-              useGameStore.getState().authAccessToken ?? restoredState.accessToken,
+              useGameStore.getState().authAccessToken ??
+              restoredState.accessToken,
             isGuestUser: useGameStore.getState().isGuestUser,
             nickname: summary.nickname,
             equippedSkin: summary.equippedSkin,
@@ -864,12 +821,9 @@ function App() {
     lang === "en"
       ? "This session was closed because the account was used on another device. Your account data is safe. Tap OK to return to the lobby and sign in again if needed."
       : "다른 기기에서 동일 계정으로 접속하여 현재 세션이 종료되었습니다. 계정 데이터는 유지되며, 확인을 누르면 로비로 돌아갑니다. 필요하면 다시 로그인해주세요.";
-  const sessionReplacedConfirm =
-    lang === "en" ? "Reconnect" : "다시 연결";
+  const sessionReplacedConfirm = lang === "en" ? "Reconnect" : "다시 연결";
   const updateRequiredTitle =
-    lang === "en"
-      ? "A new version is available."
-      : "새 버전이 출시되었습니다.";
+    lang === "en" ? "A new version is available." : "새 버전이 출시되었습니다.";
   const updateRequiredBody =
     lang === "en"
       ? "Please go to the Play Store and update the app to continue playing."
@@ -891,10 +845,7 @@ function App() {
         ? updateRequired.marketUrl
         : updateRequired.storeUrl;
     window.location.href = nativeUrl;
-    if (
-      Capacitor.isNativePlatform() &&
-      Capacitor.getPlatform() === "android"
-    ) {
+    if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android") {
       window.setTimeout(() => {
         window.location.href = updateRequired.storeUrl;
       }, 800);
@@ -934,7 +885,11 @@ function App() {
     if (matchResultAudioKind) {
       targetTrackId = matchResultAudioKind === "victory" ? "victory" : "defeat";
     } else {
-      const isBattleView = view === "game" || view === "coop" || view === "twovtwo" || view === "ability";
+      const isBattleView =
+        view === "game" ||
+        view === "coop" ||
+        view === "twovtwo" ||
+        view === "ability";
       targetTrackId = isBattleView ? "ingame" : "lobby";
     }
 
@@ -950,7 +905,12 @@ function App() {
       if (showSessionReplaced) {
         return;
       }
-      if (view === "game" || view === "coop" || view === "twovtwo" || view === "ability") {
+      if (
+        view === "game" ||
+        view === "coop" ||
+        view === "twovtwo" ||
+        view === "ability"
+      ) {
         handleReturnToLobby();
         return;
       }
@@ -1007,7 +967,7 @@ function App() {
     };
   }, [tryStartBgm]);
 
-  if (!authReady || !legalConsentResolved || !initialLobbyDataReady) {
+  if (!authReady || !legalConsentResolved) {
     return (
       <div className="app-outer app-outer--lobby">
         <div className="app-inner">
@@ -1036,7 +996,8 @@ function App() {
   const legalConsentConfirmLabel =
     lang === "en" ? "Agree and Start" : "동의하고 시작";
   const legalConsentTermsPath = lang === "en" ? TERMS_PATH_EN : TERMS_PATH_KR;
-  const legalConsentPolicyPath = lang === "en" ? POLICY_PATH_EN : POLICY_PATH_KR;
+  const legalConsentPolicyPath =
+    lang === "en" ? POLICY_PATH_EN : POLICY_PATH_KR;
   const legalDocumentTitle =
     openLegalDocument === "terms"
       ? lang === "en"
@@ -1047,188 +1008,212 @@ function App() {
         : "개인정보처리방침";
   const legalDocumentCloseLabel = lang === "en" ? "Close" : "닫기";
   const legalDocumentSrc =
-    openLegalDocument === "terms" ? legalConsentTermsPath : legalConsentPolicyPath;
+    openLegalDocument === "terms"
+      ? legalConsentTermsPath
+      : legalConsentPolicyPath;
   const isGameLoadingVisible = gameLoadingUntil > 0;
 
   return (
-    <div className={`app-outer ${view === "lobby" ? "app-outer--lobby" : "app-outer--game"}`}>
+    <div
+      className={`app-outer ${view === "lobby" ? "app-outer--lobby" : "app-outer--game"}`}
+    >
       <div className="app-inner">
-        <Suspense fallback={<GameLoadingScreen tip={loadingTip} onNextTip={showNextLoadingTip} />}>
-        {view === "lobby" && (
-          <LobbyScreen
-            onGameStart={() => startGameView("game")}
-            onCoopStart={() => startGameView("coop")}
-            onTwoVsTwoStart={() => startGameView("twovtwo")}
-            onAbilityStart={() => startGameView("ability")}
-            onboardingPromptsEnabled={hasLegalConsent}
-            tutorialPromptTrigger={tutorialPromptTrigger}
-          />
+        <Suspense
+          fallback={
+            <GameLoadingScreen
+              tip={loadingTip}
+              onNextTip={showNextLoadingTip}
+            />
+          }
+        >
+          {view === "lobby" && (
+            <LobbyScreen
+              onGameStart={() => startGameView("game")}
+              onCoopStart={() => startGameView("coop")}
+              onTwoVsTwoStart={() => startGameView("twovtwo")}
+              onAbilityStart={() => startGameView("ability")}
+              tutorialPromptTrigger={tutorialPromptTrigger}
+            />
+          )}
+          {view === "game" && (
+            <GameScreen onLeaveToLobby={handleReturnToLobby} />
+          )}
+          {view === "coop" && (
+            <CoopScreen onLeaveToLobby={handleReturnToLobby} />
+          )}
+          {view === "twovtwo" && (
+            <TwoVsTwoScreen onLeaveToLobby={handleReturnToLobby} />
+          )}
+          {view === "ability" && (
+            <AbilityScreen onLeaveToLobby={handleReturnToLobby} />
+          )}
+        </Suspense>
+        {isGameLoadingVisible && (
+          <GameLoadingScreen tip={loadingTip} onNextTip={showNextLoadingTip} />
         )}
-        {view === "game" && <GameScreen onLeaveToLobby={handleReturnToLobby} />}
-        {view === "coop" && <CoopScreen onLeaveToLobby={handleReturnToLobby} />}
-        {view === "twovtwo" && <TwoVsTwoScreen onLeaveToLobby={handleReturnToLobby} />}
-        {view === "ability" && <AbilityScreen onLeaveToLobby={handleReturnToLobby} screenReadyAt={gameLoadingUntil} />}
-      </Suspense>
-      {isGameLoadingVisible && (
-        <GameLoadingScreen tip={loadingTip} onNextTip={showNextLoadingTip} />
-      )}
-      {showExitConfirm && view === "lobby" && (
-        <div
-          className="app-confirm-backdrop"
-          onClick={() => setShowExitConfirm(false)}
-        >
+        {showExitConfirm && view === "lobby" && (
           <div
-            className="app-confirm-modal"
-            onClick={(event) => event.stopPropagation()}
+            className="app-confirm-backdrop"
+            onClick={() => setShowExitConfirm(false)}
           >
-            <h3>{exitTitle}</h3>
-            <div className="app-confirm-actions">
-              <button
-                className="app-confirm-btn app-confirm-btn-secondary"
-                onClick={() => setShowExitConfirm(false)}
-                type="button"
-              >
-                {exitCancelLabel}
-              </button>
-              <button
-                className="app-confirm-btn app-confirm-btn-primary"
-                onClick={() => void CapacitorApp.exitApp()}
-                type="button"
-              >
-                {exitConfirmLabel}
-              </button>
+            <div
+              className="app-confirm-modal"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h3>{exitTitle}</h3>
+              <div className="app-confirm-actions">
+                <button
+                  className="app-confirm-btn app-confirm-btn-secondary"
+                  onClick={() => setShowExitConfirm(false)}
+                  type="button"
+                >
+                  {exitCancelLabel}
+                </button>
+                <button
+                  className="app-confirm-btn app-confirm-btn-primary"
+                  onClick={() => void CapacitorApp.exitApp()}
+                  type="button"
+                >
+                  {exitConfirmLabel}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      {showSessionReplaced && (
-        <div className="app-confirm-backdrop">
-          <div className="app-confirm-modal">
-            <h3>{sessionReplacedTitle}</h3>
-            <p className="app-confirm-copy">{sessionReplacedBody}</p>
-            <div className="app-confirm-actions app-confirm-actions-single">
-              <button
-                className="app-confirm-btn app-confirm-btn-primary"
-                onClick={() => void handleSessionReplacedConfirm()}
-                type="button"
-                disabled={isSessionResetting}
-              >
-                {sessionReplacedConfirm}
-              </button>
+        )}
+        {showSessionReplaced && (
+          <div className="app-confirm-backdrop">
+            <div className="app-confirm-modal">
+              <h3>{sessionReplacedTitle}</h3>
+              <p className="app-confirm-copy">{sessionReplacedBody}</p>
+              <div className="app-confirm-actions app-confirm-actions-single">
+                <button
+                  className="app-confirm-btn app-confirm-btn-primary"
+                  onClick={() => void handleSessionReplacedConfirm()}
+                  type="button"
+                  disabled={isSessionResetting}
+                >
+                  {sessionReplacedConfirm}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      {updateRequired && (
-        <div className="app-confirm-backdrop">
-          <div className="app-confirm-modal">
-            <h3>{updateRequiredTitle}</h3>
-            <p className="app-confirm-copy">{updateRequiredBody}</p>
-            <div className="app-confirm-actions app-confirm-actions-single">
-              <button
-                className="app-confirm-btn app-confirm-btn-primary"
-                onClick={handleOpenStoreForUpdate}
-                type="button"
-              >
-                {updateRequiredConfirm}
-              </button>
+        )}
+        {updateRequired && (
+          <div className="app-confirm-backdrop">
+            <div className="app-confirm-modal">
+              <h3>{updateRequiredTitle}</h3>
+              <p className="app-confirm-copy">{updateRequiredBody}</p>
+              <div className="app-confirm-actions app-confirm-actions-single">
+                <button
+                  className="app-confirm-btn app-confirm-btn-primary"
+                  onClick={handleOpenStoreForUpdate}
+                  type="button"
+                >
+                  {updateRequiredConfirm}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      {roomClosedReason === "turn_limit" && (
-        <div
-          className="app-confirm-backdrop"
-          onClick={() => setRoomClosedReason(null)}
-        >
+        )}
+        {roomClosedReason === "turn_limit" && (
           <div
-            className="app-confirm-modal"
-            onClick={(event) => event.stopPropagation()}
+            className="app-confirm-backdrop"
+            onClick={() => setRoomClosedReason(null)}
           >
-            <h3>{roomClosedTitle}</h3>
-            <p className="app-confirm-copy">{roomClosedBody}</p>
-            <div className="app-confirm-actions app-confirm-actions-single">
-              <button
-                className="app-confirm-btn app-confirm-btn-primary"
-                onClick={() => setRoomClosedReason(null)}
-                type="button"
-              >
-                {roomClosedDismiss}
-              </button>
+            <div
+              className="app-confirm-modal"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h3>{roomClosedTitle}</h3>
+              <p className="app-confirm-copy">{roomClosedBody}</p>
+              <div className="app-confirm-actions app-confirm-actions-single">
+                <button
+                  className="app-confirm-btn app-confirm-btn-primary"
+                  onClick={() => setRoomClosedReason(null)}
+                  type="button"
+                >
+                  {roomClosedDismiss}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      {!updateRequired && !hasLegalConsent && (
-        <div className="app-confirm-backdrop">
-          <div className="app-confirm-modal app-legal-consent-modal">
-            <h3>{legalConsentTitle}</h3>
-            <p className="app-confirm-copy">{legalConsentBody}</p>
-            <div className="app-legal-consent-links">
-              <button
-                className="app-legal-link"
-                onClick={() => setOpenLegalDocument("terms")}
-                type="button"
-              >
-                <span>{`${legalConsentTermsLabel} >`}</span>
-              </button>
-              <button
-                className="app-legal-link"
-                onClick={() => setOpenLegalDocument("privacy")}
-                type="button"
-              >
-                <span>{`${legalConsentPolicyLabel} >`}</span>
-              </button>
-            </div>
-            <label className="app-legal-consent-checkbox">
-              <input
-                type="checkbox"
-                checked={legalConsentChecked}
-                onChange={(event) => setLegalConsentChecked(event.target.checked)}
-              />
-              <span>{legalConsentCheckboxLabel}</span>
-            </label>
-            <div className="app-confirm-actions app-confirm-actions-single">
-              <button
-                className="app-confirm-btn app-confirm-btn-primary"
-                onClick={() => void handleAgreeToLegalConsent()}
-                type="button"
-                disabled={!legalConsentChecked || isSavingLegalConsent}
-              >
-                {legalConsentConfirmLabel}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {openLegalDocument && (
-        <div className="app-legal-doc-backdrop">
-          <div className="app-legal-doc-modal" role="dialog" aria-modal="true">
-            <div className="app-legal-doc-header">
-              <h3>{legalDocumentTitle}</h3>
-              <button
-                className="app-legal-doc-close"
-                onClick={() => setOpenLegalDocument(null)}
-                type="button"
-                aria-label={legalDocumentCloseLabel}
-              >
-                ×
-              </button>
-            </div>
-            <div className="app-legal-doc-body">
-              <iframe
-                className="app-legal-doc-frame"
-                src={legalDocumentSrc}
-                title={legalDocumentTitle}
-              />
+        )}
+        {!updateRequired && !hasLegalConsent && (
+          <div className="app-confirm-backdrop">
+            <div className="app-confirm-modal app-legal-consent-modal">
+              <h3>{legalConsentTitle}</h3>
+              <p className="app-confirm-copy">{legalConsentBody}</p>
+              <div className="app-legal-consent-links">
+                <button
+                  className="app-legal-link"
+                  onClick={() => setOpenLegalDocument("terms")}
+                  type="button"
+                >
+                  <span>{`${legalConsentTermsLabel} >`}</span>
+                </button>
+                <button
+                  className="app-legal-link"
+                  onClick={() => setOpenLegalDocument("privacy")}
+                  type="button"
+                >
+                  <span>{`${legalConsentPolicyLabel} >`}</span>
+                </button>
+              </div>
+              <label className="app-legal-consent-checkbox">
+                <input
+                  type="checkbox"
+                  checked={legalConsentChecked}
+                  onChange={(event) =>
+                    setLegalConsentChecked(event.target.checked)
+                  }
+                />
+                <span>{legalConsentCheckboxLabel}</span>
+              </label>
+              <div className="app-confirm-actions app-confirm-actions-single">
+                <button
+                  className="app-confirm-btn app-confirm-btn-primary"
+                  onClick={() => void handleAgreeToLegalConsent()}
+                  type="button"
+                  disabled={!legalConsentChecked || isSavingLegalConsent}
+                >
+                  {legalConsentConfirmLabel}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>{/* app-inner */}
-  </div>
-);
+        )}
+        {openLegalDocument && (
+          <div className="app-legal-doc-backdrop">
+            <div
+              className="app-legal-doc-modal"
+              role="dialog"
+              aria-modal="true"
+            >
+              <div className="app-legal-doc-header">
+                <h3>{legalDocumentTitle}</h3>
+                <button
+                  className="app-legal-doc-close"
+                  onClick={() => setOpenLegalDocument(null)}
+                  type="button"
+                  aria-label={legalDocumentCloseLabel}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="app-legal-doc-body">
+                <iframe
+                  className="app-legal-doc-frame"
+                  src={legalDocumentSrc}
+                  title={legalDocumentTitle}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      {/* app-inner */}
+    </div>
+  );
 }
 
 export default App;
-

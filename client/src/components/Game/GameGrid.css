@@ -14,11 +14,21 @@
 }
 
 @keyframes boardShake {
-  0%   { transform: translate(0, 0); }
-  25%  { transform: translate(3px, -2px); }
-  50%  { transform: translate(-2px, 2px); }
-  75%  { transform: translate(2px, 1px); }
-  100% { transform: translate(0, 0); }
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(3px, -2px);
+  }
+  50% {
+    transform: translate(-2px, 2px);
+  }
+  75% {
+    transform: translate(2px, 1px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
 }
 
 .game-grid {
@@ -159,7 +169,7 @@
 }
 
 .game-grid.board-skin-arena3 {
-  background: #050403;
+  background: transparent;
   border-color: rgba(111, 41, 20, 0.92);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.5),
@@ -169,6 +179,7 @@
 }
 
 .game-grid.board-skin-arena3 .grid-cell {
+  background: transparent;
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -176,6 +187,7 @@
 
 .game-grid.board-skin-arena3 .grid-cell:hover,
 .game-grid.board-skin-arena3 .grid-cell.is-hovered {
+  background: transparent;
   box-shadow:
     inset 0 0 0 1px rgba(255, 155, 84, 0.18),
     0 0 14px rgba(255, 72, 24, 0.1);
@@ -184,6 +196,7 @@
 .game-grid.board-skin-arena3 .grid-cell.obstacle,
 .game-grid.board-skin-arena3 .grid-cell.obstacle:hover,
 .game-grid.board-skin-arena3 .grid-cell.obstacle.is-hovered {
+  background-color: transparent;
   border: none;
 }
 
@@ -243,8 +256,7 @@
 .obstacle-mark.slide-in-fwd-center {
   -webkit-animation: slide-in-fwd-center 0.4s
     cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-  animation: slide-in-fwd-center 0.4s
-    cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  animation: slide-in-fwd-center 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
   animation-delay: var(--obstacle-enter-delay, 0ms);
   -webkit-animation-delay: var(--obstacle-enter-delay, 0ms);
 }
