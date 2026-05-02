@@ -367,6 +367,41 @@
   z-index: 3;
 }
 
+.game-grid.board-skin-arena9 {
+  background: transparent;
+  border-color: rgba(248, 250, 252, 0.7);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(147, 197, 253, 0.12),
+    0 0 24px rgba(219, 234, 254, 0.12);
+}
+
+.game-grid.board-skin-arena9 .grid-cell {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.game-grid.board-skin-arena9 .grid-cell:hover,
+.game-grid.board-skin-arena9 .grid-cell.is-hovered {
+  background: transparent;
+  box-shadow:
+    inset 0 0 0 1px rgba(248, 250, 252, 0.24),
+    0 0 14px rgba(147, 197, 253, 0.14);
+}
+
+.game-grid.board-skin-arena9 .grid-cell.obstacle,
+.game-grid.board-skin-arena9 .grid-cell.obstacle:hover,
+.game-grid.board-skin-arena9 .grid-cell.obstacle.is-hovered {
+  background-color: transparent;
+  border: none;
+}
+
+.game-grid.board-skin-arena9 .obstacle-mark {
+  z-index: 3;
+}
+
 .grid-cell {
   position: absolute;
   border: 1px solid var(--tile-border, #3a444d);
