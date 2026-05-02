@@ -4085,6 +4085,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
             onTeleportCancel={handleTeleportCancel}
             myBlitzReserved={myBlitzReserved}
             shakeKey={boardShakeKey}
+            arena={currentArena}
           />
         </div>
 

@@ -97,6 +97,7 @@ interface Props {
   magicMineCastingColors: { red: boolean; blue: boolean };
   myBlitzReserved: boolean;
   shakeKey?: number;
+  arena?: number;
 }
 
 const GRID_SIZE = 5;
@@ -183,6 +184,7 @@ export function AbilityGrid({
   magicMineCastingColors,
   myBlitzReserved,
   shakeKey = 0,
+  arena = 1,
 }: Props) {
   const isSfxMuted = useGameStore((store) => store.isSfxMuted);
   const sfxVolume = useGameStore((store) => store.sfxVolume);
@@ -270,7 +272,9 @@ export function AbilityGrid({
         ? state.players.blue.boardSkin
         : boardSkin;
   const boardSkinClass =
-    resolvedBoardSkin === "blue_gray"
+    arena === 2
+      ? "board-skin-arena2"
+      : resolvedBoardSkin === "blue_gray"
       ? "board-skin-blue-gray"
       : resolvedBoardSkin === "pharaoh"
         ? "board-skin-pharaoh"
@@ -292,14 +296,19 @@ export function AbilityGrid({
       ["--magic-col" as string]: col,
     };
 
-    if (resolvedBoardSkin !== "magic" && resolvedBoardSkin !== "pharaoh") {
+    const cellUrl =
+      arena === 2
+        ? `/board/arena2/arena2-cell-${row}-${col}.svg`
+        : resolvedBoardSkin === "magic"
+          ? `/board/magic-cells/magic-cell-${row}-${col}.svg`
+          : resolvedBoardSkin === "pharaoh"
+            ? `/board/pharaoh-cells/pharaoh-cell-${row}-${col}.svg`
+            : null;
+
+    if (!cellUrl) {
       return baseStyle;
     }
 
-    const cellUrl =
-      resolvedBoardSkin === "magic"
-        ? `/board/magic-cells/magic-cell-${row}-${col}.svg`
-        : `/board/pharaoh-cells/pharaoh-cell-${row}-${col}.svg`;
     return {
       ...baseStyle,
       backgroundImage: blocked
