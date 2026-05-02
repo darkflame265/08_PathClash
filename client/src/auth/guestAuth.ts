@@ -26,6 +26,9 @@ export interface AuthStatePayload {
   dailyRewardWins?: number;
   dailyRewardTokens?: number;
   achievements?: PlayerAchievementState[];
+  currentRating?: number;
+  highestArena?: number;
+  rankedUnlocked?: boolean;
 }
 
 interface ProfileRow {
@@ -380,6 +383,9 @@ function toAuthState(
     dailyRewardWins: snapshot?.dailyRewardWins,
     dailyRewardTokens: snapshot?.dailyRewardTokens,
     achievements: snapshot?.achievements,
+    currentRating: snapshot?.currentRating,
+    highestArena: snapshot?.highestArena,
+    rankedUnlocked: snapshot?.rankedUnlocked,
   };
 }
 
@@ -401,6 +407,9 @@ function createDisconnectedAuthState(): AuthStatePayload {
     dailyRewardWins: 0,
     dailyRewardTokens: 0,
     achievements: [],
+    currentRating: 0,
+    highestArena: 1,
+    rankedUnlocked: false,
   };
 }
 

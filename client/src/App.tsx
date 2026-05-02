@@ -19,6 +19,7 @@ import {
 import { connectSocket, disconnectSocket, getSocket } from "./socket/socketClient";
 import type { AbilitySkillId } from "./types/ability.types";
 import { stopLocalAbilityTraining } from "./ability/localTrainingSession";
+import { getArenaFromRating } from "./data/arenaCatalog";
 import { useLang } from "./hooks/useLang";
 import { useGameStore } from "./store/gameStore";
 import {
@@ -35,8 +36,9 @@ import {
 } from "./utils/soundUtils";
 import "./App.css";
 
+const loadLobbyScreen = () => import("./components/Lobby/LobbyScreen");
 const LobbyScreen = lazy(() =>
-  import("./components/Lobby/LobbyScreen").then((module) => ({
+  loadLobbyScreen().then((module) => ({
     default: module.LobbyScreen,
   })),
 );
@@ -122,6 +124,27 @@ function wait(ms: number) {
   });
 }
 
+function preloadImage(src: string) {
+  return new Promise<void>((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve();
+    image.onerror = () => resolve();
+    image.src = src;
+  });
+}
+
+async function preloadLobbyForSummary(
+  summary: Awaited<ReturnType<typeof refreshAccountSummary>>,
+) {
+  const lobbyArena = summary.rankedUnlocked
+    ? 10
+    : getArenaFromRating(summary.currentRating);
+  await Promise.all([
+    loadLobbyScreen(),
+    preloadImage(`/arena/arena${lobbyArena}.png`),
+  ]);
+}
+
 function GameLoadingScreen({
   tip,
   onNextTip,
@@ -157,6 +180,7 @@ function App() {
   const [view, setView] = useState<AppView>("lobby");
   const [gameLoadingUntil, setGameLoadingUntil] = useState(0);
   const [loadingTipIndex, setLoadingTipIndex] = useState(getRandomLoadingTipIndex);
+  const [initialLobbyDataReady, setInitialLobbyDataReady] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showSessionReplaced, setShowSessionReplaced] = useState(false);
   const [isSessionResetting, setIsSessionResetting] = useState(false);
@@ -198,6 +222,10 @@ function App() {
 
   const showNextLoadingTip = useCallback(() => {
     setLoadingTipIndex((index) => (index + 1) % LOADING_TIPS.kr.length);
+  }, []);
+
+  useEffect(() => {
+    void loadLobbyScreen();
   }, []);
 
   const applyAccountSummary = useCallback(
@@ -370,6 +398,7 @@ function App() {
       if (!payload.userId || !payload.accessToken) {
         lastAccountSummaryRefreshAuthKeyRef.current = null;
         setAccountSummaryLoading(false);
+        setInitialLobbyDataReady(true);
         return;
       }
       const authKey = `${payload.userId}:${payload.accessToken}`;
@@ -377,6 +406,7 @@ function App() {
         return;
       }
       lastAccountSummaryRefreshAuthKeyRef.current = authKey;
+      setInitialLobbyDataReady(false);
       setAccountSummaryLoading(true);
       if (accountSummaryRefreshTimeoutRef.current !== null) {
         window.clearTimeout(accountSummaryRefreshTimeoutRef.current);
@@ -384,48 +414,31 @@ function App() {
       accountSummaryRefreshTimeoutRef.current = window.setTimeout(() => {
         accountSummaryRefreshTimeoutRef.current = null;
         void refreshAccountSummary({ force: true })
-          .then(
-            ({
-              nickname,
-              equippedSkin,
-              equippedBoardSkin,
-              equippedAbilitySkills,
-              ownedSkins,
-              ownedBoardSkins,
-              wins,
-              losses,
-              tokens,
-              dailyRewardWins,
-              dailyRewardTokens,
-              achievements,
-              currentRating,
-              highestArena,
-              rankedUnlocked,
-            }) => {
-              if (!active) return;
-              setAuthState({
-                ready: true,
-                userId: payload.userId,
-                accessToken: useGameStore.getState().authAccessToken ?? payload.accessToken,
-                isGuestUser: useGameStore.getState().isGuestUser,
-                nickname,
-                equippedSkin,
-                equippedBoardSkin,
-                equippedAbilitySkills,
-                ownedSkins,
-                ownedBoardSkins,
-                wins,
-                losses,
-                tokens,
-                dailyRewardWins,
-                dailyRewardTokens,
-                achievements,
-                currentRating,
-                highestArena,
-                rankedUnlocked,
-              });
-            },
-          )
+          .then(async (summary) => {
+            if (!active) return;
+            setAuthState({
+              ready: true,
+              userId: payload.userId,
+              accessToken: useGameStore.getState().authAccessToken ?? payload.accessToken,
+              isGuestUser: useGameStore.getState().isGuestUser,
+              nickname: summary.nickname,
+              equippedSkin: summary.equippedSkin,
+              equippedBoardSkin: summary.equippedBoardSkin,
+              equippedAbilitySkills: summary.equippedAbilitySkills,
+              ownedSkins: summary.ownedSkins,
+              ownedBoardSkins: summary.ownedBoardSkins,
+              wins: summary.wins,
+              losses: summary.losses,
+              tokens: summary.tokens,
+              dailyRewardWins: summary.dailyRewardWins,
+              dailyRewardTokens: summary.dailyRewardTokens,
+              achievements: summary.achievements,
+              currentRating: summary.currentRating,
+              highestArena: summary.highestArena,
+              rankedUnlocked: summary.rankedUnlocked,
+            });
+            await preloadLobbyForSummary(summary);
+          })
           .catch((error) => {
             if (!active) return;
             lastAccountSummaryRefreshAuthKeyRef.current = null;
@@ -434,6 +447,7 @@ function App() {
           .finally(() => {
             if (!active) return;
             setAccountSummaryLoading(false);
+            setInitialLobbyDataReady(true);
           });
       }, 80);
     };
@@ -460,6 +474,7 @@ function App() {
         window.clearTimeout(accountSummaryRefreshTimeoutRef.current);
         accountSummaryRefreshTimeoutRef.current = null;
       }
+      setInitialLobbyDataReady(false);
       cleanupNativeAuth();
       unsubscribe();
     };
@@ -992,7 +1007,7 @@ function App() {
     };
   }, [tryStartBgm]);
 
-  if (!authReady || !legalConsentResolved) {
+  if (!authReady || !legalConsentResolved || !initialLobbyDataReady) {
     return (
       <div className="app-outer app-outer--lobby">
         <div className="app-inner">
