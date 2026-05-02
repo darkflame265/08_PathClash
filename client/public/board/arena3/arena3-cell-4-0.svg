@@ -1,18 +1,31 @@
 ﻿<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
   <defs>
-    <linearGradient id="edge" x1="2" y1="2" x2="38" y2="38" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FF7A00"/>
-      <stop offset="0.52" stop-color="#2A1712"/>
-      <stop offset="1" stop-color="#FF5A1F"/>
+    <linearGradient id="rim" x1="2" y1="2" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#D93A16"/>
+      <stop offset="0.28" stop-color="#4A1A0F"/>
+      <stop offset="0.7" stop-color="#160B07"/>
+      <stop offset="1" stop-color="#FF6A1A"/>
     </linearGradient>
-    <radialGradient id="core" cx="0.46" cy="0.32" r="0.82">
-      <stop offset="0" stop-color="#271A18"/>
-      <stop offset="0.58" stop-color="#12100F"/>
-      <stop offset="1" stop-color="#070605"/>
+    <radialGradient id="basalt" cx="0.45" cy="0.28" r="0.78">
+      <stop offset="0" stop-color="#171311"/>
+      <stop offset="0.65" stop-color="#090807"/>
+      <stop offset="1" stop-color="#040303"/>
     </radialGradient>
+    <filter id="lavaGlow" x="-8" y="-8" width="56" height="56" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="0.85" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
-  <rect x="1" y="1" width="38" height="38" rx="5" fill="url(#edge)"/>
-  <rect x="2.75" y="2.75" width="34.5" height="34.5" rx="4.25" fill="url(#core)" stroke="#090504" stroke-width="1"/>
-  <rect x="4.5" y="4.5" width="31" height="31" rx="3.5" stroke="#FF7A00" stroke-opacity="0.36" stroke-width="1"/>
-  <rect x="6.5" y="6.5" width="27" height="27" rx="2.5" stroke="#FFD2A3" stroke-opacity="0.08" stroke-width="1"/>
+  <rect x="1" y="1" width="38" height="38" rx="5" fill="url(#rim)"/>
+  <rect x="2.75" y="2.75" width="34.5" height="34.5" rx="4.25" fill="url(#basalt)" stroke="#080403" stroke-width="1"/>
+  <rect x="4.5" y="4.5" width="31" height="31" rx="3.5" stroke="#35231B" stroke-opacity="0.82" stroke-width="1"/>
+  <path d="M10 12 L16 17 L22 17 L28 24" stroke="#D93A16" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.7" filter="url(#lavaGlow)"/>
+  <path d="M10 12 L16 17 L22 17 L28 24" stroke="#FFD1A3" stroke-width="0.45" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.75"/>
+  <path d="M8 29 L13 26 L16 29" stroke="#FF6A1A" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.62" filter="url(#lavaGlow)"/>
+  <path d="M20 7 L20 12 L24 14" stroke="#FF7A2A" stroke-width="0.85" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.48"/>
+  <circle cx="15" cy="25" r="1.05" fill="#D93A16" fill-opacity="0.58" filter="url(#lavaGlow)"/>
+  <circle cx="28" cy="17" r="0.75" fill="#FFD1A3" fill-opacity="0.36"/>
 </svg>
