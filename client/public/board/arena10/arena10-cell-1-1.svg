@@ -1,0 +1,35 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
+  <defs>
+    <linearGradient id="templeRim" x1="2" y1="1" x2="38" y2="39" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF7D6"/>
+      <stop offset="0.18" stop-color="#E7C873"/>
+      <stop offset="0.46" stop-color="#F8FAFC"/>
+      <stop offset="0.74" stop-color="#C3D2DF"/>
+      <stop offset="1" stop-color="#7DD3FC"/>
+    </linearGradient>
+    <radialGradient id="marbleCore" cx="0.36" cy="0.24" r="0.88">
+      <stop offset="0" stop-color="#F0F5FA"/>
+      <stop offset="0.6" stop-color="#C3D2DF"/>
+      <stop offset="1" stop-color="#64788B"/>
+    </radialGradient>
+    <linearGradient id="skyBlessing" x1="7" y1="5" x2="33" y2="35" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.16"/>
+      <stop offset="0.42" stop-color="#7DD3FC" stop-opacity="0.11"/>
+      <stop offset="1" stop-color="#FFF7D6" stop-opacity="0.08"/>
+    </linearGradient>
+    <linearGradient id="goldInset" x1="8" y1="32" x2="32" y2="8" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E7C873" stop-opacity="0.18"/>
+      <stop offset="0.52" stop-color="#FFFFFF" stop-opacity="0.035"/>
+      <stop offset="1" stop-color="#7DD3FC" stop-opacity="0.07"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="38" height="38" rx="4.8" fill="url(#templeRim)"/>
+  <rect x="2.6" y="2.6" width="34.8" height="34.8" rx="4" fill="#F8FAFC" stroke="#E7C873" stroke-opacity="0.55" stroke-width="1"/>
+  <rect x="4.5" y="4.5" width="31" height="31" rx="3.2" fill="url(#marbleCore)" stroke="#FFF7D6" stroke-opacity="0.5" stroke-width="1.1"/>
+  <rect x="6.5" y="6.5" width="27" height="27" rx="2.4" fill="url(#skyBlessing)" stroke="#7DD3FC" stroke-opacity="0.2" stroke-width="0.9"/>
+  <rect x="8.5" y="8.5" width="23" height="23" rx="1.6" fill="url(#goldInset)" stroke="#FFF7D6" stroke-opacity="0.13" stroke-width="0.8"/>
+  <rect x="4.5" y="4.5" width="5.8" height="1.5" rx="0.75" fill="#FFF7D6" fill-opacity="0.25"/>
+  <rect x="29.7" y="34" width="5.8" height="1.5" rx="0.75" fill="#E7C873" fill-opacity="0.18"/>
+  <rect x="34" y="4.5" width="1.5" height="5.8" rx="0.75" fill="#7DD3FC" fill-opacity="0.16"/>
+  <rect x="4.5" y="29.7" width="1.5" height="5.8" rx="0.75" fill="#FFF7D6" fill-opacity="0.18"/>
+</svg>
