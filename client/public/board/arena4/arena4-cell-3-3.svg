@@ -1,32 +1,19 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
   <defs>
-    <linearGradient id="stormRim" x1="2" y1="2" x2="38" y2="38" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#C084FC"/>
-      <stop offset="0.26" stop-color="#24123D"/>
-      <stop offset="0.7" stop-color="#0B0614"/>
-      <stop offset="1" stop-color="#8B5CF6"/>
+    <linearGradient id="rim" x1="2" y1="38" x2="38" y2="2" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#A855F7"/>
+      <stop offset="0.28" stop-color="#1C1030"/>
+      <stop offset="0.72" stop-color="#07060E"/>
+      <stop offset="1" stop-color="#7DD3FC"/>
     </linearGradient>
-    <radialGradient id="stormStone" cx="0.44" cy="0.3" r="0.82">
-      <stop offset="0" stop-color="#15102A"/>
-      <stop offset="0.62" stop-color="#090716"/>
-      <stop offset="1" stop-color="#03040B"/>
+    <radialGradient id="stone" cx="0.42" cy="0.32" r="0.8">
+      <stop offset="0" stop-color="#16112C"/>
+      <stop offset="0.58" stop-color="#09071A"/>
+      <stop offset="1" stop-color="#040309"/>
     </radialGradient>
-    <filter id="stormGlow" x="-10" y="-10" width="60" height="60" color-interpolation-filters="sRGB">
-      <feGaussianBlur stdDeviation="0.85" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
   </defs>
-  <rect x="1" y="1" width="38" height="38" rx="5" fill="url(#stormRim)"/>
-  <rect x="2.7" y="2.7" width="34.6" height="34.6" rx="4.25" fill="url(#stormStone)" stroke="#050512" stroke-width="1"/>
-  <rect x="4.6" y="4.6" width="30.8" height="30.8" rx="3.4" stroke="#2E244B" stroke-opacity="0.78" stroke-width="1"/>
-  <path d="M8 22 L14 20 L17 15 L23 17 L30 11" stroke="#050512" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.62"/>
-  <path d="M8 22 L14 20 L17 15 L23 17 L30 11" stroke="#8B5CF6" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.58" filter="url(#stormGlow)"/>
-  <path d="M8 22 L14 20 L17 15 L23 17 L30 11" stroke="#BAE6FD" stroke-width="0.42" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.78"/>
-  <path d="M17 15 L15 10" stroke="#C084FC" stroke-width="0.72" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.42"/>
-  <path d="M23 17 L25 22" stroke="#8B5CF6" stroke-width="0.68" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.36"/>
-  <circle cx="20" cy="21" r="0.85" fill="#BAE6FD" fill-opacity="0.32" filter="url(#stormGlow)"/>
-  <circle cx="20" cy="20" r="0.55" fill="#8B5CF6" fill-opacity="0.38"/>
+  <rect x="1" y="1" width="38" height="38" rx="5" fill="url(#rim)"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="4.5" fill="url(#stone)" stroke="#050412" stroke-width="0.8"/>
+  <rect x="4.2" y="4.2" width="31.6" height="31.6" rx="3.5" stroke="#231A40" stroke-opacity="0.55" stroke-width="0.8" fill="none"/>
+  <rect x="6.2" y="6.2" width="27.6" height="27.6" rx="2.6" stroke="#818CF8" stroke-opacity="0.06" stroke-width="1" fill="none"/>
 </svg>
