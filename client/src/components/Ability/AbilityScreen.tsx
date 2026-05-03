@@ -401,6 +401,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     triggerHeartShake,
     boardSkin,
     currentRating,
+    matchHostArena,
   } = useGameStore();
 
   const [state, setState] = useState<AbilityBattleState | null>(null);
@@ -542,7 +543,6 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
   const animationTimeoutIdsRef = useRef<number[]>([]);
   const submitTimeoutIdsRef = useRef<number[]>([]);
   const initialReadySentRef = useRef(false);
-  const hostArenaRef = useRef<number | null>(null);
   const gridAreaRef = useRef<HTMLDivElement>(null);
   const boardStageRef = useRef<HTMLDivElement>(null);
   const cellSize = useAdaptiveCellSize(gridAreaRef);
@@ -3241,18 +3241,13 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       roomId,
       color,
       training,
-      hostArena,
     }: {
       roomId: string;
       color: PlayerColor;
       training?: boolean;
-      hostArena?: number;
     }) => {
       setMyColor(color);
       setRoomCode(roomId);
-      if (hostArena !== undefined) {
-        hostArenaRef.current = hostArena;
-      }
       if (!training) {
         socket.emit("ability_client_ready");
       }
@@ -3750,7 +3745,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       : state.players.blue.boardSkin !== "classic"
         ? state.players.blue.boardSkin
         : boardSkin;
-  const currentArena = hostArenaRef.current ?? getArenaFromRating(currentRating);
+  const currentArena = matchHostArena ?? getArenaFromRating(currentRating);
   const screenBoardClass =
     currentArena > 1
       ? `arena-bg-${currentArena}-screen`

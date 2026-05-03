@@ -97,6 +97,7 @@ interface GameStore {
   currentRating: number;
   highestArena: number;
   rankedUnlocked: boolean;
+  matchHostArena: number | null;
 
   // Game
   gameState: ClientGameState | null;
@@ -214,6 +215,7 @@ interface GameStore {
   setMusicVolume: (volume: number) => void;
   setSfxVolume: (volume: number) => void;
   setAbilitySfxGain: (id: AbilitySfxGainId, gain: number) => void;
+  setMatchHostArena: (arena: number | null) => void;
   setPieceSkin: (skin: PieceSkin) => void;
   setBoardSkin: (skin: BoardSkin) => void;
   setPlayerPieceSkins: (skins: { red: PieceSkin; blue: PieceSkin }) => void;
@@ -359,6 +361,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   currentRating: 0,
   highestArena: 1,
   rankedUnlocked: false,
+  matchHostArena: null,
   gameState: null,
   myPath: [],
   opponentSubmitted: false,
@@ -456,6 +459,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setMyColor: (c) => set({ myColor: c }),
   setRoomCode: (c) => set({ roomCode: c }),
   setMatchType: (matchType) => set({ currentMatchType: matchType }),
+  setMatchHostArena: (arena) => set({ matchHostArena: arena }),
   setLocalAbilityTraining: (enabled) => set({ isLocalAbilityTraining: enabled }),
   setTwoVsTwoSlot: (slot) => set({ twoVsTwoSlot: slot }),
   setAbilityLoadout: (skills) => {
@@ -755,6 +759,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       myColor: null,
       roomCode: "",
       currentMatchType: null,
+      matchHostArena: null,
       isLocalAbilityTraining: false,
       twoVsTwoSlot: null,
       abilityLoadout: get().abilityLoadout,

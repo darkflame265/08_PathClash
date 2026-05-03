@@ -888,6 +888,7 @@ export function LobbyScreen({
     currentRating,
     highestArena,
     rankedUnlocked,
+    setMatchHostArena,
   } = useGameStore();
 
   const rotationSkills = useGameStore((s) => s.rotationSkills);
@@ -3079,17 +3080,25 @@ export function LobbyScreen({
         roomId,
 
         color,
+
+        hostArena,
       }: {
         roomId: string;
 
         color: "red" | "blue";
 
         opponentNickname: string;
+
+        hostArena?: number;
       }) => {
         if (!isAnyNetworkMatchActive(["friend", "ability"])) return;
         setMyColor(color);
 
         setRoomCode(roomId);
+
+        if (hostArena !== undefined) {
+          setMatchHostArena(hostArena);
+        }
 
         setError("");
 
