@@ -147,17 +147,14 @@ type SkinDetailState =
 type LobbyModeKey =
   | "ai"
   | "friend"
-  | "random"
   | "coop"
   | "2v2"
   | "ability"
-  | "classic_ranked"
   | "skill_ranked";
 
 const DISABLED_LOBBY_MODES = new Set<LobbyModeKey>([
   "2v2",
   "coop",
-  "classic_ranked",
   "skill_ranked",
 ]);
 
@@ -910,20 +907,19 @@ export function LobbyScreen({
   const [view, setView] = useState<LobbyView>("main");
   const [selectedLobbyMode, setSelectedLobbyMode] = useState<LobbyModeKey>(
     () => {
-      if (typeof window === "undefined") return "ai";
+      if (typeof window === "undefined") return "ability";
       const saved = window.localStorage.getItem(LAST_LOBBY_MODE_KEY);
+      if (saved === "random" || saved === "classic_ranked") return "ability";
       const nextMode =
         saved === "ai" ||
         saved === "friend" ||
-        saved === "random" ||
         saved === "coop" ||
         saved === "2v2" ||
         saved === "ability" ||
-        saved === "classic_ranked" ||
         saved === "skill_ranked"
           ? saved
-          : "ai";
-      return DISABLED_LOBBY_MODES.has(nextMode) ? "ai" : nextMode;
+          : "ability";
+      return DISABLED_LOBBY_MODES.has(nextMode) ? "ability" : nextMode;
     },
   );
 
@@ -1287,7 +1283,6 @@ export function LobbyScreen({
   const twoVsTwoStartLabel = lang === "en" ? "Start Match" : "매칭 시작";
 
   const abilityBattleTitle = lang === "en" ? "Ability Battle" : "능력 대전";
-  const classicRankedTitle = lang === "en" ? "Classic Ranked" : "클래식 랭크전";
   const skillRankedTitle = lang === "en" ? "Skill Ranked" : "스킬 랭크전";
 
   const abilityBattleStartLabel = lang === "en" ? "Start Match" : "매칭 시작";
@@ -2729,10 +2724,7 @@ export function LobbyScreen({
     const active = activeNetworkMatchRef.current;
     if (!active || active.mode !== mode) return false;
     if (epoch !== undefined && active.epoch !== epoch) return false;
-    if (
-      mode === "ability" &&
-      useGameStore.getState().isLocalAbilityTraining
-    ) {
+    if (mode === "ability" && useGameStore.getState().isLocalAbilityTraining) {
       return false;
     }
     return useGameStore.getState().currentMatchType === mode;
@@ -3322,35 +3314,6 @@ export function LobbyScreen({
         {friendModeToggleLabel}
       </button>,
     );
-
-  const handleRandom = async () => {
-    setError("");
-    const epoch = beginNetworkMatch("random");
-    setIsMatchmaking(true);
-
-    setMatchType("random");
-
-    try {
-      const profile = await ensureMatchmakingProfile();
-      const socket = await prepareMatchmakingSocket();
-      const payload = await buildPlayerPayloadFromProfile(profile);
-      if (!socket || !isNetworkMatchActive("random", epoch)) return;
-      socket.emit("join_random", payload);
-    } catch (error) {
-      if (isNetworkMatchActive("random", epoch)) showAccountLoadError(error);
-    }
-  };
-
-  const handleCancelRandom = () => {
-    cancelNetworkMatch("random");
-    const socket = getSocket();
-
-    if (socket.connected) socket.emit("cancel_random");
-
-    setIsMatchmaking(false);
-
-    setMatchType(null);
-  };
 
   const handleChangeNickname = useCallback(async () => {
     if (isChangingNickname) return;
@@ -3944,12 +3907,10 @@ export function LobbyScreen({
   }> = [
     { key: "ai", icon: "🤖", label: t.aiTitle },
     { key: "friend", icon: "🤝", label: t.friendTitle },
-    { key: "random", icon: "🎲", label: t.randomTitle },
     { key: "ability", icon: "✨", label: abilityBattleTitle },
+    { key: "skill_ranked", icon: "⚔️", label: skillRankedTitle },
     { key: "2v2", icon: "👥", label: twoVsTwoTitle },
     { key: "coop", icon: "🛡️", label: coopTitle },
-    { key: "classic_ranked", icon: "🏆", label: classicRankedTitle },
-    { key: "skill_ranked", icon: "⚔️", label: skillRankedTitle },
   ];
 
   const handleSelectLobbyMode = (mode: LobbyModeKey) => {
@@ -4207,20 +4168,6 @@ export function LobbyScreen({
             )}
           </>
         );
-      case "random":
-        return (
-          <>
-            {isMatchmaking && currentMatchType === "random"
-              ? renderMatchmakingControlBar(handleCancelRandom, t.cancelBtn)
-              : renderModeControlBar(
-                  "accent",
-                  renderRewardStartLabel(t.startBtn),
-                  () => void handleRandom(),
-                )}
-
-            {error && <p className="error-msg">{error}</p>}
-          </>
-        );
       case "coop":
         return (
           <>
@@ -4255,14 +4202,6 @@ export function LobbyScreen({
                   renderRewardStartLabel(abilityBattleStartLabel),
                   () => void handleAbilityMatch(),
                 )}
-          </>
-        );
-      case "classic_ranked":
-        return (
-          <>
-            {renderModeControlBar("accent", t.startBtn, undefined, {
-              disabled: true,
-            })}
           </>
         );
       case "skill_ranked":

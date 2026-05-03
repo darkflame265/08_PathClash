@@ -27,7 +27,6 @@ export type Translations = {
   friendTitle: string;
   createRoomBtn: string;
   enterCodeBtn: string;
-  randomTitle: string;
   matchmakingHead: string;
   matchmakingDesc: string;
   cancelBtn: string;
@@ -107,7 +106,6 @@ export const translations: Record<Lang, Translations> = {
     createRoomBtn: "Create Room",
     enterCodeBtn: "Enter Code",
 
-    randomTitle: "Random Match",
     matchmakingHead: "Searching...",
     matchmakingDesc: "Finding an opponent. Only this mode counts for stats.",
     cancelBtn: "Cancel",
@@ -197,7 +195,6 @@ export const translations: Record<Lang, Translations> = {
     createRoomBtn: "방 만들기",
     enterCodeBtn: "코드 입력",
 
-    randomTitle: "랜덤 매칭",
     matchmakingHead: "매칭 중...",
     matchmakingDesc: "상대를 찾고 있습니다. 이 모드만 전적에 반영됩니다.",
     cancelBtn: "매칭 취소",
