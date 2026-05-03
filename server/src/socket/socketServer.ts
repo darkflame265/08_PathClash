@@ -1,5 +1,5 @@
 ﻿import { Server, Socket } from 'socket.io';
-import { getAbilityAiFallbackMs } from '../game/arenaConfig';
+import { getAbilityAiFallbackMs, getArenaFromRating } from '../game/arenaConfig';
 import { GameRoom } from '../game/GameRoom';
 import { RoomStore } from '../store/RoomStore';
 import { CoopRoom } from '../game/coop/CoopRoom';
@@ -465,10 +465,12 @@ export function initSocketServer(io: Server): void {
 
     const opponentColor = humanColor === 'red' ? 'blue' : 'red';
     const opponent = room.toClientState(humanColor).players[opponentColor];
+    const hostArena = getArenaFromRating(profile.currentRating);
     socket.emit('ability_room_joined', {
       roomId,
       color: humanColor,
       opponentNickname: opponent.nickname,
+      hostArena,
     });
 
     room.prepareGameStart();
@@ -1386,10 +1388,9 @@ export function initSocketServer(io: Server): void {
         }
         const playerCurrentRating = profile.currentRating;
         const playerRankedUnlocked = profile.rankedUnlocked;
+        const playerArena = getArenaFromRating(playerCurrentRating);
 
-        // rating ±300 이내 우선 매칭, 없으면 제한 없이 대기 중인 첫 번째 상대와 매칭
-        const queued = abilityStore.dequeueWithinRange(playerCurrentRating, 300)
-          ?? abilityStore.dequeueWithinRange(playerCurrentRating);
+        const queued = abilityStore.dequeueByArena(playerArena, playerRankedUnlocked);
         if (!queued || queued.socketId === socket.id) {
           if (queued) {
             abilityStore.enqueue(
@@ -1401,6 +1402,8 @@ export function initSocketServer(io: Server): void {
               queued.boardSkin,
               queued.equippedSkills,
               queued.currentRating,
+              queued.arena,
+              queued.rankedUnlocked,
             );
           }
           abilityStore.enqueue(
@@ -1412,6 +1415,8 @@ export function initSocketServer(io: Server): void {
             boardSkin ?? 'classic',
             equippedSkills,
             playerCurrentRating,
+            playerArena,
+            playerRankedUnlocked,
           );
           socket.emit('ability_matchmaking_waiting', {});
           scheduleAbilityFallback({
@@ -1440,6 +1445,8 @@ export function initSocketServer(io: Server): void {
             boardSkin ?? 'classic',
             equippedSkills,
             playerCurrentRating,
+            playerArena,
+            playerRankedUnlocked,
           );
           socket.emit('ability_matchmaking_waiting', {});
           scheduleAbilityFallback({
@@ -1453,6 +1460,9 @@ export function initSocketServer(io: Server): void {
           });
           return;
         }
+
+        // 방장(queued, 먼저 대기한 플레이어)의 아레나를 게임에 적용
+        const hostArena = queued.rankedUnlocked ? 10 : queued.arena;
 
         const roomId = abilityStore.generateRoomId();
         const room = new AbilityRoom(roomId, roomId, io);
@@ -1488,6 +1498,7 @@ export function initSocketServer(io: Server): void {
           roomId,
           color: queuedAbilityColor,
           opponentNickname: profile.nickname,
+          hostArena,
         });
 
         abilityStore.registerSocket(socket.id, roomId);
@@ -1495,6 +1506,7 @@ export function initSocketServer(io: Server): void {
           roomId,
           color: myAbilityColor,
           opponentNickname: queued.nickname,
+          hostArena,
         });
 
         room.prepareGameStart();

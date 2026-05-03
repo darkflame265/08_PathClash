@@ -46,6 +46,8 @@ export class AbilityRoomStore {
     boardSkin: BoardSkin;
     equippedSkills: AbilitySkillId[];
     currentRating: number;
+    arena: number;
+    rankedUnlocked: boolean;
   }> = [];
 
   private static instance: AbilityRoomStore;
@@ -111,9 +113,11 @@ export class AbilityRoomStore {
     boardSkin: BoardSkin,
     equippedSkills: AbilitySkillId[],
     currentRating = 0,
+    arena = 1,
+    rankedUnlocked = false,
   ): void {
     this.removeFromQueue(socketId);
-    this.queue.push({ socketId, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills, currentRating });
+    this.queue.push({ socketId, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills, currentRating, arena, rankedUnlocked });
   }
 
   isQueued(socketId: string): boolean {
@@ -154,6 +158,33 @@ export class AbilityRoomStore {
     const idx = this.queue.findIndex(
       (entry) => Math.abs(entry.currentRating - currentRating) <= range,
     );
+    if (idx === -1) return undefined;
+    const [entry] = this.queue.splice(idx, 1);
+    return entry;
+  }
+
+  /** 아레나 차이 ≤1, 랭크 여부 동일인 가장 오래 기다린 상대 반환. */
+  dequeueByArena(
+    playerArena: number,
+    playerRankedUnlocked: boolean,
+  ): {
+    socketId: string;
+    nickname: string;
+    userId: string | null;
+    stats: { wins: number; losses: number };
+    pieceSkin: PieceSkin;
+    boardSkin: BoardSkin;
+    equippedSkills: AbilitySkillId[];
+    currentRating: number;
+    arena: number;
+    rankedUnlocked: boolean;
+  } | undefined {
+    if (this.queue.length === 0) return undefined;
+    const idx = this.queue.findIndex((entry) => {
+      if (entry.rankedUnlocked !== playerRankedUnlocked) return false;
+      if (playerRankedUnlocked) return true;
+      return Math.abs(entry.arena - playerArena) <= 1;
+    });
     if (idx === -1) return undefined;
     const [entry] = this.queue.splice(idx, 1);
     return entry;
