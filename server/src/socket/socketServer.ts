@@ -158,6 +158,7 @@ export function initSocketServer(io: Server): void {
   const clearAbilityFallback = (socketId: string) => {
     const timer = abilityFallbackTimers.get(socketId);
     if (timer) {
+      console.log(`[fallback] cleared socket=${socketId}`);
       clearTimeout(timer);
       abilityFallbackTimers.delete(socketId);
     }
@@ -414,8 +415,12 @@ export function initSocketServer(io: Server): void {
     equippedSkills: AbilitySkillId[];
   }) => {
     clearAbilityFallback(socket.id);
+    console.log(`[fallback] fired socket=${socket.id} connected=${io.sockets.sockets.has(socket.id)} queued=${abilityStore.isQueued(socket.id)}`);
     if (!io.sockets.sockets.has(socket.id)) return;
-    if (!abilityStore.isQueued(socket.id)) return;
+    if (!abilityStore.isQueued(socket.id)) {
+      console.warn(`[fallback] socket=${socket.id} not in queue — skip (likely already matched)`);
+      return;
+    }
 
     abilityStore.removeFromQueue(socket.id);
 
@@ -466,6 +471,7 @@ export function initSocketServer(io: Server): void {
     const opponentColor = humanColor === 'red' ? 'blue' : 'red';
     const opponent = room.toClientState(humanColor).players[opponentColor];
     const hostArena = getArenaFromRating(profile.currentRating);
+    console.log(`[fallback] AI match created socket=${socket.id} roomId=${roomId} color=${humanColor} hostArena=${hostArena}`);
     socket.emit('ability_room_joined', {
       roomId,
       color: humanColor,
@@ -496,6 +502,7 @@ export function initSocketServer(io: Server): void {
     clearAbilityFallback(socket.id);
     const fallbackMs = getAbilityAiFallbackMs(currentRating, rankedUnlocked);
     if (fallbackMs < 0) return; // ranked_unlocked: AI 없음
+    console.log(`[fallback] scheduled socket=${socket.id} in ${fallbackMs}ms`);
     abilityFallbackTimers.set(
       socket.id,
       setTimeout(() => {
@@ -1390,9 +1397,12 @@ export function initSocketServer(io: Server): void {
         const playerRankedUnlocked = profile.rankedUnlocked;
         const playerArena = getArenaFromRating(playerCurrentRating);
 
+        console.log(`[join_ability] socket=${socket.id} arena=${playerArena} rating=${playerCurrentRating} ranked=${playerRankedUnlocked} queueSize=${abilityStore.getStats().queueLength}`);
+
         const queued = abilityStore.dequeueByArena(playerArena, playerRankedUnlocked);
         if (!queued || queued.socketId === socket.id) {
           if (queued) {
+            console.log(`[join_ability] same-socket match, re-enqueue socket=${socket.id}`);
             abilityStore.enqueue(
               queued.socketId,
               queued.nickname,
@@ -1406,6 +1416,7 @@ export function initSocketServer(io: Server): void {
               queued.rankedUnlocked,
             );
           }
+          console.log(`[join_ability] no match found, enqueue socket=${socket.id} arena=${playerArena} ranked=${playerRankedUnlocked}`);
           abilityStore.enqueue(
             socket.id,
             profile.nickname,
@@ -1431,11 +1442,14 @@ export function initSocketServer(io: Server): void {
           return;
         }
 
+        console.log(`[join_ability] match found: socket=${socket.id}(arena=${playerArena}) <-> queued=${queued.socketId}(arena=${queued.arena}) ranked=${playerRankedUnlocked}`);
+
         clearAbilityFallback(socket.id);
         clearAbilityFallback(queued.socketId);
 
         const queuedSocket = io.sockets.sockets.get(queued.socketId);
         if (!queuedSocket) {
+          console.warn(`[join_ability] queued socket gone: ${queued.socketId}, re-enqueue current player`);
           abilityStore.enqueue(
             socket.id,
             profile.nickname,
@@ -1488,8 +1502,63 @@ export function initSocketServer(io: Server): void {
         );
 
         if (!queuedAbilityColor || !myAbilityColor) {
-          console.error('[join_ability] addPlayer failed unexpectedly');
-          socket.emit('join_error', { message: '매칭 중 오류가 발생했습니다. 다시 시도해주세요.' });
+          console.error('[join_ability] addPlayer failed unexpectedly, re-enqueue both players');
+          if (queuedAbilityColor) queuedSocket.leave(roomId);
+          if (myAbilityColor) socket.leave(roomId);
+
+          // Re-enqueue queued player with fallback
+          abilityStore.enqueue(
+            queued.socketId,
+            queued.nickname,
+            queued.userId,
+            queued.stats,
+            queued.pieceSkin,
+            queued.boardSkin,
+            queued.equippedSkills,
+            queued.currentRating,
+            queued.arena,
+            queued.rankedUnlocked,
+          );
+          queuedSocket.emit('ability_matchmaking_waiting', {});
+          scheduleAbilityFallback({
+            socket: queuedSocket,
+            profile: {
+              userId: queued.userId,
+              nickname: queued.nickname,
+              stats: queued.stats,
+              currentRating: queued.currentRating,
+              rankedUnlocked: queued.rankedUnlocked,
+            },
+            pieceSkin: queued.pieceSkin,
+            boardSkin: queued.boardSkin,
+            equippedSkills: queued.equippedSkills,
+            currentRating: queued.currentRating,
+            rankedUnlocked: queued.rankedUnlocked,
+          });
+
+          // Re-enqueue current player with fallback
+          abilityStore.enqueue(
+            socket.id,
+            profile.nickname,
+            profile.userId,
+            profile.stats,
+            pieceSkin ?? 'classic',
+            boardSkin ?? 'classic',
+            equippedSkills,
+            playerCurrentRating,
+            playerArena,
+            playerRankedUnlocked,
+          );
+          socket.emit('ability_matchmaking_waiting', {});
+          scheduleAbilityFallback({
+            socket,
+            profile,
+            pieceSkin: pieceSkin ?? 'classic',
+            boardSkin: boardSkin ?? 'classic',
+            equippedSkills,
+            currentRating: playerCurrentRating,
+            rankedUnlocked: playerRankedUnlocked,
+          });
           return;
         }
 
@@ -1509,6 +1578,7 @@ export function initSocketServer(io: Server): void {
           hostArena,
         });
 
+        console.log(`[join_ability] room created roomId=${roomId} hostArena=${hostArena}`);
         room.prepareGameStart();
         } catch (err) {
           console.error('[join_ability] handler error:', err);
