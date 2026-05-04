@@ -3764,13 +3764,18 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
 
   const me = state.players[currentColor];
   const opponent = state.players[opponentColor];
+  const shouldUseDefaultVisuals = currentMatchType === "friend";
   const resolvedBoardSkin: BoardSkin =
-    state.players.red.boardSkin !== "classic"
+    shouldUseDefaultVisuals
+      ? "classic"
+      : state.players.red.boardSkin !== "classic"
       ? state.players.red.boardSkin
       : state.players.blue.boardSkin !== "classic"
         ? state.players.blue.boardSkin
         : boardSkin;
-  const currentArena = matchHostArena ?? getArenaFromRating(currentRating);
+  const currentArena = shouldUseDefaultVisuals
+    ? 1
+    : (matchHostArena ?? getArenaFromRating(currentRating));
   const screenBoardClass =
     currentArena > 1
       ? `arena-bg-${currentArena}-screen`

@@ -74,6 +74,7 @@ export function GameGrid({
     boardShakeKey,
     isSfxMuted,
     sfxVolume,
+    currentMatchType,
   } = useGameStore();
 
   const shellRef = useRef<HTMLDivElement>(null);
@@ -108,6 +109,9 @@ export function GameGrid({
   const bluePieceSkin =
     playerPieceSkins?.blue ?? (myColor === "blue" ? pieceSkin : "classic");
   const resolvedBoardSkin: BoardSkin = (() => {
+    if (currentMatchType === "ai" || currentMatchType === "friend") {
+      return "classic";
+    }
     if (gameState?.tutorialActive) return "classic";
     const redBoardSkin = gameState?.players.red.boardSkin;
     const blueBoardSkin = gameState?.players.blue.boardSkin;

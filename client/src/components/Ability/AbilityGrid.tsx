@@ -189,6 +189,7 @@ export function AbilityGrid({
   const isSfxMuted = useGameStore((store) => store.isSfxMuted);
   const sfxVolume = useGameStore((store) => store.sfxVolume);
   const boardSkin = useGameStore((store) => store.boardSkin);
+  const currentMatchType = useGameStore((store) => store.currentMatchType);
   const shellRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState(
@@ -266,7 +267,9 @@ export function AbilityGrid({
   const redSkin = state.players.red.pieceSkin;
   const blueSkin = state.players.blue.pieceSkin;
   const resolvedBoardSkin: BoardSkin =
-    state.players.red.boardSkin !== "classic"
+    currentMatchType === "friend"
+      ? "classic"
+      : state.players.red.boardSkin !== "classic"
       ? state.players.red.boardSkin
       : state.players.blue.boardSkin !== "classic"
         ? state.players.blue.boardSkin

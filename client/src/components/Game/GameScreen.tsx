@@ -677,7 +677,10 @@ export function GameScreen({ onLeaveToLobby }: Props) {
   const useLobbyResultAction =
     currentMatchType === "friend" || currentMatchType === "random";
   const showFriendRematchAction = currentMatchType === "friend";
+  const shouldUseDefaultVisuals =
+    currentMatchType === "ai" || currentMatchType === "friend";
   const resolvedBoardSkin: BoardSkin = (() => {
+    if (shouldUseDefaultVisuals) return "classic";
     if (gameState?.tutorialActive) return "classic";
     const redBoardSkin = gameState?.players.red.boardSkin;
     const blueBoardSkin = gameState?.players.blue.boardSkin;
@@ -685,7 +688,9 @@ export function GameScreen({ onLeaveToLobby }: Props) {
     if (blueBoardSkin && blueBoardSkin !== "classic") return blueBoardSkin;
     return boardSkin;
   })();
-  const currentArena = getArenaFromRating(currentRating);
+  const currentArena = shouldUseDefaultVisuals
+    ? 1
+    : getArenaFromRating(currentRating);
   const screenBoardClass =
     currentArena > 1
       ? `arena-bg-${currentArena}-screen`
