@@ -3932,7 +3932,7 @@ export function LobbyScreen({
 
     if (selectedLobbyMode === "friend") {
       return (
-        <div className="mode-action-side">
+        <div className="mode-action-side mode-action-side--double">
           <button
             className="lobby-mini-btn"
             data-keyboard-nav-layer="mini"
@@ -3944,6 +3944,14 @@ export function LobbyScreen({
           >
             {t.enterCodeBtn}
           </button>
+          <button
+            className="lobby-mini-btn"
+            data-keyboard-nav-layer="mini"
+            type="button"
+            onClick={() => setIsAbilityLoadoutOpen(true)}
+          >
+            {abilityLoadoutTitle}
+          </button>
         </div>
       );
     }
@@ -3952,7 +3960,7 @@ export function LobbyScreen({
   };
 
   const renderAbilityLoadoutBar = () => {
-    const showLoadout = selectedLobbyMode === "ability";
+    const showLoadout = selectedLobbyMode === "ability" || selectedLobbyMode === "friend";
 
     return (
       <div
