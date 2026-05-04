@@ -2542,6 +2542,15 @@ export function LobbyScreen({
   }, []);
 
   useEffect(() => {
+    if (!onboardingPromptsEnabled) {
+      setIsInitialNicknamePromptOpen(false);
+      return;
+    }
+
+    setIsAiTutorialPromptOpen(false);
+  }, [onboardingPromptsEnabled]);
+
+  useEffect(() => {
     if (!onboardingPromptsEnabled) return;
     if (!authUserId || currentMatchType) return;
     if (accountSummaryLoading || upgradeFlowLoading) return;
@@ -2579,8 +2588,12 @@ export function LobbyScreen({
 
   useEffect(() => {
     if (!onboardingPromptsEnabled) return;
-    if (currentMatchType) return;
-    if (isInitialNicknamePromptOpen) return;
+    if (!authUserId || currentMatchType) return;
+    if (accountSummaryLoading || upgradeFlowLoading) return;
+    if (isInitialNicknamePromptOpen) {
+      setIsAiTutorialPromptOpen(false);
+      return;
+    }
 
     const completedForUser = window.localStorage.getItem(
       INITIAL_NICKNAME_COMPLETED_KEY,
@@ -2588,7 +2601,7 @@ export function LobbyScreen({
     const normalizedNickname = (myNickname || "").trim();
     const hasRealNickname =
       normalizedNickname.length > 0 && normalizedNickname !== "Guest";
-    if (authUserId && !hasRealNickname && completedForUser !== authUserId) {
+    if (!hasRealNickname && completedForUser !== authUserId) {
       return;
     }
 
@@ -2603,11 +2616,13 @@ export function LobbyScreen({
     }
   }, [
     authUserId,
+    accountSummaryLoading,
     currentMatchType,
     isInitialNicknamePromptOpen,
     myNickname,
     onboardingPromptsEnabled,
     tutorialPromptTrigger,
+    upgradeFlowLoading,
   ]);
 
   useEffect(() => {

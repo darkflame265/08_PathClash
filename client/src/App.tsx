@@ -1032,6 +1032,7 @@ function App() {
               onCoopStart={() => startGameView("coop")}
               onTwoVsTwoStart={() => startGameView("twovtwo")}
               onAbilityStart={() => startGameView("ability")}
+              onboardingPromptsEnabled={legalConsentResolved && hasLegalConsent}
               tutorialPromptTrigger={tutorialPromptTrigger}
             />
           )}
