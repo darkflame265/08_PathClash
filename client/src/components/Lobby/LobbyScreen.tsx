@@ -3243,16 +3243,13 @@ export function LobbyScreen({
 
   const handleChallengeDecline = () => {
     if (!challengeToast) return;
+    const { fromUserId } = challengeToast;
+    setChallengeToast(null);
     const socket = connectSocket();
     void (async () => {
       const auth = await getSocketAuthPayload();
-      socket.emit('friend_challenge_response', {
-        auth,
-        fromUserId: challengeToast.fromUserId,
-        accept: false,
-      });
+      socket.emit('friend_challenge_response', { auth, fromUserId, accept: false });
     })();
-    setChallengeToast(null);
   };
 
   const handleFriendRemove = async (friendId: string) => {
@@ -3287,10 +3284,14 @@ export function LobbyScreen({
       ),
     );
     if (res.status === 'offline') {
+      cancelNetworkMatch('friend');
+      setMatchType(null);
       showSkinFloatingMessage(
         lang === 'kr' ? '상대방이 오프라인입니다.' : 'Friend is offline.',
       );
     } else if (res.status === 'in_game') {
+      cancelNetworkMatch('friend');
+      setMatchType(null);
       showSkinFloatingMessage(
         lang === 'kr' ? '상대방이 게임 중입니다.' : 'Friend is in a game.',
       );
