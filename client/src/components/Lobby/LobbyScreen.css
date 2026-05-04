@@ -4519,3 +4519,7 @@
   color: #4ade80;
   margin: 0;
 }
+
+.friend-add-result.error {
+  color: #ef4444;
+}

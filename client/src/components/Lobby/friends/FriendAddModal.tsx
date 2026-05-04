@@ -13,6 +13,7 @@ export function FriendAddModal({ lang, onClose }: Props) {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [inputCode, setInputCode] = useState('');
   const [result, setResult] = useState('');
+  const [resultIsError, setResultIsError] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -74,6 +75,8 @@ export function FriendAddModal({ lang, onClose }: Props) {
         already_friends: lang === 'kr' ? '이미 친구입니다.' : 'Already friends.',
         self:            lang === 'kr' ? '자신의 코드입니다.' : 'That\'s your own code.',
       };
+      const isErr = res.status !== 'ok';
+      setResultIsError(isErr);
       setResult(msgMap[res.status] ?? (lang === 'kr' ? '오류가 발생했습니다.' : 'An error occurred.'));
       if (res.status === 'ok') setInputCode('');
     } finally {
@@ -124,7 +127,7 @@ export function FriendAddModal({ lang, onClose }: Props) {
               {confirmLabel}
             </button>
           </div>
-          {result && <p className="friend-add-result">{result}</p>}
+          {result && <p className={`friend-add-result${resultIsError ? ' error' : ''}`}>{result}</p>}
         </div>
 
         <button type="button" className="lobby-btn secondary" onClick={onClose}>
