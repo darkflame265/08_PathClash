@@ -554,6 +554,12 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     opponentTop: number;
     meLeft: number;
     meTop: number;
+    gridLeft: number;
+    gridTop: number;
+    gridSize: number;
+    gridCellSize: number;
+    stageWidth: number;
+    stageHeight: number;
   } | null>(null);
   const currentColor = myColor ?? "red";
   const opponentColor: PlayerColor = currentColor === "red" ? "blue" : "red";
@@ -686,6 +692,12 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
         opponentTop: gridAbsTop + opponentPos.row * approxCell,
         meLeft: gridAbsLeft + (myPos.col + 0.5) * approxCell,
         meTop: gridAbsTop + (myPos.row + 1) * approxCell,
+        gridLeft: gridAbsLeft,
+        gridTop: gridAbsTop,
+        gridSize: gridRenderSize,
+        gridCellSize: approxCell,
+        stageWidth: stageRect.width,
+        stageHeight: stageRect.height,
       });
     };
 
@@ -3831,6 +3843,84 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     clearSkillPressTimeout();
   };
 
+  const renderMatchIntroDimLayer = () => {
+    if (!introBannerPositions || !myColor) return null;
+
+    const layout = introBannerPositions;
+    const currentPos = state.players[myColor].position;
+    const opponentPos = state.players[opponentColor].position;
+    const highlightedCells = new Set([
+      `${currentPos.row}-${currentPos.col}`,
+      `${opponentPos.row}-${opponentPos.col}`,
+    ]);
+    const dimRects = [
+      {
+        key: "top",
+        left: 0,
+        top: 0,
+        width: layout.stageWidth,
+        height: layout.gridTop,
+      },
+      {
+        key: "bottom",
+        left: 0,
+        top: layout.gridTop + layout.gridSize,
+        width: layout.stageWidth,
+        height: Math.max(
+          0,
+          layout.stageHeight - layout.gridTop - layout.gridSize,
+        ),
+      },
+      {
+        key: "left",
+        left: 0,
+        top: layout.gridTop,
+        width: layout.gridLeft,
+        height: layout.gridSize,
+      },
+      {
+        key: "right",
+        left: layout.gridLeft + layout.gridSize,
+        top: layout.gridTop,
+        width: Math.max(
+          0,
+          layout.stageWidth - layout.gridLeft - layout.gridSize,
+        ),
+        height: layout.gridSize,
+      },
+    ];
+
+    for (let row = 0; row < 5; row += 1) {
+      for (let col = 0; col < 5; col += 1) {
+        if (highlightedCells.has(`${row}-${col}`)) continue;
+        dimRects.push({
+          key: `cell-${row}-${col}`,
+          left: layout.gridLeft + col * layout.gridCellSize,
+          top: layout.gridTop + row * layout.gridCellSize,
+          width: layout.gridCellSize,
+          height: layout.gridCellSize,
+        });
+      }
+    }
+
+    return (
+      <div className="match-intro-dim-layer" aria-hidden="true">
+        {dimRects.map((rect) => (
+          <span
+            key={rect.key}
+            className="match-intro-dim-piece"
+            style={{
+              left: rect.left,
+              top: rect.top,
+              width: Math.max(0, rect.width),
+              height: Math.max(0, rect.height),
+            }}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className={`game-screen ability-screen ${screenBoardClass}`}>
       {connStatus !== "connected" && (
@@ -4098,6 +4188,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
             <div
               className={`match-intro-overlay${matchIntroPhase === "exiting" ? " exiting" : ""}`}
             >
+              {renderMatchIntroDimLayer()}
               {introBannerPositions && (
                 <>
                   <div

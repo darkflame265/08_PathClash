@@ -802,8 +802,7 @@
   position: absolute;
   inset: 0;
   z-index: 25;
-  background: rgba(0, 0, 0, 0.62);
-  animation: match-intro-bg-in 0.35s ease-out both;
+  background: transparent;
   overflow: visible;
 }
 
@@ -814,22 +813,39 @@
 }
 
 .match-intro-overlay.exiting {
-  animation: match-intro-bg-out 0.5s ease-in forwards;
   pointer-events: none;
 }
 
-@keyframes match-intro-bg-in {
-  from { background: rgba(0, 0, 0, 0); }
-  to { background: rgba(0, 0, 0, 0.62); }
+.match-intro-dim-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
 }
 
-@keyframes match-intro-bg-out {
-  from { background: rgba(0, 0, 0, 0.62); }
-  to { background: rgba(0, 0, 0, 0); }
+.match-intro-dim-piece {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.62);
+  animation: match-intro-dim-in 0.35s ease-out both;
+}
+
+.match-intro-overlay.exiting .match-intro-dim-piece {
+  animation: match-intro-dim-out 0.5s ease-in forwards;
+}
+
+@keyframes match-intro-dim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes match-intro-dim-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 .match-intro-banner {
   position: absolute;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
