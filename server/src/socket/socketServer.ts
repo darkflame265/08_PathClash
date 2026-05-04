@@ -1127,6 +1127,134 @@ export function initSocketServer(io: Server): void {
       },
     );
 
+    socket.on(
+      'friend_list',
+      async (
+        { auth }: { auth?: AuthPayload },
+        ack?: (res: { friends: Array<{
+          userId: string;
+          nickname: string;
+          currentRating: number;
+          equippedSkin: PieceSkin;
+          status: 'online' | 'in_game' | 'offline';
+        }> }) => void,
+      ) => {
+        try {
+          const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+          if (!userId || !supabaseAdmin) { ack?.({ friends: [] }); return; }
+          const { data: friendRows } = await supabaseAdmin
+            .from('friends')
+            .select('friend_id')
+            .eq('user_id', userId);
+          if (!friendRows || friendRows.length === 0) { ack?.({ friends: [] }); return; }
+          const friendIds: string[] = friendRows.map((r: { friend_id: string }) => r.friend_id);
+          const [profilesRes, statsRes] = await Promise.all([
+            supabaseAdmin.from('profiles').select('id, nickname, equipped_skin').in('id', friendIds),
+            supabaseAdmin.from('player_stats').select('user_id, current_rating').in('user_id', friendIds),
+          ]);
+          const profileMap = new Map<string, { nickname: string | null; equipped_skin: PieceSkin | null }>(
+            (profilesRes.data ?? []).map((p: { id: string; nickname: string | null; equipped_skin: PieceSkin | null }) => [p.id, p]),
+          );
+          const statsMap = new Map<string, { current_rating: number | null }>(
+            (statsRes.data ?? []).map((s: { user_id: string; current_rating: number | null }) => [s.user_id, s]),
+          );
+          const friends = friendIds.map((fid: string) => {
+            const prof = profileMap.get(fid);
+            const stats = statsMap.get(fid);
+            const sid = activeUserSockets.get(fid);
+            let status: 'online' | 'in_game' | 'offline' = 'offline';
+            if (sid && io.sockets.sockets.has(sid)) {
+              const inGame =
+                store.getBySocket(sid) ??
+                abilityStore.getBySocket(sid) ??
+                coopStore.getBySocket(sid) ??
+                twoVsTwoStore.getBySocket(sid);
+              status = inGame ? 'in_game' : 'online';
+            }
+            return {
+              userId: fid,
+              nickname: prof?.nickname ?? 'Guest',
+              currentRating: Number(stats?.current_rating ?? 0),
+              equippedSkin: (prof?.equipped_skin ?? 'classic') as PieceSkin,
+              status,
+            };
+          });
+          ack?.({ friends });
+        } catch (err) {
+          console.error('[friend_list] handler error:', err);
+          ack?.({ friends: [] });
+        }
+      },
+    );
+
+    socket.on(
+      'friend_requests_list',
+      async (
+        { auth }: { auth?: AuthPayload },
+        ack?: (res: { requests: Array<{ id: string; senderId: string; senderNickname: string; createdAt: string }> }) => void,
+      ) => {
+        try {
+          const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+          if (!userId || !supabaseAdmin) { ack?.({ requests: [] }); return; }
+          const { data: reqRows } = await supabaseAdmin
+            .from('friend_requests')
+            .select('id, sender_id, created_at')
+            .eq('receiver_id', userId)
+            .order('created_at', { ascending: false });
+          if (!reqRows || reqRows.length === 0) { ack?.({ requests: [] }); return; }
+          const senderIds: string[] = reqRows.map((r: { sender_id: string }) => r.sender_id);
+          const { data: profileRows } = await supabaseAdmin
+            .from('profiles')
+            .select('id, nickname')
+            .in('id', senderIds);
+          const nickMap = new Map<string, string>(
+            (profileRows ?? []).map((p: { id: string; nickname: string | null }) => [p.id, p.nickname ?? 'Guest']),
+          );
+          const requests = reqRows.map((r: { id: string; sender_id: string; created_at: string }) => ({
+            id: r.id,
+            senderId: r.sender_id,
+            senderNickname: nickMap.get(r.sender_id) ?? 'Guest',
+            createdAt: r.created_at,
+          }));
+          ack?.({ requests });
+        } catch (err) {
+          console.error('[friend_requests_list] handler error:', err);
+          ack?.({ requests: [] });
+        }
+      },
+    );
+
+    socket.on(
+      'friend_request_respond',
+      async (
+        { auth, requestId, accept }: { auth?: AuthPayload; requestId: string; accept: boolean },
+        ack?: (res: { status: 'ok' | 'error' }) => void,
+      ) => {
+        try {
+          const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+          if (!userId || !supabaseAdmin) { ack?.({ status: 'error' }); return; }
+          const { data: reqRow } = await supabaseAdmin
+            .from('friend_requests')
+            .select('id, sender_id')
+            .eq('id', requestId)
+            .eq('receiver_id', userId)
+            .maybeSingle();
+          if (!reqRow) { ack?.({ status: 'error' }); return; }
+          await supabaseAdmin.from('friend_requests').delete().eq('id', requestId);
+          if (accept) {
+            await supabaseAdmin.from('friends').upsert([
+              { user_id: userId, friend_id: reqRow.sender_id },
+              { user_id: reqRow.sender_id, friend_id: userId },
+            ]);
+          }
+          ack?.({ status: 'ok' });
+        } catch (err) {
+          console.error('[friend_request_respond] handler error:', err);
+          ack?.({ status: 'error' });
+        }
+      },
+    );
+
     socket.on('join_random', async ({ nickname, auth, pieceSkin, boardSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin; boardSkin?: BoardSkin }) => {
       try {
       pendingCancelRandom.delete(socket.id);
