@@ -116,6 +116,7 @@ function initSocketServer(io) {
     const clearAbilityFallback = (socketId) => {
         const timer = abilityFallbackTimers.get(socketId);
         if (timer) {
+            console.log(`[fallback] cleared socket=${socketId}`);
             clearTimeout(timer);
             abilityFallbackTimers.delete(socketId);
         }
@@ -149,6 +150,7 @@ function initSocketServer(io) {
             displayId: fakeId,
             userId: null,
             stats,
+            currentRating: profile.currentRating,
             pieceSkin,
             boardSkin: 'classic',
         };
@@ -196,6 +198,7 @@ function initSocketServer(io) {
                 displayId: `${randomHex(8)}-${randomHex(4)}-${randomHex(4)}-${randomHex(4)}-${randomHex(12)}`,
                 userId: null,
                 stats: createNaturalFakeStats(Math.floor(Math.random() * 101) + Math.floor(Math.random() * 101)),
+                currentRating: profile.currentRating,
                 pieceSkin: 'classic',
                 boardSkin: 'classic',
                 equippedSkills: ['classic_guard'],
@@ -274,10 +277,13 @@ function initSocketServer(io) {
     };
     const createAbilityFallbackMatch = async ({ socket, profile, pieceSkin, boardSkin, equippedSkills, }) => {
         clearAbilityFallback(socket.id);
+        console.log(`[fallback] fired socket=${socket.id} connected=${io.sockets.sockets.has(socket.id)} queued=${abilityStore.isQueued(socket.id)}`);
         if (!io.sockets.sockets.has(socket.id))
             return;
-        if (!abilityStore.isQueued(socket.id))
+        if (!abilityStore.isQueued(socket.id)) {
+            console.warn(`[fallback] socket=${socket.id} not in queue — skip (likely already matched)`);
             return;
+        }
         abilityStore.removeFromQueue(socket.id);
         const roomId = abilityStore.generateRoomId();
         const room = new AbilityRoom_1.AbilityRoom(roomId, roomId, io);
@@ -288,24 +294,29 @@ function initSocketServer(io) {
             room.addIdleBot(fakeProfile.nickname, fakeProfile.pieceSkin, fakeProfile.boardSkin, fakeProfile.equippedSkills, {
                 displayId: fakeProfile.displayId,
                 stats: fakeProfile.stats,
+                rating: fakeProfile.currentRating,
             });
         }
-        const humanColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin, boardSkin, equippedSkills);
+        const humanColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, profile.currentRating, pieceSkin, boardSkin, equippedSkills);
         if (!humanColor)
             return;
         if (humanFirst) {
             room.addIdleBot(fakeProfile.nickname, fakeProfile.pieceSkin, fakeProfile.boardSkin, fakeProfile.equippedSkills, {
                 displayId: fakeProfile.displayId,
                 stats: fakeProfile.stats,
+                rating: fakeProfile.currentRating,
             });
         }
         abilityStore.registerSocket(socket.id, roomId);
         const opponentColor = humanColor === 'red' ? 'blue' : 'red';
         const opponent = room.toClientState(humanColor).players[opponentColor];
+        const hostArena = (0, arenaConfig_1.getArenaFromRating)(profile.currentRating);
+        console.log(`[fallback] AI match created socket=${socket.id} roomId=${roomId} color=${humanColor} hostArena=${hostArena}`);
         socket.emit('ability_room_joined', {
             roomId,
             color: humanColor,
             opponentNickname: opponent.nickname,
+            hostArena,
         });
         room.prepareGameStart();
     };
@@ -314,6 +325,7 @@ function initSocketServer(io) {
         const fallbackMs = (0, arenaConfig_1.getAbilityAiFallbackMs)(currentRating, rankedUnlocked);
         if (fallbackMs < 0)
             return; // ranked_unlocked: AI 없음
+        console.log(`[fallback] scheduled socket=${socket.id} in ${fallbackMs}ms`);
         abilityFallbackTimers.set(socket.id, setTimeout(() => {
             void createAbilityFallbackMatch({
                 socket,
@@ -622,7 +634,7 @@ function initSocketServer(io) {
                 const code = abilityStore.generateCode();
                 const room = new AbilityRoom_1.AbilityRoom(roomId, code, io);
                 room.enablePrivateMatch();
-                const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
+                const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, profile.currentRating, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
                 if (!color) {
                     socket.emit('join_error', { message: '방 생성에 실패했습니다.' });
                     return;
@@ -654,7 +666,7 @@ function initSocketServer(io) {
                     return;
                 }
                 room.enablePrivateMatch();
-                const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
+                const color = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, profile.currentRating, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
                 if (!color) {
                     socket.emit('join_error', { message: '입장할 수 없습니다.' });
                     return;
@@ -944,7 +956,7 @@ function initSocketServer(io) {
                     const roomId = abilityStore.generateRoomId();
                     const room = new AbilityRoom_1.AbilityRoom(roomId, roomId, io);
                     room.enableTrainingMode();
-                    const trainingColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
+                    const trainingColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, profile.currentRating, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
                     if (!trainingColor)
                         return;
                     room.addIdleBot('Training Dummy', 'classic', 'classic', []);
@@ -961,14 +973,16 @@ function initSocketServer(io) {
                 }
                 const playerCurrentRating = profile.currentRating;
                 const playerRankedUnlocked = profile.rankedUnlocked;
-                // rating ±300 이내 우선 매칭, 없으면 제한 없이 대기 중인 첫 번째 상대와 매칭
-                const queued = abilityStore.dequeueWithinRange(playerCurrentRating, 300)
-                    ?? abilityStore.dequeueWithinRange(playerCurrentRating);
+                const playerArena = (0, arenaConfig_1.getArenaFromRating)(playerCurrentRating);
+                console.log(`[join_ability] socket=${socket.id} arena=${playerArena} rating=${playerCurrentRating} ranked=${playerRankedUnlocked} queueSize=${abilityStore.getStats().queueLength}`);
+                const queued = abilityStore.dequeueByArena(playerArena, playerRankedUnlocked);
                 if (!queued || queued.socketId === socket.id) {
                     if (queued) {
-                        abilityStore.enqueue(queued.socketId, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin, queued.equippedSkills, queued.currentRating);
+                        console.log(`[join_ability] same-socket match, re-enqueue socket=${socket.id}`);
+                        abilityStore.enqueue(queued.socketId, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin, queued.equippedSkills, queued.currentRating, queued.arena, queued.rankedUnlocked);
                     }
-                    abilityStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills, playerCurrentRating);
+                    console.log(`[join_ability] no match found, enqueue socket=${socket.id} arena=${playerArena} ranked=${playerRankedUnlocked}`);
+                    abilityStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills, playerCurrentRating, playerArena, playerRankedUnlocked);
                     socket.emit('ability_matchmaking_waiting', {});
                     scheduleAbilityFallback({
                         socket,
@@ -981,11 +995,13 @@ function initSocketServer(io) {
                     });
                     return;
                 }
+                console.log(`[join_ability] match found: socket=${socket.id}(arena=${playerArena}) <-> queued=${queued.socketId}(arena=${queued.arena}) ranked=${playerRankedUnlocked}`);
                 clearAbilityFallback(socket.id);
                 clearAbilityFallback(queued.socketId);
                 const queuedSocket = io.sockets.sockets.get(queued.socketId);
                 if (!queuedSocket) {
-                    abilityStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills, playerCurrentRating);
+                    console.warn(`[join_ability] queued socket gone: ${queued.socketId}, re-enqueue current player`);
+                    abilityStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills, playerCurrentRating, playerArena, playerRankedUnlocked);
                     socket.emit('ability_matchmaking_waiting', {});
                     scheduleAbilityFallback({
                         socket,
@@ -998,14 +1014,49 @@ function initSocketServer(io) {
                     });
                     return;
                 }
+                // 방장(queued, 먼저 대기한 플레이어)의 아레나를 게임에 적용
+                const hostArena = queued.rankedUnlocked ? 10 : queued.arena;
                 const roomId = abilityStore.generateRoomId();
                 const room = new AbilityRoom_1.AbilityRoom(roomId, roomId, io);
                 abilityStore.add(room);
-                const queuedAbilityColor = room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin, queued.equippedSkills);
-                const myAbilityColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
+                const queuedAbilityColor = room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.currentRating, queued.pieceSkin, queued.boardSkin, queued.equippedSkills);
+                const myAbilityColor = room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, playerCurrentRating, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills);
                 if (!queuedAbilityColor || !myAbilityColor) {
-                    console.error('[join_ability] addPlayer failed unexpectedly');
-                    socket.emit('join_error', { message: '매칭 중 오류가 발생했습니다. 다시 시도해주세요.' });
+                    console.error('[join_ability] addPlayer failed unexpectedly, re-enqueue both players');
+                    if (queuedAbilityColor)
+                        queuedSocket.leave(roomId);
+                    if (myAbilityColor)
+                        socket.leave(roomId);
+                    // Re-enqueue queued player with fallback
+                    abilityStore.enqueue(queued.socketId, queued.nickname, queued.userId, queued.stats, queued.pieceSkin, queued.boardSkin, queued.equippedSkills, queued.currentRating, queued.arena, queued.rankedUnlocked);
+                    queuedSocket.emit('ability_matchmaking_waiting', {});
+                    scheduleAbilityFallback({
+                        socket: queuedSocket,
+                        profile: {
+                            userId: queued.userId,
+                            nickname: queued.nickname,
+                            stats: queued.stats,
+                            currentRating: queued.currentRating,
+                            rankedUnlocked: queued.rankedUnlocked,
+                        },
+                        pieceSkin: queued.pieceSkin,
+                        boardSkin: queued.boardSkin,
+                        equippedSkills: queued.equippedSkills,
+                        currentRating: queued.currentRating,
+                        rankedUnlocked: queued.rankedUnlocked,
+                    });
+                    // Re-enqueue current player with fallback
+                    abilityStore.enqueue(socket.id, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills, playerCurrentRating, playerArena, playerRankedUnlocked);
+                    socket.emit('ability_matchmaking_waiting', {});
+                    scheduleAbilityFallback({
+                        socket,
+                        profile,
+                        pieceSkin: pieceSkin ?? 'classic',
+                        boardSkin: boardSkin ?? 'classic',
+                        equippedSkills,
+                        currentRating: playerCurrentRating,
+                        rankedUnlocked: playerRankedUnlocked,
+                    });
                     return;
                 }
                 abilityStore.registerSocket(queued.socketId, roomId);
@@ -1013,13 +1064,16 @@ function initSocketServer(io) {
                     roomId,
                     color: queuedAbilityColor,
                     opponentNickname: profile.nickname,
+                    hostArena,
                 });
                 abilityStore.registerSocket(socket.id, roomId);
                 socket.emit('ability_room_joined', {
                     roomId,
                     color: myAbilityColor,
                     opponentNickname: queued.nickname,
+                    hostArena,
                 });
+                console.log(`[join_ability] room created roomId=${roomId} hostArena=${hostArena}`);
                 room.prepareGameStart();
             }
             catch (err) {

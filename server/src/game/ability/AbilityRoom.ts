@@ -940,6 +940,7 @@ export class AbilityRoom {
     nickname: string,
     userId: string | null,
     stats: { wins: number; losses: number },
+    rating: number,
     pieceSkin: PieceSkin,
     boardSkin: BoardSkin,
     equippedSkills: AbilitySkillId[],
@@ -965,6 +966,7 @@ export class AbilityRoom {
       pathSubmitted: false,
       role: color === 'red' ? 'attacker' : 'escaper',
       stats,
+      rating,
       disconnectLossRecorded: false,
       mana: this.trainingMode ? TRAINING_STARTING_MANA : INITIAL_MANA,
       invulnerableSteps: 0,
@@ -991,6 +993,7 @@ export class AbilityRoom {
     options?: {
       displayId?: string;
       stats?: { wins: number; losses: number };
+      rating?: number;
     },
   ): PlayerColor | null {
     if (this.isFull) return null;
@@ -1016,6 +1019,7 @@ export class AbilityRoom {
       pathSubmitted: false,
       role: color === 'red' ? 'attacker' : 'escaper',
       stats: options?.stats ?? { wins: 0, losses: 0 },
+      rating: options?.rating ?? 0,
       disconnectLossRecorded: false,
       mana: this.trainingMode ? TRAINING_STARTING_MANA : INITIAL_MANA,
       invulnerableSteps: 0,
@@ -1768,6 +1772,7 @@ export class AbilityRoom {
     const base = toClientPlayer(player);
     return {
       ...base,
+      rating: player.rating,
       mana: player.mana,
       invulnerableSteps: player.invulnerableSteps,
       overdriveActive: player.overdriveActive,

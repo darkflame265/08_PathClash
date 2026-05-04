@@ -255,6 +255,7 @@ export interface AbilityPlayerState {
   pathSubmitted: boolean;
   role: PlayerRole;
   stats: { wins: number; losses: number };
+  rating: number;
   mana: number;
   invulnerableSteps: number;
   pendingManaBonus?: number;

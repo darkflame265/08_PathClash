@@ -65,9 +65,9 @@ class AbilityRoomStore {
         } while (this.codeToRoom.has(this.normalizeCode(code)));
         return code;
     }
-    enqueue(socketId, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills, currentRating = 0) {
+    enqueue(socketId, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills, currentRating = 0, arena = 1, rankedUnlocked = false) {
         this.removeFromQueue(socketId);
-        this.queue.push({ socketId, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills, currentRating });
+        this.queue.push({ socketId, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills, currentRating, arena, rankedUnlocked });
     }
     isQueued(socketId) {
         return this.queue.some((entry) => entry.socketId === socketId);
@@ -83,6 +83,22 @@ class AbilityRoomStore {
             return this.queue.shift();
         }
         const idx = this.queue.findIndex((entry) => Math.abs(entry.currentRating - currentRating) <= range);
+        if (idx === -1)
+            return undefined;
+        const [entry] = this.queue.splice(idx, 1);
+        return entry;
+    }
+    /** 아레나 차이 ≤1, 랭크 여부 동일인 가장 오래 기다린 상대 반환. */
+    dequeueByArena(playerArena, playerRankedUnlocked) {
+        if (this.queue.length === 0)
+            return undefined;
+        const idx = this.queue.findIndex((entry) => {
+            if (entry.rankedUnlocked !== playerRankedUnlocked)
+                return false;
+            if (playerRankedUnlocked)
+                return true;
+            return Math.abs(entry.arena - playerArena) <= 1;
+        });
         if (idx === -1)
             return undefined;
         const [entry] = this.queue.splice(idx, 1);

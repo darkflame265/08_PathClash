@@ -204,6 +204,7 @@ export interface AbilityPlayerState {
   pathSubmitted: boolean;
   role: PlayerRole;
   stats: { wins: number; losses: number };
+  rating: number;
   disconnectLossRecorded?: boolean;
   mana: number;
   invulnerableSteps: number;
@@ -219,6 +220,7 @@ export interface AbilityPlayerState {
 }
 
 export interface ClientAbilityPlayerState extends ClientPlayerState {
+  rating: number;
   mana: number;
   invulnerableSteps: number;
   overdriveActive: boolean;

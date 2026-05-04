@@ -171,6 +171,7 @@ export function initSocketServer(io: Server): void {
     displayId: string;
     userId: string | null;
     stats: { wins: number; losses: number };
+    currentRating: number;
     pieceSkin: PieceSkin;
     boardSkin: BoardSkin;
   } => {
@@ -208,6 +209,7 @@ export function initSocketServer(io: Server): void {
       displayId: fakeId,
       userId: null,
       stats,
+      currentRating: profile.currentRating,
       pieceSkin,
       boardSkin: 'classic',
     };
@@ -266,6 +268,7 @@ export function initSocketServer(io: Server): void {
     displayId: string;
     userId: string | null;
     stats: { wins: number; losses: number };
+    currentRating: number;
     pieceSkin: PieceSkin;
     boardSkin: BoardSkin;
     equippedSkills: AbilitySkillId[];
@@ -284,6 +287,7 @@ export function initSocketServer(io: Server): void {
         stats: createNaturalFakeStats(
           Math.floor(Math.random() * 101) + Math.floor(Math.random() * 101),
         ),
+        currentRating: profile.currentRating,
         pieceSkin: 'classic',
         boardSkin: 'classic',
         equippedSkills: ['classic_guard'],
@@ -439,6 +443,7 @@ export function initSocketServer(io: Server): void {
         {
           displayId: fakeProfile.displayId,
           stats: fakeProfile.stats,
+          rating: fakeProfile.currentRating,
         },
       );
     }
@@ -448,6 +453,7 @@ export function initSocketServer(io: Server): void {
       profile.nickname,
       profile.userId,
       profile.stats,
+      profile.currentRating,
       pieceSkin,
       boardSkin,
       equippedSkills,
@@ -463,6 +469,7 @@ export function initSocketServer(io: Server): void {
         {
           displayId: fakeProfile.displayId,
           stats: fakeProfile.stats,
+          rating: fakeProfile.currentRating,
         },
       );
     }
@@ -918,6 +925,7 @@ export function initSocketServer(io: Server): void {
             profile.nickname,
             profile.userId,
             profile.stats,
+            profile.currentRating,
             pieceSkin ?? 'classic',
             boardSkin ?? 'classic',
             equippedSkills,
@@ -974,6 +982,7 @@ export function initSocketServer(io: Server): void {
             profile.nickname,
             profile.userId,
             profile.stats,
+            profile.currentRating,
             pieceSkin ?? 'classic',
             boardSkin ?? 'classic',
             equippedSkills,
@@ -1376,6 +1385,7 @@ export function initSocketServer(io: Server): void {
             profile.nickname,
             profile.userId,
             profile.stats,
+            profile.currentRating,
             pieceSkin ?? 'classic',
             boardSkin ?? 'classic',
             equippedSkills,
@@ -1487,6 +1497,7 @@ export function initSocketServer(io: Server): void {
           queued.nickname,
           queued.userId,
           queued.stats,
+          queued.currentRating,
           queued.pieceSkin,
           queued.boardSkin,
           queued.equippedSkills,
@@ -1496,6 +1507,7 @@ export function initSocketServer(io: Server): void {
           profile.nickname,
           profile.userId,
           profile.stats,
+          playerCurrentRating,
           pieceSkin ?? 'classic',
           boardSkin ?? 'classic',
           equippedSkills,

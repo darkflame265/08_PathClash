@@ -4108,8 +4108,11 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
 
         <div className="ability-opponent-panel">
           <div className="ability-opponent-panel-name">
-            <span className="ability-opponent-panel-label">
-              {lang === "en" ? "Opponent" : "상대"}
+            <span className="lobby-user-score ability-opponent-rating">
+              <span className="lobby-user-score-icon" aria-hidden="true">
+                ⭐
+              </span>
+              <span className="lobby-user-score-value">{opponent.rating}</span>
             </span>
             <PlayerInfo player={opponent} isMe={false} />
           </div>

@@ -706,7 +706,7 @@ class AbilityRoom {
     isRewardEligible() {
         return !this.trainingMode && !this.privateMatch;
     }
-    addPlayer(socket, nickname, userId, stats, pieceSkin, boardSkin, equippedSkills) {
+    addPlayer(socket, nickname, userId, stats, rating, pieceSkin, boardSkin, equippedSkills) {
         if (this.isFull)
             return null;
         const color = this.players.size === 0 ? 'red' : 'blue';
@@ -729,6 +729,7 @@ class AbilityRoom {
             pathSubmitted: false,
             role: color === 'red' ? 'attacker' : 'escaper',
             stats,
+            rating,
             disconnectLossRecorded: false,
             mana: this.trainingMode ? TRAINING_STARTING_MANA : INITIAL_MANA,
             invulnerableSteps: 0,
@@ -771,6 +772,7 @@ class AbilityRoom {
             pathSubmitted: false,
             role: color === 'red' ? 'attacker' : 'escaper',
             stats: options?.stats ?? { wins: 0, losses: 0 },
+            rating: options?.rating ?? 0,
             disconnectLossRecorded: false,
             mana: this.trainingMode ? TRAINING_STARTING_MANA : INITIAL_MANA,
             invulnerableSteps: 0,
@@ -1486,6 +1488,7 @@ class AbilityRoom {
         const base = (0, GameEngine_1.toClientPlayer)(player);
         return {
             ...base,
+            rating: player.rating,
             mana: player.mana,
             invulnerableSteps: player.invulnerableSteps,
             overdriveActive: player.overdriveActive,
