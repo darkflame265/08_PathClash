@@ -15,6 +15,7 @@ const fakeRandomNicknames_1 = require("../config/fakeRandomNicknames");
 const playerAuth_1 = require("../services/playerAuth");
 const achievementService_1 = require("../services/achievementService");
 const rotationService_1 = require("../services/rotationService");
+const supabase_1 = require("../lib/supabase");
 function initSocketServer(io) {
     const store = RoomStore_1.RoomStore.getInstance();
     const coopStore = CoopRoomStore_1.CoopRoomStore.getInstance();
@@ -31,6 +32,9 @@ function initSocketServer(io) {
     const randomFallbackTimers = new Map();
     const pendingCancelRandom = new Set();
     const abilityFallbackTimers = new Map();
+    const FRIEND_CODE_TTL_MS = 5 * 60 * 1000;
+    const friendCodes = new Map();
+    const challengePending = new Map();
     const ABILITY_FAKE_AI_SKILL_POOL = [
         'classic_guard',
         'ember_blast',
@@ -50,11 +54,12 @@ function initSocketServer(io) {
     const unregisterSocketSession = (socketId) => {
         const userId = socketUsers.get(socketId);
         if (!userId)
-            return;
+            return null;
         socketUsers.delete(socketId);
         if (activeUserSockets.get(userId) === socketId) {
             activeUserSockets.delete(userId);
         }
+        return userId;
     };
     const getSocketOrigin = (socket) => {
         const origin = socket.handshake.headers.origin;
@@ -253,6 +258,7 @@ function initSocketServer(io) {
             });
         }
         store.registerSocket(socket.id, roomId);
+        emitFriendPresenceForSocket(socket.id);
         const opponentColor = humanColor === 'red' ? 'blue' : 'red';
         const opponent = room.toClientState().players[opponentColor];
         socket.emit('room_joined', {
@@ -308,6 +314,7 @@ function initSocketServer(io) {
             });
         }
         abilityStore.registerSocket(socket.id, roomId);
+        emitFriendPresenceForSocket(socket.id);
         const opponentColor = humanColor === 'red' ? 'blue' : 'red';
         const opponent = room.toClientState(humanColor).players[opponentColor];
         const hostArena = (0, arenaConfig_1.getArenaFromRating)(profile.currentRating);
@@ -369,6 +376,95 @@ function initSocketServer(io) {
         }
         return profile;
     };
+    const getUserPresenceStatus = (userId) => {
+        const socketId = activeUserSockets.get(userId);
+        if (!socketId || !io.sockets.sockets.has(socketId))
+            return 'offline';
+        const inGame = store.getBySocket(socketId) ??
+            abilityStore.getBySocket(socketId) ??
+            coopStore.getBySocket(socketId) ??
+            twoVsTwoStore.getBySocket(socketId);
+        return inGame ? 'in_game' : 'online';
+    };
+    const getFriendIds = async (userId) => {
+        if (!supabase_1.supabaseAdmin)
+            return [];
+        const { data } = await supabase_1.supabaseAdmin
+            .from('friends')
+            .select('friend_id')
+            .eq('user_id', userId);
+        return (data ?? []).map((row) => row.friend_id);
+    };
+    const buildFriendPresenceEntry = async (userId) => {
+        if (!supabase_1.supabaseAdmin) {
+            return {
+                userId,
+                nickname: 'Guest',
+                currentRating: 0,
+                equippedSkin: 'classic',
+                status: getUserPresenceStatus(userId),
+            };
+        }
+        const [profileRes, statsRes] = await Promise.all([
+            supabase_1.supabaseAdmin
+                .from('profiles')
+                .select('nickname, equipped_skin')
+                .eq('id', userId)
+                .maybeSingle(),
+            supabase_1.supabaseAdmin
+                .from('player_stats')
+                .select('current_rating')
+                .eq('user_id', userId)
+                .maybeSingle(),
+        ]);
+        return {
+            userId,
+            nickname: profileRes.data?.nickname ?? 'Guest',
+            currentRating: Number(statsRes.data?.current_rating ?? 0),
+            equippedSkin: (profileRes.data?.equipped_skin ?? 'classic'),
+            status: getUserPresenceStatus(userId),
+        };
+    };
+    const emitFriendPresenceToFriends = async (userId) => {
+        const friendIds = await getFriendIds(userId);
+        if (friendIds.length === 0)
+            return;
+        const friend = await buildFriendPresenceEntry(userId);
+        for (const friendId of friendIds) {
+            const socketId = activeUserSockets.get(friendId);
+            if (!socketId || !io.sockets.sockets.has(socketId))
+                continue;
+            io.to(socketId).emit('friend_presence_updated', { friend });
+        }
+    };
+    const emitFriendListChanged = async (userIds) => {
+        for (const userId of userIds) {
+            const socketId = activeUserSockets.get(userId);
+            if (!socketId || !io.sockets.sockets.has(socketId))
+                continue;
+            io.to(socketId).emit('friend_list_changed', {});
+        }
+    };
+    const emitFriendRequestCountChanged = async (userId) => {
+        if (!supabase_1.supabaseAdmin)
+            return;
+        const socketId = activeUserSockets.get(userId);
+        if (!socketId || !io.sockets.sockets.has(socketId))
+            return;
+        const { count } = await supabase_1.supabaseAdmin
+            .from('friend_requests')
+            .select('id', { count: 'exact', head: true })
+            .eq('receiver_id', userId);
+        io.to(socketId).emit('friend_request_count_updated', {
+            count: count ?? 0,
+        });
+    };
+    const emitFriendPresenceForSocket = (socketId) => {
+        const userId = socketUsers.get(socketId);
+        if (!userId)
+            return;
+        void emitFriendPresenceToFriends(userId);
+    };
     setInterval(() => {
         const activeSocketIds = new Set(io.sockets.sockets.keys());
         store.sweep(activeSocketIds, Date.now(), notifyRoomClosed);
@@ -406,6 +502,13 @@ function initSocketServer(io) {
             `queues{duel=${duelStats.queueLength},coop=${coopStats.queueLength},2v2Solo=${twoVsTwoStats.queueLength},2v2Team=${twoVsTwoStats.teamQueueLength},ability=${abilityStats.queueLength}} ` +
             `mappings{duel=${duelStats.socketMappings},coop=${coopStats.socketMappings},2v2=${twoVsTwoStats.socketMappings},ability=${abilityStats.socketMappings}}`);
     }, metricsLogIntervalMs);
+    setInterval(() => {
+        const now = Date.now();
+        for (const [code, entry] of friendCodes.entries()) {
+            if (entry.expiresAt <= now)
+                friendCodes.delete(code);
+        }
+    }, 60000);
     const tryStartTwoVsTwoTeamMatch = () => {
         const match = twoVsTwoStore.dequeueTeamMatch();
         if (!match)
@@ -434,6 +537,7 @@ function initSocketServer(io) {
             if (!slot)
                 continue;
             twoVsTwoStore.registerSocket(member.socketId, roomId);
+            emitFriendPresenceForSocket(member.socketId);
             memberSocket.emit('twovtwo_room_joined', {
                 roomId,
                 slot,
@@ -457,6 +561,7 @@ function initSocketServer(io) {
         if (shouldReuseCachedSession) {
             activeUserSockets.set(cachedUserId, socket.id);
             socketUsers.set(socket.id, cachedUserId);
+            void emitFriendPresenceToFriends(cachedUserId);
             return cachedUserId;
         }
         const user = await (0, playerAuth_1.getUserFromToken)(auth?.accessToken);
@@ -481,6 +586,7 @@ function initSocketServer(io) {
         socket.data.accessToken = accessToken;
         socket.data.isGuestUser = user.is_anonymous ?? false;
         socket.data.authVerifiedAt = Date.now();
+        void emitFriendPresenceToFriends(user.id);
         if (!options?.allowConcurrentSessions &&
             previousSocketId &&
             previousSocketId !== socket.id) {
@@ -540,6 +646,7 @@ function initSocketServer(io) {
                 }
                 store.add(room);
                 store.registerSocket(socket.id, roomId);
+                emitFriendPresenceForSocket(socket.id);
                 socket.emit('room_created', { roomId, code, color, pieceSkin: pieceSkin ?? 'classic' });
             }
             catch (err) {
@@ -566,6 +673,7 @@ function initSocketServer(io) {
                 room.addAiPlayer('PathClash AI');
                 store.add(room);
                 store.registerSocket(socket.id, roomId);
+                emitFriendPresenceForSocket(socket.id);
                 const roomState = room.toClientState();
                 const opponent = roomState.players[humanColor === 'red' ? 'blue' : 'red'];
                 socket.emit('room_joined', {
@@ -601,6 +709,7 @@ function initSocketServer(io) {
                     return;
                 }
                 store.registerSocket(socket.id, room.roomId);
+                emitFriendPresenceForSocket(socket.id);
                 const roomState = room.toClientState();
                 const opponent = roomState.players[color === 'red' ? 'blue' : 'red'];
                 socket.emit('room_joined', {
@@ -641,6 +750,7 @@ function initSocketServer(io) {
                 }
                 abilityStore.add(room);
                 abilityStore.registerSocket(socket.id, roomId);
+                emitFriendPresenceForSocket(socket.id);
                 socket.emit('ability_room_created', {
                     roomId,
                     code,
@@ -673,6 +783,7 @@ function initSocketServer(io) {
                 }
                 room.prepareGameStart();
                 abilityStore.registerSocket(socket.id, room.roomId);
+                emitFriendPresenceForSocket(socket.id);
                 socket.emit('ability_room_joined', {
                     roomId: room.roomId,
                     color,
@@ -686,6 +797,382 @@ function initSocketServer(io) {
             catch (err) {
                 console.error('[join_ability_room] handler error:', err);
                 socket.emit('join_error', { message: '방 입장 중 오류가 발생했습니다.' });
+            }
+        });
+        socket.on('friend_generate_code', async ({ auth }, ack) => {
+            try {
+                const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                if (!userId) {
+                    ack?.({ error: 'auth_required' });
+                    return;
+                }
+                const profile = await resolvePlayerProfileCached(socket, auth, '');
+                // 기존 코드 제거
+                for (const [code, entry] of friendCodes.entries()) {
+                    if (entry.userId === userId)
+                        friendCodes.delete(code);
+                }
+                // 새 코드 생성
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                let code;
+                do {
+                    code = Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+                } while (friendCodes.has(code));
+                const expiresAt = Date.now() + FRIEND_CODE_TTL_MS;
+                friendCodes.set(code, { userId, nickname: profile.nickname, expiresAt });
+                ack?.({ code, expiresAt });
+            }
+            catch (err) {
+                console.error('[friend_generate_code] handler error:', err);
+                ack?.({ error: 'server_error' });
+            }
+        });
+        socket.on('friend_add_by_code', async ({ auth, code }, ack) => {
+            try {
+                const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                if (!userId || !supabase_1.supabaseAdmin) {
+                    ack?.({ status: 'not_found' });
+                    return;
+                }
+                const normalized = code.trim().toUpperCase();
+                const entry = friendCodes.get(normalized);
+                if (!entry) {
+                    ack?.({ status: 'not_found' });
+                    return;
+                }
+                if (entry.expiresAt <= Date.now()) {
+                    friendCodes.delete(normalized);
+                    ack?.({ status: 'expired' });
+                    return;
+                }
+                if (entry.userId === userId) {
+                    ack?.({ status: 'self' });
+                    return;
+                }
+                const { data: existing } = await supabase_1.supabaseAdmin
+                    .from('friends')
+                    .select('friend_id')
+                    .eq('user_id', userId)
+                    .eq('friend_id', entry.userId)
+                    .maybeSingle();
+                if (existing) {
+                    ack?.({ status: 'already_friends' });
+                    return;
+                }
+                // 중복 요청 방지
+                const { data: dupReq } = await supabase_1.supabaseAdmin
+                    .from('friend_requests')
+                    .select('id')
+                    .eq('sender_id', userId)
+                    .eq('receiver_id', entry.userId)
+                    .maybeSingle();
+                let requestId = '';
+                if (!dupReq) {
+                    const { data: inserted } = await supabase_1.supabaseAdmin
+                        .from('friend_requests')
+                        .insert({ sender_id: userId, receiver_id: entry.userId })
+                        .select('id')
+                        .maybeSingle();
+                    requestId = inserted?.id ?? '';
+                }
+                else {
+                    requestId = dupReq.id;
+                }
+                // 대상이 온라인이면 실시간 알림
+                const targetSocketId = activeUserSockets.get(entry.userId);
+                if (targetSocketId && io.sockets.sockets.has(targetSocketId)) {
+                    const senderProfile = await resolvePlayerProfileCached(socket, auth, '');
+                    io.to(targetSocketId).emit('friend_request_received', {
+                        requestId,
+                        senderNickname: senderProfile.nickname,
+                    });
+                    await emitFriendRequestCountChanged(entry.userId);
+                }
+                friendCodes.delete(normalized);
+                ack?.({ status: 'ok' });
+            }
+            catch (err) {
+                console.error('[friend_add_by_code] handler error:', err);
+                ack?.({ status: 'not_found' });
+            }
+        });
+        socket.on('friend_list', async ({ auth }, ack) => {
+            try {
+                const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                if (!userId || !supabase_1.supabaseAdmin) {
+                    ack?.({ friends: [] });
+                    return;
+                }
+                const { data: friendRows } = await supabase_1.supabaseAdmin
+                    .from('friends')
+                    .select('friend_id')
+                    .eq('user_id', userId);
+                if (!friendRows || friendRows.length === 0) {
+                    ack?.({ friends: [] });
+                    return;
+                }
+                const friendIds = friendRows.map((r) => r.friend_id);
+                const [profilesRes, statsRes] = await Promise.all([
+                    supabase_1.supabaseAdmin.from('profiles').select('id, nickname, equipped_skin').in('id', friendIds),
+                    supabase_1.supabaseAdmin.from('player_stats').select('user_id, current_rating').in('user_id', friendIds),
+                ]);
+                const profileMap = new Map((profilesRes.data ?? []).map((p) => [p.id, p]));
+                const statsMap = new Map((statsRes.data ?? []).map((s) => [s.user_id, s]));
+                const friends = friendIds.map((fid) => {
+                    const prof = profileMap.get(fid);
+                    const stats = statsMap.get(fid);
+                    return {
+                        userId: fid,
+                        nickname: prof?.nickname ?? 'Guest',
+                        currentRating: Number(stats?.current_rating ?? 0),
+                        equippedSkin: (prof?.equipped_skin ?? 'classic'),
+                        status: getUserPresenceStatus(fid),
+                    };
+                });
+                ack?.({ friends });
+            }
+            catch (err) {
+                console.error('[friend_list] handler error:', err);
+                ack?.({ friends: [] });
+            }
+        });
+        socket.on('friend_requests_list', async ({ auth }, ack) => {
+            try {
+                const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                if (!userId || !supabase_1.supabaseAdmin) {
+                    ack?.({ requests: [] });
+                    return;
+                }
+                const { data: reqRows } = await supabase_1.supabaseAdmin
+                    .from('friend_requests')
+                    .select('id, sender_id, created_at')
+                    .eq('receiver_id', userId)
+                    .order('created_at', { ascending: false });
+                if (!reqRows || reqRows.length === 0) {
+                    ack?.({ requests: [] });
+                    return;
+                }
+                const senderIds = reqRows.map((r) => r.sender_id);
+                const { data: profileRows } = await supabase_1.supabaseAdmin
+                    .from('profiles')
+                    .select('id, nickname')
+                    .in('id', senderIds);
+                const nickMap = new Map((profileRows ?? []).map((p) => [p.id, p.nickname ?? 'Guest']));
+                const requests = reqRows.map((r) => ({
+                    id: r.id,
+                    senderId: r.sender_id,
+                    senderNickname: nickMap.get(r.sender_id) ?? 'Guest',
+                    createdAt: r.created_at,
+                }));
+                ack?.({ requests });
+            }
+            catch (err) {
+                console.error('[friend_requests_list] handler error:', err);
+                ack?.({ requests: [] });
+            }
+        });
+        socket.on('friend_request_respond', async ({ auth, requestId, accept }, ack) => {
+            try {
+                const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                if (!userId || !supabase_1.supabaseAdmin) {
+                    ack?.({ status: 'error' });
+                    return;
+                }
+                const { data: reqRow } = await supabase_1.supabaseAdmin
+                    .from('friend_requests')
+                    .select('id, sender_id')
+                    .eq('id', requestId)
+                    .eq('receiver_id', userId)
+                    .maybeSingle();
+                if (!reqRow) {
+                    ack?.({ status: 'error' });
+                    return;
+                }
+                await supabase_1.supabaseAdmin.from('friend_requests').delete().eq('id', requestId);
+                if (accept) {
+                    await supabase_1.supabaseAdmin.from('friends').upsert([
+                        { user_id: userId, friend_id: reqRow.sender_id },
+                        { user_id: reqRow.sender_id, friend_id: userId },
+                    ]);
+                    await emitFriendListChanged([userId, reqRow.sender_id]);
+                    await emitFriendPresenceToFriends(userId);
+                    await emitFriendPresenceToFriends(reqRow.sender_id);
+                }
+                await emitFriendRequestCountChanged(userId);
+                ack?.({ status: 'ok' });
+            }
+            catch (err) {
+                console.error('[friend_request_respond] handler error:', err);
+                ack?.({ status: 'error' });
+            }
+        });
+        socket.on('friend_remove', async ({ auth, friendId }, ack) => {
+            try {
+                const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                if (!userId || !supabase_1.supabaseAdmin) {
+                    ack?.({ status: 'error' });
+                    return;
+                }
+                await supabase_1.supabaseAdmin
+                    .from('friends')
+                    .delete()
+                    .or(`and(user_id.eq.${userId},friend_id.eq.${friendId}),` +
+                    `and(user_id.eq.${friendId},friend_id.eq.${userId})`);
+                await emitFriendListChanged([userId, friendId]);
+                ack?.({ status: 'ok' });
+            }
+            catch (err) {
+                console.error('[friend_remove] handler error:', err);
+                ack?.({ status: 'error' });
+            }
+        });
+        socket.on('friend_get_profile', async ({ auth, friendId }, ack) => {
+            try {
+                const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                if (!userId || !supabase_1.supabaseAdmin) {
+                    ack?.({ profile: null });
+                    return;
+                }
+                const { data: friendRow } = await supabase_1.supabaseAdmin
+                    .from('friends')
+                    .select('friend_id')
+                    .eq('user_id', userId)
+                    .eq('friend_id', friendId)
+                    .maybeSingle();
+                if (!friendRow) {
+                    ack?.({ profile: null });
+                    return;
+                }
+                const [profRes, statsRes] = await Promise.all([
+                    supabase_1.supabaseAdmin.from('profiles').select('nickname, equipped_skin').eq('id', friendId).maybeSingle(),
+                    supabase_1.supabaseAdmin.from('player_stats').select('current_rating, wins, losses').eq('user_id', friendId).maybeSingle(),
+                ]);
+                ack?.({
+                    profile: {
+                        userId: friendId,
+                        nickname: profRes.data?.nickname ?? 'Guest',
+                        currentRating: Number(statsRes.data?.current_rating ?? 0),
+                        equippedSkin: (profRes.data?.equipped_skin ?? 'classic'),
+                        wins: Number(statsRes.data?.wins ?? 0),
+                        losses: Number(statsRes.data?.losses ?? 0),
+                    },
+                });
+            }
+            catch (err) {
+                console.error('[friend_get_profile] handler error:', err);
+                ack?.({ profile: null });
+            }
+        });
+        socket.on('friend_challenge', async ({ auth, friendId, pieceSkin, boardSkin, equippedSkills, }, ack) => {
+            try {
+                const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                if (!userId) {
+                    ack?.({ status: 'error' });
+                    return;
+                }
+                const targetSocketId = activeUserSockets.get(friendId);
+                if (!targetSocketId || !io.sockets.sockets.has(targetSocketId)) {
+                    ack?.({ status: 'offline' });
+                    return;
+                }
+                const inGame = store.getBySocket(targetSocketId) ??
+                    abilityStore.getBySocket(targetSocketId) ??
+                    coopStore.getBySocket(targetSocketId) ??
+                    twoVsTwoStore.getBySocket(targetSocketId);
+                if (inGame) {
+                    ack?.({ status: 'in_game' });
+                    return;
+                }
+                const profile = await resolvePlayerProfileCached(socket, auth, '');
+                challengePending.set(friendId, {
+                    fromUserId: userId,
+                    fromNickname: profile.nickname,
+                    fromSocketId: socket.id,
+                    fromPieceSkin: pieceSkin ?? 'classic',
+                    fromBoardSkin: boardSkin ?? 'classic',
+                    fromEquippedSkills: equippedSkills ?? ['classic_guard'],
+                    fromStats: profile.stats,
+                    fromCurrentRating: profile.currentRating,
+                });
+                io.to(targetSocketId).emit('friend_challenge_received', {
+                    fromUserId: userId,
+                    fromNickname: profile.nickname,
+                });
+                ack?.({ status: 'ok' });
+            }
+            catch (err) {
+                console.error('[friend_challenge] handler error:', err);
+                ack?.({ status: 'error' });
+            }
+        });
+        socket.on('friend_challenge_response', async ({ auth, fromUserId, accept, pieceSkin, boardSkin, equippedSkills, }, ack) => {
+            try {
+                const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                if (!userId) {
+                    ack?.({ status: 'error' });
+                    return;
+                }
+                const challenge = challengePending.get(userId);
+                if (!challenge || challenge.fromUserId !== fromUserId) {
+                    ack?.({ status: 'error' });
+                    return;
+                }
+                challengePending.delete(userId);
+                if (!accept) {
+                    const aSocketId = challenge.fromSocketId;
+                    if (aSocketId && io.sockets.sockets.has(aSocketId)) {
+                        io.to(aSocketId).emit('friend_challenge_declined', { byNickname: '' });
+                    }
+                    ack?.({ status: 'ok' });
+                    return;
+                }
+                const aSocketId = challenge.fromSocketId;
+                const aSocket = io.sockets.sockets.get(aSocketId);
+                if (!aSocket) {
+                    ack?.({ status: 'error' });
+                    return;
+                }
+                const bProfile = await resolvePlayerProfileCached(socket, auth, '');
+                // 방 생성
+                const roomId = abilityStore.generateRoomId();
+                const code = abilityStore.generateCode();
+                const room = new AbilityRoom_1.AbilityRoom(roomId, code, io);
+                room.enablePrivateMatch();
+                // A 입장 (도전자, red)
+                const aColor = room.addPlayer(aSocket, challenge.fromNickname, challenge.fromUserId, challenge.fromStats, challenge.fromCurrentRating, challenge.fromPieceSkin, challenge.fromBoardSkin, challenge.fromEquippedSkills);
+                if (!aColor) {
+                    ack?.({ status: 'error' });
+                    return;
+                }
+                // B 입장 (수락자, blue)
+                const bColor = room.addPlayer(socket, bProfile.nickname, bProfile.userId, bProfile.stats, bProfile.currentRating, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills ?? ['classic_guard']);
+                if (!bColor) {
+                    ack?.({ status: 'error' });
+                    return;
+                }
+                abilityStore.add(room);
+                abilityStore.registerSocket(aSocketId, roomId);
+                abilityStore.registerSocket(socket.id, roomId);
+                emitFriendPresenceForSocket(aSocketId);
+                emitFriendPresenceForSocket(socket.id);
+                room.prepareGameStart();
+                // A에게 게임 시작 신호
+                aSocket.emit('friend_challenge_accepted', {
+                    roomId,
+                    color: aColor,
+                    opponentNickname: bProfile.nickname,
+                });
+                // B에게 기존 ability_room_joined 신호
+                socket.emit('ability_room_joined', {
+                    roomId,
+                    color: bColor,
+                    opponentNickname: challenge.fromNickname,
+                });
+                ack?.({ status: 'ok' });
+            }
+            catch (err) {
+                console.error('[friend_challenge_response] handler error:', err);
+                ack?.({ status: 'error' });
             }
         });
         socket.on('join_random', async ({ nickname, auth, pieceSkin, boardSkin }) => {
@@ -745,6 +1232,8 @@ function initSocketServer(io) {
                 }
                 store.registerSocket(queued.socketId, roomId);
                 store.registerSocket(socket.id, roomId);
+                emitFriendPresenceForSocket(queued.socketId);
+                emitFriendPresenceForSocket(socket.id);
                 queuedSocket.emit('room_joined', {
                     roomId,
                     color: queuedColor,
@@ -799,6 +1288,7 @@ function initSocketServer(io) {
                 coopStore.add(room);
                 room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin);
                 coopStore.registerSocket(queued.socketId, roomId);
+                emitFriendPresenceForSocket(queued.socketId);
                 queuedSocket.emit('coop_room_joined', {
                     roomId,
                     color: 'red',
@@ -808,6 +1298,7 @@ function initSocketServer(io) {
                 });
                 room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
                 coopStore.registerSocket(socket.id, roomId);
+                emitFriendPresenceForSocket(socket.id);
                 socket.emit('coop_room_joined', {
                     roomId,
                     color: 'blue',
@@ -962,6 +1453,7 @@ function initSocketServer(io) {
                     room.addIdleBot('Training Dummy', 'classic', 'classic', []);
                     abilityStore.add(room);
                     abilityStore.registerSocket(socket.id, roomId);
+                    emitFriendPresenceForSocket(socket.id);
                     socket.emit('ability_room_joined', {
                         roomId,
                         color: trainingColor,
@@ -1060,6 +1552,7 @@ function initSocketServer(io) {
                     return;
                 }
                 abilityStore.registerSocket(queued.socketId, roomId);
+                emitFriendPresenceForSocket(queued.socketId);
                 queuedSocket.emit('ability_room_joined', {
                     roomId,
                     color: queuedAbilityColor,
@@ -1067,6 +1560,7 @@ function initSocketServer(io) {
                     hostArena,
                 });
                 abilityStore.registerSocket(socket.id, roomId);
+                emitFriendPresenceForSocket(socket.id);
                 socket.emit('ability_room_joined', {
                     roomId,
                     color: myAbilityColor,
@@ -1193,6 +1687,7 @@ function initSocketServer(io) {
                     const color = baseRoom.rejoinPlayer(socket, userId);
                     if (color) {
                         store.registerSocket(socket.id, baseRoom.roomId);
+                        emitFriendPresenceForSocket(socket.id);
                         socket.emit('rejoin_ack', {
                             mode: 'base',
                             color,
@@ -1208,6 +1703,7 @@ function initSocketServer(io) {
                     const color = abilityRoom.rejoinPlayer(socket, userId);
                     if (color) {
                         abilityStore.registerSocket(socket.id, abilityRoom.roomId);
+                        emitFriendPresenceForSocket(socket.id);
                         socket.emit('rejoin_ack', {
                             mode: 'ability',
                             color,
@@ -1281,7 +1777,7 @@ function initSocketServer(io) {
             clearAbilityFallback(socket.id);
             pendingCancelRandom.delete(socket.id);
             console.log(`[-] Disconnected: ${socket.id}`);
-            unregisterSocketSession(socket.id);
+            const disconnectedUserId = unregisterSocketSession(socket.id);
             store.removeFromQueue(socket.id);
             coopStore.removeFromQueue(socket.id);
             twoVsTwoStore.removeFromQueue(socket.id);
@@ -1295,6 +1791,9 @@ function initSocketServer(io) {
             }
             if (abilityRoom.room && abilityRoom.disconnectResult.disconnectedColor) {
                 io.to(abilityRoom.room.roomId).emit('opponent_disconnected', {});
+            }
+            if (disconnectedUserId) {
+                void emitFriendPresenceToFriends(disconnectedUserId);
             }
         });
     });

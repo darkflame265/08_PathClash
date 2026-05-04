@@ -93,14 +93,23 @@ export function initSocketServer(io: Server): void {
     string,
     { expiresAt: number; profile: PersistentPlayerProfile }
   >();
+  type FriendPresenceStatus = 'online' | 'in_game' | 'offline';
+  type FriendPresenceEntry = {
+    userId: string;
+    nickname: string;
+    currentRating: number;
+    equippedSkin: PieceSkin;
+    status: FriendPresenceStatus;
+  };
 
   const unregisterSocketSession = (socketId: string) => {
     const userId = socketUsers.get(socketId);
-    if (!userId) return;
+    if (!userId) return null;
     socketUsers.delete(socketId);
     if (activeUserSockets.get(userId) === socketId) {
       activeUserSockets.delete(userId);
     }
+    return userId;
   };
 
   const getSocketOrigin = (socket: Socket) => {
@@ -384,6 +393,7 @@ export function initSocketServer(io: Server): void {
       });
     }
     store.registerSocket(socket.id, roomId);
+    emitFriendPresenceForSocket(socket.id);
 
     const opponentColor = humanColor === 'red' ? 'blue' : 'red';
     const opponent = room.toClientState().players[opponentColor];
@@ -491,6 +501,7 @@ export function initSocketServer(io: Server): void {
       );
     }
     abilityStore.registerSocket(socket.id, roomId);
+    emitFriendPresenceForSocket(socket.id);
 
     const opponentColor = humanColor === 'red' ? 'blue' : 'red';
     const opponent = room.toClientState(humanColor).players[opponentColor];
@@ -592,6 +603,99 @@ export function initSocketServer(io: Server): void {
     return profile;
   };
 
+  const getUserPresenceStatus = (userId: string): FriendPresenceStatus => {
+    const socketId = activeUserSockets.get(userId);
+    if (!socketId || !io.sockets.sockets.has(socketId)) return 'offline';
+    const inGame =
+      store.getBySocket(socketId) ??
+      abilityStore.getBySocket(socketId) ??
+      coopStore.getBySocket(socketId) ??
+      twoVsTwoStore.getBySocket(socketId);
+    return inGame ? 'in_game' : 'online';
+  };
+
+  const getFriendIds = async (userId: string): Promise<string[]> => {
+    if (!supabaseAdmin) return [];
+    const { data } = await supabaseAdmin
+      .from('friends')
+      .select('friend_id')
+      .eq('user_id', userId);
+    return (data ?? []).map((row: { friend_id: string }) => row.friend_id);
+  };
+
+  const buildFriendPresenceEntry = async (
+    userId: string,
+  ): Promise<FriendPresenceEntry> => {
+    if (!supabaseAdmin) {
+      return {
+        userId,
+        nickname: 'Guest',
+        currentRating: 0,
+        equippedSkin: 'classic',
+        status: getUserPresenceStatus(userId),
+      };
+    }
+
+    const [profileRes, statsRes] = await Promise.all([
+      supabaseAdmin
+        .from('profiles')
+        .select('nickname, equipped_skin')
+        .eq('id', userId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('player_stats')
+        .select('current_rating')
+        .eq('user_id', userId)
+        .maybeSingle(),
+    ]);
+
+    return {
+      userId,
+      nickname: profileRes.data?.nickname ?? 'Guest',
+      currentRating: Number(statsRes.data?.current_rating ?? 0),
+      equippedSkin: (profileRes.data?.equipped_skin ?? 'classic') as PieceSkin,
+      status: getUserPresenceStatus(userId),
+    };
+  };
+
+  const emitFriendPresenceToFriends = async (userId: string) => {
+    const friendIds = await getFriendIds(userId);
+    if (friendIds.length === 0) return;
+    const friend = await buildFriendPresenceEntry(userId);
+    for (const friendId of friendIds) {
+      const socketId = activeUserSockets.get(friendId);
+      if (!socketId || !io.sockets.sockets.has(socketId)) continue;
+      io.to(socketId).emit('friend_presence_updated', { friend });
+    }
+  };
+
+  const emitFriendListChanged = async (userIds: string[]) => {
+    for (const userId of userIds) {
+      const socketId = activeUserSockets.get(userId);
+      if (!socketId || !io.sockets.sockets.has(socketId)) continue;
+      io.to(socketId).emit('friend_list_changed', {});
+    }
+  };
+
+  const emitFriendRequestCountChanged = async (userId: string) => {
+    if (!supabaseAdmin) return;
+    const socketId = activeUserSockets.get(userId);
+    if (!socketId || !io.sockets.sockets.has(socketId)) return;
+    const { count } = await supabaseAdmin
+      .from('friend_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('receiver_id', userId);
+    io.to(socketId).emit('friend_request_count_updated', {
+      count: count ?? 0,
+    });
+  };
+
+  const emitFriendPresenceForSocket = (socketId: string) => {
+    const userId = socketUsers.get(socketId);
+    if (!userId) return;
+    void emitFriendPresenceToFriends(userId);
+  };
+
   setInterval(() => {
     const activeSocketIds = new Set(io.sockets.sockets.keys());
     store.sweep(activeSocketIds, Date.now(), notifyRoomClosed);
@@ -678,6 +782,7 @@ export function initSocketServer(io: Server): void {
       );
       if (!slot) continue;
       twoVsTwoStore.registerSocket(member.socketId, roomId);
+      emitFriendPresenceForSocket(member.socketId);
       memberSocket.emit('twovtwo_room_joined', {
         roomId,
         slot,
@@ -712,6 +817,7 @@ export function initSocketServer(io: Server): void {
     if (shouldReuseCachedSession) {
       activeUserSockets.set(cachedUserId, socket.id);
       socketUsers.set(socket.id, cachedUserId);
+      void emitFriendPresenceToFriends(cachedUserId);
       return cachedUserId;
     }
 
@@ -741,6 +847,7 @@ export function initSocketServer(io: Server): void {
     socket.data.accessToken = accessToken;
     socket.data.isGuestUser = user.is_anonymous ?? false;
     socket.data.authVerifiedAt = Date.now();
+    void emitFriendPresenceToFriends(user.id);
 
     if (
       !options?.allowConcurrentSessions &&
@@ -825,6 +932,7 @@ export function initSocketServer(io: Server): void {
         }
         store.add(room);
         store.registerSocket(socket.id, roomId);
+        emitFriendPresenceForSocket(socket.id);
         socket.emit('room_created', { roomId, code, color, pieceSkin: pieceSkin ?? 'classic' });
       } catch (err) {
         console.error('[create_room] handler error:', err);
@@ -861,6 +969,7 @@ export function initSocketServer(io: Server): void {
         room.addAiPlayer('PathClash AI');
         store.add(room);
         store.registerSocket(socket.id, roomId);
+        emitFriendPresenceForSocket(socket.id);
 
         const roomState = room.toClientState();
         const opponent = roomState.players[humanColor === 'red' ? 'blue' : 'red'];
@@ -898,6 +1007,7 @@ export function initSocketServer(io: Server): void {
         }
 
         store.registerSocket(socket.id, room.roomId);
+        emitFriendPresenceForSocket(socket.id);
         const roomState = room.toClientState();
         const opponent = roomState.players[color === 'red' ? 'blue' : 'red'];
         socket.emit('room_joined', {
@@ -960,6 +1070,7 @@ export function initSocketServer(io: Server): void {
           }
           abilityStore.add(room);
           abilityStore.registerSocket(socket.id, roomId);
+          emitFriendPresenceForSocket(socket.id);
           socket.emit('ability_room_created', {
             roomId,
             code,
@@ -1018,6 +1129,7 @@ export function initSocketServer(io: Server): void {
 
           room.prepareGameStart();
           abilityStore.registerSocket(socket.id, room.roomId);
+          emitFriendPresenceForSocket(socket.id);
           socket.emit('ability_room_joined', {
             roomId: room.roomId,
             color,
@@ -1117,6 +1229,7 @@ export function initSocketServer(io: Server): void {
               requestId,
               senderNickname: senderProfile.nickname,
             });
+            await emitFriendRequestCountChanged(entry.userId);
           }
           friendCodes.delete(normalized);
           ack?.({ status: 'ok' });
@@ -1161,22 +1274,12 @@ export function initSocketServer(io: Server): void {
           const friends = friendIds.map((fid: string) => {
             const prof = profileMap.get(fid);
             const stats = statsMap.get(fid);
-            const sid = activeUserSockets.get(fid);
-            let status: 'online' | 'in_game' | 'offline' = 'offline';
-            if (sid && io.sockets.sockets.has(sid)) {
-              const inGame =
-                store.getBySocket(sid) ??
-                abilityStore.getBySocket(sid) ??
-                coopStore.getBySocket(sid) ??
-                twoVsTwoStore.getBySocket(sid);
-              status = inGame ? 'in_game' : 'online';
-            }
             return {
               userId: fid,
               nickname: prof?.nickname ?? 'Guest',
               currentRating: Number(stats?.current_rating ?? 0),
               equippedSkin: (prof?.equipped_skin ?? 'classic') as PieceSkin,
-              status,
+              status: getUserPresenceStatus(fid),
             };
           });
           ack?.({ friends });
@@ -1246,7 +1349,11 @@ export function initSocketServer(io: Server): void {
               { user_id: userId, friend_id: reqRow.sender_id },
               { user_id: reqRow.sender_id, friend_id: userId },
             ]);
+            await emitFriendListChanged([userId, reqRow.sender_id]);
+            await emitFriendPresenceToFriends(userId);
+            await emitFriendPresenceToFriends(reqRow.sender_id);
           }
+          await emitFriendRequestCountChanged(userId);
           ack?.({ status: 'ok' });
         } catch (err) {
           console.error('[friend_request_respond] handler error:', err);
@@ -1271,6 +1378,7 @@ export function initSocketServer(io: Server): void {
               `and(user_id.eq.${userId},friend_id.eq.${friendId}),` +
               `and(user_id.eq.${friendId},friend_id.eq.${userId})`,
             );
+          await emitFriendListChanged([userId, friendId]);
           ack?.({ status: 'ok' });
         } catch (err) {
           console.error('[friend_remove] handler error:', err);
@@ -1448,6 +1556,8 @@ export function initSocketServer(io: Server): void {
           abilityStore.add(room);
           abilityStore.registerSocket(aSocketId, roomId);
           abilityStore.registerSocket(socket.id, roomId);
+          emitFriendPresenceForSocket(aSocketId);
+          emitFriendPresenceForSocket(socket.id);
           room.prepareGameStart();
           // A에게 게임 시작 신호
           aSocket.emit('friend_challenge_accepted', {
@@ -1530,6 +1640,8 @@ export function initSocketServer(io: Server): void {
 
       store.registerSocket(queued.socketId, roomId);
       store.registerSocket(socket.id, roomId);
+      emitFriendPresenceForSocket(queued.socketId);
+      emitFriendPresenceForSocket(socket.id);
 
       queuedSocket.emit('room_joined', {
         roomId,
@@ -1589,6 +1701,7 @@ export function initSocketServer(io: Server): void {
 
       room.addPlayer(queuedSocket, queued.nickname, queued.userId, queued.stats, queued.pieceSkin);
       coopStore.registerSocket(queued.socketId, roomId);
+      emitFriendPresenceForSocket(queued.socketId);
       queuedSocket.emit('coop_room_joined', {
         roomId,
         color: 'red',
@@ -1599,6 +1712,7 @@ export function initSocketServer(io: Server): void {
 
       room.addPlayer(socket, profile.nickname, profile.userId, profile.stats, pieceSkin ?? 'classic');
       coopStore.registerSocket(socket.id, roomId);
+      emitFriendPresenceForSocket(socket.id);
       socket.emit('coop_room_joined', {
         roomId,
         color: 'blue',
@@ -1852,6 +1966,7 @@ export function initSocketServer(io: Server): void {
           room.addIdleBot('Training Dummy', 'classic', 'classic', []);
           abilityStore.add(room);
           abilityStore.registerSocket(socket.id, roomId);
+          emitFriendPresenceForSocket(socket.id);
           socket.emit('ability_room_joined', {
             roomId,
             color: trainingColor,
@@ -2033,6 +2148,7 @@ export function initSocketServer(io: Server): void {
         }
 
         abilityStore.registerSocket(queued.socketId, roomId);
+        emitFriendPresenceForSocket(queued.socketId);
         queuedSocket.emit('ability_room_joined', {
           roomId,
           color: queuedAbilityColor,
@@ -2041,6 +2157,7 @@ export function initSocketServer(io: Server): void {
         });
 
         abilityStore.registerSocket(socket.id, roomId);
+        emitFriendPresenceForSocket(socket.id);
         socket.emit('ability_room_joined', {
           roomId,
           color: myAbilityColor,
@@ -2226,6 +2343,7 @@ export function initSocketServer(io: Server): void {
           const color = baseRoom.rejoinPlayer(socket, userId);
           if (color) {
             store.registerSocket(socket.id, baseRoom.roomId);
+            emitFriendPresenceForSocket(socket.id);
             socket.emit('rejoin_ack', {
               mode: 'base',
               color,
@@ -2242,6 +2360,7 @@ export function initSocketServer(io: Server): void {
           const color = abilityRoom.rejoinPlayer(socket, userId);
           if (color) {
             abilityStore.registerSocket(socket.id, abilityRoom.roomId);
+            emitFriendPresenceForSocket(socket.id);
             socket.emit('rejoin_ack', {
               mode: 'ability',
               color,
@@ -2321,7 +2440,7 @@ export function initSocketServer(io: Server): void {
       clearAbilityFallback(socket.id);
       pendingCancelRandom.delete(socket.id);
       console.log(`[-] Disconnected: ${socket.id}`);
-      unregisterSocketSession(socket.id);
+      const disconnectedUserId = unregisterSocketSession(socket.id);
       store.removeFromQueue(socket.id);
       coopStore.removeFromQueue(socket.id);
       twoVsTwoStore.removeFromQueue(socket.id);
@@ -2337,6 +2456,10 @@ export function initSocketServer(io: Server): void {
 
       if (abilityRoom.room && abilityRoom.disconnectResult.disconnectedColor) {
         io.to(abilityRoom.room.roomId).emit('opponent_disconnected', {});
+      }
+
+      if (disconnectedUserId) {
+        void emitFriendPresenceToFriends(disconnectedUserId);
       }
 
     });

@@ -38,6 +38,41 @@ export function FriendListPanel({ lang, onAddFriend, onViewRequests, onFriendCli
 
   useEffect(() => { void load(); }, [load, refreshTrigger]);
 
+  useEffect(() => {
+    const socket = connectSocket();
+    const handlePresenceUpdated = ({ friend }: { friend?: FriendEntry }) => {
+      if (!friend) return;
+      setFriends((prev) => {
+        const index = prev.findIndex((entry) => entry.userId === friend.userId);
+        if (index < 0) return prev;
+        const next = [...prev];
+        next[index] = { ...next[index], ...friend };
+        return next;
+      });
+    };
+    const handleListChanged = () => {
+      void load();
+    };
+    const handleRequestCountUpdated = ({ count }: { count?: number }) => {
+      setRequestCount(Number(count ?? 0));
+    };
+    const handleRequestReceived = () => {
+      setRequestCount((prev) => prev + 1);
+    };
+
+    socket.on('friend_presence_updated', handlePresenceUpdated);
+    socket.on('friend_list_changed', handleListChanged);
+    socket.on('friend_request_count_updated', handleRequestCountUpdated);
+    socket.on('friend_request_received', handleRequestReceived);
+
+    return () => {
+      socket.off('friend_presence_updated', handlePresenceUpdated);
+      socket.off('friend_list_changed', handleListChanged);
+      socket.off('friend_request_count_updated', handleRequestCountUpdated);
+      socket.off('friend_request_received', handleRequestReceived);
+    };
+  }, [load]);
+
   const statusLabel = (s: FriendEntry['status']) =>
     s === 'online'
       ? lang === 'kr' ? '온라인' : 'Online'
