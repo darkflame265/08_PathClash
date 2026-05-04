@@ -119,7 +119,6 @@ import "./LobbyScreen.css";
 
 type LobbyView = "main" | "create" | "join";
 type SkinPickerTab = "piece" | "board";
-type FriendBattleMode = "classic" | "ability";
 type ControlsSettingsTab = "keyboard" | "controller";
 type SkinDetailState =
   | {
@@ -925,9 +924,6 @@ export function LobbyScreen({
   );
 
   const [joinCode, setJoinCode] = useState("");
-  const [friendBattleMode, setFriendBattleMode] =
-    useState<FriendBattleMode>("classic");
-
   const [createdCode, setCreatedCode] = useState("");
 
   const [error, setError] = useState("");
@@ -1270,16 +1266,8 @@ export function LobbyScreen({
 
   const twoVsTwoTitle = "2v2";
 
-  const friendClassicTabLabel = lang === "en" ? "Classic" : "클래식";
-  const friendAbilityTabLabel = lang === "en" ? "Ability Battle" : "능력대전";
-  const friendModeToggleLabel =
-    friendBattleMode === "classic"
-      ? friendAbilityTabLabel
-      : friendClassicTabLabel;
   const friendModeTitle =
-    lang === "en"
-      ? `Friendly Match (${friendBattleMode === "classic" ? "Classic" : "Ability Battle"})`
-      : `친구 대전(${friendBattleMode === "classic" ? "클래식" : "능력대전"})`;
+    lang === "en" ? "Friendly Match (Ability Battle)" : "친구 대전(능력대전)";
 
   const twoVsTwoStartLabel = lang === "en" ? "Start Match" : "매칭 시작";
 
@@ -3197,24 +3185,6 @@ export function LobbyScreen({
       profile?.equippedAbilitySkills ?? useGameStore.getState().abilityLoadout,
   });
 
-  const handleCreateRoom = async () => {
-    setError("");
-    const epoch = beginNetworkMatch("friend");
-    setIsMatchmaking(true);
-
-    setMatchType("friend");
-
-    try {
-      const profile = await ensureMatchmakingProfile();
-      const socket = await prepareMatchmakingSocket();
-      const payload = await buildPlayerPayloadFromProfile(profile);
-      if (!socket || !isNetworkMatchActive("friend", epoch)) return;
-      socket.emit("create_room", payload);
-    } catch (error) {
-      if (isNetworkMatchActive("friend", epoch)) showAccountLoadError(error);
-    }
-  };
-
   const handleCreateAbilityRoom = async () => {
     setError("");
     const epoch = beginNetworkMatch("friend");
@@ -3230,35 +3200,6 @@ export function LobbyScreen({
       const payload = await buildAbilityPlayerPayloadFromProfile(profile);
       if (!socket || !isNetworkMatchActive("friend", epoch)) return;
       socket.emit("create_ability_room", payload);
-    } catch (error) {
-      if (isNetworkMatchActive("friend", epoch)) showAccountLoadError(error);
-    }
-  };
-
-  const handleJoinRoom = async () => {
-    const normalizedJoinCode = joinCode.replace(/\s+/g, "").toUpperCase();
-
-    if (!normalizedJoinCode) {
-      setError(t.joinError);
-
-      return;
-    }
-
-    setError("");
-    const epoch = beginNetworkMatch("friend");
-    setIsMatchmaking(true);
-
-    setMatchType("friend");
-
-    try {
-      const profile = await ensureMatchmakingProfile();
-      const socket = await prepareMatchmakingSocket();
-      const payload = await buildPlayerPayloadFromProfile(profile);
-      if (!socket || !isNetworkMatchActive("friend", epoch)) return;
-      socket.emit("join_room", {
-        code: normalizedJoinCode,
-        ...payload,
-      });
     } catch (error) {
       if (isNetworkMatchActive("friend", epoch)) showAccountLoadError(error);
     }
@@ -3295,16 +3236,6 @@ export function LobbyScreen({
     }
   };
 
-  const handleFriendBattleModeChange = (nextMode: FriendBattleMode) => {
-    setFriendBattleMode(nextMode);
-    setError("");
-    setJoinCode("");
-    setCreatedCode("");
-    if (view !== "main") {
-      setView("main");
-    }
-  };
-
   const renderModeTitleBtn = (label: string, extra?: React.ReactNode) => (
     <div className="lobby-card-title-row">
       <button
@@ -3322,22 +3253,7 @@ export function LobbyScreen({
     </div>
   );
 
-  const renderFriendBattleHeader = () =>
-    renderModeTitleBtn(
-      friendModeTitle,
-      <button
-        type="button"
-        className="lobby-mini-btn"
-        data-keyboard-nav-layer="mini"
-        onClick={() =>
-          handleFriendBattleModeChange(
-            friendBattleMode === "classic" ? "ability" : "classic",
-          )
-        }
-      >
-        {friendModeToggleLabel}
-      </button>,
-    );
+  const renderFriendBattleHeader = () => renderModeTitleBtn(friendModeTitle);
 
   const handleChangeNickname = useCallback(async () => {
     if (isChangingNickname) return;
@@ -4016,19 +3932,7 @@ export function LobbyScreen({
 
     if (selectedLobbyMode === "friend") {
       return (
-        <div className="mode-action-side mode-action-side--double">
-          <button
-            type="button"
-            className="lobby-mini-btn"
-            data-keyboard-nav-layer="mini"
-            onClick={() =>
-              handleFriendBattleModeChange(
-                friendBattleMode === "classic" ? "ability" : "classic",
-              )
-            }
-          >
-            {friendModeToggleLabel}
-          </button>
+        <div className="mode-action-side">
           <button
             className="lobby-mini-btn"
             data-keyboard-nav-layer="mini"
@@ -4149,11 +4053,7 @@ export function LobbyScreen({
           {error && <p className="error-msg">{error}</p>}
           <button
             className="lobby-btn primary"
-            onClick={() =>
-              void (friendBattleMode === "ability"
-                ? handleJoinAbilityRoom()
-                : handleJoinRoom())
-            }
+            onClick={() => void handleJoinAbilityRoom()}
           >
             {t.joinBtn}
           </button>
@@ -4185,10 +4085,7 @@ export function LobbyScreen({
             {renderModeControlBar(
               "primary",
               t.createRoomBtn,
-              () =>
-                void (friendBattleMode === "ability"
-                  ? handleCreateAbilityRoom()
-                  : handleCreateRoom()),
+              () => void handleCreateAbilityRoom(),
             )}
           </>
         );
