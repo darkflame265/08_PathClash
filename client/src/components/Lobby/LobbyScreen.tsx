@@ -2782,8 +2782,6 @@ export function LobbyScreen({
     socket.off("player_skin_updated");
     socket.off("room_closed");
     socket.off("session_replaced");
-    socket.off('friend_challenge_received');
-    socket.off('friend_challenge_accepted');
 
     socket.on("game_start", (gs: ClientGameState) => {
       if (!activeNetworkMatchRef.current) return;
@@ -3135,26 +3133,6 @@ export function LobbyScreen({
       setIsMatchmaking(true);
     });
 
-    socket.on(
-      'friend_challenge_received',
-      ({ fromUserId, fromNickname }: { fromUserId: string; fromNickname: string }) => {
-        setChallengeToast({ fromUserId, fromNickname });
-      },
-    );
-
-    socket.on(
-      'friend_challenge_accepted',
-      ({ roomId, color }: { roomId: string; color: 'red' | 'blue'; opponentNickname: string }) => {
-        setChallengeToast(null);
-        setMyColor(color);
-        setRoomCode(roomId);
-        setError('');
-        setIsMatchmaking(false);
-        setMatchType('friend');
-        onAbilityStart();
-      },
-    );
-
     return socket;
   };
 
@@ -3177,6 +3155,56 @@ export function LobbyScreen({
       return null;
     }
   };
+
+  useEffect(() => {
+    const socket = connectSocket();
+    const handleChallengeReceived = ({
+      fromUserId,
+      fromNickname,
+    }: {
+      fromUserId: string;
+      fromNickname: string;
+    }) => {
+      setChallengeToast({ fromUserId, fromNickname });
+    };
+    const handleChallengeAccepted = ({
+      roomId,
+      color,
+    }: {
+      roomId: string;
+      color: "red" | "blue";
+      opponentNickname: string;
+    }) => {
+      beginNetworkMatch("friend");
+      setChallengeToast(null);
+      setMyColor(color);
+      setRoomCode(roomId);
+      setError("");
+      setIsMatchmaking(false);
+      setMatchType("friend");
+      onAbilityStart();
+    };
+    const handleChallengeDeclined = () => {
+      cancelNetworkMatch("friend");
+      setMatchType(null);
+      setIsMatchmaking(false);
+      showSkinFloatingMessageRef.current(
+        langRef.current === "en"
+          ? "Friend declined the challenge."
+          : "상대방이 친선전 요청을 거절했습니다.",
+      );
+    };
+
+    socket.on("friend_challenge_received", handleChallengeReceived);
+    socket.on("friend_challenge_accepted", handleChallengeAccepted);
+    socket.on("friend_challenge_declined", handleChallengeDeclined);
+
+    return () => {
+      socket.off("friend_challenge_received", handleChallengeReceived);
+      socket.off("friend_challenge_accepted", handleChallengeAccepted);
+      socket.off("friend_challenge_declined", handleChallengeDeclined);
+    };
+  }, [onAbilityStart, setMatchType, setMyColor, setRoomCode]);
 
   const showAccountLoadError = (error?: unknown) => {
     if (error instanceof Error && error.message === SOCKET_CONNECT_FAILED) {
@@ -3224,20 +3252,38 @@ export function LobbyScreen({
 
   const handleChallengeAccept = async () => {
     if (!challengeToast) return;
-    const socket = connectSocket();
+    const socket = await prepareMatchmakingSocket();
+    if (!socket) return;
     const auth = await getSocketAuthPayload();
     await ensureMatchmakingProfile({ syncAbilitySkills: true });
     beginNetworkMatch('friend');
     setMatchType('friend');
+    setIsMatchmaking(true);
     const store = useGameStore.getState();
-    socket.emit('friend_challenge_response', {
-      auth,
-      fromUserId: challengeToast.fromUserId,
-      accept: true,
-      pieceSkin: store.pieceSkin,
-      boardSkin: store.boardSkin,
-      equippedSkills: store.abilityLoadout,
-    });
+    const res = await new Promise<{ status: string }>((resolve) =>
+      socket.emit(
+        'friend_challenge_response',
+        {
+          auth,
+          fromUserId: challengeToast.fromUserId,
+          accept: true,
+          pieceSkin: store.pieceSkin,
+          boardSkin: store.boardSkin,
+          equippedSkills: store.abilityLoadout,
+        },
+        resolve,
+      ),
+    );
+    if (res.status !== 'ok') {
+      cancelNetworkMatch('friend');
+      setMatchType(null);
+      setIsMatchmaking(false);
+      showSkinFloatingMessage(
+        lang === 'kr'
+          ? '친선전 요청을 처리하지 못했습니다.'
+          : 'Unable to accept the challenge.',
+      );
+    }
     setChallengeToast(null);
   };
 
@@ -3264,11 +3310,13 @@ export function LobbyScreen({
 
   const handleFriendChallenge = async (friend: FriendEntry) => {
     setFriendCtx(null);
-    const socket = connectSocket();
+    const socket = await prepareMatchmakingSocket();
+    if (!socket) return;
     const auth = await getSocketAuthPayload();
     await ensureMatchmakingProfile({ syncAbilitySkills: true });
     beginNetworkMatch('friend');
     setMatchType('friend');
+    setIsMatchmaking(true);
     const store = useGameStore.getState();
     const res = await new Promise<{ status: string }>((resolve) =>
       socket.emit(
@@ -3286,14 +3334,25 @@ export function LobbyScreen({
     if (res.status === 'offline') {
       cancelNetworkMatch('friend');
       setMatchType(null);
+      setIsMatchmaking(false);
       showSkinFloatingMessage(
         lang === 'kr' ? '상대방이 오프라인입니다.' : 'Friend is offline.',
       );
     } else if (res.status === 'in_game') {
       cancelNetworkMatch('friend');
       setMatchType(null);
+      setIsMatchmaking(false);
       showSkinFloatingMessage(
         lang === 'kr' ? '상대방이 게임 중입니다.' : 'Friend is in a game.',
+      );
+    } else if (res.status !== 'ok') {
+      cancelNetworkMatch('friend');
+      setMatchType(null);
+      setIsMatchmaking(false);
+      showSkinFloatingMessage(
+        lang === 'kr'
+          ? '친선전 요청을 보내지 못했습니다.'
+          : 'Unable to send the challenge.',
       );
     }
   };
