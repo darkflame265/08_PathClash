@@ -4523,3 +4523,36 @@
 .friend-add-result.error {
   color: #ef4444;
 }
+
+/* ── FriendRequestsModal ───────────────────────────────── */
+.friend-req-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.friend-req-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--tile, #2a3137);
+  border-radius: 8px;
+}
+
+.friend-req-name {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--text, #e2e8f0);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friend-req-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
