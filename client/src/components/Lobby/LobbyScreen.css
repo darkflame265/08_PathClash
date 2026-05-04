@@ -4330,3 +4330,103 @@
     align-items: center;
   }
 }
+
+/* ── Friend List Panel ─────────────────────────────────── */
+.friend-list-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(100%, 34rem);
+  margin: auto auto 0;
+  padding: 12px;
+  background: var(--panel, #1e252b);
+  border: 1px solid var(--tile-border, #3a444d);
+  border-radius: 1rem;
+  flex-shrink: 1;
+  min-height: 0;
+}
+
+.friend-list-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  max-height: clamp(10rem, 28dvh, 18rem);
+  min-height: 4rem;
+}
+
+.friend-list-empty {
+  color: var(--text-muted, #8899aa);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 1rem 0;
+  margin: 0;
+}
+
+.friend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--tile, #2a3137);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  color: var(--text, #e2e8f0);
+  font-size: 0.85rem;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.friend-row:hover {
+  background: var(--tile-border, #3a444d);
+  border-color: rgba(125, 211, 252, 0.2);
+}
+
+.friend-status-badge {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.friend-status-badge--online  { background: #4ade80; }
+.friend-status-badge--in_game { background: #60a5fa; }
+.friend-status-badge--offline { background: #6b7280; }
+
+.friend-row-name {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friend-row-rating {
+  font-size: 0.78rem;
+  color: var(--text-muted, #8899aa);
+  flex-shrink: 0;
+}
+
+.friend-row-status {
+  font-size: 0.75rem;
+  color: var(--text-muted, #8899aa);
+  flex-shrink: 0;
+  min-width: 44px;
+  text-align: right;
+}
+
+.friend-list-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.friend-list-actions .lobby-mini-btn {
+  flex: 1;
+}
+
+.lobby-mini-btn.has-badge {
+  border-color: rgba(96, 165, 250, 0.5);
+  color: #93c5fd;
+}
