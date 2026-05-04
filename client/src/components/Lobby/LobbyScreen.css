@@ -4556,3 +4556,99 @@
   gap: 6px;
   flex-shrink: 0;
 }
+
+/* ── FriendContextPopup ────────────────────────────────── */
+.friend-ctx-popup {
+  z-index: 300;
+  background: var(--panel, #1e252b);
+  border: 1px solid var(--tile-border, #3a444d);
+  border-radius: 0.75rem;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 130px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.friend-ctx-btn {
+  background: transparent;
+  border: none;
+  color: var(--text, #e2e8f0);
+  font-size: 0.88rem;
+  padding: 7px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background 0.1s;
+}
+
+.friend-ctx-btn:hover { background: var(--tile, #2a3137); }
+.friend-ctx-btn.danger { color: #f87171; }
+.friend-ctx-btn.danger:hover { background: rgba(248, 113, 113, 0.1); }
+
+.friend-ctx-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px;
+}
+
+.friend-ctx-confirm-text {
+  font-size: 0.82rem;
+  color: var(--text, #e2e8f0);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.friend-ctx-confirm-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.lobby-mini-btn.danger {
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #f87171;
+}
+
+.lobby-mini-btn.danger:hover {
+  background: rgba(248, 113, 113, 0.12);
+}
+
+/* ── FriendProfileModal ────────────────────────────────── */
+.friend-profile-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.friend-profile-skin-wrap {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--tile, #2a3137);
+  border-radius: 50%;
+}
+
+.friend-profile-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text, #e2e8f0);
+  margin: 0;
+}
+
+.friend-profile-rating {
+  font-size: 0.9rem;
+  color: #fbbf24;
+  margin: 0;
+}
+
+.friend-profile-record {
+  font-size: 0.85rem;
+  color: var(--text-muted, #8899aa);
+  margin: 0;
+}
