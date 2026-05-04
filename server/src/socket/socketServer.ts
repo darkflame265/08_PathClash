@@ -1098,23 +1098,23 @@ export function initSocketServer(io: Server): void {
             .eq('sender_id', userId)
             .eq('receiver_id', entry.userId)
             .maybeSingle();
+          let requestId = '';
           if (!dupReq) {
-            await supabaseAdmin
+            const { data: inserted } = await supabaseAdmin
               .from('friend_requests')
-              .insert({ sender_id: userId, receiver_id: entry.userId });
+              .insert({ sender_id: userId, receiver_id: entry.userId })
+              .select('id')
+              .maybeSingle();
+            requestId = inserted?.id ?? '';
+          } else {
+            requestId = dupReq.id;
           }
           // 대상이 온라인이면 실시간 알림
           const targetSocketId = activeUserSockets.get(entry.userId);
           if (targetSocketId && io.sockets.sockets.has(targetSocketId)) {
-            const { data: reqRow } = await supabaseAdmin
-              .from('friend_requests')
-              .select('id')
-              .eq('sender_id', userId)
-              .eq('receiver_id', entry.userId)
-              .single();
             const senderProfile = await resolvePlayerProfileCached(socket, auth, '');
             io.to(targetSocketId).emit('friend_request_received', {
-              requestId: reqRow?.id ?? '',
+              requestId,
               senderNickname: senderProfile.nickname,
             });
           }
