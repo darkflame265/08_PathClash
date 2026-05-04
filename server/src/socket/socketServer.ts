@@ -1255,6 +1255,74 @@ export function initSocketServer(io: Server): void {
       },
     );
 
+    socket.on(
+      'friend_remove',
+      async (
+        { auth, friendId }: { auth?: AuthPayload; friendId: string },
+        ack?: (res: { status: 'ok' | 'error' }) => void,
+      ) => {
+        try {
+          const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+          if (!userId || !supabaseAdmin) { ack?.({ status: 'error' }); return; }
+          await supabaseAdmin
+            .from('friends')
+            .delete()
+            .or(
+              `and(user_id.eq.${userId},friend_id.eq.${friendId}),` +
+              `and(user_id.eq.${friendId},friend_id.eq.${userId})`,
+            );
+          ack?.({ status: 'ok' });
+        } catch (err) {
+          console.error('[friend_remove] handler error:', err);
+          ack?.({ status: 'error' });
+        }
+      },
+    );
+
+    socket.on(
+      'friend_get_profile',
+      async (
+        { auth, friendId }: { auth?: AuthPayload; friendId: string },
+        ack?: (res: { profile: {
+          userId: string;
+          nickname: string;
+          currentRating: number;
+          equippedSkin: PieceSkin;
+          wins: number;
+          losses: number;
+        } | null }) => void,
+      ) => {
+        try {
+          const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+          if (!userId || !supabaseAdmin) { ack?.({ profile: null }); return; }
+          const { data: friendRow } = await supabaseAdmin
+            .from('friends')
+            .select('friend_id')
+            .eq('user_id', userId)
+            .eq('friend_id', friendId)
+            .maybeSingle();
+          if (!friendRow) { ack?.({ profile: null }); return; }
+          const [profRes, statsRes] = await Promise.all([
+            supabaseAdmin.from('profiles').select('nickname, equipped_skin').eq('id', friendId).maybeSingle(),
+            supabaseAdmin.from('player_stats').select('current_rating, wins, losses').eq('user_id', friendId).maybeSingle(),
+          ]);
+          ack?.({
+            profile: {
+              userId: friendId,
+              nickname: profRes.data?.nickname ?? 'Guest',
+              currentRating: Number(statsRes.data?.current_rating ?? 0),
+              equippedSkin: (profRes.data?.equipped_skin ?? 'classic') as PieceSkin,
+              wins: Number(statsRes.data?.wins ?? 0),
+              losses: Number(statsRes.data?.losses ?? 0),
+            },
+          });
+        } catch (err) {
+          console.error('[friend_get_profile] handler error:', err);
+          ack?.({ profile: null });
+        }
+      },
+    );
+
     socket.on('join_random', async ({ nickname, auth, pieceSkin, boardSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin; boardSkin?: BoardSkin }) => {
       try {
       pendingCancelRandom.delete(socket.id);
