@@ -180,6 +180,7 @@ function App() {
     useState<LegalDocumentType | null>(null);
   const [tutorialPromptTrigger, setTutorialPromptTrigger] = useState(0);
   const gameLoadingTimeoutRef = useRef<number | null>(null);
+  const abilityScreenReadyAtRef = useRef<number | undefined>(undefined);
   const [matchResultAudioKind, setMatchResultAudioKind] =
     useState<MatchResultAudioKind | null>(null);
   const {
@@ -214,7 +215,10 @@ function App() {
     }
 
     setLoadingTipIndex(getRandomLoadingTipIndex());
-    setGameLoadingUntil(Date.now() + MIN_GAME_LOADING_MS);
+    const readyAt = Date.now() + MIN_GAME_LOADING_MS;
+    setGameLoadingUntil(readyAt);
+    abilityScreenReadyAtRef.current =
+      nextView === "ability" ? readyAt : undefined;
     setView(nextView);
     gameLoadingTimeoutRef.current = window.setTimeout(() => {
       setGameLoadingUntil(0);
@@ -1046,7 +1050,10 @@ function App() {
             <TwoVsTwoScreen onLeaveToLobby={handleReturnToLobby} />
           )}
           {view === "ability" && (
-            <AbilityScreen onLeaveToLobby={handleReturnToLobby} />
+            <AbilityScreen
+              onLeaveToLobby={handleReturnToLobby}
+              screenReadyAt={abilityScreenReadyAtRef.current}
+            />
           )}
         </Suspense>
         {isGameLoadingVisible && (

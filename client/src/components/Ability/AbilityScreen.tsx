@@ -636,16 +636,29 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
   // Phase timeline: pre → banner(enter anim) → exiting → done
   // bannerDelay = 로딩 화면 종료 후 300ms (보드가 먼저 보인 뒤 배너 등장)
   useEffect(() => {
-    const bannerDelay = Math.max(0, (screenReadyAt ?? 0) - Date.now()) + 300;
-    const bannerTimer = window.setTimeout(() => setMatchIntroPhase("banner"), bannerDelay);
-    const exitTimer   = window.setTimeout(() => setMatchIntroPhase("exiting"), bannerDelay + 4000);
-    const doneTimer   = window.setTimeout(() => setMatchIntroPhase("done"), bannerDelay + 4500);
+    if (isLocalAbilityTraining) return;
+    setMatchIntroPhase("pre");
+
+    const visibleAt = Math.max(Date.now(), screenReadyAt ?? Date.now());
+    const bannerDelay = Math.max(0, visibleAt - Date.now()) + 300;
+    const bannerTimer = window.setTimeout(
+      () => setMatchIntroPhase("banner"),
+      bannerDelay,
+    );
+    const exitTimer = window.setTimeout(
+      () => setMatchIntroPhase("exiting"),
+      bannerDelay + 4000,
+    );
+    const doneTimer = window.setTimeout(
+      () => setMatchIntroPhase("done"),
+      bannerDelay + 4500,
+    );
     return () => {
       window.clearTimeout(bannerTimer);
       window.clearTimeout(exitTimer);
       window.clearTimeout(doneTimer);
     };
-  }, [screenReadyAt]);
+  }, [isLocalAbilityTraining, screenReadyAt]);
 
   // Notify server when intro is done so it can start the planning timer.
   // Also handles rematch: matchIntroPhase stays 'done' but roundInfo resets to roundEndsAt=0.
