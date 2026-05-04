@@ -117,6 +117,14 @@ import { useLobbyKeyboardNavigation } from "./useLobbyKeyboardNavigation";
 
 import "./LobbyScreen.css";
 
+import { FriendListPanel }      from './friends/FriendListPanel';
+import { FriendAddModal }       from './friends/FriendAddModal';
+import { FriendRequestsModal }  from './friends/FriendRequestsModal';
+import { FriendContextPopup }   from './friends/FriendContextPopup';
+import { FriendProfileModal }   from './friends/FriendProfileModal';
+import { FriendChallengeToast } from './friends/FriendChallengeToast';
+import type { FriendEntry }     from './friends/types';
+
 type LobbyView = "main" | "create" | "join";
 type SkinPickerTab = "piece" | "board";
 type ControlsSettingsTab = "keyboard" | "controller";
@@ -975,6 +983,13 @@ export function LobbyScreen({
 
   const [isModePickerOpen, setIsModePickerOpen] = useState(false);
   const [showArenaGallery, setShowArenaGallery] = useState(false);
+
+  const [showFriendAdd, setShowFriendAdd]           = useState(false);
+  const [showFriendRequests, setShowFriendRequests] = useState(false);
+  const [friendCtx, setFriendCtx]                   = useState<{ friend: FriendEntry; anchorRect: DOMRect } | null>(null);
+  const [friendProfileId, setFriendProfileId]       = useState<string | null>(null);
+  const [challengeToast, setChallengeToast]         = useState<{ fromUserId: string; fromNickname: string } | null>(null);
+  const [friendListRefresh, setFriendListRefresh]   = useState(0);
 
   const [isPatchNotesOpen, setIsPatchNotesOpen] = useState(false);
 
@@ -2767,6 +2782,8 @@ export function LobbyScreen({
     socket.off("player_skin_updated");
     socket.off("room_closed");
     socket.off("session_replaced");
+    socket.off('friend_challenge_received');
+    socket.off('friend_challenge_accepted');
 
     socket.on("game_start", (gs: ClientGameState) => {
       if (!activeNetworkMatchRef.current) return;
@@ -3118,6 +3135,26 @@ export function LobbyScreen({
       setIsMatchmaking(true);
     });
 
+    socket.on(
+      'friend_challenge_received',
+      ({ fromUserId, fromNickname }: { fromUserId: string; fromNickname: string }) => {
+        setChallengeToast({ fromUserId, fromNickname });
+      },
+    );
+
+    socket.on(
+      'friend_challenge_accepted',
+      ({ roomId, color }: { roomId: string; color: 'red' | 'blue'; opponentNickname: string }) => {
+        setChallengeToast(null);
+        setMyColor(color);
+        setRoomCode(roomId);
+        setError('');
+        setIsMatchmaking(false);
+        setMatchType('friend');
+        onAbilityStart();
+      },
+    );
+
     return socket;
   };
 
@@ -3184,6 +3221,81 @@ export function LobbyScreen({
     equippedSkills:
       profile?.equippedAbilitySkills ?? useGameStore.getState().abilityLoadout,
   });
+
+  const handleChallengeAccept = async () => {
+    if (!challengeToast) return;
+    const socket = connectSocket();
+    const auth = await getSocketAuthPayload();
+    await ensureMatchmakingProfile({ syncAbilitySkills: true });
+    beginNetworkMatch('friend');
+    setMatchType('friend');
+    const store = useGameStore.getState();
+    socket.emit('friend_challenge_response', {
+      auth,
+      fromUserId: challengeToast.fromUserId,
+      accept: true,
+      pieceSkin: store.pieceSkin,
+      boardSkin: store.boardSkin,
+      equippedSkills: store.abilityLoadout,
+    });
+    setChallengeToast(null);
+  };
+
+  const handleChallengeDecline = () => {
+    if (!challengeToast) return;
+    const socket = connectSocket();
+    void (async () => {
+      const auth = await getSocketAuthPayload();
+      socket.emit('friend_challenge_response', {
+        auth,
+        fromUserId: challengeToast.fromUserId,
+        accept: false,
+      });
+    })();
+    setChallengeToast(null);
+  };
+
+  const handleFriendRemove = async (friendId: string) => {
+    const socket = connectSocket();
+    const auth = await getSocketAuthPayload();
+    await new Promise<void>((resolve) =>
+      socket.emit('friend_remove', { auth, friendId }, () => resolve()),
+    );
+    setFriendCtx(null);
+    setFriendListRefresh((n) => n + 1);
+  };
+
+  const handleFriendChallenge = async (friend: FriendEntry) => {
+    setFriendCtx(null);
+    const socket = connectSocket();
+    const auth = await getSocketAuthPayload();
+    await ensureMatchmakingProfile({ syncAbilitySkills: true });
+    beginNetworkMatch('friend');
+    setMatchType('friend');
+    const store = useGameStore.getState();
+    const res = await new Promise<{ status: string }>((resolve) =>
+      socket.emit(
+        'friend_challenge',
+        {
+          auth,
+          friendId: friend.userId,
+          pieceSkin: store.pieceSkin,
+          boardSkin: store.boardSkin,
+          equippedSkills: store.abilityLoadout,
+        },
+        resolve,
+      ),
+    );
+    if (res.status === 'offline') {
+      showSkinFloatingMessage(
+        lang === 'kr' ? '상대방이 오프라인입니다.' : 'Friend is offline.',
+      );
+    } else if (res.status === 'in_game') {
+      showSkinFloatingMessage(
+        lang === 'kr' ? '상대방이 게임 중입니다.' : 'Friend is in a game.',
+      );
+    }
+  };
 
   const handleCreateAbilityRoom = async () => {
     setError("");
@@ -3872,6 +3984,7 @@ export function LobbyScreen({
     lobbyModeOptions.find((option) => option.key === selectedLobbyMode) ??
     lobbyModeOptions[0];
   const showLobbyArenaContent = selectedLobbyMode === "ability";
+  const showFriendListPanel = selectedLobbyMode === 'friend';
 
   const renderModePickerAction = () => (
     <button
@@ -4153,6 +4266,16 @@ export function LobbyScreen({
 
   return (
     <div className="lobby-screen" onClickCapture={handleLobbyUiClickCapture}>
+      {challengeToast && (
+        <div className="friend-challenge-toast-wrap">
+          <FriendChallengeToast
+            fromNickname={challengeToast.fromNickname}
+            lang={lang}
+            onAccept={() => void handleChallengeAccept()}
+            onDecline={handleChallengeDecline}
+          />
+        </div>
+      )}
       <div className="lobby-user-header">
         <div className="lobby-user-info">
           <span className="lobby-user-name">{myNickname || "-"}</span>
@@ -4203,6 +4326,18 @@ export function LobbyScreen({
         </div>
       )}
 
+      {showFriendListPanel && (
+        <div className="lobby-arena-center">
+          <FriendListPanel
+            lang={lang}
+            onAddFriend={() => setShowFriendAdd(true)}
+            onViewRequests={() => setShowFriendRequests(true)}
+            onFriendClick={(friend, anchorRect) => setFriendCtx({ friend, anchorRect })}
+            refreshTrigger={friendListRefresh}
+          />
+        </div>
+      )}
+
       <div
         className={`lobby-card mode-content-card${accountSummaryLoading ? " is-db-loading" : ""}`}
       >
@@ -4215,6 +4350,38 @@ export function LobbyScreen({
           currentArena={lobbyArena}
           currentRating={currentRating}
           onClose={() => setShowArenaGallery(false)}
+        />
+      )}
+
+      {showFriendAdd && (
+        <FriendAddModal lang={lang} onClose={() => setShowFriendAdd(false)} />
+      )}
+
+      {showFriendRequests && (
+        <FriendRequestsModal
+          lang={lang}
+          onClose={() => setShowFriendRequests(false)}
+          onAccepted={() => { setFriendListRefresh((n) => n + 1); }}
+        />
+      )}
+
+      {friendCtx && (
+        <FriendContextPopup
+          friend={friendCtx.friend}
+          anchorRect={friendCtx.anchorRect}
+          lang={lang}
+          onViewProfile={() => { setFriendProfileId(friendCtx.friend.userId); setFriendCtx(null); }}
+          onChallenge={() => void handleFriendChallenge(friendCtx.friend)}
+          onRemove={() => void handleFriendRemove(friendCtx.friend.userId)}
+          onClose={() => setFriendCtx(null)}
+        />
+      )}
+
+      {friendProfileId && (
+        <FriendProfileModal
+          friendId={friendProfileId}
+          lang={lang}
+          onClose={() => setFriendProfileId(null)}
         />
       )}
 
