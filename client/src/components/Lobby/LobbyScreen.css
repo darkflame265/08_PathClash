@@ -4652,3 +4652,39 @@
   color: var(--text-muted, #8899aa);
   margin: 0;
 }
+
+/* ── FriendChallengeToast ──────────────────────────────── */
+.friend-challenge-toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: rgba(30, 37, 43, 0.95);
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  margin: 0 0 8px;
+}
+
+.friend-challenge-toast-msg {
+  flex: 1;
+  font-size: 0.88rem;
+  color: var(--text, #e2e8f0);
+  min-width: 180px;
+}
+
+.friend-challenge-toast-btns {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.friend-challenge-toast-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 150;
+  padding: 8px 16px 0;
+}
