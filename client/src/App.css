@@ -152,12 +152,14 @@ body {
 .app-confirm-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: rgba(7, 12, 18, 0.7);
+  background: rgba(3, 7, 18, 0.76);
+  isolation: isolate;
+  pointer-events: auto;
 }
 
 .app-confirm-modal {
@@ -243,6 +245,11 @@ body {
 
 .app-legal-consent-modal {
   width: min(100%, 28rem);
+  border: 1px solid rgba(74, 222, 128, 0.88);
+  box-shadow:
+    0 0 0 1px rgba(134, 239, 172, 0.18),
+    0 0 18px rgba(74, 222, 128, 0.32),
+    0 18px 48px rgba(15, 23, 42, 0.52);
 }
 
 .app-legal-consent-links {
@@ -301,7 +308,7 @@ body {
 .app-legal-doc-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 1100;
   display: flex;
   align-items: center;
   justify-content: center;
