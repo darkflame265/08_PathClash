@@ -11,16 +11,19 @@
 ### Supabase 테이블
 
 **`friends`**
+
 ```sql
 user_id    UUID  REFERENCES auth.users ON DELETE CASCADE
 friend_id  UUID  REFERENCES auth.users ON DELETE CASCADE
 created_at TIMESTAMPTZ DEFAULT now()
 PRIMARY KEY (user_id, friend_id)
 ```
+
 - 양방향 관계는 `(A, B)` + `(B, A)` 두 행으로 저장
 - 친구 삭제 시 두 행 모두 제거
 
 **`friend_requests`**
+
 ```sql
 id          UUID PRIMARY KEY DEFAULT gen_random_uuid()
 sender_id   UUID REFERENCES auth.users ON DELETE CASCADE
@@ -33,10 +36,16 @@ UNIQUE (sender_id, receiver_id)
 
 ```ts
 // 5분 TTL 친구 코드
-const friendCodes = new Map<string, { userId: string; nickname: string; expiresAt: number }>();
+const friendCodes = new Map<
+  string,
+  { userId: string; nickname: string; expiresAt: number }
+>();
 
 // 진행 중인 친선전 요청
-const challengePending = new Map<string, { fromUserId: string; fromNickname: string; fromSocketId: string }>();
+const challengePending = new Map<
+  string,
+  { fromUserId: string; fromNickname: string; fromSocketId: string }
+>();
 ```
 
 - 친구 코드: 대문자 영숫자 6자리 (기존 방 코드와 동일 형식)
@@ -48,51 +57,51 @@ const challengePending = new Map<string, { fromUserId: string; fromNickname: str
 
 ### 클라이언트 → 서버 (ack)
 
-| 이벤트 | 요청 페이로드 | 응답 |
-|--------|--------------|------|
-| `friend_generate_code` | `{ auth }` | `{ code: string, expiresAt: number }` |
-| `friend_add_by_code` | `{ auth, code }` | `{ status: 'ok' \| 'not_found' \| 'expired' \| 'already_friends' \| 'self' }` |
-| `friend_list` | `{ auth }` | `{ friends: FriendEntry[] }` |
-| `friend_requests_list` | `{ auth }` | `{ requests: RequestEntry[] }` |
-| `friend_request_respond` | `{ auth, requestId, accept: boolean }` | `{ status: 'ok' \| 'error' }` |
-| `friend_remove` | `{ auth, friendId }` | `{ status: 'ok' \| 'error' }` |
-| `friend_get_profile` | `{ auth, friendId }` | `{ profile: FriendProfile }` |
-| `friend_challenge` | `{ auth, friendId }` | `{ status: 'ok' \| 'offline' \| 'in_game' \| 'error' }` |
-| `friend_challenge_response` | `{ auth, fromUserId, accept: boolean }` | `{ status: 'ok' \| 'error' }` |
+| 이벤트                      | 요청 페이로드                           | 응답                                                                          |
+| --------------------------- | --------------------------------------- | ----------------------------------------------------------------------------- |
+| `friend_generate_code`      | `{ auth }`                              | `{ code: string, expiresAt: number }`                                         |
+| `friend_add_by_code`        | `{ auth, code }`                        | `{ status: 'ok' \| 'not_found' \| 'expired' \| 'already_friends' \| 'self' }` |
+| `friend_list`               | `{ auth }`                              | `{ friends: FriendEntry[] }`                                                  |
+| `friend_requests_list`      | `{ auth }`                              | `{ requests: RequestEntry[] }`                                                |
+| `friend_request_respond`    | `{ auth, requestId, accept: boolean }`  | `{ status: 'ok' \| 'error' }`                                                 |
+| `friend_remove`             | `{ auth, friendId }`                    | `{ status: 'ok' \| 'error' }`                                                 |
+| `friend_get_profile`        | `{ auth, friendId }`                    | `{ profile: FriendProfile }`                                                  |
+| `friend_challenge`          | `{ auth, friendId }`                    | `{ status: 'ok' \| 'offline' \| 'in_game' \| 'error' }`                       |
+| `friend_challenge_response` | `{ auth, fromUserId, accept: boolean }` | `{ status: 'ok' \| 'error' }`                                                 |
 
 ### 서버 → 클라이언트 (push)
 
-| 이벤트 | 데이터 | 발생 시점 |
-|--------|--------|----------|
-| `friend_request_received` | `{ requestId, senderNickname }` | 상대가 내 코드로 친구 요청 보냈을 때 |
-| `friend_challenge_received` | `{ fromUserId, fromNickname }` | 상대가 친선전 요청 보냈을 때 |
-| `friend_challenge_accepted` | `{ roomCode }` | 친선전 수락 완료, 방 코드 전달 |
+| 이벤트                      | 데이터                          | 발생 시점                            |
+| --------------------------- | ------------------------------- | ------------------------------------ |
+| `friend_request_received`   | `{ requestId, senderNickname }` | 상대가 내 코드로 친구 요청 보냈을 때 |
+| `friend_challenge_received` | `{ fromUserId, fromNickname }`  | 상대가 친선전 요청 보냈을 때         |
+| `friend_challenge_accepted` | `{ roomCode }`                  | 친선전 수락 완료, 방 코드 전달       |
 
 ### 타입 정의
 
 ```ts
 interface FriendEntry {
-  userId: string
-  nickname: string
-  currentRating: number
-  equippedSkin: PieceSkin
-  status: 'online' | 'in_game' | 'offline'
+  userId: string;
+  nickname: string;
+  currentRating: number;
+  equippedSkin: PieceSkin;
+  status: "online" | "in_game" | "offline";
 }
 
 interface RequestEntry {
-  id: string
-  senderNickname: string
-  senderId: string
-  createdAt: string
+  id: string;
+  senderNickname: string;
+  senderId: string;
+  createdAt: string;
 }
 
 interface FriendProfile {
-  userId: string
-  nickname: string
-  currentRating: number
-  equippedSkin: PieceSkin
-  wins: number
-  losses: number
+  userId: string;
+  nickname: string;
+  currentRating: number;
+  equippedSkin: PieceSkin;
+  wins: number;
+  losses: number;
 }
 ```
 
@@ -126,6 +135,7 @@ lobby-screen
 ### 컴포넌트 목록
 
 **FriendListPanel**
+
 - 친구 목록 스크롤 리스트
   - 행: 스킨 미니 아이콘 + 닉네임 + 레이팅 + 상태 뱃지 (🟢온라인 / 🔵게임중 / ⚫오프라인)
   - 클릭 → FriendContextPopup 표시
@@ -134,6 +144,7 @@ lobby-screen
   - N: 받은 요청 수 뱃지
 
 **FriendAddModal**
+
 - 상단: 내 일회용 코드 (대형 표시) + MM:SS 카운트다운
 - 코드 재생성 버튼 (만료 후 또는 사용자 요청)
 - 구분선
@@ -141,19 +152,23 @@ lobby-screen
 - 코드 입력 결과 메시지 표시
 
 **FriendRequestsModal**
+
 - 받은 요청 목록 (닉네임 + 수락 / 거절 버튼)
 - 빈 상태: "받은 친구 요청이 없습니다"
 
 **FriendContextPopup**
+
 - 클릭한 친구 행 근처에 작은 팝업
 - 3개 버튼: [프로필 보기] [친선전] [친구 삭제]
-- 친구 삭제 클릭 시 확인 없이 즉시 삭제 (단순하게)
+- 친구 삭제 클릭 시 "xxx님을 친구에서 삭제하시겠습니까?" 확인 문구 나오게 할 것.
 
 **FriendProfileModal**
+
 - 스킨 미리보기 (기존 skin preview 컴포넌트 재활용)
 - 닉네임, 레이팅, 승/패
 
 **FriendChallengeToast**
+
 - 로비 상단 고정 배너
 - 텍스트: "{nickname}님이 친선전을 요청했습니다."
 - [수락] [거절] 버튼
@@ -185,6 +200,7 @@ lobby-screen
 ## 파일 구조 (신규/수정)
 
 ### 신규
+
 - `client/src/components/Lobby/friends/FriendListPanel.tsx`
 - `client/src/components/Lobby/friends/FriendAddModal.tsx`
 - `client/src/components/Lobby/friends/FriendRequestsModal.tsx`
@@ -193,6 +209,7 @@ lobby-screen
 - `client/src/components/Lobby/friends/FriendChallengeToast.tsx`
 
 ### 수정
+
 - `server/src/socket/socketServer.ts` — 친구 관련 이벤트 핸들러 추가
 - `client/src/components/Lobby/LobbyScreen.tsx` — FriendListPanel + Toast 연결
 - Supabase: `friends`, `friend_requests` 테이블 추가 (마이그레이션)
