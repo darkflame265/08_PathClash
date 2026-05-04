@@ -34,6 +34,7 @@ import {
   trackSettingsAchievements,
 } from '../services/achievementService';
 import { getCurrentRotation } from '../services/rotationService';
+import { supabaseAdmin } from '../lib/supabase';
 
 export function initSocketServer(io: Server): void {
   const store = RoomStore.getInstance();
@@ -57,6 +58,22 @@ export function initSocketServer(io: Server): void {
     string,
     ReturnType<typeof setTimeout>
   >();
+  const FRIEND_CODE_TTL_MS = 5 * 60 * 1000;
+  const friendCodes = new Map<string, {
+    userId: string;
+    nickname: string;
+    expiresAt: number;
+  }>();
+  const challengePending = new Map<string, {
+    fromUserId: string;
+    fromNickname: string;
+    fromSocketId: string;
+    fromPieceSkin: PieceSkin;
+    fromBoardSkin: BoardSkin;
+    fromEquippedSkills: AbilitySkillId[];
+    fromStats: { wins: number; losses: number };
+    fromCurrentRating: number;
+  }>();
   const ABILITY_FAKE_AI_SKILL_POOL: AbilitySkillId[] = [
     'classic_guard',
     'ember_blast',
@@ -619,6 +636,13 @@ export function initSocketServer(io: Server): void {
     );
   }, metricsLogIntervalMs);
 
+  setInterval(() => {
+    const now = Date.now();
+    for (const [code, entry] of friendCodes.entries()) {
+      if (entry.expiresAt <= now) friendCodes.delete(code);
+    }
+  }, 60_000);
+
   const tryStartTwoVsTwoTeamMatch = () => {
     const match = twoVsTwoStore.dequeueTeamMatch();
     if (!match) return;
@@ -1007,6 +1031,98 @@ export function initSocketServer(io: Server): void {
         } catch (err) {
           console.error('[join_ability_room] handler error:', err);
           socket.emit('join_error', { message: '방 입장 중 오류가 발생했습니다.' });
+        }
+      },
+    );
+
+    socket.on(
+      'friend_generate_code',
+      async (
+        { auth }: { auth?: AuthPayload },
+        ack?: (res: { code: string; expiresAt: number } | { error: string }) => void,
+      ) => {
+        try {
+          const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+          if (!userId) { ack?.({ error: 'auth_required' }); return; }
+          const profile = await resolvePlayerProfileCached(socket, auth, '');
+          // 기존 코드 제거
+          for (const [code, entry] of friendCodes.entries()) {
+            if (entry.userId === userId) friendCodes.delete(code);
+          }
+          // 새 코드 생성
+          const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+          let code: string;
+          do {
+            code = Array.from({ length: 6 }, () =>
+              chars[Math.floor(Math.random() * chars.length)],
+            ).join('');
+          } while (friendCodes.has(code));
+          const expiresAt = Date.now() + FRIEND_CODE_TTL_MS;
+          friendCodes.set(code, { userId, nickname: profile.nickname, expiresAt });
+          ack?.({ code, expiresAt });
+        } catch (err) {
+          console.error('[friend_generate_code] handler error:', err);
+          ack?.({ error: 'server_error' });
+        }
+      },
+    );
+
+    socket.on(
+      'friend_add_by_code',
+      async (
+        { auth, code }: { auth?: AuthPayload; code: string },
+        ack?: (res: { status: 'ok' | 'not_found' | 'expired' | 'already_friends' | 'self' }) => void,
+      ) => {
+        try {
+          const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+          if (!userId || !supabaseAdmin) { ack?.({ status: 'not_found' }); return; }
+          const normalized = code.trim().toUpperCase();
+          const entry = friendCodes.get(normalized);
+          if (!entry) { ack?.({ status: 'not_found' }); return; }
+          if (entry.expiresAt <= Date.now()) {
+            friendCodes.delete(normalized);
+            ack?.({ status: 'expired' }); return;
+          }
+          if (entry.userId === userId) { ack?.({ status: 'self' }); return; }
+          const { data: existing } = await supabaseAdmin
+            .from('friends')
+            .select('friend_id')
+            .eq('user_id', userId)
+            .eq('friend_id', entry.userId)
+            .maybeSingle();
+          if (existing) { ack?.({ status: 'already_friends' }); return; }
+          // 중복 요청 방지
+          const { data: dupReq } = await supabaseAdmin
+            .from('friend_requests')
+            .select('id')
+            .eq('sender_id', userId)
+            .eq('receiver_id', entry.userId)
+            .maybeSingle();
+          if (!dupReq) {
+            await supabaseAdmin
+              .from('friend_requests')
+              .insert({ sender_id: userId, receiver_id: entry.userId });
+          }
+          // 대상이 온라인이면 실시간 알림
+          const targetSocketId = activeUserSockets.get(entry.userId);
+          if (targetSocketId && io.sockets.sockets.has(targetSocketId)) {
+            const { data: reqRow } = await supabaseAdmin
+              .from('friend_requests')
+              .select('id')
+              .eq('sender_id', userId)
+              .eq('receiver_id', entry.userId)
+              .single();
+            const senderProfile = await resolvePlayerProfileCached(socket, auth, '');
+            io.to(targetSocketId).emit('friend_request_received', {
+              requestId: reqRow?.id ?? '',
+              senderNickname: senderProfile.nickname,
+            });
+          }
+          friendCodes.delete(normalized);
+          ack?.({ status: 'ok' });
+        } catch (err) {
+          console.error('[friend_add_by_code] handler error:', err);
+          ack?.({ status: 'not_found' });
         }
       },
     );
