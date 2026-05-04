@@ -4268,7 +4268,6 @@ export function LobbyScreen({
             className="lobby-arena-showcase"
             aria-label={lobbyArenaImageAlt}
             onClick={() => setShowArenaGallery(true)}
-            style={{ cursor: "pointer" }}
           >
             <img
               src={lobbyArenaImageSrc}
