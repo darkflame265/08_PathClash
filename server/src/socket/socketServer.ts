@@ -1323,6 +1323,152 @@ export function initSocketServer(io: Server): void {
       },
     );
 
+    socket.on(
+      'friend_challenge',
+      async (
+        {
+          auth,
+          friendId,
+          pieceSkin,
+          boardSkin,
+          equippedSkills,
+        }: {
+          auth?: AuthPayload;
+          friendId: string;
+          pieceSkin?: PieceSkin;
+          boardSkin?: BoardSkin;
+          equippedSkills?: AbilitySkillId[];
+        },
+        ack?: (res: { status: 'ok' | 'offline' | 'in_game' | 'error' }) => void,
+      ) => {
+        try {
+          const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+          if (!userId) { ack?.({ status: 'error' }); return; }
+          const targetSocketId = activeUserSockets.get(friendId);
+          if (!targetSocketId || !io.sockets.sockets.has(targetSocketId)) {
+            ack?.({ status: 'offline' }); return;
+          }
+          const inGame =
+            store.getBySocket(targetSocketId) ??
+            abilityStore.getBySocket(targetSocketId) ??
+            coopStore.getBySocket(targetSocketId) ??
+            twoVsTwoStore.getBySocket(targetSocketId);
+          if (inGame) { ack?.({ status: 'in_game' }); return; }
+          const profile = await resolvePlayerProfileCached(socket, auth, '');
+          challengePending.set(friendId, {
+            fromUserId: userId,
+            fromNickname: profile.nickname,
+            fromSocketId: socket.id,
+            fromPieceSkin: pieceSkin ?? 'classic',
+            fromBoardSkin: boardSkin ?? 'classic',
+            fromEquippedSkills: equippedSkills ?? ['classic_guard'],
+            fromStats: profile.stats,
+            fromCurrentRating: profile.currentRating,
+          });
+          io.to(targetSocketId).emit('friend_challenge_received', {
+            fromUserId: userId,
+            fromNickname: profile.nickname,
+          });
+          ack?.({ status: 'ok' });
+        } catch (err) {
+          console.error('[friend_challenge] handler error:', err);
+          ack?.({ status: 'error' });
+        }
+      },
+    );
+
+    socket.on(
+      'friend_challenge_response',
+      async (
+        {
+          auth,
+          fromUserId,
+          accept,
+          pieceSkin,
+          boardSkin,
+          equippedSkills,
+        }: {
+          auth?: AuthPayload;
+          fromUserId: string;
+          accept: boolean;
+          pieceSkin?: PieceSkin;
+          boardSkin?: BoardSkin;
+          equippedSkills?: AbilitySkillId[];
+        },
+        ack?: (res: { status: 'ok' | 'error' }) => void,
+      ) => {
+        try {
+          const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+          if (!userId) { ack?.({ status: 'error' }); return; }
+          const challenge = challengePending.get(userId);
+          if (!challenge || challenge.fromUserId !== fromUserId) {
+            ack?.({ status: 'error' }); return;
+          }
+          challengePending.delete(userId);
+          if (!accept) {
+            const aSocketId = challenge.fromSocketId;
+            if (aSocketId && io.sockets.sockets.has(aSocketId)) {
+              io.to(aSocketId).emit('friend_challenge_declined', { byNickname: '' });
+            }
+            ack?.({ status: 'ok' }); return;
+          }
+          const aSocketId = challenge.fromSocketId;
+          const aSocket = io.sockets.sockets.get(aSocketId);
+          if (!aSocket) { ack?.({ status: 'error' }); return; }
+          const bProfile = await resolvePlayerProfileCached(socket, auth, '');
+          // 방 생성
+          const roomId = abilityStore.generateRoomId();
+          const code = abilityStore.generateCode();
+          const room = new AbilityRoom(roomId, code, io);
+          room.enablePrivateMatch();
+          // A 입장 (도전자, red)
+          const aColor = room.addPlayer(
+            aSocket,
+            challenge.fromNickname,
+            challenge.fromUserId,
+            challenge.fromStats,
+            challenge.fromCurrentRating,
+            challenge.fromPieceSkin,
+            challenge.fromBoardSkin,
+            challenge.fromEquippedSkills,
+          );
+          if (!aColor) { ack?.({ status: 'error' }); return; }
+          // B 입장 (수락자, blue)
+          const bColor = room.addPlayer(
+            socket,
+            bProfile.nickname,
+            bProfile.userId,
+            bProfile.stats,
+            bProfile.currentRating,
+            pieceSkin ?? 'classic',
+            boardSkin ?? 'classic',
+            equippedSkills ?? ['classic_guard'],
+          );
+          if (!bColor) { ack?.({ status: 'error' }); return; }
+          abilityStore.add(room);
+          abilityStore.registerSocket(aSocketId, roomId);
+          abilityStore.registerSocket(socket.id, roomId);
+          room.prepareGameStart();
+          // A에게 게임 시작 신호
+          aSocket.emit('friend_challenge_accepted', {
+            roomId,
+            color: aColor,
+            opponentNickname: bProfile.nickname,
+          });
+          // B에게 기존 ability_room_joined 신호
+          socket.emit('ability_room_joined', {
+            roomId,
+            color: bColor,
+            opponentNickname: challenge.fromNickname,
+          });
+          ack?.({ status: 'ok' });
+        } catch (err) {
+          console.error('[friend_challenge_response] handler error:', err);
+          ack?.({ status: 'error' });
+        }
+      },
+    );
+
     socket.on('join_random', async ({ nickname, auth, pieceSkin, boardSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin; boardSkin?: BoardSkin }) => {
       try {
       pendingCancelRandom.delete(socket.id);
