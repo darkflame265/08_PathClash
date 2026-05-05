@@ -176,6 +176,7 @@ function App() {
   const [hasLegalConsent, setHasLegalConsent] = useState(false);
   const [legalConsentChecked, setLegalConsentChecked] = useState(false);
   const [isSavingLegalConsent, setIsSavingLegalConsent] = useState(false);
+  const [isLobbyHydrating, setIsLobbyHydrating] = useState(false);
   const [openLegalDocument, setOpenLegalDocument] =
     useState<LegalDocumentType | null>(null);
   const [tutorialPromptTrigger, setTutorialPromptTrigger] = useState(0);
@@ -208,6 +209,41 @@ function App() {
   const showNextLoadingTip = useCallback(() => {
     setLoadingTipIndex((index) => (index + 1) % LOADING_TIPS.kr.length);
   }, []);
+
+  const refreshLobbyAccountSummary = useCallback(async () => {
+    const state = useGameStore.getState();
+    if (!state.authUserId || !state.authAccessToken) return;
+
+    setAccountSummaryLoading(true);
+    try {
+      const summary = await refreshAccountSummary({ force: true });
+      setAuthState({
+        ready: true,
+        userId: state.authUserId,
+        accessToken: useGameStore.getState().authAccessToken,
+        isGuestUser: useGameStore.getState().isGuestUser,
+        nickname: summary.nickname,
+        equippedSkin: summary.equippedSkin,
+        equippedBoardSkin: summary.equippedBoardSkin,
+        equippedAbilitySkills: summary.equippedAbilitySkills,
+        ownedSkins: summary.ownedSkins,
+        ownedBoardSkins: summary.ownedBoardSkins,
+        wins: summary.wins,
+        losses: summary.losses,
+        tokens: summary.tokens,
+        dailyRewardWins: summary.dailyRewardWins,
+        dailyRewardTokens: summary.dailyRewardTokens,
+        achievements: summary.achievements,
+        currentRating: summary.currentRating,
+        highestArena: summary.highestArena,
+        rankedUnlocked: summary.rankedUnlocked,
+      });
+    } catch (error) {
+      console.warn("[lobby] failed to refresh account summary", error);
+    } finally {
+      setAccountSummaryLoading(false);
+    }
+  }, [setAccountSummaryLoading, setAuthState]);
 
   const startGameView = useCallback((nextView: Exclude<AppView, "lobby">) => {
     if (gameLoadingTimeoutRef.current !== null) {
@@ -735,11 +771,13 @@ function App() {
     };
   }, [authAccessToken, authReady, authUserId, isGuestUser, setAuthState]);
 
-  const handleReturnToLobby = useCallback(() => {
+  const handleReturnToLobby = useCallback(async () => {
     if (gameLoadingTimeoutRef.current !== null) {
       window.clearTimeout(gameLoadingTimeoutRef.current);
       gameLoadingTimeoutRef.current = null;
     }
+    setLoadingTipIndex(getRandomLoadingTipIndex());
+    setIsLobbyHydrating(true);
     stopLocalAbilityTraining();
     disconnectSocket();
     useGameStore.getState().resetGame();
@@ -747,7 +785,9 @@ function App() {
     setMatchResultAudioKind(null);
     setGameLoadingUntil(0);
     setView("lobby");
-  }, []);
+    await refreshLobbyAccountSummary();
+    setIsLobbyHydrating(false);
+  }, [refreshLobbyAccountSummary]);
 
   const handleSessionReplacedConfirm = useCallback(async () => {
     setIsSessionResetting(true);
@@ -971,7 +1011,16 @@ function App() {
     };
   }, [tryStartBgm]);
 
-  if (!authReady || !legalConsentResolved) {
+  const shouldWaitForLobbyAccountSummary =
+    view === "lobby" &&
+    Boolean(authUserId && authAccessToken) &&
+    accountSummaryLoading;
+
+  if (
+    !authReady ||
+    !legalConsentResolved ||
+    shouldWaitForLobbyAccountSummary
+  ) {
     return (
       <div className="app-outer app-outer--lobby">
         <div className="app-inner">
@@ -1016,6 +1065,7 @@ function App() {
       ? legalConsentTermsPath
       : legalConsentPolicyPath;
   const isGameLoadingVisible = gameLoadingUntil > 0;
+  const isLobbyLoadingVisible = isLobbyHydrating || isGameLoadingVisible;
 
   return (
     <div
@@ -1056,7 +1106,7 @@ function App() {
             />
           )}
         </Suspense>
-        {isGameLoadingVisible && (
+        {isLobbyLoadingVisible && (
           <GameLoadingScreen tip={loadingTip} onNextTip={showNextLoadingTip} />
         )}
         {showExitConfirm && view === "lobby" && (
