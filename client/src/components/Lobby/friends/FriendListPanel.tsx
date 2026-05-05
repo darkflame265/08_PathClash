@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { connectSocket } from '../../../socket/socketClient';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { connectSocket, connectSocketReady } from '../../../socket/socketClient';
 import { getSocketAuthPayload } from '../../../auth/guestAuth';
 import type { FriendEntry } from './types';
 
@@ -11,28 +11,68 @@ interface Props {
   refreshTrigger: number;
 }
 
+function emitAckWithTimeout<T>(
+  socket: ReturnType<typeof connectSocket>,
+  eventName: string,
+  payload: unknown,
+  fallback: T,
+  timeoutMs = 8000,
+): Promise<T> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const timeout = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      resolve(fallback);
+    }, timeoutMs);
+
+    socket.emit(eventName, payload, (response: T) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      resolve(response);
+    });
+  });
+}
+
 export function FriendListPanel({ lang, onAddFriend, onViewRequests, onFriendClick, refreshTrigger }: Props) {
   const [friends, setFriends] = useState<FriendEntry[]>([]);
   const [requestCount, setRequestCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const loadRequestIdRef = useRef(0);
 
   const load = useCallback(async () => {
+    const requestId = loadRequestIdRef.current + 1;
+    loadRequestIdRef.current = requestId;
     setLoading(true);
     try {
-      const socket = connectSocket();
+      const socket = await connectSocketReady();
       const auth = await getSocketAuthPayload();
       const [listRes, reqRes] = await Promise.all([
-        new Promise<{ friends: FriendEntry[] }>((resolve) =>
-          socket.emit('friend_list', { auth }, resolve),
+        emitAckWithTimeout<{ friends: FriendEntry[] }>(
+          socket,
+          'friend_list',
+          { auth },
+          { friends: [] },
         ),
-        new Promise<{ requests: Array<{ id: string }> }>((resolve) =>
-          socket.emit('friend_requests_list', { auth }, resolve),
+        emitAckWithTimeout<{ requests: Array<{ id: string }> }>(
+          socket,
+          'friend_requests_list',
+          { auth },
+          { requests: [] },
         ),
       ]);
+      if (loadRequestIdRef.current !== requestId) return;
       setFriends(listRes.friends ?? []);
       setRequestCount(reqRes.requests?.length ?? 0);
+    } catch {
+      if (loadRequestIdRef.current !== requestId) return;
+      setFriends([]);
+      setRequestCount(0);
     } finally {
-      setLoading(false);
+      if (loadRequestIdRef.current === requestId) {
+        setLoading(false);
+      }
     }
   }, []);
 
