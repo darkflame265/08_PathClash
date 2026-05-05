@@ -946,9 +946,18 @@
 }
 
 .match-intro-banner-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 3.2rem;
+  justify-content: center;
+  padding: 0.16rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(8, 20, 35, 0.52);
+  border: 1px solid rgba(125, 211, 252, 0.18);
   font-family: var(--mono);
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0;
 }

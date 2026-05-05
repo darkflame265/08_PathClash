@@ -4223,9 +4223,8 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
                       {state.players[opponentColor].nickname}
                     </span>
                     <span className="match-intro-banner-score">
-                      {lang === "en"
-                        ? `${state.players[opponentColor].stats.wins}W ${state.players[opponentColor].stats.losses}L`
-                        : `${state.players[opponentColor].stats.wins}승 ${state.players[opponentColor].stats.losses}패`}
+                      <span aria-hidden="true">⭐</span>
+                      <span>{state.players[opponentColor].rating}</span>
                     </span>
                   </div>
                   <div
@@ -4239,9 +4238,8 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
                       {state.players[currentColor].nickname}
                     </span>
                     <span className="match-intro-banner-score">
-                      {lang === "en"
-                        ? `${state.players[currentColor].stats.wins}W ${state.players[currentColor].stats.losses}L`
-                        : `${state.players[currentColor].stats.wins}승 ${state.players[currentColor].stats.losses}패`}
+                      <span aria-hidden="true">⭐</span>
+                      <span>{state.players[currentColor].rating}</span>
                     </span>
                   </div>
                 </>
