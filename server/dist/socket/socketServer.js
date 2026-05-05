@@ -12,6 +12,7 @@ const AbilityRoom_1 = require("../game/ability/AbilityRoom");
 const AbilityRoomStore_1 = require("../store/AbilityRoomStore");
 const appVersion_1 = require("../config/appVersion");
 const fakeRandomNicknames_1 = require("../config/fakeRandomNicknames");
+const abilityUnlockConfig_1 = require("../game/ability/abilityUnlockConfig");
 const playerAuth_1 = require("../services/playerAuth");
 const achievementService_1 = require("../services/achievementService");
 const rotationService_1 = require("../services/rotationService");
@@ -35,21 +36,6 @@ function initSocketServer(io) {
     const FRIEND_CODE_TTL_MS = 5 * 60 * 1000;
     const friendCodes = new Map();
     const challengePending = new Map();
-    const ABILITY_FAKE_AI_SKILL_POOL = [
-        'classic_guard',
-        'ember_blast',
-        'nova_blast',
-        'inferno_field',
-        'quantum_shift',
-        'cosmic_bigbang',
-        'arc_reactor_field',
-        'electric_blitz',
-        'wizard_magic_mine',
-        'chronos_time_rewind',
-        'atomic_fission',
-        'sun_chariot',
-        'aurora_heal',
-    ];
     const profileCache = new Map();
     const unregisterSocketSession = (socketId) => {
         const userId = socketUsers.get(socketId);
@@ -194,6 +180,7 @@ function initSocketServer(io) {
         }
         return bag.slice(0, count);
     };
+    const getMinimumWinsForSkills = (skills) => skills.reduce((requiredWins, skill) => Math.max(requiredWins, abilityUnlockConfig_1.WIN_REQUIREMENT_BY_ABILITY_SKILL[skill] ?? 0), 0);
     const createDisguisedAbilityBotLoadout = (profile) => {
         const beginner = Math.random() < 0.05;
         if (beginner) {
@@ -211,10 +198,12 @@ function initSocketServer(io) {
             };
         }
         const fakeProfile = createDisguisedRandomProfile(profile);
-        const equippedSkills = pickRandomUniqueSkills(ABILITY_FAKE_AI_SKILL_POOL, 3);
-        // aurora_heal은 100승 이상 해금 스킬 → 장착 시 승리 수를 100~300으로 표기
-        const stats = equippedSkills.includes('aurora_heal')
-            ? createNaturalFakeStats(fakeProfile.stats.wins + fakeProfile.stats.losses, { minWins: Math.floor(Math.random() * 201) + 100 })
+        const fakeArena = (0, arenaConfig_1.getArenaFromRating)(fakeProfile.currentRating);
+        const skillPool = (0, abilityUnlockConfig_1.getFakeAiAbilitySkillPool)(fakeArena);
+        const equippedSkills = pickRandomUniqueSkills(skillPool, 3);
+        const requiredWins = getMinimumWinsForSkills(equippedSkills);
+        const stats = requiredWins > fakeProfile.stats.wins
+            ? createNaturalFakeStats(fakeProfile.stats.wins + fakeProfile.stats.losses, { minWins: requiredWins })
             : fakeProfile.stats;
         return {
             ...fakeProfile,

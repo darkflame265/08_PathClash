@@ -28,10 +28,13 @@ const ABILITY_FAKE_AI_DEBUG_LOG = false;
 const UNDER_LAMP_DANGER_TARGET_RANKS = [0, 2, 4, 6];
 const ABILITY_FAKE_AI_SKILL_POOL = [
     'classic_guard',
+    'phase_shift',
+    'plasma_charge',
     'ember_blast',
     'nova_blast',
     'inferno_field',
     'quantum_shift',
+    'void_cloak',
     'cosmic_bigbang',
     'arc_reactor_field',
     'electric_blitz',
@@ -40,6 +43,7 @@ const ABILITY_FAKE_AI_SKILL_POOL = [
     'atomic_fission',
     'sun_chariot',
     'aurora_heal',
+    'gold_overdrive',
 ];
 function collectUtilitySkillUsageByUser(players, skillEvents) {
     const usage = new Map();

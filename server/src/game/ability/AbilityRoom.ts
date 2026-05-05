@@ -61,10 +61,13 @@ const ABILITY_FAKE_AI_DEBUG_LOG = false;
 const UNDER_LAMP_DANGER_TARGET_RANKS = [0, 2, 4, 6] as const;
 const ABILITY_FAKE_AI_SKILL_POOL: AbilitySkillId[] = [
   'classic_guard',
+  'phase_shift',
+  'plasma_charge',
   'ember_blast',
   'nova_blast',
   'inferno_field',
   'quantum_shift',
+  'void_cloak',
   'cosmic_bigbang',
   'arc_reactor_field',
   'electric_blitz',
@@ -73,6 +76,7 @@ const ABILITY_FAKE_AI_SKILL_POOL: AbilitySkillId[] = [
   'atomic_fission',
   'sun_chariot',
   'aurora_heal',
+  'gold_overdrive',
 ];
 
 type BotActionCandidate = {

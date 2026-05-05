@@ -13,6 +13,10 @@ import { FAKE_RANDOM_NICKNAMES } from '../config/fakeRandomNicknames';
 import { BoardSkin, PieceSkin, Position } from '../types/game.types';
 import type { AbilitySkillId, AbilitySkillReservation } from '../game/ability/AbilityTypes';
 import {
+  getFakeAiAbilitySkillPool,
+  WIN_REQUIREMENT_BY_ABILITY_SKILL,
+} from '../game/ability/abilityUnlockConfig';
+import {
   AuthPayload,
   type AccountProfile,
   finalizeGoogleUpgrade,
@@ -74,21 +78,6 @@ export function initSocketServer(io: Server): void {
     fromStats: { wins: number; losses: number };
     fromCurrentRating: number;
   }>();
-  const ABILITY_FAKE_AI_SKILL_POOL: AbilitySkillId[] = [
-    'classic_guard',
-    'ember_blast',
-    'nova_blast',
-    'inferno_field',
-    'quantum_shift',
-    'cosmic_bigbang',
-    'arc_reactor_field',
-    'electric_blitz',
-    'wizard_magic_mine',
-    'chronos_time_rewind',
-    'atomic_fission',
-    'sun_chariot',
-    'aurora_heal',
-  ];
   const profileCache = new Map<
     string,
     { expiresAt: number; profile: PersistentPlayerProfile }
@@ -287,6 +276,13 @@ export function initSocketServer(io: Server): void {
     return bag.slice(0, count);
   };
 
+  const getMinimumWinsForSkills = (skills: AbilitySkillId[]) =>
+    skills.reduce(
+      (requiredWins, skill) =>
+        Math.max(requiredWins, WIN_REQUIREMENT_BY_ABILITY_SKILL[skill] ?? 0),
+      0,
+    );
+
   const createDisguisedAbilityBotLoadout = (
     profile: PersistentPlayerProfile,
   ): {
@@ -322,13 +318,15 @@ export function initSocketServer(io: Server): void {
     }
 
     const fakeProfile = createDisguisedRandomProfile(profile);
-    const equippedSkills = pickRandomUniqueSkills(ABILITY_FAKE_AI_SKILL_POOL, 3);
-    // aurora_heal은 100승 이상 해금 스킬 → 장착 시 승리 수를 100~300으로 표기
+    const fakeArena = getArenaFromRating(fakeProfile.currentRating);
+    const skillPool = getFakeAiAbilitySkillPool(fakeArena);
+    const equippedSkills = pickRandomUniqueSkills(skillPool, 3);
+    const requiredWins = getMinimumWinsForSkills(equippedSkills);
     const stats =
-      equippedSkills.includes('aurora_heal')
+      requiredWins > fakeProfile.stats.wins
         ? createNaturalFakeStats(
             fakeProfile.stats.wins + fakeProfile.stats.losses,
-            { minWins: Math.floor(Math.random() * 201) + 100 },
+            { minWins: requiredWins },
           )
         : fakeProfile.stats;
     return {
