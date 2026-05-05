@@ -4364,6 +4364,19 @@
   margin: 0;
 }
 
+.friend-list-loading {
+  display: flex;
+  min-height: 4rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner.friend-list-spinner {
+  width: 2rem;
+  height: 2rem;
+  margin: 0;
+}
+
 .friend-row {
   display: flex;
   align-items: center;

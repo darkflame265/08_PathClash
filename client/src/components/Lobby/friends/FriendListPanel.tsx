@@ -129,7 +129,15 @@ export function FriendListPanel({ lang, onAddFriend, onViewRequests, onFriendCli
   return (
     <div className="friend-list-panel">
       <div className="friend-list-scroll">
-        {loading && <p className="friend-list-empty">...</p>}
+        {loading && (
+          <div
+            className="friend-list-loading"
+            role="status"
+            aria-label={lang === 'kr' ? '친구 목록 불러오는 중' : 'Loading friends'}
+          >
+            <span className="spinner friend-list-spinner" aria-hidden="true" />
+          </div>
+        )}
         {!loading && friends.length === 0 && (
           <p className="friend-list-empty">{emptyText}</p>
         )}
