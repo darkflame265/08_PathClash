@@ -141,10 +141,36 @@ function initSocketServer(io) {
             displayId: fakeId,
             userId: null,
             stats,
-            currentRating: profile.currentRating,
+            currentRating: createNearbyFakeRating(profile.currentRating),
             pieceSkin,
             boardSkin: 'classic',
         };
+    };
+    const createNearbyFakeRating = (playerRating) => {
+        const normalizedPlayerRating = Math.max(0, Math.trunc(playerRating));
+        const playerArena = (0, arenaConfig_1.getArenaFromRating)(normalizedPlayerRating);
+        const arenaRange = arenaConfig_1.ARENA_RANGES.find((range) => range.arena === playerArena);
+        const minRating = normalizedPlayerRating >= arenaConfig_1.RANKED_UNLOCKED_THRESHOLD
+            ? arenaConfig_1.RANKED_UNLOCKED_THRESHOLD
+            : (arenaRange?.minRating ?? 0);
+        const maxRating = normalizedPlayerRating >= arenaConfig_1.RANKED_UNLOCKED_THRESHOLD
+            ? Math.max(minRating, Math.ceil((normalizedPlayerRating + 180) / 10) * 10)
+            : Math.floor((arenaRange?.maxRating ?? normalizedPlayerRating) / 10) * 10;
+        const baseRating = Math.round(normalizedPlayerRating / 10) * 10;
+        const nearbyCandidates = [];
+        for (let offset = -80; offset <= 80; offset += 10) {
+            const candidate = baseRating + offset;
+            if (candidate < minRating || candidate > maxRating)
+                continue;
+            if (candidate === normalizedPlayerRating)
+                continue;
+            nearbyCandidates.push(candidate);
+        }
+        if (nearbyCandidates.length > 0) {
+            return nearbyCandidates[Math.floor(Math.random() * nearbyCandidates.length)];
+        }
+        const fallback = Math.max(minRating, Math.min(maxRating, baseRating));
+        return Math.round(fallback / 10) * 10;
     };
     const createNaturalFakeStats = (totalGames, options = {}) => {
         const total = Math.max(1, Math.trunc(totalGames));

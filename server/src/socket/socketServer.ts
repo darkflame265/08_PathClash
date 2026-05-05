@@ -1,5 +1,10 @@
 ﻿import { Server, Socket } from 'socket.io';
-import { getAbilityAiFallbackMs, getArenaFromRating } from '../game/arenaConfig';
+import {
+  ARENA_RANGES,
+  RANKED_UNLOCKED_THRESHOLD,
+  getAbilityAiFallbackMs,
+  getArenaFromRating,
+} from '../game/arenaConfig';
 import { GameRoom } from '../game/GameRoom';
 import { RoomStore } from '../store/RoomStore';
 import { CoopRoom } from '../game/coop/CoopRoom';
@@ -224,10 +229,40 @@ export function initSocketServer(io: Server): void {
       displayId: fakeId,
       userId: null,
       stats,
-      currentRating: profile.currentRating,
+      currentRating: createNearbyFakeRating(profile.currentRating),
       pieceSkin,
       boardSkin: 'classic',
     };
+  };
+
+  const createNearbyFakeRating = (playerRating: number): number => {
+    const normalizedPlayerRating = Math.max(0, Math.trunc(playerRating));
+    const playerArena = getArenaFromRating(normalizedPlayerRating);
+    const arenaRange = ARENA_RANGES.find((range) => range.arena === playerArena);
+    const minRating =
+      normalizedPlayerRating >= RANKED_UNLOCKED_THRESHOLD
+        ? RANKED_UNLOCKED_THRESHOLD
+        : (arenaRange?.minRating ?? 0);
+    const maxRating =
+      normalizedPlayerRating >= RANKED_UNLOCKED_THRESHOLD
+        ? Math.max(minRating, Math.ceil((normalizedPlayerRating + 180) / 10) * 10)
+        : Math.floor((arenaRange?.maxRating ?? normalizedPlayerRating) / 10) * 10;
+    const baseRating = Math.round(normalizedPlayerRating / 10) * 10;
+    const nearbyCandidates: number[] = [];
+
+    for (let offset = -80; offset <= 80; offset += 10) {
+      const candidate = baseRating + offset;
+      if (candidate < minRating || candidate > maxRating) continue;
+      if (candidate === normalizedPlayerRating) continue;
+      nearbyCandidates.push(candidate);
+    }
+
+    if (nearbyCandidates.length > 0) {
+      return nearbyCandidates[Math.floor(Math.random() * nearbyCandidates.length)];
+    }
+
+    const fallback = Math.max(minRating, Math.min(maxRating, baseRating));
+    return Math.round(fallback / 10) * 10;
   };
 
   const createNaturalFakeStats = (
