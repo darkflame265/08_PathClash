@@ -48,7 +48,8 @@ type UiSfxId =
   | "lobby_click"
   | "victory_result"
   | "defeat_result"
-  | "loading";
+  | "loading"
+  | "ingame_player_banner";
 
 type AbilitySfxConfig = {
   path: string;
@@ -156,6 +157,10 @@ const UI_SFX: Record<UiSfxId, AbilitySfxConfig> = {
   },
   loading: {
     path: "/sfx/ui/loading.mp3",
+    gain: 0.9,
+  },
+  ingame_player_banner: {
+    path: "/sfx/ui/ingame_player_banner.mp3",
     gain: 0.9,
   },
 };
@@ -592,6 +597,10 @@ export function playMatchResultSfx(
 
 export function playLoadingSfx(volume = 0.55): void {
   playUiSfx("loading", volume, { stopPrevious: true });
+}
+
+export function playIngamePlayerBannerSfx(volume = 0.55): void {
+  playUiSfx("ingame_player_banner", volume, { stopPrevious: true });
 }
 
 export function startMatchResultBgm(kind: MatchResultAudioKind): void {

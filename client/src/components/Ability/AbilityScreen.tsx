@@ -31,6 +31,7 @@ import {
   playVoidCloak,
   playChronosTickTock,
   playPathStepClick,
+  playIngamePlayerBannerSfx,
   startChronosRewindLoop,
   stopChronosRewindLoop,
   playMatchResultSfx,
@@ -549,6 +550,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
   const [matchIntroPhase, setMatchIntroPhase] = useState<
     "pre" | "banner" | "exiting" | "done"
   >("pre");
+  const introBannerSfxPlayedRef = useRef(false);
   const [introBannerPositions, setIntroBannerPositions] = useState<{
     opponentLeft: number;
     opponentTop: number;
@@ -659,6 +661,20 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       window.clearTimeout(doneTimer);
     };
   }, [isLocalAbilityTraining, screenReadyAt]);
+
+  useEffect(() => {
+    if (matchIntroPhase === "pre") {
+      introBannerSfxPlayedRef.current = false;
+      return;
+    }
+    if (matchIntroPhase !== "banner") return;
+    if (introBannerSfxPlayedRef.current) return;
+
+    introBannerSfxPlayedRef.current = true;
+    if (!isSfxMuted) {
+      playIngamePlayerBannerSfx(sfxVolume);
+    }
+  }, [isSfxMuted, matchIntroPhase, sfxVolume]);
 
   // Notify server when intro is done so it can start the planning timer.
   // Also handles rematch: matchIntroPhase stays 'done' but roundInfo resets to roundEndsAt=0.
