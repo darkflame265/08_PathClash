@@ -161,7 +161,7 @@ const UI_SFX: Record<UiSfxId, AbilitySfxConfig> = {
   },
   ingame_player_banner: {
     path: "/sfx/ui/ingame_player_banner.mp3",
-    gain: 0.9,
+    gain: 0.7,
   },
 };
 
