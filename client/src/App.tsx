@@ -99,6 +99,7 @@ const TERMS_PATH_KR = "/terms.html";
 const TERMS_PATH_EN = "/terms-en.html";
 const POLICY_PATH_KR = "/privacy.html";
 const POLICY_PATH_EN = "/privacy-en.html";
+const MIN_LOADING_SCREEN_MS = 2000;
 const MIN_GAME_LOADING_MS = 3000;
 
 const LOADING_TIPS = {
@@ -181,7 +182,9 @@ function App() {
   const [openLegalDocument, setOpenLegalDocument] =
     useState<LegalDocumentType | null>(null);
   const [tutorialPromptTrigger, setTutorialPromptTrigger] = useState(0);
+  const [loadingHoldUntil, setLoadingHoldUntil] = useState(0);
   const gameLoadingTimeoutRef = useRef<number | null>(null);
+  const loadingHoldTimeoutRef = useRef<number | null>(null);
   const abilityScreenReadyAtRef = useRef<number | undefined>(undefined);
   const [matchResultAudioKind, setMatchResultAudioKind] =
     useState<MatchResultAudioKind | null>(null);
@@ -214,6 +217,8 @@ function App() {
       accountSummaryLoading) ||
     isLobbyHydrating ||
     gameLoadingUntil > 0;
+  const isLoadingHoldActive = Date.now() < loadingHoldUntil;
+  const shouldShowLoadingScreen = isAnyLoadingVisible || isLoadingHoldActive;
   const wasAnyLoadingVisibleRef = useRef(false);
 
   const showNextLoadingTip = useCallback(() => {
@@ -276,6 +281,9 @@ function App() {
     return () => {
       if (gameLoadingTimeoutRef.current !== null) {
         window.clearTimeout(gameLoadingTimeoutRef.current);
+      }
+      if (loadingHoldTimeoutRef.current !== null) {
+        window.clearTimeout(loadingHoldTimeoutRef.current);
       }
     };
   }, []);
@@ -931,7 +939,7 @@ function App() {
   const tryStartBgm = useCallback(() => {
     setBgmVolume(musicVolume);
     setBgmMuted(isMusicMuted);
-    if (isMusicMuted || isAnyLoadingVisible) {
+    if (isMusicMuted || shouldShowLoadingScreen) {
       pauseAllBgm();
       return;
     }
@@ -949,7 +957,13 @@ function App() {
     }
 
     playBgmTrack(targetTrackId);
-  }, [isAnyLoadingVisible, isMusicMuted, matchResultAudioKind, musicVolume, view]);
+  }, [
+    isMusicMuted,
+    matchResultAudioKind,
+    musicVolume,
+    shouldShowLoadingScreen,
+    view,
+  ]);
 
   useEffect(() => {
     if (!isAnyLoadingVisible) {
@@ -958,6 +972,15 @@ function App() {
     }
 
     pauseAllBgm();
+    const holdUntil = Date.now() + MIN_LOADING_SCREEN_MS;
+    setLoadingHoldUntil((current) => Math.max(current, holdUntil));
+    if (loadingHoldTimeoutRef.current !== null) {
+      window.clearTimeout(loadingHoldTimeoutRef.current);
+    }
+    loadingHoldTimeoutRef.current = window.setTimeout(() => {
+      loadingHoldTimeoutRef.current = null;
+      setLoadingHoldUntil(0);
+    }, MIN_LOADING_SCREEN_MS);
     if (!wasAnyLoadingVisibleRef.current && !isSfxMuted) {
       playLoadingSfx(sfxVolume);
     }
@@ -1043,7 +1066,8 @@ function App() {
   if (
     !authReady ||
     !legalConsentResolved ||
-    shouldWaitForLobbyAccountSummary
+    shouldWaitForLobbyAccountSummary ||
+    (view === "lobby" && isLoadingHoldActive)
   ) {
     return (
       <div className="app-outer app-outer--lobby">
@@ -1089,7 +1113,8 @@ function App() {
       ? legalConsentTermsPath
       : legalConsentPolicyPath;
   const isGameLoadingVisible = gameLoadingUntil > 0;
-  const isLobbyLoadingVisible = isLobbyHydrating || isGameLoadingVisible;
+  const isLobbyLoadingVisible =
+    isLobbyHydrating || isGameLoadingVisible || shouldShowLoadingScreen;
 
   return (
     <div
