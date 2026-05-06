@@ -36,6 +36,7 @@ import {
   getMatchResultAudioEvents,
   pauseAllBgm,
   playBgmTrack,
+  playLoadingSfx,
   resumeAudioContext,
   setAbilitySfxGains,
   setBgmMuted,
@@ -205,6 +206,15 @@ function App() {
 
   const loadingTips = lang === "en" ? LOADING_TIPS.en : LOADING_TIPS.kr;
   const loadingTip = loadingTips[loadingTipIndex % loadingTips.length];
+  const isAnyLoadingVisible =
+    !authReady ||
+    !legalConsentResolved ||
+    (view === "lobby" &&
+      Boolean(authUserId && authAccessToken) &&
+      accountSummaryLoading) ||
+    isLobbyHydrating ||
+    gameLoadingUntil > 0;
+  const wasAnyLoadingVisibleRef = useRef(false);
 
   const showNextLoadingTip = useCallback(() => {
     setLoadingTipIndex((index) => (index + 1) % LOADING_TIPS.kr.length);
@@ -921,7 +931,8 @@ function App() {
   const tryStartBgm = useCallback(() => {
     setBgmVolume(musicVolume);
     setBgmMuted(isMusicMuted);
-    if (isMusicMuted) {
+    if (isMusicMuted || isAnyLoadingVisible) {
+      pauseAllBgm();
       return;
     }
 
@@ -938,7 +949,20 @@ function App() {
     }
 
     playBgmTrack(targetTrackId);
-  }, [isMusicMuted, matchResultAudioKind, musicVolume, view]);
+  }, [isAnyLoadingVisible, isMusicMuted, matchResultAudioKind, musicVolume, view]);
+
+  useEffect(() => {
+    if (!isAnyLoadingVisible) {
+      wasAnyLoadingVisibleRef.current = false;
+      return;
+    }
+
+    pauseAllBgm();
+    if (!wasAnyLoadingVisibleRef.current && !isSfxMuted) {
+      playLoadingSfx(sfxVolume);
+    }
+    wasAnyLoadingVisibleRef.current = true;
+  }, [isAnyLoadingVisible, isSfxMuted, sfxVolume]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;

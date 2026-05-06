@@ -44,7 +44,11 @@ function ensureMasterCompressor(): void {
 
 type AbilitySfxId = AbilitySfxGainId;
 
-type UiSfxId = "lobby_click" | "victory_result" | "defeat_result";
+type UiSfxId =
+  | "lobby_click"
+  | "victory_result"
+  | "defeat_result"
+  | "loading";
 
 type AbilitySfxConfig = {
   path: string;
@@ -148,6 +152,10 @@ const UI_SFX: Record<UiSfxId, AbilitySfxConfig> = {
   },
   defeat_result: {
     path: "/sfx/ui/defeat_result.mp3",
+    gain: 0.9,
+  },
+  loading: {
+    path: "/sfx/ui/loading.mp3",
     gain: 0.9,
   },
 };
@@ -580,6 +588,10 @@ export function playMatchResultSfx(
   volume = 0.55,
 ): void {
   playUiSfx(kind === "victory" ? "victory_result" : "defeat_result", volume);
+}
+
+export function playLoadingSfx(volume = 0.55): void {
+  playUiSfx("loading", volume, { stopPrevious: true });
 }
 
 export function startMatchResultBgm(kind: MatchResultAudioKind): void {
