@@ -55,6 +55,12 @@
   height: 100%;
   position: relative;
   overflow: hidden;
+  border: 2px solid var(--arena-frame-color, rgba(251, 191, 36, 0.85));
+  border-radius: 1.15rem;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 0 18px color-mix(in srgb, var(--arena-frame-color, #fbbf24) 34%, transparent);
+  box-sizing: border-box;
 }
 
 .arena-gallery-slide img {
@@ -64,6 +70,16 @@
   display: block;
   pointer-events: none;
   -webkit-user-drag: none;
+}
+
+.arena-gallery-slide::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid color-mix(in srgb, var(--arena-frame-color, #fbbf24) 74%, white);
+  opacity: 0.58;
+  pointer-events: none;
 }
 
 .arena-gallery-slide--empty {

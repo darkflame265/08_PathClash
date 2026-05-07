@@ -34,6 +34,19 @@ const NEXT_ARENA_PEEK_RATIO = 0.04;
 const MIN_NEXT_ARENA_PEEK = 4;
 const MAX_NEXT_ARENA_PEEK = 44;
 
+const ARENA_FRAME_COLORS: Record<number, string> = {
+  1: "#9ca3af",
+  2: "#22d3ee",
+  3: "#f97316",
+  4: "#a78bfa",
+  5: "#c084fc",
+  6: "#facc15",
+  7: "#34d399",
+  8: "#60a5fa",
+  9: "#e0f2fe",
+  10: "#f472b6",
+};
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
@@ -113,7 +126,14 @@ function ArenaSlide({
         : 0;
 
   return (
-    <div className="arena-gallery-slide" style={{ width: slideWidth }}>
+    <div
+      className="arena-gallery-slide"
+      style={{
+        width: slideWidth,
+        ["--arena-frame-color" as string]:
+          ARENA_FRAME_COLORS[arenaNum] ?? "#fbbf24",
+      }}
+    >
       <img
         src={`/arena/arena${arenaNum}.png`}
         alt={`${range.label} ${lang === "en" ? range.themeNameEn : range.themeName}`}
