@@ -609,7 +609,7 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
   },
   berserker_rage: {
     id: "berserker_rage",
-    name: { en: "Berserker Rage", kr: "버서커 레이지" },
+    name: { en: "Berserk", kr: "광폭화" },
     loadoutTags: {
       en: "Timing: 0 · Attacker only",
       kr: "타이밍: 0칸 · 공격자 전용",
