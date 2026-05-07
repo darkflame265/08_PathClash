@@ -3286,12 +3286,20 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       }
       clearVoidCloakVanishTimeout();
       if (previousState && voidCloakTriggered) {
+        const getVanishPosition = (color: PlayerColor): Position => {
+          const player = nextState.players[color];
+          return (
+            player.previousTurnPath[player.previousTurnPath.length - 1] ??
+            player.previousTurnStart ??
+            previousState.players[color].position
+          );
+        };
         setVoidCloakVanishPositions({
           red: redVoidCloakTriggered
-            ? previousState.players.red.position
+            ? getVanishPosition("red")
             : null,
           blue: blueVoidCloakTriggered
-            ? previousState.players.blue.position
+            ? getVanishPosition("blue")
             : null,
         });
         voidCloakVanishTimeoutRef.current = window.setTimeout(() => {
