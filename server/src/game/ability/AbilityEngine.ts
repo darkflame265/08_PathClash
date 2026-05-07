@@ -432,7 +432,8 @@ export function resolveAbilityRound(params: {
       return;
     }
 
-    const collisionDmg = (sourceColor === 'red' ? redBerserkerRage : blueBerserkerRage) ? 2 : 1;
+    const isBerserkerHit = sourceColor === 'red' ? redBerserkerRage : blueBerserkerRage;
+    const collisionDmg = isBerserkerHit ? 2 : 1;
     if (targetColor === 'red') {
       redHp = Math.max(0, redHp - collisionDmg);
       collisions.push({
@@ -440,6 +441,8 @@ export function resolveAbilityRound(params: {
         position: { ...position },
         escapeeColor: 'red',
         newHp: redHp,
+        sourceColor,
+        sourceSkillId: isBerserkerHit ? 'berserker_rage' : undefined,
       });
     } else {
       blueHp = Math.max(0, blueHp - collisionDmg);
@@ -448,6 +451,8 @@ export function resolveAbilityRound(params: {
         position: { ...position },
         escapeeColor: 'blue',
         newHp: blueHp,
+        sourceColor,
+        sourceSkillId: isBerserkerHit ? 'berserker_rage' : undefined,
       });
     }
   };

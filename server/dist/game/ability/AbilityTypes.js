@@ -22,6 +22,7 @@ exports.ABILITY_SKILL_COSTS = {
     cosmic_bigbang: 10,
     wizard_magic_mine: 8,
     chronos_time_rewind: 0,
+    berserker_rage: 8,
 };
 // Shared validation metadata for server-side planning rules.
 // Keep common restrictions here so role/timing/target/cost rules do not drift
@@ -112,6 +113,11 @@ exports.ABILITY_SKILL_SERVER_RULES = {
     },
     chronos_time_rewind: {
         roleRestriction: 'any',
+        stepRule: 'zero_only',
+        targetRule: 'none',
+    },
+    berserker_rage: {
+        roleRestriction: 'attacker',
         stepRule: 'zero_only',
         targetRule: 'none',
     },

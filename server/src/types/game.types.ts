@@ -71,6 +71,8 @@ export interface CollisionEvent {
   position: Position;
   escapeeColor: PlayerColor;
   newHp: number;
+  sourceColor?: PlayerColor;
+  sourceSkillId?: string;
 }
 
 export interface PathsRevealPayload {

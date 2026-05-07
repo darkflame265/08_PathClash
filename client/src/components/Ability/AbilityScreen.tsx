@@ -16,6 +16,7 @@ import {
   playSunChariot,
   playCharge,
   playEmber,
+  playBerserkHit,
   playHealing,
   playHit,
   playInferno,
@@ -2213,6 +2214,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     hpAfter: number,
     position: Position,
     direction: { dx: number; dy: number } = { dx: 0, dy: 0 },
+    hitSound: "normal" | "berserk" = "normal",
   ) => {
     queueAnimationTimeout(() => {
       setHitFlags((prev) => ({ ...prev, [color]: true }));
@@ -2231,7 +2233,10 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
           prev.filter((entry) => entry.id !== effectId),
         );
       }, 600);
-      if (!isSfxMuted) playHit(sfxVolume);
+      if (!isSfxMuted) {
+        if (hitSound === "berserk") playBerserkHit(sfxVolume);
+        else playHit(sfxVolume);
+      }
       if (hpAfter <= 0) {
         queueAnimationTimeout(() => {
           setExplodingFlags((prev) => ({ ...prev, [color]: true }));
@@ -3038,6 +3043,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
         collision.newHp,
         collision.position,
         direction,
+        collision.sourceSkillId === "berserker_rage" ? "berserk" : "normal",
       );
     };
 

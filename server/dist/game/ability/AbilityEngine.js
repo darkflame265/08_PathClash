@@ -160,6 +160,8 @@ function resolveAbilityRound(params) {
     let blueSunChariotHit = false;
     let redSunChariotOrder = null;
     let blueSunChariotOrder = null;
+    let redBerserkerRage = false;
+    let blueBerserkerRage = false;
     let attackerQuantumOverlapPending = false;
     let redCloneStart = null;
     let blueCloneStart = null;
@@ -284,8 +286,9 @@ function resolveAbilityRound(params) {
                 blueAtFieldSteps = 0;
             if (isProtectedByInv(sourceColor))
                 return;
+            const atFieldReflectDmg = (sourceColor === 'red' ? redBerserkerRage : blueBerserkerRage) ? 2 : 1;
             if (sourceColor === 'red') {
-                redHp = Math.max(0, redHp - 1);
+                redHp = Math.max(0, redHp - atFieldReflectDmg);
                 collisions.push({
                     step,
                     position: { ...position },
@@ -294,7 +297,7 @@ function resolveAbilityRound(params) {
                 });
             }
             else {
-                blueHp = Math.max(0, blueHp - 1);
+                blueHp = Math.max(0, blueHp - atFieldReflectDmg);
                 collisions.push({
                     step,
                     position: { ...position },
@@ -304,22 +307,28 @@ function resolveAbilityRound(params) {
             }
             return;
         }
+        const isBerserkerHit = sourceColor === 'red' ? redBerserkerRage : blueBerserkerRage;
+        const collisionDmg = isBerserkerHit ? 2 : 1;
         if (targetColor === 'red') {
-            redHp = Math.max(0, redHp - 1);
+            redHp = Math.max(0, redHp - collisionDmg);
             collisions.push({
                 step,
                 position: { ...position },
                 escapeeColor: 'red',
                 newHp: redHp,
+                sourceColor,
+                sourceSkillId: isBerserkerHit ? 'berserker_rage' : undefined,
             });
         }
         else {
-            blueHp = Math.max(0, blueHp - 1);
+            blueHp = Math.max(0, blueHp - collisionDmg);
             collisions.push({
                 step,
                 position: { ...position },
                 escapeeColor: 'blue',
                 newHp: blueHp,
+                sourceColor,
+                sourceSkillId: isBerserkerHit ? 'berserker_rage' : undefined,
             });
         }
     };
@@ -611,6 +620,23 @@ function resolveAbilityRound(params) {
                 color,
                 skillId: reservation.skillId,
                 affectedPositions: getSquarePositions(currentPos),
+            });
+            return;
+        }
+        if (reservation.skillId === 'berserker_rage') {
+            if (color === 'red') {
+                redMana = spendMana(casterMana, reservation.skillId);
+                redBerserkerRage = true;
+            }
+            else {
+                blueMana = spendMana(casterMana, reservation.skillId);
+                blueBerserkerRage = true;
+            }
+            skillEvents.push({
+                step: reservation.step,
+                order: reservation.order,
+                color,
+                skillId: reservation.skillId,
             });
             return;
         }

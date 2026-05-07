@@ -62,6 +62,10 @@ type AbilitySfxConfig = {
 const ABILITY_SFX_OUTPUT_GAIN = 1;
 const UI_SFX_OUTPUT_GAIN = 1;
 const HIT_SFX_OUTPUT_GAIN = 1;
+const BERSERK_HIT_SFX = {
+  path: "/sfx/ability/berserk_hit.mp3",
+  gain: 0.9,
+};
 
 const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
   guard: {
@@ -193,6 +197,7 @@ const BGM_CONFIG: Record<BgmTrackId, { src: string; gain: number }> = {
 const audioCache: Partial<Record<AbilitySfxId, HTMLAudioElement>> = {};
 const uiAudioCache: Partial<Record<UiSfxId, HTMLAudioElement>> = {};
 const activeUiAudioCache: Partial<Record<UiSfxId, HTMLAudioElement>> = {};
+let berserkHitAudio: HTMLAudioElement | null = null;
 const abilityHowlCache: Partial<Record<AbilitySfxId, Howl>> = {};
 const bgmCache: Partial<Record<BgmTrackId, { audio: HTMLAudioElement }>> = {};
 const segmentedLoopHandlers = new WeakMap<
@@ -575,6 +580,13 @@ export function preloadAbilitySfxAssets(): void {
       // Ignore browsers that reject manual load hints.
     }
   }
+
+  const berserkHit = getBerserkHitAudio();
+  try {
+    berserkHit?.load();
+  } catch {
+    // Ignore browsers that reject manual load hints.
+  }
 }
 
 export function playLobbyClick(volume = 0.55): void {
@@ -642,6 +654,43 @@ export function playHit(volume = 0.55): void {
     osc.stop(ctx.currentTime + 0.15);
   } catch {
     // AudioContext not available
+  }
+}
+
+function getBerserkHitAudio(): HTMLAudioElement | null {
+  try {
+    if (!berserkHitAudio) {
+      const audio = new Audio(BERSERK_HIT_SFX.path);
+      audio.preload = "auto";
+      berserkHitAudio = audio;
+    }
+    return berserkHitAudio;
+  } catch {
+    return null;
+  }
+}
+
+export function playBerserkHit(volume = 0.55): void {
+  try {
+    const baseAudio = getBerserkHitAudio();
+    if (!baseAudio) return;
+    if (baseAudio.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+      const playAfterLoad = () => playBerserkHit(volume);
+      baseAudio.addEventListener("loadeddata", playAfterLoad, { once: true });
+      baseAudio.load();
+      return;
+    }
+    const audio = baseAudio.cloneNode(true) as HTMLAudioElement;
+    audio.loop = false;
+    audio.volume = Math.max(
+      0,
+      Math.min(1, volume * BERSERK_HIT_SFX.gain * HIT_SFX_OUTPUT_GAIN),
+    );
+    void audio.play().catch(() => {
+      // Playback can fail if browser blocks audio; ignore.
+    });
+  } catch {
+    // Audio element not available
   }
 }
 

@@ -309,6 +309,8 @@ export interface AbilityResolutionPayload {
     position: Position;
     escapeeColor: PlayerColor;
     newHp: number;
+    sourceColor?: PlayerColor;
+    sourceSkillId?: string;
   }>;
   skillEvents: AbilitySkillEvent[];
 }
