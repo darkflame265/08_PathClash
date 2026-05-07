@@ -220,18 +220,18 @@ begin
 
   v_required_arena := case p_skin_id
     when 'plasma'        then 1
-    when 'inferno'       then 1
+    when 'cosmic'        then 1
+    when 'neon_pulse'    then 2
     when 'quantum'       then 2
-    when 'cosmic'        then 2
-    when 'neon_pulse'    then 3
-    when 'arc_reactor'   then 3
+    when 'inferno'       then 3
     when 'berserker'     then 3
     when 'electric_core' then 4
-    when 'gold_core'     then 4
-    when 'atomic'        then 5
-    when 'chronos'       then 5
-    when 'wizard'        then 6
+    when 'wizard'        then 5
     when 'sun'           then 6
+    when 'gold_core'     then 6
+    when 'atomic'        then 8
+    when 'arc_reactor'   then 8
+    when 'chronos'       then 10
     else 1
   end;
 
@@ -618,5 +618,4 @@ create table if not exists skill_rotations (
   rare_skill      text not null,
   legendary_skill text not null
 );
-
 

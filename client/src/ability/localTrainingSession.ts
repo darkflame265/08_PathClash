@@ -23,6 +23,7 @@ import {
 const PLANNING_TIME_MS = 9_000;
 const TRAINING_STARTING_MANA = 10;
 const MAX_MANA = 10;
+const OVERDRIVE_MANA = 20;
 const MANA_PER_TURN = 3;
 const ABILITY_STARTING_HP = 5;
 const TRAINING_PATH_POINTS = 10;
@@ -161,6 +162,23 @@ function buildBlitzPath(start: Position, target: Position): Position[] {
     col += colStep;
   }
   return path;
+}
+
+function getRandomTeleportPosition(
+  current: Position,
+  opponent: Position,
+): Position {
+  const candidates: Position[] = [];
+  for (let row = 0; row < 5; row += 1) {
+    for (let col = 0; col < 5; col += 1) {
+      if (row === opponent.row && col === opponent.col) continue;
+      candidates.push({ row, col });
+    }
+  }
+
+  const filtered = candidates.filter((position) => !posEqual(position, current));
+  const pool = filtered.length > 0 ? filtered : candidates;
+  return pool[Math.floor(Math.random() * pool.length)] ?? { ...current };
 }
 
 function isValidPath(
@@ -652,11 +670,29 @@ function startRound(): void {
   bluePlayer.mana = Math.min(MAX_MANA, bluePlayer.mana + MANA_PER_TURN + bluePlayer.pendingManaBonus);
   redPlayer.pendingManaBonus = 0;
   bluePlayer.pendingManaBonus = 0;
+  if (redPlayer.pendingOverdriveStage === 1) {
+    redPlayer.mana = OVERDRIVE_MANA;
+    redPlayer.overdriveActive = true;
+    redPlayer.pendingOverdriveStage = 0;
+  }
+  if (bluePlayer.pendingOverdriveStage === 1) {
+    bluePlayer.mana = OVERDRIVE_MANA;
+    bluePlayer.overdriveActive = true;
+    bluePlayer.pendingOverdriveStage = 0;
+  }
   if (redPlayer.pendingVoidCloak) {
+    redPlayer.position = getRandomTeleportPosition(
+      redPlayer.position,
+      bluePlayer.position,
+    );
     redPlayer.hidden = true;
     redPlayer.pendingVoidCloak = false;
   }
   if (bluePlayer.pendingVoidCloak) {
+    bluePlayer.position = getRandomTeleportPosition(
+      bluePlayer.position,
+      redPlayer.position,
+    );
     bluePlayer.hidden = true;
     bluePlayer.pendingVoidCloak = false;
   }

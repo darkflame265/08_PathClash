@@ -1550,6 +1550,14 @@ export function LobbyScreen({
 
   const skinPurchaseInsufficientMsg =
     lang === "en" ? "Not enough diamonds." : "다이아몬드가 부족합니다.";
+  const skinPurchaseArenaRequiredMsg =
+    lang === "en"
+      ? "This skin is not unlocked in your arena yet."
+      : "아직 현재 아레나에서 해금되지 않은 스킨입니다.";
+  const skinPurchaseInvalidSkinMsg =
+    lang === "en"
+      ? "This skin is not registered in the purchase database yet."
+      : "이 스킨이 아직 구매 DB에 등록되지 않았습니다.";
   const skinWinRequirementInsufficientMsg =
     lang === "en" ? "Not enough wins." : "승리 횟수가 부족합니다.";
   const skinPlayRequirementInsufficientMsg =
@@ -3913,6 +3921,18 @@ export function LobbyScreen({
 
       if (result === "insufficient_tokens") {
         showSkinFloatingMessage(skinPurchaseInsufficientMsg);
+
+        return false;
+      }
+
+      if (result === "arena_required") {
+        showSkinFloatingMessage(skinPurchaseArenaRequiredMsg);
+
+        return false;
+      }
+
+      if (result === "invalid_skin") {
+        setSkinPurchaseNoticeMessage(skinPurchaseInvalidSkinMsg);
 
         return false;
       }

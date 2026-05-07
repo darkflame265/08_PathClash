@@ -1284,6 +1284,8 @@ export async function purchaseSkinWithTokens(
   | "already_owned"
   | "insufficient_tokens"
   | "auth_required"
+  | "arena_required"
+  | "invalid_skin"
   | "failed"
 > {
   if (!supabase) return "failed";
@@ -1308,6 +1310,8 @@ export async function purchaseSkinWithTokens(
 
   if (data === "INSUFFICIENT_TOKENS") return "insufficient_tokens";
   if (data === "AUTH_REQUIRED") return "auth_required";
+  if (data === "ARENA_REQUIRED") return "arena_required";
+  if (data === "INVALID_SKIN") return "invalid_skin";
   return "failed";
 }
 
