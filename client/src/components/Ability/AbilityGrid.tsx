@@ -1425,6 +1425,7 @@ export function AbilityGrid({
         ) : null}
         {voidCloakVanishPositions.red ? (
           <PlayerPiece
+            key={`red-void-cloak-vanish-${state.turn}-${voidCloakVanishPositions.red.row}-${voidCloakVanishPositions.red.col}`}
             color="red"
             position={voidCloakVanishPositions.red}
             cellSize={responsiveCellSize}
@@ -1477,6 +1478,7 @@ export function AbilityGrid({
         ) : null}
         {voidCloakVanishPositions.blue ? (
           <PlayerPiece
+            key={`blue-void-cloak-vanish-${state.turn}-${voidCloakVanishPositions.blue.row}-${voidCloakVanishPositions.blue.col}`}
             color="blue"
             position={voidCloakVanishPositions.blue}
             cellSize={responsiveCellSize}

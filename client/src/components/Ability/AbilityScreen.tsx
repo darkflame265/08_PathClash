@@ -874,8 +874,6 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     setExplodingFlags(createFalseFlags());
     setCollisionEffects([]);
     setTeleportEffects([]);
-    clearVoidCloakVanishTimeout();
-    setVoidCloakVanishPositions(createNullMarkers());
     setPendingOwnedTriggeredTrapTiles([]);
     setTimeRewindFocusColor(null);
     setRewindingPieceColor(null);
@@ -3255,6 +3253,8 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       setRoundInfo(null);
       setTrapTiles([]);
       setPendingOwnedTriggeredTrapTiles([]);
+      clearVoidCloakVanishTimeout();
+      setVoidCloakVanishPositions(createNullMarkers());
       resetPlanningState();
       applyState(nextState);
     };
