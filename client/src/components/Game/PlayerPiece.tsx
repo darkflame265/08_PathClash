@@ -23,6 +23,7 @@ interface Props {
   isExploding: boolean;
   isMe: boolean;
   isHidden?: boolean;
+  isCloaked?: boolean;
   isPhased?: boolean;
   isGuard?: boolean;
   isAtField?: boolean;
@@ -67,6 +68,7 @@ export function PlayerPiece({
   isExploding,
   isMe,
   isHidden = false,
+  isCloaked = false,
   isPhased = false,
   isGuard = false,
   isAtField = false,
@@ -135,6 +137,7 @@ export function PlayerPiece({
     `piece-skin-${effectiveSkin}`,
     isMe ? 'piece-me' : '',
     isHidden ? 'piece-hidden' : '',
+    isCloaked ? 'piece-cloaked' : '',
     isPhased ? 'piece-phased' : '',
     isOverloaded ? 'piece-overloaded' : '',
     isBlitzing ? 'piece-blitzing' : '',

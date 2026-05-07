@@ -87,6 +87,11 @@
   pointer-events: none;
 }
 
+.player-piece.piece-cloaked {
+  opacity: 0.42;
+  filter: saturate(0.82);
+}
+
 .player-piece.piece-phased {
   opacity: 0.42;
 }

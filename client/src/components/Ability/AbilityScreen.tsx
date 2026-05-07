@@ -485,6 +485,8 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
   );
   const [movingTeleportMarkers, setMovingTeleportMarkers] =
     useState<NullablePositionByColor>(createNullMarkers);
+  const [voidCloakVanishPositions, setVoidCloakVanishPositions] =
+    useState<NullablePositionByColor>(createNullMarkers);
   const [movingTeleportSteps, setMovingTeleportSteps] =
     useState<NullableNumberByColor>(createNullSteps);
   const [movingBlitzColors, setMovingBlitzColors] =
@@ -543,6 +545,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
   const skillReservationsRef = useRef<AbilitySkillReservation[]>([]);
   const animationTimeoutIdsRef = useRef<number[]>([]);
   const submitTimeoutIdsRef = useRef<number[]>([]);
+  const voidCloakVanishTimeoutRef = useRef<number | null>(null);
   const initialReadySentRef = useRef(false);
   const gridAreaRef = useRef<HTMLDivElement>(null);
   const boardStageRef = useRef<HTMLDivElement>(null);
@@ -825,6 +828,13 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     submitTimeoutIdsRef.current = [];
   };
 
+  const clearVoidCloakVanishTimeout = () => {
+    if (voidCloakVanishTimeoutRef.current !== null) {
+      window.clearTimeout(voidCloakVanishTimeoutRef.current);
+      voidCloakVanishTimeoutRef.current = null;
+    }
+  };
+
   const queueSubmitTimeout = (callback: () => void, delay: number) => {
     const timeoutId = window.setTimeout(() => {
       submitTimeoutIdsRef.current = submitTimeoutIdsRef.current.filter(
@@ -864,6 +874,8 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     setExplodingFlags(createFalseFlags());
     setCollisionEffects([]);
     setTeleportEffects([]);
+    clearVoidCloakVanishTimeout();
+    setVoidCloakVanishPositions(createNullMarkers());
     setPendingOwnedTriggeredTrapTiles([]);
     setTimeRewindFocusColor(null);
     setRewindingPieceColor(null);
@@ -3253,21 +3265,41 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       }
       const previousState = stateRef.current;
       const nextState = payload.state;
+      const redVoidCloakTriggered =
+        !!nextState.players.red.hidden &&
+        (!previousState?.players.red.hidden ||
+          previousState.players.red.position.row !==
+            nextState.players.red.position.row ||
+          previousState.players.red.position.col !==
+            nextState.players.red.position.col);
+      const blueVoidCloakTriggered =
+        !!nextState.players.blue.hidden &&
+        (!previousState?.players.blue.hidden ||
+          previousState.players.blue.position.row !==
+            nextState.players.blue.position.row ||
+          previousState.players.blue.position.col !==
+            nextState.players.blue.position.col);
       const voidCloakTriggered =
-        (!!nextState.players.red.hidden &&
-          (!previousState?.players.red.hidden ||
-            previousState.players.red.position.row !==
-              nextState.players.red.position.row ||
-            previousState.players.red.position.col !==
-              nextState.players.red.position.col)) ||
-        (!!nextState.players.blue.hidden &&
-          (!previousState?.players.blue.hidden ||
-            previousState.players.blue.position.row !==
-              nextState.players.blue.position.row ||
-            previousState.players.blue.position.col !==
-              nextState.players.blue.position.col));
+        redVoidCloakTriggered || blueVoidCloakTriggered;
       if (voidCloakTriggered && !isSfxMuted) {
         playVoidCloak(sfxVolume);
+      }
+      clearVoidCloakVanishTimeout();
+      if (previousState && voidCloakTriggered) {
+        setVoidCloakVanishPositions({
+          red: redVoidCloakTriggered
+            ? previousState.players.red.position
+            : null,
+          blue: blueVoidCloakTriggered
+            ? previousState.players.blue.position
+            : null,
+        });
+        voidCloakVanishTimeoutRef.current = window.setTimeout(() => {
+          voidCloakVanishTimeoutRef.current = null;
+          setVoidCloakVanishPositions(createNullMarkers());
+        }, 460);
+      } else {
+        setVoidCloakVanishPositions(createNullMarkers());
       }
       setRoundInfo(payload);
       setTrapTiles(nextState.trapTiles ?? []);
@@ -3478,6 +3510,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     return () => {
       clearAnimationTimeouts();
       clearSubmitTimeouts();
+      clearVoidCloakVanishTimeout();
       socket.off("ability_game_start", onGameStart);
       socket.off("ability_round_start", onRoundStart);
       socket.off("ability_timer_start", onTimerStart);
@@ -4168,6 +4201,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
             myPath={myPath}
             setMyPath={updateMyPath}
             displayPositions={{ red: redDisplayPos, blue: blueDisplayPos }}
+            voidCloakVanishPositions={voidCloakVanishPositions}
             hitFlags={hitFlags}
             explodingFlags={explodingFlags}
             collisionEffects={collisionEffects}

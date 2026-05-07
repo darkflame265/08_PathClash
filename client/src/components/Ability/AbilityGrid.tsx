@@ -25,6 +25,7 @@ interface Props {
   myPath: Position[];
   setMyPath: (path: Position[]) => void;
   displayPositions: { red: Position; blue: Position };
+  voidCloakVanishPositions: { red: Position | null; blue: Position | null };
   hitFlags: { red: boolean; blue: boolean };
   explodingFlags: { red: boolean; blue: boolean };
   collisionEffects: Array<{ id: number; position: Position; direction: { dx: number; dy: number } }>;
@@ -143,6 +144,7 @@ export function AbilityGrid({
   myPath,
   setMyPath,
   displayPositions,
+  voidCloakVanishPositions,
   hitFlags,
   explodingFlags,
   collisionEffects,
@@ -1395,7 +1397,8 @@ export function AbilityGrid({
               isHit={hitFlags.red}
               isExploding={explodingFlags.red}
               isMe={currentColor === "red"}
-              isHidden={
+              isHidden={false}
+              isCloaked={
                 state.players.red.hidden &&
                 currentColor === "red" &&
                 state.phase === "planning"
@@ -1420,6 +1423,19 @@ export function AbilityGrid({
             />
           </>
         ) : null}
+        {voidCloakVanishPositions.red ? (
+          <PlayerPiece
+            color="red"
+            position={voidCloakVanishPositions.red}
+            cellSize={responsiveCellSize}
+            isAttacker={state.attackerColor === "red"}
+            isHit={false}
+            isExploding={false}
+            isMe={currentColor === "red"}
+            isHidden
+            skin={redSkin}
+          />
+        ) : null}
         {blueVisible &&
         (state.players.blue.hp > 0 ||
           hitFlags.blue ||
@@ -1434,7 +1450,8 @@ export function AbilityGrid({
               isHit={hitFlags.blue}
               isExploding={explodingFlags.blue}
               isMe={currentColor === "blue"}
-              isHidden={
+              isHidden={false}
+              isCloaked={
                 state.players.blue.hidden &&
                 currentColor === "blue" &&
                 state.phase === "planning"
@@ -1457,6 +1474,19 @@ export function AbilityGrid({
               skin={blueSkin}
             />
           </>
+        ) : null}
+        {voidCloakVanishPositions.blue ? (
+          <PlayerPiece
+            color="blue"
+            position={voidCloakVanishPositions.blue}
+            cellSize={responsiveCellSize}
+            isAttacker={state.attackerColor === "blue"}
+            isHit={false}
+            isExploding={false}
+            isMe={currentColor === "blue"}
+            isHidden
+            skin={blueSkin}
+          />
         ) : null}
       </div>
     </div>
