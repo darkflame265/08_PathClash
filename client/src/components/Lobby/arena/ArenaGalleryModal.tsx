@@ -30,42 +30,57 @@ interface ArenaGalleryModalProps {
 const DRAG_THRESHOLD = 50;
 const BOUNCE_DURATION_MS = 480;
 const SNAP_DURATION_MS = 280;
-const PEEK = 0;
+const NEXT_ARENA_PEEK_RATIO = 0.04;
+const MIN_NEXT_ARENA_PEEK = 4;
+const MAX_NEXT_ARENA_PEEK = 44;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
 const SKIN_META: Partial<Record<PieceSkin, { name: string; tier: string }>> = {
-  plasma:        { name: "플라즈마",      tier: "common"    },
-  gold_core:     { name: "골드 코어",     tier: "common"    },
-  neon_pulse:    { name: "네온 펄스",     tier: "common"    },
-  inferno:       { name: "인페르노",      tier: "common"    },
-  quantum:       { name: "퀀텀",          tier: "common"    },
-  cosmic:        { name: "코스믹",        tier: "rare"      },
-  arc_reactor:   { name: "헥사곤",        tier: "rare"      },
-  electric_core: { name: "일렉트릭 코어", tier: "rare"      },
-  wizard:        { name: "위저드",        tier: "legendary" },
-  atomic:        { name: "아토믹",        tier: "legendary" },
-  chronos:       { name: "크로노스",      tier: "legendary" },
-  sun:           { name: "썬",            tier: "legendary" },
+  plasma: { name: "플라즈마", tier: "common" },
+  gold_core: { name: "골드 코어", tier: "common" },
+  neon_pulse: { name: "네온 펄스", tier: "common" },
+  inferno: { name: "인페르노", tier: "common" },
+  quantum: { name: "퀀텀", tier: "common" },
+  cosmic: { name: "코스믹", tier: "rare" },
+  arc_reactor: { name: "헥사곤", tier: "rare" },
+  electric_core: { name: "일렉트릭 코어", tier: "rare" },
+  wizard: { name: "위저드", tier: "legendary" },
+  atomic: { name: "아토믹", tier: "legendary" },
+  chronos: { name: "크로노스", tier: "legendary" },
+  sun: { name: "썬", tier: "legendary" },
 };
 
 function renderSkinPreview(skinId: PieceSkin) {
   switch (skinId) {
-    case "plasma":        return <PlasmaPreview />;
-    case "gold_core":     return <GoldCorePreview />;
-    case "neon_pulse":    return <NeonPulsePreview />;
-    case "cosmic":        return <CosmicPreview />;
-    case "inferno":       return <InfernoPreview />;
-    case "arc_reactor":   return <ArcReactorPreview />;
-    case "electric_core": return <ElectricCorePreview />;
-    case "quantum":       return <QuantumPreview />;
-    case "wizard":        return <WizardPreview />;
-    case "atomic":        return <AtomicPreview ready={true} />;
-    case "chronos":       return <ChronosPreview />;
-    case "sun":           return <SunPreview />;
-    default:              return null;
+    case "plasma":
+      return <PlasmaPreview />;
+    case "gold_core":
+      return <GoldCorePreview />;
+    case "neon_pulse":
+      return <NeonPulsePreview />;
+    case "cosmic":
+      return <CosmicPreview />;
+    case "inferno":
+      return <InfernoPreview />;
+    case "arc_reactor":
+      return <ArcReactorPreview />;
+    case "electric_core":
+      return <ElectricCorePreview />;
+    case "quantum":
+      return <QuantumPreview />;
+    case "wizard":
+      return <WizardPreview />;
+    case "atomic":
+      return <AtomicPreview ready={true} />;
+    case "chronos":
+      return <ChronosPreview />;
+    case "sun":
+      return <SunPreview />;
+    default:
+      return null;
   }
 }
 
@@ -171,14 +186,20 @@ export function ArenaGalleryModal({
     };
   }, []);
 
-  // slideWidth: viewport 너비 - 좌우 PEEK
-  // trackBaseOffset: 현재 아레나의 왼쪽 끝이 viewport x=PEEK에 오도록
-  const slideWidth = Math.max(0, containerWidth - 2 * PEEK);
+  const nextArenaPeek =
+    containerWidth > 0
+      ? clamp(
+          containerWidth * NEXT_ARENA_PEEK_RATIO,
+          MIN_NEXT_ARENA_PEEK,
+          MAX_NEXT_ARENA_PEEK,
+        )
+      : 0;
+  const slideWidth = Math.max(0, containerWidth - nextArenaPeek);
   const viewIndex = Math.max(
     0,
     ARENA_RANGES.findIndex((r) => r.arena === viewArena),
   );
-  const trackBaseOffset = slideWidth > 0 ? PEEK - viewIndex * slideWidth : 0;
+  const trackBaseOffset = slideWidth > 0 ? -viewIndex * slideWidth : 0;
 
   const range = ARENA_RANGES[viewIndex] ?? ARENA_RANGES[0];
   const rewardSkins = ARENA_REWARD_SKINS[viewArena] ?? [];
@@ -288,7 +309,9 @@ export function ArenaGalleryModal({
         >
           <div
             className={`arena-gallery-track${isSnapping ? " is-snapping" : ""}`}
-            style={{ transform: `translateX(${trackBaseOffset + dragOffset}px)` }}
+            style={{
+              transform: `translateX(${trackBaseOffset + dragOffset}px)`,
+            }}
           >
             {ARENA_RANGES.map((arena) => (
               <ArenaSlide
@@ -309,7 +332,10 @@ export function ArenaGalleryModal({
             {rewardSkins.map((skinId) => {
               const meta = SKIN_META[skinId];
               return (
-                <div key={skinId} className="skin-option-card skin-picker-card arena-gallery-skin-card">
+                <div
+                  key={skinId}
+                  className="skin-option-card skin-picker-card arena-gallery-skin-card"
+                >
                   <span
                     className={`skin-preview skin-picker-preview skin-preview-${skinId}`}
                     aria-hidden="true"
@@ -317,7 +343,9 @@ export function ArenaGalleryModal({
                     {renderSkinPreview(skinId)}
                   </span>
                   <span className="skin-option-copy skin-picker-copy">
-                    <strong className={`skin-name-tier-${meta?.tier ?? "common"}`}>
+                    <strong
+                      className={`skin-name-tier-${meta?.tier ?? "common"}`}
+                    >
                       {meta?.name ?? skinId}
                     </strong>
                   </span>
