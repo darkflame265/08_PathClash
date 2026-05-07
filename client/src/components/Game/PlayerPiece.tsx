@@ -35,6 +35,7 @@ interface Props {
   isMagicMineCasting?: boolean;
   isClone?: boolean;
   isBlitzRingActive?: boolean;
+  isBerserkerRage?: boolean;
   hp?: number | null;
   maxHp?: number;
   hpOffsetY?: number;
@@ -81,6 +82,7 @@ export function PlayerPiece({
   isMagicMineCasting = false,
   isClone = false,
   isBlitzRingActive = false,
+  isBerserkerRage = false,
   hp = null,
   maxHp = 3,
   hpOffsetY = 0,
@@ -146,6 +148,7 @@ export function PlayerPiece({
     isSunChariotActive ? 'piece-sun-chariot-active' : '',
     isRewinding ? 'piece-rewinding' : '',
     isClone ? 'piece-clone' : '',
+    isBerserkerRage ? 'piece-berserker-rage' : '',
     outlineColor ? `piece-outline-${outlineColor}` : '',
     isHit ? 'hit' : '',
     isExploding ? 'exploding' : '',

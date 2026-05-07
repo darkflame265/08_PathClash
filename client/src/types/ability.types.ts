@@ -33,7 +33,8 @@ export type AbilitySkillId =
   | "electric_blitz"
   | "cosmic_bigbang"
   | "wizard_magic_mine"
-  | "chronos_time_rewind";
+  | "chronos_time_rewind"
+  | "berserker_rage";
 export type AbilitySkillCategory = "attack" | "defense" | "utility" | "passive";
 export type AbilitySkillRoleRestriction = "any" | "attacker" | "escaper";
 export type AbilitySkillStepRule = "any" | "zero_only";
@@ -67,6 +68,7 @@ export const ABILITY_SKILL_IDS: AbilitySkillId[] = [
   "cosmic_bigbang",
   "wizard_magic_mine",
   "chronos_time_rewind",
+  "berserker_rage",
 ];
 
 export function normalizeAbilityLoadout(
@@ -107,6 +109,7 @@ export const ABILITY_SKILL_COSTS: Record<AbilitySkillId, number> = {
   cosmic_bigbang: 10,
   wizard_magic_mine: 8,
   chronos_time_rewind: 0,
+  berserker_rage: 8,
 };
 
 export const ABILITY_SKILL_SERVER_RULES: Record<
@@ -198,6 +201,11 @@ export const ABILITY_SKILL_SERVER_RULES: Record<
   },
   chronos_time_rewind: {
     roleRestriction: "any",
+    stepRule: "zero_only",
+    targetRule: "none",
+  },
+  berserker_rage: {
+    roleRestriction: "attacker",
     stepRule: "zero_only",
     targetRule: "none",
   },
@@ -598,6 +606,22 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     category: "passive",
     skinId: "chronos",
     icon: "⏪",
+  },
+  berserker_rage: {
+    id: "berserker_rage",
+    name: { en: "Berserker Rage", kr: "버서커 레이지" },
+    loadoutTags: {
+      en: "Timing: 0 · Attacker only",
+      kr: "타이밍: 0칸 · 공격자 전용",
+    },
+    loadoutDescription: {
+      en: "This turn, collision damage becomes 2.",
+      kr: "이번 턴, 충돌 피해가 2가 됩니다.",
+    },
+    manaCost: ABILITY_SKILL_COSTS.berserker_rage,
+    category: "attack",
+    skinId: "berserker",
+    icon: "⚔",
   },
   cosmic_bigbang: {
     id: "cosmic_bigbang",

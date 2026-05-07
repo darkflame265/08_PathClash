@@ -64,6 +64,7 @@ interface Props {
   movingBlitzProgress: { red: number; blue: number };
   movingBlitzSteps: { red: number | null; blue: number | null };
   activeSunChariots: { red: boolean; blue: boolean };
+  activeBerserkerRages: { red: boolean; blue: boolean };
   movingAtomicClones: {
     red: {
       start: Position | null;
@@ -165,6 +166,7 @@ export function AbilityGrid({
   movingBlitzProgress,
   movingBlitzSteps,
   activeSunChariots,
+  activeBerserkerRages,
   movingAtomicClones,
   movingPaths,
   movingStarts,
@@ -1413,6 +1415,7 @@ export function AbilityGrid({
               }
               isBlitzing={movingBlitzProgress.red > 0}
               isSunChariotActive={activeSunChariots.red}
+              isBerserkerRage={activeBerserkerRages.red}
               isRewinding={rewindingPieceColor === "red"}
               isMagicMineCasting={magicMineCastingColors.red}
               isBlitzRingActive={(isPlanning && currentColor === "red" && myBlitzReserved) || (isPlaybackPhase && movingBlitzColors.red)}
@@ -1467,6 +1470,7 @@ export function AbilityGrid({
               }
               isBlitzing={movingBlitzProgress.blue > 0}
               isSunChariotActive={activeSunChariots.blue}
+              isBerserkerRage={activeBerserkerRages.blue}
               isRewinding={rewindingPieceColor === "blue"}
               isMagicMineCasting={magicMineCastingColors.blue}
               isBlitzRingActive={(isPlanning && currentColor === "blue" && myBlitzReserved) || (isPlaybackPhase && movingBlitzColors.blue)}

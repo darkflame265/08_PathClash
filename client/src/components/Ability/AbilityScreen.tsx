@@ -499,6 +499,8 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     useState<BoolByColor>(createFalseFlags);
   const [transitionSunChariots, setTransitionSunChariots] =
     useState<BoolByColor>(createFalseFlags);
+  const [activeBerserkerRages, setActiveBerserkerRages] =
+    useState<BoolByColor>(createFalseFlags);
   const [movingAtomicClones, setMovingAtomicClones] =
     useState<AtomicCloneVisualsByColor>(createEmptyAtomicCloneVisuals);
   const [trapTiles, setTrapTiles] = useState<AbilityTrapTile[]>([]);
@@ -587,6 +589,20 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       activeSunChariots.blue ||
       planningSunChariots.blue ||
       transitionSunChariots.blue,
+  };
+  const planningBerserkerRages: BoolByColor = {
+    red:
+      state?.phase === "planning" &&
+      currentColor === "red" &&
+      skillReservations.some((entry) => entry.skillId === "berserker_rage"),
+    blue:
+      state?.phase === "planning" &&
+      currentColor === "blue" &&
+      skillReservations.some((entry) => entry.skillId === "berserker_rage"),
+  };
+  const visibleBerserkerRages: BoolByColor = {
+    red: activeBerserkerRages.red || planningBerserkerRages.red,
+    blue: activeBerserkerRages.blue || planningBerserkerRages.blue,
   };
   const previousGuardPathRef = useRef<Position[]>([]);
   const previousChargePathRef = useRef<Position[]>([]);
@@ -888,6 +904,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     setMovingBlitzProgress(createZeroCounters());
     setMovingBlitzSteps(createNullSteps());
     setActiveSunChariots(createFalseFlags());
+    setActiveBerserkerRages(createFalseFlags());
     setMovingAtomicClones(createEmptyAtomicCloneVisuals());
   };
 
@@ -1325,6 +1342,29 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     setPendingTeleport(false);
   };
 
+  const toggleBerserkerRage = () => {
+    const alreadyReserved = skillReservations.some(
+      (entry) => entry.skillId === "berserker_rage",
+    );
+    if (alreadyReserved) {
+      removeReservation("berserker_rage");
+      return;
+    }
+    if (getMyRole() !== "attacker") return;
+    if (getRemainingMana() < getSkillCost("berserker_rage")) return;
+    const nextReservations: AbilitySkillReservation[] = [
+      ...skillReservations.filter((entry) => entry.skillId !== "berserker_rage"),
+      {
+        skillId: "berserker_rage",
+        step: 0,
+        order: reservationOrderRef.current++,
+      },
+    ];
+    updateSkillReservations(nextReservations);
+    setSelectedSkillId(null);
+    setPendingTeleport(false);
+  };
+
   const beginWizardMagicMineStepPick = () => {
     const alreadyReserved = skillReservations.some(
       (entry) => entry.skillId === "wizard_magic_mine",
@@ -1670,6 +1710,10 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     }
     if (skillId === "sun_chariot") {
       beginSunChariotStepPick();
+      return;
+    }
+    if (skillId === "berserker_rage") {
+      toggleBerserkerRage();
       return;
     }
     if (skillId === "wizard_magic_mine") {
@@ -2435,6 +2479,12 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
         return;
       }
 
+      if (event.skillId === "berserker_rage") {
+        setAbilityBanner(null);
+        done();
+        return;
+      }
+
       if (event.skillId === "cosmic_bigbang") {
         if (!isSfxMuted) {
           playBigBang(sfxVolume);
@@ -2795,6 +2845,16 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       blue:
         payload.skillEvents.find(
           (event) => event.skillId === "sun_chariot" && event.color === "blue",
+        )?.step ?? null,
+    };
+    const berserkerRageSteps: NullableNumberByColor = {
+      red:
+        payload.skillEvents.find(
+          (event) => event.skillId === "berserker_rage" && event.color === "red",
+        )?.step ?? null,
+      blue:
+        payload.skillEvents.find(
+          (event) => event.skillId === "berserker_rage" && event.color === "blue",
         )?.step ?? null,
     };
     const atomicCloneEvents = {
@@ -3169,6 +3229,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
 
       if (step > maxSteps) {
         setActiveSunChariots(createFalseFlags());
+        setActiveBerserkerRages(createFalseFlags());
         finalizeEndNotices();
         return;
       }
@@ -3201,6 +3262,10 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       setActiveSunChariots({
         red: sunChariotSteps.red !== null && step >= sunChariotSteps.red,
         blue: sunChariotSteps.blue !== null && step >= sunChariotSteps.blue,
+      });
+      setActiveBerserkerRages({
+        red: berserkerRageSteps.red !== null && step >= berserkerRageSteps.red,
+        blue: berserkerRageSteps.blue !== null && step >= berserkerRageSteps.blue,
       });
 
       if (redShouldMoveNormally) {
@@ -4234,6 +4299,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
             movingBlitzProgress={movingBlitzProgress}
             movingBlitzSteps={movingBlitzSteps}
             activeSunChariots={visibleSunChariots}
+            activeBerserkerRages={visibleBerserkerRages}
             movingAtomicClones={movingAtomicClones}
             movingPaths={movingPaths}
             movingStarts={movingStarts}

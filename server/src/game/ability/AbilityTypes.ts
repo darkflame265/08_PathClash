@@ -25,7 +25,8 @@ export type AbilitySkillId =
   | 'electric_blitz'
   | 'cosmic_bigbang'
   | 'wizard_magic_mine'
-  | 'chronos_time_rewind';
+  | 'chronos_time_rewind'
+  | 'berserker_rage';
 export type AbilitySkillCategory = 'attack' | 'defense' | 'utility' | 'passive';
 export type AbilitySkillRoleRestriction = 'any' | 'attacker' | 'escaper';
 export type AbilitySkillStepRule = 'any' | 'zero_only';
@@ -62,6 +63,7 @@ export const ABILITY_SKILL_COSTS: Record<AbilitySkillId, number> = {
   cosmic_bigbang: 10,
   wizard_magic_mine: 8,
   chronos_time_rewind: 0,
+  berserker_rage: 8,
 };
 
 // Shared validation metadata for server-side planning rules.
@@ -156,6 +158,11 @@ export const ABILITY_SKILL_SERVER_RULES: Record<
   },
   chronos_time_rewind: {
     roleRestriction: 'any',
+    stepRule: 'zero_only',
+    targetRule: 'none',
+  },
+  berserker_rage: {
+    roleRestriction: 'attacker',
     stepRule: 'zero_only',
     targetRule: 'none',
   },
