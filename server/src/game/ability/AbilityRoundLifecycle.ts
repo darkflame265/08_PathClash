@@ -67,14 +67,25 @@ function resetPlayerForPlanning(
   player.hidden = false;
   player.overdriveActive = false;
   player.reboundLocked = false;
-  player.mana = Math.min(maxMana, player.mana + manaPerTurn + player.pendingManaBonus);
-  player.pendingManaBonus = 0;
 
   if (player.pendingOverdriveStage === 1) {
     player.mana = overdriveMana;
     player.overdriveActive = true;
-    player.pendingOverdriveStage = 0;
+    player.pendingOverdriveStage = 2;
+    player.pendingManaBonus = 0;
+    return;
   }
+
+  if (player.pendingOverdriveStage === 2) {
+    player.mana = 0;
+    player.reboundLocked = true;
+    player.pendingOverdriveStage = 0;
+    player.pendingManaBonus = 0;
+    return;
+  }
+
+  player.mana = Math.min(maxMana, player.mana + manaPerTurn + player.pendingManaBonus);
+  player.pendingManaBonus = 0;
 }
 
 export function applyAbilityRoundStartLifecycle(
