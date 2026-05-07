@@ -2561,6 +2561,78 @@ export class AbilityRoom {
         continue;
       }
 
+      if (skillId === 'phase_shift') {
+        if (bot.role !== 'escaper') continue;
+
+        const phaseDistanceToOpponent = manhattan(bot.position, opponent.position);
+        const currentDanger = scoreEscapePathAgainstModel(
+          bot.position,
+          [],
+          opponent.position,
+          opponentModel,
+          effectiveObstacles,
+        );
+        const bestBaseEscapeScore = basePaths.reduce(
+          (best, path) =>
+            Math.max(
+              best,
+              scoreEscapePathAgainstModel(
+                bot.position,
+                path,
+                opponent.position,
+                opponentModel,
+                effectiveObstacles,
+              ),
+            ),
+          -Infinity,
+        );
+        const closeRangeBonus =
+          phaseDistanceToOpponent <= 1
+            ? 760
+            : phaseDistanceToOpponent <= 2
+              ? 520
+              : phaseDistanceToOpponent <= 3
+                ? 260
+                : 0;
+        const hpPressureBonus =
+          bot.hp <= 2 ? 560 : bot.hp === 3 ? 360 : bot.hp === 4 ? 160 : 0;
+        const threatBonus = isUnderSkillThreat ? 1100 : 0;
+        const dangerBonus =
+          currentDanger < -360 ? 680 : currentDanger < -180 ? 420 : 140;
+        const manaOverflowBonus = bot.mana >= MAX_MANA ? 280 : bot.mana >= 9 ? 150 : 0;
+        const lowUrgencyPenalty =
+          !isUnderSkillThreat && phaseDistanceToOpponent > 3 && bot.hp >= 4 && bot.mana < MAX_MANA
+            ? 520
+            : 0;
+        const phaseBonus =
+          480 +
+          threatBonus +
+          closeRangeBonus +
+          hpPressureBonus +
+          dangerBonus +
+          manaOverflowBonus -
+          lowUrgencyPenalty;
+
+        for (const path of basePaths.slice(0, 4)) {
+          const base = this.scoreBotActionCandidate(
+            bot,
+            opponent,
+            path,
+            [{ skillId, step: 0, order: 0 }],
+            opponentModel,
+            'phase_shift-escape-invulnerable',
+            effectiveObstacles,
+          );
+          const escapeImprovement =
+            Number.isFinite(bestBaseEscapeScore) ? Math.max(0, base.score - bestBaseEscapeScore) : 0;
+          candidates.push({
+            ...base,
+            score: base.score + phaseBonus + escapeImprovement * 0.35,
+          });
+        }
+        continue;
+      }
+
       if (skillId === 'quantum_shift') {
         // 도망 역할일 때만 위기 탈출 목적으로 사용 (공격 역할에서는 사용 금지)
         if (bot.role !== 'escaper') continue;
