@@ -2652,6 +2652,62 @@ export class AbilityRoom {
         continue;
       }
 
+      if (skillId === 'void_cloak') {
+        if (bot.role !== 'escaper') continue;
+
+        const cloakDistanceToOpponent = manhattan(bot.position, opponent.position);
+        const currentDanger = scoreEscapePathAgainstModel(
+          bot.position,
+          [],
+          opponent.position,
+          opponentModel,
+          effectiveObstacles,
+        );
+        const closeRangeBonus =
+          cloakDistanceToOpponent <= 1
+            ? 520
+            : cloakDistanceToOpponent <= 2
+              ? 360
+              : cloakDistanceToOpponent <= 3
+                ? 180
+                : 0;
+        const hpPressureBonus =
+          bot.hp <= 2 ? 420 : bot.hp === 3 ? 260 : bot.hp === 4 ? 120 : 0;
+        const threatBonus = isUnderSkillThreat ? 900 : 0;
+        const dangerBonus =
+          currentDanger < -300 ? 520 : currentDanger < -150 ? 320 : 140;
+        const manaOverflowBonus = bot.mana >= MAX_MANA ? 260 : bot.mana >= 8 ? 130 : 0;
+        const repeatPenalty =
+          usedFourCostLastTurn && !isUnderSkillThreat && cloakDistanceToOpponent > 2
+            ? 280
+            : 0;
+        const cloakBonus =
+          420 +
+          threatBonus +
+          closeRangeBonus +
+          hpPressureBonus +
+          dangerBonus +
+          manaOverflowBonus -
+          repeatPenalty;
+
+        for (const path of basePaths.slice(0, 3)) {
+          const base = this.scoreBotActionCandidate(
+            bot,
+            opponent,
+            path,
+            [{ skillId, step: 0, order: 0 }],
+            opponentModel,
+            'void_cloak-escape-setup',
+            effectiveObstacles,
+          );
+          candidates.push({
+            ...base,
+            score: base.score + cloakBonus,
+          });
+        }
+        continue;
+      }
+
       if (skillId === 'electric_blitz') {
         const directBlitzTarget = getBlitzDirectionTowardOpponent(
           bot.position,
