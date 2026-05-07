@@ -40,6 +40,7 @@ import {
   type AbilityTurnSnapshot,
 } from './AbilityTypes';
 import { resolveAbilityRound } from './AbilityEngine';
+import { applyAbilityRoundStartLifecycle } from './AbilityRoundLifecycle';
 
 const PLANNING_TIME_MS = 9000;
 const SUBMIT_GRACE_MS = 350;
@@ -737,22 +738,6 @@ function getSquarePositions(origin: Position, radius = 1): Position[] {
   return positions;
 }
 
-function getRandomTeleportPosition(
-  current: Position,
-  opponent: Position,
-): Position {
-  const candidates: Position[] = [];
-  for (let row = 0; row < 5; row++) {
-    for (let col = 0; col < 5; col++) {
-      if (row === opponent.row && col === opponent.col) continue;
-      candidates.push({ row, col });
-    }
-  }
-  const filtered = candidates.filter((position) => !posEqual(position, current));
-  const pool = filtered.length > 0 ? filtered : candidates;
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
 function normalizeSkillReservations(
   skills: AbilitySkillReservation[],
 ): AbilitySkillReservation[] {
@@ -1299,50 +1284,11 @@ export class AbilityRoom {
     const blue = this.players.get('blue');
     if (!red || !blue) return;
 
-    red.pathSubmitted = false;
-    blue.pathSubmitted = false;
-    red.plannedPath = [];
-    blue.plannedPath = [];
-    red.plannedSkills = [];
-    blue.plannedSkills = [];
-    if (red.connected === false) {
-      red.pathSubmitted = true;
-    }
-    if (blue.connected === false) {
-      blue.pathSubmitted = true;
-    }
-    red.hidden = false;
-    blue.hidden = false;
-    red.overdriveActive = false;
-    blue.overdriveActive = false;
-    red.reboundLocked = false;
-    blue.reboundLocked = false;
-    red.mana = Math.min(MAX_MANA, red.mana + MANA_PER_TURN);
-    blue.mana = Math.min(MAX_MANA, blue.mana + MANA_PER_TURN);
-    red.mana = Math.min(MAX_MANA, red.mana + red.pendingManaBonus);
-    blue.mana = Math.min(MAX_MANA, blue.mana + blue.pendingManaBonus);
-    red.pendingManaBonus = 0;
-    blue.pendingManaBonus = 0;
-    if (red.pendingOverdriveStage === 1) {
-      red.mana = OVERDRIVE_MANA;
-      red.overdriveActive = true;
-      red.pendingOverdriveStage = 0;
-    }
-    if (blue.pendingOverdriveStage === 1) {
-      blue.mana = OVERDRIVE_MANA;
-      blue.overdriveActive = true;
-      blue.pendingOverdriveStage = 0;
-    }
-    if (red.pendingVoidCloak) {
-      red.position = getRandomTeleportPosition(red.position, blue.position);
-      red.hidden = true;
-      red.pendingVoidCloak = false;
-    }
-    if (blue.pendingVoidCloak) {
-      blue.position = getRandomTeleportPosition(blue.position, red.position);
-      blue.hidden = true;
-      blue.pendingVoidCloak = false;
-    }
+    applyAbilityRoundStartLifecycle(red, blue, {
+      maxMana: MAX_MANA,
+      manaPerTurn: MANA_PER_TURN,
+      overdriveMana: OVERDRIVE_MANA,
+    });
     this.obstacles = generateObstacles(this.roomId, this.turn, red.position, blue.position);
     if (red.isBot) {
       this.planBotTurn(red, blue);

@@ -8,6 +8,7 @@ const playerAuth_1 = require("../../services/playerAuth");
 const achievementService_1 = require("../../services/achievementService");
 const AbilityTypes_1 = require("./AbilityTypes");
 const AbilityEngine_1 = require("./AbilityEngine");
+const AbilityRoundLifecycle_1 = require("./AbilityRoundLifecycle");
 const PLANNING_TIME_MS = 9000;
 const SUBMIT_GRACE_MS = 350;
 const READY_START_FALLBACK_MS = 5000;
@@ -545,19 +546,6 @@ function getSquarePositions(origin, radius = 1) {
     }
     return positions;
 }
-function getRandomTeleportPosition(current, opponent) {
-    const candidates = [];
-    for (let row = 0; row < 5; row++) {
-        for (let col = 0; col < 5; col++) {
-            if (row === opponent.row && col === opponent.col)
-                continue;
-            candidates.push({ row, col });
-        }
-    }
-    const filtered = candidates.filter((position) => !posEqual(position, current));
-    const pool = filtered.length > 0 ? filtered : candidates;
-    return pool[Math.floor(Math.random() * pool.length)];
-}
 function normalizeSkillReservations(skills) {
     return Array.from(new Map(skills.map((skill) => [skill.skillId, skill])).values())
         .map((skill) => ({ ...skill, target: skill.target ?? null }))
@@ -1045,50 +1033,11 @@ class AbilityRoom {
         const blue = this.players.get('blue');
         if (!red || !blue)
             return;
-        red.pathSubmitted = false;
-        blue.pathSubmitted = false;
-        red.plannedPath = [];
-        blue.plannedPath = [];
-        red.plannedSkills = [];
-        blue.plannedSkills = [];
-        if (red.connected === false) {
-            red.pathSubmitted = true;
-        }
-        if (blue.connected === false) {
-            blue.pathSubmitted = true;
-        }
-        red.hidden = false;
-        blue.hidden = false;
-        red.overdriveActive = false;
-        blue.overdriveActive = false;
-        red.reboundLocked = false;
-        blue.reboundLocked = false;
-        red.mana = Math.min(MAX_MANA, red.mana + MANA_PER_TURN);
-        blue.mana = Math.min(MAX_MANA, blue.mana + MANA_PER_TURN);
-        red.mana = Math.min(MAX_MANA, red.mana + red.pendingManaBonus);
-        blue.mana = Math.min(MAX_MANA, blue.mana + blue.pendingManaBonus);
-        red.pendingManaBonus = 0;
-        blue.pendingManaBonus = 0;
-        if (red.pendingOverdriveStage === 1) {
-            red.mana = OVERDRIVE_MANA;
-            red.overdriveActive = true;
-            red.pendingOverdriveStage = 0;
-        }
-        if (blue.pendingOverdriveStage === 1) {
-            blue.mana = OVERDRIVE_MANA;
-            blue.overdriveActive = true;
-            blue.pendingOverdriveStage = 0;
-        }
-        if (red.pendingVoidCloak) {
-            red.position = getRandomTeleportPosition(red.position, blue.position);
-            red.hidden = true;
-            red.pendingVoidCloak = false;
-        }
-        if (blue.pendingVoidCloak) {
-            blue.position = getRandomTeleportPosition(blue.position, red.position);
-            blue.hidden = true;
-            blue.pendingVoidCloak = false;
-        }
+        (0, AbilityRoundLifecycle_1.applyAbilityRoundStartLifecycle)(red, blue, {
+            maxMana: MAX_MANA,
+            manaPerTurn: MANA_PER_TURN,
+            overdriveMana: OVERDRIVE_MANA,
+        });
         this.obstacles = (0, GameEngine_1.generateObstacles)(this.roomId, this.turn, red.position, blue.position);
         if (red.isBot) {
             this.planBotTurn(red, blue);
