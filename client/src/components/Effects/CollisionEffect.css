@@ -91,6 +91,50 @@
 .collision-effect-spark-d { --spark-rotate: 216deg; animation-delay: 10ms; }
 .collision-effect-spark-e { --spark-rotate: 288deg; animation-delay: 18ms; }
 
+.collision-effect--berserk::before {
+  background: radial-gradient(circle, #ef4444 0%, #7f1d1d 50%, transparent 70%);
+}
+
+.collision-effect--berserk::after {
+  background: radial-gradient(circle, transparent 40%, #b91c1c 60%, transparent 80%);
+}
+
+.collision-effect--berserk.collision-effect--directional::before {
+  background: conic-gradient(
+    from calc(var(--primary-angle) - 40deg),
+    transparent 0deg,
+    rgba(185, 28, 28, 0.78) 20deg,
+    rgba(248, 113, 113, 0.42) 40deg,
+    rgba(127, 29, 29, 0.78) 60deg,
+    transparent 80deg,
+    transparent 360deg
+  );
+}
+
+.collision-effect--berserk.collision-effect--directional::after {
+  background: conic-gradient(
+    from calc(var(--primary-angle) - 35deg),
+    transparent 0deg,
+    rgba(185, 28, 28, 0.52) 15deg,
+    rgba(239, 68, 68, 0.28) 35deg,
+    rgba(127, 29, 29, 0.52) 55deg,
+    transparent 70deg,
+    transparent 360deg
+  );
+}
+
+.collision-effect--berserk .collision-effect-core {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.96), #ef4444 38%, #7f1d1d 72%, transparent 100%);
+  filter:
+    drop-shadow(0 0 10px rgba(185, 28, 28, 0.56))
+    drop-shadow(0 0 16px rgba(239, 68, 68, 0.34));
+}
+
+.collision-effect--berserk .collision-effect-spark {
+  background: linear-gradient(180deg, #fee2e2 0%, #b91c1c 45%, rgba(127, 29, 29, 0) 100%);
+  filter: drop-shadow(0 0 3px rgba(185, 28, 28, 0.95));
+}
+
 @keyframes collision-impact {
   0% {
     transform: translate(-50%, -50%) scale(0.88);

@@ -28,7 +28,12 @@ interface Props {
   voidCloakVanishPositions: { red: Position | null; blue: Position | null };
   hitFlags: { red: boolean; blue: boolean };
   explodingFlags: { red: boolean; blue: boolean };
-  collisionEffects: Array<{ id: number; position: Position; direction: { dx: number; dy: number } }>;
+  collisionEffects: Array<{
+    id: number;
+    position: Position;
+    direction: { dx: number; dy: number };
+    variant?: "normal" | "berserk";
+  }>;
   teleportEffects: Array<{
     id: number;
     color: PlayerColor;
@@ -1248,12 +1253,13 @@ export function AbilityGrid({
             );
           })}
 
-        {collisionEffects.map(({ id, position, direction }) => (
+        {collisionEffects.map(({ id, position, direction, variant }) => (
           <CollisionEffect
             key={id}
             position={position}
             cellSize={responsiveCellSize}
             direction={direction}
+            variant={variant}
           />
         ))}
 

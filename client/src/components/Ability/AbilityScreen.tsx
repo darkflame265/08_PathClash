@@ -457,6 +457,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       id: number;
       position: Position;
       direction: { dx: number; dy: number };
+      variant?: "normal" | "berserk";
     }>
   >([]);
   const [boardShakeKey, setBoardShakeKey] = useState(0);
@@ -2226,7 +2227,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       const effectId = Date.now() + Math.random();
       setCollisionEffects((prev) => [
         ...prev,
-        { id: effectId, position, direction },
+        { id: effectId, position, direction, variant: hitSound },
       ]);
       queueAnimationTimeout(() => {
         setCollisionEffects((prev) =>

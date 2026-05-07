@@ -5,12 +5,18 @@ interface Props {
   position: Position;
   cellSize: number;
   direction?: { dx: number; dy: number };
+  variant?: 'normal' | 'berserk';
 }
 
 const SPARK_LETTERS = ['a', 'b', 'c', 'd', 'e'] as const;
 const DIRECTIONAL_OFFSETS = [0, 15, -15, 30, -30];
 
-export function CollisionEffect({ position, cellSize, direction }: Props) {
+export function CollisionEffect({
+  position,
+  cellSize,
+  direction,
+  variant = 'normal',
+}: Props) {
   const x = position.col * cellSize + cellSize / 2;
   const y = position.row * cellSize + cellSize / 2;
   const effectSize = Math.max(52, Math.round(cellSize * 1.3));
@@ -22,7 +28,7 @@ export function CollisionEffect({ position, cellSize, direction }: Props) {
 
   return (
     <div
-      className={`collision-effect${primaryAngle !== null ? ' collision-effect--directional' : ''}`}
+      className={`collision-effect collision-effect--${variant}${primaryAngle !== null ? ' collision-effect--directional' : ''}`}
       style={{
         left: x,
         top: y,
