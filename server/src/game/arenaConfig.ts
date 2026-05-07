@@ -24,14 +24,20 @@ interface RatingChange {
   loss: number;
 }
 
-const RATING_CHANGES: Array<{ arenas: number[]; change: RatingChange }> = [
-  { arenas: [1, 2, 3], change: { win: 50,  loss: -10 } },
-  { arenas: [4, 5, 6], change: { win: 40,  loss: -25 } },
-  { arenas: [7, 8],    change: { win: 30,  loss: -30 } },
-  { arenas: [9, 10],   change: { win: 25,  loss: -35 } },
+export const ABILITY_ARENA_WIN_RATING = 30;
+
+const LOSS_PROGRESS_POINTS = [
+  { progress: 0, loss: 5 },
+  { progress: 0.25, loss: 10 },
+  { progress: 0.5, loss: 18 },
+  { progress: 0.75, loss: 27 },
+  { progress: 0.95, loss: 40 },
 ];
 
-const RANKED_RATING_CHANGE: RatingChange = { win: 20, loss: -40 };
+const RANKED_RATING_CHANGE: RatingChange = {
+  win: ABILITY_ARENA_WIN_RATING,
+  loss: -40,
+};
 
 export function getArenaFromRating(rating: number): number {
   if (rating >= RANKED_UNLOCKED_THRESHOLD) return 10;
@@ -47,13 +53,40 @@ export function getRatingChange(currentRating: number, isWin: boolean): number {
   if (currentRating >= RANKED_UNLOCKED_THRESHOLD) {
     return isWin ? RANKED_RATING_CHANGE.win : RANKED_RATING_CHANGE.loss;
   }
+  if (isWin) return ABILITY_ARENA_WIN_RATING;
+
+  const arenaRange = getArenaRangeFromRating(currentRating);
+  const progress = getArenaProgress(currentRating, arenaRange);
+  return -getInterpolatedLoss(progress);
+}
+
+export function getRatingFloor(currentRating: number): number {
+  if (currentRating >= RANKED_UNLOCKED_THRESHOLD) return RANKED_UNLOCKED_THRESHOLD;
+  return getArenaRangeFromRating(currentRating).minRating;
+}
+
+function getArenaRangeFromRating(currentRating: number): ArenaRange {
   const arena = getArenaFromRating(currentRating);
-  for (const entry of RATING_CHANGES) {
-    if (entry.arenas.includes(arena)) {
-      return isWin ? entry.change.win : entry.change.loss;
+  return ARENA_RANGES.find((range) => range.arena === arena) ?? ARENA_RANGES[0];
+}
+
+function getArenaProgress(currentRating: number, arenaRange: ArenaRange): number {
+  const span = Math.max(1, arenaRange.maxRating - arenaRange.minRating);
+  const progress = (currentRating - arenaRange.minRating) / span;
+  return Math.max(0, Math.min(1, progress));
+}
+
+function getInterpolatedLoss(progress: number): number {
+  for (let i = 1; i < LOSS_PROGRESS_POINTS.length; i += 1) {
+    const previous = LOSS_PROGRESS_POINTS[i - 1];
+    const next = LOSS_PROGRESS_POINTS[i];
+    if (progress <= next.progress) {
+      const width = next.progress - previous.progress;
+      const localProgress = width <= 0 ? 0 : (progress - previous.progress) / width;
+      return Math.round(previous.loss + (next.loss - previous.loss) * localProgress);
     }
   }
-  return isWin ? 25 : -35;
+  return LOSS_PROGRESS_POINTS[LOSS_PROGRESS_POINTS.length - 1].loss;
 }
 
 /** 아레나별 AI fallback 대기 시간 (ms). ranked_unlocked면 AI 없음 → -1 반환. */

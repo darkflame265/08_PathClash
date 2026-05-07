@@ -2,7 +2,12 @@ import type { BoardSkin, PieceSkin } from '../types/game.types';
 import type { AbilitySkillId } from '../game/ability/AbilityTypes';
 import type { User } from '@supabase/supabase-js';
 import { supabaseAdmin } from '../lib/supabase';
-import { getRatingChange, getArenaFromRating, RANKED_UNLOCKED_THRESHOLD } from '../game/arenaConfig';
+import {
+  getRatingChange,
+  getRatingFloor,
+  getArenaFromRating,
+  RANKED_UNLOCKED_THRESHOLD,
+} from '../game/arenaConfig';
 import {
   listPlayerAchievements,
   mergePlayerAchievements,
@@ -917,8 +922,10 @@ export async function updateAbilityRating(
   const highestArena = Number(row?.highest_arena_reached ?? 1);
   const wasRankedUnlocked = Boolean(row?.ranked_unlocked ?? false);
 
-  const ratingChange = getRatingChange(currentRating, isWin);
-  const newRating = Math.max(0, currentRating + ratingChange);
+  const requestedRatingChange = getRatingChange(currentRating, isWin);
+  const ratingFloor = isWin ? 0 : getRatingFloor(currentRating);
+  const newRating = Math.max(ratingFloor, currentRating + requestedRatingChange);
+  const ratingChange = newRating - currentRating;
   const newArena = getArenaFromRating(newRating);
   const newHighestArena = Math.max(highestArena, newArena);
   const arenaPromoted = newHighestArena > highestArena;

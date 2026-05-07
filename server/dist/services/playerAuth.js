@@ -645,8 +645,10 @@ async function updateAbilityRating(userId, isWin) {
     const currentRating = Number(row?.current_rating ?? 0);
     const highestArena = Number(row?.highest_arena_reached ?? 1);
     const wasRankedUnlocked = Boolean(row?.ranked_unlocked ?? false);
-    const ratingChange = (0, arenaConfig_1.getRatingChange)(currentRating, isWin);
-    const newRating = Math.max(0, currentRating + ratingChange);
+    const requestedRatingChange = (0, arenaConfig_1.getRatingChange)(currentRating, isWin);
+    const ratingFloor = isWin ? 0 : (0, arenaConfig_1.getRatingFloor)(currentRating);
+    const newRating = Math.max(ratingFloor, currentRating + requestedRatingChange);
+    const ratingChange = newRating - currentRating;
     const newArena = (0, arenaConfig_1.getArenaFromRating)(newRating);
     const newHighestArena = Math.max(highestArena, newArena);
     const arenaPromoted = newHighestArena > highestArena;
