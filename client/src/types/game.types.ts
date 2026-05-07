@@ -19,6 +19,7 @@ export type PieceSkin =
   | 'inferno'
   | 'arc_reactor'
   | 'electric_core'
+  | 'berserker'
   | 'quantum'
   | 'atomic'
   | 'chronos'

@@ -1,0 +1,108 @@
+/* ─── 버서커: 강철 심장 핵 ─── */
+.player-piece.piece-skin-berserker .piece-inner {
+  overflow: visible;
+  background: radial-gradient(
+    circle at 36% 32%,
+    rgba(255, 170, 170, 0.35) 0%,
+    #dd1818 3%,
+    #8a0000 16%,
+    #3e0808 32%,
+    #1e1e1e 52%,
+    #111111 70%,
+    #060606 100%
+  );
+  box-shadow:
+    0 0 0 1.5px rgba(130, 0, 0, 0.9),
+    0 0 calc(var(--piece-glow, 12px) * 1.1) rgba(200, 0, 0, 0.65),
+    0 0 calc(var(--piece-glow, 12px) * 2.5) rgba(100, 0, 0, 0.35),
+    inset 0 0 20px rgba(0, 0, 0, 0.97),
+    inset 2px 2px 10px rgba(15, 15, 15, 0.8);
+  animation: bsk-heartbeat 2.2s ease-in-out infinite;
+}
+
+/* ─── 가시 레이어 (piece-inner 외부로 돌출) ─── */
+.bsk-spike-layer {
+  position: absolute;
+  /* 25% inset으로 piece-inner 경계 밖으로 확장 */
+  inset: -25%;
+  pointer-events: none;
+  /* 원 경계 안은 투명, 가시 영역에만 혈적 그라디언트 */
+  background: radial-gradient(
+    circle at 50% 50%,
+    transparent 30%,
+    rgba(90, 0, 0, 0.45) 36%,
+    rgba(185, 8, 8, 0.92) 51%,
+    rgba(230, 20, 20, 0.82) 58%,
+    rgba(120, 0, 0, 0.35) 68%,
+    transparent 80%
+  );
+  /* 21개 가시: 5개 장검(r=63~66%) + 8개 중형 + 8개 소형, 불균등 배치 */
+  clip-path: polygon(
+    37.8% 18.2%,  39.1%   9.4%,
+    43.7% 17.6%,  41.9%  -15.5%,
+    48.6% 17.0%,  51.4%   9.0%,
+    54.7% 16.3%,  62.1%   1.5%,
+    64.4% 19.2%,  78.2%  11.2%,
+    73.6% 25.6%,  83.9%  23.5%,
+    79.4% 33.0%, 108.4%  26.4%,
+    83.0% 42.1%, 101.8%  45.5%,
+    83.9% 52.7%,  90.7%  60.2%,
+    81.5% 62.8%,  94.2%  75.5%,
+    75.8% 73.7%,  87.3% 103.2%,
+    64.4% 80.8%,  61.1%  91.5%,
+    54.1% 83.8%,  49.2%  99.0%,
+    44.4% 83.5%,  37.0%  89.9%,
+    34.0% 80.0%,  10.6% 100.4%,
+    24.3% 72.3%,   5.8%  75.5%,
+    18.2% 62.2%,   8.9%  58.7%,
+    16.1% 52.1%,   2.2%  45.8%,
+    17.2% 41.2%,  12.9%  32.7%,
+    21.6% 31.2%,   3.2%   7.9%,
+    29.3% 23.0%,  27.3%   5.4%
+  );
+  animation: bsk-spikes-anim 2.2s ease-in-out infinite;
+}
+
+/* ─── 내부 혈핵 발광 ─── */
+.bsk-inner-glow {
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 40% 38%,
+    rgba(255, 110, 110, 1) 0%,
+    rgba(230, 25, 25, 0.85) 30%,
+    rgba(140, 0, 0, 0.45) 65%,
+    transparent 100%
+  );
+  animation: bsk-inner-glow-anim 2.2s ease-in-out infinite;
+}
+
+/* ─── 더블 심장박동 (BUM - 휴 - BUM↑↑ - 이완) ─── */
+@keyframes bsk-heartbeat {
+  0%   { transform: scale(1);    filter: saturate(1); }
+  7%   { transform: scale(1.10); filter: saturate(1.15) brightness(1.1); }
+  14%  { transform: scale(1.03); filter: saturate(1.05); }
+  24%  { transform: scale(1.18); filter: saturate(1.22) brightness(1.15); }
+  40%  { transform: scale(0.97); filter: saturate(0.95); }
+  100% { transform: scale(1);    filter: saturate(1); }
+}
+
+@keyframes bsk-spikes-anim {
+  0%   { opacity: 0.40; transform: scale(1)    rotate(0deg); }
+  7%   { opacity: 0.80; transform: scale(1.10) rotate(1.2deg); }
+  14%  { opacity: 0.55; transform: scale(1.03) rotate(0.5deg); }
+  24%  { opacity: 1;    transform: scale(1.19) rotate(-1.8deg); }
+  40%  { opacity: 0.35; transform: scale(0.97) rotate(0deg); }
+  100% { opacity: 0.40; transform: scale(1)    rotate(0deg); }
+}
+
+@keyframes bsk-inner-glow-anim {
+  0%   { opacity: 0.60; transform: scale(0.85); }
+  7%   { opacity: 0.85; transform: scale(1.05); }
+  14%  { opacity: 0.65; transform: scale(0.90); }
+  24%  { opacity: 1;    transform: scale(1.20); }
+  40%  { opacity: 0.40; transform: scale(0.80); }
+  100% { opacity: 0.60; transform: scale(0.85); }
+}

@@ -20,6 +20,7 @@ import { InfernoPreview } from "../../skins/common/inferno/Preview";
 import { QuantumPreview } from "../../skins/common/quantum/Preview";
 
 import { ElectricCorePreview } from "../../skins/rare/electric_core/Preview";
+import { BerserkerPreview } from "../../skins/rare/berserker/Preview";
 
 import {
   cancelPendingGoogleUpgradeSwitch,
@@ -1664,6 +1665,7 @@ export function LobbyScreen({
       | "arc_reactor"
       | "wizard"
       | "electric_core"
+      | "berserker"
       | "quantum"
       | "atomic"
       | "chronos"
@@ -1883,6 +1885,25 @@ export function LobbyScreen({
       requiredPlays: null,
 
       tokenPrice: 1400,
+
+      tier: "rare",
+    },
+
+    {
+      id: "berserker",
+
+      name: lang === "en" ? "Berserker" : "버서커",
+
+      desc:
+        lang === "en"
+          ? "Steel heart — dark iron core pulses with crimson blood energy. Jagged spikes erupt on every heartbeat."
+          : "강철 심장 — 검붉은 철핵이 혈기로 맥동하며, 심장박동마다 불규칙한 가시가 폭발합니다.",
+
+      requiredWins: 0,
+
+      requiredPlays: null,
+
+      tokenPrice: null,
 
       tier: "rare",
     },
@@ -2111,6 +2132,7 @@ export function LobbyScreen({
       {skinId === "inferno" && <InfernoPreview />}
       {skinId === "arc_reactor" && <ArcReactorPreview />}
       {skinId === "electric_core" && <ElectricCorePreview />}
+      {skinId === "berserker" && <BerserkerPreview />}
       {skinId === "quantum" && <QuantumPreview />}
       {skinId === "wizard" && <WizardPreview />}
       {skinId === "atomic" && <AtomicPreview ready={atomicPreviewReady} />}

@@ -2143,6 +2143,11 @@
   overflow: visible;
 }
 
+.skin-preview.skin-preview-berserker {
+  overflow: visible;
+  border-color: rgba(140, 0, 0, 0.8);
+}
+
 .skin-preview.skin-preview-arc_reactor {
   overflow: visible;
 }
