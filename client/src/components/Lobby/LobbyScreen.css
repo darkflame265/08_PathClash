@@ -4098,6 +4098,16 @@
     0 0 28px rgba(126, 34, 206, 0.72);
 }
 
+.ability-skill-icon-glyph.is-berserker-rage {
+  color: #fee2e2;
+  font-weight: 900;
+  text-shadow:
+    0 0 4px rgba(220, 38, 38, 1),
+    0 0 8px rgba(248, 113, 113, 1),
+    0 0 16px rgba(185, 28, 28, 0.95),
+    0 0 28px rgba(127, 29, 29, 0.76);
+}
+
 .ability-skill-icon-glyph.is-chronos-time-rewind {
   color: #e0f2fe;
   font-weight: 900;
@@ -4265,6 +4275,23 @@
     0 0 8px rgba(168, 85, 247, 0.65),
     inset 0 0 2px rgba(255, 255, 255, 0.25),
     inset 0 0 5px rgba(88, 28, 135, 0.78);
+}
+
+.ability-skill-preview-berserker-rage {
+  border: 2px solid #ef4444;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(254, 226, 226, 0.95) 0%,
+    rgba(239, 68, 68, 0.84) 30%,
+    rgba(185, 28, 28, 0.78) 60%,
+    rgba(69, 10, 10, 0.95) 100%
+  );
+  box-shadow:
+    0 0 2px rgba(248, 113, 113, 0.95),
+    0 0 5px rgba(239, 68, 68, 0.85),
+    0 0 8px rgba(185, 28, 28, 0.65),
+    inset 0 0 2px rgba(255, 255, 255, 0.25),
+    inset 0 0 5px rgba(127, 29, 29, 0.78);
 }
 
 .ai-tutorial-prompt-backdrop {

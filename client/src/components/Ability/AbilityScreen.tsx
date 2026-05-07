@@ -342,6 +342,18 @@ function renderSkillIcon(skillId: AbilitySkillId) {
       </span>
     );
   }
+  if (skillId === "berserker_rage") {
+    return (
+      <span
+        className="ability-skill-icon-custom ability-skill-icon-axe"
+        aria-hidden="true"
+      >
+        <span className="ability-skill-icon-axe-handle" />
+        <span className="ability-skill-icon-axe-blade" />
+        <span className="ability-skill-icon-axe-shine" />
+      </span>
+    );
+  }
   const icon = skillId === "electric_blitz" ? "⚡︎" : skill.icon;
   const skillIconClass = `is-${skillId.replaceAll("_", "-")}`;
   return (
