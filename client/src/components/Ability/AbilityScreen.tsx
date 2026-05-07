@@ -4433,7 +4433,8 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
                 skillId === "nova_blast" ||
                 skillId === "wizard_magic_mine" ||
                 skillId === "electric_blitz" ||
-                skillId === "cosmic_bigbang") &&
+                skillId === "cosmic_bigbang" ||
+                skillId === "berserker_rage") &&
                 getMyRole() !== "attacker");
             const atomicUnavailable =
               skillId === "atomic_fission" &&

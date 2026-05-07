@@ -224,6 +224,8 @@ export function resolveAbilityRound(params: {
   let blueSunChariotHit = false;
   let redSunChariotOrder: number | null = null;
   let blueSunChariotOrder: number | null = null;
+  let redBerserkerRage = false;
+  let blueBerserkerRage = false;
   let attackerQuantumOverlapPending = false;
   let redCloneStart: Position | null = null;
   let blueCloneStart: Position | null = null;
@@ -409,8 +411,9 @@ export function resolveAbilityRound(params: {
 
       if (isProtectedByInv(sourceColor)) return;
 
+      const atFieldReflectDmg = (sourceColor === 'red' ? redBerserkerRage : blueBerserkerRage) ? 2 : 1;
       if (sourceColor === 'red') {
-        redHp = Math.max(0, redHp - 1);
+        redHp = Math.max(0, redHp - atFieldReflectDmg);
         collisions.push({
           step,
           position: { ...position },
@@ -418,7 +421,7 @@ export function resolveAbilityRound(params: {
           newHp: redHp,
         });
       } else {
-        blueHp = Math.max(0, blueHp - 1);
+        blueHp = Math.max(0, blueHp - atFieldReflectDmg);
         collisions.push({
           step,
           position: { ...position },
@@ -429,8 +432,9 @@ export function resolveAbilityRound(params: {
       return;
     }
 
+    const collisionDmg = (sourceColor === 'red' ? redBerserkerRage : blueBerserkerRage) ? 2 : 1;
     if (targetColor === 'red') {
-      redHp = Math.max(0, redHp - 1);
+      redHp = Math.max(0, redHp - collisionDmg);
       collisions.push({
         step,
         position: { ...position },
@@ -438,7 +442,7 @@ export function resolveAbilityRound(params: {
         newHp: redHp,
       });
     } else {
-      blueHp = Math.max(0, blueHp - 1);
+      blueHp = Math.max(0, blueHp - collisionDmg);
       collisions.push({
         step,
         position: { ...position },
@@ -783,6 +787,23 @@ export function resolveAbilityRound(params: {
         color,
         skillId: reservation.skillId,
         affectedPositions: getSquarePositions(currentPos),
+      });
+      return;
+    }
+
+    if (reservation.skillId === 'berserker_rage') {
+      if (color === 'red') {
+        redMana = spendMana(casterMana, reservation.skillId);
+        redBerserkerRage = true;
+      } else {
+        blueMana = spendMana(casterMana, reservation.skillId);
+        blueBerserkerRage = true;
+      }
+      skillEvents.push({
+        step: reservation.step,
+        order: reservation.order,
+        color,
+        skillId: reservation.skillId,
       });
       return;
     }
