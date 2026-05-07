@@ -7,6 +7,7 @@ import { WizardPreview } from "../../../skins/legendary/wizard/Preview";
 import { CosmicPreview } from "../../../skins/rare/cosmic/Preview";
 import { ArcReactorPreview } from "../../../skins/rare/arc_reactor/Preview";
 import { ElectricCorePreview } from "../../../skins/rare/electric_core/Preview";
+import { BerserkerPreview } from "../../../skins/rare/berserker/Preview";
 import { PlasmaPreview } from "../../../skins/common/plasma/Preview";
 import { GoldCorePreview } from "../../../skins/common/gold_core/Preview";
 import { NeonPulsePreview } from "../../../skins/common/neon_pulse/Preview";
@@ -66,6 +67,8 @@ const SKIN_META: Partial<Record<PieceSkin, { name: string; tier: string }>> = {
   sun: { name: "썬", tier: "legendary" },
 };
 
+SKIN_META.berserker = { name: "버서커", tier: "rare" };
+
 function renderSkinPreview(skinId: PieceSkin) {
   switch (skinId) {
     case "plasma":
@@ -82,6 +85,8 @@ function renderSkinPreview(skinId: PieceSkin) {
       return <ArcReactorPreview />;
     case "electric_core":
       return <ElectricCorePreview />;
+    case "berserker":
+      return <BerserkerPreview />;
     case "quantum":
       return <QuantumPreview />;
     case "wizard":

@@ -112,26 +112,30 @@ function initSocketServer(io) {
             abilityFallbackTimers.delete(socketId);
         }
     };
+    const getFakeAiPieceSkinPool = (arena) => {
+        const normalizedArena = Math.max(1, Math.min(10, Math.trunc(arena)));
+        const skins = ['classic'];
+        if (normalizedArena >= 1)
+            skins.push('plasma', 'cosmic');
+        if (normalizedArena >= 2)
+            skins.push('neon_pulse', 'quantum');
+        if (normalizedArena >= 3)
+            skins.push('inferno', 'berserker');
+        if (normalizedArena >= 4)
+            skins.push('electric_core');
+        if (normalizedArena >= 5)
+            skins.push('wizard');
+        if (normalizedArena >= 6)
+            skins.push('gold_core', 'sun');
+        if (normalizedArena >= 8)
+            skins.push('arc_reactor', 'atomic');
+        if (normalizedArena >= 10)
+            skins.push('chronos');
+        return skins;
+    };
     const createDisguisedRandomProfile = (profile) => {
-        const commonSkins = [
-            'classic',
-            'plasma',
-            'gold_core',
-            'neon_pulse',
-            'inferno',
-            'quantum',
-            'cosmic',
-            'arc_reactor',
-            'electric_core',
-        ];
-        const legendarySkins = [
-            'atomic',
-            'chronos',
-            'wizard',
-            'sun',
-        ];
-        const useLegendarySkin = Math.random() < 0.1;
-        const skinPool = useLegendarySkin ? legendarySkins : commonSkins;
+        const currentRating = createNearbyFakeRating(profile.currentRating);
+        const skinPool = getFakeAiPieceSkinPool((0, arenaConfig_1.getArenaFromRating)(currentRating));
         const pieceSkin = skinPool[Math.floor(Math.random() * skinPool.length)] ?? 'classic';
         const nickname = fakeRandomNicknames_1.FAKE_RANDOM_NICKNAMES[Math.floor(Math.random() * fakeRandomNicknames_1.FAKE_RANDOM_NICKNAMES.length)];
         const fakeId = `${randomHex(8)}-${randomHex(4)}-${randomHex(4)}-${randomHex(4)}-${randomHex(12)}`;
@@ -141,7 +145,7 @@ function initSocketServer(io) {
             displayId: fakeId,
             userId: null,
             stats,
-            currentRating: createNearbyFakeRating(profile.currentRating),
+            currentRating,
             pieceSkin,
             boardSkin: 'classic',
         };

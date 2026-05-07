@@ -11,6 +11,7 @@ const SKILL_BY_SKIN = {
     arc_reactor: 'arc_reactor_field',
     atomic: 'atomic_fission',
     aurora: 'aurora_heal',
+    berserker: 'berserker_rage',
     chronos: 'chronos_time_rewind',
     cosmic: 'cosmic_bigbang',
     electric_core: 'electric_blitz',
@@ -28,7 +29,7 @@ const SKILL_BY_SKIN = {
 const DEFAULT_ARENA_REWARD_SKINS = {
     1: ['cosmic', 'plasma'],
     2: ['neon_pulse', 'quantum'],
-    3: ['inferno'],
+    3: ['inferno', 'berserker'],
     4: ['electric_core'],
     5: ['wizard'],
     6: ['sun', 'gold_core'],

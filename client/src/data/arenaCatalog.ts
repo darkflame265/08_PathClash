@@ -121,6 +121,7 @@ export const SKIN_ARENA_REQUIREMENTS: Partial<Record<PieceSkin, number>> = {
 
   // Arena 3: 화산지대
   inferno: 3,
+  berserker: 3,
 
   // Arena 4: 번개지대
   electric_core: 4,
@@ -154,7 +155,7 @@ export function isSkinArenaUnlocked(
 export const ARENA_REWARD_SKINS: Partial<Record<number, PieceSkin[]>> = {
   1: ["cosmic", "plasma"],
   2: ["neon_pulse", "quantum"],
-  3: ["inferno"],
+  3: ["inferno", "berserker"],
   4: ["electric_core"],
   5: ["wizard"],
   6: ["sun", "gold_core"],

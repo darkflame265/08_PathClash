@@ -206,6 +206,7 @@ begin
     when 'cosmic' then 1400
     when 'arc_reactor' then 1400
     when 'electric_core' then 1400
+    when 'berserker' then 1400
     when 'atomic' then 3600
     when 'chronos' then 3600
     when 'wizard' then 3600
@@ -224,6 +225,7 @@ begin
     when 'cosmic'        then 2
     when 'neon_pulse'    then 3
     when 'arc_reactor'   then 3
+    when 'berserker'     then 3
     when 'electric_core' then 4
     when 'gold_core'     then 4
     when 'atomic'        then 5
@@ -616,6 +618,5 @@ create table if not exists skill_rotations (
   rare_skill      text not null,
   legendary_skill text not null
 );
-
 
 

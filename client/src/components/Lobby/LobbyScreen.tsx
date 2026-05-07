@@ -1899,11 +1899,11 @@ export function LobbyScreen({
           ? "Steel heart — dark iron core pulses with crimson blood energy. Jagged spikes erupt on every heartbeat."
           : "강철 심장 — 검붉은 철핵이 혈기로 맥동하며, 심장박동마다 불규칙한 가시가 폭발합니다.",
 
-      requiredWins: 0,
+      requiredWins: null,
 
       requiredPlays: null,
 
-      tokenPrice: null,
+      tokenPrice: 1400,
 
       tier: "rare",
     },

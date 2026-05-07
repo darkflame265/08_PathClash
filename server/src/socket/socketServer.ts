@@ -184,6 +184,22 @@ export function initSocketServer(io: Server): void {
     }
   };
 
+  const getFakeAiPieceSkinPool = (arena: number): PieceSkin[] => {
+    const normalizedArena = Math.max(1, Math.min(10, Math.trunc(arena)));
+    const skins: PieceSkin[] = ['classic'];
+
+    if (normalizedArena >= 1) skins.push('plasma', 'cosmic');
+    if (normalizedArena >= 2) skins.push('neon_pulse', 'quantum');
+    if (normalizedArena >= 3) skins.push('inferno', 'berserker');
+    if (normalizedArena >= 4) skins.push('electric_core');
+    if (normalizedArena >= 5) skins.push('wizard');
+    if (normalizedArena >= 6) skins.push('gold_core', 'sun');
+    if (normalizedArena >= 8) skins.push('arc_reactor', 'atomic');
+    if (normalizedArena >= 10) skins.push('chronos');
+
+    return skins;
+  };
+
   const createDisguisedRandomProfile = (
     profile: PersistentPlayerProfile,
   ): {
@@ -195,25 +211,8 @@ export function initSocketServer(io: Server): void {
     pieceSkin: PieceSkin;
     boardSkin: BoardSkin;
   } => {
-    const commonSkins: PieceSkin[] = [
-      'classic',
-      'plasma',
-      'gold_core',
-      'neon_pulse',
-      'inferno',
-      'quantum',
-      'cosmic',
-      'arc_reactor',
-      'electric_core',
-    ];
-    const legendarySkins: PieceSkin[] = [
-      'atomic',
-      'chronos',
-      'wizard',
-      'sun',
-    ];
-    const useLegendarySkin = Math.random() < 0.1;
-    const skinPool = useLegendarySkin ? legendarySkins : commonSkins;
+    const currentRating = createNearbyFakeRating(profile.currentRating);
+    const skinPool = getFakeAiPieceSkinPool(getArenaFromRating(currentRating));
     const pieceSkin =
       skinPool[Math.floor(Math.random() * skinPool.length)] ?? 'classic';
     const nickname =
@@ -229,7 +228,7 @@ export function initSocketServer(io: Server): void {
       displayId: fakeId,
       userId: null,
       stats,
-      currentRating: createNearbyFakeRating(profile.currentRating),
+      currentRating,
       pieceSkin,
       boardSkin: 'classic',
     };
