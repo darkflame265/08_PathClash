@@ -3829,16 +3829,6 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
           <div className="skin-option-list">
             {TRAINING_ABILITY_SKILLS.map((skill, index) => {
               const equipped = trainingLoadout.includes(skill.id);
-              const skillSummary =
-                lang === "en"
-                  ? {
-                      tags: skill.loadoutTags.en,
-                      desc: skill.loadoutDescription.en,
-                    }
-                  : {
-                      tags: skill.loadoutTags.kr,
-                      desc: skill.loadoutDescription.kr,
-                    };
               return (
                 <button
                   key={skill.id}
@@ -3876,9 +3866,9 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
                       {lang === "en" ? skill.name.en : skill.name.kr}
                     </strong>
                     <span>
-                      {skillSummary.tags}
-                      <br />
-                      {skillSummary.desc}
+                      {lang === "en"
+                        ? skill.loadoutDescription.en
+                        : skill.loadoutDescription.kr}
                     </span>
                   </span>
                   <span className="skin-lock-meta ability-skill-meta">

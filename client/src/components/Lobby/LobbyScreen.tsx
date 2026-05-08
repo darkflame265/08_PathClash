@@ -5127,19 +5127,6 @@ export function LobbyScreen({
 
                 const unlocked = hasAbilitySkinUnlocked(skill.skinId);
 
-                const skillSummary =
-                  lang === "en"
-                    ? {
-                        tags: skill.loadoutTags.en,
-
-                        desc: skill.loadoutDescription.en,
-                      }
-                    : {
-                        tags: skill.loadoutTags.kr,
-
-                        desc: skill.loadoutDescription.kr,
-                      };
-
                 const requiredSkinChoice = skinChoices.find(
                   (choice) => choice.id === skill.skinId,
                 );
@@ -5181,11 +5168,9 @@ export function LobbyScreen({
                       </strong>
 
                       <span>
-                        {skillSummary.tags}
-
-                        <br />
-
-                        {skillSummary.desc}
+                        {lang === "en"
+                          ? skill.loadoutDescription.en
+                          : skill.loadoutDescription.kr}
 
                         <br />
 
