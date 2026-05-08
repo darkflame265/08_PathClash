@@ -32,6 +32,7 @@ import {
   type AbilityBattleState,
   type AbilityResolutionPayload,
   type AbilityLavaTile,
+  type AbilityRootWallTile,
   type AbilityTrapTile,
   type AbilityPlayerState,
   type AbilityRoundStartPayload,
@@ -814,6 +815,7 @@ export class AbilityRoom {
   private obstacles: Position[] = [];
   private lavaTiles: AbilityLavaTile[] = [];
   private trapTiles: AbilityTrapTile[] = [];
+  private rootWallTiles: AbilityRootWallTile[] = [];
   // 4코 스킬 연속 사용 방지: 마지막으로 4코 스킬을 사용한 턴 번호 추적
   private botLastFourCostSkillTurn: Map<PlayerColor, number> = new Map();
   private readySockets = new Set<string>();
@@ -1265,6 +1267,7 @@ export class AbilityRoom {
       trapTiles: forColor
         ? this.trapTiles.filter((trap) => trap.owner === forColor)
         : [],
+      rootWallTiles: this.rootWallTiles,
       players: {
         red: this.toClientPlayer(red),
         blue: this.toClientPlayer(blue),
@@ -1360,6 +1363,7 @@ export class AbilityRoom {
       obstacles: this.obstacles,
       lavaTiles: this.lavaTiles,
       trapTiles: this.trapTiles,
+      rootWallTiles: this.rootWallTiles,
     });
 
     this.applyTimeRewindIfNeeded('red', red, resolution);
@@ -1390,6 +1394,7 @@ export class AbilityRoom {
     blue.reboundLocked = resolution.blueState.reboundLocked;
     this.lavaTiles = resolution.lavaTiles;
     this.trapTiles = resolution.trapTiles;
+    this.rootWallTiles = resolution.rootWallTiles;
 
     this.touchActivity();
     for (const player of this.players.values()) {
@@ -1613,7 +1618,7 @@ export class AbilityRoom {
       }
 
       for (const skill of uniqueSkills) {
-        if (skill.skillId === 'inferno_field') {
+        if (skill.skillId === 'inferno_field' || skill.skillId === 'root_wall') {
           if (!skill.target) return null;
           if (
             skill.target.row < 0 ||
@@ -1621,9 +1626,9 @@ export class AbilityRoom {
             skill.target.col < 0 ||
             skill.target.col > 4
           ) return null;
-          const infernoOrigin =
+          const origin =
             skill.step === 0 ? player.position : path[skill.step - 1];
-          if (infernoOrigin && posEqual(infernoOrigin, skill.target)) return null;
+          if (origin && posEqual(origin, skill.target)) return null;
         }
       }
 
@@ -1641,7 +1646,7 @@ export class AbilityRoom {
     let cursor = 0;
     let segmentStart = player.position;
     for (const skill of uniqueSkills) {
-      if (skill.skillId === 'inferno_field') {
+      if (skill.skillId === 'inferno_field' || skill.skillId === 'root_wall') {
         if (!skill.target) return null;
         if (
           skill.target.row < 0 ||
@@ -1649,9 +1654,9 @@ export class AbilityRoom {
           skill.target.col < 0 ||
           skill.target.col > 4
         ) return null;
-        const infernoOrigin =
+        const origin =
           skill.step === 0 ? player.position : path[skill.step - 1];
-        if (infernoOrigin && posEqual(infernoOrigin, skill.target)) return null;
+        if (origin && posEqual(origin, skill.target)) return null;
       }
     }
 
@@ -1793,9 +1798,10 @@ export class AbilityRoom {
     opponent: AbilityPlayerState,
     pathPoints: number,
   ): BotActionCandidate {
-    // 용암 타일을 장애물로 추가해 경로 계산 시 용암을 피하도록 한다.
+    // 용암 타일과 뿌리장벽을 장애물로 추가해 경로 계산 시 피하도록 한다.
     const lavaObstacles = this.lavaTiles.map((t) => t.position);
-    const effectiveObstacles = [...this.obstacles, ...lavaObstacles];
+    const rootWallObstacles = this.rootWallTiles.map((t) => t.position);
+    const effectiveObstacles = [...this.obstacles, ...lavaObstacles, ...rootWallObstacles];
 
     // ── 무력화 적 섬멸 패턴 최우선 처리 ──────────────────────────────────
     // 상대가 오버드라이브 부작용으로 이동 불가 상태일 때 강제 진입.
@@ -2233,6 +2239,7 @@ export class AbilityRoom {
     const effectiveObstacles = [
       ...this.obstacles,
       ...this.lavaTiles.map((t) => t.position),
+      ...this.rootWallTiles.map((t) => t.position),
     ];
 
     const validCandidates: BotActionCandidate[] = [];
@@ -3347,6 +3354,7 @@ export class AbilityRoom {
     this.obstacles = [];
     this.lavaTiles = [];
     this.trapTiles = [];
+    this.rootWallTiles = [];
     this.resetPlayers();
     this.updateRoles();
     this.readySockets.clear();

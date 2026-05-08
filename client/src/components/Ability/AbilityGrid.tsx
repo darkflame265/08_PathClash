@@ -63,6 +63,7 @@ interface Props {
   teleportReservation: AbilitySkillReservation | null;
   teleportMarker: Position | null;
   infernoMarker: Position | null;
+  rootWallMarker: Position | null;
   movingTeleportMarkers: { red: Position | null; blue: Position | null };
   movingTeleportSteps: { red: number | null; blue: number | null };
   movingBlitzColors: { red: boolean; blue: boolean };
@@ -95,10 +96,12 @@ interface Props {
   teleportTargetsVisible: boolean;
   blitzTargetsVisible: boolean;
   infernoTargetsVisible: boolean;
+  rootWallTargetsVisible: boolean;
   keyboardTarget: Position | null;
   onTeleportTargetSelect: (target: Position) => void;
   onBlitzTargetSelect: (target: Position) => void;
   onInfernoTargetSelect: (target: Position) => void;
+  onRootWallTargetSelect: (target: Position) => void;
   onTeleportCancel: () => void;
   trapTiles: AbilityTrapTile[];
   magicMineCastingColors: { red: boolean; blue: boolean };
@@ -165,6 +168,7 @@ export function AbilityGrid({
   teleportReservation,
   teleportMarker,
   infernoMarker,
+  rootWallMarker,
   movingTeleportMarkers,
   movingTeleportSteps,
   movingBlitzColors,
@@ -184,10 +188,12 @@ export function AbilityGrid({
   teleportTargetsVisible,
   blitzTargetsVisible,
   infernoTargetsVisible,
+  rootWallTargetsVisible,
   keyboardTarget,
   onTeleportTargetSelect,
   onBlitzTargetSelect,
   onInfernoTargetSelect,
+  onRootWallTargetSelect,
   onTeleportCancel,
   trapTiles,
   magicMineCastingColors,
@@ -445,13 +451,15 @@ export function AbilityGrid({
       if (
         teleportTargetsVisible ||
         blitzTargetsVisible ||
-        infernoTargetsVisible
+        infernoTargetsVisible ||
+        rootWallTargetsVisible
       ) {
         const currentPos = state.players[currentColor].position;
         if (!posEqual(cell, currentPos)) return;
         if (teleportTargetsVisible) onTeleportCancel();
         if (blitzTargetsVisible) return;
         if (infernoTargetsVisible) return;
+        if (rootWallTargetsVisible) return;
         dragState.current = {
           active: true,
           fromStart: true,
@@ -479,6 +487,7 @@ export function AbilityGrid({
       currentColor,
       getPlanningTailPosition,
       infernoTargetsVisible,
+      rootWallTargetsVisible,
       myPath,
       myStart,
       onTeleportCancel,
@@ -611,6 +620,14 @@ export function AbilityGrid({
     : [];
 
   const infernoTargets = infernoTargetsVisible
+    ? cells.filter(
+        (position) =>
+          !posEqual(position, state.players.red.position) &&
+          !posEqual(position, state.players.blue.position),
+      )
+    : [];
+
+  const rootWallTargets = rootWallTargetsVisible
     ? cells.filter(
         (position) =>
           !posEqual(position, state.players.red.position) &&
@@ -764,6 +781,26 @@ export function AbilityGrid({
               src="/ui/ability/lava_domain.svg"
               alt=""
               className="ability-lava-tile__img"
+              draggable={false}
+            />
+          </div>
+        ))}
+
+        {state.rootWallTiles.map((tile) => (
+          <div
+            key={`root-wall-${tile.position.row}-${tile.position.col}`}
+            className="ability-root-wall-tile"
+            style={{
+              left: tile.position.col * responsiveCellSize,
+              top: tile.position.row * responsiveCellSize,
+              width: responsiveCellSize,
+              height: responsiveCellSize,
+            }}
+          >
+            <img
+              src="/ui/ability/root_wall.svg"
+              alt=""
+              className="ability-root-wall-tile__img"
               draggable={false}
             />
           </div>
@@ -1013,10 +1050,44 @@ export function AbilityGrid({
           />
         ))}
 
+        {isPlanning && rootWallMarker ? (
+          <div
+            className="ability-root-wall-marker"
+            style={{
+              left: rootWallMarker.col * responsiveCellSize + responsiveCellSize / 2,
+              top: rootWallMarker.row * responsiveCellSize + responsiveCellSize / 2,
+              width: Math.max(32, responsiveCellSize * 0.5),
+              height: Math.max(32, responsiveCellSize * 0.5),
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            🌿
+          </div>
+        ) : null}
+
+        {rootWallTargets.map((target) => (
+          <button
+            key={`root-wall-${target.row}-${target.col}`}
+            type="button"
+            className="ability-root-wall-target"
+            style={{
+              left: target.col * responsiveCellSize,
+              top: target.row * responsiveCellSize,
+              width: responsiveCellSize,
+              height: responsiveCellSize,
+            }}
+            onClick={() => {
+              playTargetSelectSfx();
+              onRootWallTargetSelect(target);
+            }}
+          />
+        ))}
+
         {keyboardTarget &&
           (teleportTargetsVisible ||
             blitzTargetsVisible ||
-            infernoTargetsVisible) && (
+            infernoTargetsVisible ||
+            rootWallTargetsVisible) && (
             <div
               className="ability-keyboard-target-outline"
               style={{

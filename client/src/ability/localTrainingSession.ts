@@ -13,6 +13,7 @@ import {
   ABILITY_SKILL_SERVER_RULES,
   type AbilityBattleState,
   type AbilityLavaTile,
+  type AbilityRootWallTile,
   type AbilityPlayerState,
   type AbilityResolutionPayload,
   type AbilityRoundStartPayload,
@@ -80,6 +81,7 @@ let code = "local_training";
 let obstacles: Position[] = [];
 let lavaTiles: AbilityLavaTile[] = [];
 let trapTiles: AbilityTrapTile[] = [];
+let rootWallTiles: AbilityRootWallTile[] = [];
 let roundEndsAt = 0;
 let planningTimeout: number | null = null;
 let nextRoundTimeout: number | null = null;
@@ -257,6 +259,7 @@ function toClientState(): AbilityBattleState {
     obstacles,
     lavaTiles,
     trapTiles: trapTiles.filter((tile) => tile.owner === "red"),
+    rootWallTiles,
     players: {
       red: {
         id: redPlayer.id,
@@ -502,11 +505,11 @@ function validateTrainingPlan(
 
   for (const skill of uniqueSkills) {
     if (skill.target && !inBoard(skill.target)) return null;
-    if (skill.skillId === "inferno_field") {
+    if (skill.skillId === "inferno_field" || skill.skillId === "root_wall") {
       if (!skill.target) return null;
-      const infernoOrigin =
+      const origin =
         skill.step === 0 ? player.position : candidatePath[skill.step - 1];
-      if (infernoOrigin && posEqual(infernoOrigin, skill.target)) return null;
+      if (origin && posEqual(origin, skill.target)) return null;
     }
   }
 
@@ -695,6 +698,7 @@ function revealPlans(): void {
     obstacles,
     lavaTiles,
     trapTiles,
+    rootWallTiles,
   });
 
   applyTimeRewindIfNeeded("red", redPlayer, resolution);
@@ -727,6 +731,7 @@ function revealPlans(): void {
 
   lavaTiles = resolution.lavaTiles;
   trapTiles = resolution.trapTiles;
+  rootWallTiles = resolution.rootWallTiles;
 
   emit("ability_resolution", {
     ...resolution.payload,
@@ -774,6 +779,7 @@ function startGame(): void {
   obstacles = [];
   lavaTiles = [];
   trapTiles = [];
+  rootWallTiles = [];
   const initial = getInitialPositions();
   redPlayer.hp = ABILITY_STARTING_HP;
   redPlayer.position = { ...initial.red };
@@ -934,6 +940,7 @@ export function startLocalAbilityTraining(options: StartOptions): void {
   obstacles = [];
   lavaTiles = [];
   trapTiles = [];
+  rootWallTiles = [];
   trainingSkillSelectionPending = true;
 
   redPlayer = {
@@ -1029,4 +1036,5 @@ export function stopLocalAbilityTraining(): void {
   obstacles = [];
   lavaTiles = [];
   trapTiles = [];
+  rootWallTiles = [];
 }

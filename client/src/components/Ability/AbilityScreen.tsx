@@ -480,6 +480,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
   const [pendingTeleport, setPendingTeleport] = useState(false);
   const [pendingBlitz, setPendingBlitz] = useState(false);
   const [pendingInferno, setPendingInferno] = useState(false);
+  const [pendingRootWall, setPendingRootWall] = useState(false);
   const [keyboardControls, setKeyboardControls] = useState(
     loadKeyboardControlsSettings,
   );
@@ -928,6 +929,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     setPendingTeleport(false);
     setPendingBlitz(false);
     setPendingInferno(false);
+    setPendingRootWall(false);
     setMySubmitted(false);
     setOpponentSubmitted(false);
     previousGuardPathRef.current = [];
@@ -1051,6 +1053,10 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     skillReservations.find(
       (entry) => entry.skillId === "inferno_field" && entry.target,
     ) ?? null;
+  const rootWallReservation =
+    skillReservations.find(
+      (entry) => entry.skillId === "root_wall" && entry.target,
+    ) ?? null;
   const atomicReservation =
     skillReservations.find((entry) => entry.skillId === "atomic_fission") ??
     null;
@@ -1168,6 +1174,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     setPendingTeleport(false);
     setPendingBlitz(false);
     setPendingInferno(false);
+    setPendingRootWall(false);
 
     if (skillId === "classic_guard") {
       if (overdriveTurn) {
@@ -1554,6 +1561,49 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     setPendingInferno(false);
   };
 
+  const beginRootWallPick = () => {
+    const alreadyReserved = skillReservations.some(
+      (entry) => entry.skillId === "root_wall",
+    );
+    if (alreadyReserved) {
+      removeReservation("root_wall");
+      return;
+    }
+    if (pendingRootWall && selectedSkillId === "root_wall") {
+      setSelectedSkillId(null);
+      setPendingRootWall(false);
+      return;
+    }
+    if (getRemainingMana() < getSkillCost("root_wall")) return;
+    setSelectedSkillId("root_wall");
+    setPendingRootWall(true);
+    setPendingTeleport(false);
+    setPendingBlitz(false);
+    setPendingInferno(false);
+  };
+
+  const handleRootWallTargetSelect = (target: Position) => {
+    if (!state) return;
+    if (
+      posEqual(target, state.players.red.position) ||
+      posEqual(target, state.players.blue.position)
+    ) {
+      return;
+    }
+    const nextReservations: AbilitySkillReservation[] = [
+      ...skillReservations.filter((entry) => entry.skillId !== "root_wall"),
+      {
+        skillId: "root_wall",
+        step: 0,
+        order: reservationOrderRef.current++,
+        target,
+      },
+    ];
+    setSkillReservations(nextReservations);
+    setSelectedSkillId(null);
+    setPendingRootWall(false);
+  };
+
   const beginTeleportPick = () => {
     const alreadyReserved = skillReservations.some(
       (entry) => entry.skillId === "quantum_shift",
@@ -1737,6 +1787,9 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     if (skillId !== "inferno_field") {
       setPendingInferno(false);
     }
+    if (skillId !== "root_wall") {
+      setPendingRootWall(false);
+    }
     if (skillId === "classic_guard") {
       toggleGuardSkill();
       return;
@@ -1789,6 +1842,10 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       beginInfernoPick();
       return;
     }
+    if (skillId === "root_wall") {
+      beginRootWallPick();
+      return;
+    }
     if (skillId === "quantum_shift") {
       beginTeleportPick();
       return;
@@ -1812,7 +1869,9 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       ? "blitz"
       : pendingInferno && selectedSkillId === "inferno_field"
         ? "inferno"
-        : null;
+        : pendingRootWall && selectedSkillId === "root_wall"
+          ? "root_wall"
+          : null;
 
   useEffect(() => {
     const syncControls = () => {
@@ -2039,6 +2098,8 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
             handleTeleportTargetSelect(keyboardTarget);
           } else if (keyboardTargetMode === "blitz") {
             handleBlitzTargetSelect(keyboardTarget);
+          } else if (keyboardTargetMode === "root_wall") {
+            handleRootWallTargetSelect(keyboardTarget);
           } else {
             handleInfernoTargetSelect(keyboardTarget);
           }
@@ -2051,6 +2112,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
           setPendingTeleport(false);
           setPendingBlitz(false);
           setPendingInferno(false);
+          setPendingRootWall(false);
         }
         return;
       }
@@ -3527,6 +3589,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
             ...stateRef.current,
             phase: "moving" as const,
             lavaTiles: payload.lavaTiles,
+            rootWallTiles: payload.rootWallTiles ?? [],
             players: {
               ...stateRef.current.players,
               red: { ...stateRef.current.players.red, hidden: false },
@@ -4367,6 +4430,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
                 : (teleportReservation?.target ?? null)
             }
             infernoMarker={infernoReservation?.target ?? null}
+            rootWallMarker={rootWallReservation?.target ?? null}
             movingTeleportMarkers={movingTeleportMarkers}
             movingTeleportSteps={movingTeleportSteps}
             movingBlitzColors={movingBlitzColors}
@@ -4388,10 +4452,14 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
             infernoTargetsVisible={
               pendingInferno && selectedSkillId === "inferno_field"
             }
+            rootWallTargetsVisible={
+              pendingRootWall && selectedSkillId === "root_wall"
+            }
             keyboardTarget={keyboardTarget}
             onTeleportTargetSelect={handleTeleportTargetSelect}
             onBlitzTargetSelect={handleBlitzTargetSelect}
             onInfernoTargetSelect={handleInfernoTargetSelect}
+            onRootWallTargetSelect={handleRootWallTargetSelect}
             onTeleportCancel={handleTeleportCancel}
             myBlitzReserved={myBlitzReserved}
             shakeKey={boardShakeKey}

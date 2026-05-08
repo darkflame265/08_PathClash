@@ -26,7 +26,8 @@ export type AbilitySkillId =
   | 'cosmic_bigbang'
   | 'wizard_magic_mine'
   | 'chronos_time_rewind'
-  | 'berserker_rage';
+  | 'berserker_rage'
+  | 'root_wall';
 export type AbilitySkillCategory = 'attack' | 'defense' | 'utility' | 'passive';
 export type AbilitySkillRoleRestriction = 'any' | 'attacker' | 'escaper';
 export type AbilitySkillStepRule = 'any' | 'zero_only';
@@ -64,6 +65,7 @@ export const ABILITY_SKILL_COSTS: Record<AbilitySkillId, number> = {
   wizard_magic_mine: 8,
   chronos_time_rewind: 0,
   berserker_rage: 8,
+  root_wall: 7,
 };
 
 // Shared validation metadata for server-side planning rules.
@@ -166,6 +168,11 @@ export const ABILITY_SKILL_SERVER_RULES: Record<
     stepRule: 'zero_only',
     targetRule: 'none',
   },
+  root_wall: {
+    roleRestriction: 'any',
+    stepRule: 'zero_only',
+    targetRule: 'position',
+  },
 };
 
 export interface AbilityTurnSnapshot {
@@ -183,6 +190,12 @@ export interface AbilitySkillReservation {
 
 export interface AbilityLavaTile {
   position: Position;
+  remainingTurns: number;
+}
+
+export interface AbilityRootWallTile {
+  position: Position;
+  owner: PlayerColor;
   remainingTurns: number;
 }
 
@@ -248,6 +261,7 @@ export interface AbilityBattleState {
   obstacles: Position[];
   lavaTiles: AbilityLavaTile[];
   trapTiles: AbilityTrapTile[];
+  rootWallTiles: AbilityRootWallTile[];
   players: {
     red: ClientAbilityPlayerState;
     blue: ClientAbilityPlayerState;
@@ -303,6 +317,7 @@ export interface AbilityResolutionPayload {
   blueStart: Position;
   lavaTiles: AbilityLavaTile[];
   trapTiles: AbilityTrapTile[];
+  rootWallTiles: AbilityRootWallTile[];
   blocks: AbilityBlockEvent[];
   collisions: Array<{
     step: number;

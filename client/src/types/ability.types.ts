@@ -34,7 +34,8 @@ export type AbilitySkillId =
   | "cosmic_bigbang"
   | "wizard_magic_mine"
   | "chronos_time_rewind"
-  | "berserker_rage";
+  | "berserker_rage"
+  | "root_wall";
 export type AbilitySkillCategory = "attack" | "defense" | "utility" | "passive";
 export type AbilitySkillRoleRestriction = "any" | "attacker" | "escaper";
 export type AbilitySkillStepRule = "any" | "zero_only";
@@ -69,6 +70,7 @@ export const ABILITY_SKILL_IDS: AbilitySkillId[] = [
   "wizard_magic_mine",
   "chronos_time_rewind",
   "berserker_rage",
+  "root_wall",
 ];
 
 export function normalizeAbilityLoadout(
@@ -110,6 +112,7 @@ export const ABILITY_SKILL_COSTS: Record<AbilitySkillId, number> = {
   wizard_magic_mine: 8,
   chronos_time_rewind: 0,
   berserker_rage: 8,
+  root_wall: 7,
 };
 
 export const ABILITY_SKILL_SERVER_RULES: Record<
@@ -209,6 +212,11 @@ export const ABILITY_SKILL_SERVER_RULES: Record<
     stepRule: "zero_only",
     targetRule: "none",
   },
+  root_wall: {
+    roleRestriction: "any",
+    stepRule: "zero_only",
+    targetRule: "position",
+  },
 };
 
 export interface AbilitySkillDefinition {
@@ -236,6 +244,12 @@ export interface AbilityTurnSnapshot {
 
 export interface AbilityLavaTile {
   position: Position;
+  remainingTurns: number;
+}
+
+export interface AbilityRootWallTile {
+  position: Position;
+  owner: PlayerColor;
   remainingTurns: number;
 }
 
@@ -287,6 +301,7 @@ export interface AbilityBattleState {
   obstacles: Position[];
   lavaTiles: AbilityLavaTile[];
   trapTiles: AbilityTrapTile[];
+  rootWallTiles: AbilityRootWallTile[];
   players: {
     red: AbilityPlayerState;
     blue: AbilityPlayerState;
@@ -342,6 +357,7 @@ export interface AbilityResolutionPayload {
   blueStart: Position;
   lavaTiles: AbilityLavaTile[];
   trapTiles: AbilityTrapTile[];
+  rootWallTiles: AbilityRootWallTile[];
   blocks: AbilityBlockEvent[];
   collisions: Array<{
     step: number;
@@ -570,5 +586,17 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     category: "attack",
     skinId: "cosmic",
     icon: "☄",
+  },
+  root_wall: {
+    id: "root_wall",
+    name: { en: "Root Wall", kr: "뿌리장벽" },
+    loadoutDescription: {
+      en: "Place a root barrier at a chosen tile for 3 turns. The opponent cannot pass through it.",
+      kr: "선택한 1칸에 3턴 동안 뿌리장벽을 설치합니다. 상대방은 해당 칸을 통과하지 못합니다.",
+    },
+    manaCost: ABILITY_SKILL_COSTS.root_wall,
+    category: "utility",
+    skinId: "moonlight_seed",
+    icon: "🌿",
   },
 };

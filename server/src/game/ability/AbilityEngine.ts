@@ -9,6 +9,7 @@ import type {
   AbilityDamageEvent,
   AbilityHealEvent,
   AbilityLavaTile,
+  AbilityRootWallTile,
   AbilityTrapTile,
   AbilityPlayerState,
   AbilityResolutionPayload,
@@ -150,6 +151,20 @@ function updateLavaTile(
   });
 }
 
+function updateRootWallTile(
+  rootWallTiles: AbilityRootWallTile[],
+  position: Position,
+  owner: PlayerColor,
+  remainingTurns: number,
+) {
+  const existing = rootWallTiles.find((tile) => samePosition(tile.position, position));
+  if (existing) {
+    existing.remainingTurns = Math.max(existing.remainingTurns, remainingTurns);
+    return;
+  }
+  rootWallTiles.push({ position: { ...position }, owner, remainingTurns });
+}
+
 function isAffectedByLava(
   prev: Position,
   next: Position,
@@ -166,12 +181,14 @@ export function resolveAbilityRound(params: {
   obstacles: Position[];
   lavaTiles: AbilityLavaTile[];
   trapTiles: AbilityTrapTile[];
+  rootWallTiles: AbilityRootWallTile[];
 }): {
   payload: AbilityResolutionPayload;
   redState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'pendingVoidCloak' | 'overdriveActive' | 'reboundLocked'>;
   blueState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'pendingVoidCloak' | 'overdriveActive' | 'reboundLocked'>;
   lavaTiles: AbilityLavaTile[];
   trapTiles: AbilityTrapTile[];
+  rootWallTiles: AbilityRootWallTile[];
   winner: PlayerColor | 'draw' | null;
 } {
   const { red, blue, attackerColor, obstacles } = params;
@@ -187,6 +204,11 @@ export function resolveAbilityRound(params: {
     remainingTurns: tile.remainingTurns,
   }));
   const activeTrapTiles: AbilityTrapTile[] = params.trapTiles.map((tile) => ({
+    position: { ...tile.position },
+    owner: tile.owner,
+    remainingTurns: tile.remainingTurns,
+  }));
+  const activeRootWallTiles: AbilityRootWallTile[] = params.rootWallTiles.map((tile) => ({
     position: { ...tile.position },
     owner: tile.owner,
     remainingTurns: tile.remainingTurns,
@@ -748,6 +770,24 @@ export function resolveAbilityRound(params: {
       return;
     }
 
+    if (reservation.skillId === 'root_wall' && reservation.target) {
+      if (color === 'red') {
+        redMana = spendMana(casterMana, reservation.skillId);
+      } else {
+        blueMana = spendMana(casterMana, reservation.skillId);
+      }
+      updateRootWallTile(activeRootWallTiles, reservation.target, color, 3);
+      skillEvents.push({
+        step: reservation.step,
+        order: reservation.order,
+        color,
+        skillId: reservation.skillId,
+        affectedPositions: [{ ...reservation.target }],
+        to: { ...reservation.target },
+      });
+      return;
+    }
+
     if (reservation.skillId === 'nova_blast') {
       const affectedPositions = getNovaPositions(currentPos).filter(
         (position) => !obstacles.some((obstacle) => samePosition(obstacle, position)),
@@ -906,8 +946,22 @@ export function resolveAbilityRound(params: {
           ? !samePosition(redNext, redPrev)
           : !samePosition(blueNext, bluePrev);
 
-      redPos = redNext;
-      bluePos = blueNext;
+      // Root wall: block opponent movement (blitz bypasses)
+      const redBlockedByRootWall =
+        !redBlitz &&
+        !samePosition(redNext, redPrev) &&
+        activeRootWallTiles.some(
+          (tile) => tile.owner !== 'red' && samePosition(redNext, tile.position),
+        );
+      const blueBlockedByRootWall =
+        !blueBlitz &&
+        !samePosition(blueNext, bluePrev) &&
+        activeRootWallTiles.some(
+          (tile) => tile.owner !== 'blue' && samePosition(blueNext, tile.position),
+        );
+
+      redPos = redBlockedByRootWall ? { ...redPrev } : redNext;
+      bluePos = blueBlockedByRootWall ? { ...bluePrev } : blueNext;
 
       if (
         attackerQuantumOverlapPending &&
@@ -1195,6 +1249,14 @@ export function resolveAbilityRound(params: {
     }))
     .filter((tile) => tile.remainingTurns > 0);
 
+  const nextRootWallTiles = activeRootWallTiles
+    .map((tile) => ({
+      position: { ...tile.position },
+      owner: tile.owner,
+      remainingTurns: tile.remainingTurns - 1,
+    }))
+    .filter((tile) => tile.remainingTurns > 0);
+
   return {
     payload: {
       redPath,
@@ -1206,6 +1268,11 @@ export function resolveAbilityRound(params: {
         remainingTurns: tile.remainingTurns,
       })),
       trapTiles: nextTrapTiles,
+      rootWallTiles: activeRootWallTiles.map((tile) => ({
+        position: { ...tile.position },
+        owner: tile.owner,
+        remainingTurns: tile.remainingTurns,
+      })),
       blocks,
       collisions,
       skillEvents,
@@ -1234,6 +1301,7 @@ export function resolveAbilityRound(params: {
     },
     lavaTiles: nextLavaTiles,
     trapTiles: nextTrapTiles,
+    rootWallTiles: nextRootWallTiles,
     winner,
   };
 }
