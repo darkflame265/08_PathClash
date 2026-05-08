@@ -106,6 +106,7 @@ const TRAINING_SKIN_ORDER: PieceSkin[] = [
   "arc_reactor",
   "electric_core",
   "berserker",
+  "moonlight_seed",
   "wizard",
   "chronos",
   "atomic",
