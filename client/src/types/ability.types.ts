@@ -467,8 +467,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "gold_overdrive",
     name: { en: "Overdrive", kr: "오버드라이브" },
     loadoutDescription: {
-      en: "Nothing happens this turn, but on your next turn, you get 20 mana. On the turn after that, mana becomes 0 and you cannot move.",
-      kr: "이번 턴에는 아무 일도 일어나지 않지만, 다음 턴에 마나가 20이 됩니다. 그 다음 턴에는 마나가 0이 되며 이동할 수 없습니다.",
+      en: "Gain 20 mana next turn. On the following turn, your mana becomes 0 and you cannot move.",
+      kr: "다음 턴에 마나 20을 얻습니다. 이후 턴에는 마나가 0이 되고 이동할 수 없습니다.",
     },
     manaCost: ABILITY_SKILL_COSTS.gold_overdrive,
     category: "defense",
