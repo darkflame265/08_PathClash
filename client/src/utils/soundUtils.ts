@@ -144,6 +144,10 @@ const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
     path: "/sfx/ability/magic_mine.mp3",
     gain: 0.9,
   },
+  root_wall: {
+    path: "/sfx/ability/root_wall.mp3",
+    gain: 0.9,
+  },
 };
 
 const UI_SFX: Record<UiSfxId, AbilitySfxConfig> = {
@@ -718,6 +722,10 @@ export function playMagicMine(volume = 0.55): void {
   playAbilitySfx("magic_mine", volume);
 }
 
+export function playRootWall(volume = 0.55): void {
+  playAbilitySfx("root_wall", volume);
+}
+
 export function playEmber(volume = 0.55): void {
   playAbilitySfx("ember_blast", volume);
 }
@@ -922,6 +930,9 @@ export function previewAbilitySfxSample(
       break;
     case "magic_mine":
       playMagicMine(volume);
+      break;
+    case "root_wall":
+      playRootWall(volume);
       break;
   }
 }

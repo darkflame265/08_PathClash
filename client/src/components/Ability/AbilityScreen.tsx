@@ -29,6 +29,7 @@ import {
   preloadAbilitySfxAssets,
   playQuantum,
   playMagicMine,
+  playRootWall,
   playVoidCloak,
   playChronosTickTock,
   playPathStepClick,
@@ -2516,6 +2517,12 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
               prev.filter((entry) => entry.id !== effectId),
             );
           }, 520);
+        }
+      }
+
+      if (event.skillId === "root_wall") {
+        if (!isSfxMuted) {
+          playRootWall(sfxVolume);
         }
       }
 
