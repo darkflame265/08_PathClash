@@ -21,6 +21,7 @@ import { QuantumPreview } from "../../skins/common/quantum/Preview";
 
 import { ElectricCorePreview } from "../../skins/rare/electric_core/Preview";
 import { BerserkerPreview } from "../../skins/rare/berserker/Preview";
+import { MoonlightSeedPreview } from "../../skins/rare/moonlight_seed/Preview";
 
 import {
   cancelPendingGoogleUpgradeSwitch,
@@ -1691,6 +1692,7 @@ export function LobbyScreen({
       | "wizard"
       | "electric_core"
       | "berserker"
+      | "moonlight_seed"
       | "quantum"
       | "atomic"
       | "chronos"
@@ -1934,6 +1936,25 @@ export function LobbyScreen({
     },
 
     {
+      id: "moonlight_seed",
+
+      name: lang === "en" ? "Moonlight Seed" : "월광씨앗",
+
+      desc:
+        lang === "en"
+          ? "Rare dreamwood seed — moonlit vines bloom and fireflies drift through the enchanted forest."
+          : "희귀 몽환 씨앗 — 달빛 덩굴이 자라고 반딧불이 몽환의 숲을 유영한다.",
+
+      requiredWins: null,
+
+      requiredPlays: null,
+
+      tokenPrice: 1400,
+
+      tier: "rare",
+    },
+
+    {
       id: "wizard",
 
       name: lang === "en" ? "Wizard" : "위저드",
@@ -2158,6 +2179,7 @@ export function LobbyScreen({
       {skinId === "arc_reactor" && <ArcReactorPreview />}
       {skinId === "electric_core" && <ElectricCorePreview />}
       {skinId === "berserker" && <BerserkerPreview />}
+      {skinId === "moonlight_seed" && <MoonlightSeedPreview />}
       {skinId === "quantum" && <QuantumPreview />}
       {skinId === "wizard" && <WizardPreview />}
       {skinId === "atomic" && <AtomicPreview ready={atomicPreviewReady} />}
