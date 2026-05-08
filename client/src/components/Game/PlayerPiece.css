@@ -176,7 +176,13 @@
 .player-piece.piece-overloaded .piece-inner::after,
 .player-piece.piece-overloaded .piece-inner > *,
 .player-piece.piece-overloaded .piece-inner canvas {
-  filter: grayscale(1) saturate(0.14) brightness(0.9) contrast(1.05);
+  filter: grayscale(1) saturate(0.14) brightness(0.9) contrast(1.05) !important;
+}
+
+.player-piece.piece-overloaded.piece-skin-berserker .piece-inner,
+.player-piece.piece-overloaded.piece-skin-berserker .bsk-spike-layer,
+.player-piece.piece-overloaded.piece-skin-berserker .bsk-inner-glow {
+  filter: grayscale(1) saturate(0.08) brightness(0.86) contrast(1.08) !important;
 }
 
 .player-piece.piece-overloaded .piece-inner {
