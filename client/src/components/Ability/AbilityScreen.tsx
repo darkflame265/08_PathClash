@@ -30,6 +30,7 @@ import {
   playQuantum,
   playMagicMine,
   playRootWall,
+  playBerserkOn,
   playVoidCloak,
   playChronosTickTock,
   playPathStepClick,
@@ -2632,6 +2633,9 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       }
 
       if (event.skillId === "berserker_rage") {
+        if (!isSfxMuted) {
+          playBerserkOn(sfxVolume);
+        }
         setAbilityBanner(null);
         done();
         return;
