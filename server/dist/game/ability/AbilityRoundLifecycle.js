@@ -23,7 +23,12 @@ function resetPlayerForPlanning(player, pathSubmitted, maxMana, manaPerTurn, ove
     player.plannedSkills = [];
     player.hidden = false;
     player.overdriveActive = false;
+    player.berserkerRageActive = false;
     player.reboundLocked = false;
+    if (player.pendingBerserkerRage) {
+        player.berserkerRageActive = true;
+        player.pendingBerserkerRage = false;
+    }
     if (player.pendingOverdriveStage === 1) {
         player.mana = overdriveMana;
         player.overdriveActive = true;

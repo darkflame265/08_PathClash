@@ -159,6 +159,8 @@ function resolveAbilityRound(params) {
     let bluePendingOverdriveStage = blue.pendingOverdriveStage;
     let redPendingVoidCloak = red.pendingVoidCloak;
     let bluePendingVoidCloak = blue.pendingVoidCloak;
+    let redPendingBerserkerRage = red.pendingBerserkerRage;
+    let bluePendingBerserkerRage = blue.pendingBerserkerRage;
     let redOverdriveActive = red.overdriveActive;
     let blueOverdriveActive = blue.overdriveActive;
     let redReboundLocked = red.reboundLocked;
@@ -179,8 +181,8 @@ function resolveAbilityRound(params) {
     let blueSunChariotHit = false;
     let redSunChariotOrder = null;
     let blueSunChariotOrder = null;
-    let redBerserkerRage = false;
-    let blueBerserkerRage = false;
+    let redBerserkerRage = red.berserkerRageActive === true;
+    let blueBerserkerRage = blue.berserkerRageActive === true;
     let attackerQuantumOverlapPending = false;
     let redCloneStart = null;
     let blueCloneStart = null;
@@ -385,12 +387,6 @@ function resolveAbilityRound(params) {
                 blueAtFieldSteps = AT_FIELD_STEPS;
                 blueMana = spendMana(casterMana, reservation.skillId);
             }
-            skillEvents.push({
-                step: reservation.step,
-                order: reservation.order,
-                color,
-                skillId: reservation.skillId,
-            });
             return;
         }
         if (reservation.skillId === 'phase_shift') {
@@ -663,11 +659,11 @@ function resolveAbilityRound(params) {
         if (reservation.skillId === 'berserker_rage') {
             if (color === 'red') {
                 redMana = spendMana(casterMana, reservation.skillId);
-                redBerserkerRage = true;
+                redPendingBerserkerRage = true;
             }
             else {
                 blueMana = spendMana(casterMana, reservation.skillId);
-                blueBerserkerRage = true;
+                bluePendingBerserkerRage = true;
             }
             skillEvents.push({
                 step: reservation.step,
@@ -1042,7 +1038,9 @@ function resolveAbilityRound(params) {
             pendingManaBonus: redPendingManaBonus,
             pendingOverdriveStage: redPendingOverdriveStage,
             pendingVoidCloak: redPendingVoidCloak,
+            pendingBerserkerRage: redPendingBerserkerRage,
             overdriveActive: redOverdriveActive,
+            berserkerRageActive: false,
             reboundLocked: redReboundLocked,
         },
         blueState: {
@@ -1053,7 +1051,9 @@ function resolveAbilityRound(params) {
             pendingManaBonus: bluePendingManaBonus,
             pendingOverdriveStage: bluePendingOverdriveStage,
             pendingVoidCloak: bluePendingVoidCloak,
+            pendingBerserkerRage: bluePendingBerserkerRage,
             overdriveActive: blueOverdriveActive,
+            berserkerRageActive: false,
             reboundLocked: blueReboundLocked,
         },
         lavaTiles: nextLavaTiles,

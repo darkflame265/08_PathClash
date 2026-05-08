@@ -184,8 +184,8 @@ export function resolveAbilityRound(params: {
   rootWallTiles: AbilityRootWallTile[];
 }): {
   payload: AbilityResolutionPayload;
-  redState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'pendingVoidCloak' | 'overdriveActive' | 'reboundLocked'>;
-  blueState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'pendingVoidCloak' | 'overdriveActive' | 'reboundLocked'>;
+  redState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'pendingVoidCloak' | 'pendingBerserkerRage' | 'overdriveActive' | 'berserkerRageActive' | 'reboundLocked'>;
+  blueState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'pendingVoidCloak' | 'pendingBerserkerRage' | 'overdriveActive' | 'berserkerRageActive' | 'reboundLocked'>;
   lavaTiles: AbilityLavaTile[];
   trapTiles: AbilityTrapTile[];
   rootWallTiles: AbilityRootWallTile[];
@@ -232,6 +232,8 @@ export function resolveAbilityRound(params: {
   let bluePendingOverdriveStage = blue.pendingOverdriveStage;
   let redPendingVoidCloak = red.pendingVoidCloak;
   let bluePendingVoidCloak = blue.pendingVoidCloak;
+  let redPendingBerserkerRage = red.pendingBerserkerRage;
+  let bluePendingBerserkerRage = blue.pendingBerserkerRage;
   let redOverdriveActive = red.overdriveActive;
   let blueOverdriveActive = blue.overdriveActive;
   let redReboundLocked = red.reboundLocked;
@@ -252,8 +254,8 @@ export function resolveAbilityRound(params: {
   let blueSunChariotHit = false;
   let redSunChariotOrder: number | null = null;
   let blueSunChariotOrder: number | null = null;
-  let redBerserkerRage = false;
-  let blueBerserkerRage = false;
+  let redBerserkerRage = red.berserkerRageActive === true;
+  let blueBerserkerRage = blue.berserkerRageActive === true;
   let attackerQuantumOverlapPending = false;
   let redCloneStart: Position | null = null;
   let blueCloneStart: Position | null = null;
@@ -519,12 +521,6 @@ export function resolveAbilityRound(params: {
         blueAtFieldSteps = AT_FIELD_STEPS;
         blueMana = spendMana(casterMana, reservation.skillId);
       }
-      skillEvents.push({
-        step: reservation.step,
-        order: reservation.order,
-        color,
-        skillId: reservation.skillId,
-      });
       return;
     }
 
@@ -845,10 +841,10 @@ export function resolveAbilityRound(params: {
     if (reservation.skillId === 'berserker_rage') {
       if (color === 'red') {
         redMana = spendMana(casterMana, reservation.skillId);
-        redBerserkerRage = true;
+        redPendingBerserkerRage = true;
       } else {
         blueMana = spendMana(casterMana, reservation.skillId);
-        blueBerserkerRage = true;
+        bluePendingBerserkerRage = true;
       }
       skillEvents.push({
         step: reservation.step,
@@ -1353,7 +1349,9 @@ export function resolveAbilityRound(params: {
       pendingManaBonus: redPendingManaBonus,
       pendingOverdriveStage: redPendingOverdriveStage,
       pendingVoidCloak: redPendingVoidCloak,
+      pendingBerserkerRage: redPendingBerserkerRage,
       overdriveActive: redOverdriveActive,
+      berserkerRageActive: false,
       reboundLocked: redReboundLocked,
     },
     blueState: {
@@ -1364,7 +1362,9 @@ export function resolveAbilityRound(params: {
       pendingManaBonus: bluePendingManaBonus,
       pendingOverdriveStage: bluePendingOverdriveStage,
       pendingVoidCloak: bluePendingVoidCloak,
+      pendingBerserkerRage: bluePendingBerserkerRage,
       overdriveActive: blueOverdriveActive,
+      berserkerRageActive: false,
       reboundLocked: blueReboundLocked,
     },
     lavaTiles: nextLavaTiles,

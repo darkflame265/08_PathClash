@@ -164,7 +164,7 @@ export const ABILITY_SKILL_SERVER_RULES: Record<
     targetRule: 'none',
   },
   berserker_rage: {
-    roleRestriction: 'attacker',
+    roleRestriction: 'escaper',
     stepRule: 'zero_only',
     targetRule: 'none',
   },
@@ -231,7 +231,9 @@ export interface AbilityPlayerState {
   pendingManaBonus: number;
   pendingOverdriveStage: 0 | 1 | 2;
   pendingVoidCloak: boolean;
+  pendingBerserkerRage: boolean;
   overdriveActive: boolean;
+  berserkerRageActive: boolean;
   reboundLocked: boolean;
   hidden: boolean;
   equippedSkills: AbilitySkillId[];
@@ -244,6 +246,7 @@ export interface ClientAbilityPlayerState extends ClientPlayerState {
   mana: number;
   invulnerableSteps: number;
   overdriveActive: boolean;
+  berserkerRageActive: boolean;
   reboundLocked: boolean;
   hidden: boolean;
   previousTurnStart: Position | null;

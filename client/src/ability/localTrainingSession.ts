@@ -60,6 +60,8 @@ type TrainingPlayerState = AbilityPlayerState & {
   pendingManaBonus: number;
   pendingOverdriveStage: number;
   pendingVoidCloak: boolean;
+  pendingBerserkerRage: boolean;
+  berserkerRageActive: boolean;
   turnHistory: Array<{ turn: number; position: Position; hp: number }>;
 };
 
@@ -277,6 +279,7 @@ function toClientState(): AbilityBattleState {
         mana: redPlayer.mana,
         invulnerableSteps: redPlayer.invulnerableSteps,
         overdriveActive: redPlayer.overdriveActive,
+        berserkerRageActive: redPlayer.berserkerRageActive,
         reboundLocked: redPlayer.reboundLocked,
         hidden: redPlayer.hidden,
         previousTurnStart: redPlayer.previousTurnStart,
@@ -300,6 +303,7 @@ function toClientState(): AbilityBattleState {
         mana: bluePlayer.mana,
         invulnerableSteps: bluePlayer.invulnerableSteps,
         overdriveActive: bluePlayer.overdriveActive,
+        berserkerRageActive: bluePlayer.berserkerRageActive,
         reboundLocked: bluePlayer.reboundLocked,
         hidden: bluePlayer.hidden,
         previousTurnStart: bluePlayer.previousTurnStart,
@@ -720,7 +724,9 @@ function revealPlans(): void {
   redPlayer.pendingManaBonus = resolution.redState.pendingManaBonus ?? 0;
   redPlayer.pendingOverdriveStage = resolution.redState.pendingOverdriveStage ?? 0;
   redPlayer.pendingVoidCloak = resolution.redState.pendingVoidCloak ?? false;
+  redPlayer.pendingBerserkerRage = resolution.redState.pendingBerserkerRage ?? false;
   redPlayer.overdriveActive = resolution.redState.overdriveActive;
+  redPlayer.berserkerRageActive = resolution.redState.berserkerRageActive ?? false;
   redPlayer.reboundLocked = resolution.redState.reboundLocked;
 
   bluePlayer.position = resolution.blueState.position;
@@ -730,7 +736,9 @@ function revealPlans(): void {
   bluePlayer.pendingManaBonus = resolution.blueState.pendingManaBonus ?? 0;
   bluePlayer.pendingOverdriveStage = resolution.blueState.pendingOverdriveStage ?? 0;
   bluePlayer.pendingVoidCloak = resolution.blueState.pendingVoidCloak ?? false;
+  bluePlayer.pendingBerserkerRage = resolution.blueState.pendingBerserkerRage ?? false;
   bluePlayer.overdriveActive = resolution.blueState.overdriveActive;
+  bluePlayer.berserkerRageActive = resolution.blueState.berserkerRageActive ?? false;
   bluePlayer.reboundLocked = resolution.blueState.reboundLocked;
 
   lavaTiles = resolution.lavaTiles;
@@ -798,7 +806,9 @@ function startGame(): void {
   redPlayer.pendingManaBonus = 0;
   redPlayer.pendingOverdriveStage = 0;
   redPlayer.pendingVoidCloak = false;
+  redPlayer.pendingBerserkerRage = false;
   redPlayer.overdriveActive = false;
+  redPlayer.berserkerRageActive = false;
   redPlayer.reboundLocked = false;
   redPlayer.hidden = false;
   redPlayer.timeRewindUsed = false;
@@ -817,7 +827,9 @@ function startGame(): void {
   bluePlayer.pendingManaBonus = 0;
   bluePlayer.pendingOverdriveStage = 0;
   bluePlayer.pendingVoidCloak = false;
+  bluePlayer.pendingBerserkerRage = false;
   bluePlayer.overdriveActive = false;
+  bluePlayer.berserkerRageActive = false;
   bluePlayer.reboundLocked = false;
   bluePlayer.hidden = false;
   bluePlayer.timeRewindUsed = false;
@@ -963,6 +975,7 @@ export function startLocalAbilityTraining(options: StartOptions): void {
     mana: TRAINING_STARTING_MANA,
     invulnerableSteps: 0,
     overdriveActive: false,
+    berserkerRageActive: false,
     reboundLocked: false,
     hidden: false,
     previousTurnStart: null,
@@ -975,6 +988,7 @@ export function startLocalAbilityTraining(options: StartOptions): void {
     pendingManaBonus: 0,
     pendingOverdriveStage: 0,
     pendingVoidCloak: false,
+    pendingBerserkerRage: false,
     turnHistory: [],
   };
 
@@ -994,6 +1008,7 @@ export function startLocalAbilityTraining(options: StartOptions): void {
     mana: TRAINING_STARTING_MANA,
     invulnerableSteps: 0,
     overdriveActive: false,
+    berserkerRageActive: false,
     reboundLocked: false,
     hidden: false,
     previousTurnStart: null,
@@ -1006,6 +1021,7 @@ export function startLocalAbilityTraining(options: StartOptions): void {
     pendingManaBonus: 0,
     pendingOverdriveStage: 0,
     pendingVoidCloak: false,
+    pendingBerserkerRage: false,
     turnHistory: [],
   };
 }

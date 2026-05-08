@@ -208,7 +208,7 @@ export const ABILITY_SKILL_SERVER_RULES: Record<
     targetRule: "none",
   },
   berserker_rage: {
-    roleRestriction: "attacker",
+    roleRestriction: "escaper",
     stepRule: "zero_only",
     targetRule: "none",
   },
@@ -282,7 +282,9 @@ export interface AbilityPlayerState {
   pendingManaBonus?: number;
   pendingOverdriveStage?: number;
   pendingVoidCloak?: boolean;
+  pendingBerserkerRage?: boolean;
   overdriveActive: boolean;
+  berserkerRageActive?: boolean;
   reboundLocked: boolean;
   hidden: boolean;
   previousTurnStart: Position | null;
@@ -571,8 +573,8 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     id: "berserker_rage",
     name: { en: "Berserk", kr: "광폭화" },
     loadoutDescription: {
-      en: "This turn, collision damage becomes 2.",
-      kr: "이번 턴, 충돌 피해가 2가 됩니다.",
+      en: "Escaper role only. Starting next turn, collision damage becomes 2.",
+      kr: "도망 역할일 때만 사용할 수 있습니다. 다음 턴부터 충돌 피해가 2가 됩니다.",
     },
     manaCost: ABILITY_SKILL_COSTS.berserker_rage,
     category: "attack",

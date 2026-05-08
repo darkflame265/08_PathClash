@@ -964,7 +964,9 @@ export class AbilityRoom {
       pendingManaBonus: 0,
       pendingOverdriveStage: 0,
       pendingVoidCloak: false,
+      pendingBerserkerRage: false,
       overdriveActive: false,
+      berserkerRageActive: false,
       reboundLocked: false,
       hidden: false,
       equippedSkills,
@@ -1017,7 +1019,9 @@ export class AbilityRoom {
       pendingManaBonus: 0,
       pendingOverdriveStage: 0,
       pendingVoidCloak: false,
+      pendingBerserkerRage: false,
       overdriveActive: false,
+      berserkerRageActive: false,
       reboundLocked: false,
       hidden: false,
       equippedSkills,
@@ -1381,7 +1385,9 @@ export class AbilityRoom {
     red.pendingManaBonus = resolution.redState.pendingManaBonus;
     red.pendingOverdriveStage = resolution.redState.pendingOverdriveStage;
     red.pendingVoidCloak = resolution.redState.pendingVoidCloak;
+    red.pendingBerserkerRage = resolution.redState.pendingBerserkerRage;
     red.overdriveActive = resolution.redState.overdriveActive;
+    red.berserkerRageActive = resolution.redState.berserkerRageActive;
     red.reboundLocked = resolution.redState.reboundLocked;
     blue.position = resolution.blueState.position;
     blue.hp = resolution.blueState.hp;
@@ -1390,7 +1396,9 @@ export class AbilityRoom {
     blue.pendingManaBonus = resolution.blueState.pendingManaBonus;
     blue.pendingOverdriveStage = resolution.blueState.pendingOverdriveStage;
     blue.pendingVoidCloak = resolution.blueState.pendingVoidCloak;
+    blue.pendingBerserkerRage = resolution.blueState.pendingBerserkerRage;
     blue.overdriveActive = resolution.blueState.overdriveActive;
+    blue.berserkerRageActive = resolution.blueState.berserkerRageActive;
     blue.reboundLocked = resolution.blueState.reboundLocked;
     this.lavaTiles = resolution.lavaTiles;
     this.trapTiles = resolution.trapTiles;
@@ -1735,6 +1743,7 @@ export class AbilityRoom {
       mana: player.mana,
       invulnerableSteps: player.invulnerableSteps,
       overdriveActive: player.overdriveActive,
+      berserkerRageActive: player.berserkerRageActive,
       reboundLocked: player.reboundLocked,
       hidden: player.hidden,
       previousTurnStart: player.previousTurnStart,
@@ -3259,8 +3268,8 @@ export class AbilityRoom {
     player: AbilityPlayerState,
     resolution: {
       payload: AbilityResolutionPayload;
-      redState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'pendingVoidCloak' | 'overdriveActive' | 'reboundLocked'>;
-      blueState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'pendingVoidCloak' | 'overdriveActive' | 'reboundLocked'>;
+      redState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'pendingVoidCloak' | 'pendingBerserkerRage' | 'overdriveActive' | 'berserkerRageActive' | 'reboundLocked'>;
+      blueState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'pendingVoidCloak' | 'pendingBerserkerRage' | 'overdriveActive' | 'berserkerRageActive' | 'reboundLocked'>;
       winner: PlayerColor | 'draw' | null;
     },
   ): void {
@@ -3332,7 +3341,9 @@ export class AbilityRoom {
       player.pendingManaBonus = 0;
       player.pendingOverdriveStage = 0;
       player.pendingVoidCloak = false;
+      player.pendingBerserkerRage = false;
       player.overdriveActive = false;
+      player.berserkerRageActive = false;
       player.reboundLocked = false;
       player.hidden = false;
       player.timeRewindUsed = false;

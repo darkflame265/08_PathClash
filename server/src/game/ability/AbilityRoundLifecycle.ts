@@ -11,11 +11,13 @@ export interface AbilityRoundLifecyclePlayer {
   position: AbilityRoundPosition;
   hidden: boolean;
   overdriveActive: boolean;
+  berserkerRageActive: boolean;
   reboundLocked: boolean;
   mana: number;
   pendingManaBonus: number;
   pendingOverdriveStage: number;
   pendingVoidCloak: boolean;
+  pendingBerserkerRage: boolean;
 }
 
 export interface AbilityRoundLifecycleOptions {
@@ -66,7 +68,13 @@ function resetPlayerForPlanning(
   player.plannedSkills = [];
   player.hidden = false;
   player.overdriveActive = false;
+  player.berserkerRageActive = false;
   player.reboundLocked = false;
+
+  if (player.pendingBerserkerRage) {
+    player.berserkerRageActive = true;
+    player.pendingBerserkerRage = false;
+  }
 
   if (player.pendingOverdriveStage === 1) {
     player.mana = overdriveMana;

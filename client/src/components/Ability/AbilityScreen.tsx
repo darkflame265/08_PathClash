@@ -656,19 +656,9 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       planningSunChariots.blue ||
       transitionSunChariots.blue,
   };
-  const planningBerserkerRages: BoolByColor = {
-    red:
-      state?.phase === "planning" &&
-      currentColor === "red" &&
-      skillReservations.some((entry) => entry.skillId === "berserker_rage"),
-    blue:
-      state?.phase === "planning" &&
-      currentColor === "blue" &&
-      skillReservations.some((entry) => entry.skillId === "berserker_rage"),
-  };
   const visibleBerserkerRages: BoolByColor = {
-    red: activeBerserkerRages.red || planningBerserkerRages.red,
-    blue: activeBerserkerRages.blue || planningBerserkerRages.blue,
+    red: activeBerserkerRages.red,
+    blue: activeBerserkerRages.blue,
   };
   const previousGuardPathRef = useRef<Position[]>([]);
   const previousChargePathRef = useRef<Position[]>([]);
@@ -1024,6 +1014,10 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     resetPersistentDefenseVisualState();
     resetTransientVisualState();
     resetMovingVisualState();
+    setActiveBerserkerRages({
+      red: nextState.players.red.berserkerRageActive === true,
+      blue: nextState.players.blue.berserkerRageActive === true,
+    });
     if (nextState.phase !== "gameover") {
       resetMatchUiState();
     }
@@ -1426,7 +1420,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       removeReservation("berserker_rage");
       return;
     }
-    if (getMyRole() !== "attacker") return;
+    if (getMyRole() !== "escaper") return;
     if (getRemainingMana() < getSkillCost("berserker_rage")) return;
     const nextReservations: AbilitySkillReservation[] = [
       ...skillReservations.filter((entry) => entry.skillId !== "berserker_rage"),
@@ -2633,9 +2627,6 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       }
 
       if (event.skillId === "berserker_rage") {
-        if (!isSfxMuted) {
-          playBerserkOn(sfxVolume);
-        }
         setAbilityBanner(null);
         done();
         return;
@@ -3003,15 +2994,9 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
           (event) => event.skillId === "sun_chariot" && event.color === "blue",
         )?.step ?? null,
     };
-    const berserkerRageSteps: NullableNumberByColor = {
-      red:
-        payload.skillEvents.find(
-          (event) => event.skillId === "berserker_rage" && event.color === "red",
-        )?.step ?? null,
-      blue:
-        payload.skillEvents.find(
-          (event) => event.skillId === "berserker_rage" && event.color === "blue",
-        )?.step ?? null,
+    const berserkerRageActiveAtStart: BoolByColor = {
+      red: stateRef.current?.players.red.berserkerRageActive === true,
+      blue: stateRef.current?.players.blue.berserkerRageActive === true,
     };
     const atomicCloneEvents = {
       red:
@@ -3421,8 +3406,8 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
         blue: sunChariotSteps.blue !== null && step >= sunChariotSteps.blue,
       });
       setActiveBerserkerRages({
-        red: berserkerRageSteps.red !== null && step >= berserkerRageSteps.red,
-        blue: berserkerRageSteps.blue !== null && step >= berserkerRageSteps.blue,
+        red: berserkerRageActiveAtStart.red,
+        blue: berserkerRageActiveAtStart.blue,
       });
 
       if (redShouldMoveNormally) {
@@ -3505,6 +3490,14 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
         redVoidCloakTriggered || blueVoidCloakTriggered;
       if (voidCloakTriggered && !isSfxMuted) {
         playVoidCloak(sfxVolume);
+      }
+      const berserkerRageTriggered =
+        (nextState.players.red.berserkerRageActive === true &&
+          previousState?.players.red.berserkerRageActive !== true) ||
+        (nextState.players.blue.berserkerRageActive === true &&
+          previousState?.players.blue.berserkerRageActive !== true);
+      if (berserkerRageTriggered && !isSfxMuted) {
+        playBerserkOn(sfxVolume);
       }
       clearVoidCloakVanishTimeout();
       if (previousState && voidCloakTriggered) {

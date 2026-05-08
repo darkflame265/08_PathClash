@@ -118,7 +118,7 @@ exports.ABILITY_SKILL_SERVER_RULES = {
         targetRule: 'none',
     },
     berserker_rage: {
-        roleRestriction: 'attacker',
+        roleRestriction: 'escaper',
         stepRule: 'zero_only',
         targetRule: 'none',
     },
