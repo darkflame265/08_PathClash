@@ -807,6 +807,23 @@ function getAbilitySkillCategoryLabel(
   }
 }
 
+function getAbilitySkillCategoryIcon(
+  category: "attack" | "defense" | "utility" | "passive",
+) {
+  switch (category) {
+    case "attack":
+      return "⚔";
+    case "defense":
+      return "🛡";
+    case "utility":
+      return "♥";
+    case "passive":
+      return "⏱";
+    default:
+      return "✦";
+  }
+}
+
 export function LobbyScreen({
   onGameStart,
 
@@ -5183,23 +5200,59 @@ export function LobbyScreen({
                     </span>
 
                     <span className="skin-lock-meta ability-skill-meta">
-                      <span className="skin-lock-icon" aria-hidden="true">
-                        {unlocked ? "✨" : "🔒"}
-                      </span>
+                      {unlocked ? (
+                        <>
+                          {skill.category !== "passive" && (
+                            <span className="ability-skill-info-pill ability-skill-mana-pill">
+                              <span
+                                className="ability-skill-info-icon"
+                                aria-hidden="true"
+                              >
+                                {"💧"}
+                              </span>
 
-                      <span>
-                        {unlocked
-                          ? lang === "en"
-                            ? skill.category === "passive"
-                              ? "Passive · Auto"
-                              : `${skill.manaCost} mana · ${skill.category}`
-                            : skill.category === "passive"
-                              ? "패시브 · 자동"
-                              : `마나 ${skill.manaCost} · ${skill.category === "attack" ? "공격" : skill.category === "defense" ? "방어" : "유틸"}`
-                          : lang === "en"
-                            ? "Locked"
-                            : "잠김"}
-                      </span>
+                              <span>
+                                {lang === "en"
+                                  ? `Mana ${skill.manaCost}`
+                                  : `마나 ${skill.manaCost}`}
+                              </span>
+                            </span>
+                          )}
+
+                          <span
+                            className={`ability-skill-info-pill ability-skill-category-pill is-${skill.category}`}
+                          >
+                            <span
+                              className="ability-skill-info-icon"
+                              aria-hidden="true"
+                            >
+                              {getAbilitySkillCategoryIcon(skill.category)}
+                            </span>
+
+                            <span>
+                              {skill.category === "passive"
+                                ? lang === "en"
+                                  ? "Auto"
+                                  : "자동"
+                                : getAbilitySkillCategoryLabel(
+                                    skill.category,
+                                    lang,
+                                  )}
+                            </span>
+                          </span>
+                        </>
+                      ) : (
+                        <span className="ability-skill-info-pill ability-skill-locked-pill">
+                          <span
+                            className="ability-skill-info-icon"
+                            aria-hidden="true"
+                          >
+                            {"🔒"}
+                          </span>
+
+                          <span>{lang === "en" ? "Locked" : "잠김"}</span>
+                        </span>
+                      )}
                     </span>
                   </button>
                 );

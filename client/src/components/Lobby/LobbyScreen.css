@@ -2084,6 +2084,11 @@
   box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.28);
 }
 
+.ability-loadout-modal .skin-option-card {
+  align-items: center;
+  min-height: 6.5rem;
+}
+
 .skin-option-card.is-locked {
   cursor: not-allowed;
   opacity: 0.72;
@@ -2537,6 +2542,29 @@
   .skin-option-copy span,
   .skin-picker-unlock-meta {
     font-size: 0.68rem;
+  }
+
+  .ability-loadout-modal .skin-option-card {
+    align-items: flex-start;
+    gap: 0.7rem;
+    min-height: 0;
+  }
+
+  .ability-skill-meta {
+    flex: 0 0 5.7rem;
+    gap: 0.4rem;
+  }
+
+  .ability-skill-info-pill {
+    min-height: 1.65rem;
+    padding: 0.24rem 0.42rem;
+    border-radius: 0.65rem;
+    font-size: 0.72rem;
+    gap: 0.22rem;
+  }
+
+  .ability-skill-info-icon {
+    font-size: 0.82rem;
   }
 
   .settings-row {
@@ -3993,7 +4021,91 @@
 }
 
 .ability-skill-meta {
+  flex: 0 0 7.65rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.55rem;
   color: #93c5fd;
+}
+
+.ability-skill-info-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.32rem;
+  min-height: 2rem;
+  padding: 0.32rem 0.65rem;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(96, 165, 250, 0.36);
+  background:
+    linear-gradient(180deg, rgba(37, 99, 235, 0.18), rgba(15, 23, 42, 0.24)),
+    rgba(15, 23, 42, 0.32);
+  color: #bfdbfe;
+  font-size: 0.92rem;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 14px rgba(59, 130, 246, 0.12);
+}
+
+.ability-skill-info-icon {
+  font-size: 1rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+.ability-skill-mana-pill {
+  border-color: rgba(96, 165, 250, 0.56);
+  color: #60a5fa;
+  background:
+    radial-gradient(circle at 22% 30%, rgba(147, 197, 253, 0.22), transparent 48%),
+    rgba(30, 41, 59, 0.54);
+}
+
+.ability-skill-category-pill.is-attack {
+  border-color: rgba(248, 113, 113, 0.48);
+  color: #fca5a5;
+  background:
+    radial-gradient(circle at 22% 30%, rgba(248, 113, 113, 0.2), transparent 48%),
+    rgba(69, 10, 10, 0.38);
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.36);
+}
+
+.ability-skill-category-pill.is-defense {
+  border-color: rgba(74, 222, 128, 0.46);
+  color: #fde68a;
+  background:
+    radial-gradient(circle at 22% 30%, rgba(74, 222, 128, 0.18), transparent 48%),
+    rgba(20, 83, 45, 0.32);
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+}
+
+.ability-skill-category-pill.is-utility {
+  border-color: rgba(74, 222, 128, 0.46);
+  color: #fef08a;
+  background:
+    radial-gradient(circle at 22% 30%, rgba(74, 222, 128, 0.2), transparent 48%),
+    rgba(20, 83, 45, 0.36);
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.32);
+}
+
+.ability-skill-category-pill.is-passive {
+  border-color: rgba(125, 211, 252, 0.5);
+  color: #bae6fd;
+  background:
+    radial-gradient(circle at 22% 30%, rgba(125, 211, 252, 0.2), transparent 48%),
+    rgba(12, 74, 110, 0.34);
+}
+
+.ability-skill-locked-pill {
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #cbd5e1;
+  background: rgba(30, 41, 59, 0.45);
 }
 
 .ability-required-skin-name {
