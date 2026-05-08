@@ -51,6 +51,7 @@ import type {
 } from "../../types/game.types";
 import {
   ABILITY_SKILLS,
+  ABILITY_SKILL_SERVER_RULES,
   type AbilityBattleState,
   type AbilityGameOverPayload,
   type AbilityResolutionPayload,
@@ -4593,22 +4594,12 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
             const isTimeRewindSpent =
               skillId === "chronos_time_rewind" && me.timeRewindUsed;
             const passiveSkill = skill.category === "passive";
+            const roleRestriction =
+              ABILITY_SKILL_SERVER_RULES[skillId].roleRestriction;
             const roleBlocked =
-              ((skillId === "classic_guard" ||
-                skillId === "gold_overdrive" ||
-                skillId === "phase_shift" ||
-                skillId === "arc_reactor_field") &&
-                getMyRole() !== "escaper") ||
-              ((skillId === "ember_blast" ||
-                skillId === "sun_chariot" ||
-                skillId === "atomic_fission" ||
-                skillId === "inferno_field" ||
-                skillId === "nova_blast" ||
-                skillId === "wizard_magic_mine" ||
-                skillId === "electric_blitz" ||
-                skillId === "cosmic_bigbang" ||
-                skillId === "berserker_rage") &&
-                getMyRole() !== "attacker");
+              (roleRestriction === "attacker" &&
+                getMyRole() !== "attacker") ||
+              (roleRestriction === "escaper" && getMyRole() !== "escaper");
             const atomicUnavailable =
               skillId === "atomic_fission" &&
               (!me.previousTurnStart || me.previousTurnPath.length === 0);
