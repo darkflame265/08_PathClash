@@ -1,0 +1,23 @@
+.player-piece.piece-skin-moonlight_seed .piece-inner {
+  background: #040c05;
+  box-shadow:
+    0 0 calc(var(--piece-glow, 12px) * 1.0) rgba(45, 175, 80, 0.50),
+    0 0 calc(var(--piece-glow, 12px) * 2.2) rgba(25, 120, 50, 0.28),
+    inset 0 0 8px rgba(60, 200, 90, 0.06);
+  border-color: rgba(45, 175, 80, 0.55);
+}
+
+.player-piece.piece-skin-moonlight_seed .piece-inner::before,
+.player-piece.piece-skin-moonlight_seed .piece-inner::after {
+  content: none;
+}
+
+.moonlight-seed-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 50%;
+  pointer-events: none;
+}
