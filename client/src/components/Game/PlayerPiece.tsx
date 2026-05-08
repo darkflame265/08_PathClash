@@ -13,6 +13,7 @@ import { InfernoGame } from '../../skins/common/inferno/Game';
 import { QuantumGame } from '../../skins/common/quantum/Game';
 import { ElectricCoreGame } from '../../skins/rare/electric_core/Game';
 import { BerserkerGame } from '../../skins/rare/berserker/Game';
+import { MoonlightSeedGame } from '../../skins/rare/moonlight_seed/Game';
 import './PlayerPiece.css';
 
 interface Props {
@@ -55,6 +56,7 @@ interface Props {
     | "arc_reactor"
     | "electric_core"
     | "berserker"
+    | "moonlight_seed"
     | "quantum"
     | "atomic"
     | "chronos"
@@ -251,6 +253,7 @@ export function PlayerPiece({
           {effectiveSkin === "arc_reactor" && <ArcReactorGame />}
           {effectiveSkin === "electric_core" && <ElectricCoreGame />}
           {effectiveSkin === "berserker" && <BerserkerGame />}
+          {effectiveSkin === "moonlight_seed" && <MoonlightSeedGame />}
           {effectiveSkin === "atomic" && <AtomicGame cellSize={cellSize} />}
           {effectiveSkin === "chronos" && <ChronosGame />}
           {effectiveSkin === "sun" && <SunGame cellSize={cellSize} />}
