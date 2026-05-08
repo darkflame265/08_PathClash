@@ -23,6 +23,7 @@ exports.ABILITY_SKILL_COSTS = {
     wizard_magic_mine: 8,
     chronos_time_rewind: 0,
     berserker_rage: 8,
+    root_wall: 7,
 };
 // Shared validation metadata for server-side planning rules.
 // Keep common restrictions here so role/timing/target/cost rules do not drift
@@ -120,5 +121,10 @@ exports.ABILITY_SKILL_SERVER_RULES = {
         roleRestriction: 'attacker',
         stepRule: 'zero_only',
         targetRule: 'none',
+    },
+    root_wall: {
+        roleRestriction: 'any',
+        stepRule: 'zero_only',
+        targetRule: 'position',
     },
 };

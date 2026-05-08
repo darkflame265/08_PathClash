@@ -272,11 +272,15 @@ export function AbilityGrid({
       : null;
   const baseStart = state.players[currentColor].position;
   const myStart = previewStart;
-  const obstacles = state.obstacles;
+  const boardObstacles = state.obstacles;
+  const movementObstacles = [
+    ...boardObstacles,
+    ...state.rootWallTiles.map((tile) => tile.position),
+  ];
   const shouldAnimateInitialObstacles = state.turn === 1;
   const opponentColor = currentColor === "red" ? "blue" : "red";
   const teleportBlockedPositions = [
-    ...obstacles,
+    ...movementObstacles,
     state.players[opponentColor].position,
   ];
   const redSkin = state.players.red.pieceSkin;
@@ -522,7 +526,7 @@ export function AbilityGrid({
         const lastPos = getPlanningTailPosition(current);
         if (
           !posEqual(cell, lastPos) &&
-          !isBlockedCell(cell, obstacles) &&
+          !isBlockedCell(cell, movementObstacles) &&
           isValidMove(lastPos, cell) &&
           current.length < pathPoints
         ) {
@@ -536,7 +540,7 @@ export function AbilityGrid({
       getPlanningSecondLastPosition,
       getPlanningTailPosition,
       myPath,
-      obstacles,
+      movementObstacles,
       pathPoints,
       playPathStepSfx,
       removeFromPath,
@@ -735,7 +739,7 @@ export function AbilityGrid({
       >
         {cells.map(({ row, col }) => {
           const cell = { row, col };
-          const obstacleIndex = obstacles.findIndex((obstacle) =>
+          const obstacleIndex = boardObstacles.findIndex((obstacle) =>
             posEqual(obstacle, cell),
           );
           const blocked = obstacleIndex >= 0;

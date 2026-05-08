@@ -601,6 +601,7 @@ class AbilityRoom {
         this.obstacles = [];
         this.lavaTiles = [];
         this.trapTiles = [];
+        this.rootWallTiles = [];
         // 4코 스킬 연속 사용 방지: 마지막으로 4코 스킬을 사용한 턴 번호 추적
         this.botLastFourCostSkillTurn = new Map();
         this.readySockets = new Set();
@@ -1015,6 +1016,7 @@ class AbilityRoom {
             trapTiles: forColor
                 ? this.trapTiles.filter((trap) => trap.owner === forColor)
                 : [],
+            rootWallTiles: this.rootWallTiles,
             players: {
                 red: this.toClientPlayer(red),
                 blue: this.toClientPlayer(blue),
@@ -1109,6 +1111,7 @@ class AbilityRoom {
             obstacles: this.obstacles,
             lavaTiles: this.lavaTiles,
             trapTiles: this.trapTiles,
+            rootWallTiles: this.rootWallTiles,
         });
         this.applyTimeRewindIfNeeded('red', red, resolution);
         this.applyTimeRewindIfNeeded('blue', blue, resolution);
@@ -1136,6 +1139,7 @@ class AbilityRoom {
         blue.reboundLocked = resolution.blueState.reboundLocked;
         this.lavaTiles = resolution.lavaTiles;
         this.trapTiles = resolution.trapTiles;
+        this.rootWallTiles = resolution.rootWallTiles;
         this.touchActivity();
         for (const player of this.players.values()) {
             this.io.to(player.socketId).emit('ability_resolution', {
@@ -1285,6 +1289,10 @@ class AbilityRoom {
         const hasOverdrive = uniqueSkills.some((skill) => skill.skillId === 'gold_overdrive');
         const teleport = uniqueSkills.find((skill) => skill.skillId === 'quantum_shift') ?? null;
         const hasBlitz = uniqueSkills.some((skill) => skill.skillId === 'electric_blitz');
+        const movementObstacles = [
+            ...this.obstacles,
+            ...this.rootWallTiles.map((tile) => tile.position),
+        ];
         const hasAttackSkill = uniqueSkills.some((skill) => skill.skillId === 'ember_blast' ||
             skill.skillId === 'atomic_fission' ||
             skill.skillId === 'inferno_field' ||
@@ -1307,7 +1315,7 @@ class AbilityRoom {
         if (player.reboundLocked && path.length > 0)
             return null;
         if (!isOverdriveTurn && !hasBlitz) {
-            const validationObstacles = hasPhaseShift ? [] : this.obstacles;
+            const validationObstacles = hasPhaseShift ? [] : movementObstacles;
             if (teleport) {
                 if (!teleport.target)
                     return null;
@@ -1337,7 +1345,7 @@ class AbilityRoom {
                 return null;
             }
             for (const skill of uniqueSkills) {
-                if (skill.skillId === 'inferno_field') {
+                if (skill.skillId === 'inferno_field' || skill.skillId === 'root_wall') {
                     if (!skill.target)
                         return null;
                     if (skill.target.row < 0 ||
@@ -1345,8 +1353,8 @@ class AbilityRoom {
                         skill.target.col < 0 ||
                         skill.target.col > 4)
                         return null;
-                    const infernoOrigin = skill.step === 0 ? player.position : path[skill.step - 1];
-                    if (infernoOrigin && posEqual(infernoOrigin, skill.target))
+                    const origin = skill.step === 0 ? player.position : path[skill.step - 1];
+                    if (origin && posEqual(origin, skill.target))
                         return null;
                 }
             }
@@ -1363,7 +1371,7 @@ class AbilityRoom {
         let cursor = 0;
         let segmentStart = player.position;
         for (const skill of uniqueSkills) {
-            if (skill.skillId === 'inferno_field') {
+            if (skill.skillId === 'inferno_field' || skill.skillId === 'root_wall') {
                 if (!skill.target)
                     return null;
                 if (skill.target.row < 0 ||
@@ -1371,8 +1379,8 @@ class AbilityRoom {
                     skill.target.col < 0 ||
                     skill.target.col > 4)
                     return null;
-                const infernoOrigin = skill.step === 0 ? player.position : path[skill.step - 1];
-                if (infernoOrigin && posEqual(infernoOrigin, skill.target))
+                const origin = skill.step === 0 ? player.position : path[skill.step - 1];
+                if (origin && posEqual(origin, skill.target))
                     return null;
             }
         }
@@ -1380,7 +1388,7 @@ class AbilityRoom {
             if (movementSkill.step < cursor)
                 return null;
             const prefixSegment = path.slice(cursor, movementSkill.step);
-            const validationObstacles = hasPhaseShift ? [] : this.obstacles;
+            const validationObstacles = hasPhaseShift ? [] : movementObstacles;
             if (!(0, GameEngine_1.isValidPath)(segmentStart, prefixSegment, pathPoints, validationObstacles)) {
                 return null;
             }
@@ -1417,7 +1425,7 @@ class AbilityRoom {
             cursor = movementSkill.step + blitzPath.length;
         }
         const suffix = path.slice(cursor);
-        const validationObstacles = hasPhaseShift ? [] : this.obstacles;
+        const validationObstacles = hasPhaseShift ? [] : movementObstacles;
         if (!(0, GameEngine_1.isValidPath)(segmentStart, suffix, pathPoints, validationObstacles)) {
             return null;
         }
@@ -1495,9 +1503,10 @@ class AbilityRoom {
         }
     }
     chooseBotAction(bot, opponent, pathPoints) {
-        // 용암 타일을 장애물로 추가해 경로 계산 시 용암을 피하도록 한다.
+        // 용암 타일과 뿌리장벽을 장애물로 추가해 경로 계산 시 피하도록 한다.
         const lavaObstacles = this.lavaTiles.map((t) => t.position);
-        const effectiveObstacles = [...this.obstacles, ...lavaObstacles];
+        const rootWallObstacles = this.rootWallTiles.map((t) => t.position);
+        const effectiveObstacles = [...this.obstacles, ...lavaObstacles, ...rootWallObstacles];
         // ── 무력화 적 섬멸 패턴 최우선 처리 ──────────────────────────────────
         // 상대가 오버드라이브 부작용으로 이동 불가 상태일 때 강제 진입.
         // forced blitz 등 다른 모든 패턴보다 먼저 체크해야 한다.
@@ -1851,6 +1860,7 @@ class AbilityRoom {
         const effectiveObstacles = [
             ...this.obstacles,
             ...this.lavaTiles.map((t) => t.position),
+            ...this.rootWallTiles.map((t) => t.position),
         ];
         const validCandidates = [];
         for (const launchPos of listBoardPositions()) {
@@ -2661,6 +2671,7 @@ class AbilityRoom {
         this.obstacles = [];
         this.lavaTiles = [];
         this.trapTiles = [];
+        this.rootWallTiles = [];
         this.resetPlayers();
         this.updateRoles();
         this.readySockets.clear();

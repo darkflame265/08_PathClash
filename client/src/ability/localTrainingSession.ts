@@ -501,7 +501,11 @@ function validateTrainingPlan(
   const hasBlitz = uniqueSkills.some(
     (skill) => skill.skillId === "electric_blitz",
   );
-  const validationObstacles = hasPhaseShift ? [] : obstacles;
+  const movementObstacles = [
+    ...obstacles,
+    ...rootWallTiles.map((tile) => tile.position),
+  ];
+  const validationObstacles = hasPhaseShift ? [] : movementObstacles;
 
   for (const skill of uniqueSkills) {
     if (skill.target && !inBoard(skill.target)) return null;

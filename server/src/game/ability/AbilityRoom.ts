@@ -1568,6 +1568,10 @@ export class AbilityRoom {
     const hasOverdrive = uniqueSkills.some((skill) => skill.skillId === 'gold_overdrive');
     const teleport = uniqueSkills.find((skill) => skill.skillId === 'quantum_shift') ?? null;
     const hasBlitz = uniqueSkills.some((skill) => skill.skillId === 'electric_blitz');
+    const movementObstacles = [
+      ...this.obstacles,
+      ...this.rootWallTiles.map((tile) => tile.position),
+    ];
     const hasAttackSkill = uniqueSkills.some(
       (skill) =>
         skill.skillId === 'ember_blast' ||
@@ -1593,7 +1597,7 @@ export class AbilityRoom {
     if (player.reboundLocked && path.length > 0) return null;
 
     if (!isOverdriveTurn && !hasBlitz) {
-      const validationObstacles = hasPhaseShift ? [] : this.obstacles;
+      const validationObstacles = hasPhaseShift ? [] : movementObstacles;
 
       if (teleport) {
         if (!teleport.target) return null;
@@ -1663,7 +1667,7 @@ export class AbilityRoom {
     for (const movementSkill of movementSkills) {
       if (movementSkill.step < cursor) return null;
       const prefixSegment = path.slice(cursor, movementSkill.step);
-      const validationObstacles = hasPhaseShift ? [] : this.obstacles;
+      const validationObstacles = hasPhaseShift ? [] : movementObstacles;
       if (!isValidPath(segmentStart, prefixSegment, pathPoints, validationObstacles)) {
         return null;
       }
@@ -1699,7 +1703,7 @@ export class AbilityRoom {
     }
 
     const suffix = path.slice(cursor);
-    const validationObstacles = hasPhaseShift ? [] : this.obstacles;
+    const validationObstacles = hasPhaseShift ? [] : movementObstacles;
     if (!isValidPath(segmentStart, suffix, pathPoints, validationObstacles)) {
       return null;
     }

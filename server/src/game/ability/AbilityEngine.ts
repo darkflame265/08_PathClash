@@ -238,6 +238,12 @@ export function resolveAbilityRound(params: {
   let blueReboundLocked = blue.reboundLocked;
   let redBlitz = false;
   let blueBlitz = false;
+  let redStoppedByRootWall = false;
+  let blueStoppedByRootWall = false;
+  let redPathBlockedAtStep: number | null = null;
+  let bluePathBlockedAtStep: number | null = null;
+  let redRootWallStopPosition: Position | null = null;
+  let blueRootWallStopPosition: Position | null = null;
   let redBlitzDamagedThisStep = false;
   let blueBlitzDamagedThisStep = false;
   let redSunChariot = false;
@@ -931,10 +937,37 @@ export function resolveAbilityRound(params: {
       const bluePrev = { ...bluePos };
       redPrevForStep = redPrev;
       bluePrevForStep = bluePrev;
-      const redNext =
-        !redBlitz && step <= redPath.length ? { ...redPath[step - 1] } : redPos;
-      const blueNext =
-        !blueBlitz && step <= bluePath.length ? { ...bluePath[step - 1] } : bluePos;
+      const redCanAdvance =
+        !redBlitz && !redStoppedByRootWall && step <= redPath.length;
+      const blueCanAdvance =
+        !blueBlitz && !blueStoppedByRootWall && step <= bluePath.length;
+      const redCandidate = redCanAdvance ? { ...redPath[step - 1] } : redPos;
+      const blueCandidate = blueCanAdvance ? { ...bluePath[step - 1] } : bluePos;
+
+      // Root walls stop normal movement at the tile before the wall.
+      // Once stopped, the piece stays there for the rest of this movement.
+      const redBlockedByRootWall =
+        redCanAdvance &&
+        !samePosition(redCandidate, redPrev) &&
+        activeRootWallTiles.some((tile) => samePosition(redCandidate, tile.position));
+      const blueBlockedByRootWall =
+        blueCanAdvance &&
+        !samePosition(blueCandidate, bluePrev) &&
+        activeRootWallTiles.some((tile) => samePosition(blueCandidate, tile.position));
+
+      if (redBlockedByRootWall) {
+        redStoppedByRootWall = true;
+        redPathBlockedAtStep ??= step;
+        redRootWallStopPosition ??= { ...redPrev };
+      }
+      if (blueBlockedByRootWall) {
+        blueStoppedByRootWall = true;
+        bluePathBlockedAtStep ??= step;
+        blueRootWallStopPosition ??= { ...bluePrev };
+      }
+
+      const redNext = redBlockedByRootWall ? { ...redPrev } : redCandidate;
+      const blueNext = blueBlockedByRootWall ? { ...bluePrev } : blueCandidate;
 
       const startsStepOverlapped = samePosition(redPrev, bluePrev);
       const escaperStayedStill =
@@ -946,18 +979,8 @@ export function resolveAbilityRound(params: {
           ? !samePosition(redNext, redPrev)
           : !samePosition(blueNext, bluePrev);
 
-      // Root wall: block ALL players (blitz bypasses)
-      const redBlockedByRootWall =
-        !redBlitz &&
-        !samePosition(redNext, redPrev) &&
-        activeRootWallTiles.some((tile) => samePosition(redNext, tile.position));
-      const blueBlockedByRootWall =
-        !blueBlitz &&
-        !samePosition(blueNext, bluePrev) &&
-        activeRootWallTiles.some((tile) => samePosition(blueNext, tile.position));
-
-      redPos = redBlockedByRootWall ? { ...redPrev } : redNext;
-      bluePos = blueBlockedByRootWall ? { ...bluePrev } : blueNext;
+      redPos = redNext;
+      bluePos = blueNext;
 
       if (
         attackerQuantumOverlapPending &&
@@ -1253,10 +1276,36 @@ export function resolveAbilityRound(params: {
     }))
     .filter((tile) => tile.remainingTurns > 0);
 
+  const resolveBlockedPath = (
+    path: Position[],
+    blockedAtStep: number | null,
+    stopPosition: Position | null,
+  ) => {
+    if (blockedAtStep === null || !stopPosition) return path;
+    return [
+      ...path.slice(0, blockedAtStep - 1),
+      ...Array.from(
+        { length: path.length - blockedAtStep + 1 },
+        () => ({ ...stopPosition }),
+      ),
+    ];
+  };
+
+  const resolvedRedPath = resolveBlockedPath(
+    redPath,
+    redPathBlockedAtStep,
+    redRootWallStopPosition,
+  );
+  const resolvedBluePath = resolveBlockedPath(
+    bluePath,
+    bluePathBlockedAtStep,
+    blueRootWallStopPosition,
+  );
+
   return {
     payload: {
-      redPath,
-      bluePath,
+      redPath: resolvedRedPath,
+      bluePath: resolvedBluePath,
       redStart,
       blueStart,
       lavaTiles: activeLavaTiles.map((tile) => ({
