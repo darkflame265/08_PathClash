@@ -2524,6 +2524,18 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
         if (!isSfxMuted) {
           playRootWall(sfxVolume);
         }
+        for (const position of event.affectedPositions ?? []) {
+          const effectId = Date.now() + Math.random();
+          setCollisionEffects((prev) => [
+            ...prev,
+            { id: effectId, position, direction: { dx: 0, dy: 0 } },
+          ]);
+          queueAnimationTimeout(() => {
+            setCollisionEffects((prev) =>
+              prev.filter((entry) => entry.id !== effectId),
+            );
+          }, 520);
+        }
       }
 
       if (event.skillId === "aurora_heal") {
