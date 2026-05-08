@@ -364,6 +364,56 @@ function getSkillPriority(skillId: AbilitySkillId): number {
         : 2;
 }
 
+function getAbilitySkillCategoryLabel(
+  category: "attack" | "defense" | "utility" | "passive",
+  lang: "en" | "kr",
+) {
+  if (lang === "en") {
+    switch (category) {
+      case "attack":
+        return "Attack";
+      case "defense":
+        return "Defense";
+      case "utility":
+        return "Utility";
+      case "passive":
+        return "Passive";
+      default:
+        return category;
+    }
+  }
+
+  switch (category) {
+    case "attack":
+      return "공격";
+    case "defense":
+      return "방어";
+    case "utility":
+      return "유틸";
+    case "passive":
+      return "패시브";
+    default:
+      return category;
+  }
+}
+
+function getAbilitySkillCategoryIcon(
+  category: "attack" | "defense" | "utility" | "passive",
+) {
+  switch (category) {
+    case "attack":
+      return "⚔";
+    case "defense":
+      return "🛡";
+    case "utility":
+      return "♥";
+    case "passive":
+      return "⏱";
+    default:
+      return "✦";
+  }
+}
+
 function useAdaptiveCellSize(
   gridAreaRef: React.RefObject<HTMLDivElement | null>,
 ) {
@@ -3831,17 +3881,43 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
                     </span>
                   </span>
                   <span className="skin-lock-meta ability-skill-meta">
-                    <span className="skin-lock-icon" aria-hidden="true">
-                      ✨
-                    </span>
-                    <span>
-                      {skill.category === "passive"
-                        ? lang === "en"
-                          ? "Passive · Auto"
-                          : "패시브 · 자동"
-                        : lang === "en"
-                          ? `${skill.manaCost} mana · ${skill.category}`
-                          : `마나 ${skill.manaCost} · ${skill.category === "attack" ? "공격" : skill.category === "defense" ? "방어" : "유틸"}`}
+                    {skill.category !== "passive" && (
+                      <span className="ability-skill-info-pill ability-skill-mana-pill">
+                        <span
+                          className="ability-skill-info-icon"
+                          aria-hidden="true"
+                        >
+                          {"💧"}
+                        </span>
+
+                        <span>
+                          {lang === "en"
+                            ? `Mana ${skill.manaCost}`
+                            : `마나 ${skill.manaCost}`}
+                        </span>
+                      </span>
+                    )}
+
+                    <span
+                      className={`ability-skill-info-pill ability-skill-category-pill is-${skill.category}`}
+                    >
+                      <span
+                        className="ability-skill-info-icon"
+                        aria-hidden="true"
+                      >
+                        {getAbilitySkillCategoryIcon(skill.category)}
+                      </span>
+
+                      <span>
+                        {skill.category === "passive"
+                          ? lang === "en"
+                            ? "Auto"
+                            : "자동"
+                          : getAbilitySkillCategoryLabel(
+                              skill.category,
+                              lang,
+                            )}
+                      </span>
                     </span>
                   </span>
                 </button>
