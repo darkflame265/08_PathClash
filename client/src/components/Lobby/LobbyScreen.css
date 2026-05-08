@@ -4232,6 +4232,16 @@
     0 0 28px rgba(30, 64, 175, 0.68);
 }
 
+.ability-skill-icon-glyph.is-root-wall {
+  color: #dcffe9;
+  font-weight: 900;
+  text-shadow:
+    0 0 4px rgba(74, 222, 128, 1),
+    0 0 8px rgba(187, 247, 208, 1),
+    0 0 16px rgba(34, 197, 94, 0.95),
+    0 0 28px rgba(21, 128, 61, 0.7);
+}
+
 .ability-skill-preview-classic-guard {
   border: 2px solid #7dd3fc;
   background: radial-gradient(
@@ -4406,6 +4416,23 @@
     0 0 8px rgba(185, 28, 28, 0.65),
     inset 0 0 2px rgba(255, 255, 255, 0.25),
     inset 0 0 5px rgba(127, 29, 29, 0.78);
+}
+
+.ability-skill-preview-root-wall {
+  border: 2px solid #86efac;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(220, 255, 233, 0.96) 0%,
+    rgba(74, 222, 128, 0.84) 30%,
+    rgba(34, 197, 94, 0.76) 60%,
+    rgba(20, 83, 45, 0.95) 100%
+  );
+  box-shadow:
+    0 0 2px rgba(187, 247, 208, 0.95),
+    0 0 5px rgba(74, 222, 128, 0.85),
+    0 0 8px rgba(21, 128, 61, 0.65),
+    inset 0 0 2px rgba(255, 255, 255, 0.25),
+    inset 0 0 5px rgba(20, 83, 45, 0.78);
 }
 
 .ai-tutorial-prompt-backdrop {
