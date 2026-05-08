@@ -20,6 +20,7 @@ export type PieceSkin =
   | 'arc_reactor'
   | 'electric_core'
   | 'berserker'
+  | 'moonlight_seed'
   | 'quantum'
   | 'atomic'
   | 'chronos'
