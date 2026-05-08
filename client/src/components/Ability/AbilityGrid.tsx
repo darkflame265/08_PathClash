@@ -86,6 +86,10 @@ interface Props {
     };
   };
   movingPaths: { red: Position[]; blue: Position[] };
+  movingRootWallBlockedPaths: {
+    red: { start: Position; path: Position[] } | null;
+    blue: { start: Position; path: Position[] } | null;
+  };
   movingStarts: { red: Position; blue: Position } | null;
   timeRewindFocusColor: PlayerColor | null;
   timeRewindActive: boolean;
@@ -178,6 +182,7 @@ export function AbilityGrid({
   activeBerserkerRages,
   movingAtomicClones,
   movingPaths,
+  movingRootWallBlockedPaths,
   movingStarts,
   timeRewindFocusColor,
   timeRewindActive,
@@ -1104,7 +1109,18 @@ export function AbilityGrid({
           )}
 
         {isPlaybackPhase ? (
-          movingTeleportMarkers.red && movingTeleportSteps.red !== null ? (
+          <>
+            {movingRootWallBlockedPaths.red ? (
+              <PathLine
+                color="red"
+                path={movingRootWallBlockedPaths.red.path}
+                startPos={movingRootWallBlockedPaths.red.start}
+                cellSize={responsiveCellSize}
+                isPlanning={false}
+                muted
+              />
+            ) : null}
+            {movingTeleportMarkers.red && movingTeleportSteps.red !== null ? (
             <>
               <PathLine
                 color="red"
@@ -1121,7 +1137,7 @@ export function AbilityGrid({
                 isPlanning={false}
               />
             </>
-          ) : (
+            ) : (
             <PathLine
               color="red"
               path={redPath}
@@ -1129,7 +1145,8 @@ export function AbilityGrid({
               cellSize={responsiveCellSize}
               isPlanning={false}
             />
-          )
+            )}
+          </>
         ) : currentColor !== "red" ||
           !teleportTarget ||
           teleportStep === null ? (
@@ -1169,7 +1186,18 @@ export function AbilityGrid({
             movingBlitzProgress.red,
           )}
         {isPlaybackPhase ? (
-          movingTeleportMarkers.blue && movingTeleportSteps.blue !== null ? (
+          <>
+            {movingRootWallBlockedPaths.blue ? (
+              <PathLine
+                color="blue"
+                path={movingRootWallBlockedPaths.blue.path}
+                startPos={movingRootWallBlockedPaths.blue.start}
+                cellSize={responsiveCellSize}
+                isPlanning={false}
+                muted
+              />
+            ) : null}
+            {movingTeleportMarkers.blue && movingTeleportSteps.blue !== null ? (
             <>
               <PathLine
                 color="blue"
@@ -1186,7 +1214,7 @@ export function AbilityGrid({
                 isPlanning={false}
               />
             </>
-          ) : (
+            ) : (
             <PathLine
               color="blue"
               path={bluePath}
@@ -1194,7 +1222,8 @@ export function AbilityGrid({
               cellSize={responsiveCellSize}
               isPlanning={false}
             />
-          )
+            )}
+          </>
         ) : currentColor !== "blue" ||
           !teleportTarget ||
           teleportStep === null ? (

@@ -328,4 +328,8 @@ export interface AbilityResolutionPayload {
     sourceSkillId?: string;
   }>;
   skillEvents: AbilitySkillEvent[];
+  rootWallBlockedPaths?: {
+    red: { start: Position; path: Position[] } | null;
+    blue: { start: Position; path: Position[] } | null;
+  };
 }

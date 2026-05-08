@@ -148,6 +148,9 @@ type NullableNumberByColor = { red: number | null; blue: number | null };
 type PositionByColor = { red: Position; blue: Position };
 type NullablePositionByColor = { red: Position | null; blue: Position | null };
 type PathsByColor = { red: Position[]; blue: Position[] };
+type RootWallBlockedPathsByColor = NonNullable<
+  AbilityResolutionPayload["rootWallBlockedPaths"]
+>;
 type AtomicCloneVisual = {
   start: Position | null;
   path: Position[];
@@ -177,6 +180,10 @@ function createNullMarkers(): NullablePositionByColor {
 
 function createEmptyPaths(): PathsByColor {
   return { red: [], blue: [] };
+}
+
+function createEmptyRootWallBlockedPaths(): RootWallBlockedPathsByColor {
+  return { red: null, blue: null };
 }
 
 function createEmptyAtomicClone(): AtomicCloneVisual {
@@ -534,6 +541,8 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     useState<BoolByColor>(createFalseFlags);
   const [movingPaths, setMovingPaths] =
     useState<PathsByColor>(createEmptyPaths);
+  const [movingRootWallBlockedPaths, setMovingRootWallBlockedPaths] =
+    useState<RootWallBlockedPathsByColor>(createEmptyRootWallBlockedPaths);
   const [movingStarts, setMovingStarts] = useState<PositionByColor | null>(
     null,
   );
@@ -952,6 +961,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
 
   const resetMovingVisualState = () => {
     setMovingPaths(createEmptyPaths());
+    setMovingRootWallBlockedPaths(createEmptyRootWallBlockedPaths());
     setMovingStarts(null);
     setMovingTeleportMarkers(createNullMarkers());
     setMovingTeleportSteps(createNullSteps());
@@ -986,6 +996,9 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     nextAtomicClones: AtomicCloneVisualsByColor,
   ) => {
     setMovingPaths({ red: payload.redPath, blue: payload.bluePath });
+    setMovingRootWallBlockedPaths(
+      payload.rootWallBlockedPaths ?? createEmptyRootWallBlockedPaths(),
+    );
     setMovingBlitzColors(nextBlitzColors);
     setMovingBlitzProgress(createZeroCounters());
     setMovingBlitzSteps(nextBlitzSteps);
@@ -4440,6 +4453,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
             activeBerserkerRages={visibleBerserkerRages}
             movingAtomicClones={movingAtomicClones}
             movingPaths={movingPaths}
+            movingRootWallBlockedPaths={movingRootWallBlockedPaths}
             movingStarts={movingStarts}
             timeRewindFocusColor={timeRewindFocusColor}
             timeRewindActive={timeRewindFocusColor !== null}

@@ -1290,6 +1290,17 @@ export function resolveAbilityRound(params: {
       ),
     ];
   };
+  const resolveBlockedPathTail = (
+    path: Position[],
+    blockedAtStep: number | null,
+    stopPosition: Position | null,
+  ) => {
+    if (blockedAtStep === null || !stopPosition) return null;
+    return {
+      start: { ...stopPosition },
+      path: path.slice(blockedAtStep - 1).map((position) => ({ ...position })),
+    };
+  };
 
   const resolvedRedPath = resolveBlockedPath(
     redPath,
@@ -1318,6 +1329,18 @@ export function resolveAbilityRound(params: {
         owner: tile.owner,
         remainingTurns: tile.remainingTurns,
       })),
+      rootWallBlockedPaths: {
+        red: resolveBlockedPathTail(
+          redPath,
+          redPathBlockedAtStep,
+          redRootWallStopPosition,
+        ),
+        blue: resolveBlockedPathTail(
+          bluePath,
+          bluePathBlockedAtStep,
+          blueRootWallStopPosition,
+        ),
+      },
       blocks,
       collisions,
       skillEvents,

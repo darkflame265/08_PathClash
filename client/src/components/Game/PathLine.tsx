@@ -8,6 +8,7 @@ interface Props {
   cellSize: number;
   isPlanning?: boolean;
   animateReveal?: boolean;
+  muted?: boolean;
 }
 
 export function PathLine({
@@ -17,6 +18,7 @@ export function PathLine({
   cellSize,
   isPlanning = false,
   animateReveal = false,
+  muted = false,
 }: Props) {
   const glowId = useId();
 
@@ -35,19 +37,21 @@ export function PathLine({
     ? Math.max(4, cellSize * 0.085)
     : Math.max(3, cellSize * 0.055);
   const stroke = isRed ? '#ef4444' : '#3b82f6';
-  const opacity = isRed ? 0.7 : 0.85;
-  const zIndex = isRed ? 2 : 3;
+  const opacity = muted ? 0.24 : isRed ? 0.7 : 0.85;
+  const zIndex = muted ? 1 : isRed ? 2 : 3;
   const outlineStroke = isRed
     ? 'rgba(84, 12, 18, 0.92)'
     : 'rgba(8, 30, 76, 0.92)';
   const outlineWidth = strokeWidth + Math.max(4, cellSize * 0.042);
   const glowWidth = strokeWidth + Math.max(8, cellSize * 0.09);
-  const glowOpacity = isRed ? 0.48 : 0.55;
+  const glowOpacity = muted ? 0.12 : isRed ? 0.48 : 0.55;
   const innerHighlight = isRed ? '#fecaca' : '#bfdbfe';
   const endRadius = isRed
     ? Math.max(4, cellSize * 0.072)
     : Math.max(3, cellSize * 0.052);
-  const strokeDasharray = isPlanning
+  const strokeDasharray = muted
+    ? `${strokeWidth * 1.2} ${strokeWidth * 1.35}`
+    : isPlanning
     ? `${strokeWidth * 2} ${strokeWidth * 1.5}`
     : undefined;
   const endX = path[path.length - 1].col * cellSize + cellSize / 2;
@@ -101,7 +105,7 @@ export function PathLine({
         fill="none"
         stroke={outlineStroke}
         strokeWidth={outlineWidth}
-        strokeOpacity={0.9}
+        strokeOpacity={muted ? 0.28 : 0.9}
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeDasharray={strokeDasharray}
@@ -121,7 +125,7 @@ export function PathLine({
         fill="none"
         stroke={innerHighlight}
         strokeWidth={Math.max(1.4, strokeWidth * 0.28)}
-        strokeOpacity={isRed ? 0.35 : 0.42}
+        strokeOpacity={muted ? 0.16 : isRed ? 0.35 : 0.42}
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeDasharray={strokeDasharray}
@@ -139,7 +143,7 @@ export function PathLine({
         cy={endY}
         r={endRadius + Math.max(2, cellSize * 0.025)}
         fill={outlineStroke}
-        fillOpacity={0.95}
+        fillOpacity={muted ? 0.3 : 0.95}
       />
       <circle cx={endX} cy={endY} r={endRadius} fill={stroke} fillOpacity={opacity} />
     </svg>

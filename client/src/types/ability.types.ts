@@ -368,6 +368,10 @@ export interface AbilityResolutionPayload {
     sourceSkillId?: string;
   }>;
   skillEvents: AbilitySkillEvent[];
+  rootWallBlockedPaths?: {
+    red: { start: Position; path: Position[] } | null;
+    blue: { start: Position; path: Position[] } | null;
+  };
 }
 
 export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
