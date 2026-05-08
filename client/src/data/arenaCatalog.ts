@@ -133,6 +133,9 @@ export const SKIN_ARENA_REQUIREMENTS: Partial<Record<PieceSkin, number>> = {
   sun: 6,
   gold_core: 6,
 
+  // Arena 7: 몽환의 숲
+  moonlight_seed: 7,
+
   // Arena 8: 과학의 방
   atomic: 8,
   arc_reactor: 8,
@@ -159,6 +162,7 @@ export const ARENA_REWARD_SKINS: Partial<Record<number, PieceSkin[]>> = {
   4: ["electric_core"],
   5: ["wizard"],
   6: ["sun", "gold_core"],
+  7: ["moonlight_seed"],
   8: ["atomic", "arc_reactor"],
   10: ["chronos"],
 };
