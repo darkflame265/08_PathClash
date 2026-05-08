@@ -13,6 +13,7 @@ import { GoldCorePreview } from "../../../skins/common/gold_core/Preview";
 import { NeonPulsePreview } from "../../../skins/common/neon_pulse/Preview";
 import { InfernoPreview } from "../../../skins/common/inferno/Preview";
 import { QuantumPreview } from "../../../skins/common/quantum/Preview";
+import { MoonlightSeedPreview } from "../../../skins/rare/moonlight_seed/Preview";
 
 import { ARENA_RANGES, ARENA_REWARD_SKINS } from "../../../data/arenaCatalog";
 import { LobbyArenaOverlay } from "./LobbyArenaOverlay";
@@ -68,6 +69,7 @@ const SKIN_META: Partial<Record<PieceSkin, { name: string; tier: string }>> = {
 };
 
 SKIN_META.berserker = { name: "버서커", tier: "rare" };
+SKIN_META.moonlight_seed = { name: "월광씨앗", tier: "rare" };
 
 function renderSkinPreview(skinId: PieceSkin) {
   switch (skinId) {
@@ -87,6 +89,8 @@ function renderSkinPreview(skinId: PieceSkin) {
       return <ElectricCorePreview />;
     case "berserker":
       return <BerserkerPreview />;
+    case "moonlight_seed":
+      return <MoonlightSeedPreview />;
     case "quantum":
       return <QuantumPreview />;
     case "wizard":
