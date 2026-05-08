@@ -87,3 +87,84 @@
   );
   animation: bsk-inner-glow-anim 2.2s ease-in-out infinite;
 }
+
+@keyframes bsk-heartbeat {
+  0% {
+    transform: scale(1);
+    filter: saturate(1);
+  }
+  7% {
+    transform: scale(1.1);
+    filter: saturate(1.15) brightness(1.1);
+  }
+  14% {
+    transform: scale(1.03);
+    filter: saturate(1.05);
+  }
+  24% {
+    transform: scale(1.18);
+    filter: saturate(1.22) brightness(1.15);
+  }
+  40% {
+    transform: scale(0.97);
+    filter: saturate(0.95);
+  }
+  100% {
+    transform: scale(1);
+    filter: saturate(1);
+  }
+}
+
+@keyframes bsk-spikes-anim {
+  0% {
+    opacity: 0.4;
+    transform: scale(1) rotate(0deg);
+  }
+  7% {
+    opacity: 0.8;
+    transform: scale(1.1) rotate(1.2deg);
+  }
+  14% {
+    opacity: 0.55;
+    transform: scale(1.03) rotate(0.5deg);
+  }
+  24% {
+    opacity: 1;
+    transform: scale(1.19) rotate(-1.8deg);
+  }
+  40% {
+    opacity: 0.35;
+    transform: scale(0.97) rotate(0deg);
+  }
+  100% {
+    opacity: 0.4;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes bsk-inner-glow-anim {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.85);
+  }
+  7% {
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
+  14% {
+    opacity: 0.65;
+    transform: scale(0.9);
+  }
+  24% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  40% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scale(0.85);
+  }
+}
