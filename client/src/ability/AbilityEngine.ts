@@ -946,19 +946,15 @@ export function resolveAbilityRound(params: {
           ? !samePosition(redNext, redPrev)
           : !samePosition(blueNext, bluePrev);
 
-      // Root wall: block opponent movement (blitz bypasses)
+      // Root wall: block ALL players (blitz bypasses)
       const redBlockedByRootWall =
         !redBlitz &&
         !samePosition(redNext, redPrev) &&
-        activeRootWallTiles.some(
-          (tile) => tile.owner !== 'red' && samePosition(redNext, tile.position),
-        );
+        activeRootWallTiles.some((tile) => samePosition(redNext, tile.position));
       const blueBlockedByRootWall =
         !blueBlitz &&
         !samePosition(blueNext, bluePrev) &&
-        activeRootWallTiles.some(
-          (tile) => tile.owner !== 'blue' && samePosition(blueNext, tile.position),
-        );
+        activeRootWallTiles.some((tile) => samePosition(blueNext, tile.position));
 
       redPos = redBlockedByRootWall ? { ...redPrev } : redNext;
       bluePos = blueBlockedByRootWall ? { ...bluePrev } : blueNext;
