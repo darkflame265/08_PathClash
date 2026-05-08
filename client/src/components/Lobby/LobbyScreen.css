@@ -4024,7 +4024,7 @@
   flex: 0 0 7.65rem;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: flex-end;
   justify-content: center;
   gap: 0.55rem;
   color: #93c5fd;
@@ -4034,6 +4034,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: fit-content;
+  max-width: 100%;
   gap: 0.32rem;
   min-height: 2rem;
   padding: 0.32rem 0.65rem;
