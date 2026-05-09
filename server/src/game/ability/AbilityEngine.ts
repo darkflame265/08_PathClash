@@ -166,6 +166,39 @@ function updateRootWallTile(
   rootWallTiles.push({ position: { ...position }, owner, remainingTurns });
 }
 
+function updateIceFieldTile(
+  iceFieldTiles: AbilityIceFieldTile[],
+  position: Position,
+  remainingTurns: number,
+) {
+  const existing = iceFieldTiles.find((tile) => samePosition(tile.position, position));
+  if (existing) {
+    existing.remainingTurns = Math.max(existing.remainingTurns, remainingTurns);
+    return;
+  }
+  iceFieldTiles.push({ position: { ...position }, remainingTurns });
+}
+
+function computeSlidePath(
+  from: Position,
+  direction: { dr: number; dc: number },
+  activeRootWallTiles: AbilityRootWallTile[],
+): Position[] {
+  const slide: Position[] = [];
+  let row = from.row;
+  let col = from.col;
+  for (;;) {
+    const nr = row + direction.dr;
+    const nc = col + direction.dc;
+    if (nr < 0 || nr > 4 || nc < 0 || nc > 4) break;
+    if (activeRootWallTiles.some((t) => t.position.row === nr && t.position.col === nc)) break;
+    row = nr;
+    col = nc;
+    slide.push({ row, col });
+  }
+  return slide;
+}
+
 function isAffectedByLava(
   prev: Position,
   next: Position,
