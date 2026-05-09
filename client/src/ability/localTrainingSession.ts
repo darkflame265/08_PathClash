@@ -12,6 +12,7 @@ import {
   ABILITY_SKILL_COSTS,
   ABILITY_SKILL_SERVER_RULES,
   type AbilityBattleState,
+  type AbilityIceFieldTile,
   type AbilityLavaTile,
   type AbilityRootWallTile,
   type AbilityPlayerState,
@@ -84,6 +85,7 @@ let obstacles: Position[] = [];
 let lavaTiles: AbilityLavaTile[] = [];
 let trapTiles: AbilityTrapTile[] = [];
 let rootWallTiles: AbilityRootWallTile[] = [];
+let iceFieldTiles: AbilityIceFieldTile[] = [];
 let roundEndsAt = 0;
 let planningTimeout: number | null = null;
 let nextRoundTimeout: number | null = null;
@@ -262,6 +264,7 @@ function toClientState(): AbilityBattleState {
     lavaTiles,
     trapTiles: trapTiles.filter((tile) => tile.owner === "red"),
     rootWallTiles,
+    iceFieldTiles,
     players: {
       red: {
         id: redPlayer.id,
@@ -707,6 +710,7 @@ function revealPlans(): void {
     lavaTiles,
     trapTiles,
     rootWallTiles,
+    iceFieldTiles,
   });
 
   applyTimeRewindIfNeeded("red", redPlayer, resolution);
@@ -744,6 +748,7 @@ function revealPlans(): void {
   lavaTiles = resolution.lavaTiles;
   trapTiles = resolution.trapTiles;
   rootWallTiles = resolution.rootWallTiles;
+  iceFieldTiles = resolution.iceFieldTiles;
 
   emit("ability_resolution", {
     ...resolution.payload,
@@ -792,6 +797,7 @@ function startGame(): void {
   lavaTiles = [];
   trapTiles = [];
   rootWallTiles = [];
+  iceFieldTiles = [];
   const initial = getInitialPositions();
   redPlayer.hp = ABILITY_STARTING_HP;
   redPlayer.position = { ...initial.red };
@@ -1057,4 +1063,5 @@ export function stopLocalAbilityTraining(): void {
   lavaTiles = [];
   trapTiles = [];
   rootWallTiles = [];
+  iceFieldTiles = [];
 }
