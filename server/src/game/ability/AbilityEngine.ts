@@ -8,6 +8,7 @@ import type {
   AbilityBlockEvent,
   AbilityDamageEvent,
   AbilityHealEvent,
+  AbilityIceFieldTile,
   AbilityLavaTile,
   AbilityRootWallTile,
   AbilityTrapTile,
@@ -182,6 +183,7 @@ export function resolveAbilityRound(params: {
   lavaTiles: AbilityLavaTile[];
   trapTiles: AbilityTrapTile[];
   rootWallTiles: AbilityRootWallTile[];
+  iceFieldTiles: AbilityIceFieldTile[];
 }): {
   payload: AbilityResolutionPayload;
   redState: Pick<AbilityPlayerState, 'position' | 'hp' | 'mana' | 'invulnerableSteps' | 'pendingManaBonus' | 'pendingOverdriveStage' | 'pendingVoidCloak' | 'pendingBerserkerRage' | 'overdriveActive' | 'berserkerRageActive' | 'reboundLocked'>;
@@ -189,6 +191,7 @@ export function resolveAbilityRound(params: {
   lavaTiles: AbilityLavaTile[];
   trapTiles: AbilityTrapTile[];
   rootWallTiles: AbilityRootWallTile[];
+  iceFieldTiles: AbilityIceFieldTile[];
   winner: PlayerColor | 'draw' | null;
 } {
   const { red, blue, attackerColor, obstacles } = params;

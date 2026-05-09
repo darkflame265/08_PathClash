@@ -27,7 +27,8 @@ export type AbilitySkillId =
   | 'wizard_magic_mine'
   | 'chronos_time_rewind'
   | 'berserker_rage'
-  | 'root_wall';
+  | 'root_wall'
+  | 'ice_field';
 export type AbilitySkillCategory = 'attack' | 'defense' | 'utility' | 'passive';
 export type AbilitySkillRoleRestriction = 'any' | 'attacker' | 'escaper';
 export type AbilitySkillStepRule = 'any' | 'zero_only';
@@ -66,6 +67,7 @@ export const ABILITY_SKILL_COSTS: Record<AbilitySkillId, number> = {
   chronos_time_rewind: 0,
   berserker_rage: 8,
   root_wall: 7,
+  ice_field: 6,
 };
 
 // Shared validation metadata for server-side planning rules.
@@ -173,6 +175,11 @@ export const ABILITY_SKILL_SERVER_RULES: Record<
     stepRule: 'zero_only',
     targetRule: 'position',
   },
+  ice_field: {
+    roleRestriction: 'any',
+    stepRule: 'zero_only',
+    targetRule: 'position',
+  },
 };
 
 export interface AbilityTurnSnapshot {
@@ -196,6 +203,11 @@ export interface AbilityLavaTile {
 export interface AbilityRootWallTile {
   position: Position;
   owner: PlayerColor;
+  remainingTurns: number;
+}
+
+export interface AbilityIceFieldTile {
+  position: Position;
   remainingTurns: number;
 }
 
@@ -265,6 +277,7 @@ export interface AbilityBattleState {
   lavaTiles: AbilityLavaTile[];
   trapTiles: AbilityTrapTile[];
   rootWallTiles: AbilityRootWallTile[];
+  iceFieldTiles: AbilityIceFieldTile[];
   players: {
     red: ClientAbilityPlayerState;
     blue: ClientAbilityPlayerState;
@@ -332,6 +345,11 @@ export interface AbilityResolutionPayload {
   }>;
   skillEvents: AbilitySkillEvent[];
   rootWallBlockedPaths?: {
+    red: { start: Position; path: Position[] } | null;
+    blue: { start: Position; path: Position[] } | null;
+  };
+  iceFieldTiles: AbilityIceFieldTile[];
+  iceSlideOverriddenPaths?: {
     red: { start: Position; path: Position[] } | null;
     blue: { start: Position; path: Position[] } | null;
   };
