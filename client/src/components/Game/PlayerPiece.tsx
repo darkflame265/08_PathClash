@@ -31,6 +31,7 @@ interface Props {
   isGuard?: boolean;
   isAtField?: boolean;
   isOverloaded?: boolean;
+  isIceSliding?: boolean;
   isBlitzing?: boolean;
   isSunChariotActive?: boolean;
   isRewinding?: boolean;
@@ -80,6 +81,7 @@ export function PlayerPiece({
   isGuard = false,
   isAtField = false,
   isOverloaded = false,
+  isIceSliding = false,
   isBlitzing = false,
   isSunChariotActive = false,
   isRewinding = false,
@@ -148,6 +150,7 @@ export function PlayerPiece({
     isCloaked ? 'piece-cloaked' : '',
     isPhased ? 'piece-phased' : '',
     isOverloaded ? 'piece-overloaded' : '',
+    isIceSliding ? 'piece-ice-sliding' : '',
     isBlitzing ? 'piece-blitzing' : '',
     isSunChariotActive ? 'piece-sun-chariot-active' : '',
     isRewinding ? 'piece-rewinding' : '',

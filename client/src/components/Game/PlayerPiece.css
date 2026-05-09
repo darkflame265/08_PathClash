@@ -1040,3 +1040,44 @@
   from { transform: rotate(0deg); }
   to   { transform: rotate(-360deg); }
 }
+
+/* Ice slide — rotation */
+@-webkit-keyframes rotate-center {
+  0% {
+    -webkit-transform: rotate(0);
+    transform: rotate(0);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+@keyframes rotate-center {
+  0% {
+    -webkit-transform: rotate(0);
+    transform: rotate(0);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+.player-piece.piece-ice-sliding .piece-visual {
+  -webkit-animation: rotate-center 0.4s linear infinite;
+  animation: rotate-center 0.4s linear infinite;
+}
+
+/* Ice slide — blue frozen tint */
+.player-piece.piece-ice-sliding .piece-inner,
+.player-piece.piece-ice-sliding .piece-inner::before,
+.player-piece.piece-ice-sliding .piece-inner::after,
+.player-piece.piece-ice-sliding .piece-inner > *,
+.player-piece.piece-ice-sliding .piece-inner canvas {
+  filter: saturate(0.55) hue-rotate(190deg) brightness(0.88) !important;
+}
+
+.player-piece.piece-ice-sliding .attacker-glow {
+  opacity: 0.55;
+  filter: hue-rotate(190deg) saturate(1.4);
+}

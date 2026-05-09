@@ -1623,6 +1623,7 @@ export function AbilityGrid({
                 (currentColor !== "red" &&
                   state.players.red.connected === false)
               }
+              isIceSliding={isPlaybackPhase && !!movingIceSlideOverriddenPaths.red}
               isBlitzing={movingBlitzProgress.red > 0}
               isSunChariotActive={activeSunChariots.red}
               isBerserkerRage={activeBerserkerRages.red}
@@ -1678,6 +1679,7 @@ export function AbilityGrid({
                 (currentColor !== "blue" &&
                   state.players.blue.connected === false)
               }
+              isIceSliding={isPlaybackPhase && !!movingIceSlideOverriddenPaths.blue}
               isBlitzing={movingBlitzProgress.blue > 0}
               isSunChariotActive={activeSunChariots.blue}
               isBerserkerRage={activeBerserkerRages.blue}
