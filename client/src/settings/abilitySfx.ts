@@ -18,6 +18,7 @@ export type AbilitySfxGainId =
   | "gold_overdrive_loop"
   | "magic_mine"
   | "root_wall"
+  | "ice_field"
   | "berserk_on";
 
 export const ABILITY_SFX_GAIN_IDS: AbilitySfxGainId[] = [
@@ -40,6 +41,7 @@ export const ABILITY_SFX_GAIN_IDS: AbilitySfxGainId[] = [
   "gold_overdrive_loop",
   "magic_mine",
   "root_wall",
+  "ice_field",
   "berserk_on",
 ];
 
@@ -75,6 +77,7 @@ export const ABILITY_SFX_GAIN_LABELS: Record<
   gold_overdrive_loop: { en: "Overdrive Loop", kr: "오버드라이브 지속음" },
   magic_mine: { en: "Magic Mine", kr: "마법 지뢰" },
   root_wall: { en: "Root Wall", kr: "뿌리장벽" },
+  ice_field: { en: "Ice Field", kr: "빙결지대" },
   berserk_on: { en: "Berserk", kr: "광폭화" },
 };
 

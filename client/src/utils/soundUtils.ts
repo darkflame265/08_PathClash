@@ -148,6 +148,10 @@ const ABILITY_SFX: Record<AbilitySfxId, AbilitySfxConfig> = {
     path: "/sfx/ability/root_wall.mp3",
     gain: 0.9,
   },
+  ice_field: {
+    path: "/sfx/ability/ice_field.mp3",
+    gain: 0.9,
+  },
   berserk_on: {
     path: "/sfx/ability/berserk_on.wav",
     gain: 0.9,
@@ -730,6 +734,10 @@ export function playRootWall(volume = 0.55): void {
   playAbilitySfx("root_wall", volume);
 }
 
+export function playIceField(volume = 0.55): void {
+  playAbilitySfx("ice_field", volume);
+}
+
 export function playBerserkOn(volume = 0.55): void {
   playAbilitySfx("berserk_on", volume);
 }
@@ -941,6 +949,9 @@ export function previewAbilitySfxSample(
       break;
     case "root_wall":
       playRootWall(volume);
+      break;
+    case "ice_field":
+      playIceField(volume);
       break;
     case "berserk_on":
       playBerserkOn(volume);
