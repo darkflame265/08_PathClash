@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="fh-bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0c2d48"/>
+      <stop offset="100%" stop-color="#000a14"/>
+    </radialGradient>
+    <filter id="fh-glow" x="-35%" y="-35%" width="170%" height="170%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="b1"/>
+      <feColorMatrix in="b1" type="matrix"
+        values="0 0 0 0 0.4  0 0 0 0 0.9  0 0 0 0 1  0 0 0 1.2 0"
+        result="g1"/>
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="b2"/>
+      <feColorMatrix in="b2" type="matrix"
+        values="0 0 0 0 0.2  0 0 0 0 0.7  0 0 0 0 1  0 0 0 0.6 0"
+        result="g2"/>
+      <feMerge>
+        <feMergeNode in="g2"/>
+        <feMergeNode in="g1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <g id="fh-arm">
+      <line x1="0" y1="0"    x2="0"    y2="-37"   stroke="#f0f9ff" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="0" y1="-18.5" x2="9.9"  y2="-24.2" stroke="#bae6fd" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="0" y1="-18.5" x2="-9.9" y2="-24.2" stroke="#bae6fd" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="0" y1="-29"   x2="6.8"  y2="-33"   stroke="#e0f2fe" stroke-width="1.4" stroke-linecap="round"/>
+      <line x1="0" y1="-29"   x2="-6.8" y2="-33"   stroke="#e0f2fe" stroke-width="1.4" stroke-linecap="round"/>
+      <polygon points="0,-42 3.5,-37 0,-32 -3.5,-37" fill="#e0f9ff"/>
+    </g>
+  </defs>
+  <circle cx="50" cy="50" r="50" fill="url(#fh-bg)"/>
+  <g transform="translate(50,50)" filter="url(#fh-glow)">
+    <use href="#fh-arm" transform="rotate(0)"/>
+    <use href="#fh-arm" transform="rotate(60)"/>
+    <use href="#fh-arm" transform="rotate(120)"/>
+    <use href="#fh-arm" transform="rotate(180)"/>
+    <use href="#fh-arm" transform="rotate(240)"/>
+    <use href="#fh-arm" transform="rotate(300)"/>
+    <circle cx="0" cy="0" r="4" fill="#ffffff" opacity="0.9"/>
+  </g>
+</svg>
