@@ -64,6 +64,7 @@ interface Props {
   teleportMarker: Position | null;
   infernoMarker: Position | null;
   rootWallMarker: Position | null;
+  iceFieldMarker: Position | null;
   movingTeleportMarkers: { red: Position | null; blue: Position | null };
   movingTeleportSteps: { red: number | null; blue: number | null };
   movingBlitzColors: { red: boolean; blue: boolean };
@@ -90,6 +91,10 @@ interface Props {
     red: { start: Position; path: Position[] } | null;
     blue: { start: Position; path: Position[] } | null;
   };
+  movingIceSlideOverriddenPaths: {
+    red: { start: Position; path: Position[] } | null;
+    blue: { start: Position; path: Position[] } | null;
+  };
   movingStarts: { red: Position; blue: Position } | null;
   timeRewindFocusColor: PlayerColor | null;
   timeRewindActive: boolean;
@@ -101,11 +106,13 @@ interface Props {
   blitzTargetsVisible: boolean;
   infernoTargetsVisible: boolean;
   rootWallTargetsVisible: boolean;
+  iceFieldTargetsVisible: boolean;
   keyboardTarget: Position | null;
   onTeleportTargetSelect: (target: Position) => void;
   onBlitzTargetSelect: (target: Position) => void;
   onInfernoTargetSelect: (target: Position) => void;
   onRootWallTargetSelect: (target: Position) => void;
+  onIceFieldTargetSelect: (target: Position) => void;
   onTeleportCancel: () => void;
   trapTiles: AbilityTrapTile[];
   magicMineCastingColors: { red: boolean; blue: boolean };
@@ -173,6 +180,7 @@ export function AbilityGrid({
   teleportMarker,
   infernoMarker,
   rootWallMarker,
+  iceFieldMarker,
   movingTeleportMarkers,
   movingTeleportSteps,
   movingBlitzColors,
@@ -183,6 +191,7 @@ export function AbilityGrid({
   movingAtomicClones,
   movingPaths,
   movingRootWallBlockedPaths,
+  movingIceSlideOverriddenPaths,
   movingStarts,
   timeRewindFocusColor,
   timeRewindActive,
@@ -194,11 +203,13 @@ export function AbilityGrid({
   blitzTargetsVisible,
   infernoTargetsVisible,
   rootWallTargetsVisible,
+  iceFieldTargetsVisible,
   keyboardTarget,
   onTeleportTargetSelect,
   onBlitzTargetSelect,
   onInfernoTargetSelect,
   onRootWallTargetSelect,
+  onIceFieldTargetSelect,
   onTeleportCancel,
   trapTiles,
   magicMineCastingColors,
@@ -461,7 +472,8 @@ export function AbilityGrid({
         teleportTargetsVisible ||
         blitzTargetsVisible ||
         infernoTargetsVisible ||
-        rootWallTargetsVisible
+        rootWallTargetsVisible ||
+        iceFieldTargetsVisible
       ) {
         const currentPos = state.players[currentColor].position;
         if (!posEqual(cell, currentPos)) return;
@@ -469,6 +481,7 @@ export function AbilityGrid({
         if (blitzTargetsVisible) return;
         if (infernoTargetsVisible) return;
         if (rootWallTargetsVisible) return;
+        if (iceFieldTargetsVisible) return;
         dragState.current = {
           active: true,
           fromStart: true,
@@ -495,6 +508,7 @@ export function AbilityGrid({
       canEditPath,
       currentColor,
       getPlanningTailPosition,
+      iceFieldTargetsVisible,
       infernoTargetsVisible,
       rootWallTargetsVisible,
       myPath,
@@ -637,6 +651,14 @@ export function AbilityGrid({
     : [];
 
   const rootWallTargets = rootWallTargetsVisible
+    ? cells.filter(
+        (position) =>
+          !posEqual(position, state.players.red.position) &&
+          !posEqual(position, state.players.blue.position),
+      )
+    : [];
+
+  const iceFieldTargets = iceFieldTargetsVisible
     ? cells.filter(
         (position) =>
           !posEqual(position, state.players.red.position) &&
@@ -810,6 +832,26 @@ export function AbilityGrid({
               src="/ui/ability/root_wall.svg"
               alt=""
               className="ability-root-wall-tile__img"
+              draggable={false}
+            />
+          </div>
+        ))}
+
+        {state.iceFieldTiles.map((tile) => (
+          <div
+            key={`ice-field-${tile.position.row}-${tile.position.col}`}
+            className="ability-ice-field-tile"
+            style={{
+              left: tile.position.col * responsiveCellSize,
+              top: tile.position.row * responsiveCellSize,
+              width: responsiveCellSize,
+              height: responsiveCellSize,
+            }}
+          >
+            <img
+              src="/ui/ability/ice_field.svg"
+              alt=""
+              className="ability-ice-field-tile__img"
               draggable={false}
             />
           </div>
@@ -1074,6 +1116,25 @@ export function AbilityGrid({
           </div>
         ) : null}
 
+        {isPlanning && iceFieldMarker ? (
+          <div
+            className="ability-ice-field-tile ability-ice-field-tile--pending"
+            style={{
+              left: iceFieldMarker.col * responsiveCellSize,
+              top: iceFieldMarker.row * responsiveCellSize,
+              width: responsiveCellSize,
+              height: responsiveCellSize,
+            }}
+          >
+            <img
+              src="/ui/ability/ice_field.svg"
+              alt=""
+              className="ability-ice-field-tile__img"
+              draggable={false}
+            />
+          </div>
+        ) : null}
+
         {rootWallTargets.map((target) => (
           <button
             key={`root-wall-${target.row}-${target.col}`}
@@ -1092,11 +1153,30 @@ export function AbilityGrid({
           />
         ))}
 
+        {iceFieldTargets.map((target) => (
+          <button
+            key={`ice-field-target-${target.row}-${target.col}`}
+            type="button"
+            className="ability-root-wall-target"
+            style={{
+              left: target.col * responsiveCellSize,
+              top: target.row * responsiveCellSize,
+              width: responsiveCellSize,
+              height: responsiveCellSize,
+            }}
+            onClick={() => {
+              playTargetSelectSfx();
+              onIceFieldTargetSelect(target);
+            }}
+          />
+        ))}
+
         {keyboardTarget &&
           (teleportTargetsVisible ||
             blitzTargetsVisible ||
             infernoTargetsVisible ||
-            rootWallTargetsVisible) && (
+            rootWallTargetsVisible ||
+            iceFieldTargetsVisible) && (
             <div
               className="ability-keyboard-target-outline"
               style={{
@@ -1115,6 +1195,16 @@ export function AbilityGrid({
                 color="red"
                 path={movingRootWallBlockedPaths.red.path}
                 startPos={movingRootWallBlockedPaths.red.start}
+                cellSize={responsiveCellSize}
+                isPlanning={false}
+                muted
+              />
+            ) : null}
+            {movingIceSlideOverriddenPaths.red ? (
+              <PathLine
+                color="red"
+                path={movingIceSlideOverriddenPaths.red.path}
+                startPos={movingIceSlideOverriddenPaths.red.start}
                 cellSize={responsiveCellSize}
                 isPlanning={false}
                 muted
@@ -1192,6 +1282,16 @@ export function AbilityGrid({
                 color="blue"
                 path={movingRootWallBlockedPaths.blue.path}
                 startPos={movingRootWallBlockedPaths.blue.start}
+                cellSize={responsiveCellSize}
+                isPlanning={false}
+                muted
+              />
+            ) : null}
+            {movingIceSlideOverriddenPaths.blue ? (
+              <PathLine
+                color="blue"
+                path={movingIceSlideOverriddenPaths.blue.path}
+                startPos={movingIceSlideOverriddenPaths.blue.start}
                 cellSize={responsiveCellSize}
                 isPlanning={false}
                 muted
