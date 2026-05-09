@@ -249,6 +249,10 @@ export function resolveAbilityRound(params: {
     owner: tile.owner,
     remainingTurns: tile.remainingTurns,
   }));
+  const activeIceFieldTiles: AbilityIceFieldTile[] = params.iceFieldTiles.map((tile) => ({
+    position: { ...tile.position },
+    remainingTurns: tile.remainingTurns,
+  }));
 
   let redPos = { ...red.position };
   let bluePos = { ...blue.position };
@@ -282,6 +286,10 @@ export function resolveAbilityRound(params: {
   let bluePathBlockedAtStep: number | null = null;
   let redRootWallStopPosition: Position | null = null;
   let blueRootWallStopPosition: Position | null = null;
+  let redIceSlideApplied = false;
+  let blueIceSlideApplied = false;
+  let redIceSlideOverriddenPath: { start: Position; path: Position[] } | null = null;
+  let blueIceSlideOverriddenPath: { start: Position; path: Position[] } | null = null;
   let redBlitzDamagedThisStep = false;
   let blueBlitzDamagedThisStep = false;
   let redSunChariot = false;
@@ -310,7 +318,7 @@ export function resolveAbilityRound(params: {
   const blueSunChariotPlanned = blueReservations.some(
     (reservation) => reservation.skillId === 'sun_chariot',
   );
-  const maxStep = Math.max(redPath.length, bluePath.length);
+  let maxStep = Math.max(redPath.length, bluePath.length);
   const escapeeColor: PlayerColor = attackerColor === 'red' ? 'blue' : 'red';
   const escaperPath = escapeeColor === 'red' ? redPath : bluePath;
   const startsOverlapped = samePosition(redStart, blueStart);
@@ -815,6 +823,24 @@ export function resolveAbilityRound(params: {
         blueMana = spendMana(casterMana, reservation.skillId);
       }
       updateRootWallTile(activeRootWallTiles, reservation.target, color, 3);
+      skillEvents.push({
+        step: reservation.step,
+        order: reservation.order,
+        color,
+        skillId: reservation.skillId,
+        affectedPositions: [{ ...reservation.target }],
+        to: { ...reservation.target },
+      });
+      return;
+    }
+
+    if (reservation.skillId === 'ice_field' && reservation.target) {
+      if (color === 'red') {
+        redMana = spendMana(casterMana, reservation.skillId);
+      } else {
+        blueMana = spendMana(casterMana, reservation.skillId);
+      }
+      updateIceFieldTile(activeIceFieldTiles, reservation.target, 3);
       skillEvents.push({
         step: reservation.step,
         order: reservation.order,
