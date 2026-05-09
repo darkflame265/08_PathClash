@@ -49,6 +49,10 @@
 }
 
 .gameover-reward {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.32rem;
   font-size: 0.82rem;
   font-weight: 800;
   color: #fbbf24;
@@ -57,6 +61,21 @@
   border: 1px solid rgba(251, 191, 36, 0.24);
   border-radius: 0.625rem;
   white-space: nowrap;
+}
+
+.gameover-value {
+  font-weight: inherit;
+  line-height: 1;
+}
+
+.gameover-token-icon,
+.gameover-score-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-size: 0.94em;
+  line-height: 1;
 }
 
 .rematch-notice {
@@ -109,6 +128,10 @@
 }
 
 .gameover-rating {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.32rem;
   font-size: 0.88rem;
   font-weight: 800;
   padding: 0.45rem 0.9rem;

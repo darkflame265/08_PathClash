@@ -544,13 +544,9 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
     setRematchRequestSent(true);
   };
   const dailyRewardRemaining = Math.max(0, 120 - accountDailyRewardTokens);
-  const rewardCopy =
+  const rewardAmount =
     coopState.phase === "gameover" && coopState.gameResult === "win"
-      ? Math.min(12, dailyRewardRemaining) > 0
-        ? lang === "en"
-          ? `+${Math.min(12, dailyRewardRemaining)} Tokens`
-          : `+${Math.min(12, dailyRewardRemaining)} 토큰 획득`
-        : null
+      ? Math.min(12, dailyRewardRemaining) || null
       : null;
 
   return (
@@ -597,7 +593,17 @@ export function CoopScreen({ onLeaveToLobby }: Props) {
                   {resultCopy}
                 </div>
                 {gameOverMessage && <div className="gameover-message">{gameOverMessage}</div>}
-                {rewardCopy && <div className="gameover-reward">{rewardCopy}</div>}
+                {rewardAmount && (
+                  <div className="gameover-reward">
+                    <span
+                      className="gameover-token-icon skin-token-icon"
+                      aria-hidden="true"
+                    >
+                      {"💎"}
+                    </span>
+                    <span className="gameover-value">+{rewardAmount}</span>
+                  </div>
+                )}
                 {rematchRequested && (
                   <div className="rematch-notice">
                     {lang === "en" ? "Teammate requested rematch." : "팀원이 재도전을 요청했습니다."}

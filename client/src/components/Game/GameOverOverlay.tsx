@@ -28,7 +28,7 @@ export function GameOverOverlay({
   showActionWithRematch = false,
   rematchButtonTone = "green",
 }: Props) {
-  const { t, lang } = useLang();
+  const { t } = useLang();
   const { rematchRequested, rematchRequestSent, gameOverMessage, setRematchRequestSent } = useGameStore();
   const isWinner = winner === myColor;
   const showRematch =
@@ -36,12 +36,8 @@ export function GameOverOverlay({
     !gameOverMessage &&
     (!actionLabel || showActionWithRematch);
   const showAction = !gameOverMessage && actionLabel && onAction;
-  const rewardCopy =
-    isWinner && rewardTokens && rewardTokens > 0
-      ? lang === 'en'
-        ? `+${rewardTokens} Tokens`
-        : `+${rewardTokens} 토큰 획득`
-      : null;
+  const rewardAmount =
+    isWinner && rewardTokens && rewardTokens > 0 ? rewardTokens : null;
 
   useEffect(() => {
     setRematchRequestSent(false);
@@ -63,7 +59,17 @@ export function GameOverOverlay({
           <div className="gameover-message">{gameOverMessage}</div>
         )}
 
-        {rewardCopy && <div className="gameover-reward">{rewardCopy}</div>}
+        {rewardAmount && (
+          <div className="gameover-reward">
+            <span
+              className="gameover-token-icon skin-token-icon"
+              aria-hidden="true"
+            >
+              {"💎"}
+            </span>
+            <span className="gameover-value">+{rewardAmount}</span>
+          </div>
+        )}
 
         {rematchRequested && (
           <div className="rematch-notice">{t.rematchRequested}</div>

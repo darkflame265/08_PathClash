@@ -4315,22 +4315,32 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
                 )}
                 {winner === currentColor && rewardTokens > 0 && (
                   <div className="gameover-reward">
-                    {lang === "en"
-                      ? `+${rewardTokens} Tokens`
-                      : `+${rewardTokens} 토큰 획득`}
+                    <span
+                      className="gameover-token-icon skin-token-icon"
+                      aria-hidden="true"
+                    >
+                      {"💎"}
+                    </span>
+                    <span className="gameover-value">+{rewardTokens}</span>
                   </div>
                 )}
                 {ratingResult && ratingResult.ratingChange !== null && (
                   <div
                     className={`gameover-rating ${ratingResult.ratingChange >= 0 ? "rating-up" : "rating-down"}`}
                   >
-                    {ratingResult.ratingChange >= 0
-                      ? `+${ratingResult.ratingChange}`
-                      : `${ratingResult.ratingChange}`}{" "}
-                    Rating
+                    <span
+                      className="gameover-score-icon lobby-user-score-icon"
+                      aria-hidden="true"
+                    >
+                      ⭐
+                    </span>
+                    <span className="gameover-value">
+                      {ratingResult.ratingChange >= 0
+                        ? `+${ratingResult.ratingChange}`
+                        : `${ratingResult.ratingChange}`}
+                    </span>
                     {ratingResult.newRating !== null && (
                       <span className="gameover-rating-total">
-                        {" "}
                         ({ratingResult.newRating})
                       </span>
                     )}
