@@ -602,6 +602,7 @@ class AbilityRoom {
         this.lavaTiles = [];
         this.trapTiles = [];
         this.rootWallTiles = [];
+        this.iceFieldTiles = [];
         // 4코 스킬 연속 사용 방지: 마지막으로 4코 스킬을 사용한 턴 번호 추적
         this.botLastFourCostSkillTurn = new Map();
         this.readySockets = new Set();
@@ -1021,6 +1022,7 @@ class AbilityRoom {
                 ? this.trapTiles.filter((trap) => trap.owner === forColor)
                 : [],
             rootWallTiles: this.rootWallTiles,
+            iceFieldTiles: this.iceFieldTiles,
             players: {
                 red: this.toClientPlayer(red),
                 blue: this.toClientPlayer(blue),
@@ -1116,6 +1118,7 @@ class AbilityRoom {
             lavaTiles: this.lavaTiles,
             trapTiles: this.trapTiles,
             rootWallTiles: this.rootWallTiles,
+            iceFieldTiles: this.iceFieldTiles,
         });
         this.applyTimeRewindIfNeeded('red', red, resolution);
         this.applyTimeRewindIfNeeded('blue', blue, resolution);
@@ -1148,6 +1151,7 @@ class AbilityRoom {
         this.lavaTiles = resolution.lavaTiles;
         this.trapTiles = resolution.trapTiles;
         this.rootWallTiles = resolution.rootWallTiles;
+        this.iceFieldTiles = resolution.iceFieldTiles;
         this.touchActivity();
         for (const player of this.players.values()) {
             this.io.to(player.socketId).emit('ability_resolution', {
@@ -2683,6 +2687,7 @@ class AbilityRoom {
         this.lavaTiles = [];
         this.trapTiles = [];
         this.rootWallTiles = [];
+        this.iceFieldTiles = [];
         this.resetPlayers();
         this.updateRoles();
         this.readySockets.clear();

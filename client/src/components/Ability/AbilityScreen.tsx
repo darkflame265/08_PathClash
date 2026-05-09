@@ -3714,6 +3714,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
             phase: "moving" as const,
             lavaTiles: payload.lavaTiles,
             rootWallTiles: payload.rootWallTiles ?? [],
+            iceFieldTiles: payload.iceFieldTiles ?? [],
             players: {
               ...stateRef.current.players,
               red: { ...stateRef.current.players.red, hidden: false },

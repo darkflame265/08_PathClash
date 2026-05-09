@@ -182,7 +182,7 @@ function updateIceFieldTile(
 function computeSlidePath(
   from: Position,
   direction: { dr: number; dc: number },
-  activeRootWallTiles: AbilityRootWallTile[],
+  blockedPositions: Position[],
 ): Position[] {
   const slide: Position[] = [];
   let row = from.row;
@@ -191,7 +191,7 @@ function computeSlidePath(
     const nr = row + direction.dr;
     const nc = col + direction.dc;
     if (nr < 0 || nr > 4 || nc < 0 || nc > 4) break;
-    if (activeRootWallTiles.some((t) => t.position.row === nr && t.position.col === nc)) break;
+    if (blockedPositions.some((position) => position.row === nr && position.col === nc)) break;
     row = nr;
     col = nc;
     slide.push({ row, col });
@@ -1032,7 +1032,10 @@ export function resolveAbilityRound(params: {
           activeIceFieldTiles.some((t) => samePosition(t.position, redNext))) {
         const dr = redNext.row - redPrev.row;
         const dc = redNext.col - redPrev.col;
-        const slidePath = computeSlidePath(redNext, { dr, dc }, activeRootWallTiles);
+        const slidePath = computeSlidePath(redNext, { dr, dc }, [
+          ...obstacles,
+          ...activeRootWallTiles.map((tile) => tile.position),
+        ]);
         redIceSlideOverriddenPath = {
           start: { ...redNext },
           path: redPath.slice(step).map((p) => ({ ...p })),
@@ -1046,7 +1049,10 @@ export function resolveAbilityRound(params: {
           activeIceFieldTiles.some((t) => samePosition(t.position, blueNext))) {
         const dr = blueNext.row - bluePrev.row;
         const dc = blueNext.col - bluePrev.col;
-        const slidePath = computeSlidePath(blueNext, { dr, dc }, activeRootWallTiles);
+        const slidePath = computeSlidePath(blueNext, { dr, dc }, [
+          ...obstacles,
+          ...activeRootWallTiles.map((tile) => tile.position),
+        ]);
         blueIceSlideOverriddenPath = {
           start: { ...blueNext },
           path: bluePath.slice(step).map((p) => ({ ...p })),

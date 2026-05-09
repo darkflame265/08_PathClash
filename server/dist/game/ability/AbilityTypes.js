@@ -24,6 +24,7 @@ exports.ABILITY_SKILL_COSTS = {
     chronos_time_rewind: 0,
     berserker_rage: 8,
     root_wall: 7,
+    ice_field: 6,
 };
 // Shared validation metadata for server-side planning rules.
 // Keep common restrictions here so role/timing/target/cost rules do not drift
@@ -123,6 +124,11 @@ exports.ABILITY_SKILL_SERVER_RULES = {
         targetRule: 'none',
     },
     root_wall: {
+        roleRestriction: 'any',
+        stepRule: 'zero_only',
+        targetRule: 'position',
+    },
+    ice_field: {
         roleRestriction: 'any',
         stepRule: 'zero_only',
         targetRule: 'position',

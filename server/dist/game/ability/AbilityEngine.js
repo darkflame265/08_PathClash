@@ -114,6 +114,31 @@ function updateRootWallTile(rootWallTiles, position, owner, remainingTurns) {
     }
     rootWallTiles.push({ position: { ...position }, owner, remainingTurns });
 }
+function updateIceFieldTile(iceFieldTiles, position, remainingTurns) {
+    const existing = iceFieldTiles.find((tile) => samePosition(tile.position, position));
+    if (existing) {
+        existing.remainingTurns = Math.max(existing.remainingTurns, remainingTurns);
+        return;
+    }
+    iceFieldTiles.push({ position: { ...position }, remainingTurns });
+}
+function computeSlidePath(from, direction, blockedPositions) {
+    const slide = [];
+    let row = from.row;
+    let col = from.col;
+    for (;;) {
+        const nr = row + direction.dr;
+        const nc = col + direction.dc;
+        if (nr < 0 || nr > 4 || nc < 0 || nc > 4)
+            break;
+        if (blockedPositions.some((position) => position.row === nr && position.col === nc))
+            break;
+        row = nr;
+        col = nc;
+        slide.push({ row, col });
+    }
+    return slide;
+}
 function isAffectedByLava(prev, next, lavaPosition) {
     void prev;
     return samePosition(next, lavaPosition);
@@ -139,6 +164,10 @@ function resolveAbilityRound(params) {
     const activeRootWallTiles = params.rootWallTiles.map((tile) => ({
         position: { ...tile.position },
         owner: tile.owner,
+        remainingTurns: tile.remainingTurns,
+    }));
+    const activeIceFieldTiles = params.iceFieldTiles.map((tile) => ({
+        position: { ...tile.position },
         remainingTurns: tile.remainingTurns,
     }));
     let redPos = { ...red.position };
@@ -173,6 +202,10 @@ function resolveAbilityRound(params) {
     let bluePathBlockedAtStep = null;
     let redRootWallStopPosition = null;
     let blueRootWallStopPosition = null;
+    let redIceSlideApplied = false;
+    let blueIceSlideApplied = false;
+    let redIceSlideOverriddenPath = null;
+    let blueIceSlideOverriddenPath = null;
     let redBlitzDamagedThisStep = false;
     let blueBlitzDamagedThisStep = false;
     let redSunChariot = false;
@@ -196,7 +229,7 @@ function resolveAbilityRound(params) {
     const blueReservations = sortReservations(blue.plannedSkills);
     const redSunChariotPlanned = redReservations.some((reservation) => reservation.skillId === 'sun_chariot');
     const blueSunChariotPlanned = blueReservations.some((reservation) => reservation.skillId === 'sun_chariot');
-    const maxStep = Math.max(redPath.length, bluePath.length);
+    let maxStep = Math.max(redPath.length, bluePath.length);
     const escapeeColor = attackerColor === 'red' ? 'blue' : 'red';
     const escaperPath = escapeeColor === 'red' ? redPath : bluePath;
     const startsOverlapped = samePosition(redStart, blueStart);
@@ -619,6 +652,24 @@ function resolveAbilityRound(params) {
             });
             return;
         }
+        if (reservation.skillId === 'ice_field' && reservation.target) {
+            if (color === 'red') {
+                redMana = spendMana(casterMana, reservation.skillId);
+            }
+            else {
+                blueMana = spendMana(casterMana, reservation.skillId);
+            }
+            updateIceFieldTile(activeIceFieldTiles, reservation.target, 3);
+            skillEvents.push({
+                step: reservation.step,
+                order: reservation.order,
+                color,
+                skillId: reservation.skillId,
+                affectedPositions: [{ ...reservation.target }],
+                to: { ...reservation.target },
+            });
+            return;
+        }
         if (reservation.skillId === 'nova_blast') {
             const affectedPositions = getNovaPositions(currentPos).filter((position) => !obstacles.some((obstacle) => samePosition(obstacle, position)));
             const damages = [];
@@ -762,6 +813,42 @@ function resolveAbilityRound(params) {
             }
             const redNext = redBlockedByRootWall ? { ...redPrev } : redCandidate;
             const blueNext = blueBlockedByRootWall ? { ...bluePrev } : blueCandidate;
+            if (!redIceSlideApplied &&
+                redCanAdvance &&
+                !samePosition(redNext, redPrev) &&
+                activeIceFieldTiles.some((t) => samePosition(t.position, redNext))) {
+                const dr = redNext.row - redPrev.row;
+                const dc = redNext.col - redPrev.col;
+                const slidePath = computeSlidePath(redNext, { dr, dc }, [
+                    ...obstacles,
+                    ...activeRootWallTiles.map((tile) => tile.position),
+                ]);
+                redIceSlideOverriddenPath = {
+                    start: { ...redNext },
+                    path: redPath.slice(step).map((p) => ({ ...p })),
+                };
+                redPath.splice(step, redPath.length - step, ...slidePath);
+                maxStep = Math.max(maxStep, redPath.length, bluePath.length);
+                redIceSlideApplied = true;
+            }
+            if (!blueIceSlideApplied &&
+                blueCanAdvance &&
+                !samePosition(blueNext, bluePrev) &&
+                activeIceFieldTiles.some((t) => samePosition(t.position, blueNext))) {
+                const dr = blueNext.row - bluePrev.row;
+                const dc = blueNext.col - bluePrev.col;
+                const slidePath = computeSlidePath(blueNext, { dr, dc }, [
+                    ...obstacles,
+                    ...activeRootWallTiles.map((tile) => tile.position),
+                ]);
+                blueIceSlideOverriddenPath = {
+                    start: { ...blueNext },
+                    path: bluePath.slice(step).map((p) => ({ ...p })),
+                };
+                bluePath.splice(step, bluePath.length - step, ...slidePath);
+                maxStep = Math.max(maxStep, redPath.length, bluePath.length);
+                blueIceSlideApplied = true;
+            }
             const startsStepOverlapped = samePosition(redPrev, bluePrev);
             const escaperStayedStill = escapeeColor === 'red'
                 ? samePosition(redNext, redPrev)
@@ -988,6 +1075,12 @@ function resolveAbilityRound(params) {
         remainingTurns: tile.remainingTurns - 1,
     }))
         .filter((tile) => tile.remainingTurns > 0);
+    const nextIceFieldTiles = activeIceFieldTiles
+        .map((tile) => ({
+        position: { ...tile.position },
+        remainingTurns: tile.remainingTurns - 1,
+    }))
+        .filter((tile) => tile.remainingTurns > 0);
     const resolveBlockedPath = (path, blockedAtStep, stopPosition) => {
         if (blockedAtStep === null || !stopPosition)
             return path;
@@ -1026,6 +1119,14 @@ function resolveAbilityRound(params) {
                 red: resolveBlockedPathTail(redPath, redPathBlockedAtStep, redRootWallStopPosition),
                 blue: resolveBlockedPathTail(bluePath, bluePathBlockedAtStep, blueRootWallStopPosition),
             },
+            iceFieldTiles: activeIceFieldTiles.map((tile) => ({
+                position: { ...tile.position },
+                remainingTurns: tile.remainingTurns,
+            })),
+            iceSlideOverriddenPaths: {
+                red: redIceSlideOverriddenPath,
+                blue: blueIceSlideOverriddenPath,
+            },
             blocks,
             collisions,
             skillEvents,
@@ -1059,6 +1160,7 @@ function resolveAbilityRound(params) {
         lavaTiles: nextLavaTiles,
         trapTiles: nextTrapTiles,
         rootWallTiles: nextRootWallTiles,
+        iceFieldTiles: nextIceFieldTiles,
         winner,
     };
 }
