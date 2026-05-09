@@ -31,6 +31,7 @@ import {
   ABILITY_SKILL_SERVER_RULES,
   type AbilityBattleState,
   type AbilityResolutionPayload,
+  type AbilityIceFieldTile,
   type AbilityLavaTile,
   type AbilityRootWallTile,
   type AbilityTrapTile,
@@ -816,6 +817,7 @@ export class AbilityRoom {
   private lavaTiles: AbilityLavaTile[] = [];
   private trapTiles: AbilityTrapTile[] = [];
   private rootWallTiles: AbilityRootWallTile[] = [];
+  private iceFieldTiles: AbilityIceFieldTile[] = [];
   // 4코 스킬 연속 사용 방지: 마지막으로 4코 스킬을 사용한 턴 번호 추적
   private botLastFourCostSkillTurn: Map<PlayerColor, number> = new Map();
   private readySockets = new Set<string>();
@@ -1272,6 +1274,7 @@ export class AbilityRoom {
         ? this.trapTiles.filter((trap) => trap.owner === forColor)
         : [],
       rootWallTiles: this.rootWallTiles,
+      iceFieldTiles: this.iceFieldTiles,
       players: {
         red: this.toClientPlayer(red),
         blue: this.toClientPlayer(blue),
@@ -1368,6 +1371,7 @@ export class AbilityRoom {
       lavaTiles: this.lavaTiles,
       trapTiles: this.trapTiles,
       rootWallTiles: this.rootWallTiles,
+      iceFieldTiles: this.iceFieldTiles,
     });
 
     this.applyTimeRewindIfNeeded('red', red, resolution);
@@ -1403,6 +1407,7 @@ export class AbilityRoom {
     this.lavaTiles = resolution.lavaTiles;
     this.trapTiles = resolution.trapTiles;
     this.rootWallTiles = resolution.rootWallTiles;
+    this.iceFieldTiles = resolution.iceFieldTiles;
 
     this.touchActivity();
     for (const player of this.players.values()) {
@@ -3370,6 +3375,7 @@ export class AbilityRoom {
     this.lavaTiles = [];
     this.trapTiles = [];
     this.rootWallTiles = [];
+    this.iceFieldTiles = [];
     this.resetPlayers();
     this.updateRoles();
     this.readySockets.clear();

@@ -1370,6 +1370,13 @@ export function resolveAbilityRound(params: {
     }))
     .filter((tile) => tile.remainingTurns > 0);
 
+  const nextIceFieldTiles = activeIceFieldTiles
+    .map((tile) => ({
+      position: { ...tile.position },
+      remainingTurns: tile.remainingTurns - 1,
+    }))
+    .filter((tile) => tile.remainingTurns > 0);
+
   const resolveBlockedPath = (
     path: Position[],
     blockedAtStep: number | null,
@@ -1435,6 +1442,14 @@ export function resolveAbilityRound(params: {
           blueRootWallStopPosition,
         ),
       },
+      iceFieldTiles: activeIceFieldTiles.map((tile) => ({
+        position: { ...tile.position },
+        remainingTurns: tile.remainingTurns,
+      })),
+      iceSlideOverriddenPaths: {
+        red: redIceSlideOverriddenPath,
+        blue: blueIceSlideOverriddenPath,
+      },
       blocks,
       collisions,
       skillEvents,
@@ -1468,6 +1483,7 @@ export function resolveAbilityRound(params: {
     lavaTiles: nextLavaTiles,
     trapTiles: nextTrapTiles,
     rootWallTiles: nextRootWallTiles,
+    iceFieldTiles: nextIceFieldTiles,
     winner,
   };
 }
