@@ -227,6 +227,7 @@ export function AbilityGrid({
     cellSize * GRID_SIZE || DEFAULT_CELL_SIZE * GRID_SIZE,
   );
   const [hoveredCell, setHoveredCell] = useState<Position | null>(null);
+  const [iceSlideActiveColors, setIceSlideActiveColors] = useState({ red: false, blue: false });
   const dragState = useRef<{
     active: boolean;
     fromStart: boolean;
@@ -236,6 +237,25 @@ export function AbilityGrid({
     fromStart: false,
     fromEnd: false,
   });
+
+  // Reset ice slide flags whenever the ice slide paths change (new round / cleared)
+  useEffect(() => {
+    setIceSlideActiveColors({ red: false, blue: false });
+  }, [movingIceSlideOverriddenPaths]);
+
+  // Activate ice slide effect once the player reaches the ice obstacle tile
+  useEffect(() => {
+    setIceSlideActiveColors((prev) => ({
+      red: prev.red || (
+        !!movingIceSlideOverriddenPaths.red &&
+        posEqual(displayPositions.red, movingIceSlideOverriddenPaths.red.start)
+      ),
+      blue: prev.blue || (
+        !!movingIceSlideOverriddenPaths.blue &&
+        posEqual(displayPositions.blue, movingIceSlideOverriddenPaths.blue.start)
+      ),
+    }));
+  }, [displayPositions, movingIceSlideOverriddenPaths]);
 
   useEffect(() => {
     if (!shakeKey) return;
@@ -1623,7 +1643,7 @@ export function AbilityGrid({
                 (currentColor !== "red" &&
                   state.players.red.connected === false)
               }
-              isIceSliding={isPlaybackPhase && !!movingIceSlideOverriddenPaths.red}
+              isIceSliding={iceSlideActiveColors.red}
               isBlitzing={movingBlitzProgress.red > 0}
               isSunChariotActive={activeSunChariots.red}
               isBerserkerRage={activeBerserkerRages.red}
@@ -1679,7 +1699,7 @@ export function AbilityGrid({
                 (currentColor !== "blue" &&
                   state.players.blue.connected === false)
               }
-              isIceSliding={isPlaybackPhase && !!movingIceSlideOverriddenPaths.blue}
+              isIceSliding={iceSlideActiveColors.blue}
               isBlitzing={movingBlitzProgress.blue > 0}
               isSunChariotActive={activeSunChariots.blue}
               isBerserkerRage={activeBerserkerRages.blue}

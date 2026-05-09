@@ -1063,9 +1063,9 @@
   }
 }
 
-.player-piece.piece-ice-sliding .piece-visual {
-  -webkit-animation: rotate-center 0.4s linear infinite;
-  animation: rotate-center 0.4s linear infinite;
+.player-piece.piece-ice-sliding .piece-inner {
+  -webkit-animation: rotate-center 0.4s linear infinite !important;
+  animation: rotate-center 0.4s linear infinite !important;
 }
 
 /* Ice slide — blue frozen tint */
