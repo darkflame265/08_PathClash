@@ -763,7 +763,12 @@ function renderAbilitySkillIcon(skillId: AbilitySkillId) {
     );
   }
 
-  const icon = skillId === "electric_blitz" ? "⚡︎" : skill.icon;
+  const icon =
+    skillId === "electric_blitz"
+      ? "⚡︎"
+      : skillId === "ice_field"
+        ? "❄︎"
+        : skill.icon;
   const skillIconClass = `is-${skillId.replaceAll("_", "-")}`;
 
   return (

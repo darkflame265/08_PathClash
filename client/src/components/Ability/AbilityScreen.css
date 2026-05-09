@@ -1909,12 +1909,15 @@
 }
 
 .ability-skill-icon-glyph.is-ice-field {
-  color: #e0faff;
+  color: #ffffff;
+  font-family:
+    "Segoe UI Symbol", "Noto Sans Symbols 2", "Apple Symbols", sans-serif;
   font-weight: 900;
   text-shadow:
-    0 0 4px rgba(56, 189, 248, 1),
-    0 0 8px rgba(186, 230, 253, 1),
-    0 0 16px rgba(34, 211, 238, 0.95),
+    0 0 2px rgba(255, 255, 255, 1),
+    0 0 5px rgba(255, 255, 255, 0.95),
+    0 0 10px rgba(186, 230, 253, 0.9),
+    0 0 16px rgba(34, 211, 238, 0.82),
     0 0 28px rgba(14, 116, 144, 0.72);
 }
 
