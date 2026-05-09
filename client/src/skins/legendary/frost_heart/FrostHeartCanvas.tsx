@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 
 interface Props {
   className?: string;
+  radiusFraction?: number;
 }
 
 const PRISM_ANGLES = [0, 72, 144, 216, 288];
@@ -27,7 +28,7 @@ const PARTICLES: Particle[] = [
   { ang: 180, r1: 0.86, r2: 0.06, spd: 288, dly: 144,  size: 2 },
 ];
 
-export function FrostHeartCanvas({ className }: Props) {
+export function FrostHeartCanvas({ className, radiusFraction = 1.0 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -49,7 +50,7 @@ export function FrostHeartCanvas({ className }: Props) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       cx = rect.width / 2;
       cy = rect.height / 2;
-      r = Math.min(cx, cy) - 1;
+      r = Math.min(cx, cy) * radiusFraction - 1;
     };
 
     const drawBackground = (w: number, h: number) => {

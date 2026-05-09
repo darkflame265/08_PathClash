@@ -2148,6 +2148,10 @@
   overflow: visible;
 }
 
+.skin-preview.skin-preview-frost_heart {
+  overflow: visible;
+}
+
 .skin-preview.skin-preview-berserker {
   overflow: visible;
   border-color: rgba(140, 0, 0, 0.8);
