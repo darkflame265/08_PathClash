@@ -3492,11 +3492,13 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       if (voidCloakTriggered && !isSfxMuted) {
         playVoidCloak(sfxVolume);
       }
-      const berserkerRageTriggered =
-        (nextState.players.red.berserkerRageActive === true &&
-          previousState?.players.red.berserkerRageActive !== true) ||
-        (nextState.players.blue.berserkerRageActive === true &&
-          previousState?.players.blue.berserkerRageActive !== true);
+      const redBerserkerTriggered =
+        nextState.players.red.berserkerRageActive === true &&
+        previousState?.players.red.berserkerRageActive !== true;
+      const blueBerserkerTriggered =
+        nextState.players.blue.berserkerRageActive === true &&
+        previousState?.players.blue.berserkerRageActive !== true;
+      const berserkerRageTriggered = redBerserkerTriggered || blueBerserkerTriggered;
       if (berserkerRageTriggered && !isSfxMuted) {
         playBerserkOn(sfxVolume);
       }
@@ -3532,6 +3534,23 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       setBriefMineRevealPositions([]);
       resetPlanningState();
       applyState(nextState);
+      if (berserkerRageTriggered) {
+        const berserkerTriggerPositions: Position[] = [];
+        if (redBerserkerTriggered) berserkerTriggerPositions.push(nextState.players.red.position);
+        if (blueBerserkerTriggered) berserkerTriggerPositions.push(nextState.players.blue.position);
+        for (const position of berserkerTriggerPositions) {
+          const effectId = Date.now() + Math.random();
+          setCollisionEffects((prev) => [
+            ...prev,
+            { id: effectId, position, direction: { dx: 0, dy: 0 }, variant: "berserk" },
+          ]);
+          queueAnimationTimeout(() => {
+            setCollisionEffects((prev) =>
+              prev.filter((entry) => entry.id !== effectId),
+            );
+          }, 520);
+        }
+      }
     };
 
     const onRoomJoined = ({
