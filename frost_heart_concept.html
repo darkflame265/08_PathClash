@@ -1,0 +1,1630 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>프로스트 하트 — 컨셉 아트</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap");
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        background: #0a0e14;
+        color: #e2e8f0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 48px 24px 80px;
+        gap: 48px;
+      }
+
+      header {
+        text-align: center;
+      }
+      header .badge {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        padding: 4px 14px;
+        border-radius: 20px;
+        background: rgba(251, 191, 36, 0.12);
+        color: #fbbf24;
+        border: 1px solid rgba(251, 191, 36, 0.28);
+        margin-bottom: 14px;
+      }
+      header h1 {
+        font-size: 30px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #bae6fd, #e0f2fe, #fff, #93c5fd);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+      }
+      header p {
+        font-size: 14px;
+        color: #64748b;
+        max-width: 480px;
+      }
+
+      .cards {
+        display: flex;
+        gap: 32px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .card {
+        background: #12181f;
+        border: 1.5px solid rgba(255, 255, 255, 0.07);
+        border-radius: 20px;
+        padding: 32px 28px 28px;
+        width: 300px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        cursor: pointer;
+        transition:
+          border-color 0.25s,
+          box-shadow 0.25s,
+          transform 0.18s;
+        position: relative;
+      }
+      .card:hover {
+        transform: translateY(-4px);
+      }
+      .card.selected {
+        border-color: rgba(147, 197, 253, 0.55);
+        box-shadow:
+          0 0 0 2px rgba(147, 197, 253, 0.2),
+          0 8px 40px rgba(96, 165, 250, 0.18);
+      }
+      .card .check {
+        display: none;
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #3b82f6;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+      }
+      .card.selected .check {
+        display: flex;
+      }
+
+      .stage {
+        width: 200px;
+        height: 200px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .card-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+      .card h3 {
+        font-size: 19px;
+        font-weight: 800;
+        margin-bottom: 4px;
+      }
+      .card-sub {
+        font-size: 12px;
+        color: #64748b;
+        text-align: center;
+        line-height: 1.6;
+      }
+      .card-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: center;
+      }
+      .tag {
+        font-size: 11px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+      }
+      .info {
+        text-align: center;
+        width: 100%;
+      }
+
+      /* ══════════════════════════════════════════
+     A. 크리스탈 코어
+  ══════════════════════════════════════════ */
+      .card-a {
+        border-color: rgba(147, 197, 253, 0.2);
+      }
+      .card-a .card-label {
+        color: #93c5fd;
+      }
+      .card-a h3 {
+        background: linear-gradient(135deg, #bae6fd, #fff, #93c5fd);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .card-a .tag {
+        background: rgba(147, 197, 253, 0.1);
+        color: #93c5fd;
+        border: 1px solid rgba(147, 197, 253, 0.25);
+      }
+      .card-a:hover {
+        border-color: rgba(147, 197, 253, 0.45);
+        box-shadow: 0 4px 32px rgba(147, 197, 253, 0.12);
+      }
+
+      .piece-a {
+        position: relative;
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 42% 35%,
+          #e0f2fe 0%,
+          #bae6fd 18%,
+          #38bdf8 40%,
+          #0369a1 68%,
+          #082f49 88%,
+          #020d1a 100%
+        );
+        border: 2px solid rgba(186, 230, 253, 0.65);
+        box-shadow:
+          0 0 18px rgba(186, 230, 253, 0.35),
+          0 0 45px rgba(56, 189, 248, 0.18),
+          inset 0 0 14px rgba(224, 242, 254, 0.12);
+        animation: a-pulse 3s ease-in-out infinite;
+        overflow: visible;
+      }
+      .piece-a::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background:
+          linear-gradient(
+            32deg,
+            transparent 48%,
+            rgba(224, 242, 254, 0.15) 48.5%,
+            transparent 49%
+          ),
+          linear-gradient(
+            105deg,
+            transparent 42%,
+            rgba(186, 230, 253, 0.12) 42.5%,
+            transparent 43%
+          ),
+          linear-gradient(
+            158deg,
+            transparent 38%,
+            rgba(224, 242, 254, 0.1) 38.5%,
+            transparent 39%
+          ),
+          linear-gradient(
+            210deg,
+            transparent 55%,
+            rgba(147, 197, 253, 0.1) 55.5%,
+            transparent 56%
+          );
+      }
+      .a-core {
+        position: absolute;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: radial-gradient(
+          circle at 40% 35%,
+          #ffffff 0%,
+          #e0f2fe 30%,
+          #7dd3fc 60%,
+          #0284c7 100%
+        );
+        box-shadow:
+          0 0 18px rgba(224, 242, 254, 0.9),
+          0 0 36px rgba(56, 189, 248, 0.55);
+        animation: a-core-pulse 2.5s ease-in-out infinite;
+      }
+      .a-ring {
+        position: absolute;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .a-ring-1 {
+        width: 170px;
+        height: 170px;
+        border: 1.5px solid rgba(186, 230, 253, 0.55);
+        animation: a-spin-cw 10s linear infinite;
+      }
+      .a-ring-2 {
+        width: 196px;
+        height: 196px;
+        border: 1.5px solid rgba(147, 197, 253, 0.38);
+        animation: a-spin-ccw 18s linear infinite;
+      }
+      .a-ring-3 {
+        width: 222px;
+        height: 222px;
+        border: 1px solid rgba(96, 165, 250, 0.22);
+        animation: a-spin-cw 30s linear infinite;
+      }
+      .a-tick {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        border-radius: 999px;
+        background: rgba(186, 230, 253, 0.8);
+        transform-origin: 0.75px 85px;
+        transform: rotate(var(--ang));
+      }
+      .a-tick-sm {
+        width: 1.5px;
+        height: 5px;
+        margin-left: -0.75px;
+      }
+      .a-tick-lg {
+        width: 1.5px;
+        height: 8px;
+        margin-left: -0.75px;
+        background: rgba(224, 242, 254, 0.95);
+      }
+      .a-shard {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        animation: a-shard-orbit var(--spd) linear infinite var(--dly);
+      }
+      .a-shard::before {
+        content: "";
+        display: block;
+        width: 7px;
+        height: 7px;
+        background: radial-gradient(circle at 30% 30%, #e0f2fe, #38bdf8);
+        clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        box-shadow: 0 0 8px rgba(56, 189, 248, 0.9);
+        animation: a-shard-spin var(--spd) linear infinite reverse var(--dly);
+      }
+      .a-snow {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(224, 242, 254, 0.7);
+        box-shadow: 0 0 4px rgba(186, 230, 253, 0.8);
+        animation: a-snow-drift var(--dur) ease-in-out infinite var(--dly2);
+        left: var(--sx);
+        top: var(--sy);
+      }
+      @keyframes a-pulse {
+        0%,
+        100% {
+          box-shadow:
+            0 0 18px rgba(186, 230, 253, 0.35),
+            0 0 45px rgba(56, 189, 248, 0.18),
+            inset 0 0 14px rgba(224, 242, 254, 0.12);
+        }
+        50% {
+          box-shadow:
+            0 0 28px rgba(186, 230, 253, 0.55),
+            0 0 65px rgba(56, 189, 248, 0.3),
+            inset 0 0 20px rgba(224, 242, 254, 0.2);
+        }
+      }
+      @keyframes a-core-pulse {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 0.9;
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.12);
+          opacity: 1;
+        }
+      }
+      @keyframes a-spin-cw {
+        to {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+      @keyframes a-spin-ccw {
+        to {
+          transform: translate(-50%, -50%) rotate(-360deg);
+        }
+      }
+      @keyframes a-shard-orbit {
+        from {
+          transform: rotate(var(--ang)) translateX(98px) translate(-50%, -50%);
+        }
+        to {
+          transform: rotate(calc(var(--ang) + 360deg)) translateX(98px)
+            translate(-50%, -50%);
+        }
+      }
+      @keyframes a-shard-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes a-snow-drift {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+          opacity: 0.7;
+        }
+        33% {
+          transform: translate(var(--dax), var(--day)) scale(1.1);
+          opacity: 0.9;
+        }
+        66% {
+          transform: translate(var(--dbx), var(--dby)) scale(0.85);
+          opacity: 0.5;
+        }
+      }
+
+      /* ══════════════════════════════════════════
+     B. 설풍 소용돌이 (수정본)
+     - 눈송이 정중앙 정렬 (transform-origin: x 70px)
+     - 눈송이 arm 대형화
+     - 8개 결정체 공전 추가 (5외+3내)
+  ══════════════════════════════════════════ */
+      .card-b {
+        border-color: rgba(165, 243, 252, 0.18);
+      }
+      .card-b .card-label {
+        color: #67e8f9;
+      }
+      .card-b h3 {
+        background: linear-gradient(135deg, #a5f3fc, #fff, #67e8f9);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .card-b .tag {
+        background: rgba(103, 232, 249, 0.1);
+        color: #67e8f9;
+        border: 1px solid rgba(103, 232, 249, 0.25);
+      }
+      .card-b:hover {
+        border-color: rgba(103, 232, 249, 0.4);
+        box-shadow: 0 4px 32px rgba(103, 232, 249, 0.1);
+      }
+
+      .piece-b {
+        position: relative;
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 50% 50%,
+          #0c2d48 0%,
+          #062136 45%,
+          #020f1e 80%,
+          #000a14 100%
+        );
+        border: 2px solid rgba(165, 243, 252, 0.5);
+        box-shadow:
+          0 0 22px rgba(103, 232, 249, 0.38),
+          0 0 55px rgba(34, 211, 238, 0.15),
+          inset 0 0 18px rgba(165, 243, 252, 0.08);
+        animation: b-pulse 4s ease-in-out infinite;
+        overflow: visible;
+      }
+
+      /* ── 눈송이: SVG 기반 6갈래 결정체 ── */
+      .b-snowflake-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: visible;
+        animation: b-flake-pulse 3.5s ease-in-out infinite;
+      }
+
+      /* 오로라 링 */
+      .b-aurora {
+        position: absolute;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .b-aurora-1 {
+        width: 174px;
+        height: 174px;
+        background: conic-gradient(
+          rgba(103, 232, 249, 0) 0deg,
+          rgba(103, 232, 249, 0.38) 30deg,
+          rgba(165, 243, 252, 0.15) 60deg,
+          rgba(103, 232, 249, 0) 120deg,
+          rgba(34, 211, 238, 0.3) 180deg,
+          rgba(103, 232, 249, 0) 240deg,
+          rgba(165, 243, 252, 0.24) 300deg,
+          rgba(103, 232, 249, 0) 360deg
+        );
+        mask: radial-gradient(
+          circle,
+          transparent 80px,
+          black 83px,
+          black 87px,
+          transparent 90px
+        );
+        -webkit-mask: radial-gradient(
+          circle,
+          transparent 80px,
+          black 83px,
+          black 87px,
+          transparent 90px
+        );
+        animation: b-aurora-spin 12s linear infinite;
+      }
+      .b-aurora-2 {
+        width: 210px;
+        height: 210px;
+        background: conic-gradient(
+          rgba(103, 232, 249, 0) 0deg,
+          rgba(34, 211, 238, 0.22) 45deg,
+          rgba(103, 232, 249, 0) 90deg,
+          rgba(165, 243, 252, 0.2) 150deg,
+          rgba(103, 232, 249, 0) 210deg,
+          rgba(34, 211, 238, 0.17) 270deg,
+          rgba(103, 232, 249, 0) 360deg
+        );
+        mask: radial-gradient(
+          circle,
+          transparent 96px,
+          black 99px,
+          black 105px,
+          transparent 108px
+        );
+        -webkit-mask: radial-gradient(
+          circle,
+          transparent 96px,
+          black 99px,
+          black 105px,
+          transparent 108px
+        );
+        animation: b-aurora-spin 22s linear infinite reverse;
+      }
+
+      /* 소용돌이 파티클 */
+      .b-particle {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(165, 243, 252, 0.8);
+        box-shadow: 0 0 5px rgba(103, 232, 249, 0.9);
+        animation: b-vortex var(--pspd) linear infinite var(--pdly);
+      }
+
+      /* ── 8개 결정체 공전 구조 ──
+     5개 외곽(pentagon, CW) + 3개 내곽(diamond, CCW)          */
+      .b-prism {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        animation: b-prism-orbit var(--bpspd) linear infinite var(--bpdly);
+      }
+      .b-prism::before {
+        content: "";
+        display: block;
+        width: 9px;
+        height: 9px;
+        background: linear-gradient(
+          135deg,
+          #e0f9ff 0%,
+          #67e8f9 50%,
+          #0891b2 100%
+        );
+        clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+        box-shadow:
+          0 0 9px rgba(103, 232, 249, 0.95),
+          0 0 18px rgba(34, 211, 238, 0.45);
+        transform: translate(-50%, -50%);
+        animation: b-prism-self-spin var(--bpspd) linear infinite reverse
+          var(--bpdly);
+      }
+
+      .b-crystal {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        animation: b-crystal-orbit var(--bcspd) linear infinite var(--bcdly);
+      }
+      .b-crystal::before {
+        content: "";
+        display: block;
+        width: 12px;
+        height: 12px;
+        background: linear-gradient(
+          135deg,
+          #f0fdff 0%,
+          #a5f3fc 45%,
+          #0891b2 100%
+        );
+        clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        box-shadow:
+          0 0 11px rgba(165, 243, 252, 0.9),
+          0 0 22px rgba(103, 232, 249, 0.42);
+        transform: translate(-50%, -50%);
+        animation: b-crystal-self-spin var(--bcspd) linear infinite reverse
+          var(--bcdly);
+      }
+
+      /* 중심 눈동자 */
+      .b-eye {
+        position: absolute;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: radial-gradient(
+          circle at 40% 35%,
+          #ffffff 0%,
+          #e0f9ff 20%,
+          #22d3ee 55%,
+          #0891b2 85%,
+          #083344 100%
+        );
+        box-shadow:
+          0 0 14px rgba(34, 211, 238, 0.8),
+          0 0 30px rgba(103, 232, 249, 0.45);
+        animation: b-eye-pulse 3.5s ease-in-out infinite;
+        z-index: 2;
+      }
+      .b-eye::after {
+        content: "";
+        position: absolute;
+        inset: 4px;
+        border-radius: 50%;
+        border: 1px solid rgba(224, 242, 254, 0.5);
+      }
+
+      @keyframes b-pulse {
+        0%,
+        100% {
+          box-shadow:
+            0 0 22px rgba(103, 232, 249, 0.38),
+            0 0 55px rgba(34, 211, 238, 0.15),
+            inset 0 0 18px rgba(165, 243, 252, 0.08);
+        }
+        50% {
+          box-shadow:
+            0 0 34px rgba(103, 232, 249, 0.55),
+            0 0 75px rgba(34, 211, 238, 0.25),
+            inset 0 0 26px rgba(165, 243, 252, 0.14);
+        }
+      }
+      @keyframes b-flake-pulse {
+        0%,
+        100% {
+          opacity: 0.9;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+      @keyframes b-aurora-spin {
+        to {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+      @keyframes b-vortex {
+        0% {
+          transform: rotate(var(--pang)) translateX(var(--pr1)) scale(1);
+          opacity: 0.9;
+        }
+        100% {
+          transform: rotate(calc(var(--pang) + 360deg)) translateX(var(--pr2))
+            scale(0.4);
+          opacity: 0;
+        }
+      }
+      @keyframes b-eye-pulse {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.1);
+        }
+      }
+      /* 5개 외곽 pentagon — CW */
+      @keyframes b-prism-orbit {
+        from {
+          transform: rotate(var(--bpang)) translateX(92px) translate(-50%, -50%);
+        }
+        to {
+          transform: rotate(calc(var(--bpang) + 360deg)) translateX(92px)
+            translate(-50%, -50%);
+        }
+      }
+      /* 3개 내곽 diamond — CCW */
+      @keyframes b-crystal-orbit {
+        from {
+          transform: rotate(var(--bcang)) translateX(62px) translate(-50%, -50%);
+        }
+        to {
+          transform: rotate(calc(var(--bcang) - 360deg)) translateX(62px)
+            translate(-50%, -50%);
+        }
+      }
+      @keyframes b-prism-self-spin {
+        to {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+      @keyframes b-crystal-self-spin {
+        to {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+
+      /* ══════════════════════════════════════════
+     C. 영구동토 프리즘
+  ══════════════════════════════════════════ */
+      .card-c {
+        border-color: rgba(203, 213, 225, 0.18);
+      }
+      .card-c .card-label {
+        color: #cbd5e1;
+      }
+      .card-c h3 {
+        background: linear-gradient(135deg, #f1f5f9, #e2e8f0, #bae6fd, #f8fafc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .card-c .tag {
+        background: rgba(203, 213, 225, 0.1);
+        color: #cbd5e1;
+        border: 1px solid rgba(203, 213, 225, 0.25);
+      }
+      .card-c:hover {
+        border-color: rgba(203, 213, 225, 0.38);
+        box-shadow: 0 4px 32px rgba(203, 213, 225, 0.1);
+      }
+
+      .piece-c {
+        position: relative;
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 44% 38%,
+          #dbeafe 0%,
+          #93c5fd 15%,
+          #1d4ed8 38%,
+          #1e3a5f 58%,
+          #0c1f3a 78%,
+          #030912 100%
+        );
+        border: 2px solid rgba(219, 234, 254, 0.6);
+        box-shadow:
+          0 0 20px rgba(147, 197, 253, 0.4),
+          0 0 50px rgba(59, 130, 246, 0.18),
+          inset 0 0 16px rgba(219, 234, 254, 0.1);
+        animation: c-pulse 3.5s ease-in-out infinite;
+        overflow: visible;
+      }
+      .piece-c::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background:
+          linear-gradient(
+            22deg,
+            transparent 45%,
+            rgba(219, 234, 254, 0.13) 45.4%,
+            transparent 45.8%
+          ),
+          linear-gradient(
+            78deg,
+            transparent 38%,
+            rgba(186, 230, 253, 0.1) 38.4%,
+            transparent 38.8%
+          ),
+          linear-gradient(
+            140deg,
+            transparent 52%,
+            rgba(219, 234, 254, 0.12) 52.4%,
+            transparent 52.8%
+          ),
+          linear-gradient(
+            195deg,
+            transparent 30%,
+            rgba(147, 197, 253, 0.09) 30.4%,
+            transparent 30.8%
+          ),
+          linear-gradient(
+            260deg,
+            transparent 60%,
+            rgba(219, 234, 254, 0.1) 60.4%,
+            transparent 60.8%
+          );
+      }
+      .c-hex {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(var(--hr));
+        animation: c-hex-spin var(--hs) linear infinite var(--hd);
+      }
+      .c-hex svg {
+        display: block;
+      }
+      .c-tick {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        border-radius: 999px;
+        transform-origin: 0.75px var(--to);
+        transform: rotate(var(--ta));
+      }
+      .c-ring-i {
+        position: absolute;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border: 1.5px solid rgba(219, 234, 254, 0.5);
+        animation: c-spin-cw 8s linear infinite;
+      }
+      .c-ring-m {
+        position: absolute;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border: 1px solid rgba(147, 197, 253, 0.35);
+        animation: c-spin-ccw 16s linear infinite;
+      }
+      .c-ring-o {
+        position: absolute;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border: 1px solid rgba(96, 165, 250, 0.22);
+        animation: c-spin-cw 26s linear infinite;
+      }
+      .c-prism {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        animation: c-orbit var(--cspd) linear infinite var(--cdly);
+      }
+      .c-prism::before {
+        content: "";
+        display: block;
+        width: 10px;
+        height: 10px;
+        background: linear-gradient(135deg, #fff 0%, #bae6fd 40%, #3b82f6 100%);
+        clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+        box-shadow:
+          0 0 8px rgba(147, 197, 253, 0.85),
+          0 0 14px rgba(59, 130, 246, 0.45);
+        animation: c-prism-spin var(--cspd) linear infinite reverse var(--cdly);
+      }
+      .c-crystal {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        animation: c-orbit2 var(--cspd2) linear infinite var(--cdly2);
+      }
+      .c-crystal::before {
+        content: "";
+        display: block;
+        width: 14px;
+        height: 14px;
+        background: linear-gradient(
+          135deg,
+          #f0f9ff 0%,
+          #7dd3fc 50%,
+          #1d4ed8 100%
+        );
+        clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        box-shadow:
+          0 0 12px rgba(186, 230, 253, 0.8),
+          0 0 24px rgba(59, 130, 246, 0.4);
+        animation: c-prism-spin var(--cspd2) linear infinite reverse
+          var(--cdly2);
+      }
+      .c-core {
+        position: absolute;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: radial-gradient(
+          circle at 38% 32%,
+          #ffffff 0%,
+          #dbeafe 25%,
+          #60a5fa 55%,
+          #1e40af 82%,
+          #0c1e5a 100%
+        );
+        box-shadow:
+          0 0 16px rgba(219, 234, 254, 0.9),
+          0 0 32px rgba(96, 165, 250, 0.55),
+          0 0 55px rgba(59, 130, 246, 0.25);
+        animation: c-core-pulse 2.8s ease-in-out infinite;
+      }
+      .c-core::after {
+        content: "";
+        position: absolute;
+        inset: 6px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 40% 35%,
+          rgba(255, 255, 255, 0.9),
+          rgba(219, 234, 254, 0.4)
+        );
+        animation: c-core-pulse 2.8s ease-in-out infinite reverse;
+      }
+      @keyframes c-pulse {
+        0%,
+        100% {
+          box-shadow:
+            0 0 20px rgba(147, 197, 253, 0.4),
+            0 0 50px rgba(59, 130, 246, 0.18),
+            inset 0 0 16px rgba(219, 234, 254, 0.1);
+        }
+        50% {
+          box-shadow:
+            0 0 32px rgba(147, 197, 253, 0.58),
+            0 0 70px rgba(59, 130, 246, 0.3),
+            inset 0 0 24px rgba(219, 234, 254, 0.18);
+        }
+      }
+      @keyframes c-spin-cw {
+        to {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+      @keyframes c-spin-ccw {
+        to {
+          transform: translate(-50%, -50%) rotate(-360deg);
+        }
+      }
+      @keyframes c-orbit {
+        from {
+          transform: rotate(var(--cang)) translateX(98px) translate(-50%, -50%);
+        }
+        to {
+          transform: rotate(calc(var(--cang) + 360deg)) translateX(98px)
+            translate(-50%, -50%);
+        }
+      }
+      @keyframes c-orbit2 {
+        from {
+          transform: rotate(var(--cang2)) translateX(75px) translate(-50%, -50%);
+        }
+        to {
+          transform: rotate(calc(var(--cang2) + 360deg)) translateX(75px)
+            translate(-50%, -50%);
+        }
+      }
+      @keyframes c-prism-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes c-core-pulse {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.14);
+        }
+      }
+      @keyframes c-hex-spin {
+        to {
+          transform: translate(-50%, -50%) rotate(calc(var(--hr) + 360deg));
+        }
+      }
+
+      /* ══ Selection bar ══ */
+      .sel-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 16px 24px;
+        background: rgba(10, 14, 20, 0.95);
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+        text-align: center;
+        font-size: 14px;
+        color: #64748b;
+        backdrop-filter: blur(10px);
+        display: none;
+      }
+      .sel-bar.show {
+        display: block;
+      }
+      .sel-bar span {
+        color: #93c5fd;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="badge">LEGENDARY · ARENA 9</div>
+      <h1>프로스트 하트 (Frost Heart)</h1>
+      <p>눈과 얼음 에너지 코어. 마음에 드는 컨셉을 클릭해 선택하세요.</p>
+    </header>
+
+    <div class="cards">
+      <!-- ────── A. 크리스탈 코어 (저장됨) ────── -->
+      <div class="card card-a" onclick="sel(this, 'A. 크리스탈 코어')">
+        <div class="check">✓</div>
+        <div class="stage">
+          <div class="piece-a">
+            <div class="a-ring a-ring-1">
+              <div class="a-tick a-tick-sm" style="--ang: 0deg"></div>
+              <div class="a-tick a-tick-sm" style="--ang: 30deg"></div>
+              <div class="a-tick a-tick-sm" style="--ang: 60deg"></div>
+              <div class="a-tick a-tick-lg" style="--ang: 90deg"></div>
+              <div class="a-tick a-tick-sm" style="--ang: 120deg"></div>
+              <div class="a-tick a-tick-sm" style="--ang: 150deg"></div>
+              <div class="a-tick a-tick-lg" style="--ang: 180deg"></div>
+              <div class="a-tick a-tick-sm" style="--ang: 210deg"></div>
+              <div class="a-tick a-tick-sm" style="--ang: 240deg"></div>
+              <div class="a-tick a-tick-lg" style="--ang: 270deg"></div>
+              <div class="a-tick a-tick-sm" style="--ang: 300deg"></div>
+              <div class="a-tick a-tick-sm" style="--ang: 330deg"></div>
+            </div>
+            <div class="a-ring a-ring-2"></div>
+            <div class="a-ring a-ring-3"></div>
+            <div
+              class="a-shard"
+              style="--ang: 0deg; --spd: 14s; --dly: 0s"
+            ></div>
+            <div
+              class="a-shard"
+              style="--ang: 60deg; --spd: 14s; --dly: -2.33s"
+            ></div>
+            <div
+              class="a-shard"
+              style="--ang: 120deg; --spd: 14s; --dly: -4.67s"
+            ></div>
+            <div
+              class="a-shard"
+              style="--ang: 180deg; --spd: 14s; --dly: -7s"
+            ></div>
+            <div
+              class="a-shard"
+              style="--ang: 240deg; --spd: 14s; --dly: -9.33s"
+            ></div>
+            <div
+              class="a-shard"
+              style="--ang: 300deg; --spd: 14s; --dly: -11.67s"
+            ></div>
+            <div class="a-core"></div>
+            <div
+              class="a-snow"
+              style="
+                width: 3px;
+                height: 3px;
+                --sx: 18px;
+                --sy: 22px;
+                --dur: 4.2s;
+                --dly2: 0s;
+                --dax: 4px;
+                --day: -3px;
+                --dbx: -2px;
+                --dby: 5px;
+              "
+            ></div>
+            <div
+              class="a-snow"
+              style="
+                width: 2px;
+                height: 2px;
+                --sx: 95px;
+                --sy: 30px;
+                --dur: 5.1s;
+                --dly2: -1.5s;
+                --dax: -3px;
+                --day: 4px;
+                --dbx: 2px;
+                --dby: -2px;
+              "
+            ></div>
+            <div
+              class="a-snow"
+              style="
+                width: 2px;
+                height: 2px;
+                --sx: 40px;
+                --sy: 100px;
+                --dur: 3.8s;
+                --dly2: -0.8s;
+                --dax: 2px;
+                --day: -5px;
+                --dbx: -4px;
+                --dby: 2px;
+              "
+            ></div>
+            <div
+              class="a-snow"
+              style="
+                width: 2.5px;
+                height: 2.5px;
+                --sx: 105px;
+                --sy: 88px;
+                --dur: 4.6s;
+                --dly2: -2.2s;
+                --dax: -4px;
+                --day: -2px;
+                --dbx: 3px;
+                --dby: 4px;
+              "
+            ></div>
+            <div
+              class="a-snow"
+              style="
+                width: 2px;
+                height: 2px;
+                --sx: 62px;
+                --sy: 108px;
+                --dur: 5.5s;
+                --dly2: -3s;
+                --dax: 3px;
+                --day: 2px;
+                --dbx: -2px;
+                --dby: -4px;
+              "
+            ></div>
+          </div>
+        </div>
+        <div class="info">
+          <div class="card-label">Concept A — 저장됨</div>
+          <h3>크리스탈 코어</h3>
+          <p class="card-sub">별도 파일로 저장 완료. 다른 스킨에 활용 예정.</p>
+          <div class="card-tags" style="margin-top: 12px">
+            <span class="tag">기하학적</span>
+            <span class="tag">얼음 샤드</span>
+            <span class="tag">저장됨</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ────── B. 설풍 소용돌이 (수정본) ────── -->
+      <div class="card card-b" onclick="sel(this, 'B. 설풍 소용돌이')">
+        <div class="check">✓</div>
+        <div class="stage">
+          <div class="piece-b">
+            <!-- 오로라 링 (눈송이 뒤에 먼저 렌더) -->
+            <div class="b-aurora b-aurora-1"></div>
+            <div class="b-aurora b-aurora-2"></div>
+
+            <!-- 눈송이: SVG 6갈래 결정체
+             좌표계: viewBox(0,0,140,140), translate(70,70)로 중심 이동.
+             각 팔은 rotate(0/60/120/180/240/300)으로 완벽 대칭.
+             가지 각도: ±60° (실제 눈 결정 격자각) -->
+            <svg
+              class="b-snowflake-svg"
+              viewBox="0 0 140 140"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <!-- 이중 글로우 필터: 타이트한 백색 코어 + 넓은 시안 블룸 -->
+                <filter
+                  id="sf-glow"
+                  x="-55%"
+                  y="-55%"
+                  width="210%"
+                  height="210%"
+                >
+                  <feGaussianBlur
+                    in="SourceAlpha"
+                    stdDeviation="2"
+                    result="blur-tight"
+                  />
+                  <feColorMatrix
+                    in="blur-tight"
+                    type="matrix"
+                    values="0 0 0 0 0.6  0 0 0 0 0.93 0 0 0 0 1  0 0 0 1.2 0"
+                    result="glow-tight"
+                  />
+                  <feGaussianBlur
+                    in="SourceAlpha"
+                    stdDeviation="6"
+                    result="blur-wide"
+                  />
+                  <feColorMatrix
+                    in="blur-wide"
+                    type="matrix"
+                    values="0 0 0 0 0.35 0 0 0 0 0.75 0 0 0 0 1  0 0 0 0.6 0"
+                    result="glow-wide"
+                  />
+                  <feMerge>
+                    <feMergeNode in="glow-wide" />
+                    <feMergeNode in="glow-tight" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+
+                <!-- 팔 1개 정의 (12시 방향, 원점=중심)
+                 줄기: (0,0)→(0,-52)
+                 안쪽 가지 r=26, ±60°, 길이 16px → 끝점 (±13.9, -34)
+                 바깥 가지 r=42, ±60°, 길이 11px → 끝점 (±9.5, -47.5)
+                 끝 결정: 다이아몬드 중심 (0,-52) -->
+                <g id="sf-arm">
+                  <line
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="-52"
+                    stroke="#f0f9ff"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                  />
+                  <line
+                    x1="0"
+                    y1="-26"
+                    x2="13.9"
+                    y2="-34"
+                    stroke="#bae6fd"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+                  <line
+                    x1="0"
+                    y1="-26"
+                    x2="-13.9"
+                    y2="-34"
+                    stroke="#bae6fd"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+
+                  <line
+                    x1="0"
+                    y1="-26"
+                    x2="13.9"
+                    y2="-34"
+                    stroke="#bae6fd"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+
+                  <line
+                    x1="0"
+                    y1="-34"
+                    x2="11.7"
+                    y2="-40.75"
+                    stroke="#d9f3ff"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                  />
+                  <line
+                    x1="0"
+                    y1="-34"
+                    x2="-11.7"
+                    y2="-40.75"
+                    stroke="#d9f3ff"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                  />
+
+                  <line
+                    x1="0"
+                    y1="-42"
+                    x2="9.5"
+                    y2="-47.5"
+                    stroke="#e0f2fe"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                  />
+                  <line
+                    x1="0"
+                    y1="-42"
+                    x2="-9.5"
+                    y2="-47.5"
+                    stroke="#e0f2fe"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                  />
+                  <!-- 끝 결정체: 바깥 다이아몬드(아이스블루) + 내부 하이라이트(순백) -->
+                  <polygon points="0,-59 5,-52 0,-45 -5,-52" fill="#e0f9ff" />
+                  <polygon
+                    points="0,-57 3,-52 0,-47 -3,-52"
+                    fill="white"
+                    opacity="0.92"
+                  />
+                </g>
+              </defs>
+
+              <!-- 6갈래: 60° 간격으로 완벽 대칭 배치 -->
+              <g transform="translate(70,70)" filter="url(#sf-glow)">
+                <use href="#sf-arm" transform="rotate(0)" />
+                <use href="#sf-arm" transform="rotate(60)" />
+                <use href="#sf-arm" transform="rotate(120)" />
+                <use href="#sf-arm" transform="rotate(180)" />
+                <use href="#sf-arm" transform="rotate(240)" />
+                <use href="#sf-arm" transform="rotate(300)" />
+              </g>
+            </svg>
+
+            <!-- 소용돌이 파티클 -->
+            <div
+              class="b-particle"
+              style="
+                width: 3px;
+                height: 3px;
+                --pang: 0deg;
+                --pr1: 52px;
+                --pr2: 5px;
+                --pspd: 4s;
+                --pdly: 0s;
+              "
+            ></div>
+            <div
+              class="b-particle"
+              style="
+                width: 2px;
+                height: 2px;
+                --pang: 72deg;
+                --pr1: 48px;
+                --pr2: 4px;
+                --pspd: 4.5s;
+                --pdly: -1.5s;
+              "
+            ></div>
+            <div
+              class="b-particle"
+              style="
+                width: 3px;
+                height: 3px;
+                --pang: 144deg;
+                --pr1: 55px;
+                --pr2: 6px;
+                --pspd: 3.8s;
+                --pdly: -3s;
+              "
+            ></div>
+            <div
+              class="b-particle"
+              style="
+                width: 2px;
+                height: 2px;
+                --pang: 216deg;
+                --pr1: 50px;
+                --pr2: 4px;
+                --pspd: 5.2s;
+                --pdly: -0.8s;
+              "
+            ></div>
+            <div
+              class="b-particle"
+              style="
+                width: 2.5px;
+                height: 2.5px;
+                --pang: 288deg;
+                --pr1: 46px;
+                --pr2: 5px;
+                --pspd: 4.2s;
+                --pdly: -2.1s;
+              "
+            ></div>
+            <div
+              class="b-particle"
+              style="
+                width: 2px;
+                height: 2px;
+                --pang: 36deg;
+                --pr1: 58px;
+                --pr2: 3px;
+                --pspd: 3.5s;
+                --pdly: -1s;
+              "
+            ></div>
+            <div
+              class="b-particle"
+              style="
+                width: 3px;
+                height: 3px;
+                --pang: 108deg;
+                --pr1: 42px;
+                --pr2: 6px;
+                --pspd: 5s;
+                --pdly: -3.5s;
+              "
+            ></div>
+            <div
+              class="b-particle"
+              style="
+                width: 2px;
+                height: 2px;
+                --pang: 180deg;
+                --pr1: 60px;
+                --pr2: 4px;
+                --pspd: 4.8s;
+                --pdly: -2.4s;
+              "
+            ></div>
+
+            <!-- 8개 결정체 공전: 5 외곽 pentagon(CW) + 3 내곽 diamond(CCW) -->
+            <div
+              class="b-prism"
+              style="--bpang: 0deg; --bpspd: 22s; --bpdly: 0s"
+            ></div>
+            <div
+              class="b-prism"
+              style="--bpang: 72deg; --bpspd: 22s; --bpdly: -4.4s"
+            ></div>
+            <div
+              class="b-prism"
+              style="--bpang: 144deg; --bpspd: 22s; --bpdly: -8.8s"
+            ></div>
+            <div
+              class="b-prism"
+              style="--bpang: 216deg; --bpspd: 22s; --bpdly: -13.2s"
+            ></div>
+            <div
+              class="b-prism"
+              style="--bpang: 288deg; --bpspd: 22s; --bpdly: -17.6s"
+            ></div>
+            <div
+              class="b-crystal"
+              style="--bcang: 0deg; --bcspd: 14s; --bcdly: 0s"
+            ></div>
+            <div
+              class="b-crystal"
+              style="--bcang: 120deg; --bcspd: 14s; --bcdly: -4.67s"
+            ></div>
+            <div
+              class="b-crystal"
+              style="--bcang: 240deg; --bcspd: 14s; --bcdly: -9.33s"
+            ></div>
+
+            <!-- 중심 눈동자 -->
+            <div class="b-eye"></div>
+          </div>
+        </div>
+        <div class="info">
+          <div class="card-label">Concept B — 수정본</div>
+          <h3>설풍 소용돌이</h3>
+          <p class="card-sub">
+            대형 눈송이(정중앙 정렬) + 오로라 링 + 블리자드 소용돌이 + 8개
+            결정체 공전 구조(5외·3내).
+          </p>
+          <div class="card-tags" style="margin-top: 12px">
+            <span class="tag">눈송이</span>
+            <span class="tag">8결정체</span>
+            <span class="tag">소용돌이</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ────── C. 영구동토 프리즘 ────── -->
+      <div class="card card-c" onclick="sel(this, 'C. 영구동토 프리즘')">
+        <div class="check">✓</div>
+        <div class="stage">
+          <div class="piece-c">
+            <div class="c-hex" style="--hr: 0deg; --hs: 22s; --hd: normal">
+              <svg width="178" height="178" viewBox="-89 -89 178 178">
+                <polygon
+                  points="0,-82 71,-41 71,41 0,82 -71,41 -71,-41"
+                  fill="none"
+                  stroke="rgba(147,197,253,.25)"
+                  stroke-width="1.2"
+                />
+              </svg>
+            </div>
+            <div class="c-hex" style="--hr: 30deg; --hs: 38s; --hd: reverse">
+              <svg width="148" height="148" viewBox="-74 -74 148 148">
+                <polygon
+                  points="0,-68 59,-34 59,34 0,68 -59,34 -59,-34"
+                  fill="none"
+                  stroke="rgba(96,165,250,.2)"
+                  stroke-width="1"
+                />
+              </svg>
+            </div>
+            <div class="c-ring-i" style="width: 174px; height: 174px"></div>
+            <div class="c-ring-m" style="width: 200px; height: 200px"></div>
+            <div class="c-ring-o" style="width: 226px; height: 226px"></div>
+            <div
+              class="c-tick"
+              style="
+                width: 1.5px;
+                height: 6px;
+                --to: 87px;
+                --ta: 0deg;
+                background: rgba(219, 234, 254, 0.7);
+                left: 50%;
+                margin-left: -0.75px;
+              "
+            ></div>
+            <div
+              class="c-tick"
+              style="
+                width: 1.5px;
+                height: 6px;
+                --to: 87px;
+                --ta: 45deg;
+                background: rgba(219, 234, 254, 0.7);
+                left: 50%;
+                margin-left: -0.75px;
+              "
+            ></div>
+            <div
+              class="c-tick"
+              style="
+                width: 1.5px;
+                height: 6px;
+                --to: 87px;
+                --ta: 90deg;
+                background: rgba(219, 234, 254, 0.7);
+                left: 50%;
+                margin-left: -0.75px;
+              "
+            ></div>
+            <div
+              class="c-tick"
+              style="
+                width: 1.5px;
+                height: 6px;
+                --to: 87px;
+                --ta: 135deg;
+                background: rgba(219, 234, 254, 0.7);
+                left: 50%;
+                margin-left: -0.75px;
+              "
+            ></div>
+            <div
+              class="c-tick"
+              style="
+                width: 1.5px;
+                height: 6px;
+                --to: 87px;
+                --ta: 180deg;
+                background: rgba(219, 234, 254, 0.7);
+                left: 50%;
+                margin-left: -0.75px;
+              "
+            ></div>
+            <div
+              class="c-tick"
+              style="
+                width: 1.5px;
+                height: 6px;
+                --to: 87px;
+                --ta: 225deg;
+                background: rgba(219, 234, 254, 0.7);
+                left: 50%;
+                margin-left: -0.75px;
+              "
+            ></div>
+            <div
+              class="c-tick"
+              style="
+                width: 1.5px;
+                height: 6px;
+                --to: 87px;
+                --ta: 270deg;
+                background: rgba(219, 234, 254, 0.7);
+                left: 50%;
+                margin-left: -0.75px;
+              "
+            ></div>
+            <div
+              class="c-tick"
+              style="
+                width: 1.5px;
+                height: 6px;
+                --to: 87px;
+                --ta: 315deg;
+                background: rgba(219, 234, 254, 0.7);
+                left: 50%;
+                margin-left: -0.75px;
+              "
+            ></div>
+            <div
+              class="c-prism"
+              style="--cang: 0deg; --cspd: 18s; --cdly: 0s"
+            ></div>
+            <div
+              class="c-prism"
+              style="--cang: 72deg; --cspd: 18s; --cdly: -3.6s"
+            ></div>
+            <div
+              class="c-prism"
+              style="--cang: 144deg; --cspd: 18s; --cdly: -7.2s"
+            ></div>
+            <div
+              class="c-prism"
+              style="--cang: 216deg; --cspd: 18s; --cdly: -10.8s"
+            ></div>
+            <div
+              class="c-prism"
+              style="--cang: 288deg; --cspd: 18s; --cdly: -14.4s"
+            ></div>
+            <div
+              class="c-crystal"
+              style="--cang2: 30deg; --cspd2: 12s; --cdly2: 0s"
+            ></div>
+            <div
+              class="c-crystal"
+              style="--cang2: 150deg; --cspd2: 12s; --cdly2: -4s"
+            ></div>
+            <div
+              class="c-crystal"
+              style="--cang2: 270deg; --cspd2: 12s; --cdly2: -8s"
+            ></div>
+            <div class="c-core"></div>
+          </div>
+        </div>
+        <div class="info">
+          <div class="card-label">Concept C</div>
+          <h3>영구동토 프리즘</h3>
+          <p class="card-sub">
+            육각 프리즘 구조가 겹겹이 맞물리고, 빙하 에너지 결정이 다층으로
+            공전한다. 전설 등급에 걸맞은 복합 레이어 구조.
+          </p>
+          <div class="card-tags" style="margin-top: 12px">
+            <span class="tag">복층 레이어</span>
+            <span class="tag">프리즘</span>
+            <span class="tag">레전더리</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sel-bar" id="selBar">
+      선택: <span id="selName">—</span> — 이 컨셉으로 구현을 진행합니다.
+    </div>
+
+    <script>
+      let last = null;
+      function sel(el, name) {
+        if (last && last !== el) last.classList.remove("selected");
+        el.classList.toggle("selected");
+        last = el.classList.contains("selected") ? el : null;
+        const bar = document.getElementById("selBar");
+        const nm = document.getElementById("selName");
+        if (last) {
+          nm.textContent = name;
+          bar.classList.add("show");
+        } else {
+          bar.classList.remove("show");
+        }
+      }
+    </script>
+  </body>
+</html>

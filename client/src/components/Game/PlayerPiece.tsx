@@ -14,6 +14,7 @@ import { QuantumGame } from '../../skins/common/quantum/Game';
 import { ElectricCoreGame } from '../../skins/rare/electric_core/Game';
 import { BerserkerGame } from '../../skins/rare/berserker/Game';
 import { MoonlightSeedGame } from '../../skins/rare/moonlight_seed/Game';
+import { FrostHeartGame } from '../../skins/legendary/frost_heart/Game';
 import './PlayerPiece.css';
 
 interface Props {
@@ -61,7 +62,8 @@ interface Props {
     | "atomic"
     | "chronos"
     | "sun"
-    | "wizard";
+    | "wizard"
+    | "frost_heart";
 }
 
 export function PlayerPiece({
@@ -258,6 +260,7 @@ export function PlayerPiece({
           {effectiveSkin === "chronos" && <ChronosGame />}
           {effectiveSkin === "sun" && <SunGame cellSize={cellSize} />}
           {effectiveSkin === "wizard" && <WizardGame />}
+          {effectiveSkin === "frost_heart" && <FrostHeartGame />}
           {effectiveSkin === "quantum" && <QuantumGame />}
         </div>
         {hp !== null && !isClone && (

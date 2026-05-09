@@ -140,6 +140,9 @@ export const SKIN_ARENA_REQUIREMENTS: Partial<Record<PieceSkin, number>> = {
   atomic: 8,
   arc_reactor: 8,
 
+  // Arena 9: 설원의 정상
+  frost_heart: 9,
+
   // Arena 10: 천공의 신전
   chronos: 10,
 };
@@ -164,5 +167,6 @@ export const ARENA_REWARD_SKINS: Partial<Record<number, PieceSkin[]>> = {
   6: ["sun", "gold_core"],
   7: ["moonlight_seed"],
   8: ["atomic", "arc_reactor"],
+  9: ["frost_heart"],
   10: ["chronos"],
 };

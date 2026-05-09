@@ -2,6 +2,7 @@
 
 import { AtomicPreview } from "../../skins/legendary/atomic/Preview";
 import { ChronosPreview } from "../../skins/legendary/chronos/Preview";
+import { FrostHeartPreview } from "../../skins/legendary/frost_heart/Preview";
 import { SunPreview } from "../../skins/legendary/sun/Preview";
 import { WizardPreview } from "../../skins/legendary/wizard/Preview";
 
@@ -1696,7 +1697,8 @@ export function LobbyScreen({
       | "quantum"
       | "atomic"
       | "chronos"
-      | "sun";
+      | "sun"
+      | "frost_heart";
 
     name: string;
 
@@ -2026,6 +2028,24 @@ export function LobbyScreen({
 
       tier: "legendary",
     },
+    {
+      id: "frost_heart",
+
+      name: lang === "en" ? "Frost Heart" : "프로스트 하트",
+
+      desc:
+        lang === "en"
+          ? "Legendary blizzard vortex core — a snowflake eye with aurora rings and crystal orbits."
+          : "레전더리 설풍 소용돌이 코어 - 오로라 링과 결정체 공전 속에 눈송이 눈동자가 빛납니다.",
+
+      requiredWins: null,
+
+      requiredPlays: null,
+
+      tokenPrice: 3600,
+
+      tier: "legendary",
+    },
   ];
 
   const boardSkinChoices: Array<{
@@ -2185,6 +2205,7 @@ export function LobbyScreen({
       {skinId === "atomic" && <AtomicPreview ready={atomicPreviewReady} />}
       {skinId === "chronos" && <ChronosPreview />}
       {skinId === "sun" && <SunPreview />}
+      {skinId === "frost_heart" && <FrostHeartPreview />}
     </span>
   );
 

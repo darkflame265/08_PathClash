@@ -25,7 +25,8 @@ export type PieceSkin =
   | 'atomic'
   | 'chronos'
   | 'wizard'
-  | 'sun';
+  | 'sun'
+  | 'frost_heart';
 
 export type BoardSkin = 'classic' | 'blue_gray' | 'pharaoh' | 'magic';
 
