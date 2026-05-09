@@ -1,41 +1,183 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <defs>
-    <radialGradient id="fh-bg" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#0c2d48"/>
-      <stop offset="100%" stop-color="#000a14"/>
-    </radialGradient>
-    <filter id="fh-glow" x="-35%" y="-35%" width="170%" height="170%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="b1"/>
-      <feColorMatrix in="b1" type="matrix"
-        values="0 0 0 0 0.4  0 0 0 0 0.9  0 0 0 0 1  0 0 0 1.2 0"
-        result="g1"/>
-      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="b2"/>
-      <feColorMatrix in="b2" type="matrix"
-        values="0 0 0 0 0.2  0 0 0 0 0.7  0 0 0 0 1  0 0 0 0.6 0"
-        result="g2"/>
-      <feMerge>
-        <feMergeNode in="g2"/>
-        <feMergeNode in="g1"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    <g id="fh-arm">
-      <line x1="0" y1="0"    x2="0"    y2="-37"   stroke="#f0f9ff" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="0" y1="-18.5" x2="9.9"  y2="-24.2" stroke="#bae6fd" stroke-width="1.8" stroke-linecap="round"/>
-      <line x1="0" y1="-18.5" x2="-9.9" y2="-24.2" stroke="#bae6fd" stroke-width="1.8" stroke-linecap="round"/>
-      <line x1="0" y1="-29"   x2="6.8"  y2="-33"   stroke="#e0f2fe" stroke-width="1.4" stroke-linecap="round"/>
-      <line x1="0" y1="-29"   x2="-6.8" y2="-33"   stroke="#e0f2fe" stroke-width="1.4" stroke-linecap="round"/>
-      <polygon points="0,-42 3.5,-37 0,-32 -3.5,-37" fill="#e0f9ff"/>
-    </g>
-  </defs>
-  <circle cx="50" cy="50" r="50" fill="url(#fh-bg)"/>
-  <g transform="translate(50,50)" filter="url(#fh-glow)">
-    <use href="#fh-arm" transform="rotate(0)"/>
-    <use href="#fh-arm" transform="rotate(60)"/>
-    <use href="#fh-arm" transform="rotate(120)"/>
-    <use href="#fh-arm" transform="rotate(180)"/>
-    <use href="#fh-arm" transform="rotate(240)"/>
-    <use href="#fh-arm" transform="rotate(300)"/>
-    <circle cx="0" cy="0" r="4" fill="#ffffff" opacity="0.9"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150">
+<!-- SVG created with Arrow, by QuiverAI (https://quiver.ai) -->
+  <style type="text/css">.cls-0 {fill:#002F68;}
+.cls-1 {fill:#002556;}
+.cls-2 {fill:#115497;}
+.cls-3 {fill:#1067B0;}
+.cls-4 {fill:#157CC8;}
+.cls-5 {fill:#024487;}
+.cls-6 {fill:#002F68;}
+.cls-7 {fill:#AAD7F2;}
+.cls-8 {fill:#64A8DF;}
+.cls-9 {fill:url(#SVGID_1_);}
+.cls-10 {fill:url(#SVGID_2_);}
+.cls-11 {fill:#92CBF0;}
+.cls-12 {fill:url(#SVGID_3_);}
+.cls-13 {fill:url(#SVGID_4_);}
+.cls-14 {fill:url(#SVGID_5_);}
+.cls-15 {fill:url(#SVGID_6_);}
+.cls-16 {fill:url(#SVGID_7_);}
+.cls-17 {fill:url(#SVGID_8_);}
+.cls-18 {fill:url(#SVGID_9_);}
+.cls-19 {fill:#C9E9FB;}
+.cls-20 {fill:url(#SVGID_10_);}
+.cls-21 {fill:url(#SVGID_11_);}
+.cls-22 {fill:url(#SVGID_12_);}
+.cls-23 {fill:url(#SVGID_13_);}
+.cls-24 {fill:url(#SVGID_14_);}
+.cls-25 {fill:url(#SVGID_15_);}
+.cls-26 {fill:url(#SVGID_16_);}
+.cls-27 {fill:url(#SVGID_17_);}
+.cls-28 {fill:url(#SVGID_18_);}
+.cls-29 {fill:url(#SVGID_19_);}</style>
+  <rect class="cls-0" width="150" height="150"/>
+  <polygon class="cls-1" points="74.7 4 95 0 150 0 150 74.7 123.5 73.5 141.3 59.1 120.9 73.3 84.7 71.4 88.4 66.1 91.6 59.6 98.2 52.9 118.4 31.2 99.6 45.5 104.8 29.9 98.1 47 89.6 54.4 78.9 64.3 76.4 62.2 77.9 56.8 75 55.3 77.3 49.3 73.3 56.1 70.6 56.9 64.3 60.4 66.1 67.5 61.9 61.1 60.6 53 54.4 48.8 33.3 31.5 57.9 49.7 45.8 26.1 62 57.3 62 55.3 63.4 55 67.5 59.1 71.5 64.4 75.3 45.5"/>
+  <polygon class="cls-2" points="145 4.5 145.3 30.8 121.6 28.7 115.4 62 104.7 22.9 109.9 4.6"/>
+  <polygon class="cls-3" points="74.7 0 74.4 26.7 51.3 35.1 45.2 25.7 35.8 4.8 47.7 4.3 52.5 3.9 67.4 4.2"/>
+  <polygon class="cls-4" points="74.4 32.1 70.9 27.7 51.3 35.1 60.8 53.4 70.1 60.2 73.9 45.9"/>
+  <polygon class="cls-5" points="0 74 5.1 69.7 5 41.9 28.7 52.4 62.6 66.1 56.4 54.5 35.8 32.5 56.3 48.6 62 52.6 67.7 58.3 71.5 64.4 64.4 60.5 66.1 67.5 68.5 71.6 62.9 70.5 56.3 73.6"/>
+  <polygon class="cls-6" points="0 74 5.2 80.7 5.1 103.7 0 110.1"/>
+  <polygon class="cls-2" points="5.1 103.7 31.3 92.6 45.5 91.3 38.1 111.5 14.4 113.1 5 111.5"/>
+  <polygon class="cls-4" points="31.3 92.6 40.5 108.4 54.4 94.4 63 87.4 66.1 84.7 63 89.9 59.8 93.1 49.9 102.1 49.9 110.7 63 126.9 56.8 145.3 30.5 145.5 23 145.9 5.2 145.3 5.1 145.5 5.1 145.3 5.1 103.7"/>
+  <polygon class="cls-2" points="34.5 117.1 28.9 136.5 23 145.9 41.3 145.9 56.8 145.5 62.2 129.3 64.6 125.1 74.4 130.6 76.4 150 50.7 150 56.3 145.3 30.5 145.5 5.2 150 0 150 5.1 145.3 5.1 145.5 5.1 145.3 23 145.9 30.5 145.5"/>
+  <polygon class="cls-0" points="74.1 141.5 76.4 150 50.7 150 59.1 145.5 72.1 145.5"/>
+  <polygon class="cls-1" points="74.4 130.6 74.9 101.6 77.9 89.9 79.7 88.2 88 99.8 96.6 122.1 87.1 133.5 75 141.5"/>
+  <polygon class="cls-2" points="97.1 122.1 115.7 123.8 108.1 107.9 86.4 92.5 84.7 90.7 85.6 96 92.6 112.9"/>
+  <polygon class="cls-0" points="86.4 145.1 83.4 150 109.4 150 98.3 145.5"/>
+  <polygon class="cls-0" points="97.1 122.1 108.8 145.5 109.4 150 150 150 145 145.5 108.4 145.5 103 136.9 96.6 122.1"/>
+  <polygon class="cls-2" points="123.5 73.5 145 74 144.9 99.9 123.5 92.6 98.6 83.4 90.4 76.4 95.8 74.1"/>
+  <polygon class="cls-1" points="123.5 59.1 145 50.9 145 66.1 150 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5 123.5 73.5"/>
+  <polygon class="cls-1" points="145.3 98.1 150 102.1 145 100.3"/>
+  <polygon class="cls-0" points="145.3 50.9 150 51.8 150 73.5 145.1 66.4"/>
+  <polygon class="cls-3" points="121.6 28.7 145.3 29.8 145.3 48.6 123.5 59.1 115.4 62"/>
+  <polygon class="cls-7" points="93.6 0 96.1 3.3 118.6 3.7 120.5 0 148 0 145 4.6 93.9 4.6 88.9 25.7 80.5 60.9 83.8 56.1 82.2 60.4 88.9 56.8 121.6 30.3 92.9 60.4 88.6 69.6 125 58.8 92.6 70.5 121.6 73.5 121.6 73.9 84.7 71.4 88.4 66.1 91.6 59.6 98.2 52.9 118.4 31.2 90 57.6 78.9 64.3 75 19.7 79.5 56.4 89.1 19.7 93.4 3.3"/>
+  <polygon class="cls-8" points="91.6 12.7 104.1 4.6 91.7 11.6"/>
+  <polygon class="cls-7" points="74.4 0 67.4 4.6 51.5 4.6 47.4 0.7 52.5 3.9 67.4 3.7 73.9 0"/>
+  <polygon class="cls-7" points="44.1 22 34.7 5.8 5.2 4.5 0 0 29.4 0 35.8 4.8"/>
+  <linearGradient id="SVGID_1_" x1="23.62" x2="29.2" y1=".686" y2="4.258" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#AAD7F2" offset="0"/>
+    <stop stop-color="#92CBF0" offset="1"/>
+  </linearGradient>
+  <path class="cls-9" d="m29 0 3.6 4.1-4.9-0.6c0.9-1 1.4-2.2 1.3-3.5z"/>
+  <polygon class="cls-7" points="5.2 4.5 5.8 33.4 3.7 42 3.6 74 0 74 3.7 71.5 4.6 42.2 5.8 33.4 5.8 4.5"/>
+  <linearGradient id="SVGID_2_" x1="9.233" x2="10.1" y1="31.16" y2="34.21" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#64A8DF" offset="0"/>
+    <stop stop-color="#3887C8" offset="1"/>
+  </linearGradient>
+  <polygon class="cls-10" points="5.8 33.4 5.7 34.9 13.3 31.5"/>
+  <polygon class="cls-11" points="6.5 73.9 20.8 73.6 11 63.2 20.9 73.5 20.9 73.9"/>
+  <linearGradient id="SVGID_3_" x1="17.33" x2="20.48" y1="79.96" y2="80.97" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#64A8DF" offset="0"/>
+    <stop stop-color="#92CBF0" offset="1"/>
+  </linearGradient>
+  <polygon class="cls-12" points="6.5 89.3 26.4 74.6 26.6 74.6 27.9 74.6"/>
+  <polygon class="cls-7" points="28.8 74.1 57.1 73.6 61.9 71 61.1 69.9 63.3 68.5 54.6 64.4 28.5 52.5 63 66.1 56.4 55.6 45.2 43.5 57.1 54.4 67.4 69.4 62.1 70.5 56.3 73.6 29.4 74 57.1 75.8 66.8 77.9 58.2 91.1 54.4 94.4 30.3 120.5 26.4 123.7 49 104.7 60.2 93.9 72 83.8 73.1 106.1 57.9 140.4 65.4 123.5 71.8 106.9 71.9 106.9 74.4 130.6 72.1 103.7 71.4 83.9 62.2 90.7 74.6 81.4 72.4 90 75.5 89.3 76.4 91.6 77.9 89.9 73.9 91.3 73.9 91.2 75.7 83.4 74.6 89.3 74.1 116.1 73.9 101.6 78.4 84.7 86.4 98.6 79 86.9 79.7 88.2 87.1 99.8 96.6 122.1 100.5 130.9 85.6 97.1 83.2 89.3 87.4 91.6 107 106.2 89.1 88.2 83.5 78.2 90 76.8 89.8 76.4 96 74.1 121.6 74 121.6 74.5 96.6 75.8 88.2 78.9 123.5 92.3 106.6 86.9 109.9 99.2 116.2 115.4 105.4 99.9 90.4 87.4 87.4 80.7 105.2 86.5 109.7 100.3 125 123.5 108.1 107.9 86.4 92.9 97.4 122.1 105.2 137.1 86.7 143.7 87.4 134.2 96.6 122.1 86.8 133.5 74.9 141.5 75.8 150 85.6 145.3 83.4 150 82.9 150 86.4 145.1 90 143.7 103.2 137.3 103.4 137.1 109.3 150 109.4 150 108.8 145.5 101.7 132.2 108.8 145.9 109.4 145.9 109.7 150 109.7 150 109.9 150 109.4 145.9 108.4 145.5 108.8 145.5 109 145.9 109.4 150 109.9 150 109.4 145.9 108.4 145.5 108.8 145.5 109.4 147.2 109.7 150 110 150"/>
+  <linearGradient id="SVGID_4_" x1="44.86" y1="144.6" y2="145.7" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#64A8DF" offset="0"/>
+    <stop stop-color="#92CBF0" offset="1"/>
+  </linearGradient>
+  <polygon class="cls-13" points="29.4 145.5 39.9 145.7 43.9 145.7 55.9 145.5 56.4 145.5 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.4 145.3 56.8 144.1"/>
+  <linearGradient id="SVGID_5_" x1="65.03" x2="73.42" y1="126.4" y2="128.5" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#64A8DF" offset="0"/>
+    <stop stop-color="#92CBF0" offset="1"/>
+  </linearGradient>
+  <polygon class="cls-14" points="64.6 124.4 74.4 130.6 64.6 125.5"/>
+  <polygon class="cls-11" points="48.9 104.7 50.5 119.9 50.1 104"/>
+  <linearGradient id="SVGID_6_" x1="28.63" x2="63" y1="90.44" y2="82.16" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#64A8DF" offset="0"/>
+    <stop stop-color="#92CBF0" offset="1"/>
+  </linearGradient>
+  <polygon class="cls-15" points="28.7 93.6 62.8 80.3 58.2 87.4 54.4 91.6 56.4 89.9 59.1 86.5 62.6 80.3 54.4 83.9"/>
+  <polygon class="cls-11" points="52.3 76.7 54.4 82.5 54.4 82.1 53.2 76.4"/>
+  <linearGradient id="SVGID_7_" x1="50.75" x2="55.7" y1="67.5" y2="67.5" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#64A8DF" offset="0"/>
+    <stop stop-color="#92CBF0" offset="1"/>
+  </linearGradient>
+  <polygon class="cls-16" points="49.3 72.8 52.3 68.5 52.5 65.3 54.8 63.9 54.6 64.4 52.8 65.5 52.1 68.5 50.3 72.4"/>
+  <polygon class="cls-7" points="67.8 7.9 72.4 27.7 74.7 31.1 75.3 45.5 71.6 64.4 63 55 70 60 70.7 59.8 68.1 48 69.2 48.6 70.6 59.1 73.6 45.8 73.9 32.1 71.1 27.9"/>
+  <polygon class="cls-19" points="61.1 44.4 64.4 48 61.9 45.9"/>
+  <polygon class="cls-11" points="69.2 49.3 72.8 49 73.1 48.9 72.8 49.3"/>
+  <linearGradient id="SVGID_8_" x1="84.12" x2="81.99" y1="20.45" y2="18.12" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#64A8DF" offset="0"/>
+    <stop stop-color="#92CBF0" offset="1"/>
+  </linearGradient>
+  <polygon class="cls-17" points="77.9 15.4 88 25.3 87.9 25.9"/>
+  <linearGradient id="SVGID_9_" x1="82.13" x2="87.42" y1="52.73" y2="51.43" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#64A8DF" offset="0"/>
+    <stop stop-color="#92CBF0" offset="1"/>
+  </linearGradient>
+  <polygon class="cls-18" points="82.2 53.4 87.4 50.9 87.9 50.9 87.4 50.9 82.2 52.9"/>
+  <polygon class="cls-19" points="88.6 45.5 87.9 49.3 88.4 56.4 88.6 56.1 87.9 50.1"/>
+  <linearGradient id="SVGID_10_" x1="96.59" x2="100.8" y1="62.95" y2="62.42" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#64A8DF" offset="0"/>
+    <stop stop-color="#92CBF0" offset="1"/>
+  </linearGradient>
+  <polygon class="cls-20" points="96.6 63.2 96.6 67.1 96.6 67.4 96.6 63 100.9 60.6"/>
+  <polygon class="cls-11" points="98.1 68.5 100.2 71.6 99.9 71.6"/>
+  <linearGradient id="SVGID_11_" x1="96.2" x2="98.52" y1="78.74" y2="78.22" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#64A8DF" offset="0"/>
+    <stop stop-color="#92CBF0" offset="1"/>
+  </linearGradient>
+  <polygon class="cls-21" points="96.1 81.7 96.6 81.7 99.3 75.4 99.1 75.4"/>
+  <polygon class="cls-19" points="92.4 80.9 93.9 82.5 100.2 84.5"/>
+  <linearGradient id="SVGID_12_" x1="133.8" x2="135.4" y1="79.01" y2="79.01" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#64A8DF" offset="0"/>
+    <stop stop-color="#92CBF0" offset="1"/>
+  </linearGradient>
+  <polygon class="cls-22" points="133 74.4 138.8 84 131.9 74.4"/>
+  <polygon class="cls-7" points="145 29.4 137.9 27.4 141.5 22.9 137.1 27.4 121.6 28.7 137.1 27.7 145.3 29.8"/>
+  <linearGradient id="SVGID_13_" x1="145.3" x2="150" y1="48.14" y2="48.14" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#64A8DF" offset="0"/>
+    <stop stop-color="#92CBF0" offset="1"/>
+  </linearGradient>
+  <polygon class="cls-23" points="150 44.9 145.3 48.6 150 45.2"/>
+  <polygon class="cls-4" points="150 44.9 145 50.9 123.5 58.1 145 51.1 150 56.9"/>
+  <linearGradient id="SVGID_14_" x1="141.2" x2="145" y1="112.7" y2="112.7" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#64A8DF" offset="0"/>
+    <stop stop-color="#3887C8" offset="1"/>
+  </linearGradient>
+  <path class="cls-24" d="m145 105.1-5.4 5.4c-0.3 3.6 0.9 7.8 1.6 9.9l-2.1-3.6c-0.4-1.6-0.7-4.6-0.1-5.5l6-6.2z"/>
+  <polygon class="cls-8" points="145 145.5 145 74 150 74 146.1 77.6 144.9 98.1 150 102.1 145 100.3 145 105.1 140.2 111.5 140.4 114.7 142.4 121.5 139.6 116.6 135.7 113.9 139.1 115.7 145 123.5"/>
+  <polygon class="cls-4" points="145 74 150 74 150 74.6 146.1 77.6"/>
+  <linearGradient id="SVGID_15_" x1="84.32" x2="82.87" y1="98.09" y2="99.26" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#AAD7F2" offset="0"/>
+    <stop stop-color="#C9E9FB" offset="1"/>
+  </linearGradient>
+  <polygon class="cls-25" points="84.7 95.5 81.4 99.2 77.1 102.1 81.1 99.8 83.9 96.1"/>
+  <linearGradient id="SVGID_16_" x1="69.94" x2="66.82" y1="96.89" y2="98.48" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#AAD7F2" offset="0"/>
+    <stop stop-color="#C9E9FB" offset="1"/>
+  </linearGradient>
+  <polygon class="cls-26" points="70.9 94.9 66.8 97.4 65.1 99.4 66.8 98.1 70.9 95.5"/>
+  <polygon class="cls-11" points="60.9 94.1 63.9 98.6 63.8 98.4 60.8 94.6"/>
+  <linearGradient id="SVGID_17_" x1="51.77" x2="53.27" y1="81.1" y2="81.1" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#64A8DF" offset="0"/>
+    <stop stop-color="#92CBF0" offset="1"/>
+  </linearGradient>
+  <polygon class="cls-27" points="50.9 82.9 53.2 80.3 53.2 80.3 50.9 82.5"/>
+  <linearGradient id="SVGID_18_" x1="23.99" x2="33.64" y1="32.12" y2="37.21" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#64A8DF" offset="0"/>
+    <stop stop-color="#92CBF0" offset="1"/>
+  </linearGradient>
+  <polygon class="cls-28" points="26.1 25.5 42.4 40.9 36.4 35.7 33.9 32.1"/>
+  <linearGradient id="SVGID_19_" x1="24.22" x2="29.51" y1="9.181" y2="9.181" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#AAD7F2" offset="0"/>
+    <stop stop-color="#C9E9FB" offset="1"/>
+  </linearGradient>
+  <path class="cls-29" d="m19.4 7.3 5.5 2.9 4.6-2.5-4.4 2.3-5.7-2.7z"/>
+  <polygon class="cls-7" points="44.6 13.3 47.1 4.3 47.4 4.3 44.7 13.3"/>
+  <polygon class="cls-8" points="0 99.1 5.1 103.7 5.1 103.7 0 99.4"/>
+  <polygon class="cls-11" points="0 109.9 5.1 103.7 5.1 145.5 0 150"/>
+  <path class="cls-4" d="m88.6 25.7 11.8 15.3-2.3 6-9.1 7.8-6.8 3.6c1.6-3.8 6.4-32.7 6.4-32.7z"/>
+  <polygon class="cls-4" points="109.3 38.2 104.7 22.9 109.9 4.6 109.9 4.6 104.1 4.6 93.9 4.6 91.6 12.7 88.6 25.7 100.4 41"/>
+  <polygon class="cls-4" points="121.6 34.7 115.4 62 100.2 66.1 98.1 63.5 109.3 50.9"/>
+  <polygon class="cls-4" points="96.6 75.8 90 77.9 87.9 78.9 89.6 79.4 94.9 81.4 96.6 79.4 99.1 75.8"/>
+  <polygon class="cls-4" points="105.2 86.5 87.4 80.7 90.4 87.4 98.2 95.1"/>
+  <polygon class="cls-7" points="20.9 129.3 8.4 141.7 5.1 145.3 5.1 125.9 7 125.1 12.4 132.4"/>
+  <path class="cls-8" d="m5.1 132.2-5.1-0.3v18.1l5.1-4.7v-13.1z"/>
+  <polygon class="cls-1" points="63 71.6 66.1 76.4 68.9 73.9 66.8 71.5"/>
+  <path class="cls-0" d="m63 72.1-2.4 4.6 6.2 1.2 2.1-4-2.1-2.4z"/>
+  <polygon class="cls-1" points="76.4 62.2 77.5 68.5 81.1 66.1 80 68.9 85.8 64.7 88.2 58.5 81.1 62.5 78.9 64.3"/>
+  <polygon class="cls-1" points="86.9 73.5 90.9 75.4 94.1 72.4 84.7 71.4"/>
+  <polygon class="cls-1" points="80.3 76.6 84.7 83.6 85.6 89.1 93.9 92.6 83.9 83.4 83.5 78.2 90 76.8 83.8 76.4"/>
 </svg>
