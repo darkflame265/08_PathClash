@@ -1027,6 +1027,42 @@ export function resolveAbilityRound(params: {
       const redNext = redBlockedByRootWall ? { ...redPrev } : redCandidate;
       const blueNext = blueBlockedByRootWall ? { ...bluePrev } : blueCandidate;
 
+      if (
+        !redIceSlideApplied &&
+        redCanAdvance &&
+        !samePosition(redNext, redPrev) &&
+        activeIceFieldTiles.some((t) => samePosition(t.position, redNext))
+      ) {
+        const dr = redNext.row - redPrev.row;
+        const dc = redNext.col - redPrev.col;
+        const slidePath = computeSlidePath(redNext, { dr, dc }, activeRootWallTiles);
+        redIceSlideOverriddenPath = {
+          start: { ...redNext },
+          path: redPath.slice(step).map((p) => ({ ...p })),
+        };
+        redPath.splice(step, redPath.length - step, ...slidePath);
+        maxStep = Math.max(maxStep, redPath.length, bluePath.length);
+        redIceSlideApplied = true;
+      }
+
+      if (
+        !blueIceSlideApplied &&
+        blueCanAdvance &&
+        !samePosition(blueNext, bluePrev) &&
+        activeIceFieldTiles.some((t) => samePosition(t.position, blueNext))
+      ) {
+        const dr = blueNext.row - bluePrev.row;
+        const dc = blueNext.col - bluePrev.col;
+        const slidePath = computeSlidePath(blueNext, { dr, dc }, activeRootWallTiles);
+        blueIceSlideOverriddenPath = {
+          start: { ...blueNext },
+          path: bluePath.slice(step).map((p) => ({ ...p })),
+        };
+        bluePath.splice(step, bluePath.length - step, ...slidePath);
+        maxStep = Math.max(maxStep, redPath.length, bluePath.length);
+        blueIceSlideApplied = true;
+      }
+
       const startsStepOverlapped = samePosition(redPrev, bluePrev);
       const escaperStayedStill =
         escapeeColor === 'red'
