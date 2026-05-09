@@ -35,7 +35,8 @@ export type AbilitySkillId =
   | "wizard_magic_mine"
   | "chronos_time_rewind"
   | "berserker_rage"
-  | "root_wall";
+  | "root_wall"
+  | "ice_field";
 export type AbilitySkillCategory = "attack" | "defense" | "utility" | "passive";
 export type AbilitySkillRoleRestriction = "any" | "attacker" | "escaper";
 export type AbilitySkillStepRule = "any" | "zero_only";
@@ -71,6 +72,7 @@ export const ABILITY_SKILL_IDS: AbilitySkillId[] = [
   "chronos_time_rewind",
   "berserker_rage",
   "root_wall",
+  "ice_field",
 ];
 
 export function normalizeAbilityLoadout(
@@ -113,6 +115,7 @@ export const ABILITY_SKILL_COSTS: Record<AbilitySkillId, number> = {
   chronos_time_rewind: 0,
   berserker_rage: 8,
   root_wall: 7,
+  ice_field: 6,
 };
 
 export const ABILITY_SKILL_SERVER_RULES: Record<
@@ -217,6 +220,11 @@ export const ABILITY_SKILL_SERVER_RULES: Record<
     stepRule: "zero_only",
     targetRule: "position",
   },
+  ice_field: {
+    roleRestriction: "any",
+    stepRule: "zero_only",
+    targetRule: "position",
+  },
 };
 
 export interface AbilitySkillDefinition {
@@ -250,6 +258,11 @@ export interface AbilityLavaTile {
 export interface AbilityRootWallTile {
   position: Position;
   owner: PlayerColor;
+  remainingTurns: number;
+}
+
+export interface AbilityIceFieldTile {
+  position: Position;
   remainingTurns: number;
 }
 
@@ -304,6 +317,7 @@ export interface AbilityBattleState {
   lavaTiles: AbilityLavaTile[];
   trapTiles: AbilityTrapTile[];
   rootWallTiles: AbilityRootWallTile[];
+  iceFieldTiles: AbilityIceFieldTile[];
   players: {
     red: AbilityPlayerState;
     blue: AbilityPlayerState;
@@ -371,6 +385,11 @@ export interface AbilityResolutionPayload {
   }>;
   skillEvents: AbilitySkillEvent[];
   rootWallBlockedPaths?: {
+    red: { start: Position; path: Position[] } | null;
+    blue: { start: Position; path: Position[] } | null;
+  };
+  iceFieldTiles: AbilityIceFieldTile[];
+  iceSlideOverriddenPaths?: {
     red: { start: Position; path: Position[] } | null;
     blue: { start: Position; path: Position[] } | null;
   };
@@ -604,5 +623,17 @@ export const ABILITY_SKILLS: Record<AbilitySkillId, AbilitySkillDefinition> = {
     category: "utility",
     skinId: "moonlight_seed",
     icon: "🌿",
+  },
+  ice_field: {
+    id: "ice_field",
+    name: { en: "Ice Field", kr: "빙결지대" },
+    loadoutDescription: {
+      en: "Place an ice tile for 3 turns. Any player who steps onto it slides in their direction of travel until hitting the grid edge or a Root Wall.",
+      kr: "선택한 1칸에 3턴 동안 빙판을 설치합니다. 밟은 플레이어는 진행 방향으로 그리드 끝 또는 뿌리장벽에 닿을 때까지 강제로 미끄러집니다.",
+    },
+    manaCost: ABILITY_SKILL_COSTS.ice_field,
+    category: "utility",
+    skinId: "frost_heart",
+    icon: "❄️",
   },
 };
