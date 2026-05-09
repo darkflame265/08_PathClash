@@ -199,6 +199,15 @@ function computeSlidePath(
   return slide;
 }
 
+function withoutIceFieldPositions(
+  positions: Position[],
+  activeIceFieldTiles: AbilityIceFieldTile[],
+): Position[] {
+  return positions.filter(
+    (position) => !activeIceFieldTiles.some((tile) => samePosition(tile.position, position)),
+  );
+}
+
 function isAffectedByLava(
   prev: Position,
   next: Position,
@@ -1032,10 +1041,10 @@ export function resolveAbilityRound(params: {
           activeIceFieldTiles.some((t) => samePosition(t.position, redNext))) {
         const dr = redNext.row - redPrev.row;
         const dc = redNext.col - redPrev.col;
-        const slidePath = computeSlidePath(redNext, { dr, dc }, [
+        const slidePath = computeSlidePath(redNext, { dr, dc }, withoutIceFieldPositions([
           ...obstacles,
           ...activeRootWallTiles.map((tile) => tile.position),
-        ]);
+        ], activeIceFieldTiles));
         redIceSlideOverriddenPath = {
           start: { ...redNext },
           path: redPath.slice(step).map((p) => ({ ...p })),
@@ -1049,10 +1058,10 @@ export function resolveAbilityRound(params: {
           activeIceFieldTiles.some((t) => samePosition(t.position, blueNext))) {
         const dr = blueNext.row - bluePrev.row;
         const dc = blueNext.col - bluePrev.col;
-        const slidePath = computeSlidePath(blueNext, { dr, dc }, [
+        const slidePath = computeSlidePath(blueNext, { dr, dc }, withoutIceFieldPositions([
           ...obstacles,
           ...activeRootWallTiles.map((tile) => tile.position),
-        ]);
+        ], activeIceFieldTiles));
         blueIceSlideOverriddenPath = {
           start: { ...blueNext },
           path: bluePath.slice(step).map((p) => ({ ...p })),

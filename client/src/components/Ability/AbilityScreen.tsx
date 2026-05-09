@@ -1102,6 +1102,16 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     return myPath.length;
   };
 
+  const getMovementObstacles = (battleState: AbilityBattleState) => {
+    const icePositions = battleState.iceFieldTiles.map((tile) => tile.position);
+    return [
+      ...battleState.obstacles,
+      ...battleState.rootWallTiles.map((tile) => tile.position),
+    ].filter(
+      (position) => !icePositions.some((ice) => posEqual(ice, position)),
+    );
+  };
+
   const getPreviewPositionAtStep = (step: number): Position => {
     const basePosition = state?.players[currentColor].position ?? {
       row: 2,
@@ -1713,7 +1723,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       rowDistance > 1 ||
       colDistance > 1 ||
       posEqual(target, opponentPosition) ||
-      isBlockedCell(target, state.obstacles)
+      isBlockedCell(target, getMovementObstacles(state))
     ) {
       return;
     }
@@ -2264,7 +2274,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       };
 
       if (next.row < 0 || next.row > 4 || next.col < 0 || next.col > 4) return;
-      if (isBlockedCell(next, state.obstacles)) return;
+      if (isBlockedCell(next, getMovementObstacles(state))) return;
 
       if (current.length > 0) {
         const isExtendingFromTeleportTarget =

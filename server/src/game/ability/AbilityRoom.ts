@@ -1584,7 +1584,9 @@ export class AbilityRoom {
     const movementObstacles = [
       ...this.obstacles,
       ...this.rootWallTiles.map((tile) => tile.position),
-    ];
+    ].filter(
+      (position) => !this.iceFieldTiles.some((tile) => posEqual(tile.position, position)),
+    );
     const hasAttackSkill = uniqueSkills.some(
       (skill) =>
         skill.skillId === 'ember_blast' ||

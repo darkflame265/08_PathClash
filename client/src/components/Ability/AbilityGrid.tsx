@@ -309,10 +309,13 @@ export function AbilityGrid({
   const baseStart = state.players[currentColor].position;
   const myStart = previewStart;
   const boardObstacles = state.obstacles;
+  const iceFieldPositions = state.iceFieldTiles.map((tile) => tile.position);
   const movementObstacles = [
     ...boardObstacles,
     ...state.rootWallTiles.map((tile) => tile.position),
-  ];
+  ].filter(
+    (position) => !iceFieldPositions.some((ice) => posEqual(ice, position)),
+  );
   const shouldAnimateInitialObstacles = state.turn === 1;
   const opponentColor = currentColor === "red" ? "blue" : "red";
   const teleportBlockedPositions = [

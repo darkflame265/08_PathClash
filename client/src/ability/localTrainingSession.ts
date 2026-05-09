@@ -511,7 +511,9 @@ function validateTrainingPlan(
   const movementObstacles = [
     ...obstacles,
     ...rootWallTiles.map((tile) => tile.position),
-  ];
+  ].filter(
+    (position) => !iceFieldTiles.some((tile) => posEqual(tile.position, position)),
+  );
   const validationObstacles = hasPhaseShift ? [] : movementObstacles;
 
   for (const skill of uniqueSkills) {
