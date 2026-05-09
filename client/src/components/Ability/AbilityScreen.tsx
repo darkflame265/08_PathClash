@@ -155,6 +155,9 @@ type PathsByColor = { red: Position[]; blue: Position[] };
 type RootWallBlockedPathsByColor = NonNullable<
   AbilityResolutionPayload["rootWallBlockedPaths"]
 >;
+type IceSlideOverriddenPathsByColor = NonNullable<
+  AbilityResolutionPayload["iceSlideOverriddenPaths"]
+>;
 type AtomicCloneVisual = {
   start: Position | null;
   path: Position[];
@@ -187,6 +190,10 @@ function createEmptyPaths(): PathsByColor {
 }
 
 function createEmptyRootWallBlockedPaths(): RootWallBlockedPathsByColor {
+  return { red: null, blue: null };
+}
+
+function createEmptyIceSlideOverriddenPaths(): IceSlideOverriddenPathsByColor {
   return { red: null, blue: null };
 }
 
@@ -492,6 +499,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
   const [pendingBlitz, setPendingBlitz] = useState(false);
   const [pendingInferno, setPendingInferno] = useState(false);
   const [pendingRootWall, setPendingRootWall] = useState(false);
+  const [pendingIceField, setPendingIceField] = useState(false);
   const [keyboardControls, setKeyboardControls] = useState(
     loadKeyboardControlsSettings,
   );
@@ -547,6 +555,8 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     useState<PathsByColor>(createEmptyPaths);
   const [movingRootWallBlockedPaths, setMovingRootWallBlockedPaths] =
     useState<RootWallBlockedPathsByColor>(createEmptyRootWallBlockedPaths);
+  const [movingIceSlideOverriddenPaths, setMovingIceSlideOverriddenPaths] =
+    useState<IceSlideOverriddenPathsByColor>(createEmptyIceSlideOverriddenPaths);
   const [movingStarts, setMovingStarts] = useState<PositionByColor | null>(
     null,
   );
@@ -956,6 +966,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
   const resetMovingVisualState = () => {
     setMovingPaths(createEmptyPaths());
     setMovingRootWallBlockedPaths(createEmptyRootWallBlockedPaths());
+    setMovingIceSlideOverriddenPaths(createEmptyIceSlideOverriddenPaths());
     setMovingStarts(null);
     setMovingTeleportMarkers(createNullMarkers());
     setMovingTeleportSteps(createNullSteps());
@@ -992,6 +1003,9 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     setMovingPaths({ red: payload.redPath, blue: payload.bluePath });
     setMovingRootWallBlockedPaths(
       payload.rootWallBlockedPaths ?? createEmptyRootWallBlockedPaths(),
+    );
+    setMovingIceSlideOverriddenPaths(
+      payload.iceSlideOverriddenPaths ?? createEmptyIceSlideOverriddenPaths(),
     );
     setMovingBlitzColors(nextBlitzColors);
     setMovingBlitzProgress(createZeroCounters());
@@ -1067,6 +1081,10 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
   const rootWallReservation =
     skillReservations.find(
       (entry) => entry.skillId === "root_wall" && entry.target,
+    ) ?? null;
+  const iceFieldReservation =
+    skillReservations.find(
+      (entry) => entry.skillId === "ice_field" && entry.target,
     ) ?? null;
   const atomicReservation =
     skillReservations.find((entry) => entry.skillId === "atomic_fission") ??
@@ -1615,6 +1633,50 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     setPendingRootWall(false);
   };
 
+  const beginIceFieldPick = () => {
+    const alreadyReserved = skillReservations.some(
+      (entry) => entry.skillId === "ice_field",
+    );
+    if (alreadyReserved) {
+      removeReservation("ice_field");
+      return;
+    }
+    if (pendingIceField && selectedSkillId === "ice_field") {
+      setSelectedSkillId(null);
+      setPendingIceField(false);
+      return;
+    }
+    if (getRemainingMana() < getSkillCost("ice_field")) return;
+    setSelectedSkillId("ice_field");
+    setPendingIceField(true);
+    setPendingTeleport(false);
+    setPendingBlitz(false);
+    setPendingInferno(false);
+    setPendingRootWall(false);
+  };
+
+  const handleIceFieldTargetSelect = (target: Position) => {
+    if (!state) return;
+    if (
+      posEqual(target, state.players.red.position) ||
+      posEqual(target, state.players.blue.position)
+    ) {
+      return;
+    }
+    const nextReservations: AbilitySkillReservation[] = [
+      ...skillReservations.filter((entry) => entry.skillId !== "ice_field"),
+      {
+        skillId: "ice_field",
+        step: 0,
+        order: reservationOrderRef.current++,
+        target,
+      },
+    ];
+    setSkillReservations(nextReservations);
+    setSelectedSkillId(null);
+    setPendingIceField(false);
+  };
+
   const beginTeleportPick = () => {
     const alreadyReserved = skillReservations.some(
       (entry) => entry.skillId === "quantum_shift",
@@ -1857,6 +1919,10 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       beginRootWallPick();
       return;
     }
+    if (skillId === "ice_field") {
+      beginIceFieldPick();
+      return;
+    }
     if (skillId === "quantum_shift") {
       beginTeleportPick();
       return;
@@ -1882,7 +1948,9 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
         ? "inferno"
         : pendingRootWall && selectedSkillId === "root_wall"
           ? "root_wall"
-          : null;
+          : pendingIceField && selectedSkillId === "ice_field"
+            ? "ice_field"
+            : null;
 
   useEffect(() => {
     const syncControls = () => {
@@ -2071,7 +2139,11 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
               ? "quantum_shift"
               : keyboardTargetMode === "blitz"
                 ? "electric_blitz"
-                : "inferno_field";
+                : keyboardTargetMode === "root_wall"
+                  ? "root_wall"
+                  : keyboardTargetMode === "ice_field"
+                    ? "ice_field"
+                    : "inferno_field";
 
           if (skillId === pendingSkillId) {
             event.preventDefault();
@@ -2111,6 +2183,8 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
             handleBlitzTargetSelect(keyboardTarget);
           } else if (keyboardTargetMode === "root_wall") {
             handleRootWallTargetSelect(keyboardTarget);
+          } else if (keyboardTargetMode === "ice_field") {
+            handleIceFieldTargetSelect(keyboardTarget);
           } else {
             handleInfernoTargetSelect(keyboardTarget);
           }
@@ -4491,6 +4565,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
             }
             infernoMarker={infernoReservation?.target ?? null}
             rootWallMarker={rootWallReservation?.target ?? null}
+            iceFieldMarker={iceFieldReservation?.target ?? null}
             movingTeleportMarkers={movingTeleportMarkers}
             movingTeleportSteps={movingTeleportSteps}
             movingBlitzColors={movingBlitzColors}
@@ -4501,6 +4576,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
             movingAtomicClones={movingAtomicClones}
             movingPaths={movingPaths}
             movingRootWallBlockedPaths={movingRootWallBlockedPaths}
+            movingIceSlideOverriddenPaths={movingIceSlideOverriddenPaths}
             movingStarts={movingStarts}
             timeRewindFocusColor={timeRewindFocusColor}
             timeRewindActive={timeRewindFocusColor !== null}
@@ -4516,11 +4592,15 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
             rootWallTargetsVisible={
               pendingRootWall && selectedSkillId === "root_wall"
             }
+            iceFieldTargetsVisible={
+              pendingIceField && selectedSkillId === "ice_field"
+            }
             keyboardTarget={keyboardTarget}
             onTeleportTargetSelect={handleTeleportTargetSelect}
             onBlitzTargetSelect={handleBlitzTargetSelect}
             onInfernoTargetSelect={handleInfernoTargetSelect}
             onRootWallTargetSelect={handleRootWallTargetSelect}
+            onIceFieldTargetSelect={handleIceFieldTargetSelect}
             onTeleportCancel={handleTeleportCancel}
             myBlitzReserved={myBlitzReserved}
             shakeKey={boardShakeKey}
