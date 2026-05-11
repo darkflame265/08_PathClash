@@ -18,6 +18,8 @@ export interface AuthStatePayload {
   equippedSkin?: PieceSkin;
   equippedBoardSkin?: BoardSkin;
   equippedAbilitySkills?: AbilitySkillId[];
+  abilitySkillPresets?: AbilitySkillId[][];
+  activePreset?: number;
   ownedSkins?: PieceSkin[];
   ownedBoardSkins?: BoardSkin[];
   wins?: number;
@@ -233,6 +235,19 @@ function areAbilityLoadoutsEqual(
   );
 }
 
+function normalizeAbilityPresets(
+  value: unknown,
+  activeLoadout: AbilitySkillId[],
+): AbilitySkillId[][] {
+  const defaultPresets: AbilitySkillId[][] = [activeLoadout, [], [], [], []];
+  if (!Array.isArray(value) || (value as unknown[]).length === 0) return defaultPresets;
+  const presets = (value as unknown[])
+    .slice(0, 5)
+    .map((p) => normalizeAbilityLoadout(p as unknown));
+  while (presets.length < 5) presets.push([]);
+  return presets;
+}
+
 function getUtcDayKey(now = new Date()): string {
   return now.toISOString().slice(0, 10);
 }
@@ -385,6 +400,8 @@ function toAuthState(
     equippedSkin: snapshot?.equippedSkin,
     equippedBoardSkin: snapshot?.equippedBoardSkin,
     equippedAbilitySkills: snapshot?.equippedAbilitySkills,
+    abilitySkillPresets: snapshot?.abilitySkillPresets,
+    activePreset: snapshot?.activePreset,
     ownedSkins: snapshot?.ownedSkins,
     ownedBoardSkins: snapshot?.ownedBoardSkins,
     wins: snapshot?.wins,
@@ -409,6 +426,8 @@ function createDisconnectedAuthState(): AuthStatePayload {
     equippedSkin: "classic",
     equippedBoardSkin: "classic",
     equippedAbilitySkills: [],
+    abilitySkillPresets: [[], [], [], [], []],
+    activePreset: 1,
     ownedSkins: [],
     ownedBoardSkins: [],
     wins: 0,
@@ -635,6 +654,11 @@ function normalizeAccountSnapshot(
     equippedAbilitySkills: normalizeAbilityLoadout(
       source?.equippedAbilitySkills ?? [],
     ),
+    abilitySkillPresets: normalizeAbilityPresets(
+      source?.abilitySkillPresets,
+      normalizeAbilityLoadout(source?.equippedAbilitySkills ?? []),
+    ),
+    activePreset: Math.max(1, Math.min(5, Number(source?.activePreset ?? 1) || 1)),
     ownedSkins: (source?.ownedSkins ?? []).filter((skin): skin is PieceSkin =>
       Boolean(skin),
     ),
@@ -674,6 +698,8 @@ async function getAccountSnapshot(
       equippedSkin: "classic",
       equippedBoardSkin: "classic",
       equippedAbilitySkills: [],
+      abilitySkillPresets: [[], [], [], [], []],
+      activePreset: 1,
       ownedSkins: [],
       ownedBoardSkins: [],
       wins: 0,
@@ -726,7 +752,7 @@ async function getAccountSnapshot(
       supabase
         .from("profiles")
         .select(
-          "nickname, equipped_skin, equipped_board_skin, equipped_ability_skills",
+          "nickname, equipped_skin, equipped_board_skin, equipped_ability_skills, ability_skill_presets, active_preset",
         )
         .eq("id", userId)
         .maybeSingle<ProfileRow>(),
@@ -759,7 +785,7 @@ async function getAccountSnapshot(
       profileResult = await supabase
         .from("profiles")
         .select(
-          "nickname, equipped_skin, equipped_board_skin, equipped_ability_skills",
+          "nickname, equipped_skin, equipped_board_skin, equipped_ability_skills, ability_skill_presets, active_preset",
         )
         .eq("id", userId)
         .maybeSingle<ProfileRow>();
@@ -775,6 +801,14 @@ async function getAccountSnapshot(
       equippedBoardSkin: profileResult.data?.equipped_board_skin ?? "classic",
       equippedAbilitySkills: normalizeAbilityLoadout(
         profileResult.data?.equipped_ability_skills ?? [],
+      ),
+      abilitySkillPresets: normalizeAbilityPresets(
+        profileResult.data?.ability_skill_presets,
+        normalizeAbilityLoadout(profileResult.data?.equipped_ability_skills ?? []),
+      ),
+      activePreset: Math.max(
+        1,
+        Math.min(5, Number(profileResult.data?.active_preset ?? 1) || 1),
       ),
       ownedSkins: (ownedSkinRows ?? [])
         .map((row) => row.skin_id)
@@ -1058,6 +1092,8 @@ export async function refreshAccountSummary(options?: {
       equippedSkin: "classic",
       equippedBoardSkin: "classic",
       equippedAbilitySkills: [],
+      abilitySkillPresets: [[], [], [], [], []],
+      activePreset: 1,
       ownedSkins: [],
       ownedBoardSkins: [],
       wins: 0,
@@ -1081,6 +1117,8 @@ export async function refreshAccountSummary(options?: {
       equippedSkin: "classic",
       equippedBoardSkin: "classic",
       equippedAbilitySkills: [],
+      abilitySkillPresets: [[], [], [], [], []],
+      activePreset: 1,
       ownedSkins: [],
       ownedBoardSkins: [],
       wins: 0,
@@ -1103,6 +1141,8 @@ export async function refreshAccountSummary(options?: {
     equippedSkin: snapshot.equippedSkin,
     equippedBoardSkin: snapshot.equippedBoardSkin,
     equippedAbilitySkills: snapshot.equippedAbilitySkills,
+    abilitySkillPresets: snapshot.abilitySkillPresets,
+    activePreset: snapshot.activePreset,
     ownedSkins: snapshot.ownedSkins,
     ownedBoardSkins: snapshot.ownedBoardSkins,
     wins: snapshot.wins,
@@ -1283,6 +1323,43 @@ export async function syncEquippedAbilitySkills(
   lastSyncedProfileState.set(userId, {
     ...(current ?? {}),
     equippedAbilitySkills: normalized,
+  });
+  knownProfileUsers.add(userId);
+}
+
+export async function syncAbilityPresets(
+  presets: AbilitySkillId[][],
+  activePreset: number,
+): Promise<void> {
+  if (!supabase) return;
+  const session = await getCurrentSession();
+  if (!session?.user) return;
+
+  const userId = session.user.id;
+  const normalizedPresets = presets.map((p) => normalizeAbilityLoadout(p));
+  const clamped = Math.max(1, Math.min(5, activePreset));
+  const activeLoadout = normalizedPresets[clamped - 1] ?? [];
+
+  const { error } = await supabase.from("profiles").upsert({
+    id: userId,
+    ability_skill_presets: normalizedPresets,
+    active_preset: clamped,
+    equipped_ability_skills: activeLoadout,
+    is_guest: session.user.is_anonymous ?? false,
+  });
+
+  if (error) {
+    console.error("[supabase] failed to sync ability presets", error);
+    return;
+  }
+
+  invalidateAccountSnapshot(userId);
+  const current = lastSyncedProfileState.get(userId);
+  lastSyncedProfileState.set(userId, {
+    ...(current ?? {}),
+    equippedAbilitySkills: activeLoadout,
+    abilitySkillPresets: normalizedPresets,
+    activePreset: clamped,
   });
   knownProfileUsers.add(userId);
 }
