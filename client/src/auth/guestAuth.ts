@@ -636,6 +636,8 @@ function cacheAccountSnapshot(userId: string, snapshot: AccountSnapshot) {
     equippedSkin: snapshot.equippedSkin,
     equippedBoardSkin: snapshot.equippedBoardSkin,
     equippedAbilitySkills: snapshot.equippedAbilitySkills,
+    abilitySkillPresets: snapshot.abilitySkillPresets,
+    activePreset: snapshot.activePreset,
   });
 }
 
