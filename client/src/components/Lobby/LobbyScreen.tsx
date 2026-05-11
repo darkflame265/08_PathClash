@@ -5137,7 +5137,10 @@ export function LobbyScreen({
               </div>
             </div>
 
-            <div className="ability-loadout-chip-row ability-loadout-modal-selected">
+            <div
+              key={`ability-preset-selected-${activePreset}`}
+              className="ability-loadout-chip-row ability-loadout-modal-selected"
+            >
               {equippedAbilitySkillDefs.map((skill) => (
                 <span key={skill.id} className="ability-loadout-chip">
                   {renderAbilitySkillIcon(skill.id)}
