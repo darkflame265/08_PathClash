@@ -891,7 +891,6 @@ export function LobbyScreen({
 
     abilityLoadout,
 
-    abilitySkillPresets,
     activePreset,
     setAbilityLoadoutForPreset,
     switchAbilityPreset,
