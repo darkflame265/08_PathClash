@@ -4439,7 +4439,11 @@ export function LobbyScreen({
   return (
     <div className="lobby-screen" onClickCapture={handleLobbyUiClickCapture}>
       {challengeToast && (
-        <div className="friend-challenge-toast-wrap">
+        <div
+          className={`friend-challenge-toast-wrap${
+            challengeToast.kind === "outgoing" ? " is-outgoing" : ""
+          }`}
+        >
           {challengeToast.kind === "incoming" ? (
             <FriendChallengeToast
               kind="incoming"

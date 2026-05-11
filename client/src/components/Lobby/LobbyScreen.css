@@ -5030,6 +5030,26 @@
   margin: 0 0 8px;
 }
 
+.friend-challenge-toast-wrap.is-outgoing {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  padding: 8px 16px 0;
+  background: rgba(0, 0, 0, 0.62);
+  pointer-events: auto;
+}
+
+.friend-challenge-toast-wrap.is-outgoing .friend-challenge-toast {
+  position: relative;
+  z-index: 1;
+  width: min(calc(100vw - 32px), var(--lobby-stage-width));
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+  margin-left: auto;
+  margin-right: auto;
+  pointer-events: auto;
+}
+
 .friend-challenge-toast-msg {
   flex: 1;
   font-size: 0.88rem;
