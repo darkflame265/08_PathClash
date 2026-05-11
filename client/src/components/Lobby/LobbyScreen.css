@@ -5010,16 +5010,6 @@
   gap: 0.5rem;
 }
 
-.friend-profile-skin-wrap {
-  width: 80px;
-  height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--tile, #2a3137);
-  border-radius: 50%;
-}
-
 .friend-profile-name {
   font-size: 1.1rem;
   font-weight: 700;
