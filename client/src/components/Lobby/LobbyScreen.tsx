@@ -5509,15 +5509,6 @@ export function LobbyScreen({
               <div className="upgrade-modal-actions settings-actions">
                 <button
                   className="lobby-btn secondary settings-policy-btn"
-                  onClick={handleToggleLanguage}
-                  type="button"
-                >
-                  <SettingsActionIcon kind="language" lang={lang} />
-                  <span>{languageButtonLabel}</span>
-                </button>
-
-                <button
-                  className="lobby-btn secondary settings-policy-btn"
                   onClick={() => {
                     prepareSfxPreviewAudio();
                     setIsAudioSettingsOpen(true);
@@ -5550,6 +5541,15 @@ export function LobbyScreen({
                 >
                   <SettingsActionIcon kind="tutorial" lang={lang} />
                   <span>{t.aiTutorialBtn ?? aiTutorialButtonLabel}</span>
+                </button>
+
+                <button
+                  className="lobby-btn secondary settings-policy-btn"
+                  onClick={handleToggleLanguage}
+                  type="button"
+                >
+                  <SettingsActionIcon kind="language" lang={lang} />
+                  <span>{languageButtonLabel}</span>
                 </button>
 
                 <a
