@@ -96,7 +96,7 @@ interface OwnedBoardSkinRow {
 
 function normalizeAbilityLoadout(value: unknown): AbilitySkillId[] {
   if (!Array.isArray(value)) {
-    return ['classic_guard'];
+    return [];
   }
 
   const validSkills: AbilitySkillId[] = [
@@ -125,7 +125,7 @@ function normalizeAbilityLoadout(value: unknown): AbilitySkillId[] {
       validSkills.includes(entry as AbilitySkillId),
   );
 
-  return normalized.length > 0 ? normalized.slice(0, 3) : ['classic_guard'];
+  return normalized.slice(0, 3);
 }
 
 const DAILY_REWARD_TOKENS_PER_WIN = 6;
@@ -783,7 +783,7 @@ export async function finalizeGoogleUpgrade(
   const adoptedEquippedAbilitySkills =
     guestSnapshot?.equippedAbilitySkills ??
     guestAccountProfile.equippedAbilitySkills ??
-    ['classic_guard'];
+    [];
   const adoptedWins = guestSnapshot?.wins ?? guestAccountProfile.wins;
   const adoptedLosses = guestSnapshot?.losses ?? guestAccountProfile.losses;
   const adoptedTokens = guestSnapshot?.tokens ?? guestAccountProfile.tokens;

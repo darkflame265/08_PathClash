@@ -1501,7 +1501,7 @@ export function initSocketServer(io: Server): void {
             fromSocketId: socket.id,
             fromPieceSkin: pieceSkin ?? 'classic',
             fromBoardSkin: boardSkin ?? 'classic',
-            fromEquippedSkills: equippedSkills ?? ['classic_guard'],
+            fromEquippedSkills: equippedSkills ?? [],
             fromStats: profile.stats,
             fromCurrentRating: profile.currentRating,
           });
@@ -1582,7 +1582,7 @@ export function initSocketServer(io: Server): void {
             bProfile.currentRating,
             pieceSkin ?? 'classic',
             boardSkin ?? 'classic',
-            equippedSkills ?? ['classic_guard'],
+            equippedSkills ?? [],
           );
           if (!bColor) { ack?.({ status: 'error' }); return; }
           abilityStore.add(room);

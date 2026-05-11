@@ -1109,7 +1109,7 @@ function initSocketServer(io) {
                     fromSocketId: socket.id,
                     fromPieceSkin: pieceSkin ?? 'classic',
                     fromBoardSkin: boardSkin ?? 'classic',
-                    fromEquippedSkills: equippedSkills ?? ['classic_guard'],
+                    fromEquippedSkills: equippedSkills ?? [],
                     fromStats: profile.stats,
                     fromCurrentRating: profile.currentRating,
                 });
@@ -1164,7 +1164,7 @@ function initSocketServer(io) {
                     return;
                 }
                 // B 입장 (수락자, blue)
-                const bColor = room.addPlayer(socket, bProfile.nickname, bProfile.userId, bProfile.stats, bProfile.currentRating, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills ?? ['classic_guard']);
+                const bColor = room.addPlayer(socket, bProfile.nickname, bProfile.userId, bProfile.stats, bProfile.currentRating, pieceSkin ?? 'classic', boardSkin ?? 'classic', equippedSkills ?? []);
                 if (!bColor) {
                     ack?.({ status: 'error' });
                     return;

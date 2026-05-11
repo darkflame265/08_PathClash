@@ -16,7 +16,7 @@ const achievementService_1 = require("./achievementService");
 const rotationService_1 = require("./rotationService");
 function normalizeAbilityLoadout(value) {
     if (!Array.isArray(value)) {
-        return ['classic_guard'];
+        return [];
     }
     const validSkills = [
         'classic_guard',
@@ -39,7 +39,7 @@ function normalizeAbilityLoadout(value) {
     ];
     const normalized = value.filter((entry) => typeof entry === 'string' &&
         validSkills.includes(entry));
-    return normalized.length > 0 ? normalized.slice(0, 3) : ['classic_guard'];
+    return normalized.slice(0, 3);
 }
 const DAILY_REWARD_TOKENS_PER_WIN = 6;
 const DAILY_REWARD_MAX_WINS = 20;
@@ -549,7 +549,7 @@ async function finalizeGoogleUpgrade(targetAuth, guestAuth, guestSnapshot, flowS
     const adoptedEquippedBoardSkin = guestSnapshot?.equippedBoardSkin ?? guestAccountProfile.equippedBoardSkin ?? 'classic';
     const adoptedEquippedAbilitySkills = guestSnapshot?.equippedAbilitySkills ??
         guestAccountProfile.equippedAbilitySkills ??
-        ['classic_guard'];
+        [];
     const adoptedWins = guestSnapshot?.wins ?? guestAccountProfile.wins;
     const adoptedLosses = guestSnapshot?.losses ?? guestAccountProfile.losses;
     const adoptedTokens = guestSnapshot?.tokens ?? guestAccountProfile.tokens;

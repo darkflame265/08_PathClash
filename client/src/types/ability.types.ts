@@ -77,7 +77,7 @@ export const ABILITY_SKILL_IDS: AbilitySkillId[] = [
 
 export function normalizeAbilityLoadout(
   value: unknown,
-  fallback: AbilitySkillId[] = ["classic_guard"],
+  fallback: AbilitySkillId[] = [],
 ): AbilitySkillId[] {
   if (!Array.isArray(value)) {
     return fallback;
@@ -89,7 +89,7 @@ export function normalizeAbilityLoadout(
       ABILITY_SKILL_IDS.includes(entry as AbilitySkillId),
   );
 
-  return normalized.length > 0 ? normalized.slice(0, 3) : fallback;
+  return normalized.slice(0, 3);
 }
 
 // Client-side single source of truth for displayed mana costs.

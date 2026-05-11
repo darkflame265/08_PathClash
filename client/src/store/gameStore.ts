@@ -333,7 +333,7 @@ const initialBoardSkin = (() => {
     ? stored
     : "classic";
 })();
-const initialAbilityLoadout = ["classic_guard"] as AbilitySkillId[];
+const initialAbilityLoadout = [] as AbilitySkillId[];
 
 export const useGameStore = create<GameStore>((set, get) => ({
   myNickname: "",
