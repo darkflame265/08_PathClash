@@ -4432,7 +4432,10 @@ export function LobbyScreen({
           <figure
             className="lobby-arena-showcase"
             aria-label={lobbyArenaImageAlt}
-            onClick={() => setShowArenaGallery(true)}
+            onClick={() => {
+              if (!isSfxMuted) playLobbyClick(sfxVolume);
+              setShowArenaGallery(true);
+            }}
           >
             <img
               src={lobbyArenaImageSrc}
