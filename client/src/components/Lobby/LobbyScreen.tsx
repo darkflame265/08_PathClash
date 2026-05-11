@@ -4182,13 +4182,19 @@ export function LobbyScreen({
     lobbyModeOptions[0];
   const showLobbyArenaContent = selectedLobbyMode === "ability";
   const showFriendListPanel = selectedLobbyMode === 'friend';
+  const isAbilityMatchmakingActive =
+    isMatchmaking && currentMatchType === "ability";
 
   const renderModePickerAction = () => (
     <button
       type="button"
-      className="lobby-bottom-action lobby-mode-action"
+      className={`lobby-bottom-action lobby-mode-action${
+        isAbilityMatchmakingActive ? " is-matchmaking-disabled" : ""
+      }`}
       data-keyboard-nav-layer="mode-title"
       onClick={() => setIsModePickerOpen(true)}
+      disabled={isAbilityMatchmakingActive}
+      aria-disabled={isAbilityMatchmakingActive}
     >
       <span className="lobby-bottom-action-icon-wrap" aria-hidden="true">
         <span className="lobby-mode-action-icon">
@@ -4206,18 +4212,26 @@ export function LobbyScreen({
       return (
         <div className="mode-action-side mode-action-side--double">
           <button
-            className="lobby-mini-btn"
+            className={`lobby-mini-btn${
+              isAbilityMatchmakingActive ? " is-matchmaking-disabled" : ""
+            }`}
             data-keyboard-nav-layer="mini"
             type="button"
             onClick={() => void handleAbilityTraining()}
+            disabled={isAbilityMatchmakingActive}
+            aria-disabled={isAbilityMatchmakingActive}
           >
             {abilityTrainingTitle}
           </button>
           <button
-            className="lobby-mini-btn"
+            className={`lobby-mini-btn${
+              isAbilityMatchmakingActive ? " is-matchmaking-disabled" : ""
+            }`}
             data-keyboard-nav-layer="mini"
             type="button"
             onClick={() => setIsAbilityLoadoutOpen(true)}
+            disabled={isAbilityMatchmakingActive}
+            aria-disabled={isAbilityMatchmakingActive}
           >
             {abilityLoadoutTitle}
           </button>
@@ -4259,7 +4273,9 @@ export function LobbyScreen({
 
     return (
       <div
-        className={`ability-loadout-chip-row mode-loadout-row${showLoadout ? "" : " is-empty"}`}
+        className={`ability-loadout-chip-row mode-loadout-row${showLoadout ? "" : " is-empty"}${
+          showLoadout && isAbilityMatchmakingActive ? " is-matchmaking-disabled" : ""
+        }`}
         aria-hidden={!showLoadout}
       >
         {showLoadout &&
@@ -5346,10 +5362,14 @@ export function LobbyScreen({
       <div className="lobby-bottom-panel">
         <div className="lobby-bottom-actions">
           <button
-            className={`lobby-bottom-action ${isSkinPickerOpen ? "is-active" : ""}`}
+            className={`lobby-bottom-action ${isSkinPickerOpen ? "is-active" : ""}${
+              isAbilityMatchmakingActive ? " is-matchmaking-disabled" : ""
+            }`}
             data-keyboard-nav-layer="bottom"
             onClick={() => setIsSkinPickerOpen(true)}
             aria-pressed={isSkinPickerOpen}
+            aria-disabled={isAbilityMatchmakingActive}
+            disabled={isAbilityMatchmakingActive}
             type="button"
           >
             <span className="lobby-bottom-action-icon-wrap" aria-hidden="true">
@@ -5364,13 +5384,17 @@ export function LobbyScreen({
           </button>
 
           <button
-            className="lobby-bottom-action lobby-patch-notes-link"
+            className={`lobby-bottom-action lobby-patch-notes-link${
+              isAbilityMatchmakingActive ? " is-matchmaking-disabled" : ""
+            }`}
             data-keyboard-nav-layer="bottom"
             onClick={() => {
               setIsPatchNotesOpen(true);
 
               markPatchNotesRead();
             }}
+            aria-disabled={isAbilityMatchmakingActive}
+            disabled={isAbilityMatchmakingActive}
             type="button"
           >
             <span className="lobby-bottom-action-icon-wrap" aria-hidden="true">
@@ -5389,9 +5413,13 @@ export function LobbyScreen({
           </button>
 
           <button
-            className="lobby-bottom-action"
+            className={`lobby-bottom-action${
+              isAbilityMatchmakingActive ? " is-matchmaking-disabled" : ""
+            }`}
             data-keyboard-nav-layer="bottom"
             onClick={() => setIsAchievementsOpen(true)}
+            aria-disabled={isAbilityMatchmakingActive}
+            disabled={isAbilityMatchmakingActive}
             type="button"
           >
             <span className="lobby-bottom-action-icon-wrap" aria-hidden="true">
@@ -5412,9 +5440,13 @@ export function LobbyScreen({
           </button>
 
           <button
-            className="lobby-bottom-action"
+            className={`lobby-bottom-action${
+              isAbilityMatchmakingActive ? " is-matchmaking-disabled" : ""
+            }`}
             data-keyboard-nav-layer="bottom"
             onClick={handleOpenSettings}
+            aria-disabled={isAbilityMatchmakingActive}
+            disabled={isAbilityMatchmakingActive}
             type="button"
           >
             <span className="lobby-bottom-action-icon-wrap" aria-hidden="true">

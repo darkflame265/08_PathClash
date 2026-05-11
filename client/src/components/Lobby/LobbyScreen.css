@@ -116,6 +116,29 @@
   transform: scale(0.98);
 }
 
+.lobby-mini-btn:disabled,
+.lobby-bottom-action:disabled,
+.lobby-mini-btn.is-matchmaking-disabled,
+.lobby-bottom-action.is-matchmaking-disabled,
+.mode-loadout-row.is-matchmaking-disabled {
+  cursor: default;
+  opacity: 0.38;
+  filter: grayscale(0.35) brightness(0.58);
+}
+
+.lobby-mini-btn:disabled:hover,
+.lobby-bottom-action:disabled:hover,
+.lobby-mini-btn.is-matchmaking-disabled:hover,
+.lobby-bottom-action.is-matchmaking-disabled:hover {
+  transform: none;
+}
+
+.mode-loadout-row.is-matchmaking-disabled .ability-loadout-chip {
+  border-color: rgba(58, 68, 77, 0.45);
+  background: rgba(8, 13, 18, 0.48);
+  box-shadow: none;
+}
+
 .lobby-mini-btn.tutorial {
   box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.14) inset;
 }
