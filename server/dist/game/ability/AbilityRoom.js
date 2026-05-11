@@ -68,6 +68,20 @@ function collectUtilitySkillUsageByUser(players, skillEvents) {
     }
     return Object.fromEntries(usage);
 }
+function buildPreviousTurnPathWithQuantumShift(color, path, skillEvents) {
+    const quantumShift = skillEvents.find((event) => event.color === color &&
+        event.skillId === 'quantum_shift' &&
+        event.to);
+    if (!quantumShift?.to) {
+        return path.map((position) => ({ ...position }));
+    }
+    const insertAt = Math.min(Math.max(quantumShift.step, 0), path.length);
+    return [
+        ...path.slice(0, insertAt).map((position) => ({ ...position })),
+        { ...quantumShift.to },
+        ...path.slice(insertAt).map((position) => ({ ...position })),
+    ];
+}
 function collectBlockEventsByUser(players, blocks) {
     const result = new Map();
     for (const block of blocks) {
@@ -1123,9 +1137,9 @@ class AbilityRoom {
         this.applyTimeRewindIfNeeded('red', red, resolution);
         this.applyTimeRewindIfNeeded('blue', blue, resolution);
         red.previousTurnStart = { ...resolution.payload.redStart };
-        red.previousTurnPath = resolution.payload.redPath.map((position) => ({ ...position }));
+        red.previousTurnPath = buildPreviousTurnPathWithQuantumShift('red', resolution.payload.redPath, resolution.payload.skillEvents);
         blue.previousTurnStart = { ...resolution.payload.blueStart };
-        blue.previousTurnPath = resolution.payload.bluePath.map((position) => ({ ...position }));
+        blue.previousTurnPath = buildPreviousTurnPathWithQuantumShift('blue', resolution.payload.bluePath, resolution.payload.skillEvents);
         red.position = resolution.redState.position;
         red.hp = resolution.redState.hp;
         red.mana = resolution.redState.mana;

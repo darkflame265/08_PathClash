@@ -1612,6 +1612,42 @@ export function initSocketServer(io: Server): void {
     );
 
     socket.on(
+      'friend_challenge_update',
+      async (
+        {
+          auth,
+          friendId,
+          pieceSkin,
+          boardSkin,
+          equippedSkills,
+        }: {
+          auth?: AuthPayload;
+          friendId: string;
+          pieceSkin?: PieceSkin;
+          boardSkin?: BoardSkin;
+          equippedSkills?: AbilitySkillId[];
+        },
+        ack?: (res: { status: 'ok' | 'error' }) => void,
+      ) => {
+        try {
+          const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+          if (!userId) { ack?.({ status: 'error' }); return; }
+          const challenge = challengePending.get(friendId);
+          if (!challenge || challenge.fromUserId !== userId) {
+            ack?.({ status: 'error' }); return;
+          }
+          challenge.fromPieceSkin = pieceSkin ?? challenge.fromPieceSkin;
+          challenge.fromBoardSkin = boardSkin ?? challenge.fromBoardSkin;
+          challenge.fromEquippedSkills = equippedSkills ?? challenge.fromEquippedSkills;
+          ack?.({ status: 'ok' });
+        } catch (err) {
+          console.error('[friend_challenge_update] handler error:', err);
+          ack?.({ status: 'error' });
+        }
+      },
+    );
+
+    socket.on(
       'friend_challenge_cancel',
       async (
         {

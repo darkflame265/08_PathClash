@@ -3427,6 +3427,23 @@ export function LobbyScreen({
     })();
   };
 
+  useEffect(() => {
+    if (!challengeToast || challengeToast.kind !== "outgoing") return;
+    const { toUserId } = challengeToast;
+    const socket = connectSocket();
+    void (async () => {
+      const auth = await getSocketAuthPayload();
+      const store = useGameStore.getState();
+      socket.emit("friend_challenge_update", {
+        auth,
+        friendId: toUserId,
+        pieceSkin: store.pieceSkin,
+        boardSkin: store.boardSkin,
+        equippedSkills: store.abilityLoadout,
+      });
+    })();
+  }, [abilityLoadout, boardSkin, challengeToast, pieceSkin]);
+
   const handleFriendRemove = async (friendId: string) => {
     const socket = connectSocket();
     const auth = await getSocketAuthPayload();

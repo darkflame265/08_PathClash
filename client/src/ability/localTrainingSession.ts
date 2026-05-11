@@ -343,6 +343,28 @@ function getTimeRewindSnapshot(player: TrainingPlayerState) {
   return player.turnHistory[player.turnHistory.length - 1] ?? null;
 }
 
+function buildPreviousTurnPathWithQuantumShift(
+  color: PlayerColor,
+  path: Position[],
+  skillEvents: AbilityResolutionPayload["skillEvents"],
+): Position[] {
+  const quantumShift = skillEvents.find(
+    (event) =>
+      event.color === color &&
+      event.skillId === "quantum_shift" &&
+      event.to,
+  );
+  if (!quantumShift?.to) {
+    return path.map((position) => ({ ...position }));
+  }
+  const insertAt = Math.min(Math.max(quantumShift.step, 0), path.length);
+  return [
+    ...path.slice(0, insertAt).map((position) => ({ ...position })),
+    { ...quantumShift.to },
+    ...path.slice(insertAt).map((position) => ({ ...position })),
+  ];
+}
+
 function findLethalStep(
   color: PlayerColor,
   payload: AbilityResolutionPayload,
@@ -719,9 +741,17 @@ function revealPlans(): void {
   applyTimeRewindIfNeeded("blue", bluePlayer, resolution);
 
   redPlayer.previousTurnStart = { ...resolution.payload.redStart };
-  redPlayer.previousTurnPath = resolution.payload.redPath.map((position) => ({ ...position }));
+  redPlayer.previousTurnPath = buildPreviousTurnPathWithQuantumShift(
+    "red",
+    resolution.payload.redPath,
+    resolution.payload.skillEvents,
+  );
   bluePlayer.previousTurnStart = { ...resolution.payload.blueStart };
-  bluePlayer.previousTurnPath = resolution.payload.bluePath.map((position) => ({ ...position }));
+  bluePlayer.previousTurnPath = buildPreviousTurnPathWithQuantumShift(
+    "blue",
+    resolution.payload.bluePath,
+    resolution.payload.skillEvents,
+  );
 
   redPlayer.position = resolution.redState.position;
   redPlayer.hp = resolution.redState.hp;
