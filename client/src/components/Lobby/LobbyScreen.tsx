@@ -3821,6 +3821,12 @@ export function LobbyScreen({
     setAbilityLoadoutForPreset([...abilityLoadout, skillId]);
   };
 
+  const handleUnequipAbilitySkill = (skillId: AbilitySkillId) => {
+    if (!abilityLoadout.includes(skillId)) return;
+
+    setAbilityLoadoutForPreset(abilityLoadout.filter((value) => value !== skillId));
+  };
+
   const handleSwitchPreset = (presetIndex: number) => {
     switchAbilityPreset(presetIndex);
   };
@@ -5162,10 +5168,20 @@ export function LobbyScreen({
               className="ability-loadout-chip-row ability-loadout-modal-selected"
             >
               {equippedAbilitySkillDefs.map((skill) => (
-                <span key={skill.id} className="ability-loadout-chip">
+                <button
+                  key={skill.id}
+                  className="ability-loadout-chip ability-loadout-chip-btn"
+                  type="button"
+                  onClick={() => handleUnequipAbilitySkill(skill.id)}
+                  aria-label={
+                    lang === "en"
+                      ? `Unequip ${skill.name.en}`
+                      : `${skill.name.kr} 장착 해제`
+                  }
+                >
                   {renderAbilitySkillIcon(skill.id)}
                   <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
-                </span>
+                </button>
               ))}
             </div>
 

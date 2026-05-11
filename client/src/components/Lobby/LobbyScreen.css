@@ -4027,6 +4027,24 @@
   font-weight: 700;
 }
 
+.ability-loadout-chip-btn {
+  appearance: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.ability-loadout-chip-btn:hover,
+.ability-loadout-chip-btn:focus-visible {
+  border-color: rgba(125, 211, 252, 0.7);
+  background: rgba(59, 130, 246, 0.18);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.18);
+  outline: none;
+}
+
+.ability-loadout-chip-btn:active {
+  transform: translateY(1px);
+}
+
 .ability-loadout-chip .ability-skill-icon-glyph,
 .ability-loadout-chip .ability-skill-icon-custom {
   flex: 0 0 auto;
