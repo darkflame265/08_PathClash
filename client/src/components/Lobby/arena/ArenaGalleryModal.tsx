@@ -111,6 +111,28 @@ function renderSkinPreview(skinId: PieceSkin) {
   }
 }
 
+function getSkinDisplayName(skinId: PieceSkin, lang: "en" | "kr") {
+  const names: Partial<Record<PieceSkin, { en: string; kr: string }>> = {
+    plasma: { en: "Plasma", kr: "플라즈마" },
+    gold_core: { en: "Gold Core", kr: "골드 코어" },
+    neon_pulse: { en: "Neon Pulse", kr: "네온 펄스" },
+    inferno: { en: "Inferno", kr: "인페르노" },
+    quantum: { en: "Quantum", kr: "퀀텀" },
+    cosmic: { en: "Cosmic", kr: "코스믹" },
+    arc_reactor: { en: "Hexagon", kr: "헥사곤" },
+    electric_core: { en: "Electric Core", kr: "일렉트릭 코어" },
+    berserker: { en: "Berserker", kr: "버서커" },
+    moonlight_seed: { en: "Moonlight Seed", kr: "월광씨앗" },
+    wizard: { en: "Wizard", kr: "위저드" },
+    atomic: { en: "Atomic", kr: "아토믹" },
+    chronos: { en: "Chronos", kr: "크로노스" },
+    sun: { en: "Sun", kr: "썬" },
+    frost_heart: { en: "Frost Heart", kr: "프로스트 하트" },
+  };
+
+  return names[skinId]?.[lang] ?? skinId;
+}
+
 function ArenaSlide({
   arenaNum,
   slideWidth,
@@ -380,7 +402,7 @@ export function ArenaGalleryModal({
                     <strong
                       className={`skin-name-tier-${meta?.tier ?? "common"}`}
                     >
-                      {meta?.name ?? skinId}
+                      {getSkinDisplayName(skinId, lang)}
                     </strong>
                   </span>
                 </div>
