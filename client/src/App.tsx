@@ -19,7 +19,7 @@ import {
   refreshAccountSummary,
   syncLegalConsent,
   syncAchievementSettings,
-  syncEquippedAbilitySkills,
+  syncAbilityPresets,
   syncEquippedBoardSkin,
   syncEquippedSkin,
 } from "./auth/guestAuth";
@@ -522,7 +522,9 @@ function App() {
   useEffect(() => {
     if (!authReady || !authUserId || !authAccessToken || accountSummaryLoading)
       return;
-    void syncEquippedAbilitySkills(abilityLoadout);
+    const { abilitySkillPresets: presets, activePreset: preset } =
+      useGameStore.getState();
+    void syncAbilityPresets(presets, preset);
   }, [
     abilityLoadout,
     accountSummaryLoading,
@@ -647,7 +649,7 @@ function App() {
                     store.setPendingRemovedRotationSkillsNotice(removed);
                     const equipped = (syncResp.profile.equippedAbilitySkills ??
                       []) as AbilitySkillId[];
-                    store.setAbilityLoadout(equipped);
+                    store.setAbilityLoadoutForPreset(equipped);
                   }
                 }
               },
