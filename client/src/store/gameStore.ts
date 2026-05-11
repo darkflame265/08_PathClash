@@ -92,6 +92,8 @@ interface GameStore {
   isLocalAbilityTraining: boolean;
   twoVsTwoSlot: "red_top" | "red_bottom" | "blue_top" | "blue_bottom" | null;
   abilityLoadout: AbilitySkillId[];
+  abilitySkillPresets: AbilitySkillId[][];
+  activePreset: number;
   rotationSkills: AbilitySkillId[];
   pendingRemovedRotationSkillsNotice: AbilitySkillId[];
   currentRating: number;
@@ -155,6 +157,8 @@ interface GameStore {
     equippedSkin?: PieceSkin;
     equippedBoardSkin?: BoardSkin;
     equippedAbilitySkills?: AbilitySkillId[];
+    abilitySkillPresets?: AbilitySkillId[][];
+    activePreset?: number;
     ownedSkins?: PieceSkin[];
     ownedBoardSkins?: BoardSkin[];
     wins?: number;
@@ -185,6 +189,8 @@ interface GameStore {
     slot: "red_top" | "red_bottom" | "blue_top" | "blue_bottom" | null,
   ) => void;
   setAbilityLoadout: (skills: AbilitySkillId[]) => void;
+  setAbilityLoadoutForPreset: (skills: AbilitySkillId[]) => void;
+  switchAbilityPreset: (presetIndex: number) => void;
   setRotationSkills: (skills: AbilitySkillId[]) => void;
   setPendingRemovedRotationSkillsNotice: (skills: AbilitySkillId[]) => void;
   setGameState: (gs: ClientGameState) => void;
@@ -356,6 +362,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isLocalAbilityTraining: false,
   twoVsTwoSlot: null,
   abilityLoadout: initialAbilityLoadout,
+  abilitySkillPresets: [[], [], [], [], []],
+  activePreset: 1,
   rotationSkills: [],
   pendingRemovedRotationSkillsNotice: [],
   currentRating: 0,
@@ -407,6 +415,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     equippedSkin,
     equippedBoardSkin,
     equippedAbilitySkills,
+    abilitySkillPresets,
+    activePreset,
     ownedSkins,
     ownedBoardSkins,
     wins,
@@ -439,14 +449,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
       accountTokens: tokens ?? state.accountTokens,
       ownedSkins: ownedSkins ?? state.ownedSkins,
       ownedBoardSkins: ownedBoardSkins ?? state.ownedBoardSkins,
+      abilitySkillPresets: abilitySkillPresets ?? state.abilitySkillPresets,
+      activePreset: activePreset ?? state.activePreset,
       abilityLoadout:
-        equippedAbilitySkills !== undefined
-          ? normalizeAbilityLoadout(equippedAbilitySkills)
-          : userId
-            ? userId !== state.authUserId
-              ? initialAbilityLoadout
-              : state.abilityLoadout
-            : initialAbilityLoadout,
+        abilitySkillPresets !== undefined
+          ? normalizeAbilityLoadout(
+              abilitySkillPresets[(activePreset ?? state.activePreset) - 1] ?? [],
+            )
+          : equippedAbilitySkills !== undefined
+            ? normalizeAbilityLoadout(equippedAbilitySkills)
+            : userId
+              ? userId !== state.authUserId
+                ? initialAbilityLoadout
+                : state.abilityLoadout
+              : initialAbilityLoadout,
       accountDailyRewardWins: dailyRewardWins ?? state.accountDailyRewardWins,
       accountDailyRewardTokens:
         dailyRewardTokens ?? state.accountDailyRewardTokens,
@@ -466,6 +482,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const next = normalizeAbilityLoadout(skills);
     set({ abilityLoadout: next });
   },
+  setAbilityLoadoutForPreset: (skills) =>
+    set((state) => {
+      const normalized = normalizeAbilityLoadout(skills);
+      const newPresets = [...state.abilitySkillPresets];
+      newPresets[state.activePreset - 1] = normalized;
+      return { abilityLoadout: normalized, abilitySkillPresets: newPresets };
+    }),
+  switchAbilityPreset: (presetIndex) =>
+    set((state) => {
+      const clamped = Math.max(1, Math.min(5, presetIndex));
+      const newLoadout = normalizeAbilityLoadout(
+        state.abilitySkillPresets[clamped - 1] ?? [],
+      );
+      return { activePreset: clamped, abilityLoadout: newLoadout };
+    }),
   setRotationSkills: (skills) => set({ rotationSkills: skills }),
   setPendingRemovedRotationSkillsNotice: (skills) =>
     set({ pendingRemovedRotationSkillsNotice: skills }),
