@@ -1050,7 +1050,7 @@ export function resolveAbilityRound(params: {
           path: redPath.slice(step).map((p) => ({ ...p })),
         };
         redPath.splice(step, redPath.length - step, ...slidePath);
-        maxStep = Math.max(maxStep, redPath.length, bluePath.length);
+        maxStep = Math.max(redPath.length, bluePath.length);
         redIceSlideApplied = true;
       }
 
@@ -1067,7 +1067,7 @@ export function resolveAbilityRound(params: {
           path: bluePath.slice(step).map((p) => ({ ...p })),
         };
         bluePath.splice(step, bluePath.length - step, ...slidePath);
-        maxStep = Math.max(maxStep, redPath.length, bluePath.length);
+        maxStep = Math.max(redPath.length, bluePath.length);
         blueIceSlideApplied = true;
       }
 
