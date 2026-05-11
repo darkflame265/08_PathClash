@@ -853,6 +853,11 @@ function resolveAbilityRound(params) {
                 blueIceSlideApplied = true;
             }
             const startsStepOverlapped = samePosition(redPrev, bluePrev);
+            const redHeldByRootWall = redStoppedByRootWall && step <= redPath.length && samePosition(redNext, redPrev);
+            const blueHeldByRootWall = blueStoppedByRootWall && step <= bluePath.length && samePosition(blueNext, bluePrev);
+            const rootWallHeldOverlap = startsStepOverlapped &&
+                samePosition(redNext, blueNext) &&
+                (redHeldByRootWall || blueHeldByRootWall);
             const escaperStayedStill = escapeeColor === 'red'
                 ? samePosition(redNext, redPrev)
                 : samePosition(blueNext, bluePrev);
@@ -872,7 +877,8 @@ function resolveAbilityRound(params) {
             if (!overlappingAfterBlitz &&
                 !redPhaseShift &&
                 !bluePhaseShift &&
-                positionsTouch(redPos, redPrev, bluePos, bluePrev)) {
+                positionsTouch(redPos, redPrev, bluePos, bluePrev) &&
+                !rootWallHeldOverlap) {
                 resolveCollisionHit(attackerColor, escapeeColor, redPos, step);
             }
         }
