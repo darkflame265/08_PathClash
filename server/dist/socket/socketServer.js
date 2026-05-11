@@ -17,6 +17,29 @@ const playerAuth_1 = require("../services/playerAuth");
 const achievementService_1 = require("../services/achievementService");
 const rotationService_1 = require("../services/rotationService");
 const supabase_1 = require("../lib/supabase");
+const achievementCatalog_1 = require("../achievements/achievementCatalog");
+const PROFILE_PIECE_SKIN_IDS = [
+    'classic',
+    'ember',
+    'nova',
+    'aurora',
+    'void',
+    'plasma',
+    'gold_core',
+    'neon_pulse',
+    'inferno',
+    'quantum',
+    'cosmic',
+    'arc_reactor',
+    'electric_core',
+    'berserker',
+    'moonlight_seed',
+    'wizard',
+    'chronos',
+    'atomic',
+    'sun',
+    'frost_heart',
+];
 function initSocketServer(io) {
     const store = RoomStore_1.RoomStore.getInstance();
     const coopStore = CoopRoomStore_1.CoopRoomStore.getInstance();
@@ -1062,10 +1085,20 @@ function initSocketServer(io) {
                     ack?.({ profile: null });
                     return;
                 }
-                const [profRes, statsRes] = await Promise.all([
+                const [profRes, statsRes, ownedSkinsRes, achievementsRes] = await Promise.all([
                     supabase_1.supabaseAdmin.from('profiles').select('nickname, equipped_skin').eq('id', friendId).maybeSingle(),
                     supabase_1.supabaseAdmin.from('player_stats').select('current_rating, wins, losses').eq('user_id', friendId).maybeSingle(),
+                    supabase_1.supabaseAdmin.from('owned_skins').select('skin_id').eq('user_id', friendId),
+                    supabase_1.supabaseAdmin.from('player_achievements').select('achievement_id').eq('user_id', friendId).eq('completed', true),
                 ]);
+                const profileSkinIds = new Set(PROFILE_PIECE_SKIN_IDS);
+                const ownedSkinIds = new Set(['classic']);
+                for (const row of ownedSkinsRes.data ?? []) {
+                    const skinId = String(row.skin_id ?? '');
+                    if (profileSkinIds.has(skinId))
+                        ownedSkinIds.add(skinId);
+                }
+                const completedAchievementIds = new Set((achievementsRes.data ?? []).map((row) => String(row.achievement_id ?? '')).filter(Boolean));
                 ack?.({
                     profile: {
                         userId: friendId,
@@ -1074,6 +1107,10 @@ function initSocketServer(io) {
                         equippedSkin: (profRes.data?.equipped_skin ?? 'classic'),
                         wins: Number(statsRes.data?.wins ?? 0),
                         losses: Number(statsRes.data?.losses ?? 0),
+                        ownedSkinCount: ownedSkinIds.size,
+                        totalSkinCount: PROFILE_PIECE_SKIN_IDS.length,
+                        completedAchievementCount: completedAchievementIds.size,
+                        totalAchievementCount: achievementCatalog_1.ACHIEVEMENT_CATALOG.length,
                     },
                 });
             }

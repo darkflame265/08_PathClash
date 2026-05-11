@@ -35,6 +35,8 @@ export function FriendProfileModal({ friendId, lang, onClose }: Props) {
   const ratingLabel = lang === 'kr' ? '레이팅' : 'Rating';
   const winsLabel = lang === 'kr' ? '승' : 'W';
   const lossesLabel = lang === 'kr' ? '패' : 'L';
+  const skinsLabel = lang === 'kr' ? '보유 스킨' : 'Skins';
+  const achievementsLabel = lang === 'kr' ? '달성 업적' : 'Achievements';
   const closeLabel = lang === 'kr' ? '닫기' : 'Close';
   const loadingLabel = lang === 'kr' ? '불러오는 중...' : 'Loading...';
   const errorLabel =
@@ -55,6 +57,15 @@ export function FriendProfileModal({ friendId, lang, onClose }: Props) {
             <p className="friend-profile-record">
               {winsLabel} {profile.wins} / {lossesLabel} {profile.losses}
             </p>
+            <div className="friend-profile-collection-summary">
+              <span>
+                {skinsLabel} {profile.ownedSkinCount}/{profile.totalSkinCount}
+              </span>
+              <span>
+                {achievementsLabel} {profile.completedAchievementCount}/
+                {profile.totalAchievementCount}
+              </span>
+            </div>
           </div>
         )}
         <button type="button" className="lobby-btn secondary" onClick={onClose}>

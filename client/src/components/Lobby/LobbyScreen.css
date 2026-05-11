@@ -5029,6 +5029,17 @@
   margin: 0;
 }
 
+.friend-profile-collection-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.22rem;
+  margin-top: 0.25rem;
+  color: #a855f7 !important;
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
 /* ── FriendChallengeToast ──────────────────────────────── */
 .friend-challenge-toast {
   display: flex;

@@ -44,6 +44,30 @@ import {
 } from '../services/achievementService';
 import { getCurrentRotation } from '../services/rotationService';
 import { supabaseAdmin } from '../lib/supabase';
+import { ACHIEVEMENT_CATALOG } from '../achievements/achievementCatalog';
+
+const PROFILE_PIECE_SKIN_IDS = [
+  'classic',
+  'ember',
+  'nova',
+  'aurora',
+  'void',
+  'plasma',
+  'gold_core',
+  'neon_pulse',
+  'inferno',
+  'quantum',
+  'cosmic',
+  'arc_reactor',
+  'electric_core',
+  'berserker',
+  'moonlight_seed',
+  'wizard',
+  'chronos',
+  'atomic',
+  'sun',
+  'frost_heart',
+] as const;
 
 export function initSocketServer(io: Server): void {
   const store = RoomStore.getInstance();
@@ -1430,6 +1454,10 @@ export function initSocketServer(io: Server): void {
           equippedSkin: PieceSkin;
           wins: number;
           losses: number;
+          ownedSkinCount: number;
+          totalSkinCount: number;
+          completedAchievementCount: number;
+          totalAchievementCount: number;
         } | null }) => void,
       ) => {
         try {
@@ -1442,10 +1470,21 @@ export function initSocketServer(io: Server): void {
             .eq('friend_id', friendId)
             .maybeSingle();
           if (!friendRow) { ack?.({ profile: null }); return; }
-          const [profRes, statsRes] = await Promise.all([
+          const [profRes, statsRes, ownedSkinsRes, achievementsRes] = await Promise.all([
             supabaseAdmin.from('profiles').select('nickname, equipped_skin').eq('id', friendId).maybeSingle(),
             supabaseAdmin.from('player_stats').select('current_rating, wins, losses').eq('user_id', friendId).maybeSingle(),
+            supabaseAdmin.from('owned_skins').select('skin_id').eq('user_id', friendId),
+            supabaseAdmin.from('player_achievements').select('achievement_id').eq('user_id', friendId).eq('completed', true),
           ]);
+          const profileSkinIds = new Set<string>(PROFILE_PIECE_SKIN_IDS);
+          const ownedSkinIds = new Set<string>(['classic']);
+          for (const row of ownedSkinsRes.data ?? []) {
+            const skinId = String(row.skin_id ?? '');
+            if (profileSkinIds.has(skinId)) ownedSkinIds.add(skinId);
+          }
+          const completedAchievementIds = new Set(
+            (achievementsRes.data ?? []).map((row) => String(row.achievement_id ?? '')).filter(Boolean),
+          );
           ack?.({
             profile: {
               userId: friendId,
@@ -1454,6 +1493,10 @@ export function initSocketServer(io: Server): void {
               equippedSkin: (profRes.data?.equipped_skin ?? 'classic') as PieceSkin,
               wins: Number(statsRes.data?.wins ?? 0),
               losses: Number(statsRes.data?.losses ?? 0),
+              ownedSkinCount: ownedSkinIds.size,
+              totalSkinCount: PROFILE_PIECE_SKIN_IDS.length,
+              completedAchievementCount: completedAchievementIds.size,
+              totalAchievementCount: ACHIEVEMENT_CATALOG.length,
             },
           });
         } catch (err) {

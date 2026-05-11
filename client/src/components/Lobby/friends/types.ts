@@ -22,4 +22,8 @@ export interface FriendProfile {
   equippedSkin: PieceSkin;
   wins: number;
   losses: number;
+  ownedSkinCount: number;
+  totalSkinCount: number;
+  completedAchievementCount: number;
+  totalAchievementCount: number;
 }
