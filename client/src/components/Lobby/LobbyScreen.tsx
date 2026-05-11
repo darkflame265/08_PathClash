@@ -1320,9 +1320,6 @@ export function LobbyScreen({
 
   const twoVsTwoTitle = "2v2";
 
-  const friendModeTitle =
-    lang === "en" ? "Friendly Match (Ability Battle)" : "친구 대전(능력대전)";
-
   const twoVsTwoStartLabel = lang === "en" ? "Start Match" : "매칭 시작";
 
   const abilityBattleTitle = lang === "en" ? "Ability Battle" : "능력 대전";
@@ -3546,25 +3543,6 @@ export function LobbyScreen({
     }
   };
 
-  const renderModeTitleBtn = (label: string, extra?: React.ReactNode) => (
-    <div className="lobby-card-title-row">
-      <button
-        type="button"
-        className="mode-title-btn"
-        data-keyboard-nav-layer="mode-title"
-        onClick={() => setIsModePickerOpen(true)}
-      >
-        {label}
-        <span className="mode-title-chevron" aria-hidden="true">
-          ▾
-        </span>
-      </button>
-      {extra}
-    </div>
-  );
-
-  const renderFriendBattleHeader = () => renderModeTitleBtn(friendModeTitle);
-
   const handleChangeNickname = useCallback(async () => {
     if (isChangingNickname) return;
 
@@ -4331,7 +4309,6 @@ export function LobbyScreen({
     if (selectedLobbyMode === "friend" && view === "create") {
       return (
         <>
-          {renderFriendBattleHeader()}
           <h2 data-step="3">{t.roomCreatedTitle}</h2>
           <p>{t.roomCreatedDesc}</p>
           <div className="room-code">{createdCode}</div>
@@ -4343,7 +4320,6 @@ export function LobbyScreen({
     if (selectedLobbyMode === "friend" && view === "join") {
       return (
         <>
-          {renderFriendBattleHeader()}
           <h2 data-step="3">{t.joinTitle}</h2>
           <input
             className="lobby-input code-input"
