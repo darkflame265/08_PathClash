@@ -1516,10 +1516,16 @@ class AbilityRoom {
         }
     }
     chooseBotAction(bot, opponent, pathPoints) {
-        // 용암 타일과 뿌리장벽을 장애물로 추가해 경로 계산 시 피하도록 한다.
+        // 스킬로 생성된 위험 타일도 장애물처럼 취급해 AI 경로 계산 시 피하도록 한다.
         const lavaObstacles = this.lavaTiles.map((t) => t.position);
         const rootWallObstacles = this.rootWallTiles.map((t) => t.position);
-        const effectiveObstacles = [...this.obstacles, ...lavaObstacles, ...rootWallObstacles];
+        const iceFieldObstacles = this.iceFieldTiles.map((t) => t.position);
+        const effectiveObstacles = [
+            ...this.obstacles,
+            ...lavaObstacles,
+            ...rootWallObstacles,
+            ...iceFieldObstacles,
+        ];
         // ── 무력화 적 섬멸 패턴 최우선 처리 ──────────────────────────────────
         // 상대가 오버드라이브 부작용으로 이동 불가 상태일 때 강제 진입.
         // forced blitz 등 다른 모든 패턴보다 먼저 체크해야 한다.
@@ -1874,6 +1880,7 @@ class AbilityRoom {
             ...this.obstacles,
             ...this.lavaTiles.map((t) => t.position),
             ...this.rootWallTiles.map((t) => t.position),
+            ...this.iceFieldTiles.map((t) => t.position),
         ];
         const validCandidates = [];
         for (const launchPos of listBoardPositions()) {
@@ -1890,6 +1897,8 @@ class AbilityRoom {
                 continue;
             const blitzPath = buildBlitzPath(launchPos, blitzDir);
             if (blitzPath.length === 0)
+                continue;
+            if (blitzPath.some((position) => isObstacle(position, effectiveObstacles)))
                 continue;
             // 현재 위치에서 launchPos까지 최단 경로 (장애물 회피)
             const prefixPath = buildShortestAbilityPath(bot.position, launchPos, effectiveObstacles);
@@ -1941,6 +1950,15 @@ class AbilityRoom {
         const blitzPath = buildBlitzPath(bot.position, directionTarget);
         if (blitzPath.length === 0)
             return null;
+        const effectiveObstacles = [
+            ...this.obstacles,
+            ...this.lavaTiles.map((t) => t.position),
+            ...this.rootWallTiles.map((t) => t.position),
+            ...this.iceFieldTiles.map((t) => t.position),
+        ];
+        if (blitzPath.some((position) => isObstacle(position, effectiveObstacles))) {
+            return null;
+        }
         const forced = this.validatePlan(bot, blitzPath, [{ skillId: 'electric_blitz', step: 0, order: 0, target: directionTarget }]);
         if (!forced) {
             return null;
@@ -2064,7 +2082,7 @@ class AbilityRoom {
                 const guardCloseRange = guardDist <= 2;
                 if (!guardInBlitzLineThreat && !guardCloseRange)
                     continue;
-                const danger = scoreEscapePathAgainstModel(bot.position, [], opponent.position, opponentModel, this.obstacles);
+                const danger = scoreEscapePathAgainstModel(bot.position, [], opponent.position, opponentModel, effectiveObstacles);
                 candidates.push({
                     path: [],
                     skills: [{ skillId, step: 0, order: 0 }],
@@ -2090,7 +2108,7 @@ class AbilityRoom {
                 candidates.push({
                     path: basePath,
                     skills: [{ skillId, step: 0, order: 0 }],
-                    score: scoreEscapePathAgainstModel(bot.position, basePath, opponent.position, opponentModel, this.obstacles) + (inBlitzLineThreat ? 200 : 110),
+                    score: scoreEscapePathAgainstModel(bot.position, basePath, opponent.position, opponentModel, effectiveObstacles) + (inBlitzLineThreat ? 200 : 110),
                     reason: 'at-field-threat-check',
                     selectedSkill: skillId,
                 });
@@ -2251,6 +2269,8 @@ class AbilityRoom {
                 for (const target of getCardinalNeighbors(bot.position, [])) {
                     const blitzPath = buildBlitzPath(bot.position, target);
                     if (blitzPath.length === 0)
+                        continue;
+                    if (blitzPath.some((position) => isObstacle(position, effectiveObstacles)))
                         continue;
                     const interceptBonus = bot.role === 'attacker' &&
                         posEqual(target, directBlitzTarget)

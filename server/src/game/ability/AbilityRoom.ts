@@ -1818,10 +1818,16 @@ export class AbilityRoom {
     opponent: AbilityPlayerState,
     pathPoints: number,
   ): BotActionCandidate {
-    // 용암 타일과 뿌리장벽을 장애물로 추가해 경로 계산 시 피하도록 한다.
+    // 스킬로 생성된 위험 타일도 장애물처럼 취급해 AI 경로 계산 시 피하도록 한다.
     const lavaObstacles = this.lavaTiles.map((t) => t.position);
     const rootWallObstacles = this.rootWallTiles.map((t) => t.position);
-    const effectiveObstacles = [...this.obstacles, ...lavaObstacles, ...rootWallObstacles];
+    const iceFieldObstacles = this.iceFieldTiles.map((t) => t.position);
+    const effectiveObstacles = [
+      ...this.obstacles,
+      ...lavaObstacles,
+      ...rootWallObstacles,
+      ...iceFieldObstacles,
+    ];
 
     // ── 무력화 적 섬멸 패턴 최우선 처리 ──────────────────────────────────
     // 상대가 오버드라이브 부작용으로 이동 불가 상태일 때 강제 진입.
@@ -2260,6 +2266,7 @@ export class AbilityRoom {
       ...this.obstacles,
       ...this.lavaTiles.map((t) => t.position),
       ...this.rootWallTiles.map((t) => t.position),
+      ...this.iceFieldTiles.map((t) => t.position),
     ];
 
     const validCandidates: BotActionCandidate[] = [];
@@ -2276,6 +2283,7 @@ export class AbilityRoom {
 
       const blitzPath = buildBlitzPath(launchPos, blitzDir);
       if (blitzPath.length === 0) continue;
+      if (blitzPath.some((position) => isObstacle(position, effectiveObstacles))) continue;
 
       // 현재 위치에서 launchPos까지 최단 경로 (장애물 회피)
       const prefixPath = buildShortestAbilityPath(bot.position, launchPos, effectiveObstacles);
@@ -2334,6 +2342,15 @@ export class AbilityRoom {
 
     const blitzPath = buildBlitzPath(bot.position, directionTarget);
     if (blitzPath.length === 0) return null;
+    const effectiveObstacles = [
+      ...this.obstacles,
+      ...this.lavaTiles.map((t) => t.position),
+      ...this.rootWallTiles.map((t) => t.position),
+      ...this.iceFieldTiles.map((t) => t.position),
+    ];
+    if (blitzPath.some((position) => isObstacle(position, effectiveObstacles))) {
+      return null;
+    }
 
     const forced = this.validatePlan(
       bot,
@@ -2490,7 +2507,7 @@ export class AbilityRoom {
           [],
           opponent.position,
           opponentModel,
-          this.obstacles,
+          effectiveObstacles,
         );
         candidates.push({
           path: [],
@@ -2526,7 +2543,7 @@ export class AbilityRoom {
               basePath,
               opponent.position,
               opponentModel,
-              this.obstacles,
+              effectiveObstacles,
             ) + (inBlitzLineThreat ? 200 : 110),
           reason: 'at-field-threat-check',
           selectedSkill: skillId,
@@ -2763,6 +2780,7 @@ export class AbilityRoom {
         for (const target of getCardinalNeighbors(bot.position, [])) {
           const blitzPath = buildBlitzPath(bot.position, target);
           if (blitzPath.length === 0) continue;
+          if (blitzPath.some((position) => isObstacle(position, effectiveObstacles))) continue;
           const interceptBonus =
             bot.role === 'attacker' &&
             posEqual(target, directBlitzTarget)
