@@ -68,6 +68,18 @@ function isPersistentOverlap(
   return samePosition(aPrev, bPrev) && samePosition(aNow, bNow);
 }
 
+function isMovingPersistentOverlap(
+  aNow: Position,
+  aPrev: Position,
+  bNow: Position,
+  bPrev: Position,
+): boolean {
+  return (
+    isPersistentOverlap(aNow, aPrev, bNow, bPrev) &&
+    (!samePosition(aNow, aPrev) || !samePosition(bNow, bPrev))
+  );
+}
+
 function getCrossPositions(origin: Position): Position[] {
   return [
     origin,
@@ -1226,7 +1238,8 @@ export function resolveAbilityRound(params: {
       redCloneNext &&
       attackerColor === 'red' &&
       positionsTouch(bluePos, bluePrevForStep, redCloneNext, redClonePrevForStep) &&
-      !isPersistentOverlap(bluePos, bluePrevForStep, redCloneNext, redClonePrevForStep)
+      (!isPersistentOverlap(bluePos, bluePrevForStep, redCloneNext, redClonePrevForStep) ||
+        isMovingPersistentOverlap(bluePos, bluePrevForStep, redCloneNext, redClonePrevForStep))
     ) {
       resolveCollisionHit('red', 'blue', redCloneNext, step);
     }
@@ -1236,7 +1249,8 @@ export function resolveAbilityRound(params: {
       blueCloneNext &&
       attackerColor === 'blue' &&
       positionsTouch(redPos, redPrevForStep, blueCloneNext, blueClonePrevForStep) &&
-      !isPersistentOverlap(redPos, redPrevForStep, blueCloneNext, blueClonePrevForStep)
+      (!isPersistentOverlap(redPos, redPrevForStep, blueCloneNext, blueClonePrevForStep) ||
+        isMovingPersistentOverlap(redPos, redPrevForStep, blueCloneNext, blueClonePrevForStep))
     ) {
       resolveCollisionHit('blue', 'red', blueCloneNext, step);
     }
