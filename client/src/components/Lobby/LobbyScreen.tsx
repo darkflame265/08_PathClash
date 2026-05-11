@@ -77,7 +77,6 @@ import {
 import {
   connectSocket,
   connectSocketReady,
-  disconnectSocket,
   getSocket,
   SOCKET_CONNECT_FAILED,
 } from "../../socket/socketClient";
@@ -155,7 +154,6 @@ type SkinDetailState =
     }
   | null;
 type LobbyModeKey =
-  | "ai"
   | "friend"
   | "coop"
   | "2v2"
@@ -952,9 +950,10 @@ export function LobbyScreen({
     () => {
       if (typeof window === "undefined") return "ability";
       const saved = window.localStorage.getItem(LAST_LOBBY_MODE_KEY);
-      if (saved === "random" || saved === "classic_ranked") return "ability";
+      if (saved === "random" || saved === "classic_ranked" || saved === "ai") {
+        return "ability";
+      }
       const nextMode =
-        saved === "ai" ||
         saved === "friend" ||
         saved === "coop" ||
         saved === "2v2" ||
@@ -1322,7 +1321,7 @@ export function LobbyScreen({
   const twoVsTwoStartLabel = lang === "en" ? "Start Match" : "매칭 시작";
 
   const abilityBattleTitle = lang === "en" ? "Ability Battle" : "능력 대전";
-  const skillRankedTitle = lang === "en" ? "Skill Ranked" : "스킬 랭크전";
+  const skillRankedTitle = lang === "en" ? "Ranked" : "랭크전";
 
   const abilityBattleStartLabel = lang === "en" ? "Start Match" : "매칭 시작";
 
@@ -1357,7 +1356,6 @@ export function LobbyScreen({
 
   const aiTutorialButtonLabel = lang === "en" ? "Tutorial" : "튜토리얼";
 
-  const aiCancelLabel = lang === "en" ? t.cancelBtn : "매칭 취소";
   const upgradeFlowLoadingLabel =
     lang === "en"
       ? "Loading account information. Please wait."
@@ -3661,19 +3659,6 @@ export function LobbyScreen({
     }
   };
 
-  const handleCancelAi = () => {
-    cancelNetworkMatch("ai");
-    disconnectSocket();
-
-    useGameStore.getState().resetGame();
-
-    setIsMatchmaking(false);
-
-    setMatchType(null);
-
-    setError("");
-  };
-
   const startTutorialReplay = async (options?: { closePrompt?: boolean }) => {
     window.localStorage.setItem(AI_TUTORIAL_PROMPT_ANSWERED_KEY, "1");
 
@@ -3688,10 +3673,6 @@ export function LobbyScreen({
     }
 
     await handleAiMatchWithTutorial(true);
-  };
-
-  const handleAiMatch = async () => {
-    await handleAiMatchWithTutorial(false);
   };
 
   const handleReplayAiTutorial = async () => {
@@ -4134,7 +4115,6 @@ export function LobbyScreen({
     icon: string;
     label: string;
   }> = [
-    { key: "ai", icon: "🤖", label: t.aiTitle },
     { key: "friend", icon: "🤝", label: t.friendTitle },
     { key: "ability", icon: "✨", label: abilityBattleTitle },
     { key: "skill_ranked", icon: "⚔️", label: skillRankedTitle },
@@ -4354,14 +4334,6 @@ export function LobbyScreen({
     }
 
     switch (selectedLobbyMode) {
-      case "ai":
-        return (
-          <>
-            {isMatchmaking && currentMatchType === "ai"
-              ? renderMatchmakingControlBar(handleCancelAi, aiCancelLabel)
-              : renderModeControlBar("ai", t.aiBtn, () => void handleAiMatch())}
-          </>
-        );
       case "friend":
         return (
           <>
