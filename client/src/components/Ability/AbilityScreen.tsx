@@ -992,6 +992,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
   const resetMatchUiState = () => {
     setWinner(null);
     setGameOverMessage(null);
+    setRatingResult(null);
     setRematchRequested(false);
     setRematchRequestSent(false);
   };
@@ -3773,7 +3774,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     }: AbilityGameOverPayload) => {
       setWinner(nextWinner);
       setState((prev) => (prev ? { ...prev, phase: "gameover" } : prev));
-      if (ratingChange !== null) {
+      if (!isLocalAbilityTraining && typeof ratingChange === "number") {
         setRatingResult({
           ratingChange,
           newRating,
@@ -4260,6 +4261,10 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     onLeaveToLobby();
   };
 
+  const handleTrainingRematch = () => {
+    getLocalAbilityTrainingSocket().emit("request_rematch");
+  };
+
   const handleRequestRematch = () => {
     getAbilitySocket().emit("request_rematch");
     setRematchRequestSent(true);
@@ -4433,7 +4438,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
                     <span className="gameover-value">+{rewardTokens}</span>
                   </div>
                 )}
-                {ratingResult && ratingResult.ratingChange !== null && (
+                {!isLocalAbilityTraining && ratingResult && ratingResult.ratingChange !== null && (
                   <div
                     className={`gameover-rating ${ratingResult.ratingChange >= 0 ? "rating-up" : "rating-down"}`}
                   >
@@ -4455,7 +4460,8 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
                     )}
                   </div>
                 )}
-                {ratingResult?.arenaPromoted &&
+                {!isLocalAbilityTraining &&
+                  ratingResult?.arenaPromoted &&
                   ratingResult.newArena !== null && (
                     <div className="gameover-arena-promotion">
                       {lang === "en"
@@ -4481,6 +4487,14 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
                   <button
                     className="rematch-btn rematch-btn-blue"
                     onClick={handleRequestRematch}
+                  >
+                    {lang === "en" ? "REMATCH" : "재시합"}
+                  </button>
+                )}
+                {!gameOverMessage && isLocalAbilityTraining && (
+                  <button
+                    className="rematch-btn rematch-btn-blue"
+                    onClick={handleTrainingRematch}
                   >
                     {lang === "en" ? "REMATCH" : "재시합"}
                   </button>
