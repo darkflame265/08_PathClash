@@ -186,6 +186,7 @@ type SettingsIconKind =
   | "language"
   | "sound"
   | "controls"
+  | "tutorial"
   | "terms"
   | "privacy"
   | "donate";
@@ -223,6 +224,15 @@ function SettingsActionIcon({
         <path d="M7.5 11.5v3" />
         <path d="M16.8 12.3h.01" />
         <path d="M18.6 14.1h.01" />
+      </>
+    ),
+    tutorial: (
+      <>
+        <path d="M5.5 4.5h8.2a3.8 3.8 0 0 1 3.8 3.8v11.2H9.3a3.8 3.8 0 0 0-3.8-3.8V4.5Z" />
+        <path d="M18.5 7.5h.6a2.9 2.9 0 0 1 2.9 2.9v9.1h-4.5" />
+        <path d="M8.5 8.5h5.8" />
+        <path d="M8.5 11.5h4.2" />
+        <path d="M8.5 14.5h2.8" />
       </>
     ),
     terms: (
@@ -4195,21 +4205,6 @@ export function LobbyScreen({
       );
     }
 
-    if (selectedLobbyMode === "ai") {
-      return (
-        <div className="mode-action-side">
-          <button
-            type="button"
-            className="lobby-mini-btn tutorial"
-            data-keyboard-nav-layer="mini"
-            onClick={() => void handleReplayAiTutorial()}
-          >
-            {t.aiTutorialBtn ?? aiTutorialButtonLabel}
-          </button>
-        </div>
-      );
-    }
-
     if (selectedLobbyMode === "friend") {
       return (
         <div className="mode-action-side mode-action-side--double">
@@ -5571,6 +5566,18 @@ export function LobbyScreen({
                 >
                   <SettingsActionIcon kind="controls" lang={lang} />
                   <span>{controlsButtonLabel}</span>
+                </button>
+
+                <button
+                  className="lobby-btn secondary settings-policy-btn"
+                  onClick={() => {
+                    setIsSettingsOpen(false);
+                    void handleReplayAiTutorial();
+                  }}
+                  type="button"
+                >
+                  <SettingsActionIcon kind="tutorial" lang={lang} />
+                  <span>{t.aiTutorialBtn ?? aiTutorialButtonLabel}</span>
                 </button>
 
                 <a
