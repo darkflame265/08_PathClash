@@ -37,7 +37,7 @@ import {
   purchaseSkinWithTokens,
   purchaseBoardSkinWithTokens,
   refreshAccountSummary,
-  syncEquippedAbilitySkills,
+  syncAbilityPresets,
   syncNickname,
   type PlayerAchievementState,
   resolveUpgradeFlowAfterRedirect,
@@ -891,7 +891,10 @@ export function LobbyScreen({
 
     abilityLoadout,
 
-    setAbilityLoadout,
+    abilitySkillPresets,
+    activePreset,
+    setAbilityLoadoutForPreset,
+    switchAbilityPreset,
 
     currentMatchType,
 
@@ -1327,11 +1330,6 @@ export function LobbyScreen({
 
   const abilityLoadoutTitle = lang === "en" ? "Equipped Skills" : "장착 스킬";
   const abilityTrainingTitle = lang === "en" ? "Training" : "훈련장";
-
-  const abilityLoadoutDesc =
-    lang === "en"
-      ? "Select up to 3 skills you want to bring into Ability Battle."
-      : "능력 대전에 가져갈 스킬을 최대 3개까지 선택하세요.";
 
   const abilityLoadoutCount = lang === "en" ? "equipped" : "장착 중";
 
@@ -3330,7 +3328,8 @@ export function LobbyScreen({
   const ensureMatchmakingProfile = useCallback(
     async (options?: { syncAbilitySkills?: boolean }) => {
       if (options?.syncAbilitySkills) {
-        await syncEquippedAbilitySkills(useGameStore.getState().abilityLoadout);
+        const s = useGameStore.getState();
+        await syncAbilityPresets(s.abilitySkillPresets, s.activePreset);
       }
       const profile = await refreshAccountSummary({ force: true });
       applyProfileToStore(profile, setAuthState);
@@ -3793,7 +3792,7 @@ export function LobbyScreen({
     const isEquipped = abilityLoadout.includes(skillId);
 
     if (isEquipped) {
-      setAbilityLoadout(abilityLoadout.filter((value) => value !== skillId));
+      setAbilityLoadoutForPreset(abilityLoadout.filter((value) => value !== skillId));
 
       return;
     }
@@ -3808,7 +3807,11 @@ export function LobbyScreen({
       return;
     }
 
-    setAbilityLoadout([...abilityLoadout, skillId]);
+    setAbilityLoadoutForPreset([...abilityLoadout, skillId]);
+  };
+
+  const handleSwitchPreset = (presetIndex: number) => {
+    switchAbilityPreset(presetIndex);
   };
 
   const handlePreviewAbilitySfx = useCallback(
@@ -5116,22 +5119,24 @@ export function LobbyScreen({
             className="upgrade-modal skin-modal ability-loadout-modal"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="skin-modal-head">
-              <h3>{abilityLoadoutTitle}</h3>
-
-              <div
-                className="skin-token-badge"
-                aria-label="Ability loadout count"
-              >
+            <div className="ability-preset-bar">
+              {[1, 2, 3, 4, 5].map((index) => (
+                <button
+                  key={index}
+                  type="button"
+                  className={`ability-preset-btn${activePreset === index ? " is-active" : ""}`}
+                  onClick={() => handleSwitchPreset(index)}
+                >
+                  {index}
+                </button>
+              ))}
+              <div className="skin-token-badge ability-preset-count" aria-label="Ability loadout count">
                 <span className="skin-token-badge-main">
                   <span>{equippedAbilitySkillDefs.length} / 3</span>
-
                   <span>{abilityLoadoutCount}</span>
                 </span>
               </div>
             </div>
-
-            <p>{abilityLoadoutDesc}</p>
 
             <div className="ability-loadout-chip-row ability-loadout-modal-selected">
               {equippedAbilitySkillDefs.map((skill) => (

@@ -3997,6 +3997,42 @@
   flex: 0 0 auto;
 }
 
+.ability-preset-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0 0.75rem 0;
+}
+
+.ability-preset-btn {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 0.45rem;
+  border: 1.5px solid var(--tile-border, #3a444d);
+  background: var(--tile, #2a3137);
+  color: var(--text-muted, #8a9bb0);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  flex: 0 0 auto;
+}
+
+.ability-preset-btn:hover {
+  border-color: var(--blue, #3b82f6);
+  color: var(--text, #e2e8f0);
+}
+
+.ability-preset-btn.is-active {
+  border-color: var(--blue, #3b82f6);
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+}
+
+.ability-preset-count {
+  margin-left: auto;
+}
+
 .ability-skill-preview {
   display: inline-flex;
   align-items: center;
