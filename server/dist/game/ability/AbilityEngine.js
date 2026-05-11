@@ -609,6 +609,7 @@ function resolveAbilityRound(params) {
                 blueCloneStep = 0;
                 blueClonePos = { ...cloneStart };
             }
+            maxStep = getActiveMaxStep();
             skillEvents.push({
                 step: 0,
                 order: reservation.order,
@@ -769,6 +770,7 @@ function resolveAbilityRound(params) {
         }
     };
     const lavaDamagedThisRound = new Set();
+    const getActiveMaxStep = () => Math.max(redPath.length, bluePath.length, redCloneStep === null ? 0 : redCloneStep + redClonePath.length, blueCloneStep === null ? 0 : blueCloneStep + blueClonePath.length);
     for (let step = 0; step <= maxStep; step++) {
         redBlitzDamagedThisStep = false;
         blueBlitzDamagedThisStep = false;
@@ -831,7 +833,7 @@ function resolveAbilityRound(params) {
                     path: redPath.slice(step).map((p) => ({ ...p })),
                 };
                 redPath.splice(step, redPath.length - step, ...slidePath);
-                maxStep = Math.max(redPath.length, bluePath.length);
+                maxStep = getActiveMaxStep();
                 redIceSlideApplied = true;
             }
             if (!blueIceSlideApplied &&
@@ -849,7 +851,7 @@ function resolveAbilityRound(params) {
                     path: bluePath.slice(step).map((p) => ({ ...p })),
                 };
                 bluePath.splice(step, bluePath.length - step, ...slidePath);
-                maxStep = Math.max(redPath.length, bluePath.length);
+                maxStep = getActiveMaxStep();
                 blueIceSlideApplied = true;
             }
             const startsStepOverlapped = samePosition(redPrev, bluePrev);

@@ -3216,7 +3216,15 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
 
     const redSeq = [redVisualStart, ...payload.redPath];
     const blueSeq = [blueVisualStart, ...payload.bluePath];
-    const maxSteps = Math.max(redSeq.length - 1, blueSeq.length - 1);
+    const atomicCloneMaxSteps = payload.skillEvents.reduce((max, event) => {
+      if (event.skillId !== "atomic_fission" || !event.cloneStart) return max;
+      return Math.max(max, event.step + (event.clonePath?.length ?? 0));
+    }, 0);
+    const maxSteps = Math.max(
+      redSeq.length - 1,
+      blueSeq.length - 1,
+      atomicCloneMaxSteps,
+    );
 
     const getVisualPositionForStep = (
       color: PlayerColor,

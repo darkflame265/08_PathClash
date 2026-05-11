@@ -792,6 +792,7 @@ export function resolveAbilityRound(params: {
         blueCloneStep = 0;
         blueClonePos = { ...cloneStart };
       }
+      maxStep = getActiveMaxStep();
       skillEvents.push({
         step: 0,
         order: reservation.order,
@@ -979,6 +980,13 @@ export function resolveAbilityRound(params: {
   let blueIceSlideApplied = false;
   let redIceSlideOverriddenPath: { start: Position; path: Position[] } | null = null;
   let blueIceSlideOverriddenPath: { start: Position; path: Position[] } | null = null;
+  const getActiveMaxStep = () =>
+    Math.max(
+      redPath.length,
+      bluePath.length,
+      redCloneStep === null ? 0 : redCloneStep + redClonePath.length,
+      blueCloneStep === null ? 0 : blueCloneStep + blueClonePath.length,
+    );
 
   for (let step = 0; step <= maxStep; step++) {
     redBlitzDamagedThisStep = false;
@@ -1050,7 +1058,7 @@ export function resolveAbilityRound(params: {
           path: redPath.slice(step).map((p) => ({ ...p })),
         };
         redPath.splice(step, redPath.length - step, ...slidePath);
-        maxStep = Math.max(redPath.length, bluePath.length);
+        maxStep = getActiveMaxStep();
         redIceSlideApplied = true;
       }
 
@@ -1067,7 +1075,7 @@ export function resolveAbilityRound(params: {
           path: bluePath.slice(step).map((p) => ({ ...p })),
         };
         bluePath.splice(step, bluePath.length - step, ...slidePath);
-        maxStep = Math.max(redPath.length, bluePath.length);
+        maxStep = getActiveMaxStep();
         blueIceSlideApplied = true;
       }
 

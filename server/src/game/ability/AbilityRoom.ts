@@ -1445,8 +1445,17 @@ export class AbilityRoom {
         return sum + Math.max(0, rewindDuration - SKILL_EVENT_BUFFER_MS);
       }, 0);
 
+    const atomicCloneMaxSteps = resolution.payload.skillEvents.reduce((max, event) => {
+      if (event.skillId !== 'atomic_fission' || !event.cloneStart) return max;
+      return Math.max(max, event.step + (event.clonePath?.length ?? 0));
+    }, 0);
+
     const animTime = calcAnimationDuration(
-      Math.max(red.plannedPath.length, blue.plannedPath.length) + resolution.payload.skillEvents.length,
+      Math.max(
+        resolution.payload.redPath.length,
+        resolution.payload.bluePath.length,
+        atomicCloneMaxSteps,
+      ) + resolution.payload.skillEvents.length,
     ) +
       resolution.payload.skillEvents.length * SKILL_EVENT_BUFFER_MS +
       atFieldEventCount * AT_FIELD_END_DELAY_MS +
