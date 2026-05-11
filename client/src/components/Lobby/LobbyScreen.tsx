@@ -130,6 +130,9 @@ import type { FriendEntry }     from './friends/types';
 type LobbyView = "main" | "create" | "join";
 type SkinPickerTab = "piece" | "board";
 type ControlsSettingsTab = "keyboard" | "controller";
+type ChallengeToastState =
+  | { kind: "incoming"; fromUserId: string; fromNickname: string }
+  | { kind: "outgoing"; toUserId: string; toNickname: string };
 type SkinDetailState =
   | {
       tab: "piece";
@@ -1024,7 +1027,7 @@ export function LobbyScreen({
   const [showFriendRequests, setShowFriendRequests] = useState(false);
   const [friendCtx, setFriendCtx]                   = useState<{ friend: FriendEntry; anchorRect: DOMRect } | null>(null);
   const [friendProfileId, setFriendProfileId]       = useState<string | null>(null);
-  const [challengeToast, setChallengeToast]         = useState<{ fromUserId: string; fromNickname: string } | null>(null);
+  const [challengeToast, setChallengeToast]         = useState<ChallengeToastState | null>(null);
   const [friendListRefresh, setFriendListRefresh]   = useState(0);
 
   const [isPatchNotesOpen, setIsPatchNotesOpen] = useState(false);
@@ -3268,7 +3271,7 @@ export function LobbyScreen({
       fromUserId: string;
       fromNickname: string;
     }) => {
-      setChallengeToast({ fromUserId, fromNickname });
+      setChallengeToast({ kind: "incoming", fromUserId, fromNickname });
     };
     const handleChallengeAccepted = ({
       roomId,
@@ -3288,6 +3291,7 @@ export function LobbyScreen({
       onAbilityStart();
     };
     const handleChallengeDeclined = () => {
+      setChallengeToast(null);
       cancelNetworkMatch("friend");
       setMatchType(null);
       setIsMatchmaking(false);
@@ -3297,15 +3301,24 @@ export function LobbyScreen({
           : "상대방이 친선전 요청을 거절했습니다.",
       );
     };
+    const handleChallengeCanceled = ({ fromUserId }: { fromUserId: string }) => {
+      setChallengeToast((current) =>
+        current?.kind === "incoming" && current.fromUserId === fromUserId
+          ? null
+          : current,
+      );
+    };
 
     socket.on("friend_challenge_received", handleChallengeReceived);
     socket.on("friend_challenge_accepted", handleChallengeAccepted);
     socket.on("friend_challenge_declined", handleChallengeDeclined);
+    socket.on("friend_challenge_canceled", handleChallengeCanceled);
 
     return () => {
       socket.off("friend_challenge_received", handleChallengeReceived);
       socket.off("friend_challenge_accepted", handleChallengeAccepted);
       socket.off("friend_challenge_declined", handleChallengeDeclined);
+      socket.off("friend_challenge_canceled", handleChallengeCanceled);
     };
   }, [onAbilityStart, setMatchType, setMyColor, setRoomCode]);
 
@@ -3355,7 +3368,8 @@ export function LobbyScreen({
   });
 
   const handleChallengeAccept = async () => {
-    if (!challengeToast) return;
+    if (!challengeToast || challengeToast.kind !== "incoming") return;
+    const { fromUserId } = challengeToast;
     const socket = await prepareMatchmakingSocket();
     if (!socket) return;
     const auth = await getSocketAuthPayload();
@@ -3369,7 +3383,7 @@ export function LobbyScreen({
         'friend_challenge_response',
         {
           auth,
-          fromUserId: challengeToast.fromUserId,
+          fromUserId,
           accept: true,
           pieceSkin: store.pieceSkin,
           boardSkin: store.boardSkin,
@@ -3392,13 +3406,27 @@ export function LobbyScreen({
   };
 
   const handleChallengeDecline = () => {
-    if (!challengeToast) return;
+    if (!challengeToast || challengeToast.kind !== "incoming") return;
     const { fromUserId } = challengeToast;
     setChallengeToast(null);
     const socket = connectSocket();
     void (async () => {
       const auth = await getSocketAuthPayload();
       socket.emit('friend_challenge_response', { auth, fromUserId, accept: false });
+    })();
+  };
+
+  const handleChallengeCancel = () => {
+    if (!challengeToast || challengeToast.kind !== "outgoing") return;
+    const { toUserId } = challengeToast;
+    setChallengeToast(null);
+    cancelNetworkMatch("friend");
+    setMatchType(null);
+    setIsMatchmaking(false);
+    const socket = connectSocket();
+    void (async () => {
+      const auth = await getSocketAuthPayload();
+      socket.emit("friend_challenge_cancel", { auth, friendId: toUserId });
     })();
   };
 
@@ -3435,7 +3463,13 @@ export function LobbyScreen({
         resolve,
       ),
     );
-    if (res.status === 'offline') {
+    if (res.status === 'ok') {
+      setChallengeToast({
+        kind: "outgoing",
+        toUserId: friend.userId,
+        toNickname: friend.nickname,
+      });
+    } else if (res.status === 'offline') {
       cancelNetworkMatch('friend');
       setMatchType(null);
       setIsMatchmaking(false);
@@ -4407,12 +4441,22 @@ export function LobbyScreen({
     <div className="lobby-screen" onClickCapture={handleLobbyUiClickCapture}>
       {challengeToast && (
         <div className="friend-challenge-toast-wrap">
-          <FriendChallengeToast
-            fromNickname={challengeToast.fromNickname}
-            lang={lang}
-            onAccept={() => void handleChallengeAccept()}
-            onDecline={handleChallengeDecline}
-          />
+          {challengeToast.kind === "incoming" ? (
+            <FriendChallengeToast
+              kind="incoming"
+              nickname={challengeToast.fromNickname}
+              lang={lang}
+              onAccept={() => void handleChallengeAccept()}
+              onDecline={handleChallengeDecline}
+            />
+          ) : (
+            <FriendChallengeToast
+              kind="outgoing"
+              nickname={challengeToast.toNickname}
+              lang={lang}
+              onCancel={handleChallengeCancel}
+            />
+          )}
         </div>
       )}
       <div className="lobby-user-header">

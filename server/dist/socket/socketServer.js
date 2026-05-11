@@ -1194,6 +1194,32 @@ function initSocketServer(io) {
                 ack?.({ status: 'error' });
             }
         });
+        socket.on('friend_challenge_cancel', async ({ auth, friendId, }, ack) => {
+            try {
+                const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
+                if (!userId) {
+                    ack?.({ status: 'error' });
+                    return;
+                }
+                const challenge = challengePending.get(friendId);
+                if (!challenge || challenge.fromUserId !== userId) {
+                    ack?.({ status: 'ok' });
+                    return;
+                }
+                challengePending.delete(friendId);
+                const targetSocketId = activeUserSockets.get(friendId);
+                if (targetSocketId && io.sockets.sockets.has(targetSocketId)) {
+                    io.to(targetSocketId).emit('friend_challenge_canceled', {
+                        fromUserId: userId,
+                    });
+                }
+                ack?.({ status: 'ok' });
+            }
+            catch (err) {
+                console.error('[friend_challenge_cancel] handler error:', err);
+                ack?.({ status: 'error' });
+            }
+        });
         socket.on('join_random', async ({ nickname, auth, pieceSkin, boardSkin }) => {
             try {
                 pendingCancelRandom.delete(socket.id);

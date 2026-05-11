@@ -41,6 +41,17 @@ function normalizeAbilityLoadout(value) {
         validSkills.includes(entry));
     return normalized.slice(0, 3);
 }
+function normalizeAbilityPresets(value, activeLoadout) {
+    const defaultPresets = [activeLoadout, [], [], [], []];
+    if (!Array.isArray(value) || value.length === 0)
+        return defaultPresets;
+    const presets = value
+        .slice(0, 5)
+        .map((p) => normalizeAbilityLoadout(p));
+    while (presets.length < 5)
+        presets.push([]);
+    return presets;
+}
 const DAILY_REWARD_TOKENS_PER_WIN = 6;
 const DAILY_REWARD_MAX_WINS = 20;
 const VERIFIED_USER_CACHE_TTL_MS = 60 * 1000;
@@ -129,7 +140,7 @@ async function getUserFromToken(accessToken) {
 async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUser = false) {
     const profilePromise = supabase_1.supabaseAdmin
         ?.from('profiles')
-        .select('nickname, equipped_skin, equipped_board_skin, equipped_ability_skills')
+        .select('nickname, equipped_skin, equipped_board_skin, equipped_ability_skills, ability_skill_presets, active_preset')
         .eq('id', userId)
         .maybeSingle();
     const statsPromise = supabase_1.supabaseAdmin
@@ -184,11 +195,21 @@ async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUse
         removedRotationSkills.push(skillId);
         return false;
     });
+    const rawActivePreset = typeof profileResult?.data?.active_preset === 'number'
+        ? profileResult.data.active_preset
+        : 1;
+    const activePreset = Math.max(1, Math.min(5, rawActivePreset));
+    const abilitySkillPresets = normalizeAbilityPresets(profileResult?.data?.ability_skill_presets, equippedAbilitySkills);
     // 제거된 스킬이 있으면 DB 업데이트 (fire-and-forget, 에러는 로그)
     if (removedRotationSkills.length > 0) {
+        const updatedPresets = [...abilitySkillPresets];
+        updatedPresets[activePreset - 1] = equippedAbilitySkills;
         void Promise.resolve(supabase_1.supabaseAdmin
             ?.from('profiles')
-            .update({ equipped_ability_skills: equippedAbilitySkills })
+            .update({
+            equipped_ability_skills: equippedAbilitySkills,
+            ability_skill_presets: updatedPresets,
+        })
             .eq('id', userId)).then((result) => {
             if (result?.error)
                 console.error('[rotation] failed to update equipped_ability_skills', result.error);
@@ -202,6 +223,8 @@ async function readAccountProfile(userId, fallbackNickname = 'Guest', isGuestUse
         equippedSkin: profileResult?.data?.equipped_skin ?? 'classic',
         equippedBoardSkin: profileResult?.data?.equipped_board_skin ?? 'classic',
         equippedAbilitySkills,
+        abilitySkillPresets,
+        activePreset,
         ownedSkins,
         ownedBoardSkins,
         wins: statsResult?.data?.wins ?? 0,
