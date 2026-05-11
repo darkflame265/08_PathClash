@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { AtomicPreview } from "../../../skins/legendary/atomic/Preview";
 import { ChronosPreview } from "../../../skins/legendary/chronos/Preview";
+import { FrostHeartPreview } from "../../../skins/legendary/frost_heart/Preview";
 import { SunPreview } from "../../../skins/legendary/sun/Preview";
 import { WizardPreview } from "../../../skins/legendary/wizard/Preview";
 import { CosmicPreview } from "../../../skins/rare/cosmic/Preview";
@@ -71,6 +72,8 @@ const SKIN_META: Partial<Record<PieceSkin, { name: string; tier: string }>> = {
 SKIN_META.berserker = { name: "버서커", tier: "rare" };
 SKIN_META.moonlight_seed = { name: "월광씨앗", tier: "rare" };
 
+SKIN_META.frost_heart = { name: "프로스트 하트", tier: "legendary" };
+
 function renderSkinPreview(skinId: PieceSkin) {
   switch (skinId) {
     case "plasma":
@@ -101,6 +104,8 @@ function renderSkinPreview(skinId: PieceSkin) {
       return <ChronosPreview />;
     case "sun":
       return <SunPreview />;
+    case "frost_heart":
+      return <FrostHeartPreview />;
     default:
       return null;
   }
