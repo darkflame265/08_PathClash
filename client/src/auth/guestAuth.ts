@@ -36,6 +36,8 @@ interface ProfileRow {
   equipped_skin: PieceSkin | null;
   equipped_board_skin?: BoardSkin | null;
   equipped_ability_skills?: AbilitySkillId[] | null;
+  ability_skill_presets?: unknown | null;
+  active_preset?: number | null;
   legal_consent_version?: string | null;
   legal_consented_at?: string | null;
 }
@@ -87,6 +89,8 @@ interface AccountSnapshot {
   equippedSkin: PieceSkin;
   equippedBoardSkin: BoardSkin;
   equippedAbilitySkills: AbilitySkillId[];
+  abilitySkillPresets: AbilitySkillId[][];
+  activePreset: number;
   ownedSkins: PieceSkin[];
   ownedBoardSkins: BoardSkin[];
   wins: number;
@@ -105,6 +109,8 @@ interface AccountSnapshotRpcRow {
   equippedSkin?: PieceSkin | null;
   equippedBoardSkin?: BoardSkin | null;
   equippedAbilitySkills?: string[] | null;
+  abilitySkillPresets?: unknown | null;
+  activePreset?: number | null;
   ownedSkins?: string[] | null;
   ownedBoardSkins?: string[] | null;
   wins?: number | null;
@@ -131,6 +137,8 @@ export interface AccountProfile {
   equippedSkin: PieceSkin;
   equippedBoardSkin: BoardSkin;
   equippedAbilitySkills: AbilitySkillId[];
+  abilitySkillPresets: AbilitySkillId[][];
+  activePreset: number;
   ownedSkins: PieceSkin[];
   ownedBoardSkins: BoardSkin[];
   wins: number;
@@ -206,6 +214,8 @@ const lastSyncedProfileState = new Map<
     equippedSkin?: PieceSkin;
     equippedBoardSkin?: BoardSkin;
     equippedAbilitySkills?: AbilitySkillId[];
+    abilitySkillPresets?: AbilitySkillId[][];
+    activePreset?: number;
     legalConsentVersion?: string | null;
     legalConsentedAt?: string | null;
   }
