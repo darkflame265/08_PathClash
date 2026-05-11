@@ -3980,7 +3980,7 @@
 }
 
 .ability-loadout-modal-selected .ability-loadout-chip {
-  animation: ability-loadout-chip-slide-in-top 0.5s
+  animation: ability-loadout-chip-slide-in-fwd-center 0.4s
     cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
 }
 
@@ -3996,14 +3996,14 @@
   animation-delay: 0.16s;
 }
 
-@keyframes ability-loadout-chip-slide-in-top {
+@keyframes ability-loadout-chip-slide-in-fwd-center {
   0% {
-    transform: translateY(-1000px);
+    transform: perspective(900px) translateZ(-1400px);
     opacity: 0;
   }
 
   100% {
-    transform: translateY(0);
+    transform: perspective(900px) translateZ(0);
     opacity: 1;
   }
 }
