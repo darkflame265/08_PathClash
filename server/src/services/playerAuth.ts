@@ -42,6 +42,8 @@ export interface AccountProfile {
   equippedSkin: PieceSkin;
   equippedBoardSkin: BoardSkin;
   equippedAbilitySkills: AbilitySkillId[];
+  abilitySkillPresets: AbilitySkillId[][];
+  activePreset: number;
   ownedSkins: PieceSkin[];
   ownedBoardSkins: BoardSkin[];
   wins: number;
@@ -73,6 +75,8 @@ interface ProfileRow {
   equipped_skin: PieceSkin | null;
   equipped_board_skin?: BoardSkin | null;
   equipped_ability_skills?: AbilitySkillId[] | null;
+  ability_skill_presets?: unknown | null;
+  active_preset?: number | null;
 }
 
 interface StatsRow {
@@ -126,6 +130,19 @@ function normalizeAbilityLoadout(value: unknown): AbilitySkillId[] {
   );
 
   return normalized.slice(0, 3);
+}
+
+function normalizeAbilityPresets(
+  value: unknown,
+  activeLoadout: AbilitySkillId[],
+): AbilitySkillId[][] {
+  const defaultPresets: AbilitySkillId[][] = [activeLoadout, [], [], [], []];
+  if (!Array.isArray(value) || value.length === 0) return defaultPresets;
+  const presets = (value as unknown[])
+    .slice(0, 5)
+    .map((p) => normalizeAbilityLoadout(p));
+  while (presets.length < 5) presets.push([]);
+  return presets;
 }
 
 const DAILY_REWARD_TOKENS_PER_WIN = 6;
@@ -234,7 +251,7 @@ export async function getUserFromToken(accessToken?: string) {
 async function readAccountProfile(userId: string, fallbackNickname = 'Guest', isGuestUser = false): Promise<AccountProfile> {
   const profilePromise = supabaseAdmin
     ?.from('profiles')
-    .select('nickname, equipped_skin, equipped_board_skin, equipped_ability_skills')
+    .select('nickname, equipped_skin, equipped_board_skin, equipped_ability_skills, ability_skill_presets, active_preset')
     .eq('id', userId)
     .maybeSingle<ProfileRow>();
 
@@ -299,12 +316,26 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
     return false;
   });
 
+  const rawActivePreset = typeof profileResult?.data?.active_preset === 'number'
+    ? profileResult.data.active_preset
+    : 1;
+  const activePreset = Math.max(1, Math.min(5, rawActivePreset));
+  const abilitySkillPresets = normalizeAbilityPresets(
+    profileResult?.data?.ability_skill_presets,
+    equippedAbilitySkills,
+  );
+
   // 제거된 스킬이 있으면 DB 업데이트 (fire-and-forget, 에러는 로그)
   if (removedRotationSkills.length > 0) {
+    const updatedPresets = [...abilitySkillPresets];
+    updatedPresets[activePreset - 1] = equippedAbilitySkills;
     void Promise.resolve(
       supabaseAdmin
         ?.from('profiles')
-        .update({ equipped_ability_skills: equippedAbilitySkills })
+        .update({
+          equipped_ability_skills: equippedAbilitySkills,
+          ability_skill_presets: updatedPresets,
+        })
         .eq('id', userId)
     ).then((result) => {
       if (result?.error) console.error('[rotation] failed to update equipped_ability_skills', result.error);
@@ -319,6 +350,8 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
     equippedSkin: profileResult?.data?.equipped_skin ?? 'classic',
     equippedBoardSkin: profileResult?.data?.equipped_board_skin ?? 'classic',
     equippedAbilitySkills,
+    abilitySkillPresets,
+    activePreset,
     ownedSkins,
     ownedBoardSkins,
     wins: statsResult?.data?.wins ?? 0,
