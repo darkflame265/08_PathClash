@@ -2887,9 +2887,12 @@ export function LobbyScreen({
     socket.off("session_replaced");
 
     socket.on("game_start", (gs: ClientGameState) => {
-      if (!activeNetworkMatchRef.current) return;
+      const activeMatch = activeNetworkMatchRef.current;
+      if (!activeMatch) return;
       if (useGameStore.getState().isLocalAbilityTraining) return;
       setGameState(gs);
+      cancelNetworkMatch(activeMatch.mode);
+      setIsMatchmaking(false);
 
       onGameStart();
     });
