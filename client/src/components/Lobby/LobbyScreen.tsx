@@ -4641,7 +4641,11 @@ export function LobbyScreen({
               </div>
             </div>
 
-            <div className="victory-vault-visual">
+            <div
+              className={`victory-vault-visual${
+                isVaultHelpOpen ? " is-help" : ""
+              }`}
+            >
               {isVaultHelpOpen ? (
                 <div className="victory-vault-help-popover">
                   <p>
@@ -4689,12 +4693,13 @@ export function LobbyScreen({
                   </div>
                 </div>
               ) : (
-                <div
+                <img
+                  src="/safe/safe_image.png"
+                  alt=""
                   className={`victory-vault-safe${vaultReady ? " is-ready" : ""}`}
                   aria-hidden="true"
-                >
-                  <div className="victory-vault-safe-handle" />
-                </div>
+                  draggable={false}
+                />
               )}
             </div>
 

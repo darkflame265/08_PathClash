@@ -2002,85 +2002,34 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: clamp(18rem, 48dvh, 24rem);
-  padding: 1.2rem;
+  height: clamp(18rem, 48dvh, 24rem);
+  padding: 0;
   border-radius: 1.2rem;
   background:
     radial-gradient(circle at 50% 25%, rgba(251, 191, 36, 0.16), transparent 36%),
     linear-gradient(180deg, rgba(15, 23, 42, 0.52), rgba(8, 13, 18, 0.4));
-  border: 1px solid rgba(125, 211, 252, 0.12);
+  border: 1.5px solid rgba(251, 191, 36, 0.72);
+  box-shadow:
+    inset 0 0 0 1px rgba(254, 243, 199, 0.12),
+    0 0 20px rgba(251, 191, 36, 0.08);
   overflow: hidden;
 }
 
-.victory-vault-safe {
-  position: relative;
-  width: clamp(13rem, 48vw, 17rem);
-  aspect-ratio: 1.08;
-  border-radius: 1.55rem;
-  background:
-    linear-gradient(135deg, #fde68a, #d97706 54%, #78350f),
-    #d97706;
-  border: 3px solid rgba(254, 243, 199, 0.72);
-  box-shadow:
-    inset 0 0 0 0.9rem rgba(120, 53, 15, 0.25),
-    inset 0 -1.4rem 2.2rem rgba(69, 26, 3, 0.34),
-    0 0 38px rgba(251, 191, 36, 0.16),
-    0 18px 42px rgba(0, 0, 0, 0.35);
+.victory-vault-visual.is-help {
+  padding: 1.2rem;
 }
 
-.victory-vault-safe::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: -3.15rem;
-  width: 7.2rem;
-  height: 5rem;
-  border: 1.1rem solid #ca8a04;
-  border-bottom: 0;
-  border-radius: 999px 999px 0 0;
-  transform: translateX(-50%);
-  box-shadow: inset 0 0 0 2px rgba(254, 243, 199, 0.28);
+.victory-vault-safe {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(1.05) contrast(1.03);
+  user-select: none;
+  pointer-events: none;
 }
 
 .victory-vault-safe.is-ready {
   animation: vault-ready-pulse 1.55s ease-in-out infinite;
-}
-
-.victory-vault-safe-handle {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 4.65rem;
-  height: 4.65rem;
-  border-radius: 999px;
-  border: 0.58rem solid rgba(255, 251, 235, 0.86);
-  transform: translate(-50%, -50%);
-  box-shadow:
-    inset 0 0 18px rgba(255, 255, 255, 0.22),
-    0 0 12px rgba(120, 53, 15, 0.28);
-}
-
-.victory-vault-safe-handle::before,
-.victory-vault-safe-handle::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 0.38rem;
-  height: 3.85rem;
-  border-radius: 999px;
-  background: rgba(255, 251, 235, 0.82);
-  transform: translate(-50%, -50%);
-}
-
-.victory-vault-safe-handle::after {
-  transform: translate(-50%, -50%) rotate(90deg);
-}
-
-.victory-vault-safe-handle::before,
-.victory-vault-safe-handle::after {
-  width: 0.48rem;
-  height: 5.25rem;
 }
 
 .victory-vault-gauge {
@@ -2141,18 +2090,12 @@
 @keyframes vault-ready-pulse {
   0%,
   100% {
-    box-shadow:
-      inset 0 0 0 0.7rem rgba(120, 53, 15, 0.25),
-      inset 0 -1.2rem 2rem rgba(69, 26, 3, 0.34),
-      0 0 30px rgba(251, 191, 36, 0.16),
-      0 18px 42px rgba(0, 0, 0, 0.35);
+    filter: saturate(1.05) contrast(1.03)
+      drop-shadow(0 0 18px rgba(251, 191, 36, 0.16));
   }
   50% {
-    box-shadow:
-      inset 0 0 0 0.7rem rgba(120, 53, 15, 0.25),
-      inset 0 -1.2rem 2rem rgba(69, 26, 3, 0.34),
-      0 0 46px rgba(251, 191, 36, 0.34),
-      0 18px 42px rgba(0, 0, 0, 0.35);
+    filter: saturate(1.12) contrast(1.05)
+      drop-shadow(0 0 34px rgba(251, 191, 36, 0.34));
   }
 }
 
