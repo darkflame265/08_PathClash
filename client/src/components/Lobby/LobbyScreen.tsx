@@ -1125,13 +1125,15 @@ export function LobbyScreen({
     setPendingRemovedRotationSkillsNotice,
   ]);
 
-  const handleLobbyUiClickCapture = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      const target = event.target as HTMLElement | null;
-
+  const playLobbyUiClickFromTarget = useCallback(
+    (target: EventTarget | null) => {
       if (!target) return;
 
-      const clickable = target.closest("button, a");
+      const targetElement = target instanceof Element ? target : null;
+
+      if (!targetElement) return;
+
+      const clickable = targetElement.closest("button, a");
 
       if (!(clickable instanceof HTMLElement)) return;
 
@@ -1149,6 +1151,21 @@ export function LobbyScreen({
     },
 
     [isSfxMuted, sfxVolume],
+  );
+
+  const handleLobbyUiPointerDownCapture = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      playLobbyUiClickFromTarget(event.target);
+    },
+    [playLobbyUiClickFromTarget],
+  );
+
+  const handleLobbyUiClickCapture = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (event.detail !== 0) return;
+      playLobbyUiClickFromTarget(event.target);
+    },
+    [playLobbyUiClickFromTarget],
   );
 
   const closeTopLobbyModal = useCallback(() => {
@@ -4255,7 +4272,11 @@ export function LobbyScreen({
   };
 
   return (
-    <div className="lobby-screen" onClickCapture={handleLobbyUiClickCapture}>
+    <div
+      className="lobby-screen"
+      onPointerDownCapture={handleLobbyUiPointerDownCapture}
+      onClickCapture={handleLobbyUiClickCapture}
+    >
       {challengeToast && (
         <div
           className={`friend-challenge-toast-wrap${

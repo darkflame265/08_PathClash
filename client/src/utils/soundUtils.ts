@@ -209,6 +209,8 @@ const BGM_CONFIG: Record<BgmTrackId, { src: string; gain: number }> = {
 const audioCache: Partial<Record<AbilitySfxId, HTMLAudioElement>> = {};
 const uiAudioCache: Partial<Record<UiSfxId, HTMLAudioElement>> = {};
 const activeUiAudioCache: Partial<Record<UiSfxId, HTMLAudioElement>> = {};
+const uiHowlCache: Partial<Record<UiSfxId, Howl>> = {};
+const activeUiHowlSoundIds: Partial<Record<UiSfxId, number>> = {};
 let berserkHitAudio: HTMLAudioElement | null = null;
 const abilityHowlCache: Partial<Record<AbilitySfxId, Howl>> = {};
 const bgmCache: Partial<Record<BgmTrackId, { audio: HTMLAudioElement }>> = {};
@@ -235,6 +237,7 @@ export function resumeAudioContext(): void {
       void ctx.resume();
     }
     ensureMasterCompressor();
+    preloadUiSfxAssets();
   } catch {
     // AudioContext not available
   }
@@ -529,12 +532,64 @@ function getUiAudio(id: UiSfxId): HTMLAudioElement | null {
   }
 }
 
+function getUiHowl(id: UiSfxId): Howl | null {
+  try {
+    if (!uiHowlCache[id]) {
+      const config = UI_SFX[id];
+      uiHowlCache[id] = new Howl({
+        src: [config.path],
+        loop: !!config.loop,
+        preload: true,
+        html5: false,
+        volume: Math.max(0, Math.min(1, config.gain)),
+      });
+      ensureMasterCompressor();
+    }
+    return uiHowlCache[id] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function playUiSfx(
   id: UiSfxId,
   volume = 0.55,
   options?: { stopPrevious?: boolean },
 ): void {
   try {
+    resumeAudioContext();
+    const howl = getUiHowl(id);
+    if (howl) {
+      if (options?.stopPrevious) {
+        const activeSoundId = activeUiHowlSoundIds[id];
+        if (activeSoundId !== undefined) {
+          howl.stop(activeSoundId);
+          activeUiHowlSoundIds[id] = undefined;
+        }
+      }
+
+      const normalizedVolume = Math.max(
+        0,
+        Math.min(1, volume * UI_SFX[id].gain * UI_SFX_OUTPUT_GAIN),
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const uiHowl = howl as any;
+      if (uiHowl.state?.() !== "loaded") {
+        howl.once("load", () => playUiSfx(id, volume, options));
+        uiHowl.load?.();
+        return;
+      }
+      const soundId = howl.play();
+      howl.volume(normalizedVolume, soundId);
+      activeUiHowlSoundIds[id] = soundId;
+      howl.once("end", () => {
+        if (activeUiHowlSoundIds[id] === soundId) {
+          activeUiHowlSoundIds[id] = undefined;
+        }
+      }, soundId);
+      return;
+    }
+
     const baseAudio = getUiAudio(id);
     if (!baseAudio) return;
     if (options?.stopPrevious) {
@@ -565,6 +620,12 @@ function playUiSfx(
   }
 }
 
+function preloadUiSfxAssets(): void {
+  for (const id of Object.keys(UI_SFX) as UiSfxId[]) {
+    getUiHowl(id);
+  }
+}
+
 export function preloadAbilitySfxAssets(): void {
   if (abilitySfxPreloadStarted) return;
   abilitySfxPreloadStarted = true;
@@ -584,13 +645,7 @@ export function preloadAbilitySfxAssets(): void {
   }
 
   for (const id of Object.keys(UI_SFX) as UiSfxId[]) {
-    const audio = getUiAudio(id);
-    if (!audio) continue;
-    try {
-      audio.load();
-    } catch {
-      // Ignore browsers that reject manual load hints.
-    }
+    getUiHowl(id);
   }
 
   const berserkHit = getBerserkHitAudio();

@@ -1061,13 +1061,11 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
 
   const getAvailableSkills = () =>
     state?.players[currentColor].equippedSkills ?? [];
-  const handleTrainingSkillSelectClickCapture = (
-    event: React.MouseEvent<HTMLDivElement>,
-  ) => {
-    const target = event.target as HTMLElement | null;
-    if (!target) return;
+  const playTrainingSkillSelectClickFromTarget = (target: EventTarget | null) => {
+    const targetElement = target instanceof Element ? target : null;
+    if (!targetElement) return;
 
-    const clickable = target.closest("button, a");
+    const clickable = targetElement.closest("button, a");
     if (!(clickable instanceof HTMLElement)) return;
     if (clickable.hasAttribute("disabled")) return;
     if (clickable.getAttribute("aria-disabled") === "true") return;
@@ -1076,6 +1074,17 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
     if (!isSfxMuted) {
       playLobbyClick(sfxVolume);
     }
+  };
+  const handleTrainingSkillSelectPointerDownCapture = (
+    event: React.PointerEvent<HTMLDivElement>,
+  ) => {
+    playTrainingSkillSelectClickFromTarget(event.target);
+  };
+  const handleTrainingSkillSelectClickCapture = (
+    event: React.MouseEvent<HTMLDivElement>,
+  ) => {
+    if (event.detail !== 0) return;
+    playTrainingSkillSelectClickFromTarget(event.target);
   };
   const teleportReservation =
     skillReservations.find(
@@ -4011,6 +4020,7 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
       <div
         className="upgrade-modal-backdrop"
         style={{ zIndex: 200 }}
+        onPointerDownCapture={handleTrainingSkillSelectPointerDownCapture}
         onClickCapture={handleTrainingSkillSelectClickCapture}
       >
         <div
