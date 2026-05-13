@@ -4523,9 +4523,13 @@ export function LobbyScreen({
               setIsVaultOpen(true);
             }}
           >
-            <span className="lobby-vault-icon" aria-hidden="true">
-              <span className="lobby-vault-door" />
-            </span>
+            <img
+              className="lobby-vault-icon"
+              src="/safe/safe_icon.svg"
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+            />
           </button>
           <span className="lobby-vault-progress" aria-hidden="true">
             {Array.from({ length: vaultRequiredWins }).map((_, index) => (
