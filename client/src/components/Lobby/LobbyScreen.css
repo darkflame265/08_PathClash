@@ -1953,6 +1953,9 @@
 }
 
 .victory-vault-help-section li {
+  display: flex;
+  align-items: center;
+  gap: 0.16rem;
   min-width: 0;
   padding: 0.34rem 0.48rem;
   border: 1px solid rgba(148, 163, 184, 0.16);
@@ -1962,6 +1965,16 @@
   font-size: 0.76rem;
   font-weight: 800;
   line-height: 1.2;
+}
+
+.victory-vault-help-reward {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18rem;
+}
+
+.victory-vault-help-reward .skin-token-icon {
+  font-size: 0.78rem;
 }
 
 @media (max-width: 420px) {

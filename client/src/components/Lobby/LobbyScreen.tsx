@@ -4664,12 +4664,24 @@ export function LobbyScreen({
                         : "다이아몬드 보상 확률"}
                     </strong>
                     <ul>
-                      <li>50% - 50</li>
-                      <li>30% - 100</li>
-                      <li>16% - 300</li>
-                      <li>3% - 800</li>
-                      <li>0.9% - 3000</li>
-                      <li>0.1% - 10000</li>
+                      {[
+                        ["50%", 50],
+                        ["30%", 100],
+                        ["16%", 300],
+                        ["3%", 800],
+                        ["0.9%", 3000],
+                        ["0.1%", 10000],
+                      ].map(([chance, diamonds]) => (
+                        <li key={`${chance}-${diamonds}`}>
+                          <span>{chance} - </span>
+                          <span className="victory-vault-help-reward">
+                            <span>{diamonds}</span>
+                            <span className="skin-token-icon" aria-hidden="true">
+                              {"💎"}
+                            </span>
+                          </span>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                   <div className="victory-vault-help-section">
@@ -4683,15 +4695,22 @@ export function LobbyScreen({
                     </p>
                     <ul>
                       <li>
-                        {lang === "en" ? "Common skin 60%" : "일반 스킨 60%"}
+                        <span className="skin-name-tier-common">
+                          {lang === "en" ? "Common skin" : "일반 스킨"}
+                        </span>{" "}
+                        60%
                       </li>
                       <li>
-                        {lang === "en" ? "Rare skin 30%" : "희귀 스킨 30%"}
+                        <span className="skin-name-tier-rare">
+                          {lang === "en" ? "Rare skin" : "희귀 스킨"}
+                        </span>{" "}
+                        30%
                       </li>
                       <li>
-                        {lang === "en"
-                          ? "Legendary skin 10%"
-                          : "전설 스킨 10%"}
+                        <span className="skin-name-tier-legendary">
+                          {lang === "en" ? "Legendary skin" : "전설 스킨"}
+                        </span>{" "}
+                        10%
                       </li>
                     </ul>
                   </div>
