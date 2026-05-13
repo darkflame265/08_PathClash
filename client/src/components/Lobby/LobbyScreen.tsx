@@ -119,33 +119,31 @@ import { useLobbyKeyboardNavigation } from "./useLobbyKeyboardNavigation";
 
 import "./LobbyScreen.css";
 
-import { FriendListPanel }      from './friends/FriendListPanel';
-import { FriendAddModal }       from './friends/FriendAddModal';
-import { FriendRequestsModal }  from './friends/FriendRequestsModal';
-import { FriendContextPopup }   from './friends/FriendContextPopup';
-import { FriendProfileModal }   from './friends/FriendProfileModal';
-import { FriendChallengeToast } from './friends/FriendChallengeToast';
-import type { FriendEntry }     from './friends/types';
+import { FriendListPanel } from "./friends/FriendListPanel";
+import { FriendAddModal } from "./friends/FriendAddModal";
+import { FriendRequestsModal } from "./friends/FriendRequestsModal";
+import { FriendContextPopup } from "./friends/FriendContextPopup";
+import { FriendProfileModal } from "./friends/FriendProfileModal";
+import { FriendChallengeToast } from "./friends/FriendChallengeToast";
+import type { FriendEntry } from "./friends/types";
 
 type LobbyView = "main" | "create" | "join";
 type ControlsSettingsTab = "keyboard" | "controller";
 type ChallengeToastState =
   | { kind: "incoming"; fromUserId: string; fromNickname: string }
   | { kind: "outgoing"; toUserId: string; toNickname: string };
-type SkinDetailState =
-  | {
-      tab: "piece";
-      choice: {
-        id: PieceSkin;
-        name: string;
-        desc: string;
-        requiredWins: number | null;
-        requiredPlays?: number | null;
-        tokenPrice?: number | null;
-        tier?: "common" | "rare" | "legendary" | null;
-      };
-    }
-  | null;
+type SkinDetailState = {
+  tab: "piece";
+  choice: {
+    id: PieceSkin;
+    name: string;
+    desc: string;
+    requiredWins: number | null;
+    requiredPlays?: number | null;
+    tokenPrice?: number | null;
+    tier?: "common" | "rare" | "legendary" | null;
+  };
+} | null;
 type VaultOpenResponse =
   | {
       status: "OPENED";
@@ -167,12 +165,7 @@ type VaultOpenResponse =
         | "ALREADY_OPENED"
         | "FAILED";
     };
-type LobbyModeKey =
-  | "friend"
-  | "coop"
-  | "2v2"
-  | "ability"
-  | "skill_ranked";
+type LobbyModeKey = "friend" | "coop" | "2v2" | "ability" | "skill_ranked";
 
 function PieceSkinPreviewContent({
   skinId,
@@ -1124,12 +1117,16 @@ export function LobbyScreen({
   const [isModePickerOpen, setIsModePickerOpen] = useState(false);
   const [showArenaGallery, setShowArenaGallery] = useState(false);
 
-  const [showFriendAdd, setShowFriendAdd]           = useState(false);
+  const [showFriendAdd, setShowFriendAdd] = useState(false);
   const [showFriendRequests, setShowFriendRequests] = useState(false);
-  const [friendCtx, setFriendCtx]                   = useState<{ friend: FriendEntry; anchorRect: DOMRect } | null>(null);
-  const [friendProfileId, setFriendProfileId]       = useState<string | null>(null);
-  const [challengeToast, setChallengeToast]         = useState<ChallengeToastState | null>(null);
-  const [friendListRefresh, setFriendListRefresh]   = useState(0);
+  const [friendCtx, setFriendCtx] = useState<{
+    friend: FriendEntry;
+    anchorRect: DOMRect;
+  } | null>(null);
+  const [friendProfileId, setFriendProfileId] = useState<string | null>(null);
+  const [challengeToast, setChallengeToast] =
+    useState<ChallengeToastState | null>(null);
+  const [friendListRefresh, setFriendListRefresh] = useState(0);
 
   const [isPatchNotesOpen, setIsPatchNotesOpen] = useState(false);
 
@@ -1177,6 +1174,7 @@ export function LobbyScreen({
     text: string;
   } | null>(null);
   const [isVaultOpen, setIsVaultOpen] = useState(false);
+  const [isVaultHelpOpen, setIsVaultHelpOpen] = useState(false);
   const [isOpeningVault, setIsOpeningVault] = useState(false);
   const [vaultOpenResult, setVaultOpenResult] = useState<Extract<
     VaultOpenResponse,
@@ -1352,13 +1350,7 @@ export function LobbyScreen({
     } finally {
       setIsOpeningVault(false);
     }
-  }, [
-    authAccessToken,
-    authUserId,
-    isGuestUser,
-    isOpeningVault,
-    setAuthState,
-  ]);
+  }, [authAccessToken, authUserId, isGuestUser, isOpeningVault, setAuthState]);
 
   const closeTopLobbyModal = useCallback(() => {
     if (capturingControlKey) {
@@ -2305,7 +2297,9 @@ export function LobbyScreen({
   const vaultReady = !accountVaultOpenedToday && vaultWins >= vaultRequiredWins;
   const vaultProgressText = `${vaultWins}/${vaultRequiredWins}`;
   const getSkinDisplayName = (skinId: PieceSkin | null) =>
-    skinId ? (skinChoices.find((choice) => choice.id === skinId)?.name ?? skinId) : "";
+    skinId
+      ? (skinChoices.find((choice) => choice.id === skinId)?.name ?? skinId)
+      : "";
 
   const totalPlays = accountWins + accountLosses;
 
@@ -3366,7 +3360,11 @@ export function LobbyScreen({
           : "상대방이 친선전 요청을 거절했습니다.",
       );
     };
-    const handleChallengeCanceled = ({ fromUserId }: { fromUserId: string }) => {
+    const handleChallengeCanceled = ({
+      fromUserId,
+    }: {
+      fromUserId: string;
+    }) => {
       setChallengeToast((current) =>
         current?.kind === "incoming" && current.fromUserId === fromUserId
           ? null
@@ -3439,13 +3437,13 @@ export function LobbyScreen({
     if (!socket) return;
     const auth = await getSocketAuthPayload();
     await ensureMatchmakingProfile({ syncAbilitySkills: true });
-    beginNetworkMatch('friend');
-    setMatchType('friend');
+    beginNetworkMatch("friend");
+    setMatchType("friend");
     setIsMatchmaking(true);
     const store = useGameStore.getState();
     const res = await new Promise<{ status: string }>((resolve) =>
       socket.emit(
-        'friend_challenge_response',
+        "friend_challenge_response",
         {
           auth,
           fromUserId,
@@ -3457,14 +3455,14 @@ export function LobbyScreen({
         resolve,
       ),
     );
-    if (res.status !== 'ok') {
-      cancelNetworkMatch('friend');
+    if (res.status !== "ok") {
+      cancelNetworkMatch("friend");
       setMatchType(null);
       setIsMatchmaking(false);
       showSkinFloatingMessage(
-        lang === 'kr'
-          ? '친선전 요청을 처리하지 못했습니다.'
-          : 'Unable to accept the challenge.',
+        lang === "kr"
+          ? "친선전 요청을 처리하지 못했습니다."
+          : "Unable to accept the challenge.",
       );
     }
     setChallengeToast(null);
@@ -3477,7 +3475,11 @@ export function LobbyScreen({
     const socket = connectSocket();
     void (async () => {
       const auth = await getSocketAuthPayload();
-      socket.emit('friend_challenge_response', { auth, fromUserId, accept: false });
+      socket.emit("friend_challenge_response", {
+        auth,
+        fromUserId,
+        accept: false,
+      });
     })();
   };
 
@@ -3516,7 +3518,7 @@ export function LobbyScreen({
     const socket = connectSocket();
     const auth = await getSocketAuthPayload();
     await new Promise<void>((resolve) =>
-      socket.emit('friend_remove', { auth, friendId }, () => resolve()),
+      socket.emit("friend_remove", { auth, friendId }, () => resolve()),
     );
     setFriendCtx(null);
     setFriendListRefresh((n) => n + 1);
@@ -3528,13 +3530,13 @@ export function LobbyScreen({
     if (!socket) return;
     const auth = await getSocketAuthPayload();
     await ensureMatchmakingProfile({ syncAbilitySkills: true });
-    beginNetworkMatch('friend');
-    setMatchType('friend');
+    beginNetworkMatch("friend");
+    setMatchType("friend");
     setIsMatchmaking(true);
     const store = useGameStore.getState();
     const res = await new Promise<{ status: string }>((resolve) =>
       socket.emit(
-        'friend_challenge',
+        "friend_challenge",
         {
           auth,
           friendId: friend.userId,
@@ -3545,34 +3547,34 @@ export function LobbyScreen({
         resolve,
       ),
     );
-    if (res.status === 'ok') {
+    if (res.status === "ok") {
       setChallengeToast({
         kind: "outgoing",
         toUserId: friend.userId,
         toNickname: friend.nickname,
       });
-    } else if (res.status === 'offline') {
-      cancelNetworkMatch('friend');
+    } else if (res.status === "offline") {
+      cancelNetworkMatch("friend");
       setMatchType(null);
       setIsMatchmaking(false);
       showSkinFloatingMessage(
-        lang === 'kr' ? '상대방이 오프라인입니다.' : 'Friend is offline.',
+        lang === "kr" ? "상대방이 오프라인입니다." : "Friend is offline.",
       );
-    } else if (res.status === 'in_game') {
-      cancelNetworkMatch('friend');
+    } else if (res.status === "in_game") {
+      cancelNetworkMatch("friend");
       setMatchType(null);
       setIsMatchmaking(false);
       showSkinFloatingMessage(
-        lang === 'kr' ? '상대방이 게임 중입니다.' : 'Friend is in a game.',
+        lang === "kr" ? "상대방이 게임 중입니다." : "Friend is in a game.",
       );
-    } else if (res.status !== 'ok') {
-      cancelNetworkMatch('friend');
+    } else if (res.status !== "ok") {
+      cancelNetworkMatch("friend");
       setMatchType(null);
       setIsMatchmaking(false);
       showSkinFloatingMessage(
-        lang === 'kr'
-          ? '친선전 요청을 보내지 못했습니다.'
-          : 'Unable to send the challenge.',
+        lang === "kr"
+          ? "친선전 요청을 보내지 못했습니다."
+          : "Unable to send the challenge.",
       );
     }
   };
@@ -3888,7 +3890,9 @@ export function LobbyScreen({
     const isEquipped = abilityLoadout.includes(skillId);
 
     if (isEquipped) {
-      setAbilityLoadoutForPreset(abilityLoadout.filter((value) => value !== skillId));
+      setAbilityLoadoutForPreset(
+        abilityLoadout.filter((value) => value !== skillId),
+      );
 
       return;
     }
@@ -3909,7 +3913,9 @@ export function LobbyScreen({
   const handleUnequipAbilitySkill = (skillId: AbilitySkillId) => {
     if (!abilityLoadout.includes(skillId)) return;
 
-    setAbilityLoadoutForPreset(abilityLoadout.filter((value) => value !== skillId));
+    setAbilityLoadoutForPreset(
+      abilityLoadout.filter((value) => value !== skillId),
+    );
   };
 
   const handleSwitchPreset = (presetIndex: number) => {
@@ -4190,7 +4196,7 @@ export function LobbyScreen({
     lobbyModeOptions.find((option) => option.key === selectedLobbyMode) ??
     lobbyModeOptions[0];
   const showLobbyArenaContent = selectedLobbyMode === "ability";
-  const showFriendListPanel = selectedLobbyMode === 'friend';
+  const showFriendListPanel = selectedLobbyMode === "friend";
   const isAbilityMatchmakingActive =
     isMatchmaking && currentMatchType === "ability";
 
@@ -4278,12 +4284,15 @@ export function LobbyScreen({
   };
 
   const renderAbilityLoadoutBar = () => {
-    const showLoadout = selectedLobbyMode === "ability" || selectedLobbyMode === "friend";
+    const showLoadout =
+      selectedLobbyMode === "ability" || selectedLobbyMode === "friend";
 
     return (
       <div
         className={`ability-loadout-chip-row mode-loadout-row${showLoadout ? "" : " is-empty"}${
-          showLoadout && isAbilityMatchmakingActive ? " is-matchmaking-disabled" : ""
+          showLoadout && isAbilityMatchmakingActive
+            ? " is-matchmaking-disabled"
+            : ""
         }`}
         aria-hidden={!showLoadout}
       >
@@ -4509,6 +4518,7 @@ export function LobbyScreen({
           aria-label={lang === "en" ? "Victory vault" : "승리 금고"}
           onClick={() => {
             setVaultOpenResult(null);
+            setIsVaultHelpOpen(false);
             setIsVaultOpen(true);
           }}
         >
@@ -4576,7 +4586,9 @@ export function LobbyScreen({
             lang={lang}
             onAddFriend={() => setShowFriendAdd(true)}
             onViewRequests={() => setShowFriendRequests(true)}
-            onFriendClick={(friend, anchorRect) => setFriendCtx({ friend, anchorRect })}
+            onFriendClick={(friend, anchorRect) =>
+              setFriendCtx({ friend, anchorRect })
+            }
             refreshTrigger={friendListRefresh}
           />
         </div>
@@ -4600,7 +4612,10 @@ export function LobbyScreen({
       {isVaultOpen && (
         <div
           className="upgrade-modal-backdrop"
-          onClick={() => setIsVaultOpen(false)}
+          onClick={() => {
+            setIsVaultOpen(false);
+            setIsVaultHelpOpen(false);
+          }}
         >
           <div
             className="upgrade-modal skin-modal victory-vault-modal"
@@ -4608,13 +4623,77 @@ export function LobbyScreen({
           >
             <div className="skin-modal-head">
               <h3>{lang === "en" ? "Victory Vault" : "승리 금고"}</h3>
-              <span className="victory-vault-status">{vaultProgressText}</span>
+              <div className="victory-vault-head-actions">
+                <button
+                  className={`victory-vault-help-btn${isVaultHelpOpen ? " is-active" : ""}`}
+                  type="button"
+                  aria-label={lang === "en" ? "Vault help" : "금고 도움말"}
+                  aria-expanded={isVaultHelpOpen}
+                  onClick={() => setIsVaultHelpOpen((open) => !open)}
+                >
+                  ?
+                </button>
+                <span className="victory-vault-status">
+                  {vaultProgressText}
+                </span>
+              </div>
             </div>
 
-            <div className="victory-vault-visual" aria-hidden="true">
-              <div className={`victory-vault-safe${vaultReady ? " is-ready" : ""}`}>
-                <div className="victory-vault-safe-handle" />
-              </div>
+            <div className="victory-vault-visual">
+              {isVaultHelpOpen ? (
+                <div className="victory-vault-help-popover">
+                  <p>
+                    {lang === "en"
+                      ? "Win matches to fill the vault. At 3 wins, you can open it once per UTC day."
+                      : "승리할 때마다 금고 게이지가 채워집니다. 3승을 채우면 UTC 기준 하루 1회 금고를 열 수 있습니다."}
+                  </p>
+                  <div className="victory-vault-help-section">
+                    <strong>
+                      {lang === "en"
+                        ? "Diamond Rewards"
+                        : "다이아몬드 보상 확률"}
+                    </strong>
+                    <ul>
+                      <li>50% - 50</li>
+                      <li>30% - 100</li>
+                      <li>16% - 300</li>
+                      <li>3% - 800</li>
+                      <li>0.9% - 3000</li>
+                      <li>0.1% - 10000</li>
+                    </ul>
+                  </div>
+                  <div className="victory-vault-help-section">
+                    <strong>
+                      {lang === "en" ? "Bonus Skin" : "보너스 스킨"}
+                    </strong>
+                    <p>
+                      {lang === "en"
+                        ? "Opening has a 1% chance to grant a skin. Duplicate skins become diamonds worth 50% of that skin's price."
+                        : "금고 개봉 시 1% 확률로 스킨을 획득합니다. 이미 보유한 스킨이 나오면 해당 스킨 가격의 50%만큼 다이아몬드로 전환됩니다."}
+                    </p>
+                    <ul>
+                      <li>
+                        {lang === "en" ? "Common skin 60%" : "일반 스킨 60%"}
+                      </li>
+                      <li>
+                        {lang === "en" ? "Rare skin 30%" : "희귀 스킨 30%"}
+                      </li>
+                      <li>
+                        {lang === "en"
+                          ? "Legendary skin 10%"
+                          : "전설 스킨 10%"}
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className={`victory-vault-safe${vaultReady ? " is-ready" : ""}`}
+                  aria-hidden="true"
+                >
+                  <div className="victory-vault-safe-handle" />
+                </div>
+              )}
             </div>
 
             <div className="victory-vault-gauge" aria-label={vaultProgressText}>
@@ -4633,7 +4712,8 @@ export function LobbyScreen({
                     {"💎"}
                   </span>
                   <strong>
-                    +{vaultOpenResult.rewardTokens +
+                    +
+                    {vaultOpenResult.rewardTokens +
                       vaultOpenResult.duplicateCompensationTokens}
                   </strong>
                 </div>
@@ -4672,7 +4752,10 @@ export function LobbyScreen({
               <button
                 className="lobby-btn secondary victory-vault-close-btn"
                 type="button"
-                onClick={() => setIsVaultOpen(false)}
+                onClick={() => {
+                  setIsVaultOpen(false);
+                  setIsVaultHelpOpen(false);
+                }}
               >
                 {lang === "en" ? "Close" : "닫기"}
               </button>
@@ -4689,7 +4772,9 @@ export function LobbyScreen({
         <FriendRequestsModal
           lang={lang}
           onClose={() => setShowFriendRequests(false)}
-          onAccepted={() => { setFriendListRefresh((n) => n + 1); }}
+          onAccepted={() => {
+            setFriendListRefresh((n) => n + 1);
+          }}
         />
       )}
 
@@ -4698,7 +4783,10 @@ export function LobbyScreen({
           friend={friendCtx.friend}
           anchorRect={friendCtx.anchorRect}
           lang={lang}
-          onViewProfile={() => { setFriendProfileId(friendCtx.friend.userId); setFriendCtx(null); }}
+          onViewProfile={() => {
+            setFriendProfileId(friendCtx.friend.userId);
+            setFriendCtx(null);
+          }}
           onChallenge={() => void handleFriendChallenge(friendCtx.friend)}
           onRemove={() => void handleFriendRemove(friendCtx.friend.userId)}
           onClose={() => setFriendCtx(null)}
@@ -4830,9 +4918,7 @@ export function LobbyScreen({
 
             <p>{skinModalDesc}</p>
 
-            <p className="skin-collection-summary">
-              {skinCollectionSummary}
-            </p>
+            <p className="skin-collection-summary">{skinCollectionSummary}</p>
 
             <div className="skin-option-grid" ref={skinOptionGridRef}>
               {skinChoices.map((choice, index) => {
@@ -5033,21 +5119,19 @@ export function LobbyScreen({
                   data-keyboard-modal-layer="skin-detail-action"
                   type="button"
                   onClick={() => void handleSkinDetailAction()}
-                  disabled={
-                    (() => {
-                      const choice = skinDetail.choice;
-                      const isOwned = ownedSkins.includes(choice.id);
-                      const isTokenSkin =
-                        choice.tokenPrice !== null &&
-                        choice.tokenPrice !== undefined;
-                      return (
-                        choice.id !== "classic" &&
-                        isTokenSkin &&
-                        !isOwned &&
-                        !isSkinArenaUnlocked(choice.id, highestArena)
-                      );
-                    })()
-                  }
+                  disabled={(() => {
+                    const choice = skinDetail.choice;
+                    const isOwned = ownedSkins.includes(choice.id);
+                    const isTokenSkin =
+                      choice.tokenPrice !== null &&
+                      choice.tokenPrice !== undefined;
+                    return (
+                      choice.id !== "classic" &&
+                      isTokenSkin &&
+                      !isOwned &&
+                      !isSkinArenaUnlocked(choice.id, highestArena)
+                    );
+                  })()}
                 >
                   {(() => {
                     const choice = skinDetail.choice;
@@ -5216,7 +5300,10 @@ export function LobbyScreen({
                   {index}
                 </button>
               ))}
-              <div className="skin-token-badge ability-preset-count" aria-label="Ability loadout count">
+              <div
+                className="skin-token-badge ability-preset-count"
+                aria-label="Ability loadout count"
+              >
                 <span className="skin-token-badge-main">
                   <span>{equippedAbilitySkillDefs.length} / 3</span>
                   <span>{abilityLoadoutCount}</span>
