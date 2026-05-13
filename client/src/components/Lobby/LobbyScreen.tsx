@@ -4512,19 +4512,21 @@ export function LobbyScreen({
             </div>
           )}
         </div>
-        <button
-          className={`lobby-vault-button${vaultReady ? " is-ready" : ""}`}
-          type="button"
-          aria-label={lang === "en" ? "Victory vault" : "승리 금고"}
-          onClick={() => {
-            setVaultOpenResult(null);
-            setIsVaultHelpOpen(false);
-            setIsVaultOpen(true);
-          }}
-        >
-          <span className="lobby-vault-icon" aria-hidden="true">
-            <span className="lobby-vault-door" />
-          </span>
+        <div className="lobby-vault-wrap">
+          <button
+            className={`lobby-vault-button${vaultReady ? " is-ready" : ""}`}
+            type="button"
+            aria-label={lang === "en" ? "Victory vault" : "승리 금고"}
+            onClick={() => {
+              setVaultOpenResult(null);
+              setIsVaultHelpOpen(false);
+              setIsVaultOpen(true);
+            }}
+          >
+            <span className="lobby-vault-icon" aria-hidden="true">
+              <span className="lobby-vault-door" />
+            </span>
+          </button>
           <span className="lobby-vault-progress" aria-hidden="true">
             {Array.from({ length: vaultRequiredWins }).map((_, index) => (
               <span
@@ -4533,7 +4535,7 @@ export function LobbyScreen({
               />
             ))}
           </span>
-        </button>
+        </div>
       </div>
 
       {showLobbyArenaContent && (
