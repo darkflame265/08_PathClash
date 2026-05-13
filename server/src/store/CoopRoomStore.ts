@@ -26,12 +26,12 @@ export class CoopRoomStore {
     room: CoopRoom,
     roomId: string,
     roomSocketIds: string[],
-    reason: 'turn_limit' | 'waiting_timeout' | 'empty',
+    reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance',
     onRemove?: (
       payload: {
         roomId: string;
         socketIds: string[];
-        reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance';
       },
     ) => void,
   ) {
@@ -86,6 +86,12 @@ export class CoopRoomStore {
     this.queue = this.queue.filter((entry) => entry.socketId !== socketId);
   }
 
+  drainQueue(): string[] {
+    const socketIds = this.queue.map((entry) => entry.socketId);
+    this.queue = [];
+    return socketIds;
+  }
+
   getStats(): {
     roomCount: number;
     queueLength: number;
@@ -105,7 +111,7 @@ export class CoopRoomStore {
       payload: {
         roomId: string;
         socketIds: string[];
-        reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance';
       },
     ) => void,
   ): void {
@@ -150,7 +156,7 @@ export class CoopRoomStore {
       payload: {
         roomId: string;
         socketIds: string[];
-        reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance';
       },
     ) => void,
   ): void {
@@ -176,6 +182,26 @@ export class CoopRoomStore {
           ? 'turn_limit'
           : 'waiting_timeout';
       this.notifyRoomRemoved(room, roomId, roomSocketIds, reason, onRemove);
+    }
+  }
+
+  forceCloseAllRooms(
+    onRemove?: (
+      payload: {
+        roomId: string;
+        socketIds: string[];
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance';
+      },
+    ) => void,
+  ): void {
+    for (const [roomId, room] of this.rooms.entries()) {
+      this.notifyRoomRemoved(
+        room,
+        roomId,
+        room.getSocketIds(),
+        'maintenance',
+        onRemove,
+      );
     }
   }
 }

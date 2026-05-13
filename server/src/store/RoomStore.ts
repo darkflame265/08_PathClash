@@ -12,12 +12,12 @@ export class RoomStore {
     room: GameRoom,
     roomId: string,
     roomSocketIds: string[],
-    reason: 'turn_limit' | 'waiting_timeout' | 'empty',
+    reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance',
     onRemove?: (
       payload: {
         roomId: string;
         socketIds: string[];
-        reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance';
       },
     ) => void,
   ) {
@@ -170,6 +170,12 @@ export class RoomStore {
     this.matchQueue = this.matchQueue.filter((entry) => entry.socketId !== socketId);
   }
 
+  drainQueue(): string[] {
+    const socketIds = this.matchQueue.map((entry) => entry.socketId);
+    this.matchQueue = [];
+    return socketIds;
+  }
+
   isQueuedRandom(socketId: string): boolean {
     return this.matchQueue.some((entry) => entry.socketId === socketId);
   }
@@ -200,7 +206,7 @@ export class RoomStore {
       payload: {
         roomId: string;
         socketIds: string[];
-        reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance';
       },
     ) => void,
   ): void {
@@ -228,7 +234,7 @@ export class RoomStore {
       payload: {
         roomId: string;
         socketIds: string[];
-        reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance';
       },
     ) => void,
   ): void {
@@ -254,6 +260,26 @@ export class RoomStore {
           ? 'turn_limit'
           : 'waiting_timeout';
       this.notifyRoomRemoved(room, roomId, roomSocketIds, reason, onRemove);
+    }
+  }
+
+  forceCloseAllRooms(
+    onRemove?: (
+      payload: {
+        roomId: string;
+        socketIds: string[];
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance';
+      },
+    ) => void,
+  ): void {
+    for (const [roomId, room] of this.rooms.entries()) {
+      this.notifyRoomRemoved(
+        room,
+        roomId,
+        room.getSocketIds(),
+        'maintenance',
+        onRemove,
+      );
     }
   }
 }

@@ -53,6 +53,15 @@ class TwoVsTwoRoomStore {
         }))
             .filter((team) => team.members.length > 0);
     }
+    drainQueue() {
+        const socketIds = [
+            ...this.queue.map((entry) => entry.socketId),
+            ...this.teamQueue.flatMap((team) => team.members.map((entry) => entry.socketId)),
+        ];
+        this.queue = [];
+        this.teamQueue = [];
+        return socketIds;
+    }
     enqueueTeam(members) {
         if (members.length !== 2)
             return;
@@ -140,6 +149,11 @@ class TwoVsTwoRoomStore {
                     ? 'turn_limit'
                     : 'waiting_timeout';
             this.notifyRoomRemoved(room, roomId, roomSocketIds, reason, onRemove);
+        }
+    }
+    forceCloseAllRooms(onRemove) {
+        for (const [roomId, room] of this.rooms.entries()) {
+            this.notifyRoomRemoved(room, roomId, room.getSocketIds(), 'maintenance', onRemove);
         }
     }
 }

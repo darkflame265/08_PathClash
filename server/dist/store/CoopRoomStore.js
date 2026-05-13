@@ -45,6 +45,11 @@ class CoopRoomStore {
     removeFromQueue(socketId) {
         this.queue = this.queue.filter((entry) => entry.socketId !== socketId);
     }
+    drainQueue() {
+        const socketIds = this.queue.map((entry) => entry.socketId);
+        this.queue = [];
+        return socketIds;
+    }
     getStats() {
         return {
             roomCount: this.rooms.size,
@@ -103,6 +108,11 @@ class CoopRoomStore {
                     ? 'turn_limit'
                     : 'waiting_timeout';
             this.notifyRoomRemoved(room, roomId, roomSocketIds, reason, onRemove);
+        }
+    }
+    forceCloseAllRooms(onRemove) {
+        for (const [roomId, room] of this.rooms.entries()) {
+            this.notifyRoomRemoved(room, roomId, room.getSocketIds(), 'maintenance', onRemove);
         }
     }
 }

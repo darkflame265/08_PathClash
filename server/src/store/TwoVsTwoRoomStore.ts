@@ -33,12 +33,12 @@ export class TwoVsTwoRoomStore {
     room: TwoVsTwoRoom,
     roomId: string,
     roomSocketIds: string[],
-    reason: 'turn_limit' | 'waiting_timeout' | 'empty',
+    reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance',
     onRemove?: (
       payload: {
         roomId: string;
         socketIds: string[];
-        reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance';
       },
     ) => void,
   ) {
@@ -93,6 +93,18 @@ export class TwoVsTwoRoomStore {
       .filter((team) => team.members.length > 0);
   }
 
+  drainQueue(): string[] {
+    const socketIds = [
+      ...this.queue.map((entry) => entry.socketId),
+      ...this.teamQueue.flatMap((team) =>
+        team.members.map((entry) => entry.socketId),
+      ),
+    ];
+    this.queue = [];
+    this.teamQueue = [];
+    return socketIds;
+  }
+
   enqueueTeam(members: QueueEntry[]): void {
     if (members.length !== 2) return;
     const deduped = members.filter(
@@ -139,7 +151,7 @@ export class TwoVsTwoRoomStore {
       payload: {
         roomId: string;
         socketIds: string[];
-        reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance';
       },
     ) => void,
   ): void {
@@ -189,7 +201,7 @@ export class TwoVsTwoRoomStore {
       payload: {
         roomId: string;
         socketIds: string[];
-        reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance';
       },
     ) => void,
   ): void {
@@ -216,6 +228,26 @@ export class TwoVsTwoRoomStore {
           ? 'turn_limit'
           : 'waiting_timeout';
       this.notifyRoomRemoved(room, roomId, roomSocketIds, reason, onRemove);
+    }
+  }
+
+  forceCloseAllRooms(
+    onRemove?: (
+      payload: {
+        roomId: string;
+        socketIds: string[];
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance';
+      },
+    ) => void,
+  ): void {
+    for (const [roomId, room] of this.rooms.entries()) {
+      this.notifyRoomRemoved(
+        room,
+        roomId,
+        room.getSocketIds(),
+        'maintenance',
+        onRemove,
+      );
     }
   }
 }

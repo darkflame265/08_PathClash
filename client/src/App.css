@@ -243,6 +243,67 @@ body {
   filter: saturate(0.7);
 }
 
+.maintenance-screen {
+  width: 100%;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.2), transparent 42%),
+    linear-gradient(180deg, #101820, #071016);
+}
+
+.maintenance-panel {
+  width: min(100%, 25rem);
+  display: grid;
+  justify-items: center;
+  gap: 0.8rem;
+  padding: 1.6rem 1.25rem;
+  border: 1px solid rgba(96, 165, 250, 0.36);
+  border-radius: 1rem;
+  background: rgba(18, 27, 36, 0.92);
+  box-shadow:
+    0 22px 56px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  text-align: center;
+}
+
+.maintenance-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(250, 204, 21, 0.75);
+  background: radial-gradient(circle at 40% 30%, #fef3c7, #d97706 72%);
+  color: #1f2937;
+  font-size: 2rem;
+  font-weight: 950;
+  box-shadow: 0 0 24px rgba(251, 191, 36, 0.28);
+}
+
+.maintenance-panel h2 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 1.35rem;
+  line-height: 1.25;
+}
+
+.maintenance-panel p {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.maintenance-panel span {
+  color: #93c5fd;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
 .app-legal-consent-modal {
   width: min(100%, 28rem);
   border: 1px solid rgba(74, 222, 128, 0.88);

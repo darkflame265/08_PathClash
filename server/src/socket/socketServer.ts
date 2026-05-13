@@ -46,6 +46,11 @@ import {
 import { getCurrentRotation } from '../services/rotationService';
 import { supabaseAdmin } from '../lib/supabase';
 import { ACHIEVEMENT_CATALOG } from '../achievements/achievementCatalog';
+import {
+  maintenanceController,
+  type MaintenanceNotice,
+  type MaintenanceStatus,
+} from '../services/maintenanceService';
 
 const PROFILE_PIECE_SKIN_IDS = [
   'classic',
@@ -78,6 +83,10 @@ export function initSocketServer(io: Server): void {
   const activeUserSockets = new Map<string, string>();
   const socketUsers = new Map<string, string>();
   const authCacheTtlMs = 10 * 60 * 1000;
+  const maintenanceMatchmakingMessage =
+    '서버 점검이 곧 시작되어 새 게임을 시작할 수 없습니다.';
+  const maintenanceClosedMessage =
+    '점검으로 인해 경기가 종료되었습니다. 해당 경기는 승패에 반영되지 않습니다.';
   const profileCacheTtlMs = 60 * 1000;
   const roomSweepIntervalMs = 60 * 1000;
   const metricsLogIntervalMs = 60 * 1000;
@@ -614,16 +623,71 @@ export function initSocketServer(io: Server): void {
     reason,
   }: {
     socketIds: string[];
-    reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+    reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance';
   }) => {
-    if (reason !== 'turn_limit') return;
+    if (reason !== 'turn_limit' && reason !== 'maintenance') return;
     for (const socketId of socketIds) {
       if (!io.sockets.sockets.has(socketId)) continue;
       io.to(socketId).emit('room_closed', {
         reason,
+        message: reason === 'maintenance' ? maintenanceClosedMessage : undefined,
+        maintenance:
+          reason === 'maintenance' ? maintenanceController.getStatus() : undefined,
       });
     }
   };
+
+  const rejectMatchmakingForMaintenance = (socket: Socket): boolean => {
+    if (!maintenanceController.isMatchmakingLocked()) return false;
+    socket.emit('join_error', {
+      message: maintenanceMatchmakingMessage,
+      maintenance: maintenanceController.getStatus(),
+    });
+    return true;
+  };
+
+  const cancelQueuedMatchmakingForMaintenance = () => {
+    const queuedSocketIds = [
+      ...store.drainQueue(),
+      ...coopStore.drainQueue(),
+      ...twoVsTwoStore.drainQueue(),
+      ...abilityStore.drainQueue(),
+    ];
+    for (const socketId of queuedSocketIds) {
+      clearRandomFallback(socketId);
+      clearAbilityFallback(socketId);
+      const queuedSocket = io.sockets.sockets.get(socketId);
+      queuedSocket?.emit('join_error', {
+        message: maintenanceMatchmakingMessage,
+        maintenance: maintenanceController.getStatus(),
+      });
+    }
+  };
+
+  const forceCloseRoomsForMaintenance = () => {
+    const onRemove = notifyRoomClosed;
+    store.forceCloseAllRooms(onRemove);
+    coopStore.forceCloseAllRooms(onRemove);
+    twoVsTwoStore.forceCloseAllRooms(onRemove);
+    abilityStore.forceCloseAllRooms(onRemove);
+  };
+
+  maintenanceController.on('changed', (status: MaintenanceStatus) => {
+    io.emit('maintenance_status', status);
+  });
+  maintenanceController.on('notice', (notice: MaintenanceNotice) => {
+    io.emit('maintenance_notice', notice);
+    if (
+      notice.kind === 'matchmaking_locked' ||
+      notice.status.phase === 'matchmaking_locked' ||
+      notice.status.phase === 'active'
+    ) {
+      cancelQueuedMatchmakingForMaintenance();
+    }
+  });
+  maintenanceController.on('force-close', () => {
+    forceCloseRoomsForMaintenance();
+  });
 
   const resolvePlayerProfileCached = async (
     socket: Socket,
@@ -923,6 +987,7 @@ export function initSocketServer(io: Server): void {
 
   io.on('connection', (socket: Socket) => {
     console.log(`[+] Connected: ${socket.id}`);
+    socket.emit('maintenance_status', maintenanceController.getStatus());
 
     socket.on(
       'sync_time',
@@ -976,6 +1041,7 @@ export function initSocketServer(io: Server): void {
     socket.on('create_room', async ({ nickname, auth, pieceSkin, boardSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin; boardSkin?: BoardSkin }) => {
       try {
         if (emitUpdateRequired(socket, auth)) return;
+        if (rejectMatchmakingForMaintenance(socket)) return;
         await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
         const profile = await resolvePlayerProfileCached(socket, auth, nickname);
         if (!io.sockets.sockets.has(socket.id)) return;
@@ -1010,6 +1076,7 @@ export function initSocketServer(io: Server): void {
       ) => {
       try {
         if (emitUpdateRequired(socket, auth)) return;
+        if (rejectMatchmakingForMaintenance(socket)) return;
         await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
         const profile = await resolvePlayerProfileCached(socket, auth, nickname);
         if (!io.sockets.sockets.has(socket.id)) return;
@@ -1048,6 +1115,7 @@ export function initSocketServer(io: Server): void {
     socket.on('join_room', async ({ code, nickname, auth, pieceSkin, boardSkin }: { code: string; nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin; boardSkin?: BoardSkin }) => {
       try {
         if (emitUpdateRequired(socket, auth)) return;
+        if (rejectMatchmakingForMaintenance(socket)) return;
         await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
         const profile = await resolvePlayerProfileCached(socket, auth, nickname);
         if (!io.sockets.sockets.has(socket.id)) return;
@@ -1104,6 +1172,7 @@ export function initSocketServer(io: Server): void {
       }) => {
         try {
           if (emitUpdateRequired(socket, auth)) return;
+          if (rejectMatchmakingForMaintenance(socket)) return;
           await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
           const profile = await resolvePlayerProfileCached(socket, auth, nickname);
           if (!io.sockets.sockets.has(socket.id)) return;
@@ -1159,6 +1228,7 @@ export function initSocketServer(io: Server): void {
       }) => {
         try {
           if (emitUpdateRequired(socket, auth)) return;
+          if (rejectMatchmakingForMaintenance(socket)) return;
           await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
           const profile = await resolvePlayerProfileCached(socket, auth, nickname);
           if (!io.sockets.sockets.has(socket.id)) return;
@@ -1526,6 +1596,10 @@ export function initSocketServer(io: Server): void {
         ack?: (res: { status: 'ok' | 'offline' | 'in_game' | 'error' }) => void,
       ) => {
         try {
+          if (rejectMatchmakingForMaintenance(socket)) {
+            ack?.({ status: 'error' });
+            return;
+          }
           const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
           if (!userId) { ack?.({ status: 'error' }); return; }
           const targetSocketId = activeUserSockets.get(friendId);
@@ -1595,6 +1669,10 @@ export function initSocketServer(io: Server): void {
               io.to(aSocketId).emit('friend_challenge_declined', { byNickname: '' });
             }
             ack?.({ status: 'ok' }); return;
+          }
+          if (rejectMatchmakingForMaintenance(socket)) {
+            ack?.({ status: 'error' });
+            return;
           }
           const aSocketId = challenge.fromSocketId;
           const aSocket = io.sockets.sockets.get(aSocketId);
@@ -1674,6 +1752,10 @@ export function initSocketServer(io: Server): void {
         ack?: (res: { status: 'ok' | 'error' }) => void,
       ) => {
         try {
+          if (rejectMatchmakingForMaintenance(socket)) {
+            ack?.({ status: 'error' });
+            return;
+          }
           const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
           if (!userId) { ack?.({ status: 'error' }); return; }
           const challenge = challengePending.get(friendId);
@@ -1729,6 +1811,7 @@ export function initSocketServer(io: Server): void {
       try {
       pendingCancelRandom.delete(socket.id);
       if (emitUpdateRequired(socket, auth)) return;
+      if (rejectMatchmakingForMaintenance(socket)) return;
       await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
       const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       if (pendingCancelRandom.has(socket.id)) {
@@ -1821,6 +1904,7 @@ export function initSocketServer(io: Server): void {
     socket.on('join_coop', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
       try {
       if (emitUpdateRequired(socket, auth)) return;
+      if (rejectMatchmakingForMaintenance(socket)) return;
       await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
       const profile = await resolvePlayerProfileCached(socket, auth, nickname);
       if (!io.sockets.sockets.has(socket.id)) return;
@@ -2070,6 +2154,7 @@ export function initSocketServer(io: Server): void {
     socket.on('join_2v2', async ({ nickname, auth, pieceSkin }: { nickname: string; auth?: AuthPayload; pieceSkin?: PieceSkin }) => {
       try {
         if (emitUpdateRequired(socket, auth)) return;
+        if (rejectMatchmakingForMaintenance(socket)) return;
         await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
         const profile = await resolvePlayerProfileCached(socket, auth, nickname);
         if (!io.sockets.sockets.has(socket.id)) return;
@@ -2106,6 +2191,7 @@ export function initSocketServer(io: Server): void {
       ) => {
         try {
         if (emitUpdateRequired(socket, auth)) return;
+        if (!training && rejectMatchmakingForMaintenance(socket)) return;
         await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
         const profile = await resolvePlayerProfileCached(socket, auth, nickname);
         if (!io.sockets.sockets.has(socket.id)) return;

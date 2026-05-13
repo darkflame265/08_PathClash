@@ -109,6 +109,11 @@ class RoomStore {
     removeFromQueue(socketId) {
         this.matchQueue = this.matchQueue.filter((entry) => entry.socketId !== socketId);
     }
+    drainQueue() {
+        const socketIds = this.matchQueue.map((entry) => entry.socketId);
+        this.matchQueue = [];
+        return socketIds;
+    }
     isQueuedRandom(socketId) {
         return this.matchQueue.some((entry) => entry.socketId === socketId);
     }
@@ -160,6 +165,11 @@ class RoomStore {
                     ? 'turn_limit'
                     : 'waiting_timeout';
             this.notifyRoomRemoved(room, roomId, roomSocketIds, reason, onRemove);
+        }
+    }
+    forceCloseAllRooms(onRemove) {
+        for (const [roomId, room] of this.rooms.entries()) {
+            this.notifyRoomRemoved(room, roomId, room.getSocketIds(), 'maintenance', onRemove);
         }
     }
 }

@@ -84,6 +84,28 @@ type UpdateRequiredPayload = {
   marketUrl: string;
 };
 
+type MaintenancePhase =
+  | "normal"
+  | "scheduled"
+  | "matchmaking_locked"
+  | "active";
+
+type MaintenanceStatusPayload = {
+  enabled: boolean;
+  phase: MaintenancePhase;
+  startsAt: number | null;
+  noticeAt: number | null;
+  matchmakingLocksAt: number | null;
+  forceEndsAt: number | null;
+  serverNow: number;
+  message: string | null;
+};
+
+type MaintenanceNoticePayload = {
+  kind: "ten_min" | "matchmaking_locked" | "started" | "ended";
+  status: MaintenanceStatusPayload;
+};
+
 type StoredLegalConsent = {
   version: string;
   consentedAt: string;
@@ -91,7 +113,7 @@ type StoredLegalConsent = {
 };
 
 type LegalDocumentType = "terms" | "privacy";
-type RoomClosedReason = "turn_limit" | "waiting_timeout" | "empty";
+type RoomClosedReason = "turn_limit" | "waiting_timeout" | "empty" | "maintenance";
 
 const LEGAL_CONSENT_VERSION = "2026-04-01-v1";
 const LEGAL_CONSENT_STORAGE_KEY = "pathclash.legalConsent.v1";
@@ -143,6 +165,55 @@ function GameLoadingScreen({
   );
 }
 
+function formatMaintenanceTime(timestamp: number | null, lang: "kr" | "en") {
+  if (!timestamp) return "";
+  return new Intl.DateTimeFormat(lang === "en" ? "en-US" : "ko-KR", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(timestamp));
+}
+
+function MaintenanceScreen({
+  status,
+  lang,
+}: {
+  status: MaintenanceStatusPayload;
+  lang: "kr" | "en";
+}) {
+  const startsAt = formatMaintenanceTime(status.startsAt, lang);
+  const title =
+    lang === "en" ? "Server Maintenance" : "서버 점검 중입니다";
+  const body =
+    status.phase === "active"
+      ? lang === "en"
+        ? "PathClash is temporarily unavailable while maintenance is in progress."
+        : "업데이트 점검이 진행 중이라 잠시 접속할 수 없습니다."
+      : lang === "en"
+        ? "Server maintenance is scheduled soon. New matches are temporarily unavailable."
+        : "서버 점검이 곧 시작되어 새 게임을 시작할 수 없습니다.";
+  const timeText =
+    startsAt && status.phase !== "active"
+      ? lang === "en"
+        ? `Starts at ${startsAt}`
+        : `시작 예정: ${startsAt}`
+      : null;
+
+  return (
+    <div className="maintenance-screen" role="status" aria-live="polite">
+      <div className="maintenance-panel">
+        <div className="maintenance-icon" aria-hidden="true">
+          !
+        </div>
+        <h2>{title}</h2>
+        <p>{status.message || body}</p>
+        {timeText && <span>{timeText}</span>}
+      </div>
+    </div>
+  );
+}
+
 function readStoredLegalConsent(): StoredLegalConsent | null {
   const raw = window.localStorage.getItem(LEGAL_CONSENT_STORAGE_KEY);
   if (!raw) return null;
@@ -174,6 +245,10 @@ function App() {
     useState<RoomClosedReason | null>(null);
   const [updateRequired, setUpdateRequired] =
     useState<UpdateRequiredPayload | null>(null);
+  const [maintenanceStatus, setMaintenanceStatus] =
+    useState<MaintenanceStatusPayload | null>(null);
+  const [maintenanceNotice, setMaintenanceNotice] =
+    useState<MaintenanceNoticePayload | null>(null);
   const [legalConsentResolved, setLegalConsentResolved] = useState(false);
   const [hasLegalConsent, setHasLegalConsent] = useState(false);
   const [legalConsentChecked, setLegalConsentChecked] = useState(false);
@@ -719,13 +794,62 @@ function App() {
   }, [applyUpdateRequired]);
 
   useEffect(() => {
+    const socket = connectSocket();
+    const applyMaintenanceStatus = (status: MaintenanceStatusPayload) => {
+      setMaintenanceStatus(status.enabled ? status : null);
+      if (!status.enabled) {
+        setMaintenanceNotice(null);
+        return;
+      }
+      if (status.phase === "active" && view === "lobby") {
+        stopLocalAbilityTraining();
+        useGameStore.getState().resetGame();
+        setShowExitConfirm(false);
+        setMatchResultAudioKind(null);
+      }
+    };
+    const onMaintenanceStatus = (status: MaintenanceStatusPayload) => {
+      applyMaintenanceStatus(status);
+    };
+    const onMaintenanceNotice = (notice: MaintenanceNoticePayload) => {
+      applyMaintenanceStatus(notice.status);
+      if (notice.kind === "ended") {
+        setMaintenanceNotice(null);
+        return;
+      }
+      setMaintenanceNotice(notice);
+    };
+
+    socket.on("maintenance_status", onMaintenanceStatus);
+    socket.on("maintenance_notice", onMaintenanceNotice);
+
+    return () => {
+      socket.off("maintenance_status", onMaintenanceStatus);
+      socket.off("maintenance_notice", onMaintenanceNotice);
+    };
+  }, [view]);
+
+  useEffect(() => {
     const socket = getSocket();
-    const onRoomClosed = ({ reason }: { reason?: RoomClosedReason }) => {
-      if (reason !== "turn_limit") return;
+    const onRoomClosed = ({
+      reason,
+      maintenance,
+    }: {
+      reason?: RoomClosedReason;
+      maintenance?: MaintenanceStatusPayload;
+    }) => {
+      if (reason !== "turn_limit" && reason !== "maintenance") return;
       useGameStore.getState().resetGame();
       setShowExitConfirm(false);
       setMatchResultAudioKind(null);
       setView("lobby");
+      if (reason === "maintenance") {
+        if (maintenance?.enabled) {
+          setMaintenanceStatus(maintenance);
+        }
+        setRoomClosedReason("maintenance");
+        return;
+      }
       setRoomClosedReason(reason);
     };
 
@@ -928,9 +1052,13 @@ function App() {
   const roomClosedTitle =
     lang === "en" ? "Game session closed" : "게임 세션이 종료되었습니다.";
   const roomClosedBody =
-    lang === "en"
-      ? "This match was closed automatically because it exceeded the round limit."
-      : "이 게임은 진행 라운드 수 상한을 초과하여 자동으로 종료되었습니다.";
+    roomClosedReason === "maintenance"
+      ? lang === "en"
+        ? "The match was closed for server maintenance. This match will not count toward wins, losses, or rewards."
+        : "점검으로 인해 경기가 종료되었습니다. 해당 경기는 승패와 보상에 반영되지 않습니다."
+      : lang === "en"
+        ? "This match was closed automatically because it exceeded the round limit."
+        : "이 게임은 진행 라운드 수 상한을 초과하여 자동으로 종료되었습니다.";
   const roomClosedDismiss = lang === "en" ? "Close" : "닫기";
 
   const handleOpenStoreForUpdate = useCallback(() => {
@@ -1148,6 +1276,34 @@ function App() {
   const isGameLoadingVisible = gameLoadingUntil > 0;
   const isLobbyLoadingVisible =
     isLobbyHydrating || isGameLoadingVisible || shouldShowLoadingScreen;
+  const shouldShowMaintenanceScreen =
+    maintenanceStatus?.enabled === true &&
+    maintenanceStatus.phase === "active" &&
+    view === "lobby";
+  const maintenanceNoticeTitle =
+    maintenanceNotice?.kind === "matchmaking_locked"
+      ? lang === "en"
+        ? "Maintenance starts soon"
+        : "서버 점검이 곧 시작됩니다"
+      : maintenanceNotice?.kind === "started"
+        ? lang === "en"
+          ? "Maintenance started"
+          : "서버 점검이 시작되었습니다"
+        : lang === "en"
+          ? "Maintenance notice"
+          : "점검 안내";
+  const maintenanceNoticeBody =
+    maintenanceNotice?.kind === "matchmaking_locked"
+      ? lang === "en"
+        ? "Server maintenance will begin soon, so new games cannot be started."
+        : "서버 점검이 곧 시작되어 새 게임을 시작할 수 없습니다."
+      : maintenanceNotice?.kind === "started"
+        ? lang === "en"
+          ? "Server maintenance has started. Games already in progress may finish briefly."
+          : "서버 점검이 시작되었습니다. 진행 중인 경기는 잠시 마무리할 수 있습니다."
+        : lang === "en"
+          ? "Server maintenance will begin in 10 minutes."
+          : "서버 점검이 10분 후 시작됩니다.";
 
   return (
     <div
@@ -1162,7 +1318,7 @@ function App() {
             />
           }
         >
-          {view === "lobby" && (
+          {view === "lobby" && !shouldShowMaintenanceScreen && (
             <LobbyScreen
               onGameStart={() => startGameView("game")}
               onCoopStart={() => startGameView("coop")}
@@ -1171,6 +1327,9 @@ function App() {
               onboardingPromptsEnabled={legalConsentResolved && hasLegalConsent}
               tutorialPromptTrigger={tutorialPromptTrigger}
             />
+          )}
+          {shouldShowMaintenanceScreen && maintenanceStatus && (
+            <MaintenanceScreen status={maintenanceStatus} lang={lang} />
           )}
           {view === "game" && (
             <GameScreen onLeaveToLobby={handleReturnToLobby} />
@@ -1255,7 +1414,33 @@ function App() {
             </div>
           </div>
         )}
-        {roomClosedReason === "turn_limit" && (
+        {maintenanceNotice && maintenanceNotice.kind !== "ended" && (
+          <div
+            className="app-confirm-backdrop"
+            onClick={() => setMaintenanceNotice(null)}
+          >
+            <div
+              className="app-confirm-modal"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h3>{maintenanceNoticeTitle}</h3>
+              <p className="app-confirm-copy">
+                {maintenanceNotice.status.message || maintenanceNoticeBody}
+              </p>
+              <div className="app-confirm-actions app-confirm-actions-single">
+                <button
+                  className="app-confirm-btn app-confirm-btn-primary"
+                  onClick={() => setMaintenanceNotice(null)}
+                  type="button"
+                >
+                  {lang === "en" ? "OK" : "확인"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {(roomClosedReason === "turn_limit" ||
+          roomClosedReason === "maintenance") && (
           <div
             className="app-confirm-backdrop"
             onClick={() => setRoomClosedReason(null)}

@@ -13,12 +13,12 @@ export class AbilityRoomStore {
     room: AbilityRoom,
     roomId: string,
     roomSocketIds: string[],
-    reason: 'turn_limit' | 'waiting_timeout' | 'empty',
+    reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance',
     onRemove?: (
       payload: {
         roomId: string;
         socketIds: string[];
-        reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance';
       },
     ) => void,
   ) {
@@ -194,6 +194,12 @@ export class AbilityRoomStore {
     this.queue = this.queue.filter((entry) => entry.socketId !== socketId);
   }
 
+  drainQueue(): string[] {
+    const socketIds = this.queue.map((entry) => entry.socketId);
+    this.queue = [];
+    return socketIds;
+  }
+
   findRoomForRejoin(userId: string): AbilityRoom | undefined {
     for (const room of this.rooms.values()) {
       if (room.hasDisconnectedUser(userId)) return room;
@@ -259,7 +265,7 @@ export class AbilityRoomStore {
       payload: {
         roomId: string;
         socketIds: string[];
-        reason: 'turn_limit' | 'waiting_timeout' | 'empty';
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance';
       },
     ) => void,
   ): void {
@@ -286,6 +292,26 @@ export class AbilityRoomStore {
           ? 'turn_limit'
           : 'waiting_timeout';
       this.notifyRoomRemoved(room, roomId, roomSocketIds, reason, onRemove);
+    }
+  }
+
+  forceCloseAllRooms(
+    onRemove?: (
+      payload: {
+        roomId: string;
+        socketIds: string[];
+        reason: 'turn_limit' | 'waiting_timeout' | 'empty' | 'maintenance';
+      },
+    ) => void,
+  ): void {
+    for (const [roomId, room] of this.rooms.entries()) {
+      this.notifyRoomRemoved(
+        room,
+        roomId,
+        room.getSocketIds(),
+        'maintenance',
+        onRemove,
+      );
     }
   }
 }

@@ -18,6 +18,7 @@ const achievementService_1 = require("../services/achievementService");
 const rotationService_1 = require("../services/rotationService");
 const supabase_1 = require("../lib/supabase");
 const achievementCatalog_1 = require("../achievements/achievementCatalog");
+const maintenanceService_1 = require("../services/maintenanceService");
 const PROFILE_PIECE_SKIN_IDS = [
     'classic',
     'ember',
@@ -48,6 +49,8 @@ function initSocketServer(io) {
     const activeUserSockets = new Map();
     const socketUsers = new Map();
     const authCacheTtlMs = 10 * 60 * 1000;
+    const maintenanceMatchmakingMessage = '서버 점검이 곧 시작되어 새 게임을 시작할 수 없습니다.';
+    const maintenanceClosedMessage = '점검으로 인해 경기가 종료되었습니다. 해당 경기는 승패에 반영되지 않습니다.';
     const profileCacheTtlMs = 60 * 1000;
     const roomSweepIntervalMs = 60 * 1000;
     const metricsLogIntervalMs = 60 * 1000;
@@ -386,16 +389,65 @@ function initSocketServer(io) {
         }, fallbackMs));
     };
     const notifyRoomClosed = ({ socketIds, reason, }) => {
-        if (reason !== 'turn_limit')
+        if (reason !== 'turn_limit' && reason !== 'maintenance')
             return;
         for (const socketId of socketIds) {
             if (!io.sockets.sockets.has(socketId))
                 continue;
             io.to(socketId).emit('room_closed', {
                 reason,
+                message: reason === 'maintenance' ? maintenanceClosedMessage : undefined,
+                maintenance: reason === 'maintenance' ? maintenanceService_1.maintenanceController.getStatus() : undefined,
             });
         }
     };
+    const rejectMatchmakingForMaintenance = (socket) => {
+        if (!maintenanceService_1.maintenanceController.isMatchmakingLocked())
+            return false;
+        socket.emit('join_error', {
+            message: maintenanceMatchmakingMessage,
+            maintenance: maintenanceService_1.maintenanceController.getStatus(),
+        });
+        return true;
+    };
+    const cancelQueuedMatchmakingForMaintenance = () => {
+        const queuedSocketIds = [
+            ...store.drainQueue(),
+            ...coopStore.drainQueue(),
+            ...twoVsTwoStore.drainQueue(),
+            ...abilityStore.drainQueue(),
+        ];
+        for (const socketId of queuedSocketIds) {
+            clearRandomFallback(socketId);
+            clearAbilityFallback(socketId);
+            const queuedSocket = io.sockets.sockets.get(socketId);
+            queuedSocket?.emit('join_error', {
+                message: maintenanceMatchmakingMessage,
+                maintenance: maintenanceService_1.maintenanceController.getStatus(),
+            });
+        }
+    };
+    const forceCloseRoomsForMaintenance = () => {
+        const onRemove = notifyRoomClosed;
+        store.forceCloseAllRooms(onRemove);
+        coopStore.forceCloseAllRooms(onRemove);
+        twoVsTwoStore.forceCloseAllRooms(onRemove);
+        abilityStore.forceCloseAllRooms(onRemove);
+    };
+    maintenanceService_1.maintenanceController.on('changed', (status) => {
+        io.emit('maintenance_status', status);
+    });
+    maintenanceService_1.maintenanceController.on('notice', (notice) => {
+        io.emit('maintenance_notice', notice);
+        if (notice.kind === 'matchmaking_locked' ||
+            notice.status.phase === 'matchmaking_locked' ||
+            notice.status.phase === 'active') {
+            cancelQueuedMatchmakingForMaintenance();
+        }
+    });
+    maintenanceService_1.maintenanceController.on('force-close', () => {
+        forceCloseRoomsForMaintenance();
+    });
     const resolvePlayerProfileCached = async (socket, auth, fallbackNickname) => {
         const userId = typeof socket.data.userId === 'string' ? socket.data.userId : null;
         if (userId) {
@@ -642,6 +694,7 @@ function initSocketServer(io) {
     };
     io.on('connection', (socket) => {
         console.log(`[+] Connected: ${socket.id}`);
+        socket.emit('maintenance_status', maintenanceService_1.maintenanceController.getStatus());
         socket.on('sync_time', (ack) => {
             ack?.({ serverNow: Date.now() });
         });
@@ -674,6 +727,8 @@ function initSocketServer(io) {
             try {
                 if (emitUpdateRequired(socket, auth))
                     return;
+                if (rejectMatchmakingForMaintenance(socket))
+                    return;
                 await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
                 const profile = await resolvePlayerProfileCached(socket, auth, nickname);
                 if (!io.sockets.sockets.has(socket.id))
@@ -699,6 +754,8 @@ function initSocketServer(io) {
         socket.on('join_ai', async ({ nickname, auth, pieceSkin, tutorialPending, boardSkin, }) => {
             try {
                 if (emitUpdateRequired(socket, auth))
+                    return;
+                if (rejectMatchmakingForMaintenance(socket))
                     return;
                 await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
                 const profile = await resolvePlayerProfileCached(socket, auth, nickname);
@@ -735,6 +792,8 @@ function initSocketServer(io) {
         socket.on('join_room', async ({ code, nickname, auth, pieceSkin, boardSkin }) => {
             try {
                 if (emitUpdateRequired(socket, auth))
+                    return;
+                if (rejectMatchmakingForMaintenance(socket))
                     return;
                 await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
                 const profile = await resolvePlayerProfileCached(socket, auth, nickname);
@@ -777,6 +836,8 @@ function initSocketServer(io) {
             try {
                 if (emitUpdateRequired(socket, auth))
                     return;
+                if (rejectMatchmakingForMaintenance(socket))
+                    return;
                 await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
                 const profile = await resolvePlayerProfileCached(socket, auth, nickname);
                 if (!io.sockets.sockets.has(socket.id))
@@ -807,6 +868,8 @@ function initSocketServer(io) {
         socket.on('join_ability_room', async ({ code, nickname, auth, pieceSkin, boardSkin, equippedSkills, }) => {
             try {
                 if (emitUpdateRequired(socket, auth))
+                    return;
+                if (rejectMatchmakingForMaintenance(socket))
                     return;
                 await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
                 const profile = await resolvePlayerProfileCached(socket, auth, nickname);
@@ -1121,6 +1184,10 @@ function initSocketServer(io) {
         });
         socket.on('friend_challenge', async ({ auth, friendId, pieceSkin, boardSkin, equippedSkills, }, ack) => {
             try {
+                if (rejectMatchmakingForMaintenance(socket)) {
+                    ack?.({ status: 'error' });
+                    return;
+                }
                 const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
                 if (!userId) {
                     ack?.({ status: 'error' });
@@ -1182,6 +1249,10 @@ function initSocketServer(io) {
                     ack?.({ status: 'ok' });
                     return;
                 }
+                if (rejectMatchmakingForMaintenance(socket)) {
+                    ack?.({ status: 'error' });
+                    return;
+                }
                 const aSocketId = challenge.fromSocketId;
                 const aSocket = io.sockets.sockets.get(aSocketId);
                 if (!aSocket) {
@@ -1233,6 +1304,10 @@ function initSocketServer(io) {
         });
         socket.on('friend_challenge_update', async ({ auth, friendId, pieceSkin, boardSkin, equippedSkills, }, ack) => {
             try {
+                if (rejectMatchmakingForMaintenance(socket)) {
+                    ack?.({ status: 'error' });
+                    return;
+                }
                 const userId = await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
                 if (!userId) {
                     ack?.({ status: 'error' });
@@ -1283,6 +1358,8 @@ function initSocketServer(io) {
             try {
                 pendingCancelRandom.delete(socket.id);
                 if (emitUpdateRequired(socket, auth))
+                    return;
+                if (rejectMatchmakingForMaintenance(socket))
                     return;
                 await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
                 const profile = await resolvePlayerProfileCached(socket, auth, nickname);
@@ -1367,6 +1444,8 @@ function initSocketServer(io) {
         socket.on('join_coop', async ({ nickname, auth, pieceSkin }) => {
             try {
                 if (emitUpdateRequired(socket, auth))
+                    return;
+                if (rejectMatchmakingForMaintenance(socket))
                     return;
                 await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
                 const profile = await resolvePlayerProfileCached(socket, auth, nickname);
@@ -1532,6 +1611,8 @@ function initSocketServer(io) {
             try {
                 if (emitUpdateRequired(socket, auth))
                     return;
+                if (rejectMatchmakingForMaintenance(socket))
+                    return;
                 await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
                 const profile = await resolvePlayerProfileCached(socket, auth, nickname);
                 if (!io.sockets.sockets.has(socket.id))
@@ -1551,6 +1632,8 @@ function initSocketServer(io) {
         socket.on('join_ability', async ({ nickname, auth, pieceSkin, boardSkin, equippedSkills, training, }) => {
             try {
                 if (emitUpdateRequired(socket, auth))
+                    return;
+                if (!training && rejectMatchmakingForMaintenance(socket))
                     return;
                 await registerSocketSession(socket, auth, { allowConcurrentSessions: true });
                 const profile = await resolvePlayerProfileCached(socket, auth, nickname);

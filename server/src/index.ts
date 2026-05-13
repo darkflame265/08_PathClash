@@ -9,6 +9,7 @@ import { initSocketServer } from "./socket/socketServer";
 import { initRotation } from './services/rotationService';
 import { getAndroidVersionStatus } from "./config/appVersion";
 import { getUserFromToken } from "./services/playerAuth";
+import { maintenanceController } from "./services/maintenanceService";
 
 process.on('uncaughtException', (error) => {
   console.error('[fatal] uncaughtException:', error);
@@ -83,7 +84,10 @@ function applyApiCors(origin: string | undefined, res: Response) {
   res.setHeader("Access-Control-Allow-Origin", origin);
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Admin-Token",
+  );
   return true;
 }
 
@@ -126,6 +130,95 @@ const io = new Server(httpServer, {
 });
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
+
+function isAdminRequest(req: Request): boolean {
+  const configuredToken = process.env.MAINTENANCE_ADMIN_TOKEN?.trim();
+  if (!configuredToken) return false;
+  const authHeader = req.header("Authorization") ?? "";
+  const bearerToken = authHeader.startsWith("Bearer ")
+    ? authHeader.slice("Bearer ".length).trim()
+    : "";
+  const headerToken = req.header("X-Admin-Token")?.trim() ?? "";
+  return bearerToken === configuredToken || headerToken === configuredToken;
+}
+
+function parseMaintenanceStart(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.trunc(value);
+  }
+  if (typeof value !== "string") return null;
+  const numeric = Number(value);
+  if (Number.isFinite(numeric)) return Math.trunc(numeric);
+  const parsedDate = Date.parse(value);
+  return Number.isFinite(parsedDate) ? parsedDate : null;
+}
+
+function readMinutes(value: unknown, fallback: number): number {
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? Math.max(0, parsed) : fallback;
+}
+
+app.get("/admin/maintenance", (req, res) => {
+  if (!isAdminRequest(req)) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
+  }
+  res.json(maintenanceController.getStatus());
+});
+
+app.post("/admin/maintenance/schedule", (req, res) => {
+  if (!isAdminRequest(req)) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
+  }
+
+  const startsAt = parseMaintenanceStart(req.body?.startsAt);
+  if (startsAt === null) {
+    res.status(400).json({ error: "invalid_startsAt" });
+    return;
+  }
+
+  try {
+    res.json(
+      maintenanceController.schedule({
+        startsAt,
+        noticeBeforeMs: readMinutes(req.body?.noticeMinutes, 10) * 60 * 1000,
+        matchmakingLockBeforeMs:
+          readMinutes(req.body?.lockMinutes, 5) * 60 * 1000,
+        graceMs: readMinutes(req.body?.graceMinutes, 3) * 60 * 1000,
+        message:
+          typeof req.body?.message === "string" ? req.body.message : null,
+      }),
+    );
+  } catch (error) {
+    res.status(400).json({
+      error: error instanceof Error ? error.message : "invalid_request",
+    });
+  }
+});
+
+app.post("/admin/maintenance/start", (req, res) => {
+  if (!isAdminRequest(req)) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
+  }
+
+  res.json(
+    maintenanceController.startNow({
+      graceMs: readMinutes(req.body?.graceMinutes, 3) * 60 * 1000,
+      message: typeof req.body?.message === "string" ? req.body.message : null,
+    }),
+  );
+});
+
+app.post("/admin/maintenance/cancel", (req, res) => {
+  if (!isAdminRequest(req)) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
+  }
+
+  res.json(maintenanceController.cancel());
+});
 
 app.get("/app-version/android", (req, res) => {
   const versionCodeParam =
