@@ -2019,6 +2019,7 @@
   padding-right: 0.1rem;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  contain: layout paint style;
 }
 
 .skin-option-grid::-webkit-scrollbar {
@@ -2144,6 +2145,9 @@
   min-height: 0;
   height: auto;
   padding: 0.78rem 0.5rem 0.62rem;
+  contain: layout paint style;
+  content-visibility: auto;
+  contain-intrinsic-size: 7.25rem 7.25rem;
 }
 
 .skin-preview {
@@ -2165,6 +2169,14 @@
   height: 2.25rem;
   transform: scale(1.62);
   margin-top: 0.2rem;
+}
+
+.skin-picker-preview.is-preview-suspended,
+.skin-picker-preview.is-preview-suspended::before,
+.skin-picker-preview.is-preview-suspended::after,
+.skin-picker-preview.is-preview-suspended *,
+.skin-picker-preview.is-preview-suspended canvas {
+  animation-play-state: paused !important;
 }
 
 .skin-preview.skin-preview-atomic {

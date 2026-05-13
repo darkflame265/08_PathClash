@@ -1,5 +1,7 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import type { RefObject } from "react";
+
 import { AtomicPreview } from "../../skins/legendary/atomic/Preview";
 import { ChronosPreview } from "../../skins/legendary/chronos/Preview";
 import { FrostHeartPreview } from "../../skins/legendary/frost_heart/Preview";
@@ -150,6 +152,95 @@ type LobbyModeKey =
   | "2v2"
   | "ability"
   | "skill_ranked";
+
+function PieceSkinPreviewContent({
+  skinId,
+  atomicPreviewReady,
+}: {
+  skinId: PieceSkin;
+  atomicPreviewReady: boolean;
+}) {
+  return (
+    <>
+      {skinId === "plasma" && <PlasmaPreview />}
+      {skinId === "gold_core" && <GoldCorePreview />}
+      {skinId === "neon_pulse" && <NeonPulsePreview />}
+      {skinId === "cosmic" && <CosmicPreview />}
+      {skinId === "inferno" && <InfernoPreview />}
+      {skinId === "arc_reactor" && <ArcReactorPreview />}
+      {skinId === "electric_core" && <ElectricCorePreview />}
+      {skinId === "berserker" && <BerserkerPreview />}
+      {skinId === "moonlight_seed" && <MoonlightSeedPreview />}
+      {skinId === "quantum" && <QuantumPreview />}
+      {skinId === "wizard" && <WizardPreview />}
+      {skinId === "atomic" && <AtomicPreview ready={atomicPreviewReady} />}
+      {skinId === "chronos" && <ChronosPreview />}
+      {skinId === "sun" && <SunPreview />}
+      {skinId === "frost_heart" && <FrostHeartPreview />}
+    </>
+  );
+}
+
+function LazyPieceSkinPreview({
+  skinId,
+  atomicPreviewReady,
+  className,
+  eager = false,
+  scrollRootRef,
+}: {
+  skinId: PieceSkin;
+  atomicPreviewReady: boolean;
+  className: string;
+  eager?: boolean;
+  scrollRootRef: RefObject<HTMLDivElement | null>;
+}) {
+  const previewRef = useRef<HTMLSpanElement | null>(null);
+  const [isNearViewport, setIsNearViewport] = useState(eager);
+
+  useEffect(() => {
+    if (eager) {
+      setIsNearViewport(true);
+      return;
+    }
+
+    const preview = previewRef.current;
+    if (!preview || typeof IntersectionObserver === "undefined") {
+      setIsNearViewport(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsNearViewport(entry.isIntersecting);
+      },
+      {
+        root: scrollRootRef.current,
+        rootMargin: "240px 0px",
+        threshold: 0,
+      },
+    );
+
+    observer.observe(preview);
+    return () => observer.disconnect();
+  }, [eager, scrollRootRef]);
+
+  return (
+    <span
+      ref={previewRef}
+      className={`${className} skin-preview-${skinId}${
+        isNearViewport ? "" : " is-preview-suspended"
+      }`}
+      aria-hidden="true"
+    >
+      {isNearViewport && (
+        <PieceSkinPreviewContent
+          skinId={skinId}
+          atomicPreviewReady={atomicPreviewReady}
+        />
+      )}
+    </span>
+  );
+}
 
 const DISABLED_LOBBY_MODES = new Set<LobbyModeKey>([
   "2v2",
@@ -1074,6 +1165,7 @@ export function LobbyScreen({
     ((confirmed: boolean) => void) | null
   >(null);
   const skinFloatingMessageIdRef = useRef(0);
+  const skinOptionGridRef = useRef<HTMLDivElement | null>(null);
 
   const langRef = useRef(lang);
   langRef.current = lang;
@@ -2096,21 +2188,10 @@ export function LobbyScreen({
     className = "skin-preview",
   ) => (
     <span className={`${className} skin-preview-${skinId}`} aria-hidden="true">
-      {skinId === "plasma" && <PlasmaPreview />}
-      {skinId === "gold_core" && <GoldCorePreview />}
-      {skinId === "neon_pulse" && <NeonPulsePreview />}
-      {skinId === "cosmic" && <CosmicPreview />}
-      {skinId === "inferno" && <InfernoPreview />}
-      {skinId === "arc_reactor" && <ArcReactorPreview />}
-      {skinId === "electric_core" && <ElectricCorePreview />}
-      {skinId === "berserker" && <BerserkerPreview />}
-      {skinId === "moonlight_seed" && <MoonlightSeedPreview />}
-      {skinId === "quantum" && <QuantumPreview />}
-      {skinId === "wizard" && <WizardPreview />}
-      {skinId === "atomic" && <AtomicPreview ready={atomicPreviewReady} />}
-      {skinId === "chronos" && <ChronosPreview />}
-      {skinId === "sun" && <SunPreview />}
-      {skinId === "frost_heart" && <FrostHeartPreview />}
+      <PieceSkinPreviewContent
+        skinId={skinId}
+        atomicPreviewReady={atomicPreviewReady}
+      />
     </span>
   );
 
@@ -4539,7 +4620,7 @@ export function LobbyScreen({
               {skinCollectionSummary}
             </p>
 
-            <div className="skin-option-grid">
+            <div className="skin-option-grid" ref={skinOptionGridRef}>
               {skinChoices.map((choice, index) => {
                 const isOwned = ownedSkins.includes(choice.id);
                 const isUnlocked = isPieceSkinUnlocked(choice);
@@ -4567,10 +4648,13 @@ export function LobbyScreen({
                     disabled={false}
                     type="button"
                   >
-                    {renderPieceSkinPreview(
-                      choice.id,
-                      "skin-preview skin-picker-preview",
-                    )}
+                    <LazyPieceSkinPreview
+                      skinId={choice.id}
+                      atomicPreviewReady={atomicPreviewReady}
+                      className="skin-preview skin-picker-preview"
+                      eager={index < 8 || pieceSkin === choice.id}
+                      scrollRootRef={skinOptionGridRef}
+                    />
 
                     <span className="skin-option-copy skin-picker-copy">
                       <strong
