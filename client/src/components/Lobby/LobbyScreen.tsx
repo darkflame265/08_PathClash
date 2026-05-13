@@ -4320,8 +4320,13 @@ export function LobbyScreen({
           <figure
             className="lobby-arena-showcase"
             aria-label={lobbyArenaImageAlt}
-            onClick={() => {
+            onPointerDown={() => {
               if (!isSfxMuted) playLobbyClick(sfxVolume);
+            }}
+            onClick={(event) => {
+              if (event.detail === 0 && !isSfxMuted) {
+                playLobbyClick(sfxVolume);
+              }
               setShowArenaGallery(true);
             }}
           >

@@ -4798,16 +4798,21 @@ export function AbilityScreen({ onLeaveToLobby, screenReadyAt }: Props) {
                 type="button"
                 className={`ability-skill-btn ${reserved ? "is-selected" : ""} ${selectedSkillId === skillId ? "is-active" : ""}`}
                 disabled={disabled}
-                onPointerDown={() => handleSkillPressStart(skillId)}
+                onPointerDown={() => {
+                  if (!isSfxMuted) {
+                    playLobbyClick(sfxVolume);
+                  }
+                  handleSkillPressStart(skillId);
+                }}
                 onPointerUp={handleSkillPressEnd}
                 onPointerLeave={handleSkillPressEnd}
                 onPointerCancel={handleSkillPressEnd}
-                onClick={() => {
+                onClick={(event) => {
                   if (longPressTriggeredRef.current) {
                     longPressTriggeredRef.current = false;
                     return;
                   }
-                  if (!isSfxMuted) {
+                  if (event.detail === 0 && !isSfxMuted) {
                     playLobbyClick(sfxVolume);
                   }
                   setMySkillInfo(null);
