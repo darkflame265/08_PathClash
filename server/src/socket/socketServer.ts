@@ -27,6 +27,7 @@ import {
   finalizeGoogleUpgrade,
   grantDailyRewardTokens,
   getUserFromToken,
+  openVictoryVault,
   recordMatchmakingResult,
   resolveAccount,
   resolveAccountForUser,
@@ -1996,6 +1997,22 @@ export function initSocketServer(io: Server): void {
         } catch (err) {
           console.error('[achievements_sync_settings] handler error:', err);
           ack?.({ ok: true, status: 'AUTH_INVALID' });
+        }
+      },
+    );
+
+    socket.on(
+      'open_victory_vault',
+      async (
+        { auth }: { auth?: AuthPayload },
+        ack?: (response: Awaited<ReturnType<typeof openVictoryVault>>) => void,
+      ) => {
+        try {
+          await registerSocketSession(socket, auth, { forceRevalidate: true });
+          ack?.(await openVictoryVault(auth));
+        } catch (err) {
+          console.error('[open_victory_vault] handler error:', err);
+          ack?.({ status: 'FAILED' });
         }
       },
     );

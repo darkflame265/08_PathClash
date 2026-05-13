@@ -73,6 +73,9 @@ interface GameStore {
   equippedAbilitySkills?: AbilitySkillId[];
   accountDailyRewardWins: number;
   accountDailyRewardTokens: number;
+  accountVaultWins: number;
+  accountVaultRequiredWins: number;
+  accountVaultOpenedToday: boolean;
   accountAchievements: Array<{
     achievementId: string;
     progress: number;
@@ -166,6 +169,9 @@ interface GameStore {
     tokens?: number;
     dailyRewardWins?: number;
     dailyRewardTokens?: number;
+    vaultWins?: number;
+    vaultRequiredWins?: number;
+    vaultOpenedToday?: boolean;
     achievements?: Array<{
       achievementId: string;
       progress: number;
@@ -357,6 +363,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   ownedBoardSkins: [],
   accountDailyRewardWins: 0,
   accountDailyRewardTokens: 0,
+  accountVaultWins: 0,
+  accountVaultRequiredWins: 3,
+  accountVaultOpenedToday: false,
   accountAchievements: [],
   currentMatchType: null,
   isLocalAbilityTraining: false,
@@ -424,6 +433,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     tokens,
     dailyRewardWins,
     dailyRewardTokens,
+    vaultWins,
+    vaultRequiredWins,
+    vaultOpenedToday,
     achievements,
     currentRating,
     highestArena,
@@ -466,6 +478,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       accountDailyRewardWins: dailyRewardWins ?? state.accountDailyRewardWins,
       accountDailyRewardTokens:
         dailyRewardTokens ?? state.accountDailyRewardTokens,
+      accountVaultWins: vaultWins ?? state.accountVaultWins,
+      accountVaultRequiredWins:
+        vaultRequiredWins ?? state.accountVaultRequiredWins,
+      accountVaultOpenedToday:
+        vaultOpenedToday ?? state.accountVaultOpenedToday,
       accountAchievements: achievements ?? state.accountAchievements,
       currentRating: currentRating ?? state.currentRating,
       highestArena: highestArena ?? state.highestArena,

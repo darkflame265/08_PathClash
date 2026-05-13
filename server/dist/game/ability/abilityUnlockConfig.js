@@ -18,6 +18,7 @@ const SKILL_BY_SKIN = {
     ember: 'ember_blast',
     gold_core: 'gold_overdrive',
     inferno: 'inferno_field',
+    moonlight_seed: 'root_wall',
     neon_pulse: 'phase_shift',
     nova: 'nova_blast',
     plasma: 'plasma_charge',
@@ -25,6 +26,7 @@ const SKILL_BY_SKIN = {
     sun: 'sun_chariot',
     void: 'void_cloak',
     wizard: 'wizard_magic_mine',
+    frost_heart: 'ice_field',
 };
 const DEFAULT_ARENA_REWARD_SKINS = {
     1: ['cosmic', 'plasma'],
@@ -33,7 +35,9 @@ const DEFAULT_ARENA_REWARD_SKINS = {
     4: ['electric_core'],
     5: ['wizard'],
     6: ['sun', 'gold_core'],
+    7: ['moonlight_seed'],
     8: ['atomic', 'arc_reactor'],
+    9: ['frost_heart'],
     10: ['chronos'],
 };
 exports.WIN_UNLOCKED_ABILITY_SKILLS = [

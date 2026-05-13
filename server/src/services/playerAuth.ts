@@ -51,6 +51,9 @@ export interface AccountProfile {
   tokens: number;
   dailyRewardWins: number;
   dailyRewardTokens: number;
+  vaultWins: number;
+  vaultRequiredWins: number;
+  vaultOpenedToday: boolean;
   isGuestUser: boolean;
   achievements: PlayerAchievementState[];
   rotationSkills: AbilitySkillId[];
@@ -85,6 +88,9 @@ interface StatsRow {
   tokens: number | null;
   daily_reward_wins: number | null;
   daily_reward_day: string | null;
+  vault_wins?: number | null;
+  vault_day?: string | null;
+  vault_opened_day?: string | null;
   current_rating: number | null;
   highest_arena_reached: number | null;
   ranked_unlocked: boolean | null;
@@ -147,6 +153,7 @@ function normalizeAbilityPresets(
 
 const DAILY_REWARD_TOKENS_PER_WIN = 6;
 const DAILY_REWARD_MAX_WINS = 20;
+const VAULT_REQUIRED_WINS = 3;
 const VERIFIED_USER_CACHE_TTL_MS = 60 * 1000;
 const VERIFIED_USER_CACHE_MAX_ENTRIES = 500;
 const verifiedUserCache = new Map<string, { expiresAt: number; user: User }>();
@@ -218,6 +225,112 @@ function getActiveDailyRewardWins(
   return Math.min(DAILY_REWARD_MAX_WINS, Math.max(0, Number(stats.daily_reward_wins ?? 0)));
 }
 
+function getActiveVaultWins(
+  stats: Pick<StatsRow, 'vault_wins' | 'vault_day' | 'vault_opened_day'> | null | undefined,
+  utcDayKey = getUtcDayKey(),
+): number {
+  if (!stats || stats.vault_opened_day === utcDayKey || stats.vault_day !== utcDayKey) {
+    return 0;
+  }
+  return Math.min(VAULT_REQUIRED_WINS, Math.max(0, Number(stats.vault_wins ?? 0)));
+}
+
+function hasVaultOpenedToday(
+  stats: Pick<StatsRow, 'vault_opened_day'> | null | undefined,
+  utcDayKey = getUtcDayKey(),
+): boolean {
+  return stats?.vault_opened_day === utcDayKey;
+}
+
+function getNextVaultWinsAfterVictory(
+  stats: Pick<StatsRow, 'vault_wins' | 'vault_day' | 'vault_opened_day'>,
+  utcDayKey = getUtcDayKey(),
+): number {
+  if (hasVaultOpenedToday(stats, utcDayKey)) return 0;
+  const activeVaultWins = stats.vault_day === utcDayKey
+    ? Math.max(0, Number(stats.vault_wins ?? 0))
+    : 0;
+  return Math.min(VAULT_REQUIRED_WINS, activeVaultWins + 1);
+}
+
+type VaultSkinTier = 'common' | 'rare' | 'legendary';
+
+const VAULT_SKIN_CATALOG: Array<{
+  id: PieceSkin;
+  tier: VaultSkinTier;
+  tokenPrice: number;
+}> = [
+  { id: 'plasma', tier: 'common', tokenPrice: 480 },
+  { id: 'gold_core', tier: 'common', tokenPrice: 480 },
+  { id: 'neon_pulse', tier: 'common', tokenPrice: 480 },
+  { id: 'inferno', tier: 'common', tokenPrice: 480 },
+  { id: 'quantum', tier: 'common', tokenPrice: 480 },
+  { id: 'cosmic', tier: 'rare', tokenPrice: 1400 },
+  { id: 'arc_reactor', tier: 'rare', tokenPrice: 1400 },
+  { id: 'electric_core', tier: 'rare', tokenPrice: 1400 },
+  { id: 'berserker', tier: 'rare', tokenPrice: 1400 },
+  { id: 'moonlight_seed', tier: 'rare', tokenPrice: 1400 },
+  { id: 'wizard', tier: 'legendary', tokenPrice: 3600 },
+  { id: 'chronos', tier: 'legendary', tokenPrice: 3600 },
+  { id: 'atomic', tier: 'legendary', tokenPrice: 3600 },
+  { id: 'sun', tier: 'legendary', tokenPrice: 3600 },
+  { id: 'frost_heart', tier: 'legendary', tokenPrice: 3600 },
+];
+
+const VAULT_TOKEN_REWARDS = [
+  { chance: 0.5, tokens: 50 },
+  { chance: 0.3, tokens: 100 },
+  { chance: 0.16, tokens: 300 },
+  { chance: 0.03, tokens: 800 },
+  { chance: 0.009, tokens: 3000 },
+  { chance: 0.001, tokens: 10000 },
+] as const;
+
+const VAULT_SKIN_TIER_WEIGHTS: Record<VaultSkinTier, number> = {
+  common: 60,
+  rare: 30,
+  legendary: 10,
+};
+
+function rollVaultTokenReward(): number {
+  const roll = Math.random();
+  let cumulative = 0;
+  for (const reward of VAULT_TOKEN_REWARDS) {
+    cumulative += reward.chance;
+    if (roll < cumulative) return reward.tokens;
+  }
+  return VAULT_TOKEN_REWARDS[0].tokens;
+}
+
+function pickWeightedVaultSkin(): typeof VAULT_SKIN_CATALOG[number] | null {
+  if (VAULT_SKIN_CATALOG.length === 0) return null;
+  const totalWeight = VAULT_SKIN_CATALOG.reduce(
+    (sum, skin) => sum + VAULT_SKIN_TIER_WEIGHTS[skin.tier],
+    0,
+  );
+  let roll = Math.random() * totalWeight;
+  for (const skin of VAULT_SKIN_CATALOG) {
+    roll -= VAULT_SKIN_TIER_WEIGHTS[skin.tier];
+    if (roll <= 0) return skin;
+  }
+  return VAULT_SKIN_CATALOG[VAULT_SKIN_CATALOG.length - 1] ?? null;
+}
+
+export type OpenVictoryVaultResponse =
+  | {
+      status: 'OPENED';
+      rewardTokens: number;
+      bonusSkin: PieceSkin | null;
+      duplicateSkin: PieceSkin | null;
+      duplicateCompensationTokens: number;
+      tokens: number;
+      ownedSkins: PieceSkin[];
+      vaultWins: number;
+      vaultRequiredWins: number;
+      vaultOpenedToday: boolean;
+    }
+  | { status: 'AUTH_REQUIRED' | 'AUTH_INVALID' | 'NOT_READY' | 'ALREADY_OPENED' | 'FAILED' };
+
 export async function getUserFromToken(accessToken?: string) {
   const normalizedToken = accessToken?.trim();
   if (!supabaseAdmin || !normalizedToken) return null;
@@ -257,7 +370,7 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
 
   const statsPromise = supabaseAdmin
     ?.from('player_stats')
-    .select('wins, losses, tokens, daily_reward_wins, daily_reward_day, current_rating, highest_arena_reached, ranked_unlocked')
+    .select('wins, losses, tokens, daily_reward_wins, daily_reward_day, vault_wins, vault_day, vault_opened_day, current_rating, highest_arena_reached, ranked_unlocked')
     .eq('user_id', userId)
     .maybeSingle<StatsRow>();
 
@@ -284,6 +397,7 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
   });
   const nickname = profileResult?.data?.nickname?.trim() || fallbackNickname;
   const dailyRewardWins = getActiveDailyRewardWins(statsResult?.data);
+  const vaultWins = getActiveVaultWins(statsResult?.data);
   const ownedSkins = (ownedSkinsResult?.data ?? [])
     .map((row) => row.skin_id)
     .filter((skin): skin is PieceSkin => Boolean(skin));
@@ -359,6 +473,9 @@ async function readAccountProfile(userId: string, fallbackNickname = 'Guest', is
     tokens: statsResult?.data?.tokens ?? 0,
     dailyRewardWins,
     dailyRewardTokens: dailyRewardWins * DAILY_REWARD_TOKENS_PER_WIN,
+    vaultWins,
+    vaultRequiredWins: VAULT_REQUIRED_WINS,
+    vaultOpenedToday: hasVaultOpenedToday(statsResult?.data),
     isGuestUser,
     achievements,
     rotationSkills: activeRotation,
@@ -452,7 +569,7 @@ export async function recordMatchmakingResult(
 
   const { data: rows, error } = await supabaseAdmin
     .from('player_stats')
-    .select('user_id, wins, losses, tokens, daily_reward_wins, daily_reward_day')
+    .select('user_id, wins, losses, tokens, daily_reward_wins, daily_reward_day, vault_wins, vault_day, vault_opened_day, current_rating, highest_arena_reached, ranked_unlocked')
     .in('user_id', [winnerUserId, loserUserId]);
 
   if (error) {
@@ -469,6 +586,9 @@ export async function recordMatchmakingResult(
         tokens: Number(row.tokens ?? 0),
         dailyRewardWins: Number(row.daily_reward_wins ?? 0),
         dailyRewardDay: row.daily_reward_day ?? null,
+        vaultWins: Number(row.vault_wins ?? 0),
+        vaultDay: row.vault_day ?? null,
+        vaultOpenedDay: row.vault_opened_day ?? null,
       },
     ]),
   );
@@ -479,6 +599,9 @@ export async function recordMatchmakingResult(
     tokens: 0,
     dailyRewardWins: 0,
     dailyRewardDay: null,
+    vaultWins: 0,
+    vaultDay: null,
+    vaultOpenedDay: null,
   };
   const loser = byId.get(loserUserId) ?? {
     wins: 0,
@@ -486,6 +609,9 @@ export async function recordMatchmakingResult(
     tokens: 0,
     dailyRewardWins: 0,
     dailyRewardDay: null,
+    vaultWins: 0,
+    vaultDay: null,
+    vaultOpenedDay: null,
   };
   const utcDayKey = getUtcDayKey();
   const winnerActiveDailyWins = winner.dailyRewardDay === utcDayKey
@@ -505,6 +631,13 @@ export async function recordMatchmakingResult(
         tokens: winner.tokens + (winnerEarnedReward ? DAILY_REWARD_TOKENS_PER_WIN : 0),
         daily_reward_wins: nextWinnerDailyRewardWins,
         daily_reward_day: utcDayKey,
+        vault_wins: getNextVaultWinsAfterVictory({
+          vault_wins: winner.vaultWins,
+          vault_day: winner.vaultDay,
+          vault_opened_day: winner.vaultOpenedDay,
+        }, utcDayKey),
+        vault_day: utcDayKey,
+        vault_opened_day: winner.vaultOpenedDay,
       },
       {
         user_id: loserUserId,
@@ -513,6 +646,9 @@ export async function recordMatchmakingResult(
         tokens: loser.tokens,
         daily_reward_wins: loser.dailyRewardWins,
         daily_reward_day: loser.dailyRewardDay,
+        vault_wins: loser.vaultWins,
+        vault_day: loser.vaultDay,
+        vault_opened_day: loser.vaultOpenedDay,
       },
     ],
     { onConflict: 'user_id' },
@@ -535,7 +671,7 @@ export async function recordMatchmakingWin(
 
   const { data: row, error } = await supabaseAdmin
     .from('player_stats')
-    .select('user_id, wins, losses, tokens, daily_reward_wins, daily_reward_day')
+    .select('user_id, wins, losses, tokens, daily_reward_wins, daily_reward_day, vault_wins, vault_day, vault_opened_day')
     .eq('user_id', winnerUserId)
     .maybeSingle();
 
@@ -550,6 +686,9 @@ export async function recordMatchmakingWin(
     tokens: Number(row?.tokens ?? 0),
     dailyRewardWins: Number(row?.daily_reward_wins ?? 0),
     dailyRewardDay: row?.daily_reward_day ?? null,
+    vaultWins: Number(row?.vault_wins ?? 0),
+    vaultDay: row?.vault_day ?? null,
+    vaultOpenedDay: row?.vault_opened_day ?? null,
   };
 
   const utcDayKey = getUtcDayKey();
@@ -569,6 +708,13 @@ export async function recordMatchmakingWin(
       tokens: winner.tokens + (winnerEarnedReward ? DAILY_REWARD_TOKENS_PER_WIN : 0),
       daily_reward_wins: nextWinnerDailyRewardWins,
       daily_reward_day: utcDayKey,
+      vault_wins: getNextVaultWinsAfterVictory({
+        vault_wins: winner.vaultWins,
+        vault_day: winner.vaultDay,
+        vault_opened_day: winner.vaultOpenedDay,
+      }, utcDayKey),
+      vault_day: utcDayKey,
+      vault_opened_day: winner.vaultOpenedDay,
     },
     { onConflict: 'user_id' },
   );
@@ -590,7 +736,7 @@ export async function recordMatchmakingLoss(
 
   const { data: row, error } = await supabaseAdmin
     .from('player_stats')
-    .select('user_id, wins, losses, tokens, daily_reward_wins, daily_reward_day')
+    .select('user_id, wins, losses, tokens, daily_reward_wins, daily_reward_day, vault_wins, vault_day, vault_opened_day')
     .eq('user_id', loserUserId)
     .maybeSingle();
 
@@ -605,6 +751,9 @@ export async function recordMatchmakingLoss(
     tokens: Number(row?.tokens ?? 0),
     dailyRewardWins: Number(row?.daily_reward_wins ?? 0),
     dailyRewardDay: row?.daily_reward_day ?? null,
+    vaultWins: Number(row?.vault_wins ?? 0),
+    vaultDay: row?.vault_day ?? null,
+    vaultOpenedDay: row?.vault_opened_day ?? null,
   };
 
   const { error: upsertError } = await supabaseAdmin.from('player_stats').upsert(
@@ -615,6 +764,9 @@ export async function recordMatchmakingLoss(
       tokens: loser.tokens,
       daily_reward_wins: loser.dailyRewardWins,
       daily_reward_day: loser.dailyRewardDay,
+      vault_wins: loser.vaultWins,
+      vault_day: loser.vaultDay,
+      vault_opened_day: loser.vaultOpenedDay,
     },
     { onConflict: 'user_id' },
   );
@@ -640,7 +792,7 @@ export async function grantDailyRewardTokens(
 
   const { data: rows, error } = await supabaseAdmin
     .from('player_stats')
-    .select('user_id, wins, losses, tokens, daily_reward_wins, daily_reward_day')
+    .select('user_id, wins, losses, tokens, daily_reward_wins, daily_reward_day, vault_wins, vault_day, vault_opened_day')
     .in('user_id', normalizedUserIds);
 
   if (error) {
@@ -657,6 +809,9 @@ export async function grantDailyRewardTokens(
         tokens: Number(row.tokens ?? 0),
         dailyRewardWins: Number(row.daily_reward_wins ?? 0),
         dailyRewardDay: row.daily_reward_day ?? null,
+        vaultWins: Number(row.vault_wins ?? 0),
+        vaultDay: row.vault_day ?? null,
+        vaultOpenedDay: row.vault_opened_day ?? null,
       },
     ]),
   );
@@ -668,12 +823,21 @@ export async function grantDailyRewardTokens(
       tokens: 0,
       dailyRewardWins: 0,
       dailyRewardDay: null,
+      vaultWins: 0,
+      vaultDay: null,
+      vaultOpenedDay: null,
     };
     const activeDailyWins = current.dailyRewardDay === utcDayKey
       ? Math.min(DAILY_REWARD_MAX_WINS, Math.max(0, current.dailyRewardWins))
       : 0;
     const remainingRewardWins = Math.max(0, DAILY_REWARD_MAX_WINS - activeDailyWins);
     const grantedRewardWins = Math.min(rewardWins, remainingRewardWins);
+    const activeVaultWins = current.vaultDay === utcDayKey && current.vaultOpenedDay !== utcDayKey
+      ? Math.max(0, current.vaultWins)
+      : 0;
+    const nextVaultWins = current.vaultOpenedDay === utcDayKey
+      ? 0
+      : Math.min(VAULT_REQUIRED_WINS, activeVaultWins + rewardWins);
 
     return {
       user_id: userId,
@@ -682,6 +846,9 @@ export async function grantDailyRewardTokens(
       tokens: current.tokens + grantedRewardWins * DAILY_REWARD_TOKENS_PER_WIN,
       daily_reward_wins: activeDailyWins + grantedRewardWins,
       daily_reward_day: utcDayKey,
+      vault_wins: nextVaultWins,
+      vault_day: utcDayKey,
+      vault_opened_day: current.vaultOpenedDay,
     };
   });
 
@@ -695,6 +862,128 @@ export async function grantDailyRewardTokens(
   }
 
   await recordDailyRewardGrant(normalizedUserIds, rewardWins);
+}
+
+export async function openVictoryVault(
+  auth: AuthPayload | undefined,
+): Promise<OpenVictoryVaultResponse> {
+  if (!supabaseAdmin || !auth?.accessToken) return { status: 'AUTH_REQUIRED' };
+
+  const user = await getUserFromToken(auth.accessToken);
+  if (!user) return { status: 'AUTH_INVALID' };
+
+  const userId = user.id;
+  const utcDayKey = getUtcDayKey();
+
+  const { data: statsRow, error: statsError } = await supabaseAdmin
+    .from('player_stats')
+    .select('user_id, wins, losses, tokens, daily_reward_wins, daily_reward_day, vault_wins, vault_day, vault_opened_day')
+    .eq('user_id', userId)
+    .maybeSingle<StatsRow & { user_id?: string | null }>();
+
+  if (statsError) {
+    console.error('[vault] failed to read player_stats', statsError);
+    return { status: 'FAILED' };
+  }
+
+  if (hasVaultOpenedToday(statsRow, utcDayKey)) {
+    return { status: 'ALREADY_OPENED' };
+  }
+
+  const activeVaultWins = getActiveVaultWins(statsRow, utcDayKey);
+  if (activeVaultWins < VAULT_REQUIRED_WINS) {
+    return { status: 'NOT_READY' };
+  }
+
+  const { data: ownedRows, error: ownedError } = await supabaseAdmin
+    .from('owned_skins')
+    .select('skin_id')
+    .eq('user_id', userId)
+    .returns<OwnedSkinRow[]>();
+
+  if (ownedError) {
+    console.error('[vault] failed to read owned skins', ownedError);
+    return { status: 'FAILED' };
+  }
+
+  const ownedSkins = (ownedRows ?? [])
+    .map((row) => row.skin_id)
+    .filter((skin): skin is PieceSkin => Boolean(skin));
+  const ownedSkinSet = new Set<PieceSkin>(ownedSkins);
+  const rewardTokens = rollVaultTokenReward();
+  let bonusSkin: PieceSkin | null = null;
+  let duplicateSkin: PieceSkin | null = null;
+  let duplicateCompensationTokens = 0;
+  let newlyOwnedSkins = ownedSkins;
+
+  if (Math.random() < 0.01) {
+    const rolledSkin = pickWeightedVaultSkin();
+    if (rolledSkin) {
+      if (ownedSkinSet.has(rolledSkin.id)) {
+        duplicateSkin = rolledSkin.id;
+        duplicateCompensationTokens = Math.floor(rolledSkin.tokenPrice * 0.5);
+      } else {
+        bonusSkin = rolledSkin.id;
+        const { error: skinInsertError } = await supabaseAdmin
+          .from('owned_skins')
+          .upsert(
+            { user_id: userId, skin_id: rolledSkin.id },
+            { onConflict: 'user_id,skin_id' },
+          );
+        if (skinInsertError) {
+          console.error('[vault] failed to grant bonus skin', skinInsertError);
+          return { status: 'FAILED' };
+        }
+        newlyOwnedSkins = [...ownedSkins, rolledSkin.id];
+      }
+    }
+  }
+
+  const totalTokensGranted = rewardTokens + duplicateCompensationTokens;
+  const currentTokens = Number(statsRow?.tokens ?? 0);
+  const nextTokens = currentTokens + totalTokensGranted;
+
+  const { error: upsertError } = await supabaseAdmin
+    .from('player_stats')
+    .upsert(
+      {
+        user_id: userId,
+        wins: Number(statsRow?.wins ?? 0),
+        losses: Number(statsRow?.losses ?? 0),
+        tokens: nextTokens,
+        daily_reward_wins: Number(statsRow?.daily_reward_wins ?? 0),
+        daily_reward_day: statsRow?.daily_reward_day ?? null,
+        vault_wins: 0,
+        vault_day: utcDayKey,
+        vault_opened_day: utcDayKey,
+        current_rating: Number(statsRow?.current_rating ?? 0),
+        highest_arena_reached: Number(statsRow?.highest_arena_reached ?? 1),
+        ranked_unlocked: Boolean(statsRow?.ranked_unlocked ?? false),
+      },
+      { onConflict: 'user_id' },
+    );
+
+  if (upsertError) {
+    console.error('[vault] failed to update player_stats', upsertError);
+    return { status: 'FAILED' };
+  }
+
+  if (bonusSkin) {
+    await syncAchievementDerivedProgress({ userId, ownedSkins: newlyOwnedSkins });
+  }
+
+  return {
+    status: 'OPENED',
+    rewardTokens,
+    bonusSkin,
+    duplicateSkin,
+    duplicateCompensationTokens,
+    tokens: nextTokens,
+    ownedSkins: newlyOwnedSkins,
+    vaultWins: 0,
+    vaultRequiredWins: VAULT_REQUIRED_WINS,
+    vaultOpenedToday: true,
+  };
 }
 
 export async function finalizeGoogleUpgrade(

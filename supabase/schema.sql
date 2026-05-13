@@ -44,6 +44,15 @@ alter table public.player_stats
 add column if not exists daily_reward_day date;
 
 alter table public.player_stats
+add column if not exists vault_wins integer not null default 0;
+
+alter table public.player_stats
+add column if not exists vault_day date;
+
+alter table public.player_stats
+add column if not exists vault_opened_day date;
+
+alter table public.player_stats
 add column if not exists current_rating integer not null default 0;
 
 alter table public.player_stats
@@ -450,6 +459,8 @@ as $$
 declare
   current_day text := to_char(timezone('utc', now()), 'YYYY-MM-DD');
   reward_wins integer := 0;
+  vault_wins_today integer := 0;
+  vault_opened_today boolean := false;
 begin
   if target_user_id is null or auth.uid() is null or auth.uid() <> target_user_id then
     return null;
@@ -461,6 +472,23 @@ begin
     where ps.user_id = target_user_id
       and ps.daily_reward_day::text = current_day
   ), 0);
+
+  vault_opened_today := exists (
+    select 1
+    from public.player_stats ps
+    where ps.user_id = target_user_id
+      and ps.vault_opened_day::text = current_day
+  );
+
+  vault_wins_today := case
+    when vault_opened_today then 0
+    else coalesce((
+      select least(3, greatest(0, ps.vault_wins))
+      from public.player_stats ps
+      where ps.user_id = target_user_id
+        and ps.vault_day::text = current_day
+    ), 0)
+  end;
 
   return jsonb_build_object(
     'nickname',
@@ -512,6 +540,12 @@ begin
       reward_wins,
     'dailyRewardTokens',
       reward_wins * 6,
+    'vaultWins',
+      vault_wins_today,
+    'vaultRequiredWins',
+      3,
+    'vaultOpenedToday',
+      vault_opened_today,
     'achievements',
       coalesce(
         (
@@ -636,7 +670,7 @@ set ability_skill_presets = jsonb_set(
 )
 where ability_skill_presets = '[[],[],[],[],[]]'::jsonb;
 
--- Updated get_account_snapshot to include preset fields
+-- Updated get_account_snapshot to include preset and vault fields
 create or replace function public.get_account_snapshot(
   target_user_id uuid default auth.uid()
 )
@@ -648,6 +682,8 @@ as $$
 declare
   current_day text := to_char(timezone('utc', now()), 'YYYY-MM-DD');
   reward_wins integer := 0;
+  vault_wins_today integer := 0;
+  vault_opened_today boolean := false;
 begin
   if target_user_id is null or auth.uid() is null or auth.uid() <> target_user_id then
     return null;
@@ -659,6 +695,23 @@ begin
     where ps.user_id = target_user_id
       and ps.daily_reward_day::text = current_day
   ), 0);
+
+  vault_opened_today := exists (
+    select 1
+    from public.player_stats ps
+    where ps.user_id = target_user_id
+      and ps.vault_opened_day::text = current_day
+  );
+
+  vault_wins_today := case
+    when vault_opened_today then 0
+    else coalesce((
+      select least(3, greatest(0, ps.vault_wins))
+      from public.player_stats ps
+      where ps.user_id = target_user_id
+        and ps.vault_day::text = current_day
+    ), 0)
+  end;
 
   return jsonb_build_object(
     'nickname',
@@ -720,6 +773,12 @@ begin
       reward_wins,
     'dailyRewardTokens',
       reward_wins * 6,
+    'vaultWins',
+      vault_wins_today,
+    'vaultRequiredWins',
+      3,
+    'vaultOpenedToday',
+      vault_opened_today,
     'achievements',
       coalesce(
         (
@@ -748,4 +807,3 @@ begin
   );
 end;
 $$;
-

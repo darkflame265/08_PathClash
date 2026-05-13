@@ -1499,6 +1499,16 @@ function initSocketServer(io) {
                 ack?.({ ok: true, status: 'AUTH_INVALID' });
             }
         });
+        socket.on('open_victory_vault', async ({ auth }, ack) => {
+            try {
+                await registerSocketSession(socket, auth, { forceRevalidate: true });
+                ack?.(await (0, playerAuth_1.openVictoryVault)(auth));
+            }
+            catch (err) {
+                console.error('[open_victory_vault] handler error:', err);
+                ack?.({ status: 'FAILED' });
+            }
+        });
         socket.on('finalize_google_upgrade', async ({ auth, guestAuth, guestProfile, flowStartedAt, allowExistingSwitch, }, ack) => {
             try {
                 await registerSocketSession(socket, auth, { forceRevalidate: true });

@@ -27,6 +27,9 @@ export interface AuthStatePayload {
   tokens?: number;
   dailyRewardWins?: number;
   dailyRewardTokens?: number;
+  vaultWins?: number;
+  vaultRequiredWins?: number;
+  vaultOpenedToday?: boolean;
   achievements?: PlayerAchievementState[];
   currentRating?: number;
   highestArena?: number;
@@ -50,6 +53,9 @@ interface StatsRow {
   tokens: number | null;
   daily_reward_wins: number | null;
   daily_reward_day: string | null;
+  vault_wins?: number | null;
+  vault_day?: string | null;
+  vault_opened_day?: string | null;
   current_rating: number | null;
   highest_arena_reached: number | null;
   ranked_unlocked: boolean | null;
@@ -100,6 +106,9 @@ interface AccountSnapshot {
   tokens: number;
   dailyRewardWins: number;
   dailyRewardTokens: number;
+  vaultWins: number;
+  vaultRequiredWins: number;
+  vaultOpenedToday: boolean;
   achievements: PlayerAchievementState[];
   currentRating: number;
   highestArena: number;
@@ -120,6 +129,9 @@ interface AccountSnapshotRpcRow {
   tokens?: number | null;
   dailyRewardWins?: number | null;
   dailyRewardTokens?: number | null;
+  vaultWins?: number | null;
+  vaultRequiredWins?: number | null;
+  vaultOpenedToday?: boolean | null;
   achievements?: Array<{
     achievementId?: string | null;
     progress?: number | null;
@@ -148,6 +160,9 @@ export interface AccountProfile {
   tokens: number;
   dailyRewardWins: number;
   dailyRewardTokens: number;
+  vaultWins: number;
+  vaultRequiredWins: number;
+  vaultOpenedToday: boolean;
   isGuestUser: boolean;
   achievements: PlayerAchievementState[];
   rotationSkills?: AbilitySkillId[];
@@ -172,6 +187,9 @@ export interface PendingUpgradeContext {
     tokens: number;
     dailyRewardWins: number;
     dailyRewardTokens: number;
+    vaultWins: number;
+    vaultRequiredWins: number;
+    vaultOpenedToday: boolean;
   };
   flowStartedAt: string;
 }
@@ -201,6 +219,7 @@ interface ServerAccountResponse {
 
 const DAILY_REWARD_TOKENS_PER_WIN = 6;
 const DAILY_REWARD_MAX_WINS = 20;
+const VAULT_REQUIRED_WINS = 3;
 const ACCOUNT_SNAPSHOT_CACHE_TTL_MS = 3000;
 
 const knownProfileUsers = new Set<string>();
@@ -260,6 +279,24 @@ function getActiveDailyRewardWins(
     DAILY_REWARD_MAX_WINS,
     Math.max(0, Number(stats.daily_reward_wins ?? 0)),
   );
+}
+
+function getActiveVaultWins(
+  stats:
+    | Pick<StatsRow, "vault_wins" | "vault_day" | "vault_opened_day">
+    | undefined,
+): number {
+  const utcDayKey = getUtcDayKey();
+  if (!stats || stats.vault_opened_day === utcDayKey || stats.vault_day !== utcDayKey) {
+    return 0;
+  }
+  return Math.min(VAULT_REQUIRED_WINS, Math.max(0, Number(stats.vault_wins ?? 0)));
+}
+
+function hasVaultOpenedToday(
+  stats: Pick<StatsRow, "vault_opened_day"> | undefined,
+): boolean {
+  return stats?.vault_opened_day === getUtcDayKey();
 }
 
 interface StoredGuestSession {
@@ -409,6 +446,9 @@ function toAuthState(
     tokens: snapshot?.tokens,
     dailyRewardWins: snapshot?.dailyRewardWins,
     dailyRewardTokens: snapshot?.dailyRewardTokens,
+    vaultWins: snapshot?.vaultWins,
+    vaultRequiredWins: snapshot?.vaultRequiredWins,
+    vaultOpenedToday: snapshot?.vaultOpenedToday,
     achievements: snapshot?.achievements,
     currentRating: snapshot?.currentRating,
     highestArena: snapshot?.highestArena,
@@ -435,6 +475,9 @@ function createDisconnectedAuthState(): AuthStatePayload {
     tokens: 0,
     dailyRewardWins: 0,
     dailyRewardTokens: 0,
+    vaultWins: 0,
+    vaultRequiredWins: VAULT_REQUIRED_WINS,
+    vaultOpenedToday: false,
     achievements: [],
     currentRating: 0,
     highestArena: 1,
@@ -673,6 +716,12 @@ function normalizeAccountSnapshot(
     tokens: Number(source?.tokens ?? 0),
     dailyRewardWins: Number(source?.dailyRewardWins ?? 0),
     dailyRewardTokens: Number(source?.dailyRewardTokens ?? 0),
+    vaultWins: Math.min(
+      Number(source?.vaultRequiredWins ?? VAULT_REQUIRED_WINS),
+      Math.max(0, Number(source?.vaultWins ?? 0)),
+    ),
+    vaultRequiredWins: Number(source?.vaultRequiredWins ?? VAULT_REQUIRED_WINS),
+    vaultOpenedToday: Boolean(source?.vaultOpenedToday ?? false),
     achievements: (source?.achievements ?? [])
       .filter((row): row is NonNullable<typeof row> => Boolean(row))
       .map((row) => ({
@@ -709,6 +758,9 @@ async function getAccountSnapshot(
       tokens: 0,
       dailyRewardWins: 0,
       dailyRewardTokens: 0,
+      vaultWins: 0,
+      vaultRequiredWins: VAULT_REQUIRED_WINS,
+      vaultOpenedToday: false,
       achievements: [],
       currentRating: 0,
       highestArena: 1,
@@ -760,7 +812,7 @@ async function getAccountSnapshot(
         .maybeSingle<ProfileRow>(),
       supabase
         .from("player_stats")
-        .select("wins, losses, tokens, daily_reward_wins, daily_reward_day, current_rating, highest_arena_reached, ranked_unlocked")
+        .select("wins, losses, tokens, daily_reward_wins, daily_reward_day, vault_wins, vault_day, vault_opened_day, current_rating, highest_arena_reached, ranked_unlocked")
         .eq("user_id", userId)
         .maybeSingle<StatsRow>(),
       supabase
@@ -796,6 +848,7 @@ async function getAccountSnapshot(
     const dailyRewardWins = getActiveDailyRewardWins(
       statsResult.data ?? undefined,
     );
+    const vaultWins = getActiveVaultWins(statsResult.data ?? undefined);
 
     const snapshot = {
       nickname: profileResult.data?.nickname ?? null,
@@ -826,6 +879,9 @@ async function getAccountSnapshot(
       tokens: statsResult.data?.tokens ?? 0,
       dailyRewardWins,
       dailyRewardTokens: dailyRewardWins * DAILY_REWARD_TOKENS_PER_WIN,
+      vaultWins,
+      vaultRequiredWins: VAULT_REQUIRED_WINS,
+      vaultOpenedToday: hasVaultOpenedToday(statsResult.data ?? undefined),
       achievements: (achievementsResult.data ?? []).map((row) => ({
         achievementId: row.achievement_id,
         progress: Number(row.progress ?? 0),
@@ -1103,6 +1159,9 @@ export async function refreshAccountSummary(options?: {
       tokens: 0,
       dailyRewardWins: 0,
       dailyRewardTokens: 0,
+      vaultWins: 0,
+      vaultRequiredWins: VAULT_REQUIRED_WINS,
+      vaultOpenedToday: false,
       achievements: [],
       currentRating: 0,
       highestArena: 1,
@@ -1128,6 +1187,9 @@ export async function refreshAccountSummary(options?: {
       tokens: 0,
       dailyRewardWins: 0,
       dailyRewardTokens: 0,
+      vaultWins: 0,
+      vaultRequiredWins: VAULT_REQUIRED_WINS,
+      vaultOpenedToday: false,
       achievements: [],
       currentRating: 0,
       highestArena: 1,
@@ -1152,6 +1214,9 @@ export async function refreshAccountSummary(options?: {
     tokens: snapshot.tokens,
     dailyRewardWins: snapshot.dailyRewardWins,
     dailyRewardTokens: snapshot.dailyRewardTokens,
+    vaultWins: snapshot.vaultWins,
+    vaultRequiredWins: snapshot.vaultRequiredWins,
+    vaultOpenedToday: snapshot.vaultOpenedToday,
     achievements: snapshot.achievements,
     currentRating: snapshot.currentRating,
     highestArena: snapshot.highestArena,
@@ -1588,6 +1653,9 @@ export async function linkGoogleAccount(): Promise<void> {
         tokens: snapshot.tokens ?? 0,
         dailyRewardWins: snapshot.dailyRewardWins ?? 0,
         dailyRewardTokens: snapshot.dailyRewardTokens ?? 0,
+        vaultWins: snapshot.vaultWins ?? 0,
+        vaultRequiredWins: snapshot.vaultRequiredWins ?? VAULT_REQUIRED_WINS,
+        vaultOpenedToday: snapshot.vaultOpenedToday ?? false,
       },
       flowStartedAt: new Date().toISOString(),
     });
@@ -1626,6 +1694,9 @@ export async function logoutToGuestMode(): Promise<AuthStatePayload> {
       tokens: 0,
       dailyRewardWins: 0,
       dailyRewardTokens: 0,
+      vaultWins: 0,
+      vaultRequiredWins: VAULT_REQUIRED_WINS,
+      vaultOpenedToday: false,
       achievements: [],
     };
   }

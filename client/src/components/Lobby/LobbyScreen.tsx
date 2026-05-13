@@ -146,6 +146,27 @@ type SkinDetailState =
       };
     }
   | null;
+type VaultOpenResponse =
+  | {
+      status: "OPENED";
+      rewardTokens: number;
+      bonusSkin: PieceSkin | null;
+      duplicateSkin: PieceSkin | null;
+      duplicateCompensationTokens: number;
+      tokens: number;
+      ownedSkins: PieceSkin[];
+      vaultWins: number;
+      vaultRequiredWins: number;
+      vaultOpenedToday: boolean;
+    }
+  | {
+      status:
+        | "AUTH_REQUIRED"
+        | "AUTH_INVALID"
+        | "NOT_READY"
+        | "ALREADY_OPENED"
+        | "FAILED";
+    };
 type LobbyModeKey =
   | "friend"
   | "coop"
@@ -961,6 +982,12 @@ export function LobbyScreen({
 
     accountDailyRewardTokens,
 
+    accountVaultWins,
+
+    accountVaultRequiredWins,
+
+    accountVaultOpenedToday,
+
     accountAchievements,
 
     setAuthState,
@@ -1149,6 +1176,12 @@ export function LobbyScreen({
     id: number;
     text: string;
   } | null>(null);
+  const [isVaultOpen, setIsVaultOpen] = useState(false);
+  const [isOpeningVault, setIsOpeningVault] = useState(false);
+  const [vaultOpenResult, setVaultOpenResult] = useState<Extract<
+    VaultOpenResponse,
+    { status: "OPENED" }
+  > | null>(null);
 
   const [atomicPreviewReady, setAtomicPreviewReady] = useState(false);
 
@@ -1259,6 +1292,73 @@ export function LobbyScreen({
     },
     [playLobbyUiClickFromTarget],
   );
+
+  const handleOpenVictoryVault = useCallback(async () => {
+    if (isOpeningVault) return;
+    if (!authAccessToken) {
+      showSkinFloatingMessageRef.current(
+        langRef.current === "en"
+          ? "Please sign in before opening the vault."
+          : "금고를 열려면 먼저 로그인해야 합니다.",
+      );
+      return;
+    }
+
+    setIsOpeningVault(true);
+    try {
+      const socket = getSocket();
+      const response = await new Promise<VaultOpenResponse>((resolve) => {
+        socket.emit(
+          "open_victory_vault",
+          {
+            auth: {
+              accessToken: authAccessToken,
+              userId: authUserId ?? undefined,
+            },
+          },
+          (ack: VaultOpenResponse) => resolve(ack),
+        );
+      });
+
+      if (response.status === "OPENED") {
+        setVaultOpenResult(response);
+        setAuthState({
+          ready: true,
+          userId: authUserId,
+          accessToken: authAccessToken,
+          isGuestUser,
+          tokens: response.tokens,
+          ownedSkins: response.ownedSkins,
+          vaultWins: response.vaultWins,
+          vaultRequiredWins: response.vaultRequiredWins,
+          vaultOpenedToday: response.vaultOpenedToday,
+        });
+        return;
+      }
+
+      const message =
+        response.status === "NOT_READY"
+          ? langRef.current === "en"
+            ? "Win 3 times to open the vault."
+            : "3승을 채워야 금고를 열 수 있습니다."
+          : response.status === "ALREADY_OPENED"
+            ? langRef.current === "en"
+              ? "The vault has already been opened today."
+              : "오늘은 이미 금고를 열었습니다."
+            : langRef.current === "en"
+              ? "Unable to open the vault. Please try again."
+              : "금고를 열 수 없습니다. 다시 시도해주세요.";
+      showSkinFloatingMessageRef.current(message);
+    } finally {
+      setIsOpeningVault(false);
+    }
+  }, [
+    authAccessToken,
+    authUserId,
+    isGuestUser,
+    isOpeningVault,
+    setAuthState,
+  ]);
 
   const closeTopLobbyModal = useCallback(() => {
     if (capturingControlKey) {
@@ -2197,6 +2297,15 @@ export function LobbyScreen({
 
   const currentSkinName =
     skinChoices.find((choice) => choice.id === pieceSkin)?.name ?? pieceSkin;
+
+  const vaultRequiredWins = Math.max(1, accountVaultRequiredWins || 3);
+  const vaultWins = accountVaultOpenedToday
+    ? 0
+    : Math.min(vaultRequiredWins, Math.max(0, accountVaultWins));
+  const vaultReady = !accountVaultOpenedToday && vaultWins >= vaultRequiredWins;
+  const vaultProgressText = `${vaultWins}/${vaultRequiredWins}`;
+  const getSkinDisplayName = (skinId: PieceSkin | null) =>
+    skinId ? (skinChoices.find((choice) => choice.id === skinId)?.name ?? skinId) : "";
 
   const totalPlays = accountWins + accountLosses;
 
@@ -4394,6 +4503,27 @@ export function LobbyScreen({
             </div>
           )}
         </div>
+        <button
+          className={`lobby-vault-button${vaultReady ? " is-ready" : ""}`}
+          type="button"
+          aria-label={lang === "en" ? "Victory vault" : "승리 금고"}
+          onClick={() => {
+            setVaultOpenResult(null);
+            setIsVaultOpen(true);
+          }}
+        >
+          <span className="lobby-vault-icon" aria-hidden="true">
+            <span className="lobby-vault-door" />
+          </span>
+          <span className="lobby-vault-progress" aria-hidden="true">
+            {Array.from({ length: vaultRequiredWins }).map((_, index) => (
+              <span
+                key={index}
+                className={index < vaultWins ? "is-filled" : ""}
+              />
+            ))}
+          </span>
+        </button>
       </div>
 
       {showLobbyArenaContent && (
@@ -4465,6 +4595,90 @@ export function LobbyScreen({
           currentRating={currentRating}
           onClose={() => setShowArenaGallery(false)}
         />
+      )}
+
+      {isVaultOpen && (
+        <div
+          className="upgrade-modal-backdrop"
+          onClick={() => setIsVaultOpen(false)}
+        >
+          <div
+            className="upgrade-modal skin-modal victory-vault-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="skin-modal-head">
+              <h3>{lang === "en" ? "Victory Vault" : "승리 금고"}</h3>
+              <span className="victory-vault-status">{vaultProgressText}</span>
+            </div>
+
+            <div className="victory-vault-visual" aria-hidden="true">
+              <div className={`victory-vault-safe${vaultReady ? " is-ready" : ""}`}>
+                <div className="victory-vault-safe-handle" />
+              </div>
+            </div>
+
+            <div className="victory-vault-gauge" aria-label={vaultProgressText}>
+              {Array.from({ length: vaultRequiredWins }).map((_, index) => (
+                <span
+                  key={index}
+                  className={index < vaultWins ? "is-filled" : ""}
+                />
+              ))}
+            </div>
+
+            {vaultOpenResult && (
+              <div className="victory-vault-result">
+                <div>
+                  <span className="skin-token-icon" aria-hidden="true">
+                    {"💎"}
+                  </span>
+                  <strong>
+                    +{vaultOpenResult.rewardTokens +
+                      vaultOpenResult.duplicateCompensationTokens}
+                  </strong>
+                </div>
+                {vaultOpenResult.bonusSkin && (
+                  <p>
+                    {lang === "en"
+                      ? `Skin unlocked: ${getSkinDisplayName(vaultOpenResult.bonusSkin)}`
+                      : `스킨 획득: ${getSkinDisplayName(vaultOpenResult.bonusSkin)}`}
+                  </p>
+                )}
+                {vaultOpenResult.duplicateSkin && (
+                  <p>
+                    {lang === "en"
+                      ? `Duplicate ${getSkinDisplayName(vaultOpenResult.duplicateSkin)} converted to ${vaultOpenResult.duplicateCompensationTokens} diamonds.`
+                      : `중복 ${getSkinDisplayName(vaultOpenResult.duplicateSkin)} 스킨이 ${vaultOpenResult.duplicateCompensationTokens}다이아몬드로 전환되었습니다.`}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="victory-vault-actions">
+              <button
+                className="lobby-btn primary victory-vault-open-btn"
+                type="button"
+                disabled={!vaultReady || isOpeningVault}
+                onClick={() => void handleOpenVictoryVault()}
+              >
+                {isOpeningVault
+                  ? lang === "en"
+                    ? "Opening..."
+                    : "여는 중..."
+                  : lang === "en"
+                    ? "Open"
+                    : "열기"}
+              </button>
+              <button
+                className="lobby-btn secondary victory-vault-close-btn"
+                type="button"
+                onClick={() => setIsVaultOpen(false)}
+              >
+                {lang === "en" ? "Close" : "닫기"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {showFriendAdd && (
