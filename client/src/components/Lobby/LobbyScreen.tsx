@@ -4653,9 +4653,16 @@ export function LobbyScreen({
               {isVaultHelpOpen ? (
                 <div className="victory-vault-help-popover">
                   <p>
-                    {lang === "en"
-                      ? "Win matches to fill the vault. At 3 wins, you can open it once per UTC day."
-                      : "승리할 때마다 금고 게이지가 채워집니다. 3승을 채우면 UTC 기준 하루 1회 금고를 열 수 있습니다."}
+                    <span>
+                      {lang === "en"
+                        ? "Win matches to fill the vault gauge."
+                        : "승리할 때마다 금고 게이지가 충전됩니다."}
+                    </span>
+                    <span>
+                      {lang === "en"
+                        ? "At 3 wins, you can open it once per UTC day."
+                        : "3승 달성 시 UTC 기준 하루 1회 금고를 열 수 있습니다."}
+                    </span>
                   </p>
                   <div className="victory-vault-help-section">
                     <strong>
@@ -4673,9 +4680,9 @@ export function LobbyScreen({
                         ["0.1%", 10000],
                       ].map(([chance, diamonds]) => (
                         <li key={`${chance}-${diamonds}`}>
-                          <span>{chance} - </span>
+                          <span>{chance} → </span>
                           <span className="victory-vault-help-reward">
-                            <span>{diamonds}</span>
+                            <span>{Number(diamonds).toLocaleString()}</span>
                             <span className="skin-token-icon" aria-hidden="true">
                               {"💎"}
                             </span>
@@ -4689,10 +4696,22 @@ export function LobbyScreen({
                       {lang === "en" ? "Bonus Skin" : "보너스 스킨"}
                     </strong>
                     <p>
-                      {lang === "en"
-                        ? "Opening has a 1% chance to grant a skin. Duplicate skins become diamonds worth 50% of that skin's price."
-                        : "금고 개봉 시 1% 확률로 스킨을 획득합니다. 이미 보유한 스킨이 나오면 해당 스킨 가격의 50%만큼 다이아몬드로 전환됩니다."}
+                      <span>
+                        {lang === "en"
+                          ? "Opening has a 1% chance to grant a bonus skin."
+                          : "금고 오픈 시 1% 확률로 보너스 스킨이 등장합니다."}
+                      </span>
+                      <span>
+                        {lang === "en"
+                          ? "Duplicate skins become diamonds worth 50% of that skin's price."
+                          : "이미 보유한 스킨은 가격의 50%만큼 다이아몬드로 전환됩니다."}
+                      </span>
                     </p>
+                    <strong>
+                      {lang === "en"
+                        ? "Skin Tier Rates"
+                        : "스킨 등장 시 등급 확률"}
+                    </strong>
                     <ul>
                       <li>
                         <span className="skin-name-tier-common">
