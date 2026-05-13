@@ -83,9 +83,5 @@ function getAbilityAiFallbackMs(currentRating, rankedUnlocked) {
     const arena = getArenaFromRating(currentRating);
     if (arena <= 3)
         return 7000;
-    if (arena <= 6)
-        return 12000;
-    if (arena <= 8)
-        return 20000;
-    return 30000;
+    return 12000;
 }

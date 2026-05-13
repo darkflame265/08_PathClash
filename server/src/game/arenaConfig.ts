@@ -94,7 +94,5 @@ export function getAbilityAiFallbackMs(currentRating: number, rankedUnlocked: bo
   if (rankedUnlocked || currentRating >= RANKED_UNLOCKED_THRESHOLD) return -1;
   const arena = getArenaFromRating(currentRating);
   if (arena <= 3) return 7_000;
-  if (arena <= 6) return 12_000;
-  if (arena <= 8) return 20_000;
-  return 30_000;
+  return 12_000;
 }
