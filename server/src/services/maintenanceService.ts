@@ -48,6 +48,13 @@ const DEFAULT_NOTICE_BEFORE_MS = 10 * 60 * 1000;
 const DEFAULT_MATCHMAKING_LOCK_BEFORE_MS = 5 * 60 * 1000;
 const DEFAULT_GRACE_MS = 3 * 60 * 1000;
 
+function normalizeMaintenanceMessage(message: string | null | undefined): string | null {
+  const trimmed = message?.trim();
+  if (!trimmed) return null;
+  if (trimmed.includes('\uFFFD') || /\?{2,}/.test(trimmed)) return null;
+  return trimmed;
+}
+
 class MaintenanceController extends EventEmitter {
   private scheduleData: ActiveMaintenanceSchedule | null = null;
   private timers: NodeJS.Timeout[] = [];
@@ -111,7 +118,7 @@ class MaintenanceController extends EventEmitter {
         ),
       ),
       graceMs: Math.max(0, Math.trunc(input.graceMs ?? DEFAULT_GRACE_MS)),
-      message: input.message?.trim() || null,
+      message: normalizeMaintenanceMessage(input.message),
     };
     this.forceCloseEmittedFor = null;
     this.installTimers();

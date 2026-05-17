@@ -5,6 +5,14 @@ const events_1 = require("events");
 const DEFAULT_NOTICE_BEFORE_MS = 10 * 60 * 1000;
 const DEFAULT_MATCHMAKING_LOCK_BEFORE_MS = 5 * 60 * 1000;
 const DEFAULT_GRACE_MS = 3 * 60 * 1000;
+function normalizeMaintenanceMessage(message) {
+    const trimmed = message?.trim();
+    if (!trimmed)
+        return null;
+    if (trimmed.includes('\uFFFD') || /\?{2,}/.test(trimmed))
+        return null;
+    return trimmed;
+}
 class MaintenanceController extends events_1.EventEmitter {
     constructor() {
         super(...arguments);
@@ -56,7 +64,7 @@ class MaintenanceController extends events_1.EventEmitter {
             noticeBeforeMs: Math.max(0, Math.trunc(input.noticeBeforeMs ?? DEFAULT_NOTICE_BEFORE_MS)),
             matchmakingLockBeforeMs: Math.max(0, Math.trunc(input.matchmakingLockBeforeMs ?? DEFAULT_MATCHMAKING_LOCK_BEFORE_MS)),
             graceMs: Math.max(0, Math.trunc(input.graceMs ?? DEFAULT_GRACE_MS)),
-            message: input.message?.trim() || null,
+            message: normalizeMaintenanceMessage(input.message),
         };
         this.forceCloseEmittedFor = null;
         this.installTimers();

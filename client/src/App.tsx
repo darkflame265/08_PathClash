@@ -175,6 +175,13 @@ function formatMaintenanceTime(timestamp: number | null, lang: "kr" | "en") {
   }).format(new Date(timestamp));
 }
 
+function getReadableMaintenanceMessage(message: string | null | undefined) {
+  const trimmed = message?.trim();
+  if (!trimmed) return null;
+  if (trimmed.includes("\uFFFD") || /\?{2,}/.test(trimmed)) return null;
+  return trimmed;
+}
+
 function MaintenanceScreen({
   status,
   lang,
@@ -207,7 +214,7 @@ function MaintenanceScreen({
           !
         </div>
         <h2>{title}</h2>
-        <p>{status.message || body}</p>
+        <p>{getReadableMaintenanceMessage(status.message) || body}</p>
         {timeText && <span>{timeText}</span>}
       </div>
     </div>
@@ -1425,7 +1432,9 @@ function App() {
             >
               <h3>{maintenanceNoticeTitle}</h3>
               <p className="app-confirm-copy">
-                {maintenanceNotice.status.message || maintenanceNoticeBody}
+                {getReadableMaintenanceMessage(
+                  maintenanceNotice.status.message,
+                ) || maintenanceNoticeBody}
               </p>
               <div className="app-confirm-actions app-confirm-actions-single">
                 <button
