@@ -1099,6 +1099,9 @@ export function LobbyScreen({
   const [isNameChangeOpen, setIsNameChangeOpen] = useState(false);
 
   const [isAbilityLoadoutOpen, setIsAbilityLoadoutOpen] = useState(false);
+  const [abilityLoadoutViewMode, setAbilityLoadoutViewMode] = useState<
+    "list" | "grid"
+  >("list");
 
   useEffect(() => {
     const syncGamepadLayout = () => {
@@ -5360,29 +5363,68 @@ export function LobbyScreen({
               </div>
             </div>
 
-            <div
-              key={`ability-preset-selected-${activePreset}`}
-              className="ability-loadout-chip-row ability-loadout-modal-selected"
-            >
-              {equippedAbilitySkillDefs.map((skill) => (
-                <button
-                  key={skill.id}
-                  className="ability-loadout-chip ability-loadout-chip-btn"
-                  type="button"
-                  onClick={() => handleUnequipAbilitySkill(skill.id)}
-                  aria-label={
-                    lang === "en"
-                      ? `Unequip ${skill.name.en}`
-                      : `${skill.name.kr} 장착 해제`
-                  }
-                >
-                  {renderAbilitySkillIcon(skill.id)}
-                  <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
-                </button>
-              ))}
+            <div className="ability-loadout-selected-toolbar">
+              <div
+                key={`ability-preset-selected-${activePreset}`}
+                className="ability-loadout-chip-row ability-loadout-modal-selected"
+              >
+                {equippedAbilitySkillDefs.map((skill) => (
+                  <button
+                    key={skill.id}
+                    className="ability-loadout-chip ability-loadout-chip-btn"
+                    type="button"
+                    onClick={() => handleUnequipAbilitySkill(skill.id)}
+                    aria-label={
+                      lang === "en"
+                        ? `Unequip ${skill.name.en}`
+                        : `${skill.name.kr} 장착 해제`
+                    }
+                  >
+                    {renderAbilitySkillIcon(skill.id)}
+                    <span>{lang === "en" ? skill.name.en : skill.name.kr}</span>
+                  </button>
+                ))}
+              </div>
+              <button
+                className="ability-loadout-view-toggle"
+                type="button"
+                onClick={() =>
+                  setAbilityLoadoutViewMode((mode) =>
+                    mode === "list" ? "grid" : "list",
+                  )
+                }
+                aria-label={
+                  abilityLoadoutViewMode === "list"
+                    ? lang === "en"
+                      ? "Switch to grid view"
+                      : "그리드 보기로 전환"
+                    : lang === "en"
+                      ? "Switch to list view"
+                      : "리스트 보기로 전환"
+                }
+                title={
+                  abilityLoadoutViewMode === "list"
+                    ? lang === "en"
+                      ? "Grid view"
+                      : "그리드 보기"
+                    : lang === "en"
+                      ? "List view"
+                      : "리스트 보기"
+                }
+              >
+                <span aria-hidden="true">
+                  {abilityLoadoutViewMode === "list" ? "▦" : "☰"}
+                </span>
+              </button>
             </div>
 
-            <div className="skin-option-list">
+            <div
+              className={
+                abilityLoadoutViewMode === "grid"
+                  ? "ability-skill-grid"
+                  : "skin-option-list"
+              }
+            >
               {availableAbilitySkills.map((skill, index) => {
                 const equipped = abilityLoadout.includes(skill.id);
 
@@ -5398,6 +5440,33 @@ export function LobbyScreen({
                 const requiredSkinTierClass = requiredSkinChoice?.tier
                   ? `skin-name-tier-${requiredSkinChoice.tier}`
                   : undefined;
+
+                if (abilityLoadoutViewMode === "grid") {
+                  return (
+                    <button
+                      key={skill.id}
+                      className={`skin-option-card ability-skill-grid-card ${equipped ? "is-selected" : ""} ${!unlocked ? "is-locked" : ""}`}
+                      data-keyboard-modal-layer={`ability-skill-row-${index}`}
+                      type="button"
+                      onClick={() => {
+                        if (!unlocked) return;
+
+                        handleToggleAbilitySkill(skill.id);
+                      }}
+                      disabled={!unlocked}
+                    >
+                      <span
+                        className={`skin-preview ability-skill-preview ability-skill-grid-preview ability-skill-preview-${skill.id.replaceAll("_", "-")}`}
+                      >
+                        {renderAbilitySkillIcon(skill.id)}
+                      </span>
+
+                      <span className="ability-skill-grid-name">
+                        {lang === "en" ? skill.name.en : skill.name.kr}
+                      </span>
+                    </button>
+                  );
+                }
 
                 return (
                   <button
