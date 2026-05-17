@@ -2431,6 +2431,14 @@ export function initSocketServer(io: Server): void {
       abilityStore.removeFromQueue(socket.id);
     });
 
+    socket.on('leave_ability_room', (ack?: (response: { status: 'ok' }) => void) => {
+      const { room } = abilityStore.removeSocket(socket.id);
+      if (room) {
+        socket.leave(room.roomId);
+      }
+      ack?.({ status: 'ok' });
+    });
+
     socket.on('twovtwo_client_ready', () => {
       const room = twoVsTwoStore.getBySocket(socket.id);
       room?.markClientReady(socket.id);

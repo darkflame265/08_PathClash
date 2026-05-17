@@ -3646,6 +3646,18 @@ export function LobbyScreen({
     }
   };
 
+  const handleLeaveCreatedAbilityRoom = () => {
+    const socket = connectSocket();
+    socket.emit("leave_ability_room", () => undefined);
+    cancelNetworkMatch("friend");
+    setIsMatchmaking(false);
+    setMatchType(null);
+    setCreatedCode("");
+    setRoomCode("");
+    setError("");
+    setView("main");
+  };
+
   const handleChangeNickname = useCallback(async () => {
     if (isChangingNickname) return;
 
@@ -4215,17 +4227,25 @@ export function LobbyScreen({
   const showFriendListPanel = selectedLobbyMode === "friend";
   const isAbilityMatchmakingActive =
     isMatchmaking && currentMatchType === "ability";
+  const isFriendCreatedRoomWaiting =
+    selectedLobbyMode === "friend" &&
+    view === "create" &&
+    currentMatchType === "friend" &&
+    createdCode.length > 0;
+  const isLobbyInteractionLocked =
+    isAbilityMatchmakingActive || isFriendCreatedRoomWaiting;
+  const friendRoomLeaveLabel = lang === "en" ? "Leave" : "나가기";
 
   const renderModePickerAction = () => (
     <button
       type="button"
       className={`lobby-bottom-action lobby-mode-action${
-        isAbilityMatchmakingActive ? " is-matchmaking-disabled" : ""
+        isLobbyInteractionLocked ? " is-matchmaking-disabled" : ""
       }`}
       data-keyboard-nav-layer="mode-title"
       onClick={() => setIsModePickerOpen(true)}
-      disabled={isAbilityMatchmakingActive}
-      aria-disabled={isAbilityMatchmakingActive}
+      disabled={isLobbyInteractionLocked}
+      aria-disabled={isLobbyInteractionLocked}
     >
       <span className="lobby-bottom-action-icon-wrap" aria-hidden="true">
         <span className="lobby-mode-action-icon">
@@ -4244,25 +4264,25 @@ export function LobbyScreen({
         <div className="mode-action-side mode-action-side--double">
           <button
             className={`lobby-mini-btn${
-              isAbilityMatchmakingActive ? " is-matchmaking-disabled" : ""
+              isLobbyInteractionLocked ? " is-matchmaking-disabled" : ""
             }`}
             data-keyboard-nav-layer="mini"
             type="button"
             onClick={() => void handleAbilityTraining()}
-            disabled={isAbilityMatchmakingActive}
-            aria-disabled={isAbilityMatchmakingActive}
+            disabled={isLobbyInteractionLocked}
+            aria-disabled={isLobbyInteractionLocked}
           >
             {abilityTrainingTitle}
           </button>
           <button
             className={`lobby-mini-btn${
-              isAbilityMatchmakingActive ? " is-matchmaking-disabled" : ""
+              isLobbyInteractionLocked ? " is-matchmaking-disabled" : ""
             }`}
             data-keyboard-nav-layer="mini"
             type="button"
             onClick={() => setIsAbilityLoadoutOpen(true)}
-            disabled={isAbilityMatchmakingActive}
-            aria-disabled={isAbilityMatchmakingActive}
+            disabled={isLobbyInteractionLocked}
+            aria-disabled={isLobbyInteractionLocked}
           >
             {abilityLoadoutTitle}
           </button>
@@ -4274,21 +4294,29 @@ export function LobbyScreen({
       return (
         <div className="mode-action-side mode-action-side--double">
           <button
-            className="lobby-mini-btn"
+            className={`lobby-mini-btn${
+              isLobbyInteractionLocked ? " is-matchmaking-disabled" : ""
+            }`}
             data-keyboard-nav-layer="mini"
             type="button"
             onClick={() => {
               setView("join");
               setError("");
             }}
+            disabled={isLobbyInteractionLocked}
+            aria-disabled={isLobbyInteractionLocked}
           >
             {t.enterCodeBtn}
           </button>
           <button
-            className="lobby-mini-btn"
+            className={`lobby-mini-btn${
+              isLobbyInteractionLocked ? " is-matchmaking-disabled" : ""
+            }`}
             data-keyboard-nav-layer="mini"
             type="button"
             onClick={() => setIsAbilityLoadoutOpen(true)}
+            disabled={isLobbyInteractionLocked}
+            aria-disabled={isLobbyInteractionLocked}
           >
             {abilityLoadoutTitle}
           </button>
@@ -4306,7 +4334,7 @@ export function LobbyScreen({
     return (
       <div
         className={`ability-loadout-chip-row mode-loadout-row${showLoadout ? "" : " is-empty"}${
-          showLoadout && isAbilityMatchmakingActive
+          showLoadout && isLobbyInteractionLocked
             ? " is-matchmaking-disabled"
             : ""
         }`}
@@ -4386,6 +4414,13 @@ export function LobbyScreen({
           <p>{t.roomCreatedDesc}</p>
           <div className="room-code">{createdCode}</div>
           <p className="waiting-text">{t.waitingText}</p>
+          <button
+            className="lobby-btn secondary friend-room-leave-btn"
+            type="button"
+            onClick={handleLeaveCreatedAbilityRoom}
+          >
+            {friendRoomLeaveLabel}
+          </button>
         </>
       );
     }
@@ -4530,10 +4565,15 @@ export function LobbyScreen({
         </div>
         <div className="lobby-vault-wrap">
           <button
-            className={`lobby-vault-button${vaultReady ? " is-ready" : ""}`}
+            className={`lobby-vault-button${vaultReady ? " is-ready" : ""}${
+              isLobbyInteractionLocked ? " is-matchmaking-disabled" : ""
+            }`}
             type="button"
             aria-label={lang === "en" ? "Victory vault" : "승리 금고"}
+            aria-disabled={isLobbyInteractionLocked}
+            disabled={isLobbyInteractionLocked}
             onClick={() => {
+              if (isLobbyInteractionLocked) return;
               setVaultOpenResult(null);
               setIsVaultHelpOpen(false);
               setIsVaultOpen(true);
@@ -4603,7 +4643,12 @@ export function LobbyScreen({
       )}
 
       {showFriendListPanel && (
-        <div className="lobby-arena-center">
+        <div
+          className={`lobby-arena-center${
+            isFriendCreatedRoomWaiting ? " is-lobby-interaction-locked" : ""
+          }`}
+          aria-disabled={isFriendCreatedRoomWaiting}
+        >
           <FriendListPanel
             lang={lang}
             onAddFriend={() => setShowFriendAdd(true)}
@@ -4752,7 +4797,11 @@ export function LobbyScreen({
                 </div>
               ) : (
                 <img
-                  src="/safe/safe_image.png"
+                  src={
+                    vaultReady
+                      ? "/safe/safe_image.png"
+                      : "/safe/safe_locked.png"
+                  }
                   alt=""
                   className={`victory-vault-safe${vaultReady ? " is-ready" : ""}`}
                   aria-hidden="true"
@@ -5605,13 +5654,13 @@ export function LobbyScreen({
         <div className="lobby-bottom-actions">
           <button
             className={`lobby-bottom-action ${isSkinPickerOpen ? "is-active" : ""}${
-              isAbilityMatchmakingActive ? " is-matchmaking-disabled" : ""
+              isLobbyInteractionLocked ? " is-matchmaking-disabled" : ""
             }`}
             data-keyboard-nav-layer="bottom"
             onClick={() => setIsSkinPickerOpen(true)}
             aria-pressed={isSkinPickerOpen}
-            aria-disabled={isAbilityMatchmakingActive}
-            disabled={isAbilityMatchmakingActive}
+            aria-disabled={isLobbyInteractionLocked}
+            disabled={isLobbyInteractionLocked}
             type="button"
           >
             <span className="lobby-bottom-action-icon-wrap" aria-hidden="true">
@@ -5627,7 +5676,7 @@ export function LobbyScreen({
 
           <button
             className={`lobby-bottom-action lobby-patch-notes-link${
-              isAbilityMatchmakingActive ? " is-matchmaking-disabled" : ""
+              isLobbyInteractionLocked ? " is-matchmaking-disabled" : ""
             }`}
             data-keyboard-nav-layer="bottom"
             onClick={() => {
@@ -5635,8 +5684,8 @@ export function LobbyScreen({
 
               markPatchNotesRead();
             }}
-            aria-disabled={isAbilityMatchmakingActive}
-            disabled={isAbilityMatchmakingActive}
+            aria-disabled={isLobbyInteractionLocked}
+            disabled={isLobbyInteractionLocked}
             type="button"
           >
             <span className="lobby-bottom-action-icon-wrap" aria-hidden="true">
@@ -5656,12 +5705,12 @@ export function LobbyScreen({
 
           <button
             className={`lobby-bottom-action${
-              isAbilityMatchmakingActive ? " is-matchmaking-disabled" : ""
+              isLobbyInteractionLocked ? " is-matchmaking-disabled" : ""
             }`}
             data-keyboard-nav-layer="bottom"
             onClick={() => setIsAchievementsOpen(true)}
-            aria-disabled={isAbilityMatchmakingActive}
-            disabled={isAbilityMatchmakingActive}
+            aria-disabled={isLobbyInteractionLocked}
+            disabled={isLobbyInteractionLocked}
             type="button"
           >
             <span className="lobby-bottom-action-icon-wrap" aria-hidden="true">
@@ -5683,12 +5732,12 @@ export function LobbyScreen({
 
           <button
             className={`lobby-bottom-action${
-              isAbilityMatchmakingActive ? " is-matchmaking-disabled" : ""
+              isLobbyInteractionLocked ? " is-matchmaking-disabled" : ""
             }`}
             data-keyboard-nav-layer="bottom"
             onClick={handleOpenSettings}
-            aria-disabled={isAbilityMatchmakingActive}
-            disabled={isAbilityMatchmakingActive}
+            aria-disabled={isLobbyInteractionLocked}
+            disabled={isLobbyInteractionLocked}
             type="button"
           >
             <span className="lobby-bottom-action-icon-wrap" aria-hidden="true">
