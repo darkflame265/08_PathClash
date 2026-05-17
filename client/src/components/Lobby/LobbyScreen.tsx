@@ -387,6 +387,7 @@ const AI_TUTORIAL_SEEN_KEY = "pathclash.aiTutorialSeen.v1";
 const AI_TUTORIAL_PROMPT_ANSWERED_KEY = "pathclash.aiTutorialPromptAnswered.v1";
 const INITIAL_NICKNAME_COMPLETED_KEY = "pathclash.initialNicknameSetUser.v1";
 const LAST_LOBBY_MODE_KEY = "pathclash.lastLobbyMode.v1";
+const ABILITY_LOADOUT_VIEW_MODE_KEY = "pathclash.abilityLoadoutViewMode.v1";
 
 const PATCH_NOTES_READ_KEY = "pathclash.patchNotes.read";
 
@@ -1101,7 +1102,12 @@ export function LobbyScreen({
   const [isAbilityLoadoutOpen, setIsAbilityLoadoutOpen] = useState(false);
   const [abilityLoadoutViewMode, setAbilityLoadoutViewMode] = useState<
     "list" | "grid"
-  >("list");
+  >(() => {
+    if (typeof window === "undefined") return "list";
+    return window.localStorage.getItem(ABILITY_LOADOUT_VIEW_MODE_KEY) === "grid"
+      ? "grid"
+      : "list";
+  });
 
   useEffect(() => {
     const syncGamepadLayout = () => {
@@ -1220,6 +1226,13 @@ export function LobbyScreen({
   useEffect(() => {
     window.localStorage.setItem(LAST_LOBBY_MODE_KEY, selectedLobbyMode);
   }, [selectedLobbyMode]);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      ABILITY_LOADOUT_VIEW_MODE_KEY,
+      abilityLoadoutViewMode,
+    );
+  }, [abilityLoadoutViewMode]);
 
   useEffect(() => {
     return () => {

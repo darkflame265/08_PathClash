@@ -5528,3 +5528,14 @@
   width: 2.6rem;
   height: 2.6rem;
 }
+
+.ability-loadout-modal
+  .ability-skill-grid-card
+  .ability-skill-grid-preview
+  .ability-skill-icon-glyph,
+.ability-loadout-modal
+  .ability-skill-grid-card
+  .ability-skill-grid-preview
+  .ability-skill-icon-custom {
+  font-size: 1.45em;
+}
